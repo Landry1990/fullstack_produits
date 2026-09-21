@@ -52,23 +52,23 @@ function TeamDetailRow({ equipe, currencySymbol }: { equipe: TeamReportEquipe; c
         <TableRow className="bg-slate-50/50">
           <TableCell colSpan={5} className="py-3 px-4">
             <div className="ml-6">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">
+              <p className="text-caption font-bold uppercase tracking-widest text-slate-400 mb-2">
                 {t('dashboard.manager_dashboard.teams_report_details', 'Détail par vendeur')}
               </p>
               {equipe.membres.length > 0 ? (
                 <Table>
                   <TableHeader>
                     <TableRow className="border-slate-100">
-                      <TableHead className="h-7 py-1 px-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      <TableHead className="h-7 py-1 px-2 text-caption font-bold uppercase tracking-wider text-slate-400">
                         {t('dashboard.manager_dashboard.teams_report_seller', 'Vendeur')}
                       </TableHead>
-                      <TableHead className="h-7 py-1 px-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 text-right">
+                      <TableHead className="h-7 py-1 px-2 text-caption font-bold uppercase tracking-wider text-slate-400 text-right">
                         {t('dashboard.manager_dashboard.teams_report_ca', 'CA')}
                       </TableHead>
-                      <TableHead className="h-7 py-1 px-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 text-right">
+                      <TableHead className="h-7 py-1 px-2 text-caption font-bold uppercase tracking-wider text-slate-400 text-right">
                         {t('dashboard.manager_dashboard.teams_report_nb_ventes', 'Nb Ventes')}
                       </TableHead>
-                      <TableHead className="h-7 py-1 px-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 text-right">
+                      <TableHead className="h-7 py-1 px-2 text-caption font-bold uppercase tracking-wider text-slate-400 text-right">
                         {t('dashboard.manager_dashboard.teams_report_nb_boites', 'Nb Boîtes')}
                       </TableHead>
                     </TableRow>
@@ -216,7 +216,7 @@ export default function TeamReportsPage() {
                             <Icon className={`size-5 ${cfg.color}`} />
                           </div>
                           <div>
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                            <p className="text-caption font-bold uppercase tracking-widest text-slate-400">
                               {t('dashboard.manager_dashboard.teams_report_rank', 'Rang')} {item.rang}
                             </p>
                             <p className="text-sm font-bold text-slate-900">{item.nom}</p>

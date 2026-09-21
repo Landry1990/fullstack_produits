@@ -4,6 +4,7 @@ import api from '../../services/api';
 import { useTranslation } from 'react-i18next';
 import { getLocale } from '../../utils/dateUtils';
 import { getApiErrorDetail } from '../../utils/errorHandling';
+import { ErrorState } from '../ui/ErrorState';
 import { logger } from '../../utils/logger'
 
 
@@ -63,7 +64,7 @@ export const TrancheHoraireStats: React.FC<TrancheHoraireStatsProps> = ({ onVeri
 
             <div className="flex flex-wrap items-end gap-4">
                 <div>
-                    <label htmlFor="tranche-start-time" className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('sales:tranche_horaire.start_time')}</label>
+                    <label htmlFor="tranche-start-time" className="block text-caption font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('sales:tranche_horaire.start_time')}</label>
                     <input
                         id="tranche-start-time"
                         type="time"
@@ -74,7 +75,7 @@ export const TrancheHoraireStats: React.FC<TrancheHoraireStatsProps> = ({ onVeri
                     />
                 </div>
                 <div>
-                    <label htmlFor="tranche-end-time" className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('sales:tranche_horaire.end_time')}</label>
+                    <label htmlFor="tranche-end-time" className="block text-caption font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('sales:tranche_horaire.end_time')}</label>
                     <input
                         id="tranche-end-time"
                         type="time"
@@ -94,11 +95,7 @@ export const TrancheHoraireStats: React.FC<TrancheHoraireStatsProps> = ({ onVeri
                 </button>
             </div>
 
-            {error && (
-                <div className="bg-error/10 border border-red-100 rounded-lg p-3 text-sm text-error flex items-center gap-2">
-                    <span>⚠️</span> {error}
-                </div>
-            )}
+            <ErrorState error={error} onRetry={fetchTrancheStats} retrying={loading} compact />
 
         </div>
     );

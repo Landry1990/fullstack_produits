@@ -192,7 +192,7 @@ const ChallengesPage: React.FC = () => {
             <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 w-full">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                     <div className="flex flex-col gap-1 flex-1 min-w-0">
-                        <label htmlFor="challenges-search" className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        <label htmlFor="challenges-search" className="text-caption font-bold uppercase tracking-wider text-slate-500">
                             {t('challenges:filters.search')}
                         </label>
                         <div className="relative group">
@@ -220,7 +220,7 @@ const ChallengesPage: React.FC = () => {
                         </div>
                     </div>
                     <div className="flex flex-col gap-1 flex-1 min-w-0">
-                        <label htmlFor="challenges-statut" className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        <label htmlFor="challenges-statut" className="text-caption font-bold uppercase tracking-wider text-slate-500">
                             {t('challenges:filters.statut')}
                         </label>
                         <Select
@@ -245,25 +245,25 @@ const ChallengesPage: React.FC = () => {
                     <Table className="w-full min-w-[1100px]">
                         <TableHeader>
                             <TableRow className="bg-slate-50 hover:bg-slate-50">
-                                <TableHead className="w-[22%] px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                                <TableHead className="w-[22%] px-4 py-3 text-left text-caption font-bold uppercase tracking-wider text-slate-500">
                                     {t('challenges:table.nom')}
                                 </TableHead>
-                                <TableHead className="w-[16%] px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                                <TableHead className="w-[16%] px-4 py-3 text-left text-caption font-bold uppercase tracking-wider text-slate-500">
                                     {t('challenges:table.periode')}
                                 </TableHead>
-                                <TableHead className="w-[8%] px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                                <TableHead className="w-[8%] px-4 py-3 text-left text-caption font-bold uppercase tracking-wider text-slate-500">
                                     {t('challenges:table.statut')}
                                 </TableHead>
-                                <TableHead className="w-[10%] px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                                <TableHead className="w-[10%] px-4 py-3 text-left text-caption font-bold uppercase tracking-wider text-slate-500">
                                     {t('challenges:type_objectif')}
                                 </TableHead>
-                                <TableHead className="w-[9%] px-4 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                                <TableHead className="w-[9%] px-4 py-3 text-center text-caption font-bold uppercase tracking-wider text-slate-500">
                                     {t('challenges:table.participants')}
                                 </TableHead>
-                                <TableHead className="w-[8%] px-4 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                                <TableHead className="w-[8%] px-4 py-3 text-center text-caption font-bold uppercase tracking-wider text-slate-500">
                                     {t('challenges:table.produits')}
                                 </TableHead>
-                                <TableHead className="w-[27%] px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                                <TableHead className="w-[27%] px-4 py-3 text-right text-caption font-bold uppercase tracking-wider text-slate-500">
                                     {t('challenges:table.actions')}
                                 </TableHead>
                             </TableRow>
@@ -309,7 +309,7 @@ const ChallengesPage: React.FC = () => {
                                                     </span>
                                                 )}
                                                 {!challenge.is_active && (
-                                                    <span className="text-[10px] text-red-500 font-bold uppercase">
+                                                    <span className="text-caption text-red-500 font-bold uppercase">
                                                         {t('challenges:table.inactive')}
                                                     </span>
                                                 )}
@@ -325,7 +325,7 @@ const ChallengesPage: React.FC = () => {
                                             <div className="flex flex-col gap-1">
                                                 {getStatutBadge(challenge.statut)}
                                                 {challenge.is_ongoing && (
-                                                    <span className="text-[10px] text-emerald-600 font-bold uppercase">
+                                                    <span className="text-caption text-emerald-600 font-bold uppercase">
                                                         {t('challenges:table.ongoing')}
                                                     </span>
                                                 )}
@@ -337,14 +337,14 @@ const ChallengesPage: React.FC = () => {
                                                     {t(`challenges:type_objectif_${(challenge.type_objectif ?? 'CA').toLowerCase()}`)}
                                                 </span>
                                                 {challenge.objectif_valeur != null && (
-                                                    <span className="inline-flex items-center gap-1 text-[10px] text-amber-700 font-bold">
+                                                    <span className="inline-flex items-center gap-1 text-caption text-amber-700 font-bold">
                                                         <Target className="size-3" />
                                                         {challenge.type_objectif === 'CA'
                                                             ? new Intl.NumberFormat(locale).format(challenge.objectif_valeur) + ' FCFA'
                                                             : challenge.objectif_valeur}
                                                     </span>
                                                 )}
-                                                <span className="text-[10px] text-slate-400 font-medium">
+                                                <span className="text-caption text-slate-400 font-medium">
                                                     {t(`challenges:mode_${(challenge.mode ?? 'INDIVIDUEL').toLowerCase()}`)}
                                                 </span>
                                             </div>

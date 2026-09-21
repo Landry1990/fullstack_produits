@@ -7,6 +7,8 @@ import type { User } from '../types/auth';
 const fetchLogs = async (filters: AuditFilters): Promise<AuditLogResponse> => {
     const params: Record<string, string | number> = { page: filters.page, page_size: 50 };
     if (filters.action) params['action'] = filters.action;
+    if (filters.action_in) params['action_in'] = filters.action_in;
+    if (filters.q) params['q'] = filters.q;
     if (filters.user) params['user'] = filters.user;
     if (filters.model_name) params['model_name'] = filters.model_name;
     if (filters.date_from) params['date_from'] = filters.date_from;
@@ -38,6 +40,8 @@ const fetchLogs = async (filters: AuditFilters): Promise<AuditLogResponse> => {
 const fetchStatistics = async (filters: Omit<AuditFilters, 'page'>): Promise<Statistics> => {
     const params: Record<string, string> = {};
     if (filters.action) params['action'] = filters.action;
+    if (filters.action_in) params['action_in'] = filters.action_in;
+    if (filters.q) params['q'] = filters.q;
     if (filters.user) params['user'] = filters.user;
     if (filters.model_name) params['model_name'] = filters.model_name;
     if (filters.date_from) params['date_from'] = filters.date_from;

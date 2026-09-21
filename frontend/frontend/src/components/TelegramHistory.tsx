@@ -184,7 +184,7 @@ const TelegramHistory: React.FC = () => {
                                         <Badge variant="ghost" size="sm" className="font-semibold">{log.type_display}</Badge>
                                     </td>
                                     <td>
-                                        <Badge variant={getStatusClass(log.status)} size="sm" className="gap-1 font-bold text-[10px]">
+                                        <Badge variant={getStatusClass(log.status)} size="sm" className="gap-1 font-bold text-caption">
                                             {getStatusIcon(log.status)}
                                             {log.status_display}
                                         </Badge>

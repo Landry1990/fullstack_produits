@@ -1,6 +1,13 @@
 {
   "title": "Corbeille",
   "subtitle": "Éléments supprimés · Restaurez ou supprimez définitivement",
+  "subtitle_count": "{{count}} élément(s) en suppression",
+  "date_groups": {
+    "today": "Aujourd'hui",
+    "yesterday": "Hier",
+    "this_week": "Cette semaine",
+    "older": "Plus ancien"
+  },
   "tabs": {
     "all": "Tout",
     "produits": "Produits",
@@ -33,7 +40,8 @@
     "empty_trash": "Vider la corbeille",
     "empty_all": "Vider tout",
     "refresh": "Actualiser",
-    "selected": "{{count}} sélectionné(s)"
+    "selected": "{{count}} sélectionné(s)",
+    "select_all": "Tout sélectionner"
   },
   "badges": {
     "produit": "Produit",

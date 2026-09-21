@@ -3,11 +3,12 @@ Rapports financiers, comptables et analyse de TVA — RapportFinanceMixin.
 """
 import csv
 import json
+import logging
 from datetime import datetime, time, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 
 import openpyxl
-from django.db.models import Count, Exists, F, OuterRef, Q, Sum
+from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q, Sum
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse
 from django.utils import timezone
@@ -17,7 +18,9 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from api.audit_helpers import log_audit
 from api.models import (
+    AuditLog,
     Caisse,
     Facture,
     FactureProduit,
@@ -28,6 +31,8 @@ from api.models import (
 )
 from api.views.rapports.pdf_builders import build_rapport_pdf
 from api.views.rapports.tz_utils import parse_api_datetime
+
+logger = logging.getLogger(__name__)
 
 # ── Helpers privés ────────────────────────────────────────────────────────────
 
@@ -189,8 +194,23 @@ class RapportFinanceMixin:
         mois = request.query_params.get('mois')
         if not mois:
             return Response({'detail': 'Mois requis'}, status=400)
-        date_debut = timezone.make_aware(datetime.strptime(f"{mois}-01", '%Y-%m-%d'))
-        date_fin   = (date_debut + timedelta(days=32)).replace(day=1)
+        try:
+            date_debut = timezone.make_aware(datetime.strptime(f"{mois}-01", '%Y-%m-%d'))
+            date_fin   = (date_debut + timedelta(days=32)).replace(day=1)
+        except ValueError:
+            return Response({'error': 'Format de mois invalide (AAAA-MM attendu)'}, status=400)
+        try:
+            log_audit(
+                user=request.user,
+                action=AuditLog.Action.EXPORT,
+                model_name='Rapport',
+                object_id=0,
+                description=f"Export PDF rapport mensuel — {mois}",
+                details={'params': request.query_params.dict(), 'type': 'rapport_mensuel_pdf'},
+                request=request,
+            )
+        except Exception:
+            logger.exception("Échec de l'audit rapport_mensuel_pdf")
         data       = self._get_rapport_data(date_debut, date_fin, mois)
         return build_rapport_pdf(data, f"RAPPORT MENSUEL — {mois}", f"rapport_{mois}.pdf")
 
@@ -201,6 +221,18 @@ class RapportFinanceMixin:
             db_s, df_s, date_debut, date_fin_exclusive = _parse_day_range(request)
         except ValueError as e:
             return Response({'detail': str(e)}, status=400)
+        try:
+            log_audit(
+                user=request.user,
+                action=AuditLog.Action.EXPORT,
+                model_name='Rapport',
+                object_id=0,
+                description=f"Export PDF rapport par dates — {db_s} → {df_s}",
+                details={'params': request.query_params.dict(), 'type': 'rapport_par_dates_pdf'},
+                request=request,
+            )
+        except Exception:
+            logger.exception("Échec de l'audit rapport_par_dates_pdf")
         data = self._get_rapport_data(date_debut, date_fin_exclusive, f"{db_s} → {df_s}")
         return build_rapport_pdf(
             data,
@@ -239,6 +271,19 @@ class RapportFinanceMixin:
         date_fin = (date_debut + timedelta(days=32)).replace(day=1)
         mois_label = date_debut.strftime('%B %Y').capitalize()
 
+        try:
+            log_audit(
+                user=request.user,
+                action=AuditLog.Action.EXPORT,
+                model_name='Rapport',
+                object_id=0,
+                description=f"Export Excel rapport général — {mois}",
+                details={'params': request.query_params.dict(), 'type': 'rapport_general_excel'},
+                request=request,
+            )
+        except Exception:
+            logger.exception("Échec de l'audit rapport_general_excel")
+
         return build_rapport_general_excel(date_debut, date_fin, mois_label)
 
     # ── CA multi-annuel ───────────────────────────────────────────────────────
@@ -248,7 +293,8 @@ class RapportFinanceMixin:
         # Récupérer toutes les années avec des factures (en excluant les lots is_divers)
         annees = [
             d.year for d in Facture.objects
-            .filter(status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE])
+            .filter(status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+                    is_active=True)
             .exclude(produits__allocations__stock_lot__is_divers=True)
             .dates('date', 'year', order='DESC')
         ]
@@ -260,6 +306,10 @@ class RapportFinanceMixin:
         results = [{'Mois': k, '_index': i + 1} for i, k in enumerate(m_keys)]
         totaux  = {'Mois': 'total_general', '_index': 13}
 
+        # NOTE: une agrégation TruncMonth globale n'est pas triviale ici car le
+        # calcul du CA par taux de TVA repose sur la répartition de la remise
+        # globale par facture et sur l'exclusion des lignes is_divers via
+        # _calculate_ca_par_tva. On conserve donc une itération par mois.
         for annee in sorted(annees):
             at_tva = at_exo = Decimal('0.00')
             for m_idx in range(1, 13):
@@ -267,7 +317,9 @@ class RapportFinanceMixin:
                 date_fin   = (date_debut + timedelta(days=32)).replace(day=1)
                 ca_tva = ca_exo = Decimal('0.00')
                 # Exclure les factures avec des produits is_divers
-                factures = self._get_factures_periode(date_debut, date_fin).exclude(
+                factures = self._get_factures_periode(date_debut, date_fin).filter(
+                    is_active=True
+                ).exclude(
                     produits__allocations__stock_lot__is_divers=True
                 )
                 for item in self._calculate_ca_par_tva(factures):
@@ -310,6 +362,7 @@ class RapportFinanceMixin:
             .filter(
                 facture__date__range=(date_debut, date_fin),
                 facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+                facture__is_active=True,
                 tva__gt=0,
             )
             .exclude(allocations__stock_lot__is_divers=True)
@@ -346,6 +399,24 @@ class RapportFinanceMixin:
         if date_debut is None or date_fin is None:
             return Response({'error': 'Date invalide'}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Limite de période pour éviter les exports trop lourds
+        nb_mois = (date_fin.year - date_debut.year) * 12 + (date_fin.month - date_debut.month)
+        if nb_mois > 24:
+            return Response({'error': 'Période trop longue (max 24 mois)'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            log_audit(
+                user=request.user,
+                action=AuditLog.Action.EXPORT,
+                model_name='Rapport',
+                object_id=0,
+                description="Export comptable CSV",
+                details={'params': request.query_params.dict(), 'type': 'export_comptable_csv'},
+                request=request,
+            )
+        except Exception:
+            logger.exception("Échec de l'audit export_comptable_csv")
+
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="export_comptable.csv"'
         response.write('\ufeff'.encode('utf8'))
@@ -356,14 +427,11 @@ class RapportFinanceMixin:
                          'Mode de Paiement', 'Caissier'])
 
         # OPTIMISATION: Prefetch des paiements complétés pour éviter N+1
-        from django.db.models import Prefetch
-
-        from ...models import Caisse
-        
         factures = (
             Facture.objects
             .filter(date__range=(date_debut, date_fin),
-                    status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE])
+                    status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+                    is_active=True)
             .select_related('client', 'created_by')
             .prefetch_related(
                 Prefetch(
@@ -409,7 +477,8 @@ class RapportFinanceMixin:
         factures = (
             Facture.objects
             .filter(status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
-                    date__gte=date_debut, date__lte=date_fin)
+                    date__gte=date_debut, date__lte=date_fin,
+                    is_active=True)
             .select_related('validated_by')
         )
         stats = (
@@ -464,7 +533,8 @@ class RapportFinanceMixin:
         factures = (
             Facture.objects
             .filter(status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
-                    date__gte=date_debut, date__lte=date_fin)
+                    date__gte=date_debut, date__lte=date_fin,
+                    is_active=True)
             .select_related('client', 'validated_by', 'remise_validated_by', 'prix_validated_by')
             .prefetch_related('produits')
         )
@@ -509,6 +579,18 @@ class RapportFinanceMixin:
     def rapport_remises_details_excel(self, request):
         from api.models import PharmacySettings
         data = self.rapport_remises_details(request).data or []
+        try:
+            log_audit(
+                user=request.user,
+                action=AuditLog.Action.EXPORT,
+                model_name='Rapport',
+                object_id=0,
+                description="Export Excel détails remises",
+                details={'params': request.query_params.dict(), 'type': 'rapport_remises_details_excel'},
+                request=request,
+            )
+        except Exception:
+            logger.exception("Échec de l'audit rapport_remises_details_excel")
         wb = openpyxl.Workbook()
         ws = wb.active
         assert ws is not None
@@ -537,6 +619,18 @@ class RapportFinanceMixin:
     def rapport_remises_excel(self, request):
         from api.models import PharmacySettings
         data = self.rapport_remises(request).data or []
+        try:
+            log_audit(
+                user=request.user,
+                action=AuditLog.Action.EXPORT,
+                model_name='Rapport',
+                object_id=0,
+                description="Export Excel remises par utilisateur",
+                details={'params': request.query_params.dict(), 'type': 'rapport_remises_excel'},
+                request=request,
+            )
+        except Exception:
+            logger.exception("Échec de l'audit rapport_remises_excel")
         wb = openpyxl.Workbook()
         ws = wb.active
         assert ws is not None
@@ -573,6 +667,24 @@ class RapportFinanceMixin:
         date_fin   = parse_api_datetime(df_str, end_of_day=True)
         if date_debut is None or date_fin is None:
             return Response({'detail': 'Format de date invalide'}, status=400)
+
+        # Limite de période pour éviter les exports trop lourds
+        nb_mois = (date_fin.year - date_debut.year) * 12 + (date_fin.month - date_debut.month)
+        if nb_mois > 24:
+            return Response({'detail': 'Période trop longue (max 24 mois)'}, status=400)
+
+        try:
+            log_audit(
+                user=request.user,
+                action=AuditLog.Action.EXPORT,
+                model_name='Rapport',
+                object_id=0,
+                description=f"Export Excel livre de caisse — {db_str} → {df_str}",
+                details={'params': request.query_params.dict(), 'type': 'livre_caisse_excel'},
+                request=request,
+            )
+        except Exception:
+            logger.exception("Échec de l'audit livre_caisse_excel")
 
         poste_caisse_id = request.query_params.get('poste_caisse_id')
 
@@ -892,6 +1004,7 @@ class RapportFinanceMixin:
         factures = Facture.objects.filter(
             date__range=(date_debut, date_fin),
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+            is_active=True,
         )
         results = []
 
@@ -910,7 +1023,6 @@ class RapportFinanceMixin:
             item     = alloc.facture_produit
             f        = item.facture
             p        = item.produit
-            Decimal(str(item.tva or 0))
             qty      = Decimal(str(alloc.quantity))
             price_ttc = item.selling_price - item.discount
             
@@ -970,7 +1082,6 @@ class RapportFinanceMixin:
         for item in unallocated:
             f        = item.facture
             p        = item.produit
-            Decimal(str(item.tva or 0))
             qty      = Decimal(str(item.quantity))
             price_ttc = item.selling_price - item.discount
             
@@ -1061,7 +1172,8 @@ class RapportFinanceMixin:
         from api.views.rapports.tz_utils import local_trunc_date
         ca_by_day = (
             Facture.objects
-            .filter(date__range=(date_debut, date_fin), status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE])
+            .filter(date__range=(date_debut, date_fin), status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+                    is_active=True)
             .annotate(day=local_trunc_date('date'))
             .values('day')
             .annotate(
@@ -1083,7 +1195,8 @@ class RapportFinanceMixin:
         alloc_by_day = (
             FactureProduitAllocation.objects
             .filter(facture_produit__facture__date__range=(date_debut, date_fin))
-            .filter(facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE])
+            .filter(facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+                    facture_produit__facture__is_active=True)
             .exclude(stock_lot__is_divers=True)
             .annotate(day=local_trunc_date('facture_produit__facture__date'))
             .values('day')
@@ -1102,7 +1215,8 @@ class RapportFinanceMixin:
         unalloc = (
             FactureProduit.objects
             .filter(facture__date__range=(date_debut, date_fin))
-            .filter(facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE])
+            .filter(facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+                    facture__is_active=True)
             .annotate(has_alloc=Exists(FactureProduitAllocation.objects.filter(facture_produit=OuterRef('pk'))))
             .filter(has_alloc=False)
             .exclude(produit__stock_lots__is_divers=True)
@@ -1164,7 +1278,9 @@ class RapportFinanceMixin:
         'quantite':      {'ventes': 'quantity',       'achats': 'quantity',    'stock': 'quantity_remaining', 'produits': 'stock'},
         'total_ht':      {'stock':  'price_cost'},
         'prix_vente':    {'ventes': 'selling_price',  'produits': 'selling_price'},
-        'cout_achat':    {'ventes': 'selling_price',  'achats': 'price_cost',  'stock': 'price_cost',         'produits': 'pmp'},
+        # Le coût d'achat n'existe pas directement au niveau de la ligne de vente
+        # (il est porté par les allocations de lot). On ne mappe donc pas 'ventes' ici.
+        'cout_achat':    {'achats': 'price_cost',  'stock': 'price_cost',         'produits': 'pmp'},
         'tva':           {'ventes': 'produit__tva',   'achats': 'produit__tva','stock': 'produit__tva',       'produits': 'tva'},
         'stock_minimum': {'produits': 'stock_minimum'},
         'cip':           {'ventes': 'produit__cip1',  'achats': 'produit__cip1','stock': 'produit__cip1',     'produits': 'cip1'},
@@ -1183,8 +1299,9 @@ class RapportFinanceMixin:
     def rapport_dynamique(self, request):
         try:
             return self._rapport_dynamique(request)
-        except Exception as e:
-            return Response({"error": f"Erreur interne: {e}"}, status=500)
+        except Exception:
+            logger.exception("Erreur lors de la génération du rapport dynamique")
+            return Response({"error": "Erreur interne lors de la génération du rapport"}, status=500)
 
     def _rapport_dynamique(self, request):
         source         = request.query_params.get('source', 'ventes')
@@ -1288,19 +1405,20 @@ class RapportFinanceMixin:
 
         if source == 'ventes':
             from api.models.billing import FactureProduit as FP
-            from api.models.billing import FactureProduitAllocation as FPA
             filters = {
                 'facture__date__range': (date_debut, date_fin),
                 'facture__status__in':  ['VAL', 'PAY'],
+                'facture__is_active': True,
             }
             if vendeur_id: filters['facture__created_by_id'] = vendeur_id
             if client_id:  filters['facture__client_id']     = client_id
             if famille_id: filters['produit__famille_risque_id'] = famille_id
             qs = _apply_conditions(FP.objects.filter(**filters), 'ventes')
-            for item in qs.select_related(
+            qs = qs.select_related(
                 'facture', 'facture__client', 'facture__created_by',
                 'produit', 'produit__famille_risque', 'produit__rayon', 'produit__forme',
-            ):
+            ).prefetch_related('allocations')
+            for item in qs:
                 p = item.produit
                 f = item.facture
                 prix_net      = float((item.selling_price or 0) - (item.discount or 0))
@@ -1321,9 +1439,9 @@ class RapportFinanceMixin:
                 if 'forme'      in requested_fields: row['Forme']      = p.forme.name if p and p.forme else 'N/A'
                 if 'cip'        in requested_fields: row['Code CIP']   = p.cip1 if p else 'N/A'
                 if any(x in requested_fields for x in ['cout_achat', 'marge', 'pourcentage_marge']):
-                    allocs     = FPA.objects.filter(facture_produit=item)
+                    allocs     = list(item.allocations.all())
                     total_cost = sum(float(a.quantity or 0) * float(a.cost_price or 0) for a in allocs)
-                    if not allocs.exists() and p:
+                    if not allocs and p:
                         total_cost = float(p.pmp or 0) * qty
                     if 'cout_achat'        in requested_fields: row['Coût Achat']  = round(total_cost / qty, 2) if qty > 0 else 0
                     if 'marge'             in requested_fields: row['Marge Brute'] = round(total_ht_ligne - total_cost, 2)
@@ -1334,7 +1452,11 @@ class RapportFinanceMixin:
 
         elif source == 'achats':
             from api.models.orders import CommandeProduit as CP
-            filters = {'commande__date_cloture__range': (date_debut, date_fin), 'commande__status': 'CLOT'}
+            filters = {
+                'commande__date_cloture__range': (date_debut, date_fin),
+                'commande__status': 'CLOT',
+                'commande__is_active': True,
+            }
             if fournisseur_id: filters['commande__fournisseur_id'] = fournisseur_id
             if famille_id:     filters['produit__famille_risque_id'] = famille_id
             qs = _apply_conditions(CP.objects.filter(**filters), 'achats')
@@ -1435,8 +1557,16 @@ class RapportFinanceMixin:
                 try:
                     first_key = next(iter(results[0].keys()))
                     results.sort(key=lambda x: str(x.get(first_key, '')), reverse=reverse)
-                except (IndexError, KeyError):
+                except (IndexError, KeyError, StopIteration):
                     pass
+
+        # Limiter le volume renvoyé pour éviter les timeouts / OOM
+        try:
+            limit = int(request.query_params.get('limit', 5000))
+        except (ValueError, TypeError):
+            limit = 5000
+        limit = max(1, min(limit, 20000))
+        results = results[:limit]
 
         return Response(results)
 
@@ -1461,17 +1591,36 @@ class RapportFinanceMixin:
         except (ValueError, AttributeError, TypeError):
             return Response({'error': 'Dates invalides (format requis: YYYY-MM-DD)'}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Limite de période pour éviter les exports trop lourds
+        nb_mois = (date_fin.year - date_debut.year) * 12 + (date_fin.month - date_debut.month)
+        if nb_mois > 24:
+            return Response({'error': 'Période trop longue (max 24 mois)'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            log_audit(
+                user=request.user,
+                action=AuditLog.Action.EXPORT,
+                model_name='Rapport',
+                object_id=0,
+                description="Export Sage i7 CSV",
+                details={'params': request.query_params.dict(), 'type': 'export_sage_i7'},
+                request=request,
+            )
+        except Exception:
+            logger.exception("Échec de l'audit export_sage_i7")
+
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="export_sage_i7.csv"'
-        
+
         # Encodage UTF-8 avec BOM pour une ouverture directe dans Excel sans soucis d'accents
         response.write('\ufeff'.encode('utf8'))
         writer = csv.writer(response, delimiter=';')
-        
+
         # 1. Écritures de Ventes (Journal VT)
         factures = Facture.objects.filter(
             date__range=(date_debut, date_fin),
-            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+            is_active=True,
         ).exclude(produits__allocations__stock_lot__is_divers=True).select_related('client').order_by('date')
 
         for f in factures:
@@ -1480,38 +1629,43 @@ class RapportFinanceMixin:
             libelle = f"Facture {num_fact}"
             if f.client:
                 libelle += f" - {f.client.name}"
-            
+
             # Débit Client (411100) - Total TTC
             writer.writerow(['VT', date_sage, '411100', f.client.id if f.client else '', libelle, str(f.total_ttc).replace('.', ','), '0'])
-            
+
             # Crédit Ventes (701100) - Total HT
             writer.writerow(['VT', date_sage, '701100', '', libelle, '0', str(f.total_ht).replace('.', ',')])
-            
+
             # Crédit TVA (443100) si applicable
             if f.total_tva > 0:
                 writer.writerow(['VT', date_sage, '443100', '', libelle, '0', str(f.total_tva).replace('.', ',')])
 
         # 2. Écritures de Règlements (Journal CA / BQ)
+        # Les paiements doivent être rattachés à une facture pour être exportés
         paiements = Caisse.objects.filter(
             date_paiement__range=(date_debut, date_fin),
-            statut='completee'
+            statut='completee',
+            facture__isnull=False,
         ).select_related('facture', 'facture__client').order_by('date_paiement')
 
         for p in paiements:
+            if not p.facture:
+                continue
             date_sage = p.date_paiement.strftime('%d%m%y')
             # Mapping journal et compte de trésorerie
             is_cash = p.mode_paiement == 'especes'
             journal = 'CA' if is_cash else 'BQ'
             compte_t = '571100' if is_cash else '521100'
-            
+
             num_fact = p.facture.numero_facture or p.facture.id
             libelle = f"Regl {p.get_mode_paiement_display()} Fact {num_fact}"
-            
+
             # Débit Trésorerie (Caisse ou Banque)
             writer.writerow([journal, date_sage, compte_t, '', libelle, str(p.montant).replace('.', ','), '0'])
-            
+
             # Crédit Client (411100)
-            writer.writerow([journal, date_sage, '411100', p.facture.client.id if p.facture.client else '', libelle, '0', str(p.montant).replace('.', ',')])
+            client_id = p.facture.client.id if (p.facture and p.facture.client) else ''
+            writer.writerow([journal, date_sage, '411100', client_id, libelle, '0', str(p.montant).replace('.', ',')])
 
         return response
 

@@ -107,6 +107,7 @@
         "delete_success": "Customer deleted successfully",
         "bulk_delete_success": "{{count}} customers deleted",
         "error_fetch": "Error loading customers",
+        "error_load_details": "Error loading customer details",
         "error_save": "Error during saving",
         "error_delete": "Error during deletion",
         "error_bulk_delete": "Error during bulk deletion",

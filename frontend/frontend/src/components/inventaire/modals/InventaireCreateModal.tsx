@@ -91,7 +91,7 @@ const InventaireCreateModal: React.FC<InventaireCreateModalProps> = ({
 
                     {step === 1 && (
                         <div className="space-y-3">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">
+                            <span className="text-caption font-bold text-slate-400 uppercase tracking-widest pl-1">
                                 {t('inventaire.create.action_title')}
                             </span>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -107,7 +107,7 @@ const InventaireCreateModal: React.FC<InventaireCreateModalProps> = ({
                                     </div>
                                     <div>
                                         <div className={`font-bold text-sm ${action === 'VERIFY' ? 'text-emerald-600' : 'text-slate-700'}`}>{t('inventaire.create.action_partial')}</div>
-                                        <div className="text-[11px] text-slate-400 leading-tight mt-1">{t('inventaire.create.action_partial_desc')}</div>
+                                        <div className="text-label text-slate-400 leading-tight mt-1">{t('inventaire.create.action_partial_desc')}</div>
                                     </div>
                                     <Settings2 className={`h-5 w-5 ml-auto opacity-20 transition-opacity ${action === 'VERIFY' ? 'text-emerald-600 opacity-40' : ''}`} />
                                 </label>
@@ -124,7 +124,7 @@ const InventaireCreateModal: React.FC<InventaireCreateModalProps> = ({
                                     </div>
                                     <div>
                                         <div className={`font-bold text-sm ${action === 'ENTRY' ? 'text-emerald-600' : 'text-slate-700'}`}>{t('inventaire.create.action_full')}</div>
-                                        <div className="text-[11px] text-slate-400 leading-tight mt-1">{t('inventaire.create.action_full_desc')}</div>
+                                        <div className="text-label text-slate-400 leading-tight mt-1">{t('inventaire.create.action_full_desc')}</div>
                                     </div>
                                     <Warehouse className={`h-5 w-5 ml-auto opacity-20 transition-opacity ${action === 'ENTRY' ? 'text-emerald-600 opacity-40' : ''}`} />
                                 </label>
@@ -136,7 +136,7 @@ const InventaireCreateModal: React.FC<InventaireCreateModalProps> = ({
                         <div className="space-y-6">
                             {/* Stock Type Selection */}
                             <div className="space-y-3">
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">
+                                <span className="text-caption font-bold text-slate-400 uppercase tracking-widest pl-1">
                                     {t('inventaire.create.stock_type_title')}
                                 </span>
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -163,12 +163,12 @@ const InventaireCreateModal: React.FC<InventaireCreateModalProps> = ({
                             {/* Category Selection (Only for VERIFY) */}
                             {action === 'VERIFY' && (
                                 <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200 animate-in slide-in-from-top-2 duration-300">
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
+                                    <span className="text-caption font-bold text-slate-400 uppercase tracking-widest block">
                                         {t('inventaire.create.perimeter_title')}
                                     </span>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
                                         <div className="space-y-1">
-                                            <label className="flex items-center gap-2 text-[10px] uppercase font-bold text-slate-400">
+                                            <label className="flex items-center gap-2 text-caption uppercase font-bold text-slate-400">
                                                 {t('sidebar.stock.organisation.tabs.rayons', 'Rayon')}
                                                 {loadingRayons && <Loader2 className="size-3 animate-spin" />}
                                             </label>
@@ -184,7 +184,7 @@ const InventaireCreateModal: React.FC<InventaireCreateModalProps> = ({
                                             </select>
                                         </div>
                                         <div className="space-y-1">
-                                            <label className="flex items-center gap-2 text-[10px] uppercase font-bold text-slate-400">
+                                            <label className="flex items-center gap-2 text-caption uppercase font-bold text-slate-400">
                                                 {t('sidebar.stock.organisation.tabs.groupes', 'Groupe')}
                                                 {loadingGroupes && <Loader2 className="size-3 animate-spin" />}
                                             </label>
@@ -200,7 +200,7 @@ const InventaireCreateModal: React.FC<InventaireCreateModalProps> = ({
                                             </select>
                                         </div>
                                         <div className="space-y-1">
-                                            <label className="flex items-center gap-2 text-[10px] uppercase font-bold text-slate-400">
+                                            <label className="flex items-center gap-2 text-caption uppercase font-bold text-slate-400">
                                                 {t('sidebar.stock.organisation.tabs.formes', 'Forme')}
                                                 {loadingFormes && <Loader2 className="size-3 animate-spin" />}
                                             </label>
@@ -221,7 +221,7 @@ const InventaireCreateModal: React.FC<InventaireCreateModalProps> = ({
 
                             {/* Recap */}
                             <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-xl">
-                                <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest block mb-1">
+                                <span className="text-caption font-bold text-emerald-600 uppercase tracking-widest block mb-1">
                                     {t('inventaire.create.recap_title')}
                                 </span>
                                 <p className="text-sm text-slate-700 leading-relaxed">

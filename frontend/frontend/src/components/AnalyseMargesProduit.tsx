@@ -107,7 +107,7 @@ export default function AnalyseMargesProduit() {
               {tab.icon}
               {tab.label}
               {tab.id === 'negative' && margeData && margeData.negative_margin.length > 0 && (
-                <Badge variant="destructive" className="text-[10px] ml-1">
+                <Badge variant="destructive" className="text-caption ml-1">
                   {margeData.negative_margin.length}
                 </Badge>
               )}
@@ -202,7 +202,7 @@ export default function AnalyseMargesProduit() {
                     <div className="text-2xl font-black text-blue-600">
                       {promoData.ecart_taux_marge > 0 ? '+' : ''}{promoData.ecart_taux_marge}%
                     </div>
-                    <div className="text-[10px] text-slate-400 mt-1">
+                    <div className="text-caption text-slate-400 mt-1">
                       {t('marge_produit.ecart_hint', 'Sans promo - Avec promo')}
                     </div>
                   </div>

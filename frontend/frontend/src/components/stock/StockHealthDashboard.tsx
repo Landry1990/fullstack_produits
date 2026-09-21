@@ -122,7 +122,7 @@ const StockHealthDashboard: React.FC = () => {
                             <Info className="size-4 text-slate-400 hover:text-slate-700 transition-colors cursor-help" />
                             <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-72 hidden group-hover/tooltip:block z-[100] bg-white border border-slate-200 rounded-2xl shadow-xl p-4 text-left">
                                 <h4 className="font-bold text-sm text-slate-700 mb-2">Interprétation du Score</h4>
-                                <ul className="text-[10px] space-y-2">
+                                <ul className="text-caption space-y-2">
                                     <li className="flex items-start gap-2">
                                         <span className="text-emerald-600 font-bold w-12 shrink-0">&ge; 80%</span>
                                         <span className="text-slate-600"><strong>Sain</strong> : Stock optimal, peu de ruptures, rotation fluide.</span>
@@ -139,7 +139,7 @@ const StockHealthDashboard: React.FC = () => {
                             </div>
                         </div>
                     </div>
-                    <p className="relative text-[10px] text-slate-400 font-medium mt-0.5">
+                    <p className="relative text-caption text-slate-400 font-medium mt-0.5">
                         {t('stock:analyse.dashboard.health_score_desc')}
                     </p>
                 </div>
@@ -158,7 +158,7 @@ const StockHealthDashboard: React.FC = () => {
                             <AlertCircle className="size-5" />
                         </div>
                         <div className="flex items-center gap-2">
-                            <div className="text-[10px] font-black uppercase tracking-[0.2em] text-red-400">
+                            <div className="text-caption font-black uppercase tracking-[0.2em] text-red-400">
                                 {t('stock:analyse.dashboard.missed_sales')}
                             </div>
                             <div className="relative group/tip">
@@ -184,13 +184,13 @@ const StockHealthDashboard: React.FC = () => {
 
                         <button
                             onClick={() => navigate('/app/commandes', { state: { action: 'OPEN_SUGGESTIONS', mode: 'optimise' } })}
-                            className="inline-flex items-center justify-center h-8 px-3 text-[10px] font-bold bg-red-500 text-white hover:bg-red-600 rounded-xl gap-2 shadow-lg shadow-red-500/20 hover:scale-105 active:scale-95 transition-all w-full md:w-auto"
+                            className="inline-flex items-center justify-center h-8 px-3 text-caption font-bold bg-red-500 text-white hover:bg-red-600 rounded-xl gap-2 shadow-lg shadow-red-500/20 hover:scale-105 active:scale-95 transition-all w-full md:w-auto"
                         >
                             <ShoppingCart className="size-4" />
                             {t('stock:analyse.dashboard.fix_ruptures_btn')}
                         </button>
 
-                        <p className="mt-2 text-[10px] text-slate-400 font-medium leading-relaxed italic">
+                        <p className="mt-2 text-caption text-slate-400 font-medium leading-relaxed italic">
                             {t('stock:analyse.dashboard.lost_revenue_desc')}
                         </p>
                     </div>
@@ -207,7 +207,7 @@ const StockHealthDashboard: React.FC = () => {
                             <Wallet className="size-5" />
                         </div>
                         <div className="flex items-center gap-2">
-                            <div className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400">
+                            <div className="text-caption font-black uppercase tracking-[0.2em] text-blue-400">
                                 {t('stock:analyse.dashboard.dead_stock')}
                             </div>
                             <div className="relative group/tip">
@@ -232,13 +232,13 @@ const StockHealthDashboard: React.FC = () => {
 
                         <button
                             onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}
-                            className="inline-flex items-center justify-center h-8 px-3 text-[10px] font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-xl gap-2 shadow-lg shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all w-full md:w-auto"
+                            className="inline-flex items-center justify-center h-8 px-3 text-caption font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-xl gap-2 shadow-lg shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all w-full md:w-auto"
                         >
                             <Filter className="size-4" />
                             {t('stock:analyse.dashboard.optimize_cash_btn')}
                         </button>
 
-                        <p className="mt-2 text-[10px] text-slate-400 font-medium leading-relaxed italic">
+                        <p className="mt-2 text-caption text-slate-400 font-medium leading-relaxed italic">
                             {t('stock:analyse.dashboard.dead_stock_desc', { days: data.dead_stock.days_threshold })}
                         </p>
                     </div>
@@ -256,7 +256,7 @@ const StockHealthDashboard: React.FC = () => {
                     </div>
                     <div>
                         <div className="flex items-center gap-1.5">
-                            <div className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                            <div className="text-caption font-black uppercase text-slate-400 tracking-widest">
                                 {t('stock:analyse.dashboard.availability')}
                             </div>
                             <div className="relative group/tip">
@@ -282,7 +282,7 @@ const StockHealthDashboard: React.FC = () => {
                     </div>
                     <div>
                         <div className="flex items-center gap-1.5">
-                            <div className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                            <div className="text-caption font-black uppercase text-slate-400 tracking-widest">
                                 {t('stock:analyse.dashboard.rupture_rate')}
                             </div>
                             <div className="relative group/tip">
@@ -308,7 +308,7 @@ const StockHealthDashboard: React.FC = () => {
                     </div>
                     <div>
                         <div className="flex items-center gap-1.5">
-                            <div className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                            <div className="text-caption font-black uppercase text-slate-400 tracking-widest">
                                 {t('stock:analyse.dashboard.rotation')}
                             </div>
                             <div className="relative group/tip">
@@ -334,7 +334,7 @@ const StockHealthDashboard: React.FC = () => {
                     </div>
                     <div>
                         <div className="flex items-center gap-1.5">
-                            <div className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                            <div className="text-caption font-black uppercase text-slate-400 tracking-widest">
                                 {t('stock:analyse.dashboard.imminent_shortages')}
                             </div>
                             <div className="relative group/tip">
@@ -360,7 +360,7 @@ const StockHealthDashboard: React.FC = () => {
                     </div>
                     <div>
                         <div className="flex items-center gap-1.5">
-                            <div className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                            <div className="text-caption font-black uppercase text-slate-400 tracking-widest">
                                 {t('stock:analyse.dashboard.total_stock_value')}
                             </div>
                             <div className="relative group/tip">

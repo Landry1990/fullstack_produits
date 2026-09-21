@@ -155,7 +155,7 @@ export default function EcheancierFournisseursModal({ isOpen, onClose, onPointer
                   <card.icon className="h-4 w-4" />
                 </div>
                 <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-base-content/50">{card.label}</div>
+                  <div className="text-caption font-bold uppercase tracking-wider text-base-content/50">{card.label}</div>
                   <div className="text-base font-black text-base-content tabular-nums">{formatCurrency(card.amount)}</div>
                 </div>
               </Card>
@@ -223,7 +223,7 @@ export default function EcheancierFournisseursModal({ isOpen, onClose, onPointer
                         <div className="font-mono text-xs font-medium bg-base-200 px-2 py-0.5 rounded inline-block text-base-content/80">
                           {e.numero_facture}
                         </div>
-                        <div className="text-[10px] text-base-content/40 mt-0.5 uppercase tracking-wide">
+                        <div className="text-caption text-base-content/40 mt-0.5 uppercase tracking-wide">
                           {e.type_reglement === 'RELEVE' ? t('providers:schedule.type_statement') : t('providers:schedule.type_invoice')}
                         </div>
                       </TableCell>

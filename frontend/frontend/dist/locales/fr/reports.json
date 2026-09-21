@@ -12,6 +12,8 @@
     "subtitle": "Sélectionnez une requête, configurez les paramètres et visualisez les résultats",
     "queries_title": "Liste des Requêtes",
     "execute": "Exécuter la requête",
+    "group_by_lot": "Par lot",
+    "group_by_product": "⚠ Par produit",
     "copy": "Copier (Excel)",
     "params_title": "Paramètres",
     "no_query_selected": "Aucune requête sélectionnée",

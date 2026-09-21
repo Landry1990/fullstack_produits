@@ -146,14 +146,14 @@ const ScoreCard: React.FC<{ data: StockHealthData; diagnostic: string }> = ({ da
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                     <span className="text-2xl font-black text-slate-800">{Math.round(score)}</span>
-                    <span className="text-[10px] text-slate-400 font-semibold">/{t('matrix.score_card.out_of')}</span>
+                    <span className="text-caption text-slate-400 font-semibold">/{t('matrix.score_card.out_of')}</span>
                 </div>
             </div>
 
             {/* Texte */}
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">{t('matrix.score_card.title')}</span>
+                    <span className="text-caption font-semibold uppercase tracking-widest text-slate-500">{t('matrix.score_card.title')}</span>
                     <div className="relative group/tooltip">
                         <Info className="size-3.5 text-slate-300 hover:text-slate-500 cursor-help" />
                         <div className="absolute left-0 bottom-full mb-2 w-64 hidden group-hover/tooltip:block z-50 bg-white border border-slate-200 rounded-xl shadow-lg p-4 text-left">
@@ -180,11 +180,11 @@ const ScoreCard: React.FC<{ data: StockHealthData; diagnostic: string }> = ({ da
                         const barColor = pct >= 80 ? 'bg-emerald-500' : pct >= 50 ? 'bg-slate-400' : 'bg-red-400';
                         return (
                             <div key={key} className="flex items-center gap-2">
-                                <span className="text-[10px] text-slate-500 w-14 shrink-0">{t(`matrix.score_card.labels.${key}`)}</span>
+                                <span className="text-caption text-slate-500 w-14 shrink-0">{t(`matrix.score_card.labels.${key}`)}</span>
                                 <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                                     <div className={`h-full rounded-full ${barColor}`} style={{ width: `${pct}%` }} />
                                 </div>
-                                <span className="text-[10px] font-semibold text-slate-600 w-8 text-right">{comp.score.toFixed(0)}/{comp.weight}</span>
+                                <span className="text-caption font-semibold text-slate-600 w-8 text-right">{comp.score.toFixed(0)}/{comp.weight}</span>
                             </div>
                         );
                     })}
@@ -218,7 +218,7 @@ const MatrixGrid: React.FC<{ data: StockHealthData; stats: MatrixStats }> = ({ d
         <div className="bg-white rounded-2xl border border-slate-200 p-3">
             <div className="flex items-center justify-between mb-2">
                 <p className="text-xs font-semibold text-slate-800">{t('matrix.grid.title')}</p>
-                <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                <div className="flex items-center gap-2 text-caption text-slate-400">
                     <span className="flex items-center gap-1"><TrendingUp className="size-2.5" /> {t('matrix.grid.high_rotation')}</span>
                     <span className="flex items-center gap-1"><TrendingDown className="size-2.5" /> {t('matrix.grid.low_rotation')}</span>
                 </div>
@@ -233,17 +233,17 @@ const MatrixGrid: React.FC<{ data: StockHealthData; stats: MatrixStats }> = ({ d
                             <div className="flex items-center justify-between mb-1">
                                 <div className="flex items-center gap-1.5">
                                     <div className={`size-1.5 rounded-full ${cfg.dot}`} />
-                                    <span className="text-[10px] font-semibold text-slate-800">{t(`matrix.quadrants.${key}.label`)}</span>
+                                    <span className="text-caption font-semibold text-slate-800">{t(`matrix.quadrants.${key}.label`)}</span>
                                 </div>
                                 <Icon className={`size-3.5 ${cfg.accent}`} />
                             </div>
-                            <p className="text-[10px] text-slate-500 mb-1 leading-tight">{t(`matrix.quadrants.${key}.description`)}</p>
+                            <p className="text-caption text-slate-500 mb-1 leading-tight">{t(`matrix.quadrants.${key}.description`)}</p>
                             {count > 0 ? (
                                 <>
                                     <span className={`text-lg font-bold ${cfg.accent}`}>{count}</span>
-                                    <span className="text-[10px] text-slate-500 ml-1">{t('matrix.grid.product', { count })}</span>
+                                    <span className="text-caption text-slate-500 ml-1">{t('matrix.grid.product', { count })}</span>
                                     {value !== undefined && value > 0 && (
-                                        <p className="text-[10px] text-slate-600 mt-0.5 leading-tight">{valueLabel} : <span className="font-semibold">{formatCurrency(Math.round(value))}</span></p>
+                                        <p className="text-caption text-slate-600 mt-0.5 leading-tight">{valueLabel} : <span className="font-semibold">{formatCurrency(Math.round(value))}</span></p>
                                     )}
                                 </>
                             ) : (
@@ -254,7 +254,7 @@ const MatrixGrid: React.FC<{ data: StockHealthData; stats: MatrixStats }> = ({ d
                 })}
             </div>
 
-            <div className="mt-2 flex justify-between text-[10px] text-slate-400">
+            <div className="mt-2 flex justify-between text-caption text-slate-400">
                 <span>{t('matrix.grid.low_availability')}</span>
                 <span>{t('matrix.grid.high_availability')}</span>
             </div>

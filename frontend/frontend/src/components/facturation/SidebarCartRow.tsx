@@ -79,10 +79,10 @@ export default React.memo(function SidebarCartRow({
              <h4 className={`text-sm font-semibold truncate leading-tight ${isReturn ? 'text-red-600' : 'text-slate-800'}`} title={`${t('facturation:cart.headers.total')} ${formatCurrency(normalizeNumberInput(ligne.total_ligne))}`}>
                {ligne.produit.name}
              </h4>
-             {ligne.isPromis && <Badge variant="secondary" className="text-[10px] h-4 px-1 bg-amber-100 text-amber-700 border-amber-200">{t('facturation:cart_extra.promis')}</Badge>}
+             {ligne.isPromis && <Badge variant="secondary" className="text-caption h-4 px-1 bg-amber-100 text-amber-700 border-amber-200">{t('facturation:cart_extra.promis')}</Badge>}
            </div>
            {ligne.produit.stock !== undefined && (
-              <div className={`text-[10px] leading-none mt-1 ${ligne.produit.stock <= 0 ? 'text-red-500 font-semibold' : 'text-slate-400'}`}>
+              <div className={`text-caption leading-none mt-1 ${ligne.produit.stock <= 0 ? 'text-red-500 font-semibold' : 'text-slate-400'}`}>
                 {t('facturation:cart_extra.stock_label')} {ligne.produit.stock}
               </div>
            )}
@@ -133,7 +133,7 @@ export default React.memo(function SidebarCartRow({
             }}
              className="w-12 h-9 bg-transparent px-1 text-xs text-center font-semibold text-slate-700 focus:bg-white focus:outline-none"
            />
-           <div className="flex items-center h-9 px-1.5 bg-slate-50 border-l border-slate-200 text-[10px] font-semibold text-slate-400">
+           <div className="flex items-center h-9 px-1.5 bg-slate-50 border-l border-slate-200 text-caption font-semibold text-slate-400">
               <span className="mr-1">×</span>
               <input
                  type="text"
@@ -155,7 +155,7 @@ export default React.memo(function SidebarCartRow({
               />
            </div>
            {/* Champ de Remise */}
-           <div className="flex items-center h-9 px-1.5 bg-amber-50 border-l border-amber-200 text-[10px] w-14 focus-within:bg-amber-100">
+           <div className="flex items-center h-9 px-1.5 bg-amber-50 border-l border-amber-200 text-caption w-14 focus-within:bg-amber-100">
               <span className="text-amber-500 font-bold mr-0.5">-</span>
               <input
                  type="text"
@@ -184,7 +184,7 @@ export default React.memo(function SidebarCartRow({
            variant="outline"
            size="sm"
            onClick={(e) => { e.stopPropagation(); onOpenLotModal(ligne.produit, ligne.lotId || null, ligne.quantite, ligne.lotAllocations || null, ligne.lineId); }}
-           className={`h-9 px-2 text-[11px] font-semibold uppercase transition-colors shrink min-w-0 gap-1.5
+           className={`h-9 px-2 text-label font-semibold uppercase transition-colors shrink min-w-0 gap-1.5
              ${(ligne.lotId || ligne.lotAllocations?.length)
                ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300'
                : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200 hover:text-slate-600'}`}

@@ -18,6 +18,7 @@ Recalcule automatiquement:
 from datetime import timedelta
 from decimal import ROUND_HALF_UP, Decimal
 
+from django.db import transaction
 from django.db.models import Sum
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
@@ -153,31 +154,32 @@ def calculate_and_apply_stock_levels(produit_id=None):
     return updated_count
 
 
-@receiver(post_save, sender=FactureProduit)
-def update_stock_levels_on_sale(sender, instance, created, **kwargs):
-    """
-    Recalcule les seuils après chaque vente pour ce produit spécifique.
-    Léger et rapide (un seul produit).
-    """
-    if instance.produit_id:
-        updated = calculate_and_apply_stock_levels(instance.produit_id)
-        if updated:
-            print(f"[StockLevels] Recalculé pour produit #{instance.produit_id} (vente)")
+def _schedule_stock_levels_update(produit_ids):
+    ids = tuple(set(produit_ids))
+    if not ids:
+        return
+
+    def recalculate():
+        for produit_id in ids:
+            calculate_and_apply_stock_levels(produit_id)
+
+    transaction.on_commit(recalculate)
 
 
 @receiver(post_delete, sender=FactureProduit)
 def update_stock_levels_on_sale_delete(sender, instance, **kwargs):
-    if instance.produit_id:
-        updated = calculate_and_apply_stock_levels(instance.produit_id)
-        if updated:
-            print(f"[StockLevels] Recalculé pour produit #{instance.produit_id} (annulation)")
+    if instance.produit_id and instance.facture.status in [Facture.Status.VALIDEE, Facture.Status.PAYEE]:
+        _schedule_stock_levels_update([instance.produit_id])
 
 
 @receiver(post_save, sender=Facture)
-def update_stock_levels_on_invoice_save(sender, instance, **kwargs):
+def update_stock_levels_on_invoice_save(sender, instance, update_fields=None, **kwargs):
+    if instance.status not in [Facture.Status.VALIDEE, Facture.Status.PAYEE]:
+        return
+    if update_fields is not None and 'status' not in update_fields:
+        return
     produit_ids = instance.produits.exclude(produit_id__isnull=True).values_list('produit_id', flat=True)
-    for produit_id in produit_ids:
-        calculate_and_apply_stock_levels(produit_id)
+    _schedule_stock_levels_update(produit_ids)
 
 
 def monthly_stock_levels_update():
@@ -194,4 +196,5 @@ def monthly_stock_levels_update():
         print(f"[StockLevels] Cache produit invalidé ({updated} produits mis à jour)")
     
     print(f"[StockLevels] Fin recalcul: {updated} produits mis à jour")
+    return updated
     return updated

@@ -51,27 +51,27 @@ export const AjustementsTable: React.FC<AjustementsTableProps> = ({
                 <table className="w-full text-sm">
                     <thead className="sticky top-0 z-10">
                         <tr className="bg-slate-50 border-b border-slate-100">
-                            <th className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-6 py-3 text-left">
+                            <th className="text-caption font-black uppercase tracking-widest text-slate-400 px-6 py-3 text-left">
                                 <div className="flex items-center gap-1.5"><Calendar className="size-3" /> {t('ajustements.table.date_header')}</div>
                             </th>
-                            <th className="text-[10px] font-black uppercase tracking-widest text-slate-400 py-3 text-left">
+                            <th className="text-caption font-black uppercase tracking-widest text-slate-400 py-3 text-left">
                                 <div className="flex items-center gap-1.5"><Package className="size-3" /> {t('ajustements.table.product_header')}</div>
                             </th>
-                            <th className="text-[10px] font-black uppercase tracking-widest text-slate-400 py-3 text-left">
+                            <th className="text-caption font-black uppercase tracking-widest text-slate-400 py-3 text-left">
                                 <div className="flex items-center gap-1.5"><Hash className="size-3" /> {t('ajustements.table.cip_header')}</div>
                             </th>
-                            <th className="text-[10px] font-black uppercase tracking-widest text-slate-400 py-3 text-left">
+                            <th className="text-caption font-black uppercase tracking-widest text-slate-400 py-3 text-left">
                                 <div className="flex items-center gap-1.5"><User className="size-3" /> {t('ajustements.table.user_header')}</div>
                             </th>
-                            <th className="text-[10px] font-black uppercase tracking-widest text-slate-400 py-3 text-left">
+                            <th className="text-caption font-black uppercase tracking-widest text-slate-400 py-3 text-left">
                                 <div className="flex items-center gap-1.5"><Tag className="size-3" /> {t('ajustements.table.lot_header')}</div>
                             </th>
-                            <th className="text-[10px] font-black uppercase tracking-widest text-slate-400 py-3 text-right">{t('ajustements.table.before_header')}</th>
-                            <th className="text-[10px] font-black uppercase tracking-widest text-slate-400 py-3 text-right">{t('ajustements.table.after_header')}</th>
-                            <th className="text-[10px] font-black uppercase tracking-widest text-slate-400 py-3 text-center">
+                            <th className="text-caption font-black uppercase tracking-widest text-slate-400 py-3 text-right">{t('ajustements.table.before_header')}</th>
+                            <th className="text-caption font-black uppercase tracking-widest text-slate-400 py-3 text-right">{t('ajustements.table.after_header')}</th>
+                            <th className="text-caption font-black uppercase tracking-widest text-slate-400 py-3 text-center">
                                 <div className="flex items-center justify-center gap-1.5"><ArrowLeftRight className="size-3" /> {t('ajustements.table.diff_header')}</div>
                             </th>
-                            <th className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-6 py-3 text-left">{t('ajustements.table.reason_header')}</th>
+                            <th className="text-caption font-black uppercase tracking-widest text-slate-400 px-6 py-3 text-left">{t('ajustements.table.reason_header')}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -81,7 +81,7 @@ export const AjustementsTable: React.FC<AjustementsTableProps> = ({
                                     <div className="font-mono text-xs text-slate-500">
                                         {formatDate(adj.created_at)}
                                     </div>
-                                    <div className="text-[10px] font-bold text-slate-400">
+                                    <div className="text-caption font-bold text-slate-400">
                                         {formatDateTime(adj.created_at).split(' ').slice(1).join(' ')}
                                     </div>
                                 </td>
@@ -99,7 +99,7 @@ export const AjustementsTable: React.FC<AjustementsTableProps> = ({
                                                 {adj.lot_number}
                                             </span>
                                             {adj.lot_expiration && (
-                                                <span className="text-[10px] text-slate-400">
+                                                <span className="text-caption text-slate-400">
                                                     {formatDate(adj.lot_expiration)}
                                                 </span>
                                             )}
@@ -120,7 +120,7 @@ export const AjustementsTable: React.FC<AjustementsTableProps> = ({
                                     </span>
                                 </td>
                                 <td className="px-6 py-3">
-                                    <span className="text-[10px] font-black uppercase tracking-tighter text-emerald-700 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-100">
+                                    <span className="text-caption font-black uppercase tracking-tighter text-emerald-700 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-100">
                                         {t(`ajustements.filters.reasons.${adj.reason_type}`, { defaultValue: adj.reason_type_display })}
                                     </span>
                                 </td>

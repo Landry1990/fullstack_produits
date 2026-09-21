@@ -59,14 +59,14 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
             {/* Info Card - Improved design */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-base-200/50 p-4 rounded-2xl border border-base-300 shadow-sm">
               <div className="flex flex-col">
-                <span className="text-[10px] uppercase font-bold text-base-content/50">{t('products:detail.cip')}</span>
+                <span className="text-caption uppercase font-bold text-base-content/50">{t('products:detail.cip')}</span>
                 <span className="font-mono font-bold text-primary">{selectedProduit.cip1 || '-'}</span>
                 {[selectedProduit.cip2, selectedProduit.cip3, selectedProduit.cip4].filter(Boolean).map((cip) => (
                   <span key={cip} className="font-mono text-xs text-base-content/60">{cip}</span>
                 ))}
               </div>
               <div className="flex flex-col">
-                <span className="text-[10px] uppercase font-bold text-base-content/50">{t('products:detail.total_stock')}</span>
+                <span className="text-caption uppercase font-bold text-base-content/50">{t('products:detail.total_stock')}</span>
                 <span className={`text-xl font-bold ${
                   (selectedProduit.stock ?? 0) <= 0 ? 'text-error' :
                   (selectedProduit.stock ?? 0) <= (selectedProduit.stock_alert ?? 0) ? 'text-warning' :
@@ -74,7 +74,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                 }`}>{selectedProduit.stock ?? 0}</span>
               </div>
               <div className="flex flex-col">
-                <span className="text-[10px] uppercase font-bold text-base-content/50">{t('products:detail.rayon_label')}</span>
+                <span className="text-caption uppercase font-bold text-base-content/50">{t('products:detail.rayon_label')}</span>
                 <span className="font-bold truncate" title={selectedProduit.rayon_name ?? undefined}>{selectedProduit.rayon_name || '-'}</span>
               </div>
             </div>

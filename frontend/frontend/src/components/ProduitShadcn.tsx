@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { gooeyToast } from 'goey-toast'
 import {
   Package, Upload, RefreshCw, Search, X,
-  ChevronLeft, ChevronRight, AlertTriangle,
+  ChevronLeft, ChevronRight,
   BarChart3, Tags, Eye, EyeOff, Truck
 } from 'lucide-react'
 
@@ -31,6 +31,7 @@ import { Badge } from './ui/Badge'
 import { Checkbox } from './ui/Checkbox'
 import SkeletonTable from './ui/SkeletonTable'
 import { EmptyState } from './ui/EmptyState'
+import { ErrorState } from './ui/ErrorState'
 import { ProductTabsContent } from './products/ProductTabsContent'
 import ProduitCreateModal from './ProduitFormModal'
 import PasswordConfirmModal from './PasswordConfirmModal'
@@ -410,12 +411,7 @@ export default function ProduitShadcn() {
       </header>
 
       {/* ── Error Banner ── */}
-      {error && (
-        <div className="mx-6 mt-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-center gap-2">
-          <AlertTriangle className="size-4" />
-          {error}
-        </div>
-      )}
+      <ErrorState error={error} onRetry={() => refetch()} retrying={isLoading} className="mx-6 mt-4" />
 
       {/* ── Main Content ── */}
       <main className="flex-1 p-4 min-h-0 overflow-hidden">

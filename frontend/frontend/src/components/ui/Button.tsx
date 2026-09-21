@@ -11,15 +11,15 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   ref?: React.Ref<HTMLButtonElement>;
 }
 
-const baseStyles = 'inline-flex items-center justify-center gap-2 font-semibold transition-all duration-300 active:scale-95 disabled:pointer-events-none disabled:text-base-content/50 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2';
+const baseStyles = 'inline-flex items-center justify-center gap-2 font-semibold transition-all duration-300 active:scale-95 disabled:pointer-events-none disabled:text-slate-400 dark:disabled:text-slate-500 outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2';
 
 const variants = {
-  primary: 'bg-primary text-primary-content hover:bg-primary/90 shadow-sm hover:shadow-md hover:-translate-y-[1px]',
-  secondary: 'bg-secondary text-secondary-content hover:bg-secondary/90 shadow-sm hover:shadow-md hover:-translate-y-[1px]',
-  outline: 'border-2 border-base-300 bg-transparent hover:bg-base-200 text-base-content hover:border-base-400',
-  ghost: 'bg-transparent hover:bg-base-200 text-base-content',
-  danger: 'bg-error text-error-content hover:bg-error/90 shadow-sm hover:shadow-error/30 hover:-translate-y-[1px]',
-  glass: 'glass-panel-pro text-base-content hover:bg-base-100/40 dark:hover:bg-black/40',
+  primary: 'bg-emerald-600 text-white hover:bg-emerald-500 shadow-sm hover:shadow-md hover:-translate-y-[1px]',
+  secondary: 'bg-blue-600 text-white hover:bg-blue-500 shadow-sm hover:shadow-md hover:-translate-y-[1px]',
+  outline: 'border-2 border-slate-200 bg-transparent hover:bg-slate-100 text-slate-900 hover:border-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:text-slate-100 dark:hover:border-slate-600',
+  ghost: 'bg-transparent hover:bg-slate-100 text-slate-900 dark:hover:bg-slate-800 dark:text-slate-100',
+  danger: 'bg-red-500 text-white hover:bg-red-400 shadow-sm hover:shadow-red-500/30 hover:-translate-y-[1px]',
+  glass: 'glass-panel-pro text-slate-900 hover:bg-white/40 dark:text-slate-100 dark:hover:bg-black/40',
 };
 
 const sizes = {
@@ -28,6 +28,7 @@ const sizes = {
   lg: 'h-12 px-6 text-base rounded-[1rem]',
 };
 
+/** @deprecated Utiliser l'équivalent shadcn dans components/shadcn/ — conservé pour compatibilité */
 export const Button: React.FC<ButtonProps> = ({
   className = '',
   variant = 'primary',

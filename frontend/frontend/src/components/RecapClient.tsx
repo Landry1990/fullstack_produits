@@ -54,7 +54,7 @@ const fmt = (val: number | string | null | undefined) => {
 }
 
 export default function RecapClient() {
-  const { t } = useTranslation(['recap', 'common'])
+  const { t, i18n } = useTranslation(['recap', 'common'])
   const inputRef = useRef<HTMLInputElement>(null)
 
   const [numeros, setNumeros] = useState<string[]>([])
@@ -215,7 +215,7 @@ export default function RecapClient() {
                 <Plus className="size-4" />
               </Button>
             </div>
-            <p className="text-[10px] text-slate-400 mt-1">{t('recap:form.hint')}</p>
+            <p className="text-caption text-slate-400 mt-1">{t('recap:form.hint')}</p>
           </div>
 
           {/* Tags des numéros ajoutés avec indicateur de statut */}
@@ -237,7 +237,7 @@ export default function RecapClient() {
                     {status === 'cancelled' && <span className="size-2 rounded-full bg-amber-500" />}
                     {status === 'not_found' && <span className="size-2 rounded-full bg-red-500" />}
                     {num}
-                    {status === 'cancelled' && <span className="text-[9px] font-sans no-underline">{t('recap:status.cancelled')}</span>}
+                    {status === 'cancelled' && <span className="text-micro font-sans no-underline">{t('recap:status.cancelled')}</span>}
                     <button onClick={() => removeNumero(idx)} className="text-slate-400 hover:text-red-500 ml-1 no-underline" aria-label={`${t('common:remove')} ${num}`}>
                       <X className="size-3" />
                     </button>
@@ -292,19 +292,19 @@ export default function RecapClient() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bg-slate-50 rounded-xl p-3 text-center">
                   <div className="text-2xl font-bold text-emerald-600">{result.recap.nombre_factures}</div>
-                  <div className="text-[10px] text-slate-500 uppercase font-bold">{t('recap:results.tickets')}</div>
+                  <div className="text-caption text-slate-500 uppercase font-bold">{t('recap:results.tickets')}</div>
                 </div>
                 <div className="bg-slate-50 rounded-xl p-3 text-center">
                   <div className="text-2xl font-bold text-slate-800">{fmt(result.recap.total_ht)} F</div>
-                  <div className="text-[10px] text-slate-500 uppercase font-bold">{t('recap:results.total_ht')}</div>
+                  <div className="text-caption text-slate-500 uppercase font-bold">{t('recap:results.total_ht')}</div>
                 </div>
                 <div className="bg-slate-50 rounded-xl p-3 text-center">
                   <div className="text-2xl font-bold text-slate-800">{fmt(result.recap.total_tva)} F</div>
-                  <div className="text-[10px] text-slate-500 uppercase font-bold">{t('recap:results.total_tva')}</div>
+                  <div className="text-caption text-slate-500 uppercase font-bold">{t('recap:results.total_tva')}</div>
                 </div>
                 <div className="bg-emerald-50 rounded-xl p-3 text-center">
                   <div className="text-2xl font-bold text-emerald-700">{fmt(result.recap.total_ttc)} F</div>
-                  <div className="text-[10px] text-emerald-600 uppercase font-bold">{t('recap:results.total_ttc')}</div>
+                  <div className="text-caption text-emerald-600 uppercase font-bold">{t('recap:results.total_ttc')}</div>
                 </div>
               </div>
             </div>
@@ -323,10 +323,10 @@ export default function RecapClient() {
                       <div className="flex items-center gap-3">
                         <span className={`font-mono text-sm font-bold ${isCancelled ? 'text-amber-600 line-through' : 'text-emerald-600'}`}>{facture.numero_facture}</span>
                         {isCancelled && (
-                          <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded">{t('recap:status.cancelled')}</span>
+                          <span className="text-micro font-bold uppercase px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded">{t('recap:status.cancelled')}</span>
                         )}
                         <span className="text-xs text-slate-500">
-                          {new Date(facture.date).toLocaleDateString('fr-FR')} {new Date(facture.date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                          {new Date(facture.date).toLocaleDateString(i18n.language.startsWith('en') ? 'en-GB' : 'fr-FR')} {new Date(facture.date).toLocaleTimeString(i18n.language.startsWith('en') ? 'en-GB' : 'fr-FR', { hour: '2-digit', minute: '2-digit' })}
                         </span>
                         {facture.created_by_name && (
                           <span className="text-xs text-slate-400">• {facture.created_by_name}</span>

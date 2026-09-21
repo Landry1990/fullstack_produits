@@ -56,7 +56,7 @@ export default defineConfig({
           }
         ]
       },
-      includeAssets: ['favicon.svg', 'pwa-icon-192x192.png', 'pwa-icon-512x512.png'],
+      includeAssets: ['favicon.png', 'apple-touch-icon.png', 'pwa-icon-192x192.png', 'pwa-icon-512x512.png'],
       devOptions: {
         enabled: false
       }

@@ -23,6 +23,7 @@
         "retry": "Retry"
     },
     "loading": "Loading...",
+    "retry": "Retry",
     "today": "Today",
     "dashboard": "Dashboard",
     "name": "Name",
@@ -370,13 +371,18 @@
         "placeholder": "Search (products, clients, navigation)...",
         "empty": "No results found.",
         "groups": {
-            "actions": "⚡ Quick Actions",
-            "navigation": "📍 Quick Navigation",
-            "products": "💊 Products",
-            "clients": "👥 Clients",
-            "invoices": "📄 Invoices / Sales",
-            "procurements": "📦 Purchase Orders",
-            "suppliers": "🏭 Suppliers"
+            "actions": "Quick Actions",
+            "navigation": "Quick Navigation",
+            "products": "Products",
+            "clients": "Clients",
+            "invoices": "Invoices / Sales",
+            "procurements": "Purchase Orders",
+            "suppliers": "Suppliers"
+        },
+        "hints": {
+            "navigate": "Navigate",
+            "open": "Open",
+            "close": "Close"
         },
         "nav": {
             "monthly_report": "Monthly Report / Summary",
@@ -388,10 +394,19 @@
         },
         "actions": {
             "new_sale": "New Sale",
+            "new_sale_desc": "Open the register",
             "new_product": "Create new product",
+            "new_product_desc": "Product form",
             "new_client": "Add a client",
+            "new_client_desc": "Client form",
             "new_order": "Create supplier order",
-            "open_products": "Product List"
+            "new_order_desc": "Restocking",
+            "open_products": "Product List",
+            "open_products_desc": "Full catalog",
+            "open_perimes": "Expired products",
+            "open_perimes_desc": "At-risk stock",
+            "open_cadencier": "Payment schedule",
+            "open_cadencier_desc": "Due-date tracking"
         },
         "preview": {
             "title": "God Mode Omnisearch",

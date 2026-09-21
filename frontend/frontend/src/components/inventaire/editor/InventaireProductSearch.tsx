@@ -81,14 +81,14 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                     <Plus className="size-4" />
                 </button>
             </div>
-            <div className="px-2 py-1 text-[10px] text-slate-400 flex items-center gap-2">
-                <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 font-mono text-[10px]">F3</span>
+            <div className="px-2 py-1 text-caption text-slate-400 flex items-center gap-2">
+                <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 font-mono text-caption">F3</span>
                 <span>{t('common:search')}</span>
-                <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 font-mono text-[10px]">↑/↓</span>
+                <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 font-mono text-caption">↑/↓</span>
                 <span>{t('common:navigate')}</span>
-                <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 font-mono text-[10px]">Enter</span>
+                <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 font-mono text-caption">Enter</span>
                 <span>{t('common:select')}</span>
-                <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 font-mono text-[10px]">Shift+Del</span>
+                <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 font-mono text-caption">Shift+Del</span>
                 <span>{t('common:remove')}</span>
             </div>
 
@@ -156,7 +156,7 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                                         >
                                             <div className="flex-1 min-w-0">
                                                 <div className="font-bold font-mono text-base text-slate-800">{lot.lot}</div>
-                                                <div className="text-[10px] text-slate-400 mt-0.5">
+                                                <div className="text-caption text-slate-400 mt-0.5">
                                                     {t('common:exp')}: {formatDate(lot.date_expiration) !== '-' ? formatDate(lot.date_expiration) : t('common:not_available')} • {lot.quantity_remaining} {t('common:units_short')}.
                                                 </div>
                                             </div>
@@ -217,7 +217,7 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                                 >
                                     <div className="text-left">
                                         <div className="font-bold text-sm text-slate-700 group-hover:text-emerald-600 transition-colors">{t('inventaire.lot_modal.btn_new')}</div>
-                                        <div className="text-[10px] text-slate-400">{t('inventaire.lot_modal.desc_new')}</div>
+                                        <div className="text-caption text-slate-400">{t('inventaire.lot_modal.desc_new')}</div>
                                     </div>
                                     <Plus className="h-4 w-4 text-slate-300 group-hover:text-emerald-500 transition-all" />
                                 </button>
@@ -268,7 +268,7 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                                 {t('common:confirm_shortcut')}
                             </button>
                         </div>
-                        <div className="px-4 py-2 bg-slate-100 border-t border-slate-200 text-[10px] text-slate-500 text-center">
+                        <div className="px-4 py-2 bg-slate-100 border-t border-slate-200 text-caption text-slate-500 text-center">
                             {t('common:keyboard_help')}
                         </div>
                     </div>

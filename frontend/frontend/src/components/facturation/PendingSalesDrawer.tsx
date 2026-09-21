@@ -110,7 +110,7 @@ export default function PendingSalesDrawer({
                       <div className="flex flex-col items-center gap-1 shrink-0">
                         <Badge variant="primary" size="sm" className="shrink-0 font-black">#{idx + 1}</Badge>
                         {vendeur && (
-                          <span title={vente.vendeurName || t('facturation:pending_sales.unknown_vendor')} className={`text-[10px] font-black size-5 rounded-full flex items-center justify-center border ${vendeur.bg} ${vendeur.text} ${vendeur.border}`}>
+                          <span title={vente.vendeurName || t('facturation:pending_sales.unknown_vendor')} className={`text-caption font-black size-5 rounded-full flex items-center justify-center border ${vendeur.bg} ${vendeur.text} ${vendeur.border}`}>
                             {getInitials(vente.vendeurName || '')}
                           </span>
                         )}
@@ -121,7 +121,7 @@ export default function PendingSalesDrawer({
                         <div className="font-bold text-sm truncate" title={vente.clientName || vente.manualClientName || t('facturation:pending_sales.unspecified_client')}>
                           {vente.clientName || vente.manualClientName || t('facturation:pending_sales.unspecified_client')}
                         </div>
-                        <div className="text-[10px] text-slate-400 flex items-center gap-1 sm:hidden">
+                        <div className="text-caption text-slate-400 flex items-center gap-1 sm:hidden">
                           {vente.lignes.length} {t('facturation:pending_sales.articles_short')}
                         </div>
                       </div>
@@ -129,7 +129,7 @@ export default function PendingSalesDrawer({
                       {/* Stats, Duration, Total */}
                       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                         <div className="hidden sm:flex flex-col items-end">
-                          <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                          <span className="text-caption uppercase font-bold text-slate-400 tracking-wider">
                             {t('facturation:cart.items_count', { count: vente.lignes.length })}
                           </span>
                           <span className="text-xs font-medium tabular-nums text-slate-500">
@@ -138,17 +138,17 @@ export default function PendingSalesDrawer({
                         </div>
 
                         <div className="flex flex-col items-end">
-                          <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">{t('facturation:pending_sales.total')}</span>
+                          <span className="text-caption uppercase font-bold text-slate-400 tracking-wider">{t('facturation:pending_sales.total')}</span>
                           <span className="text-sm font-black text-emerald-600 tabular-nums">
                             {formatCurrency(totalNet)}
                           </span>
                         </div>
 
                         <div className="hidden sm:flex flex-col items-end">
-                          <Badge size="sm" className={`text-[10px] tabular-nums border font-semibold ${durationColor(diff)}`}>
+                          <Badge size="sm" className={`text-caption tabular-nums border font-semibold ${durationColor(diff)}`}>
                             {formatDurationAgo(vente.timestamp, t)}
                           </Badge>
-                          <span className="text-[10px] font-medium text-slate-400 tabular-nums mt-0.5">
+                          <span className="text-caption font-medium text-slate-400 tabular-nums mt-0.5">
                             {new Date(Number(vente.timestamp)).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
@@ -180,7 +180,7 @@ export default function PendingSalesDrawer({
                     {/* Hover preview */}
                     <div className="pointer-events-none absolute left-0 right-0 top-full z-10 mt-1 opacity-0 invisible group-hover/preview:opacity-100 group-hover/preview:visible transition-all duration-200">
                       <div className="bg-white border border-slate-200 rounded-xl shadow-xl p-3 mx-1">
-                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-2">
+                        <p className="text-caption uppercase font-bold text-slate-400 tracking-wider mb-2">
                           {t('facturation:pending_sales.preview_title')}
                         </p>
                         <div className="space-y-1 mb-2">
@@ -191,7 +191,7 @@ export default function PendingSalesDrawer({
                             </div>
                           ))}
                           {vente.lignes.length > 4 && (
-                            <p className="text-[10px] text-slate-400 italic">+ {vente.lignes.length - 4} {t('facturation:pending_sales.more_items')}</p>
+                            <p className="text-caption text-slate-400 italic">+ {vente.lignes.length - 4} {t('facturation:pending_sales.more_items')}</p>
                           )}
                         </div>
                         <div className="flex justify-between items-center border-t border-slate-200 pt-2">

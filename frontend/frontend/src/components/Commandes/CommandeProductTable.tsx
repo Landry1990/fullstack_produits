@@ -120,7 +120,7 @@ export default function CommandeProductTable({
                 ) : (
                     <Table className="min-w-full relative text-sm">
                         <TableHeader>
-                            <TableRow className="sticky top-0 z-30 bg-slate-100 text-[11px] uppercase tracking-wider text-slate-600 font-bold border-b-2 border-slate-300">
+                            <TableRow className="sticky top-0 z-30 bg-slate-100 text-label uppercase tracking-wider text-slate-600 font-bold border-b-2 border-slate-300">
                                 <TableHead className="bg-slate-100 w-8 px-2 whitespace-nowrap">
                                     <Checkbox
                                         checked={selectedRows.size === commandeProduits.length && commandeProduits.length > 0}
@@ -179,7 +179,7 @@ export default function CommandeProductTable({
                                     )}
                                 </React.Fragment>
                             ))}
-                            <TableRow className="sticky bottom-0 z-30 bg-slate-100 text-[10px] uppercase font-bold text-slate-500 border-t-2 border-slate-300 shadow-md">
+                            <TableRow className="sticky bottom-0 z-30 bg-slate-100 text-caption uppercase font-bold text-slate-500 border-t-2 border-slate-300 shadow-md">
                                 <TableHead colSpan={3} className="bg-slate-100 pl-4 py-2">{t('orders:product_table.end_of_list', { count: commandeProduits.length })}</TableHead>
                                 <TableHead className="bg-slate-100 py-2"></TableHead>
                                 <TableHead className="bg-slate-100 py-2"></TableHead>

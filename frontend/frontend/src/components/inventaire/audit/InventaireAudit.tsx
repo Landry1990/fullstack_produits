@@ -191,7 +191,7 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-1">
                     <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('inventaire.audit.stats.total_loss')}</span>
+                        <span className="text-caption font-black uppercase tracking-widest text-slate-400">{t('inventaire.audit.stats.total_loss')}</span>
                         <TrendingDown className="h-4 w-4 text-red-500" />
                     </div>
                     <div className="text-2xl font-black text-red-500 font-mono">
@@ -201,7 +201,7 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
 
                 <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-1">
                     <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('inventaire.audit.stats.total_gain')}</span>
+                        <span className="text-caption font-black uppercase tracking-widest text-slate-400">{t('inventaire.audit.stats.total_gain')}</span>
                         <TrendingUp className="h-4 w-4 text-emerald-600" />
                     </div>
                     <div className="text-2xl font-black text-emerald-600 font-mono">
@@ -211,7 +211,7 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
 
                 <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-1">
                     <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('inventaire.audit.stats.net_result')}</span>
+                        <span className="text-caption font-black uppercase tracking-widest text-slate-400">{t('inventaire.audit.stats.net_result')}</span>
                         <LayoutDashboard className="h-4 w-4 text-emerald-600" />
                     </div>
                     <div className={`text-2xl font-black font-mono ${(stats?.net || 0) < 0 ? 'text-red-500' : 'text-emerald-600'}`}>
@@ -221,13 +221,13 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
 
                 <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-1">
                     <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('inventaire.audit.stats.analyzed_count')}</span>
+                        <span className="text-caption font-black uppercase tracking-widest text-slate-400">{t('inventaire.audit.stats.analyzed_count')}</span>
                         <Package className="h-4 w-4 text-blue-500" />
                     </div>
                     <div className="text-2xl font-black text-blue-600 font-mono">
                         {stats?.nombre_inventaires || 0}
                     </div>
-                    <div className="text-[10px] text-slate-300 italic">{t('inventaire.audit.stats.lines_info', { count: stats?.nombre_lignes || 0 })}</div>
+                    <div className="text-caption text-slate-300 italic">{t('inventaire.audit.stats.lines_info', { count: stats?.nombre_lignes || 0 })}</div>
                 </div>
             </div>
 
@@ -241,7 +241,7 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
                                 ? t('inventaire.audit.chart.title_value', { type: groupBy === 'RAYON' ? t('common:rayon') : t('common:groupe') })
                                 : t('inventaire.audit.chart.title_freq', { type: groupBy === 'RAYON' ? t('common:rayon') : t('common:groupe') })}
                         </div>
-                        <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">{metric} / {groupBy}</span>
+                        <span className="text-caption font-black text-slate-300 uppercase tracking-widest">{metric} / {groupBy}</span>
                     </h3>
                     <div className="h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
@@ -290,11 +290,11 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
                 <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-6">
                     <div className="flex items-center justify-between">
                         <h3 className="font-bold text-lg text-red-500">{t('inventaire.audit.table.title')}</h3>
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black border border-red-200 text-red-500 bg-red-50">{t('inventaire.audit.table.critical_badge')}</span>
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-caption font-black border border-red-200 text-red-500 bg-red-50">{t('inventaire.audit.table.critical_badge')}</span>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full text-xs">
-                            <thead className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                            <thead className="text-caption font-black uppercase tracking-widest text-slate-400">
                                 <tr className="border-b border-slate-100">
                                     <th className="py-3 text-left font-black">{t('inventaire.audit.table.col_product')}</th>
                                     <th className="text-right py-3 cursor-pointer hover:text-emerald-600 transition-colors" onClick={() => handleSort('total_quantite')} tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('total_quantite'); } }}>
@@ -314,13 +314,13 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
                                         <td className="max-w-[150px] truncate font-bold py-2">
                                             <div className="flex flex-col">
                                                 <span className="text-slate-700">{p.produit__name}</span>
-                                                <span className="text-[10px] font-normal text-slate-400">{t('common:cip')}: {p.produit__cip1}</span>
+                                                <span className="text-caption font-normal text-slate-400">{t('common:cip')}: {p.produit__cip1}</span>
                                             </div>
                                         </td>
                                         <td className="text-right text-red-500 font-mono">{p.total_quantite > 0 ? `+${p.total_quantite}` : p.total_quantite}</td>
                                         <td className="text-right font-black text-red-500 font-mono">{formatCurrency(Math.abs(p.total_valeur))}</td>
                                         <td className="text-center">
-                                            <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-bold ${p.occurrence > 5 ? 'bg-red-50 text-red-500 border border-red-200' : 'bg-slate-100 text-slate-400'}`}>
+                                            <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-caption font-bold ${p.occurrence > 5 ? 'bg-red-50 text-red-500 border border-red-200' : 'bg-slate-100 text-slate-400'}`}>
                                                 {p.occurrence}
                                             </span>
                                         </td>

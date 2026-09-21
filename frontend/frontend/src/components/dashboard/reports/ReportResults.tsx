@@ -101,13 +101,13 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                             return (
                                 <Card key={key}>
                                     <CardHeader className="pb-3">
-                                        <CardTitle className="text-[10px] font-bold uppercase text-slate-400 tracking-widest">{key.replace(/_/g, ' ')}</CardTitle>
+                                        <CardTitle className="text-caption font-bold uppercase text-slate-400 tracking-widest">{key.replace(/_/g, ' ')}</CardTitle>
                                     </CardHeader>
                                     <CardContent>
                                         <div className="space-y-2">
                                             {Object.entries(value as object).map(([subKey, subValue]) => (
                                                 <div key={subKey} className="flex justify-between items-center text-sm border-b border-slate-200/50 pb-2 last:border-0 last:pb-0">
-                                                    <span className="text-slate-500 font-bold uppercase text-[10px] tracking-tight">{subKey.replace(/_/g, ' ')}</span>
+                                                    <span className="text-slate-500 font-bold uppercase text-caption tracking-tight">{subKey.replace(/_/g, ' ')}</span>
                                                     <span className="font-black text-slate-800">{formatValue(subKey, subValue, t)}</span>
                                                 </div>
                                             ))}
@@ -119,7 +119,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                         return (
                             <Card key={key} className="flex flex-col justify-center">
                                 <CardHeader className="pb-1">
-                                    <CardTitle className="text-[10px] font-bold uppercase text-slate-400 tracking-widest">{key.replace(/_/g, ' ')}</CardTitle>
+                                    <CardTitle className="text-caption font-bold uppercase text-slate-400 tracking-widest">{key.replace(/_/g, ' ')}</CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     <div className="text-2xl font-black text-slate-800">{formatValue(key, value, t)}</div>
@@ -189,7 +189,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                             {isMargesReport && (
                                 <div className="flex flex-wrap items-center gap-2">
                                     <AlertTriangle className="size-3.5 text-amber-600 shrink-0" />
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mr-2">{t('reports.results.filter_margin', { defaultValue: 'Filtre marge :' })}</span>
+                                    <span className="text-caption font-black uppercase tracking-widest text-slate-400 mr-2">{t('reports.results.filter_margin', { defaultValue: 'Filtre marge :' })}</span>
                                     {(['all', 'negative', 'low'] as const).map(f => (
                                         <Button
                                             key={f}
@@ -197,7 +197,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                                             variant={margeFilter === f ? 'default' : 'outline'}
                                             size="sm"
                                             aria-pressed={margeFilter === f}
-                                            className={`h-7 px-3 rounded-full font-bold uppercase tracking-wider text-[10px] ${
+                                            className={`h-7 px-3 rounded-full font-bold uppercase tracking-wider text-caption ${
                                                 margeFilter === f
                                                     ? f === 'negative' ? 'bg-red-500 hover:bg-red-600' : f === 'low' ? 'bg-amber-500 hover:bg-amber-600' : 'bg-emerald-600 hover:bg-emerald-700'
                                                     : 'text-slate-500'
@@ -210,7 +210,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                             )}
                         </div>
                         <div className="mt-2 flex items-center justify-end">
-                            <span className="text-[10px] text-slate-400 font-bold">
+                            <span className="text-caption text-slate-400 font-bold">
                                 {t('reports.results.lines_count', { filtered: filteredResults.length, total: results.length, defaultValue: `${filteredResults.length} / ${results.length} lignes` })}
                             </span>
                         </div>
@@ -277,7 +277,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                                 <TableBody className="border-t-2 border-emerald-200 bg-emerald-50/60">
                                     <TableRow className="font-black text-emerald-700 uppercase hover:bg-emerald-50/60">
                                         {columns.map((col, idx) => {
-                                            if (idx === 0) return <TableCell key={col} className="text-[10px] tracking-widest">{t('common:total', 'TOTAL / MOYENNE')}</TableCell>;
+                                            if (idx === 0) return <TableCell key={col} className="text-caption tracking-widest">{t('common:total', 'TOTAL / MOYENNE')}</TableCell>;
 
                                             if (isAverageColumn(col)) {
                                                 const total = filteredResults.reduce((sum: number, r: Record<string, unknown>) => sum + (Number(r[col]) || 0), 0);
@@ -286,7 +286,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                                                     <TableCell key={col} className={`text-right text-sm ${isNumericColumn(col) ? 'text-right' : ''}`}>
                                                         <div className="flex flex-col items-end">
                                                             <span>{formatValue(col, avg, t)}</span>
-                                                            <span className="text-[9px] opacity-50 uppercase tracking-wider">{t('reports.results.footer_avg_label', { defaultValue: 'moyenne' })}</span>
+                                                            <span className="text-micro opacity-50 uppercase tracking-wider">{t('reports.results.footer_avg_label', { defaultValue: 'moyenne' })}</span>
                                                         </div>
                                                     </TableCell>
                                                 );
@@ -306,7 +306,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                                                         <TableCell key={col} className="text-right text-sm">
                                                             <div className="flex flex-col items-end">
                                                                 <span>{tauxGlobal.toFixed(1)} %</span>
-                                                                <span className="text-[9px] opacity-50 uppercase tracking-wider">{t('reports.results.footer_global_label', { defaultValue: 'global' })}</span>
+                                                                <span className="text-micro opacity-50 uppercase tracking-wider">{t('reports.results.footer_global_label', { defaultValue: 'global' })}</span>
                                                             </div>
                                                         </TableCell>
                                                     );
@@ -326,7 +326,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                     </CardContent>
                     {!isMargesReport && filteredResults.length > 100 && !pagination && (
                         <CardFooter className="p-4 bg-slate-50 border-t border-slate-200 justify-center">
-                            <span className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">
+                            <span className="text-caption font-black uppercase text-slate-400 tracking-[0.2em]">
                                 {t('results.limited_display', 'Affichage limité aux 100 premiers résultats sur {{total}}', { total: Array.isArray(results) ? results.length : 0 })}
                             </span>
                         </CardFooter>
@@ -355,13 +355,13 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
             {pagination && (
                 <Card className="mt-6">
                     <CardFooter className="p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-center sm:text-left">
+                        <div className="text-caption font-black uppercase tracking-[0.2em] text-slate-400 text-center sm:text-left">
                             Total: <span className="text-slate-800">{pagination.count}</span> éléments
                         </div>
                         <div className="flex gap-2 w-full sm:w-auto">
                             <Button 
                                 variant="outline" size="sm"
-                                className="rounded-xl font-bold uppercase tracking-widest text-[10px] gap-2 flex-1 sm:flex-initial"
+                                className="rounded-xl font-bold uppercase tracking-widest text-caption gap-2 flex-1 sm:flex-initial"
                                 disabled={!pagination.previous || loading}
                                 onClick={() => onPageChange(pagination.previous)}
                             >
@@ -370,7 +370,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                             </Button>
                             <Button 
                                 variant="outline" size="sm"
-                                className="rounded-xl font-bold uppercase tracking-widest text-[10px] gap-2 flex-1 sm:flex-initial"
+                                className="rounded-xl font-bold uppercase tracking-widest text-caption gap-2 flex-1 sm:flex-initial"
                                 disabled={!pagination.next || loading}
                                 onClick={() => onPageChange(pagination.next)}
                             >

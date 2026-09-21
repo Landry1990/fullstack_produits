@@ -214,6 +214,7 @@ export default function Clients() {
       });
     } catch (err) {
       logger.error(err);
+      gooeyToast.error(t('clients:messages.error_load_details'));
       setSelectedClient(client);
     } finally {
       setLoadingHistory(false);
@@ -433,7 +434,7 @@ export default function Clients() {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row h-full bg-slate-50">
+    <div className="flex flex-col lg:flex-row h-full bg-slate-50 max-w-[1600px] mx-auto w-full">
       {/* LEFT PANEL */}
       <div className={cn("w-full lg:w-1/3 border-b lg:border-b-0 lg:border-r border-slate-200 flex flex-col bg-white h-full lg:h-full", selectedClient ? 'hidden lg:flex' : 'flex')}>
         <div className="p-4 border-b border-slate-200 space-y-4">
@@ -569,6 +570,7 @@ export default function Clients() {
                       }}
                     >
                        <Checkbox
+                         aria-label={t('common:select')}
                          checked={selectedSet.has(client.id)}
                          onCheckedChange={() => setSelectedIds(prev => { const s = new Set(prev); return s.has(client.id) ? prev.filter(id => id !== client.id) : [...prev, client.id]; })}
                          onClick={(e) => e.stopPropagation()}
@@ -576,14 +578,14 @@ export default function Clients() {
                        <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-center">
                              <p className={cn("text-sm font-semibold truncate", selectedClient?.id === client.id ? 'text-emerald-700' : 'text-slate-800')}>{client.name}</p>
-                             <Badge variant="outline" className={cn("text-[10px] font-semibold uppercase tracking-wide", client.client_type === 'PROFESSIONNEL' ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-slate-100 text-slate-500 border-slate-200')}>
+                             <Badge variant="outline" className={cn("text-caption font-semibold uppercase tracking-wide", client.client_type === 'PROFESSIONNEL' ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-slate-100 text-slate-500 border-slate-200')}>
                                 {client.client_type === 'PROFESSIONNEL' ? t('clients:types.pro_short') : t('clients:types.part_short')}
                              </Badge>
                           </div>
                           <div className="flex items-center justify-between gap-1.5 text-xs text-slate-500">
                              <span className="flex items-center gap-1"><Phone className="size-3" /> {client.phone || '—'}</span>
                              {client.client_type === 'PROFESSIONNEL' && ((client as Client & { ayants_droit_count?: number }).ayants_droit_count || 0) > 0 && (
-                               <span className="flex items-center gap-0.5 text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded text-[10px] font-medium">
+                               <span className="flex items-center gap-0.5 text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded text-caption font-medium">
                                  <Users className="size-3" />
                                  {(client as Client & { ayants_droit_count?: number }).ayants_droit_count}
                                </span>
@@ -629,7 +631,7 @@ export default function Clients() {
                   <div>
                      <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
                        {selectedClient.name}
-                       {selectedClient.is_active === false && <Badge variant="outline" className="bg-amber-50 text-amber-600 border-amber-200 text-[10px]">{t('clients:status.inactive')}</Badge>}
+                       {selectedClient.is_active === false && <Badge variant="outline" className="bg-amber-50 text-amber-600 border-amber-200 text-caption">{t('clients:status.inactive')}</Badge>}
                      </h2>
                      <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 mt-0.5">
                         <span className="flex items-center gap-1"><Phone className="size-3" /> {selectedClient.phone || '—'}</span>
@@ -688,14 +690,14 @@ export default function Clients() {
                      </div>
                      <div className="p-5 space-y-4">
                         <div className="space-y-1">
-                           <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t('clients:fields.address')}</span>
+                           <span className="text-caption font-semibold uppercase tracking-wider text-slate-500">{t('clients:fields.address')}</span>
                            <div className="flex items-start gap-2 text-sm text-slate-700">
                               <MapPin className="size-4 text-emerald-500 mt-0.5 shrink-0" />
                               <span>{selectedClient.address || t('common:no_address')}</span>
                            </div>
                         </div>
                         <div className="space-y-1">
-                           <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t('clients:fields.type')}</span>
+                           <span className="text-caption font-semibold uppercase tracking-wider text-slate-500">{t('clients:fields.type')}</span>
                            <div className="text-sm font-medium text-slate-700 flex items-center gap-2">
                               <Activity className="size-4 text-slate-500" />
                               {selectedClient.client_type === 'PROFESSIONNEL' ? t('clients:types.professional') : t('clients:types.individual')}
@@ -714,11 +716,11 @@ export default function Clients() {
                         {selectedClient.client_type === 'PARTICULIER' && (
                            <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg flex flex-col gap-1 relative">
                               <div className="flex items-center justify-between">
-                                 <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-600/70">{t('clients:history.loyalty')}</span>
+                                 <span className="text-caption font-semibold uppercase tracking-wider text-amber-600/70">{t('clients:history.loyalty')}</span>
                                  {selectedClient.is_loyalty_member ? (
-                                    <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded">{t('clients:loyalty.member_active')}</span>
+                                    <span className="text-micro font-bold uppercase tracking-wider text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded">{t('clients:loyalty.member_active')}</span>
                                  ) : (
-                                    <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">{t('clients:loyalty.member_inactive')}</span>
+                                    <span className="text-micro font-bold uppercase tracking-wider text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">{t('clients:loyalty.member_inactive')}</span>
                                  )}
                               </div>
                               <div className="flex justify-between items-end">
@@ -731,7 +733,7 @@ export default function Clients() {
                                        <circle cx="18" cy="18" r="16" fill="none" stroke="currentColor" strokeWidth="3" className="text-amber-200" />
                                        <circle cx="18" cy="18" r="16" fill="none" stroke="currentColor" strokeWidth="3" strokeDasharray={`${Math.min(100, ((selectedClient.points_fidelite ?? 0) / loyaltyThreshold) * 100)} 100`} strokeLinecap="round" className="text-amber-500 transition-all" />
                                      </svg>
-                                     <span className="text-[10px] font-bold text-amber-600">
+                                     <span className="text-caption font-bold text-amber-600">
                                        {Math.min(100, Math.round(((selectedClient.points_fidelite ?? 0) / loyaltyThreshold) * 100))}%
                                      </span>
                                    </div>
@@ -745,13 +747,13 @@ export default function Clients() {
                               {Number(selectedClient.pending_discount || 0) > 0 && (
                                 <div className="mt-1 pt-1 border-t border-amber-200/50 flex items-center gap-1">
                                    <Gift className="size-3 text-purple-500" />
-                                   <span className="text-[10px] font-semibold text-purple-600">
+                                   <span className="text-caption font-semibold text-purple-600">
                                       {t('clients:loyalty.pending_discount', { discount: Number(selectedClient.pending_discount).toFixed(2) })}
                                    </span>
                                 </div>
                               )}
                               <button
-                                className="mt-1 text-[10px] font-semibold text-amber-600/80 hover:text-amber-700 underline-offset-2 hover:underline text-left"
+                                className="mt-1 text-caption font-semibold text-amber-600/80 hover:text-amber-700 underline-offset-2 hover:underline text-left"
                                 onClick={() => navigate('/app/fidelite', { state: { selectedClientId: selectedClient.id, selectedClientName: selectedClient.name } })}
                               >
                                 {t('clients:loyalty.view_history')} →
@@ -773,33 +775,33 @@ export default function Clients() {
                                   }
                                 }}
                               >
-                                 <span className="text-[10px] font-semibold uppercase tracking-wider text-indigo-500/70">{t('clients:finance.solde_depot')}</span>
+                                 <span className="text-caption font-semibold uppercase tracking-wider text-indigo-500/70">{t('clients:finance.solde_depot')}</span>
                                  <div className="text-lg font-bold text-indigo-600">{formatCurrency(parseFloat(selectedClient.solde_depot || '0'))}</div>
                               </div>
                             ) : (
-                              <div className="p-3 bg-slate-100 border border-slate-200 rounded-lg flex flex-col gap-1 text-slate-400">
-                                 <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t('clients:finance.solde_depot')}</span>
-                                 <div className="text-lg font-bold text-slate-400">{formatCurrency(0)}</div>
+                              <div className="p-3 bg-slate-100 border border-slate-200 rounded-lg flex flex-col gap-1 text-slate-500">
+                                 <span className="text-caption font-semibold uppercase tracking-wider text-slate-500">{t('clients:finance.solde_depot')}</span>
+                                 <div className="text-lg font-bold text-slate-500">{formatCurrency(0)}</div>
                               </div>
                             )}
                             <div className="p-3 bg-slate-100 border border-slate-200 rounded-lg flex flex-col gap-1">
-                               <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t('clients:finance.auto_discount')}</span>
+                               <span className="text-caption font-semibold uppercase tracking-wider text-slate-500">{t('clients:finance.auto_discount')}</span>
                                <div className="text-lg font-bold text-slate-700">{selectedClient.remise_automatique || 0}{t('clients:units.percent')}</div>
                             </div>
                           </>
                         )}
                         {selectedClient.client_type === 'PROFESSIONNEL' && (
                           <div className="col-span-2 p-3 bg-indigo-50 border border-indigo-100 rounded-lg flex flex-col gap-1">
-                             <span className="text-[10px] font-semibold uppercase tracking-wider text-indigo-500/70">{t('clients:finance.auto_discount')}</span>
+                             <span className="text-caption font-semibold uppercase tracking-wider text-indigo-500/70">{t('clients:finance.auto_discount')}</span>
                              <div className="text-lg font-bold text-indigo-600">{selectedClient.remise_automatique || 0}{t('clients:units.percent')}</div>
                           </div>
                         )}
                         {selectedClient.client_type === 'PROFESSIONNEL' && (
                           <div className="col-span-2 p-3 bg-amber-50 border border-orange-100 rounded-lg flex justify-between items-center">
                              <div>
-                                <span className="text-[10px] font-semibold uppercase tracking-wider text-orange-500/70">{t('clients:finance.debt_usage')}</span>
+                                <span className="text-caption font-semibold uppercase tracking-wider text-orange-500/70">{t('clients:finance.debt_usage')}</span>
                                 <div className="text-base font-bold text-slate-700">
-                                  {formatCurrency(normalizeNumberInput(selectedClient.current_debt || '0'))} <span className="text-slate-400 font-normal">/ {formatCurrency(normalizeNumberInput(selectedClient.plafond || '0'))}</span>
+                                  {formatCurrency(normalizeNumberInput(selectedClient.current_debt || '0'))} <span className="text-slate-500 font-normal">/ {formatCurrency(normalizeNumberInput(selectedClient.plafond || '0'))}</span>
                                 </div>
                              </div>
                              <div className="relative size-12 flex items-center justify-center">
@@ -807,13 +809,13 @@ export default function Clients() {
                                  <circle cx="18" cy="18" r="16" fill="none" stroke="currentColor" strokeWidth="4" className="text-orange-200" />
                                  <circle cx="18" cy="18" r="16" fill="none" stroke="currentColor" strokeWidth="4" strokeDasharray={`${Math.min(100, (normalizeNumberInput(selectedClient.current_debt || '0') / normalizeNumberInput(selectedClient.plafond || '1')) * 100)} 100`} strokeLinecap="round" className="text-orange-500 transition-all" />
                                </svg>
-                               <span className="text-[10px] font-bold text-amber-600">{(normalizeNumberInput(selectedClient.current_debt || '0') / normalizeNumberInput(selectedClient.plafond || '1') * 100).toFixed(0)}%</span>
+                               <span className="text-caption font-bold text-amber-600">{(normalizeNumberInput(selectedClient.current_debt || '0') / normalizeNumberInput(selectedClient.plafond || '1') * 100).toFixed(0)}%</span>
                              </div>
                           </div>
                         )}
                         {selectedClient.client_type === 'PROFESSIONNEL' && selectedClient.majoration_pro_pourcentage && parseFloat(selectedClient.majoration_pro_pourcentage) > 0 && (
                            <div className="col-span-2 p-3 bg-red-50 border border-red-100 rounded-lg flex flex-col gap-1">
-                              <span className="text-[10px] font-semibold uppercase tracking-wider text-red-500/70">{t('clients:finance.majoration_pro')}</span>
+                              <span className="text-caption font-semibold uppercase tracking-wider text-red-500/70">{t('clients:finance.majoration_pro')}</span>
                               <div className="text-lg font-bold text-red-600">+{selectedClient.majoration_pro_pourcentage}{t('clients:units.percent')}</div>
                            </div>
                         )}
@@ -825,15 +827,15 @@ export default function Clients() {
                     <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                        <div className="px-5 py-3 border-b border-slate-200 bg-slate-50 flex items-center gap-2">
                           <Users className="size-4 text-indigo-500" />
-                          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">{t('clients:beneficiaries.title')}</h3>
+                          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">{t('clients:beneficiaries.title')}</h3>
                        </div>
                        <div className="overflow-x-auto">
                           <Table className="min-w-full">
                              <TableHeader>
                                 <TableRow className="bg-slate-100 hover:bg-slate-100">
-                                   <TableHead className="px-6 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{t('clients:beneficiaries.col_name')}</TableHead>
-                                   <TableHead className="px-6 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{t('clients:beneficiaries.company') || 'Société'}</TableHead>
-                                   <TableHead className="px-6 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{t('clients:beneficiaries.col_id')}</TableHead>
+                                   <TableHead className="px-6 py-3 text-left text-caption font-semibold text-slate-500 uppercase tracking-wider">{t('clients:beneficiaries.col_name')}</TableHead>
+                                   <TableHead className="px-6 py-3 text-left text-caption font-semibold text-slate-500 uppercase tracking-wider">{t('clients:beneficiaries.company') || 'Société'}</TableHead>
+                                   <TableHead className="px-6 py-3 text-right text-caption font-semibold text-slate-500 uppercase tracking-wider">{t('clients:beneficiaries.col_id')}</TableHead>
                                 </TableRow>
                              </TableHeader>
                              <TableBody>

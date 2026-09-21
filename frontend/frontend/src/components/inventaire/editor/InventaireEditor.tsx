@@ -155,24 +155,24 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                     </h1>
                     <div className="flex items-center gap-2 mt-1">
                         {isReadOnly ? (
-                            <span className="inline-flex items-center gap-1 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-600">
+                            <span className="inline-flex items-center gap-1 px-3 py-0.5 rounded-full text-caption font-bold uppercase tracking-wider bg-emerald-50 text-emerald-600">
                                 <CheckCircle2 className="h-3 w-3" />
                                 {t('inventaire.detail.validated')}
                             </span>
                         ) : (
-                            <span className="inline-flex items-center gap-1 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-600">
+                            <span className="inline-flex items-center gap-1 px-3 py-0.5 rounded-full text-caption font-bold uppercase tracking-wider bg-amber-50 text-amber-600">
                                 <History className="h-3 w-3" />
                                 {t('common:status.draft')}
                             </span>
                         )}
                         {autoSaving && (
-                            <span className="inline-flex items-center gap-1 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-500 animate-pulse">
+                            <span className="inline-flex items-center gap-1 px-3 py-0.5 rounded-full text-caption font-bold uppercase tracking-wider bg-slate-100 text-slate-500 animate-pulse">
                                 <div className="animate-spin rounded-full size-3 border-b-2 border-slate-400"></div>
                                 {t('common:auto_saving')}
                             </span>
                         )}
                         {activeInventaire?.inventory_type && (
-                            <span className="inline-flex items-center px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-600">
+                            <span className="inline-flex items-center px-3 py-0.5 rounded-full text-caption font-bold uppercase tracking-wider bg-blue-50 text-blue-600">
                                 {activeInventaire.inventory_type === 'RESERVE' ? t('inventaire.types.reserve') :
                                  activeInventaire.inventory_type === 'RAYON' ? t('inventaire.types.rayon') : t('inventaire.types.global')}
                             </span>
@@ -206,7 +206,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                               key={g}
                               type="button"
                               onClick={() => setPrintGroupBy(g)}
-                              className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all ${printGroupBy === g ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-500 hover:text-slate-700'}`}
+                              className={`px-3 py-1.5 rounded-lg text-caption font-bold uppercase transition-all ${printGroupBy === g ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-500 hover:text-slate-700'}`}
                           >
                               {t(`inventaire.detail.group_${g}`)}
                           </button>
@@ -308,7 +308,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
             {/* Header Form Area */}
             <div className="p-6 bg-slate-50/50 grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">{t('inventaire.detail.date')}</label>
+                    <label className="text-caption font-bold text-slate-400 uppercase tracking-widest pl-1">{t('inventaire.detail.date')}</label>
                     <LocalizedDateInput
                         className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all disabled:bg-slate-50 disabled:text-slate-400 text-slate-700"
                         value={dateInventaire}
@@ -319,7 +319,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                     />
                 </div>
                 <div className="md:col-span-2 space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">{t('inventaire.detail.description')}</label>
+                    <label className="text-caption font-bold text-slate-400 uppercase tracking-widest pl-1">{t('inventaire.detail.description')}</label>
                     <input
                         type="text"
                         className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all disabled:bg-slate-50 disabled:text-slate-400 text-slate-700"

@@ -7,6 +7,7 @@ export interface UseSearchNavigationOptions {
 
 export interface SearchNavigationItemProps {
     id: string;
+    'data-search-index': number;
     style: React.CSSProperties;
     onMouseEnter: () => void;
     className: string;
@@ -73,6 +74,7 @@ export function useSearchNavigation<T>(
 
     const getItemProps = (index: number): SearchNavigationItemProps => ({
         id: `search-result-${index}`,
+        'data-search-index': index,
         style: index === selectedIndex ? {
             backgroundColor: '#3b82f6',
             color: 'white',

@@ -404,12 +404,17 @@ export function buildReceptionPrintHtml(commande: Commande, companyInfo: { name?
     .text-right { text-align: right; }
     .text-center { text-align: center; }
     
-    .summary { margin-top: 12px; display: flex; justify-content: space-between; align-items: flex-start; }
+    .summary { margin-top: 12px; display: flex; justify-content: space-between; align-items: center; }
     .summary-left { font-size: 9pt; color: ${lightColor}; }
     .summary-left span { display: inline-block; margin-right: 16px; }
-    .totals-box { border: ${totalsBorder}; padding: 12px 16px; min-width: 160px; }
-    .totals-box .row { display: flex; justify-content: space-between; font-size: 9pt; margin-bottom: 4px; }
-    .totals-box .row.total { font-size: 13pt; font-weight: 700; margin-top: 8px; padding-top: 8px; border-top: ${totalsBorderTop}; }
+    .totals-box { padding: 8px 16px; display: flex; align-items: center; gap: 18px; }
+    .totals-box .cell { display: flex; flex-direction: column; align-items: flex-end; }
+    .totals-box .cell .lbl { font-size: 7pt; text-transform: uppercase; letter-spacing: 0.5px; color: ${lightColor}; }
+    .totals-box .cell .val { font-size: 10pt; font-weight: 700; color: ${primaryColor}; }
+    .totals-box .cell.total { padding-left: 18px; border-left: ${totalsBorderTop}; }
+    .totals-box .cell.total .val { font-size: 13pt; }
+    .totals-box .cell.margin { padding-left: 18px; border-left: ${totalsBorderTop}; }
+    .totals-box .cell.margin .val { color: ${isInkless ? '#16a34a' : '#15803d'}; }
     
     .footer-note { margin-top: 20px; font-size: 8pt; color: ${lightColor}; font-style: italic; border-top: ${rowBorder}; padding-top: 8px; }
     .print-footer { margin-top: 30px; text-align: center; font-size: 7pt; color: ${lightColor}; }
@@ -472,15 +477,15 @@ export function buildReceptionPrintHtml(commande: Commande, companyInfo: { name?
         <span><b>Gratuites:</b> ${totalGratuites}</span>
       </div>
       <div class="totals-box">
-        <div class="row"><span>TOTAL HT:</span><span>${formatMoney(totalHT)} F</span></div>
-        <div class="row"><span>TOTAL TVA:</span><span>${formatMoney(totalTVA)} F</span></div>
-        <div class="row total"><span>Total TTC :</span><span>&nbsp;${formatMoney(totalTTC)} F</span></div>
-        <div class="row" style="margin-top: 8px; padding-top: 8px; border-top: ${totalsBorderTop}; color: ${isInkless ? '#16a34a' : '#15803d'};"><span>Marge obtenue:</span><span>${formatMoney(totalMarge)} F</span></div>
+        <div class="cell"><span class="lbl">Total HT</span><span class="val">${formatMoney(totalHT)} F</span></div>
+        <div class="cell"><span class="lbl">TVA</span><span class="val">${formatMoney(totalTVA)} F</span></div>
+        <div class="cell total"><span class="lbl">Total TTC</span><span class="val">${formatMoney(totalTTC)} F</span></div>
+        <div class="cell margin"><span class="lbl">Marge</span><span class="val">${formatMoney(totalMarge)} F</span></div>
       </div>
     </div>
 
     <div class="footer-note">Ce document atteste la réception physique des articles mentionnés dans les stocks de l'établissement.</div>
-    <div class="print-footer">Logiciel de Gestion Antigravity POS - Document Interne</div>
+    <div class="print-footer">Logiciel de Gestion Zenith Pharma - Document Interne</div>
   </div>
   <script>
     window.onload = () => {

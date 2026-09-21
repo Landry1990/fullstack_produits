@@ -93,7 +93,7 @@ export const AvoirsLotModal: React.FC<LotModalProps> = ({
                                                 <TableCell className={`text-center text-xs ${expiryClass}`}>
                                                     {formatExpiry(lot.date_expiration)}
                                                     {daysLeft !== null && daysLeft >= 0 && daysLeft < 30 && (
-                                                        <div className="text-[10px] text-amber-400">({daysLeft}j)</div>
+                                                        <div className="text-caption text-amber-400">({daysLeft}j)</div>
                                                     )}
                                                 </TableCell>
                                                 <TableCell className="text-center">

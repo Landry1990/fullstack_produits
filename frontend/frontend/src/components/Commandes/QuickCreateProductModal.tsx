@@ -17,6 +17,7 @@ import {
     DialogTitle,
     DialogDescription,
 } from '../shadcn/dialog';
+import { ErrorState } from '../ui/ErrorState';
 
 interface QuickCreateProductModalProps {
   open: boolean;
@@ -185,11 +186,7 @@ export default function QuickCreateProductModal({
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
-          {error && (
-            <div className="bg-red-50 border border-red-100 rounded-lg p-3 text-red-600 text-sm">
-              {error}
-            </div>
-          )}
+          <ErrorState error={error} compact />
 
           <DialogDescription className="sr-only">
             {isEditMode ? t('orders:quick_create.edit_title') : t('orders:quick_create.title')}

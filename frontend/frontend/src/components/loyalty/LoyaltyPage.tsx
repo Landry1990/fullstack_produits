@@ -51,7 +51,7 @@ const StatCard: React.FC<StatCardProps> = ({ label, value, hint, icon, accent })
     <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 flex items-start gap-3">
         <div className={cn('p-2.5 rounded-lg', accent)}>{icon}</div>
         <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{label}</p>
+            <p className="text-caption font-bold uppercase tracking-wider text-slate-500">{label}</p>
             <p className="text-lg font-bold text-slate-800 truncate">{value}</p>
             <p className="text-xs text-slate-400 mt-0.5 truncate">{hint}</p>
         </div>
@@ -238,7 +238,7 @@ const LoyaltyPage: React.FC = () => {
             <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 w-full">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                     <div className="flex flex-col gap-1 flex-1 min-w-0" ref={clientDropdownRef}>
-                        <label htmlFor="loyalty-client-search" className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        <label htmlFor="loyalty-client-search" className="text-caption font-bold uppercase tracking-wider text-slate-500">
                             {t('loyalty:filters.client')}
                         </label>
                         <div className="relative group">
@@ -286,7 +286,7 @@ const LoyaltyPage: React.FC = () => {
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="font-bold text-sm truncate">{c.name}</div>
-                                                    {c.phone && <div className="text-[10px] text-slate-400 font-bold">{c.phone}</div>}
+                                                    {c.phone && <div className="text-caption text-slate-400 font-bold">{c.phone}</div>}
                                                 </div>
                                             </button>
                                         </li>
@@ -296,7 +296,7 @@ const LoyaltyPage: React.FC = () => {
                         </div>
                     </div>
                     <div className="flex flex-col gap-1 flex-1 min-w-0">
-                        <label htmlFor="loyalty-type-filter" className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        <label htmlFor="loyalty-type-filter" className="text-caption font-bold uppercase tracking-wider text-slate-500">
                             {t('loyalty:filters.type')}
                         </label>
                         <Select
@@ -320,15 +320,15 @@ const LoyaltyPage: React.FC = () => {
                     <Table className="w-full min-w-[1100px]">
                         <TableHeader>
                             <TableRow className="bg-slate-50 hover:bg-slate-50">
-                                <TableHead className="w-[10%] px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">{t('loyalty:table.date')}</TableHead>
-                                <TableHead className="w-[15%] px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">{t('loyalty:table.client')}</TableHead>
-                                <TableHead className="w-[10%] px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">{t('loyalty:table.type')}</TableHead>
-                                <TableHead className="w-[8%] px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-slate-500">{t('loyalty:table.points')}</TableHead>
-                                <TableHead className="w-[8%] px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-slate-500">{t('loyalty:table.balance_after')}</TableHead>
-                                <TableHead className="w-[12%] px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-slate-500">{t('loyalty:table.amount')}</TableHead>
-                                <TableHead className="w-[10%] px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">{t('loyalty:table.invoice')}</TableHead>
-                                <TableHead className="w-[15%] px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">{t('loyalty:table.notes')}</TableHead>
-                                <TableHead className="w-[12%] px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">{t('loyalty:table.operator')}</TableHead>
+                                <TableHead className="w-[10%] px-4 py-3 text-left text-caption font-bold uppercase tracking-wider text-slate-500">{t('loyalty:table.date')}</TableHead>
+                                <TableHead className="w-[15%] px-4 py-3 text-left text-caption font-bold uppercase tracking-wider text-slate-500">{t('loyalty:table.client')}</TableHead>
+                                <TableHead className="w-[10%] px-4 py-3 text-left text-caption font-bold uppercase tracking-wider text-slate-500">{t('loyalty:table.type')}</TableHead>
+                                <TableHead className="w-[8%] px-4 py-3 text-right text-caption font-bold uppercase tracking-wider text-slate-500">{t('loyalty:table.points')}</TableHead>
+                                <TableHead className="w-[8%] px-4 py-3 text-right text-caption font-bold uppercase tracking-wider text-slate-500">{t('loyalty:table.balance_after')}</TableHead>
+                                <TableHead className="w-[12%] px-4 py-3 text-right text-caption font-bold uppercase tracking-wider text-slate-500">{t('loyalty:table.amount')}</TableHead>
+                                <TableHead className="w-[10%] px-4 py-3 text-left text-caption font-bold uppercase tracking-wider text-slate-500">{t('loyalty:table.invoice')}</TableHead>
+                                <TableHead className="w-[15%] px-4 py-3 text-left text-caption font-bold uppercase tracking-wider text-slate-500">{t('loyalty:table.notes')}</TableHead>
+                                <TableHead className="w-[12%] px-4 py-3 text-left text-caption font-bold uppercase tracking-wider text-slate-500">{t('loyalty:table.operator')}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>

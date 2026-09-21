@@ -261,7 +261,7 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                                     <div className="font-semibold text-slate-900 text-sm">
                                         {format(new Date(avoir.created_at || avoir.date), 'dd/MM/yyyy', { locale: i18n.language === 'fr' ? fr : enUS })}
                                     </div>
-                                    <div className="text-[10px] text-slate-500 mt-0.5 font-medium">
+                                    <div className="text-caption text-slate-500 mt-0.5 font-medium">
                                         {format(new Date(avoir.created_at || avoir.date), 'HH:mm', { locale: i18n.language === 'fr' ? fr : enUS })}
                                     </div>
                                 </TableCell>
@@ -276,13 +276,13 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                                     </div>
                                 </TableCell>
                                 <TableCell className="px-3 py-2">
-                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border uppercase tracking-wide whitespace-nowrap ${getTypeAvoirStyle(avoir.type_avoir)}`}>
+                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-caption font-bold border uppercase tracking-wide whitespace-nowrap ${getTypeAvoirStyle(avoir.type_avoir)}`}>
                                         {getTypeAvoirLabel(avoir.type_avoir, t)}
                                     </span>
                                 </TableCell>
                                 <TableCell className="px-3 py-2 text-center">
                                     {nbLignes !== null ? (
-                                        <span className="inline-flex items-center justify-center size-6 rounded-full bg-slate-100 text-[11px] font-bold text-slate-600">
+                                        <span className="inline-flex items-center justify-center size-6 rounded-full bg-slate-100 text-label font-bold text-slate-600">
                                             {nbLignes}
                                         </span>
                                     ) : (
@@ -295,7 +295,7 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                                     </span>
                                 </TableCell>
                                 <TableCell className="px-3 py-2 text-center">
-                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-wide ${getStatusStyle(avoir.status_display || avoir.status)}`}>
+                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-caption font-bold border uppercase tracking-wide ${getStatusStyle(avoir.status_display || avoir.status)}`}>
                                         {getStatusLabel(avoir.status_display || avoir.status, t)}
                                     </span>
                                 </TableCell>

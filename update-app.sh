@@ -163,30 +163,54 @@ write_status "running" "Collecte des fichiers statiques..."
 docker exec "$BACKEND_CONTAINER" python manage.py collectstatic --noinput --clear >> "$LOG_FILE" 2>&1 || true
 log "✓ Fichiers statiques collectés"
 
-# ── Étape 7 : Redémarrage backend ────────────────────────────
+# ── Étape 7 : Copie frontend + reload nginx ───────────────────
 
-# IMPORTANT : écrire le statut "done" AVANT le restart
-# car le restart va tuer temporairement le backend et le thread qui exécute ce script
-write_status "done" "Mise à jour terminée avec succès"
-log "✓ Statut 'done' écrit — redémarrage du backend..."
+# IMPORTANT : le frontend est copié AVANT le restart backend.
+# Le restart final tue ce script (il tourne dans le conteneur backend) —
+# tout ce qui est après le restart ne s'exécuterait jamais.
 
-docker restart "$BACKEND_CONTAINER" >> "$LOG_FILE" 2>&1 || {
-    log "⚠ docker restart a échoué mais le statut done a déjà été écrit"
-}
-log "✓ Backend redémarré"
-
-# ── Étape 8 : Copie frontend + reload nginx ───────────────────
-
-# Le frontend n'est PAS encore copié à ce point. On le fait après le restart backend
-# car le statut "done" est déjà écrit et le frontend peut déjà afficher le succès.
-# Mais on copie quand même le nouveau frontend pour que le Ctrl+F5 charge la nouvelle version.
-
+write_status "running" "Copie du frontend..."
 if [ -d "$APP_DIR/frontend/frontend/dist" ]; then
     docker cp "$APP_DIR/frontend/frontend/dist/." "$FRONTEND_CONTAINER:/usr/share/nginx/html/" >> "$LOG_FILE" 2>&1 || true
     docker exec "$FRONTEND_CONTAINER" nginx -s reload >> "$LOG_FILE" 2>&1 || true
     log "✓ Frontend copié et nginx rechargé"
 else
     log "⚠ Pas de dist/ trouvé — le frontend n'est pas mis à jour"
+fi
+
+# ── Étape 8 : Redémarrage backend via helper détaché ──────────
+
+# ⚠️ Ce script s'exécute DANS le conteneur backend. Un `docker restart`
+# direct se tue lui-même (le processus meurt avec le conteneur).
+# SOLUTION (même pattern que nightly-update.sh) : un conteneur helper
+# détaché, hors du projet compose, attend 3s puis redémarre le backend.
+# Il survit au restart car il n'appartient pas au projet.
+
+write_status "done" "Mise à jour terminée — le backend redémarre, l'application sera disponible dans quelques secondes"
+log "✓ Statut 'done' écrit — programmation du redémarrage backend..."
+
+# Image pour le helper : docker:latest si présente, sinon l'image du backend
+# (elle contient déjà le CLI docker puisque ce script l'utilise)
+HELPER_IMAGE="docker:latest"
+if ! docker image inspect "$HELPER_IMAGE" >/dev/null 2>&1; then
+    HELPER_IMAGE=$(docker inspect --format '{{.Image}}' "$BACKEND_CONTAINER" 2>/dev/null || echo "")
+fi
+
+docker rm -f zenith-restart-helper >/dev/null 2>&1 || true
+if [ -n "$HELPER_IMAGE" ]; then
+    docker run --rm -d \
+        --name zenith-restart-helper \
+        -v /var/run/docker.sock:/var/run/docker.sock \
+        "$HELPER_IMAGE" \
+        sh -c "sleep 3 && docker restart $BACKEND_CONTAINER" \
+        >> "$LOG_FILE" 2>&1 || {
+            # Fallback : restart direct (le script meurt ici, le statut done est déjà écrit)
+            log "⚠ Helper indisponible — restart direct"
+            docker restart "$BACKEND_CONTAINER" >> "$LOG_FILE" 2>&1 || true
+        }
+else
+    log "⚠ Aucune image helper trouvée — restart direct"
+    docker restart "$BACKEND_CONTAINER" >> "$LOG_FILE" 2>&1 || true
 fi
 
 log "========================================"

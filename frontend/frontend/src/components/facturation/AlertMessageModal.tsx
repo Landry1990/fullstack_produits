@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Loader2 } from 'lucide-react';
 import PremiumModal from '../common/PremiumModal';
 import api from '../../services/api';
 import { gooeyToast } from 'goey-toast';
@@ -72,7 +73,7 @@ export default function AlertMessageModal({ isOpen, onClose, target, onSuccess }
                         {t('facturation:alert_message.cancel')}
                     </button>
                     <button className="inline-flex items-center justify-center h-9 px-4 rounded-lg text-sm font-semibold bg-amber-500 text-white shadow-sm hover:bg-amber-600 transition-colors" onClick={handleSave} disabled={loading} autoFocus>
-                        {loading ? <div className="animate-spin rounded-full size-4 border-b-2 border-white"></div> : t('facturation:alert_message.save')}
+                        {loading ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : t('facturation:alert_message.save')}
                     </button>
                 </div>
             </div>

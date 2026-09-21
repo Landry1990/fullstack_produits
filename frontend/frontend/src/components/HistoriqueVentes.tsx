@@ -234,20 +234,20 @@ const HistoriqueVentes = () => {
               <table className="min-w-full table-fixed divide-y divide-slate-200">
                 <thead className="bg-slate-100 sticky top-0 z-10 opacity-100">
                   <tr>
-                    <th className="py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.date')}</th>
-                    <th className="text-right py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.ca_ttc')}</th>
-                    <th className="text-right py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.cash')}</th>
-                    <th className="text-right py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.card')}</th>
-                    <th className="text-right py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.check')}</th>
-                    <th className="text-right py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.virement')}</th>
-                    <th className="text-right py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.mobiles')}</th>
-                    <th className="text-right py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.coupons')}</th>
-                    <th className="text-right py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.en_compte')}</th>
-                    <th className="text-center py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.nb_ventes')}</th>
-                    <th className="text-right py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.avg_basket')}</th>
-                    <th className="text-right py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.margin')}</th>
-                    <th className="text-right py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.discounts')}</th>
-                    <th className="text-center py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.telegram')}</th>
+                    <th className="py-2 px-3 text-caption lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.date')}</th>
+                    <th className="text-right py-2 px-3 text-caption lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.ca_ttc')}</th>
+                    <th className="text-right py-2 px-3 text-caption lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.cash')}</th>
+                    <th className="text-right py-2 px-3 text-caption lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.card')}</th>
+                    <th className="text-right py-2 px-3 text-caption lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.check')}</th>
+                    <th className="text-right py-2 px-3 text-caption lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.virement')}</th>
+                    <th className="text-right py-2 px-3 text-caption lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.mobiles')}</th>
+                    <th className="text-right py-2 px-3 text-caption lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.coupons')}</th>
+                    <th className="text-right py-2 px-3 text-caption lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.en_compte')}</th>
+                    <th className="text-center py-2 px-3 text-caption lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.nb_ventes')}</th>
+                    <th className="text-right py-2 px-3 text-caption lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.avg_basket')}</th>
+                    <th className="text-right py-2 px-3 text-caption lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.margin')}</th>
+                    <th className="text-right py-2 px-3 text-caption lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.discounts')}</th>
+                    <th className="text-center py-2 px-3 text-caption lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.telegram')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 bg-white">
@@ -256,7 +256,7 @@ const HistoriqueVentes = () => {
                       <td className="font-semibold text-slate-700 whitespace-nowrap py-2 px-3">
                         <div className="flex flex-col">
                           <span className="text-sm">{formatDate(row.date)}</span>
-                          <span className="text-[10px] text-slate-400 font-normal">{formatDateLong(row.date)}</span>
+                          <span className="text-caption text-slate-400 font-normal">{formatDateLong(row.date)}</span>
                         </div>
                       </td>
                       <td className="text-right py-2 px-3">
@@ -313,7 +313,7 @@ const HistoriqueVentes = () => {
                   <tfoot className="bg-slate-50 border-t-2 border-slate-200">
                     <tr className="text-slate-700 font-bold">
                       <td className="py-2 px-3 whitespace-nowrap">
-                        <span className="uppercase text-[10px] tracking-tight">{t('total_period')}</span>
+                        <span className="uppercase text-caption tracking-tight">{t('total_period')}</span>
                       </td>
                       <td className="text-right py-2 px-3 text-emerald-600 text-lg">{formatMoney(globalTotals.ca_ttc)}</td>
                       <td className="text-right py-2 px-3">{formatMoney(globalTotals.especes)}</td>

@@ -9,10 +9,10 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 const baseStyles = 'rounded-box overflow-hidden transition-all duration-300';
 
 const variants = {
-  default: 'bg-base-100 border border-base-300 shadow-sm hover:shadow-md',
-  bordered: 'bg-transparent border-2 border-base-300 hover:border-base-400',
+  default: 'bg-white border border-slate-200 shadow-sm hover:shadow-md dark:bg-slate-900 dark:border-slate-700',
+  bordered: 'bg-transparent border-2 border-slate-200 hover:border-slate-300 dark:border-slate-700 dark:hover:border-slate-600',
   glass: 'glass-panel-pro',
-  elevated: 'bg-base-100 border border-base-300 shadow-lg hover:shadow-premium hover:-translate-y-1',
+  elevated: 'bg-white border border-slate-200 shadow-lg hover:shadow-premium hover:-translate-y-1 dark:bg-slate-900 dark:border-slate-700',
 };
 
 const paddings = {
@@ -22,6 +22,7 @@ const paddings = {
   lg: 'p-8',
 };
 
+/** @deprecated Utiliser l'équivalent shadcn dans components/shadcn/ — conservé pour compatibilité */
 export const Card: React.FC<CardProps> = ({ className = '', variant = 'default', padding = 'md', children, ref, ...props }) => {
 
   return (

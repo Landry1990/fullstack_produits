@@ -199,21 +199,21 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
 
                     <Card className="flex flex-wrap items-center gap-x-8 gap-y-4 p-4 text-sm">
                         <div className="flex flex-col">
-                            <span className="text-[9px] font-bold text-slate-400 uppercase leading-none mb-1">{t('stock:avoirs.details.items_count')}</span>
+                            <span className="text-micro font-bold text-slate-400 uppercase leading-none mb-1">{t('stock:avoirs.details.items_count')}</span>
                             <span className="font-mono font-bold text-slate-500 text-base whitespace-nowrap">
                                 {selectedAvoir.produits?.length || 0}
                             </span>
                         </div>
 
                         <div className="flex flex-col border-l pl-5 border-slate-200">
-                            <span className="text-[9px] font-bold text-slate-400 uppercase leading-none mb-1">{t('stock:avoirs.details.total_qty')}</span>
+                            <span className="text-micro font-bold text-slate-400 uppercase leading-none mb-1">{t('stock:avoirs.details.total_qty')}</span>
                             <span className="font-mono font-bold text-slate-500 text-base whitespace-nowrap">
                                 {selectedAvoir.produits?.reduce((sum, p) => sum + Number(p.quantity || 0), 0)}
                             </span>
                         </div>
 
                         <div className="flex flex-col border-l pl-5 border-slate-200">
-                            <span className="text-[9px] font-black text-indigo-600 uppercase leading-none mb-1">{t('stock:avoirs.details.total_ht')}</span>
+                            <span className="text-micro font-black text-indigo-600 uppercase leading-none mb-1">{t('stock:avoirs.details.total_ht')}</span>
                             <span className="font-mono font-black text-2xl text-indigo-600 leading-none whitespace-nowrap">
                                 {formatCurrency(Number(selectedAvoir.total_ht) || 0)}
                             </span>

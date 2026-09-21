@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Settings, Check, RotateCcw, Info } from 'lucide-react';
+import { Settings, Check, RotateCcw, Info, Loader2 } from 'lucide-react';
 import { gooeyToast } from 'goey-toast';
 import { usePharmacySettings } from '../../hooks/usePharmacySettings';
 import { stockHealthSettingsSchema } from '../../schemas/stockSchema';
@@ -157,7 +157,7 @@ const StockHealthSettingsModal: React.FC<StockHealthSettingsModalProps> = ({ isO
                             disabled={saving}
                         >
                             {saving ? (
-                                <span className="animate-spin rounded-full size-4 border-b-2 border-white"></span>
+                                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
                             ) : (
                                 <>
                                     <Check className="size-5" />

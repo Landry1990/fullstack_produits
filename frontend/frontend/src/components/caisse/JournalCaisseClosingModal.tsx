@@ -169,7 +169,7 @@ export default function JournalCaisseClosingModal({ state }: Props) {
                 <div className="flex items-center justify-between">
                   <div className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('closing.add_movement')}</div>
                   {userName && (
-                    <div className="flex items-center gap-1 text-[10px] text-slate-400 font-bold">
+                    <div className="flex items-center gap-1 text-caption text-slate-400 font-bold">
                       <UserIcon className="size-3" />
                       {userName}
                     </div>
@@ -227,12 +227,12 @@ export default function JournalCaisseClosingModal({ state }: Props) {
                     {manualMovements.map(m => (
                       <div key={m.id} className="flex justify-between items-center px-4 py-2 text-xs">
                         <div className="flex items-center gap-2 min-w-0">
-                          <span className={cn("inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-bold shrink-0", m.type === 'ENTREE' ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white')}>
+                          <span className={cn("inline-flex items-center rounded-md px-1.5 py-0.5 text-caption font-bold shrink-0", m.type === 'ENTREE' ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white')}>
                             {m.type === 'ENTREE' ? '+' : '-'}
                           </span>
                           <div className="min-w-0">
                             <div className="text-slate-700 truncate">{m.motif}</div>
-                            {'caissier' in m && typeof m.caissier === 'string' && <div className="text-[10px] text-slate-400 font-bold">{m.caissier}</div>}
+                            {'caissier' in m && typeof m.caissier === 'string' && <div className="text-caption text-slate-400 font-bold">{m.caissier}</div>}
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
@@ -259,9 +259,9 @@ export default function JournalCaisseClosingModal({ state }: Props) {
               {/* === TOTAL THÉORIQUE CALCULÉ === */}
               {computed && (
                 <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-center">
-                  <div className="text-[10px] font-black text-emerald-600/60 uppercase tracking-widest">{t('closing.theoretical_amount')}</div>
+                  <div className="text-caption font-black text-emerald-600/60 uppercase tracking-widest">{t('closing.theoretical_amount')}</div>
                   <div className="text-2xl font-black text-emerald-600">{formatCurrencyLocal(Math.round(computed.totalTheorique))}</div>
-                  <div className="text-[10px] text-emerald-400 mt-1 font-mono">
+                  <div className="text-caption text-emerald-400 mt-1 font-mono">
                     {t('closing.theoretical_formula')}
                   </div>
                 </div>
@@ -326,7 +326,7 @@ export default function JournalCaisseClosingModal({ state }: Props) {
                   </Button>
                 </div>
                 {!billetageObligatoire && (
-                  <p className="mt-1 text-[10px] text-slate-400 font-bold">
+                  <p className="mt-1 text-caption text-slate-400 font-bold">
                     {t('closing.breakdown_optional_hint', { defaultValue: 'Billetage optionnel — cliquez l\'icône pour détailler vos coupures' })}
                   </p>
                 )}

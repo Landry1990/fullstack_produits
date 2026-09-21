@@ -109,7 +109,8 @@
         "import_launch_error": "Error launching import",
         "purge_launch_error": "Error during purge",
         "backend_restarting": "Backend is restarting...",
-        "starting": "Starting..."
+        "starting": "Starting...",
+        "update_timeout": "Timeout: the update is taking too long."
     },
     "placeholders": {
         "enter_password": "Enter your password",
@@ -124,5 +125,61 @@
     "export_success": "Excel export downloaded!",
     "export_error": "Error during Excel export",
     "backup_path_description": "Linux path in the container (ex: /mnt/backups). The volume must be mounted in docker-compose.",
-    "admin_password_placeholder": "Admin password"
+    "admin_password_placeholder": "Admin password",
+    "tabs": {
+        "cleanup": "Cleanup",
+        "backups": "Backups & Code"
+    },
+    "products_title": "Product Management",
+    "products_in_db": "Products in database",
+    "import_description": "Import an Excel (.xlsx) or CSV file to create/update products.",
+    "import_button": "Import",
+    "importing": "Importing...",
+    "import_result": {
+        "created": "Created",
+        "updated": "Updated",
+        "errors": "Errors"
+    },
+    "download_excel_report": "Download the Excel report",
+    "download_text_report": "Download the text report",
+    "purge_products_desc": "Deletes all products (useful if a wrong file was imported).",
+    "keep_products_with_sales": "Keep products linked to sales",
+    "purge_products_btn": "Purge products",
+    "purge_result_deleted": "{{count}} product(s) deleted",
+    "purge_result_kept": "{{count}} kept because linked to sales",
+    "manual_update_title": "Manual Update",
+    "manual_update_desc": "Runs the nightly update (git pull + Docker build + migrations) on demand.",
+    "updating": "Updating...",
+    "run_update": "Run update",
+    "waiting_logs": "Waiting for logs...",
+    "latest_changes": "Latest changes",
+    "changelog_unavailable": "Changelog not available.",
+    "backup_steps": {
+        "init": "Initializing...",
+        "analyze": "Analyzing database...",
+        "extract": "Extracting tables...",
+        "generate": "Generating SQL file...",
+        "compress": "GZip compression..."
+    },
+    "restore_steps": {
+        "init": "Initializing...",
+        "verify": "Verifying file...",
+        "decompress": "GZip decompression...",
+        "restore": "PostgreSQL restore (psql)...",
+        "sequences": "Synchronizing sequences...",
+        "done": "Restoration completed!"
+    },
+    "purge_modal": {
+        "irreversible": "Irreversible operation",
+        "warn_unlinked": "All products NOT linked to sales will be deleted.",
+        "warn_all": "ALL products will be deleted.",
+        "confirm_password": "Confirm your password",
+        "confirm_btn": "Confirm purge"
+    },
+    "update_modal": {
+        "sensitive": "Sensitive operation",
+        "desc": "This action will download the latest version, rebuild the Docker images and restart the containers. The application will be briefly unavailable.",
+        "confirm_password": "Confirm your admin password",
+        "confirm_btn": "Confirm update"
+    }
 }

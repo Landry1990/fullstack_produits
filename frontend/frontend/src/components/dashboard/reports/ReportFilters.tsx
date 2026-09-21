@@ -193,7 +193,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
             {filteredParams.map(param => (
                 <div key={param.key} className="w-full sm:w-auto sm:min-w-[200px] min-w-0">
                     <label htmlFor={`rp-${param.key}`} className="block py-1">
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                        <span className="text-caption font-bold uppercase tracking-widest text-slate-400">
                             {t(`params.${param.key}`, { defaultValue: param.label })}
                             {param.required && <span className="text-red-600 ml-1">*</span>}
                         </span>
@@ -313,7 +313,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                                     </div>
                                                     <div className="flex-1">
                                                         <div className="font-bold text-sm">{client.name}</div>
-                                                        {client.phone && <div className="text-[10px] text-slate-300 font-bold">{client.phone}</div>}
+                                                        {client.phone && <div className="text-caption text-slate-300 font-bold">{client.phone}</div>}
                                                     </div>
                                                 </button>
                                             </li>
@@ -563,7 +563,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                                 return (
                                                     <div key={`cond-${cond.field}-${cond.operator}`} className="flex flex-wrap items-center gap-2 p-3 bg-slate-50/50 rounded-2xl border border-slate-200 animate-in zoom-in-95 duration-200">
                                                         <Select
-                                                            className="rounded-lg flex-1 min-w-[140px] font-bold text-[11px] uppercase bg-white h-8 px-2 text-xs border border-slate-200"
+                                                            className="rounded-lg flex-1 min-w-[140px] font-bold text-label uppercase bg-white h-8 px-2 text-xs border border-slate-200"
                                                             aria-label={t('dynamic_constructor.field_placeholder')}
                                                             value={cond.field}
                                                             onChange={(e) => {
@@ -584,7 +584,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                                         </Select>
 
                                                         <Select
-                                                            className="rounded-lg w-32 font-bold text-[11px] bg-white h-8 px-2 text-xs border border-slate-200"
+                                                            className="rounded-lg w-32 font-bold text-label bg-white h-8 px-2 text-xs border border-slate-200"
                                                             aria-label={t('dynamic_constructor.operator_label', 'Opérateur')}
                                                             value={cond.operator}
                                                             onChange={(e) => {
@@ -605,7 +605,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                                         {showValueInput ? (
                                                             <Input
                                                                 type="text"
-                                                                className="rounded-lg w-24 font-bold text-[11px] bg-white h-8 px-2 text-xs border border-slate-200"
+                                                                className="rounded-lg w-24 font-bold text-label bg-white h-8 px-2 text-xs border border-slate-200"
                                                                 placeholder={t('dynamic_constructor.value_placeholder')}
                                                                 aria-label={t('dynamic_constructor.value_placeholder')}
                                                                 value={cond.value}
@@ -616,7 +616,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                                                 }}
                                                             />
                                                         ) : (
-                                                            <div className="w-24 px-2 py-1 bg-slate-200/50 rounded-lg text-[10px] font-black uppercase text-center text-slate-300 border border-slate-200 border-dashed">
+                                                            <div className="w-24 px-2 py-1 bg-slate-200/50 rounded-lg text-caption font-black uppercase text-center text-slate-300 border border-slate-200 border-dashed">
                                                                 {t('dynamic_constructor.no_value')}
                                                             </div>
                                                         )}
@@ -701,7 +701,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                                                 setParam(param.key, newFields.join(','));
                                                             }}
                                                         />
-                                                        <span className={`text-[11px] font-bold uppercase tracking-tight ${isChecked ? 'text-indigo-600' : 'text-slate-500'}`}>
+                                                        <span className={`text-label font-bold uppercase tracking-tight ${isChecked ? 'text-indigo-600' : 'text-slate-500'}`}>
                                                             {t(`reports.query_options.${selectedQuery.id}.${param.key}.${opt.value}`, { defaultValue: opt.label })}
                                                         </span>
                                                     </label>
@@ -710,7 +710,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                             })()}
                                         </div>
                                         <div className="mt-4 pt-4 border-t border-slate-200 flex justify-between items-center">
-                                            <div className="text-[9px] font-bold uppercase text-slate-300 italic">
+                                            <div className="text-micro font-bold uppercase text-slate-300 italic">
                                                 * {t('reports.select_columns_hint', { defaultValue: 'Sélectionnez les colonnes à afficher' })}
                                             </div>
                                             <button 

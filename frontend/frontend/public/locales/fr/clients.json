@@ -112,6 +112,7 @@
         "delete_success": "Client supprimé avec succès",
         "bulk_delete_success": "{{count}} clients supprimés",
         "error_fetch": "Erreur lors du chargement des clients",
+        "error_load_details": "Erreur lors du chargement des détails du client",
         "error_save": "Erreur lors de l'enregistrement",
         "error_delete": "Erreur lors de la suppression",
         "error_bulk_delete": "Erreur lors de la suppression groupée",

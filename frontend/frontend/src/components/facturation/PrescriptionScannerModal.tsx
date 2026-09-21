@@ -372,7 +372,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
                     matchResults.map((result, idx) => (
                       <div key={result.ocrLine} className={`p-3 rounded-xl border transition-all ${result.matchedProduct ? 'bg-emerald-50/50 border-emerald-200' : 'bg-white border-slate-100'}`}>
                         <div className="flex justify-between items-start mb-2">
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{t('facturation:prescription_scanner.ocr_line_label')}</span>
+                          <span className="text-caption font-bold text-slate-400 uppercase tracking-tighter">{t('facturation:prescription_scanner.ocr_line_label')}</span>
                           {result.matchedProduct && <Check className={`size-4 text-emerald-600 ${matchPulse ? 'animate-ping' : ''}`} />}
                         </div>
                         <p className="font-medium text-sm mb-2 text-slate-800">{result.ocrLine}</p>
@@ -385,12 +385,12 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
                                 onClick={() => handleSelectProduct(idx, product)}
                             >
                                 <span className="truncate flex-1 font-bold">{product.name}</span>
-                                <span className="ml-2 text-[10px] text-slate-400">{product.selling_price} F</span>
+                                <span className="ml-2 text-caption text-slate-400">{product.selling_price} F</span>
                             </button>
                           ))}
 
                           {result.suggestions.length === 0 && (
-                              <p className="text-[10px] text-red-600 flex items-center gap-1 py-1">
+                              <p className="text-caption text-red-600 flex items-center gap-1 py-1">
                                   <AlertCircle className="size-3" />
                                   {t('facturation:prescription_scanner.no_match')}
                               </p>

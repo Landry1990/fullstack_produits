@@ -160,7 +160,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                 <span>{t('sales:details.payments')}</span>
                                 <div className="flex gap-2">
                                     {facture.paiements.map((p) => (
-                                        <span key={p.mode_paiement_display} className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700 border border-slate-200 text-[10px]">
+                                        <span key={p.mode_paiement_display} className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700 border border-slate-200 text-caption">
                                             {p.mode_paiement_display} ({formatCurrency(parseFloat(p.montant))})
                                         </span>
                                     ))}
@@ -209,7 +209,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                                         {prod.produit_nom}
                                                     </div>
                                                     {prod.is_chronic && (
-                                                        <span className="flex items-center gap-1 text-[10px] bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded-full border border-emerald-100 font-bold animate-pulse">
+                                                        <span className="flex items-center gap-1 text-caption bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded-full border border-emerald-100 font-bold animate-pulse">
                                                             <CheckCircle2 className="size-2.5" />
                                                             CHRONIQUE
                                                         </span>
@@ -218,32 +218,32 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                                 <div className="flex flex-wrap gap-2 mt-1">
                                                     {prod.allocations && prod.allocations.length > 1 ? (
                                                         <div className="flex flex-col gap-1">
-                                                            <span className="text-[10px] font-medium text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
+                                                            <span className="text-caption font-medium text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
                                                                 {prod.allocations.length} lots répartis manuellement
                                                             </span>
                                                             {prod.allocations.map((alloc, idx) => (
-                                                                <span key={alloc.id || idx} className="text-[10px] text-blue-600 font-mono bg-blue-50/50 px-1.5 py-0.5 rounded border border-blue-100">
+                                                                <span key={alloc.id || idx} className="text-caption text-blue-600 font-mono bg-blue-50/50 px-1.5 py-0.5 rounded border border-blue-100">
                                                                     Lot: {alloc.lot || 'N/A'} × {alloc.quantity}
                                                                     {alloc.date_expiration && ` (Exp: ${alloc.date_expiration})`}
                                                                 </span>
                                                             ))}
                                                         </div>
                                                     ) : prod.lot ? (
-                                                        <span className="text-[10px] text-blue-600 font-mono bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
+                                                        <span className="text-caption text-blue-600 font-mono bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
                                                             Lot: {prod.lot} {prod.date_expiration && `(Exp: ${prod.date_expiration})`}
                                                         </span>
                                                     ) : prod.allocations && prod.allocations.length === 1 ? (
-                                                        <span className="text-[10px] text-blue-600 font-mono bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
+                                                        <span className="text-caption text-blue-600 font-mono bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
                                                             Lot: {prod.allocations[0].lot || 'N/A'} {prod.allocations[0].date_expiration && `(Exp: ${prod.allocations[0].date_expiration})`}
                                                         </span>
                                                     ) : null}
                                                     {remiseUnitaire > 0 && (
-                                                        <span className="text-[10px] text-amber-600 font-medium bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100">
+                                                        <span className="text-caption text-amber-600 font-medium bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100">
                                                             Remise: -{formatCurrency(remiseUnitaire)} /unité
                                                         </span>
                                                     )}
                                                     {prod.treatment_duration_days && (
-                                                        <span className="text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+                                                        <span className="text-caption text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
                                                             Durée: {prod.treatment_duration_days} jours
                                                         </span>
                                                     )}
@@ -290,21 +290,21 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                     <div className="flex justify-end">
                     <div className="flex flex-wrap items-center justify-end gap-8 text-sm">
                         <div className="flex flex-col items-end border-r border-slate-300 pr-8 last:border-0 last:pr-0">
-                            <span className="text-[10px] uppercase font-black tracking-widest text-slate-500 mb-1">{t('fields.subtotal_ht')}</span>
+                            <span className="text-caption uppercase font-black tracking-widest text-slate-500 mb-1">{t('fields.subtotal_ht')}</span>
                             <span className="font-mono font-bold text-slate-800">{formatCurrency(totals.totalHt)}</span>
                         </div>
                         <div className="flex flex-col items-end border-r border-slate-300 pr-8 last:border-0 last:pr-0">
-                            <span className="text-[10px] uppercase font-black tracking-widest text-slate-500 mb-1">{t('fields.vat')}</span>
+                            <span className="text-caption uppercase font-black tracking-widest text-slate-500 mb-1">{t('fields.vat')}</span>
                             <span className="font-mono font-bold text-slate-800">{formatCurrency(totals.totalTva)}</span>
                         </div>
                         {totals.remise > 0 && (
                             <div className="flex flex-col items-end border-r border-slate-300 pr-8 last:border-0 last:pr-0">
-                                <span className="text-[10px] uppercase font-black tracking-widest text-orange-500 mb-1">{t('table.discount')}</span>
+                                <span className="text-caption uppercase font-black tracking-widest text-orange-500 mb-1">{t('table.discount')}</span>
                                 <span className="font-mono font-bold text-amber-600">-{formatCurrency(totals.remise)}</span>
                             </div>
                         )}
                         <div className="flex flex-col items-end bg-blue-50 px-4 py-2 rounded-xl border border-blue-100 shadow-sm">
-                            <span className="text-[10px] uppercase font-black tracking-widest text-blue-500 mb-1">{t('fields.total_ttc')}</span>
+                            <span className="text-caption uppercase font-black tracking-widest text-blue-500 mb-1">{t('fields.total_ttc')}</span>
                             <span className="font-mono text-xl text-blue-600 font-black tracking-tight">
                                 {formatCurrency(totals.totalTtc)}
                             </span>
@@ -315,7 +315,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                     <div className="flex justify-end mt-4">
                         {Math.abs(totals.partClient - totals.totalTtc) > 1 && (
                             <div className="flex items-center gap-4 text-white bg-blue-500 py-2.5 px-5 rounded-xl shadow-lg">
-                                <span className="uppercase text-[10px] font-black tracking-widest opacity-80 border-r border-white/20 pr-4">À payer client</span>
+                                <span className="uppercase text-caption font-black tracking-widest opacity-80 border-r border-white/20 pr-4">À payer client</span>
                                 <span className="font-mono text-2xl font-black tracking-tight">
                                     {formatCurrency(totals.partClient)}
                                 </span>

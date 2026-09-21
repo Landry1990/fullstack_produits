@@ -92,7 +92,7 @@ export default function OmnisearchResults({
 
   return (
     <CommandList className="flex-1 overflow-y-auto p-2 cmdk-list">
-      <CommandEmpty className="py-8 text-center text-sm text-slate-400 italic">
+      <CommandEmpty className="py-8 text-center text-sm text-slate-500 italic">
         {loading ? (
           <div className="flex flex-col items-center gap-2">
             <span className="inline-block w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
@@ -106,7 +106,7 @@ export default function OmnisearchResults({
       {!search && (<>
         <CommandGroup
           heading={t('omnisearch.groups.actions', 'Actions Rapides')}
-          className="text-[10px] font-black text-slate-400 pt-4 pb-1 px-3 uppercase tracking-[0.15em]"
+          className="text-caption font-black text-slate-500 pt-4 pb-1 px-3 uppercase tracking-[0.15em]"
         >
           <div className="grid grid-cols-2 gap-2 px-1 pb-1">
             {quickActions.map(({ action, value, icon: Icon, chip, label, desc }) => (
@@ -116,7 +116,7 @@ export default function OmnisearchResults({
                 </div>
                 <div className="flex flex-col items-start gap-0.5">
                   <span className="text-xs font-bold text-slate-700 leading-tight">{label}</span>
-                  <span className="text-[10px] font-medium text-slate-400 leading-tight">{desc}</span>
+                  <span className="text-caption font-medium text-slate-500 leading-tight">{desc}</span>
                 </div>
               </CommandItem>
             ))}
@@ -128,7 +128,7 @@ export default function OmnisearchResults({
       {!search && (<>
         <CommandGroup
           heading={t('omnisearch.groups.navigation')}
-          className="text-[10px] font-black text-slate-400 pt-4 pb-1 px-3 uppercase tracking-[0.15em]"
+          className="text-caption font-black text-slate-500 pt-4 pb-1 px-3 uppercase tracking-[0.15em]"
         >
           {navLinks.map(({ path, value, icon: Icon, chip, label }) => (
             <CommandItem key={value} value={value} onSelect={() => onSelectLink(path)} className={itemClassNav}>
@@ -145,7 +145,7 @@ export default function OmnisearchResults({
       {search && produits.length > 0 && (<>
         <CommandGroup
           heading={t('omnisearch.groups.products')}
-          className="text-[10px] font-black text-slate-400 pt-4 pb-1 px-3 uppercase tracking-[0.15em]"
+          className="text-caption font-black text-slate-500 pt-4 pb-1 px-3 uppercase tracking-[0.15em]"
         >
           {produits.map((prod) => (
             <CommandItem
@@ -159,7 +159,7 @@ export default function OmnisearchResults({
               </div>
               <div className="flex-1 flex flex-col items-start overflow-hidden">
                 <span className="font-bold truncate w-full group-aria-selected:text-blue-600" title={prod.name}>{prod.name}</span>
-                <span className="text-[10px] text-slate-500 font-medium uppercase">
+                <span className="text-caption text-slate-500 font-medium uppercase">
                   {prod.forme_name} • {prod.rayon_name || prod.groupe_name}
                 </span>
               </div>
@@ -177,7 +177,7 @@ export default function OmnisearchResults({
       {search && clients.length > 0 && (<>
         <CommandGroup
           heading={t('omnisearch.groups.clients')}
-          className="text-[10px] font-black text-slate-400 pt-4 pb-1 px-3 uppercase tracking-[0.15em]"
+          className="text-caption font-black text-slate-500 pt-4 pb-1 px-3 uppercase tracking-[0.15em]"
         >
           {clients.map((client) => (
             <CommandItem
@@ -191,7 +191,7 @@ export default function OmnisearchResults({
               </div>
               <div className="flex-1 flex flex-col items-start">
                 <span className="font-bold group-aria-selected:text-indigo-500">{client.name}</span>
-                <span className="text-[10px] text-slate-500 font-bold">{client.phone || client.email || 'Aucun contact'}</span>
+                <span className="text-caption text-slate-500 font-bold">{client.phone || client.email || 'Aucun contact'}</span>
               </div>
             </CommandItem>
           ))}
@@ -202,7 +202,7 @@ export default function OmnisearchResults({
       {search && factures.length > 0 && (<>
         <CommandGroup
           heading={t('omnisearch.groups.invoices')}
-          className="text-[10px] font-black text-slate-400 pt-4 pb-1 px-3 uppercase tracking-[0.15em]"
+          className="text-caption font-black text-slate-500 pt-4 pb-1 px-3 uppercase tracking-[0.15em]"
         >
           {factures.map((f) => (
             <CommandItem
@@ -216,7 +216,7 @@ export default function OmnisearchResults({
               </div>
               <div className="flex-1 flex flex-col items-start overflow-hidden">
                 <span className="font-bold truncate w-full group-aria-selected:text-blue-600">{f.numero_facture}</span>
-                <span className="text-[10px] text-slate-500 font-medium uppercase font-mono">
+                <span className="text-caption text-slate-500 font-medium uppercase font-mono">
                   {f.client_name || 'Client de passage'} • {formatDate(f.date)}
                 </span>
               </div>
@@ -232,7 +232,7 @@ export default function OmnisearchResults({
       {search && commandes.length > 0 && (<>
         <CommandGroup
           heading={t('omnisearch.groups.procurements')}
-          className="text-[10px] font-black text-slate-400 pt-4 pb-1 px-3 uppercase tracking-[0.15em]"
+          className="text-caption font-black text-slate-500 pt-4 pb-1 px-3 uppercase tracking-[0.15em]"
         >
           {commandes.map((o) => (
             <CommandItem
@@ -246,7 +246,7 @@ export default function OmnisearchResults({
               </div>
               <div className="flex-1 flex flex-col items-start overflow-hidden">
                 <span className="font-bold truncate w-full group-aria-selected:text-blue-600">{o.fournisseur_nom || 'Grossiste'}</span>
-                <span className="text-[10px] text-slate-500 font-medium uppercase">
+                <span className="text-caption text-slate-500 font-medium uppercase">
                   {formatDate(o.date)} • {o.status_display}
                 </span>
               </div>
@@ -259,7 +259,7 @@ export default function OmnisearchResults({
       {search && fournisseurs.length > 0 && (<>
         <CommandGroup
           heading={t('omnisearch.groups.suppliers')}
-          className="text-[10px] font-black text-slate-400 pt-4 pb-1 px-3 uppercase tracking-[0.15em]"
+          className="text-caption font-black text-slate-500 pt-4 pb-1 px-3 uppercase tracking-[0.15em]"
         >
           {fournisseurs.map((s) => (
             <CommandItem
@@ -273,7 +273,7 @@ export default function OmnisearchResults({
               </div>
               <div className="flex-1 flex flex-col items-start overflow-hidden">
                 <span className="font-bold truncate w-full group-aria-selected:text-blue-600">{s.name}</span>
-                <span className="text-[10px] text-slate-500 font-medium uppercase">{s.phone || s.email || 'Contact N/A'}</span>
+                <span className="text-caption text-slate-500 font-medium uppercase">{s.phone || s.email || 'Contact N/A'}</span>
               </div>
             </CommandItem>
           ))}

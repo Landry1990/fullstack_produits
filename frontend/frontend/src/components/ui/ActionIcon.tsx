@@ -13,6 +13,7 @@ interface ActionIconProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
+/** @deprecated Utiliser l'équivalent shadcn dans components/shadcn/ — conservé pour compatibilité */
 const ActionIcon: React.FC<ActionIconProps> = ({
   icon: Icon,
   onClick,
@@ -25,13 +26,13 @@ const ActionIcon: React.FC<ActionIconProps> = ({
 }) => {
   const getVariantClass = () => {
     switch (variant) {
-      case 'success': return 'text-success hover:bg-success/10';
-      case 'error': return 'text-error hover:bg-error/10';
-      case 'warning': return 'text-warning hover:bg-warning/10';
-      case 'info': return 'text-info hover:bg-info/10';
-      case 'primary': return 'text-primary hover:bg-primary/10';
-      case 'secondary': return 'text-secondary hover:bg-secondary/10';
-      default: return 'text-base-content/60 hover:text-base-content hover:bg-base-200';
+      case 'success': return 'text-green-600 hover:bg-green-500/10 dark:text-green-400';
+      case 'error': return 'text-red-600 hover:bg-red-500/10 dark:text-red-400';
+      case 'warning': return 'text-amber-500 hover:bg-amber-500/10 dark:text-amber-400';
+      case 'info': return 'text-blue-600 hover:bg-blue-500/10 dark:text-blue-400';
+      case 'primary': return 'text-emerald-600 hover:bg-emerald-600/10 dark:text-emerald-400';
+      case 'secondary': return 'text-blue-600 hover:bg-blue-600/10 dark:text-blue-400';
+      default: return 'text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800';
     }
   };
 
@@ -62,7 +63,7 @@ const ActionIcon: React.FC<ActionIconProps> = ({
         rounded-lg transition-all duration-200 flex items-center justify-center
         ${getSizeClass()}
         ${getVariantClass()}
-        ${disabled ? 'text-base-content/30 cursor-not-allowed' : 'active:scale-95'}
+        ${disabled ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed' : 'active:scale-95'}
         ${className}
       `}
       title={title}

@@ -2,6 +2,490 @@
 
 ---
 
+## 2026-09-21 — 🖼️ Icônes navigateur/PWA régénérées depuis le nouveau logo
+
+Le favicon navigateur et les icônes PWA (barre des tâches, écran
+d'accueil) sont des fichiers séparés du logo in-app — régénérés depuis
+`public/logo.png` via PIL (LANCZOS) :
+
+- `favicon.svg` → `favicon.png` 64px (+ `apple-touch-icon.png` 180px
+  ajouté dans `index.html`).
+- `pwa-icon-192x192.png` / `pwa-icon-512x512.png` : logo à 78% sur fond
+  blanc (safe zone maskable).
+- `vite.config.ts` : `includeAssets` mis à jour.
+- **v2/v3 (même jour)** : icônes PWA régénérées en **fond transparent**
+  puis logo porté à **100%** de la surface (bord à bord, validé en
+  barre des tâches) ; `manifest.json` `purpose` : `"any"`.
+
+⚠️ L'icône de la barre des tâches / raccourci installé se met à jour
+uniquement en réinstallant le raccourci PWA (désinstaller → réinstaller
+via le menu navigateur) — le cache d'icône Windows/Android est tenace.
+
+Fichiers : `index.html`, `vite.config.ts`, `public/{favicon,apple-touch-icon,pwa-icon-*}.png`.
+
+---
+
+## 2026-09-21 — ⏹️ Programmation auto de commandes désactivée
+
+Des commandes `AUTO-UBIPHARMC-*` apparaissaient chaque dimanche ~21h10 :
+le `OrderSchedule #1` (UBIPHARM CAMEROUN, mode OPTIMISE, actif depuis le
+06/09) fonctionnait enfin via le scheduler interne (`run_order_schedules`
+toutes les 10 min), mais l'interface de gestion avait été supprimée.
+
+Décision : **désactivation** (`is_active=False` en base, effet immédiat,
+aucun code touché). Réactivation possible à tout moment ; l'UI de gestion
+reste récupérable dans l'historique git (`OrderSchedulingModal` +
+`ScheduledOrdersListModal` avant commit `3341acbd`).
+
+---
+
+## 2026-09-21 — 🖼️ Nouveau logo applicatif (sidebar + login)
+
+Le logo Zenith SVG inline est remplacé par le logo image du client
+(croix verte + feuille) :
+
+- `frontend/frontend/public/logo.png` : PNG transparent 426×432 généré
+  depuis le JPG source (détourage du fond blanc via PIL/numpy,
+  unblend des bords anti-aliasés, recadrage).
+- `frontend/frontend/src/components/ZenithLogo.tsx` : réécrit pour
+  rendre `<img src="/logo.png">` — l'API (`variant`, `size`,
+  `className`) est conservée pour compatibilité des appelants.
+- Effet visible dans `Sidebar.tsx` (26/32px) et `LoginShadcn.tsx`
+  (48/80px) — le détourage de la feuille laisse voir le fond sombre.
+
+Vérifié : `npm run build` OK, déployé via `deploy.ps1 -Target frontend`.
+
+---
+
+## 2026-09-21 — 🧩 JournalAudit migré vers shadcn/ui
+
+`JournalAudit.tsx` n'utilisait aucune primitive shadcn (boutons natifs,
+selects/inputs/pagination customs). Migration complète, comportement
+inchangé :
+
+- **Button** (outline/secondary/ghost + tailles) : export CSV, toggle
+  filtres, reset, quick filters (pilules), pagination prev/next, bouton
+  d'expansion des détails.
+- **Badge** : badges de sévérité par action, badge sudo, chips de détails.
+- **Select / Input** : filtres utilisateur/modèle/dates, champ de
+  recherche (`disableUppercase` pour ne pas casser la recherche).
+- **Card** : cartes KPI et panneau de filtres.
+
+Gains : focus rings uniformes, états hover/disabled cohérents, a11y.
+Fichier : `frontend/frontend/src/components/JournalAudit.tsx`.
+Vérifié : `tsc --noEmit` OK, `npm run build` OK.
+
+---
+
+## 2026-09-21 — 🌙 Lot 4 audit visuel : dark mode
+
+Contrairement à l'audit initial (qui comptait les `dark:` manquants), le
+mode nuit (`theme-midnight`) reposait déjà sur ~700 lignes d'overrides
+globaux dans `index.css`. Le lot 4 a consisté à **boucher les trous**
+identifiés par un inventaire exhaustif des classes utilisées non couvertes.
+
+### Correctifs `index.css` (nouveau bloc)
+
+- **Tokens soft/strong** : `--color-{success,warning,error}-{soft,strong}`
+  redéfinis sous `.theme-midnight` (fix de régression lot 3 — pastel clair
+  sur fond nuit).
+- **Hovers manquants** : `hover:bg-{emerald,amber,red,blue,indigo}-100`,
+  `hover:bg-slate-300`, `group-hover:bg-{white,slate-*,indigo-*,emerald-*}`,
+  `hover:border-{slate,gray}-*`, `focus-within:bg-white` (Omnisearch).
+- **Variantes d'opacité** : `border-{slate,gray}-*/NN`, `bg-slate-200/NN`,
+  `bg-{slate,gray}-300/NN`, `border-*-50`, `divide-*-50`.
+- **États** : `aria-selected`/`group-aria-selected` (Omnisearch, incl.
+  neutralisation hors-sélection des teintes permanentes dues aux sélecteurs
+  `[class*="…/"]`), `data-[state=active/selected/open]:bg-*`,
+  `ring-offset-white`, `focus:ring-{emerald,red}-100`.
+- **Recharts** : tooltips thémés (fond/bordure/texte sombres).
+
+### Impression en mode nuit (bug réel corrigé)
+
+- `InventairePrintTemplate.tsx` : ajout de `data-theme="light"` manquant.
+- `[data-theme="light"]` : réinitialisation locale des tokens `base-*` en
+  clair + re-force des classes slate utilisées par les templates → les
+  documents imprimés depuis une session en mode nuit restent blancs.
+
+### Non traité (consciemment)
+
+- `LicenceScreen` : design sombre intentionnel.
+- `LoginShadcn` : logique isDark locale self-contained.
+
+### Vérifié
+
+`tsc --noEmit` OK, `npm run build` OK, 942 règles `.theme-midnight` dans le
+CSS généré.
+
+---
+
+## 2026-09-21 — 🎯 Lot 3 audit visuel : convergence shadcn
+
+Stratégie "compat layer" : les primitives `components/ui/*` gardent leur
+API (isLoading, leftIcon, auto-uppercase…) mais rendent désormais avec la
+palette slate/emerald + variantes `dark:` — les ~100 fichiers consommateurs
+convergent visuellement sans réécriture. Tous marqués `@deprecated` vers
+`components/shadcn/`.
+
+### ui/* normalisés (16 fichiers)
+
+- Display : Button, Badge, Card, ActionIcon, Pagination, SelectionHeader,
+  Skeleton, SkeletonTable (+ EmptyState nettoyé).
+- Formulaires : Input, Select, Dialog (déjà Radix), Checkbox, Switch, Tabs,
+  Textarea, Label.
+- Bonus : classes mortes corrigées (`bg-muted` inexistant → slate-200,
+  `glass-panel-pro` défini dans index.css — light + midnight).
+
+### PremiumModal → Radix Dialog
+
+- `common/PremiumModal.tsx` réécrit sur `shadcn/Dialog` : focus trap,
+  Escape, scroll-lock natifs. API 100% conservée (isOpen, maxWidth,
+  gradient, footer, disableClose). ~35 callers inchangés.
+
+### Tokens & purge CSS
+
+- Nouveaux tokens : `success/warning/error-soft/strong`, `brand-telegram`,
+  `brand-whatsapp` → 14 hex en dur remplacés (ClinicalAlerts,
+  FacturationNotifications, PointageReleveModal, NotificationsTab,
+  LoginShadcn, InventaireAnalysisTab).
+- Règles DaisyUI globales supprimées d'`index.css` : `.input`/`.select`
+  (+ media query), `.table` (zebra/sticky), `.badge`/`.badge-outline`/
+  `.badge-pharma`, `.modal`/`.modal-box` — **zéro consommateur** vérifié
+  par grep exhaustif.
+
+### Vérifié
+
+`tsc --noEmit` OK, `npm run build` OK.
+
+### Note
+
+~10 modales manuelles `role="dialog"` sans focus trap restent à migrer
+vers Dialog Radix dans une vague future (InventaireCreateModal,
+ProduitFormModal, InteractionsManager, etc.).
+
+---
+
+## 2026-09-21 — 🧱 Lot 2 audit visuel : fondations design system
+
+### Tokens typographiques
+
+- `index.css` `@theme` : `--text-micro` (9px), `--text-caption` (10px),
+  `--text-label` (11px) → classes `text-micro`/`text-caption`/`text-label`.
+- Codemod : **1216 remplacements** dans 162 fichiers —
+  `text-[9px]`→`text-micro`, `text-[10px]`→`text-caption`,
+  `text-[11px]`→`text-label` (variantes sm:/lg:/dark: préservées).
+  Rendu identique, mais la taille est maintenant un token modifiable
+  centralement.
+
+### PageContainer
+
+- Nouveau `components/ui/PageContainer.tsx` : variantes `dense`
+  (max-w-1600px), `form` (4xl), `full` (POS).
+- Migrées : JournalAudit, Comptabilite, Maintenance, GestionUtilisateurs,
+  StatistiquesFournisseur (wrappées) ; Clients, Fournisseurs, Commandes,
+  Ventes, Corbeille, Creances, HistoriqueClotures, Perimes (max-w-1600px
+  sur root pleine hauteur) ; CentreRapports (7xl → 1600px interne).
+
+### Dialog standardisé
+
+- `shadcn/DialogContent` : prop `size` typée `sm|md|lg|xl|full`
+  (défaut md = comportement précédent, rétrocompatible).
+
+### Vérifié
+
+`tsc --noEmit` OK, `npm run build` OK, classes text-micro/caption/label
+présentes dans le CSS généré.
+
+---
+
+## 2026-09-21 — 🎨 Lot 1 audit visuel : quick wins UX/a11y/i18n
+
+Suite de l'audit visuel complet (3 agents d'analyse). Quick wins appliqués
+par 4 agents parallèles sur fichiers disjoints :
+
+### ErrorState + retry
+
+- Nouveau composant `components/ui/ErrorState.tsx` : bannière d'erreur avec
+  bouton "Réessayer" optionnel (clé `common:retry` fr/en ajoutée).
+- ~12 affichages `{error && <div>}` bruts remplacés (ProduitShadcn, Commandes,
+  Fournisseurs, CentreRapports, JournalCaisseTable, Creances, StockAnalysis,
+  TrancheHoraireStats, SystemHealthTab + modales Produit/Lot/QuickCreate/
+  CashMovement) — avec `onRetry` quand un refetch existe.
+
+### Submit buttons sécurisés
+
+- `disabled` + spinner `Loader2` sur les soumissions qui en manquaient
+  (UserFormDialog, ConfigOptionManager, CategoryManager, ClientNameModal)
+  et spinners custom → `Loader2` partout (ClientFormModal,
+  FournisseurFormModals, ClientDepositModal, AlertMessageModal,
+  StockHealthSettingsModal). Anti double-clic.
+
+### Accessibilité
+
+- `aria-label` ajoutés sur les boutons icône restants (Clients checkbox,
+  ProductSearch, TableCartRow).
+- `cursor-pointer` vérifié sur les éléments cliquables.
+- Contraste : `text-slate-400` → `text-slate-500` sur les labels/infos en
+  fond clair (CommandeForm, Omnisearch ×3, JournalAudit, Clients).
+- Toast d'erreur sur les chargements silencieux (Clients
+  `handleSelectClient`, CaisseCentralisee `fetchFacturesEnAttente`).
+
+### i18n
+
+- Maintenance.tsx entièrement traduit (étapes backup/restore, import,
+  purge, modales) — ~40 clés ajoutées dans maintenance.json fr/en.
+- Chaînes en dur : Fournisseurs (titre/sous-titre), Ventes (Nouvelle vente),
+  CentreRapports (Par lot/Par produit), StockAnalysis (onglets).
+- Locales `fr-FR` hardcodées → dynamiques via `i18n.language` dans
+  Comptabilite, CommandeProductRow, CashBreakdownModal, RecapClient,
+  ClassementVendeurs, TicketTemplate, SimplePrintLabelsModal.
+
+### Nettoyage CSS/dépendances
+
+- Import Google Fonts **Syne** supprimé (morte, pénalisait l'offline).
+- `@fontsource/poppins` retiré de package.json/lock (jamais importé).
+- Bloc scrollbar dupliqué supprimé dans index.css.
+
+### Vérifié
+
+`npx tsc --noEmit` OK, `npm run build` OK (warnings de chunks inchangés).
+
+### Fichiers modifiés
+
+`components/ui/ErrorState.tsx` (nouveau) + ~30 fichiers components/
++ locales fr/en (common, providers, sales, reports, maintenance, clients)
++ `index.css`, `package.json`, `package-lock.json`.
+
+---
+
+## 2026-09-21 — 🔄 Fix mise à jour via "Administration système"
+
+### Problème
+
+La mise à jour lancée depuis l'app (`run_update` → `update-app.sh` dans le
+conteneur backend) s'arrêtait en plein milieu : le script faisait
+`docker restart zenith-pharma-backend` **puis** copiait le frontend —
+or le restart tue le processus qui exécute le script → la copie frontend +
+reload nginx ne s'exécutaient jamais. Le statut affichait "done" alors que
+la mise à jour était incomplète.
+
+### Changements
+
+- **`update-app.sh`** : réordonné — copie frontend + reload nginx AVANT le
+  restart backend ; le restart est maintenant la dernière étape et passe
+  par un **helper container détaché** (`zenith-restart-helper`, même
+  pattern que `nightly-update.sh`) qui attend 3 s puis redémarre le backend
+  — il survit car il n'appartient pas au projet compose. Image helper :
+  `docker:latest`, fallback sur l'image du backend elle-même, dernier
+  recours restart direct (statut `done` déjà écrit).
+- **`.gitattributes`** (nouveau) : `*.sh text eol=lf` — protège les scripts
+  shell contre la conversion CRLF sous Windows.
+
+### Fichiers modifiés
+
+- `update-app.sh`
+- `.gitattributes` (nouveau)
+
+---
+
+## 2026-09-21 — 🔍 Journal d'audit : consolidation des logs de clôture commande
+
+### Changements
+
+- **`api/views/commandes/cloture_mixin.py`** : la clôture d'une commande ne
+  logge plus **un AuditLog par produit** (une grosse commande inondait le
+  journal de lignes identiques "Stock/PMP mis à jour via clôture commande
+  #X"). Remplacé par **un seul log `ORD_RECV`** de synthèse :
+  `"Réception commande #X : N produit(s) mis à jour (stock/PMP), M lot(s)
+  créé(s)"` avec `produits_count`, `lots_count`, `produit_ids` (max 50).
+- **Consolidation DB** : les 469 anciennes lignes par-produit ont été
+  remplacées par 40 logs consolidés (un par commande, `consolide: true`,
+  date/heure de la dernière occurrence conservée). Journal : 3 827 → 3 398.
+
+### Vérifications
+
+- `ast.parse` OK ; comptage post-consolidation vérifié.
+
+### Fichiers modifiés
+
+- `backend/api/views/commandes/cloture_mixin.py`
+
+---
+
+## 2026-09-21 — 🔍 Journal d'audit : suppression du bruit des signaux + filtres/stats/export
+
+### Changements
+
+- **`api/signals.py`** : suppression des receivers `post_save`/`post_delete` de
+  log automatique sur `Produit`, `Commande`, `Client` et `InvoiceSettings`.
+  Ces signaux généraient ~120k lignes de bruit avec `user=NULL` et écrasaient
+  les vraies actions métier loguées via `log_audit()`. Le receiver
+  `invalidate_secondary_caches` est conservé.
+- **`api/filters.py`** : `AuditLogFilter` remplacé par une version complète
+  supportant `action`, `action_in`, `user`, `model_name`, `model_name_in`,
+  `date_from`/`date_to` (ISO ou date), et `q` (recherche multi-champs incluant
+  `details` casté en texte PostgreSQL).
+- **`api/views/audit.py`** : `AuditLogViewSet` utilise `AuditLogFilter` ; ajout
+  des actions `statistics` (agrégats filtrés : `total_logs`, `recent_activity`,
+  `by_action`, `top_users`) et `export_csv` (BOM UTF-8, `;`, max 10 000 lignes,
+  log `EXPORT` des filtres utilisés). Permissions ajustées :
+  superuser/PHARMACIEN/COMPTABLE (et `manager` pour compatibilité) voient tout,
+  les autres rôles ne voient que leurs propres logs.
+- **`api/serializers/audit.py`** : vérifié, tous les champs attendus sont déjà
+  exposés (`user_name`, `action_display`, `details`, `timestamp`, `ip_address`,
+  `description`, `model_name`, `object_id`).
+- **`api/management/commands/clean_audit_noise.py`** (nouveau) : suppression
+  par lots des logs sans utilisateur et avec action `CREATE`/`UPDATE`/`DELETE`
+  (bruit du signal). Options `--dry-run`, `--confirm`, `--batch`.
+- **Frontend `JournalAudit.tsx`** : recherche serveur `q` (debounce 400 ms),
+  quick filters envoyés en `action_in`, nouveau filtre modèle
+  (`model_name`), vue compacte ~44 px/ligne (badge sévérité + description +
+  chips + auteur, expansion JSON au clic), KPI branchés sur `statistics`,
+  export CSV avec tous les filtres actifs, i18n complète (fr+en).
+- **`api/management/commands/clean_audit_noise.py`** (nouveau) : suppression
+  par lots des logs sans utilisateur et avec action `CREATE`/`UPDATE`/`DELETE`
+  (bruit du signal). Options `--dry-run`, `--confirm`, `--batch`.
+
+### Vérification
+
+- `ast.parse` OK sur les fichiers backend ; `npx tsc --noEmit` OK.
+- Smoke test conteneur : `statistics` 200 (contrat complet), liste filtrée
+  `q` + `action_in` OK, filtre `model_name` OK, `export_csv` 200 (CSV),
+  vendeur sans droit → ne voit que ses logs (0).
+
+### Fichiers modifiés
+
+- `backend/api/signals.py`
+- `backend/api/filters.py`
+- `backend/api/views/audit.py`
+- `backend/api/management/commands/clean_audit_noise.py` (nouveau)
+- `frontend/frontend/src/components/JournalAudit.tsx`
+- `frontend/frontend/src/hooks/useAudit.ts`
+- `frontend/frontend/src/types/audit.ts`
+- `frontend/frontend/public/locales/fr/audit.json`
+- `frontend/frontend/public/locales/en/audit.json`
+
+---
+
+## 2026-09-21 — 📊 Centre de rapports : sécurité, exactitude, perf
+
+### Sécurité
+
+- **`api/views/rapports/permissions.py` (nouveau)** : `CanAccessReports` —
+  superuser/staff OK, sinon exige le menu `statistiques_rapports` (ou
+  `statistiques`) dans `profile.allowed_menus`. Appliqué au `RapportViewSet`
+  (33 actions qui n'exigeaient que `IsAuthenticated`).
+- **`log_audit(EXPORT)`** ajouté sur tous les exports sensibles :
+  `export_comptable_csv`, `export_sage_i7`, `rapport_general_excel`,
+  `livre_caisse_excel`, `rapport_remises_excel`,
+  `rapport_remises_details_excel`, `rapport_mensuel_pdf`,
+  `rapport_par_dates_pdf`, `meilleurs_clients` (csv).
+
+### Exactitude comptable
+
+- **`is_active=True`** ajouté partout : factures en corbeille ne sont plus
+  comptées dans le CA, la TVA, les marges, les remises, les créances, les
+  achats fournisseurs, les stats vendeurs (base.py, finance.py, sales.py,
+  inventory.py). Les commandes/avoirs/clients/fournisseurs inactifs sont
+  aussi exclus des agrégats.
+- **Exclusion `is_divers` au niveau ligne** (`base.py`) via `Exists` sur
+  `FactureProduitAllocation` au lieu d'exclure la facture entière — les
+  factures mixtes ne sont plus sous-comptées.
+- **`top_selling_products`** : `Count` sur paiements (qui gonflait
+  qté/CA/marge) remplacé par `Exists` sur paiement complété.
+- **`valeur_stock_journalier`** : coût des ventes historique via
+  `FactureProduitAllocation.cost_price` (fallback PMP) au lieu du PMP actuel.
+- **`evolution_vendeur`** : vrais mois calendaires (fin du pas de 30 jours
+  qui doublait/sautait des mois).
+- **`rapport_dynamique`** : `cout_achat` sur source `ventes` ne filtre plus
+  par erreur le prix de vente (clé retirée, pas de champ coût en ligne).
+- **`export_sage_i7`** : `facture__isnull=False` + guards → plus de 500 sur
+  paiement sans facture.
+- **`rapport_mensuel_pdf`** : `?mois=abc` → 400 au lieu de 500.
+- **`rapport_dynamique`** : tri par défaut ne plante plus sur résultats
+  vides (`StopIteration`).
+
+### Performance
+
+- `rapport_dynamique` : N+1 allocations → `prefetch_related`, limite
+  `limit` (défaut 5000, max 20000), erreur interne loggée au lieu d'être
+  exposée au client.
+- `stocks_morts` : filtre/tri en SQL (`valeur_stock` annoté) avant
+  pagination au lieu de tout charger en Python.
+- Limites de période 24 mois sur `export_comptable_csv`, `export_sage_i7`,
+  `livre_caisse_excel` ; validations dates sur `valeur_stock_journalier`.
+- `user_map` ne charge que les vendeurs présents (stats/classement).
+
+### Divers
+
+- `except:` nus → exceptions précises ; `Decimal(...)` orphelins supprimés ;
+  `get_user_model()` inutilisé retiré ; garde `lot.produit` None sur la
+  valorisation divers.
+
+### Vérifications (conteneur Docker)
+
+- `ast.parse` OK sur les 6 fichiers rapports.
+- Smoke test réel : 18 endpoints → 200 ; vendeur sans menu → 403, avec
+  menu → 200 ; exports CSV/PDF OK ; `rapport_mensuel_pdf?mois=abc` → 400.
+- Note : `meilleurs_clients?format=csv` → 404 pré-existant (DRF réserve le
+  param `format`) — chemin mort, l'export frontend est côté client.
+
+### Fichiers modifiés
+
+- `backend/api/views/rapports/permissions.py` (nouveau)
+- `backend/api/views/rapports/__init__.py`
+- `backend/api/views/rapports/base.py`
+- `backend/api/views/rapports/finance.py`
+- `backend/api/views/rapports/sales.py`
+- `backend/api/views/rapports/inventory.py`
+
+---
+
+## 2026-09-21 — 🗑️ Corbeille : sécurité + i18n
+
+### Changements
+
+- **Sécurité backend** (`api/views/corbeille.py`) :
+  - `CorbeilleViewSet` exige désormais `IsAdminUser` (le menu corbeille est
+    déjà réservé aux admins côté frontend, l'API ne l'était pas — n'importe
+    quel utilisateur authentifié pouvait purger des factures ou des comptes).
+  - Les **superusers** sont exclus de la liste, du `purge` et du `empty` sur
+    le modèle `user` (évite de supprimer définitivement un compte admin).
+  - Fournisseurs : ajout de `order_by('-deleted_at')[:200]` (cohérence avec
+    les autres modèles, limite manquante).
+- **i18n frontend** (`components/Corbeille.tsx`) : suppression des chaînes
+  FR en dur — labels de types via `tabs.*`/`badges.*`, groupes de dates via
+  `date_groups.*`, sous-titre `subtitle_count`, `actions.select_all`,
+  boutons bulk `actions.restore`/`actions.delete_permanently`.
+- Nouvelles clés ajoutées dans `locales/fr/corbeille.json` et
+  `locales/en/corbeille.json`.
+
+- **Métadonnées de suppression en masse** : tous les `update(is_active=False)`
+  renseignent désormais `deleted_at`/`deleted_by` (produits, factures,
+  brouillons, clients, fournisseurs) ; idem pour la suppression groupée de
+  commandes (par-objet). Les éléments mis en corbeille affichent la vraie
+  date et le vrai auteur.
+- `formatDateTime` utilise `i18n.language` au lieu de `'fr-FR'` en dur.
+
+### Vérifications
+
+- `npx tsc --noEmit` OK.
+- `ast.parse` sur les 6 fichiers backend modifiés OK (conteneur Docker).
+
+### Fichiers modifiés
+
+- `backend/api/views/corbeille.py`
+- `backend/api/views/produit_actions/bulk_ops.py`
+- `backend/api/views/ventes/facture_mixins/bulk_actions.py`
+- `backend/api/views/commandes/bulk_actions_mixin.py`
+- `backend/api/views/clients.py`
+- `backend/api/views/fournisseurs.py`
+- `frontend/frontend/src/components/Corbeille.tsx`
+- `frontend/frontend/public/locales/fr/corbeille.json`
+- `frontend/frontend/public/locales/en/corbeille.json`
+
+---
+
 ## 2026-09-19 — ♻️ Refactor de la Gestion des Utilisateurs
 
 ### Changements

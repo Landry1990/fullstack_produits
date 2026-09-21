@@ -74,12 +74,12 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                 <table className="w-full text-sm">
                     <thead>
                         <tr className="bg-slate-50">
-                            <th className="text-[10px] font-black uppercase tracking-widest text-slate-400 py-4">{t('creances:client_list.client')}</th>
-                            <th className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right py-4">{t('creances:client_list.nb_invoices')}</th>
-                            <th className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right py-4">{t('creances:client_list.total_amount')}</th>
-                            <th className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right py-4">{t('creances:client_list.already_paid')}</th>
-                            <th className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right py-4">{t('creances:client_list.remaining_due')}</th>
-                            <th className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-center py-4">{t('creances:client_list.actions')}</th>
+                            <th className="text-caption font-black uppercase tracking-widest text-slate-400 py-4">{t('creances:client_list.client')}</th>
+                            <th className="text-caption font-black uppercase tracking-widest text-slate-400 text-right py-4">{t('creances:client_list.nb_invoices')}</th>
+                            <th className="text-caption font-black uppercase tracking-widest text-slate-400 text-right py-4">{t('creances:client_list.total_amount')}</th>
+                            <th className="text-caption font-black uppercase tracking-widest text-slate-400 text-right py-4">{t('creances:client_list.already_paid')}</th>
+                            <th className="text-caption font-black uppercase tracking-widest text-slate-400 text-right py-4">{t('creances:client_list.remaining_due')}</th>
+                            <th className="text-caption font-black uppercase tracking-widest text-slate-400 text-center py-4">{t('creances:client_list.actions')}</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -103,7 +103,7 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                                         </div>
                                         <div className="flex flex-col">
                                             <span className="font-black text-sm text-slate-800 group-hover:text-emerald-600 transition-colors">{groupe.client.name}</span>
-                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('creances:client_type_label')}</span>
+                                            <span className="text-caption font-bold text-slate-400 uppercase tracking-widest">{t('creances:client_type_label')}</span>
                                         </div>
                                     </div>
                                 </td>
@@ -178,7 +178,7 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                         ] as const).map((col) => (
                             <th
                                 key={col.key}
-                                className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 cursor-pointer hover:text-emerald-600 transition-colors p-4 whitespace-nowrap"
+                                className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 text-caption font-black uppercase tracking-widest text-slate-400 cursor-pointer hover:text-emerald-600 transition-colors p-4 whitespace-nowrap"
                                 onClick={() => onSort(col.key)}
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter' || e.key === ' ') {
@@ -194,8 +194,8 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                                 </div>
                             </th>
                         ))}
-                        <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center p-4">{t('creances:invoice_list.status')}</th>
-                        <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center p-4">{t('creances:invoice_list.actions')}</th>
+                        <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 text-caption font-black uppercase tracking-widest text-slate-400 text-center p-4">{t('creances:invoice_list.status')}</th>
+                        <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 text-caption font-black uppercase tracking-widest text-slate-400 text-center p-4">{t('creances:invoice_list.actions')}</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -224,7 +224,7 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                                         <span className="font-mono text-xs font-black text-slate-500">
                                             {formatDate(creance.date)}
                                         </span>
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                        <span className="text-caption font-bold text-slate-400 uppercase tracking-widest">
                                             {formatTime(creance.date)}
                                         </span>
                                     </div>

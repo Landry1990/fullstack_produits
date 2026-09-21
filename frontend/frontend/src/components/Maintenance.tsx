@@ -32,6 +32,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from './shadcn/dialog';
+import { PageContainer } from './ui/PageContainer';
 
 interface PurgeTable {
   key: string;
@@ -217,7 +218,7 @@ export default function Maintenance() {
       if (pollCount > maxPolls) {
         clearInterval(poll);
         setUpdateRunning(false);
-        setUpdateError('Timeout : la mise à jour prend trop de temps.');
+        setUpdateError(t('toasts.update_timeout'));
         return;
       }
       try {
@@ -480,8 +481,8 @@ export default function Maintenance() {
   const handleManualBackup = async () => {
     setBackupLoading(true);
     setBackupProgress(0);
-    setBackupStep('Initialisation...');
-    
+    setBackupStep(t('backup_steps.init'));
+
     // Simulation logic
     const progressInterval = setInterval(() => {
       setBackupProgress(prev => {
@@ -492,10 +493,10 @@ export default function Maintenance() {
     }, 400);
 
     const steps = [
-      { p: 10, s: 'Analyse de la base de données...' },
-      { p: 30, s: 'Extraction des tables...' },
-      { p: 60, s: 'Génération du fichier SQL...' },
-      { p: 85, s: 'Compression GZip...' },
+      { p: 10, s: t('backup_steps.analyze') },
+      { p: 30, s: t('backup_steps.extract') },
+      { p: 60, s: t('backup_steps.generate') },
+      { p: 85, s: t('backup_steps.compress') },
     ];
 
     steps.forEach((step, idx) => {
@@ -549,7 +550,7 @@ export default function Maintenance() {
 
     setRestoring(true);
     setRestoreProgress(0);
-    setRestoreStep('Initialisation...');
+    setRestoreStep(t('restore_steps.init'));
 
     // Simulation de progression
     const progressInterval = setInterval(() => {
@@ -561,10 +562,10 @@ export default function Maintenance() {
     }, 500);
 
     const steps = [
-      { p: 15, s: 'Vérification du fichier...' },
-      { p: 40, s: 'Décompression GZip...' },
-      { p: 70, s: 'Restauration PostgreSQL (psql)...' },
-      { p: 90, s: 'Synchronisation des séquences...' },
+      { p: 15, s: t('restore_steps.verify') },
+      { p: 40, s: t('restore_steps.decompress') },
+      { p: 70, s: t('restore_steps.restore') },
+      { p: 90, s: t('restore_steps.sequences') },
     ];
 
     steps.forEach((step, idx) => {
@@ -579,7 +580,7 @@ export default function Maintenance() {
       await api.post('maintenance/restore/', formData);
       clearInterval(progressInterval);
       setRestoreProgress(100);
-      setRestoreStep('Restauration terminée !');
+      setRestoreStep(t('restore_steps.done'));
       gooeyToast.success(t('toasts.restore_success'));
       setShowRestoreConfirm(false);
       setRestoreFile(null);
@@ -643,7 +644,7 @@ export default function Maintenance() {
   const tableMap = new Map(tables.map(t => [t.key, t]));
 
   return (
-    <div className="p-4 md:p-6 max-w-5xl mx-auto">
+    <PageContainer variant="dense" className="p-4 md:p-6">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <div className="p-3 rounded-xl bg-gradient-to-br from-red-500/20 to-orange-500/20">
@@ -771,7 +772,7 @@ export default function Maintenance() {
               }`}
             >
               <Wrench className="size-4" />
-              Nettoyage
+              {t('tabs.cleanup')}
             </button>
             <button
               type="button"
@@ -783,7 +784,7 @@ export default function Maintenance() {
               }`}
             >
               <Database className="size-4" />
-              Sauvegardes & Code
+              {t('tabs.backups')}
             </button>
           </div>
 
@@ -867,12 +868,12 @@ export default function Maintenance() {
             <div className="p-6 space-y-4">
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <Package className="size-5 text-indigo-500" />
-                Gestion des Produits
+                {t('products_title')}
               </h2>
 
               {/* Compteur */}
               <div className="flex items-center justify-between bg-slate-100/50 rounded-lg px-4 py-2">
-                <span className="text-sm text-slate-500">Produits en base</span>
+                <span className="text-sm text-slate-500">{t('products_in_db')}</span>
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-lg text-indigo-500">
                     {produitsCount === null ? '...' : produitsCount.toLocaleString()}
@@ -887,7 +888,7 @@ export default function Maintenance() {
 
               {/* Import Excel */}
               <div className="space-y-2">
-                <p className="text-xs text-slate-500">Importez un fichier Excel (.xlsx) ou CSV pour créer/mettre à jour les produits.</p>
+                <p className="text-xs text-slate-500">{t('import_description')}</p>
                 <div className="w-full">
                   <input
                     type="file"
@@ -904,7 +905,7 @@ export default function Maintenance() {
                   disabled={importing || !importFile}
                 >
                   {importing ? <Loader2 className="size-4 animate-spin" /> : <FileUp className="size-4" />}
-                  {importing ? 'Import en cours...' : 'Importer'}
+                  {importing ? t('importing') : t('import_button')}
                 </Button>
 
                 {importing && (
@@ -923,15 +924,15 @@ export default function Maintenance() {
                 {importResult && (
                   <div className="bg-slate-100 rounded-lg p-3 space-y-1 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Créés</span>
+                      <span className="text-slate-500">{t('import_result.created')}</span>
                       <span className="font-bold text-emerald-600">{importResult.created}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Mis à jour</span>
+                      <span className="text-slate-500">{t('import_result.updated')}</span>
                       <span className="font-bold text-blue-600">{importResult.updated}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Erreurs</span>
+                      <span className="text-slate-500">{t('import_result.errors')}</span>
                       <span className={`font-bold ${importResult.errors > 0 ? 'text-red-600' : 'text-slate-400'}`}>{importResult.errors}</span>
                     </div>
                     {importResult.rapport_xlsx && (
@@ -941,7 +942,7 @@ export default function Maintenance() {
                         className="w-full gap-1 mt-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50"
                         onClick={() => downloadRapport(importResult.rapport_xlsx as string, t)}
                       >
-                        <FileDown className="size-3" /> Télécharger le rapport Excel
+                        <FileDown className="size-3" /> {t('download_excel_report')}
                       </Button>
                     )}
                     {importResult.rapport_txt && (
@@ -951,7 +952,7 @@ export default function Maintenance() {
                         className="w-full gap-1"
                         onClick={() => downloadRapport(importResult.rapport_txt as string, t)}
                       >
-                        <FileDown className="size-3" /> Télécharger le rapport texte
+                        <FileDown className="size-3" /> {t('download_text_report')}
                       </Button>
                     )}
                   </div>
@@ -980,20 +981,20 @@ export default function Maintenance() {
               {/* Purge */}
               {purgeResult && (
                 <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-sm">
-                  <p className="font-bold text-emerald-600">✅ {purgeResult.deleted} produit(s) supprimé(s)</p>
+                  <p className="font-bold text-emerald-600">✅ {t('purge_result_deleted', { count: purgeResult.deleted })}</p>
                   {purgeResult.conserves > 0 && (
-                    <p className="text-xs text-slate-500">{purgeResult.conserves} conservé(s) car liés à des ventes</p>
+                    <p className="text-xs text-slate-500">{t('purge_result_kept', { count: purgeResult.conserves })}</p>
                   )}
                 </div>
               )}
               <div className="space-y-1">
-                <p className="text-xs text-slate-500">Supprime tous les produits (utile si mauvais fichier importé).</p>
+                <p className="text-xs text-slate-500">{t('purge_products_desc')}</p>
                 <label className="flex items-center gap-2 text-xs cursor-pointer">
                   <Checkbox
                     checked={purgeSansVentes}
                     onCheckedChange={(checked) => setPurgeSansVentes(!!checked)}
                   />
-                  Conserver les produits liés à des ventes
+                  {t('keep_products_with_sales')}
                 </label>
                 <Button
                   variant="destructive"
@@ -1002,7 +1003,7 @@ export default function Maintenance() {
                   onClick={() => { setPurgeResult(null); setShowPurgeModal(true); }}
                 >
                   <Trash2 className="size-4" />
-                  Purger les produits
+                  {t('purge_products_btn')}
                 </Button>
               </div>
             </div>
@@ -1048,7 +1049,7 @@ export default function Maintenance() {
 
                   {backupLoading && (
                     <div className="mt-4 space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                      <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-indigo-600">
+                      <div className="flex justify-between items-center text-caption font-bold uppercase tracking-widest text-indigo-600">
                         <span>{backupStep}</span>
                         <span>{Math.round(backupProgress)}%</span>
                       </div>
@@ -1105,7 +1106,7 @@ export default function Maintenance() {
                       value={pharmacySettings?.secondary_backup_path || ""}
                       onChange={e => setPharmacySettings({...pharmacySettings, secondary_backup_path: e.target.value})}
                     />
-                    <p className="text-[10px] text-slate-400 mt-1">
+                    <p className="text-caption text-slate-400 mt-1">
                       {t('maintenance:backup_path_description')}
                     </p>
                   </div>
@@ -1159,14 +1160,14 @@ export default function Maintenance() {
                 
                 {restoring && (
                   <div className="mt-4 space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                    <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-red-600">
+                    <div className="flex justify-between items-center text-caption font-bold uppercase tracking-widest text-red-600">
                       <span>{restoreStep}</span>
                       <span>{Math.round(restoreProgress)}%</span>
                     </div>
                     <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden shadow-inner">
                       <div className="h-full bg-red-600 rounded-full transition-all" style={{ width: `${restoreProgress}%` }} />
                     </div>
-                    <p className="text-[10px] text-center text-red-600/60 italic">{t('restore_restart_msg')}</p>
+                    <p className="text-caption text-center text-red-600/60 italic">{t('restore_restart_msg')}</p>
                   </div>
                 )}
               </div>
@@ -1232,12 +1233,12 @@ export default function Maintenance() {
             <div className="p-6 space-y-4">
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <Rocket className="size-5 text-emerald-600" />
-                Mise à jour manuelle
+                {t('manual_update_title')}
               </h2>
 
               <div className="space-y-4">
                 <p className="text-xs text-slate-500">
-                  Lance la mise à jour nocturne (git pull + build Docker + migrations) à la demande.
+                  {t('manual_update_desc')}
                 </p>
 
                 <Button
@@ -1248,20 +1249,20 @@ export default function Maintenance() {
                   disabled={updateRunning}
                 >
                   {updateRunning ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
-                  {updateRunning ? 'Mise à jour en cours...' : 'Lancer la mise à jour'}
+                  {updateRunning ? t('updating') : t('run_update')}
                 </Button>
 
                 {updateRunning && (
                   <div className="mt-4 space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                    <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-emerald-600">
+                    <div className="flex justify-between items-center text-caption font-bold uppercase tracking-widest text-emerald-600">
                       <span>{updateStep}</span>
                       <span>{Math.round(updateProgress)}%</span>
                     </div>
                     <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden shadow-inner">
                       <div className="h-full bg-emerald-600 rounded-full transition-all" style={{ width: `${updateProgress}%` }} />
                     </div>
-                    <div className="max-h-32 overflow-y-auto rounded-lg bg-slate-900 p-2 text-[10px] font-mono text-emerald-400">
-                      {updateLog.length === 0 ? 'En attente de logs...' : (
+                    <div className="max-h-32 overflow-y-auto rounded-lg bg-slate-900 p-2 text-caption font-mono text-emerald-400">
+                      {updateLog.length === 0 ? t('waiting_logs') : (
                         updateLog.slice(-20).map((line) => (
                           <div key={`log-${line}`} className="truncate">{line}</div>
                         ))
@@ -1281,10 +1282,10 @@ export default function Maintenance() {
                 <div>
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2 mb-2">
                     <ScrollText className="size-4" />
-                    Derniers changements
+                    {t('latest_changes')}
                   </h3>
                   <div className="max-h-48 overflow-y-auto rounded-lg bg-slate-50 border border-slate-200 p-3 text-xs text-slate-700 whitespace-pre-wrap">
-                    {changelog || 'Changelog non disponible.'}
+                    {changelog || t('changelog_unavailable')}
                   </div>
                 </div>
               </div>
@@ -1504,17 +1505,17 @@ export default function Maintenance() {
               <div className="p-2 rounded-full bg-red-100">
                 <Trash2 className="size-6 text-red-600" />
               </div>
-              Purger les produits
+              {t('purge_products_btn')}
             </DialogTitle>
             <DialogDescription>
               <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-lg p-3 mt-2">
                 <AlertTriangle className="size-5 text-red-600 shrink-0" />
                 <div>
-                  <p className="font-bold text-red-800">Opération irréversible</p>
+                  <p className="font-bold text-red-800">{t('purge_modal.irreversible')}</p>
                   <p className="text-sm text-red-700">
                     {purgeSansVentes
-                      ? 'Tous les produits NON liés à des ventes seront supprimés.'
-                      : 'TOUS les produits seront supprimés.'}
+                      ? t('purge_modal.warn_unlinked')
+                      : t('purge_modal.warn_all')}
                   </p>
                 </div>
               </div>
@@ -1523,7 +1524,7 @@ export default function Maintenance() {
 
           <div className="mb-4">
             <label htmlFor="purge-produits-password" className="block">
-              <span className="text-sm font-semibold text-slate-700">Confirmez votre mot de passe</span>
+              <span className="text-sm font-semibold text-slate-700">{t('purge_modal.confirm_password')}</span>
             </label>
             <Input
               id="purge-produits-password"
@@ -1538,7 +1539,7 @@ export default function Maintenance() {
 
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={() => { setShowPurgeModal(false); setPurgePassword(''); }}>
-              Annuler
+              {t('cancel')}
             </Button>
             <Button
               variant="destructive"
@@ -1547,7 +1548,7 @@ export default function Maintenance() {
               disabled={purging2 || !purgePassword}
             >
               {purging2 ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
-              Confirmer la purge
+              {t('purge_modal.confirm_btn')}
             </Button>
           </div>
         </DialogContent>
@@ -1561,15 +1562,15 @@ export default function Maintenance() {
               <div className="p-2 rounded-full bg-emerald-100">
                 <Rocket className="size-6 text-emerald-600" />
               </div>
-              Lancer la mise à jour
+              {t('run_update')}
             </DialogTitle>
             <DialogDescription>
               <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-lg p-3 mt-2">
                 <AlertTriangle className="size-5 text-amber-600 shrink-0" />
                 <div>
-                  <p className="font-bold text-amber-800">Opération sensible</p>
+                  <p className="font-bold text-amber-800">{t('update_modal.sensitive')}</p>
                   <p className="text-sm text-amber-700">
-                    Cette action va télécharger la dernière version, reconstruire les images Docker et redémarrer les conteneurs. L'application sera brièvement indisponible.
+                    {t('update_modal.desc')}
                   </p>
                 </div>
               </div>
@@ -1578,7 +1579,7 @@ export default function Maintenance() {
 
           <div className="mb-4">
             <label htmlFor="update-admin-password" className="block">
-              <span className="text-sm font-semibold text-slate-700">Confirmez votre mot de passe admin</span>
+              <span className="text-sm font-semibold text-slate-700">{t('update_modal.confirm_password')}</span>
             </label>
             <Input
               id="update-admin-password"
@@ -1593,7 +1594,7 @@ export default function Maintenance() {
 
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={() => { setShowUpdateConfirm(false); setUpdatePassword(''); }}>
-              Annuler
+              {t('cancel')}
             </Button>
             <Button
               variant="default"
@@ -1602,12 +1603,12 @@ export default function Maintenance() {
               disabled={!updatePassword}
             >
               <Rocket className="size-4" />
-              Confirmer la mise à jour
+              {t('update_modal.confirm_btn')}
             </Button>
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </PageContainer>
   );
 }
 

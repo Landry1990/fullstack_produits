@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   X, Plus, Trash2, Save, User, Award, Activity, Mail,
-  Phone, MapPin, ShieldCheck, CreditCard, Building2, FileText
+  Phone, MapPin, ShieldCheck, CreditCard, Building2, FileText, Loader2
 } from 'lucide-react';
 import type { Client, AyantDroit } from '../../types';
 import { Switch } from '../ui/Switch';
@@ -98,7 +98,7 @@ export default function ClientFormModal({
                 {isEdit ? t('clients:actions.edit') : t('clients:actions.create')}
               </h2>
               {isEdit && data.id && (
-                <span className="text-[10px] text-base-content/50 font-medium uppercase tracking-wider">
+                <span className="text-caption text-base-content/50 font-medium uppercase tracking-wider">
                   ID {data.id}
                 </span>
               )}
@@ -241,7 +241,7 @@ export default function ClientFormModal({
                   <div>
                     <span className="text-sm font-medium text-base-content block">{t('clients:fields.loyalty_member')}</span>
                     {(data.is_loyalty_member ?? true) && (
-                      <span className="text-[10px] text-warning font-medium">{data.points_fidelite || 0} pts</span>
+                      <span className="text-caption text-warning font-medium">{data.points_fidelite || 0} pts</span>
                     )}
                   </div>
                 </div>
@@ -372,9 +372,9 @@ export default function ClientFormModal({
                   <table className="min-w-full divide-y divide-base-300">
                     <thead className="bg-base-200">
                       <tr>
-                        <th className="px-4 py-2 text-left text-[10px] font-semibold text-base-content/60 uppercase tracking-wider">{t('common:name')}</th>
-                        <th className="px-4 py-2 text-left text-[10px] font-semibold text-base-content/60 uppercase tracking-wider">{t('clients:beneficiaries.col_id')}</th>
-                        <th className="px-4 py-2 text-left text-[10px] font-semibold text-base-content/60 uppercase tracking-wider">{t('clients:beneficiaries.company')}</th>
+                        <th className="px-4 py-2 text-left text-caption font-semibold text-base-content/60 uppercase tracking-wider">{t('common:name')}</th>
+                        <th className="px-4 py-2 text-left text-caption font-semibold text-base-content/60 uppercase tracking-wider">{t('clients:beneficiaries.col_id')}</th>
+                        <th className="px-4 py-2 text-left text-caption font-semibold text-base-content/60 uppercase tracking-wider">{t('clients:beneficiaries.company')}</th>
                         <th className="px-4 py-2 w-10"></th>
                       </tr>
                     </thead>
@@ -420,7 +420,7 @@ export default function ClientFormModal({
             className="inline-flex items-center px-6 py-2 text-sm font-medium rounded-lg text-white bg-primary hover:bg-primary-focus disabled:opacity-60 transition-colors gap-2"
           >
             {isSubmitting ? (
-              <span className="inline-block size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <Loader2 className="size-4 animate-spin" />
             ) : (
               <Save className="size-4" />
             )}

@@ -5,6 +5,7 @@ import { gooeyToast } from 'goey-toast';
 import { formatCurrency } from '../utils/formatters';
 import { useRecharts } from '../hooks/useRecharts';
 import { logger } from '../utils/logger'
+import i18n from '../i18n';
 
 
 interface VendeurRanking {
@@ -39,7 +40,7 @@ interface EvolutionSeries {
 }
 
 const formatMoney = (value: number, currencySymbol: string) => {
-  return formatCurrency(value, 'fr-FR', currencySymbol);
+  return formatCurrency(value, i18n.language.startsWith('en') ? 'en-GB' : 'fr-FR', currencySymbol);
 };
 
 const getMedal = (rang: number) => {
@@ -216,7 +217,7 @@ export default function ClassementVendeurs() {
             <div className="overflow-x-auto max-h-96">
               <table className="w-full border-separate border-spacing-0 text-sm">
                 <thead>
-                  <tr className="bg-slate-50 text-[11px] font-black text-slate-400 uppercase tracking-widest">
+                  <tr className="bg-slate-50 text-label font-black text-slate-400 uppercase tracking-widest">
                     <th className="sticky top-0 bg-slate-50 py-3 pl-3 text-left border-b border-slate-200">#</th>
                     <th className="sticky top-0 bg-slate-50 py-3 text-left border-b border-slate-200">{t('sellers:ranking.seller')}</th>
                     <th className="sticky top-0 bg-slate-50 py-3 text-right border-b border-slate-200">{t('sellers:ranking.sales')}</th>

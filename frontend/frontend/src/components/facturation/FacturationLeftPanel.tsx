@@ -101,13 +101,13 @@ export default function FacturationLeftPanel({ hook, datamatrixEnabled, scan }: 
           </div>
           <div>
             <p className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">{hook.t('sales:pos.ready_for_sale')}</p>
-            <p className="text-[10px] text-slate-400">{hook.t('sales:pos.scan_or_search')}</p>
+            <p className="text-caption text-slate-400">{hook.t('sales:pos.scan_or_search')}</p>
           </div>
           <div className="grid grid-cols-2 gap-2 w-full">
             {[['F9',hook.t('facturation:shortcuts.validate')],['ENTRÉE',hook.t('facturation:shortcuts.search_enter')],['ESC',hook.t('facturation:shortcuts.cancel')],['F8',hook.t('facturation:shortcuts.pending')]].map(([k,v]) => (
               <div key={k} className="bg-slate-100 rounded-xl p-2 flex flex-col items-center gap-1">
-                <kbd className="px-1.5 py-0.5 bg-white rounded text-slate-600 font-mono text-[10px] font-bold shadow-sm">{k}</kbd>
-                <span className="text-[10px] uppercase font-semibold text-slate-400">{v}</span>
+                <kbd className="px-1.5 py-0.5 bg-white rounded text-slate-600 font-mono text-caption font-bold shadow-sm">{k}</kbd>
+                <span className="text-caption uppercase font-semibold text-slate-400">{v}</span>
               </div>
             ))}
           </div>

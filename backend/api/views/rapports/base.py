@@ -1,7 +1,19 @@
 from datetime import timedelta
 from decimal import Decimal
 
-from django.db.models import Count, DecimalField, F, Max, Min, Q, Sum, Value
+from django.db.models import (
+    Count,
+    DecimalField,
+    Exists,
+    F,
+    Max,
+    Min,
+    OuterRef,
+    Q,
+    Subquery,
+    Sum,
+    Value,
+)
 from django.db.models.functions import Coalesce
 
 from api.models import (
@@ -23,13 +35,12 @@ class RapportBaseMixin:
     def _get_factures_periode(self, date_debut, date_fin):
         return Facture.objects.filter(
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+            is_active=True,
             date__gte=date_debut,
             date__lt=date_fin
         ).prefetch_related('produits', 'produits__produit', 'paiements')
 
     def _calculate_ca_stats(self, factures):
-        from django.db.models import OuterRef, Subquery
-
         # Sous-requête pour calculer le montant des produits is_divers par facture
         divers_total_sub = FactureProduitAllocation.objects.filter(
             facture_produit__facture=OuterRef('pk'),
@@ -59,11 +70,15 @@ class RapportBaseMixin:
             part_client=Coalesce(Sum('part_client'), Decimal('0.00'))
         )
 
-        # Les remises lignes ne concernent que les produits non is_divers
+        # Les remises lignes ne concernent que les produits non is_divers (niveau ligne)
+        allocations_divers = FactureProduitAllocation.objects.filter(
+            facture_produit=OuterRef('pk'),
+            stock_lot__is_divers=True
+        )
         prod_stats = FactureProduit.objects.filter(
             facture__in=factures
         ).exclude(
-            allocations__stock_lot__is_divers=True
+            Exists(allocations_divers)
         ).aggregate(
             total_remises_lignes=Coalesce(Sum(F('discount') * F('quantity'), output_field=DecimalField()), Decimal('0.00'))
         )
@@ -173,9 +188,7 @@ class RapportBaseMixin:
         }
 
     def _calculate_creances(self):
-        # Sous-requête pour calculer le montant des produits is_divers par facture
-        from django.db.models import OuterRef, Subquery
-
+        # Stock global des créances ; non limité à la période du rapport.
         divers_total_sub = FactureProduitAllocation.objects.filter(
             facture_produit__facture=OuterRef('pk'),
             stock_lot__is_divers=True
@@ -187,7 +200,8 @@ class RapportBaseMixin:
         ).values('total_divers')
 
         stats = Facture.objects.filter(
-            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+            is_active=True
         ).annotate(
             divers_amount=Coalesce(
                 Subquery(divers_total_sub, output_field=DecimalField()),
@@ -207,10 +221,14 @@ class RapportBaseMixin:
 
     def _calculate_ca_par_tva(self, factures):
         ca_par_tva_stats = {}
+        allocations_divers = FactureProduitAllocation.objects.filter(
+            facture_produit=OuterRef('pk'),
+            stock_lot__is_divers=True
+        )
         lignes = FactureProduit.objects.filter(
             facture__in=factures
         ).exclude(
-            allocations__stock_lot__is_divers=True
+            Exists(allocations_divers)
         ).values(
             'tva', 'facture__id', 'facture__remise'
         ).annotate(
@@ -242,15 +260,21 @@ class RapportBaseMixin:
     def _calculate_achats_fournisseurs(self, date_debut, date_fin):
         from api.models import Avoir, Commande
         achats_stats = {}
-        for c in Commande.objects.filter(date__gte=date_debut, date__lt=date_fin, status='CLOT').exclude(type='DIV').prefetch_related('produits'):
+        for c in Commande.objects.filter(
+            date__gte=date_debut, date__lt=date_fin, status='CLOT',
+            is_active=True, fournisseur__is_active=True
+        ).exclude(type='DIV').prefetch_related('produits'):
             if not c.fournisseur: continue
             fid = c.fournisseur.id
             if fid not in achats_stats:
                 achats_stats[fid] = {'fournisseur_id': fid, 'fournisseur_nom': c.fournisseur.name, 'montant_total': Decimal('0.00'), 'nb_commandes': 0, 'nb_avoirs': 0, 'montant_avoirs': Decimal('0.00')}
             achats_stats[fid]['montant_total'] += sum(cp.quantity * cp.price for cp in c.produits.all())  # type: ignore[attr-defined]
             achats_stats[fid]['nb_commandes'] += 1
-            
-        for a in Avoir.objects.filter(date__gte=date_debut.date(), date__lt=date_fin.date(), status='VALIDEE'):
+
+        for a in Avoir.objects.filter(
+            date__gte=date_debut.date(), date__lt=date_fin.date(), status='VALIDEE',
+            is_active=True, fournisseur__is_active=True
+        ):
             if not a.fournisseur: continue
             fid = a.fournisseur.id
             if fid not in achats_stats:
@@ -261,9 +285,10 @@ class RapportBaseMixin:
         return sorted(achats_stats.values(), key=lambda x: x['montant_total'], reverse=True)
 
     def _calculate_clients_pro(self, factures):
-        from django.db.models import OuterRef, Subquery
-
-        pro_factures = factures.filter(client__client_type='PROFESSIONNEL')
+        pro_factures = factures.filter(
+            client__client_type='PROFESSIONNEL',
+            client__is_active=True
+        )
 
         # Sous-requête pour exclure is_divers du CA des clients pro
         divers_total_sub = FactureProduitAllocation.objects.filter(
@@ -298,7 +323,11 @@ class RapportBaseMixin:
         return {'ca_total': ca_total, 'montant_paye': paid_total, 'reste_a_payer': ca_total - paid_total, 'taux_recouvrement_pct': round(paid_total/ca_total*100, 2) if ca_total > 0 else 0, 'nb_factures': sum(b['nb_factures'] for b in billing_stats), 'top_clients': results[:10]}
 
     def _calculate_unites_gratuites(self, date_debut, date_fin):
-        ugs = CommandeProduit.objects.filter(commande__date__gte=date_debut, commande__date__lt=date_fin, commande__status='CLOT', unites_gratuites__gt=0).exclude(commande__type='DIV').select_related('produit')
+        ugs = CommandeProduit.objects.filter(
+            commande__date__gte=date_debut, commande__date__lt=date_fin,
+            commande__status='CLOT', commande__is_active=True,
+            unites_gratuites__gt=0
+        ).exclude(commande__type='DIV').select_related('produit')
         total_val = sum(cp.unites_gratuites * cp.produit.selling_price for cp in ugs)
         ug_map = {}
         for cp in ugs:

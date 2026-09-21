@@ -109,7 +109,8 @@
         "import_launch_error": "Erreur lors du lancement de l'import",
         "purge_launch_error": "Erreur lors de la purge",
         "backend_restarting": "Redémarrage du backend en cours...",
-        "starting": "Démarrage..."
+        "starting": "Démarrage...",
+        "update_timeout": "Timeout : la mise à jour prend trop de temps."
     },
     "placeholders": {
         "enter_password": "Saisissez votre mot de passe",
@@ -124,5 +125,61 @@
     "export_success": "Export Excel téléchargé !",
     "export_error": "Erreur lors de l'export Excel",
     "backup_path_description": "Chemin Linux dans le conteneur (ex: /mnt/backups). Le volume doit être monté dans docker-compose.",
-    "admin_password_placeholder": "Mot de passe admin"
+    "admin_password_placeholder": "Mot de passe admin",
+    "tabs": {
+        "cleanup": "Nettoyage",
+        "backups": "Sauvegardes & Code"
+    },
+    "products_title": "Gestion des Produits",
+    "products_in_db": "Produits en base",
+    "import_description": "Importez un fichier Excel (.xlsx) ou CSV pour créer/mettre à jour les produits.",
+    "import_button": "Importer",
+    "importing": "Import en cours...",
+    "import_result": {
+        "created": "Créés",
+        "updated": "Mis à jour",
+        "errors": "Erreurs"
+    },
+    "download_excel_report": "Télécharger le rapport Excel",
+    "download_text_report": "Télécharger le rapport texte",
+    "purge_products_desc": "Supprime tous les produits (utile si mauvais fichier importé).",
+    "keep_products_with_sales": "Conserver les produits liés à des ventes",
+    "purge_products_btn": "Purger les produits",
+    "purge_result_deleted": "{{count}} produit(s) supprimé(s)",
+    "purge_result_kept": "{{count}} conservé(s) car liés à des ventes",
+    "manual_update_title": "Mise à jour manuelle",
+    "manual_update_desc": "Lance la mise à jour nocturne (git pull + build Docker + migrations) à la demande.",
+    "updating": "Mise à jour en cours...",
+    "run_update": "Lancer la mise à jour",
+    "waiting_logs": "En attente de logs...",
+    "latest_changes": "Derniers changements",
+    "changelog_unavailable": "Changelog non disponible.",
+    "backup_steps": {
+        "init": "Initialisation...",
+        "analyze": "Analyse de la base de données...",
+        "extract": "Extraction des tables...",
+        "generate": "Génération du fichier SQL...",
+        "compress": "Compression GZip..."
+    },
+    "restore_steps": {
+        "init": "Initialisation...",
+        "verify": "Vérification du fichier...",
+        "decompress": "Décompression GZip...",
+        "restore": "Restauration PostgreSQL (psql)...",
+        "sequences": "Synchronisation des séquences...",
+        "done": "Restauration terminée !"
+    },
+    "purge_modal": {
+        "irreversible": "Opération irréversible",
+        "warn_unlinked": "Tous les produits NON liés à des ventes seront supprimés.",
+        "warn_all": "TOUS les produits seront supprimés.",
+        "confirm_password": "Confirmez votre mot de passe",
+        "confirm_btn": "Confirmer la purge"
+    },
+    "update_modal": {
+        "sensitive": "Opération sensible",
+        "desc": "Cette action va télécharger la dernière version, reconstruire les images Docker et redémarrer les conteneurs. L'application sera brièvement indisponible.",
+        "confirm_password": "Confirmez votre mot de passe admin",
+        "confirm_btn": "Confirmer la mise à jour"
+    }
 }

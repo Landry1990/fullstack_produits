@@ -65,7 +65,7 @@ const Ventes: React.FC = () => {
     }, [location.state, filteredFactures, actions, navigate]);
     
     return (
-        <div className="h-full flex flex-col bg-slate-50 font-sans p-4 sm:p-6 gap-4 sm:gap-6">
+        <div className="h-full flex flex-col bg-slate-50 font-sans p-4 sm:p-6 gap-4 sm:gap-6 max-w-[1600px] mx-auto w-full">
 
             {/* ── HEADER ── */}
             {!headerCollapsed && (
@@ -88,8 +88,8 @@ const Ventes: React.FC = () => {
                             <Link to="/app/facturation">
                                 <Button className="gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/20">
                                     <Plus className="size-4" />
-                                    <span className="hidden sm:inline">Nouvelle vente</span>
-                                    <span className="sm:hidden">Vente</span>
+                                    <span className="hidden sm:inline">{t('actions.new_sale')}</span>
+                                    <span className="sm:hidden">{t('actions.new_sale_short')}</span>
                                 </Button>
                             </Link>
                             <button

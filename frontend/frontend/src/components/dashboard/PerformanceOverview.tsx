@@ -143,7 +143,7 @@ export default function PerformanceOverview({
               <div className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl" style={{ background: card.accent }} />
 
               <div className="flex items-start justify-between gap-2">
-                <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-slate-500 leading-tight">
+                <p className="text-micro sm:text-caption font-black uppercase tracking-widest text-slate-500 leading-tight">
                   {card.title}
                 </p>
                 <div className="size-7 xl:size-8 rounded-lg xl:rounded-xl flex items-center justify-center shrink-0" style={{ background: card.accent + '20', color: card.accent }}>
@@ -156,7 +156,7 @@ export default function PerformanceOverview({
               </p>
 
               <div className="flex items-center gap-1.5 mt-auto">
-                <span className={`inline-flex items-center gap-0.5 text-[9px] sm:text-[10px] font-black px-1.5 py-0.5 rounded ${
+                <span className={`inline-flex items-center gap-0.5 text-micro sm:text-caption font-black px-1.5 py-0.5 rounded ${
                   card.isPositive ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-500'
                 }`}>
                   {card.isPositive ? <ArrowUpRight className="size-2.5" /> : <ArrowDownRight className="size-2.5" />}
@@ -190,7 +190,7 @@ export default function PerformanceOverview({
             </div>
             <div className="text-white min-w-0">
               <h3 className="text-xs sm:text-sm font-black uppercase tracking-wide leading-tight">{t('reappro.alert_title', { defaultValue: 'Réapprovisionnement rayon nécessaire' })}</h3>
-              <p className="text-[10px] sm:text-xs font-bold opacity-75 mt-0.5 truncate">
+              <p className="text-caption sm:text-xs font-bold opacity-75 mt-0.5 truncate">
                 {t('reappro.products_waiting', '{{count}} produits', { count: reapproStats.product_count })} · +{reapproStats.total_units_suggested} {t('reappro.units_to_transfer', 'unités à transférer')}
               </p>
             </div>
@@ -212,7 +212,7 @@ export default function PerformanceOverview({
             </div>
             <div>
               <h2 className="text-xs font-bold text-slate-700 tracking-tight uppercase">{t('charts.revenue_evolution')}</h2>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('charts.last_7_days')}</p>
+              <p className="text-caption font-bold text-slate-400 uppercase tracking-widest">{t('charts.last_7_days')}</p>
             </div>
           </div>
           <div className="p-4 sm:p-5 h-64 sm:h-72">
@@ -277,7 +277,7 @@ export default function PerformanceOverview({
             </div>
             <div>
               <h2 className="text-xs font-bold text-slate-700 tracking-tight uppercase">{t('hourly_traffic_title')}</h2>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('hourly_traffic_desc')}</p>
+              <p className="text-caption font-bold text-slate-400 uppercase tracking-widest">{t('hourly_traffic_desc')}</p>
             </div>
           </div>
           <div className="p-4 sm:p-5 h-64 sm:h-72">
@@ -324,19 +324,19 @@ export default function PerformanceOverview({
             </div>
             <div>
               <h2 className="text-xs font-bold text-slate-700 tracking-tight uppercase">{t('charts.pnl_history_title', 'Historique CA & Marges (7 jours)')}</h2>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('charts.pnl_history_desc', "Chiffre d'affaires, coûts d'achat et marges par jour")}</p>
+              <p className="text-caption font-bold text-slate-400 uppercase tracking-widest">{t('charts.pnl_history_desc', "Chiffre d'affaires, coûts d'achat et marges par jour")}</p>
             </div>
           </div>
           <div className="p-4 sm:p-5 h-64 sm:h-72 overflow-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50/50">
-                  <th scope="col" className="text-[10px] font-black uppercase tracking-wider text-slate-400 text-left px-5 py-2">{t('charts.pnl_day')}</th>
-                  <th scope="col" className="text-[10px] font-black uppercase tracking-wider text-slate-400 text-right px-3 py-2">{t('charts.pnl_ca_ttc')}</th>
-                  <th scope="col" className="text-[10px] font-black uppercase tracking-wider text-slate-400 text-right px-3 py-2">{t('charts.pnl_cout_achat')}</th>
-                  <th scope="col" className="text-[10px] font-black uppercase tracking-wider text-slate-400 text-right px-3 py-2">{t('charts.pnl_marge_brute')}</th>
-                  <th scope="col" className="text-[10px] font-black uppercase tracking-wider text-slate-400 text-right px-3 py-2">{t('charts.pnl_tx_marge')}</th>
-                  <th scope="col" className="text-[10px] font-black uppercase tracking-wider text-slate-400 text-center px-3 py-2">{t('charts.pnl_ventes')}</th>
+                  <th scope="col" className="text-caption font-black uppercase tracking-wider text-slate-400 text-left px-5 py-2">{t('charts.pnl_day')}</th>
+                  <th scope="col" className="text-caption font-black uppercase tracking-wider text-slate-400 text-right px-3 py-2">{t('charts.pnl_ca_ttc')}</th>
+                  <th scope="col" className="text-caption font-black uppercase tracking-wider text-slate-400 text-right px-3 py-2">{t('charts.pnl_cout_achat')}</th>
+                  <th scope="col" className="text-caption font-black uppercase tracking-wider text-slate-400 text-right px-3 py-2">{t('charts.pnl_marge_brute')}</th>
+                  <th scope="col" className="text-caption font-black uppercase tracking-wider text-slate-400 text-right px-3 py-2">{t('charts.pnl_tx_marge')}</th>
+                  <th scope="col" className="text-caption font-black uppercase tracking-wider text-slate-400 text-center px-3 py-2">{t('charts.pnl_ventes')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -351,7 +351,7 @@ export default function PerformanceOverview({
                     <tr key={label} className={`border-b border-slate-50 ${isToday ? 'bg-emerald-50/30' : ''}`}>
                       <td className="px-5 py-2.5">
                         <span className="font-bold text-slate-700 text-xs">{label}</span>
-                        {isToday && <span className="ml-2 text-[9px] font-black uppercase text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded">{t('charts.pnl_today')}</span>}
+                        {isToday && <span className="ml-2 text-micro font-black uppercase text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded">{t('charts.pnl_today')}</span>}
                       </td>
                       <td className="px-3 py-2.5 text-right font-bold text-slate-800 text-xs">{formatCurrencyLocal(ca)}</td>
                       <td className="px-3 py-2.5 text-right text-slate-500 text-xs font-medium">{formatCurrencyLocal(cout)}</td>
@@ -368,7 +368,7 @@ export default function PerformanceOverview({
               </tbody>
               <tfoot>
                 <tr className="border-t-2 border-slate-200 bg-slate-50/80">
-                  <td className="px-5 py-3 text-[10px] font-black uppercase tracking-wider text-slate-500">{t('charts.pnl_total')}</td>
+                  <td className="px-5 py-3 text-caption font-black uppercase tracking-wider text-slate-500">{t('charts.pnl_total')}</td>
                   <td className="px-3 py-3 text-right font-black text-slate-800 text-xs">{formatCurrencyLocal(revenueChart.data.reduce((a: number, b: number) => a + b, 0))}</td>
                   <td className="px-3 py-3 text-right font-bold text-slate-500 text-xs">{formatCurrencyLocal((revenueChart.couts ?? []).reduce((a: number, b: number) => a + b, 0))}</td>
                   <td className="px-3 py-3 text-right font-black text-xs" style={{ color: '#059669' }}>{formatCurrencyLocal((revenueChart.marges ?? []).reduce((a: number, b: number) => a + b, 0))}</td>
@@ -397,19 +397,19 @@ export default function PerformanceOverview({
             </div>
             <div>
               <h2 className="text-xs font-bold text-slate-700 tracking-tight uppercase">{t('charts.frequent_stockouts_title', 'Top 10 ruptures fréquentes (30 jours)')}</h2>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('charts.frequent_stockouts_desc', 'Produits qui tombent à 0 le plus souvent')}</p>
+              <p className="text-caption font-bold text-slate-400 uppercase tracking-widest">{t('charts.frequent_stockouts_desc', 'Produits qui tombent à 0 le plus souvent')}</p>
             </div>
           </div>
           <div className="p-4 sm:p-5 h-64 sm:h-72 overflow-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50/50">
-                  <th scope="col" className="text-[10px] font-black uppercase tracking-wider text-slate-400 text-left px-5 py-2">#</th>
-                  <th scope="col" className="text-[10px] font-black uppercase tracking-wider text-slate-400 text-left px-3 py-2">{t('charts.fs_product')}</th>
-                  <th scope="col" className="text-[10px] font-black uppercase tracking-wider text-slate-400 text-center px-3 py-2">{t('charts.fs_ruptures')}</th>
-                  <th scope="col" className="text-[10px] font-black uppercase tracking-wider text-slate-400 text-center px-3 py-2">{t('charts.fs_stock_current')}</th>
-                  <th scope="col" className="text-[10px] font-black uppercase tracking-wider text-slate-400 text-center px-3 py-2">{t('charts.fs_stock_min')}</th>
-                  <th scope="col" className="text-[10px] font-black uppercase tracking-wider text-slate-400 text-center px-3 py-2">{t('charts.fs_rotation')}</th>
+                  <th scope="col" className="text-caption font-black uppercase tracking-wider text-slate-400 text-left px-5 py-2">#</th>
+                  <th scope="col" className="text-caption font-black uppercase tracking-wider text-slate-400 text-left px-3 py-2">{t('charts.fs_product')}</th>
+                  <th scope="col" className="text-caption font-black uppercase tracking-wider text-slate-400 text-center px-3 py-2">{t('charts.fs_ruptures')}</th>
+                  <th scope="col" className="text-caption font-black uppercase tracking-wider text-slate-400 text-center px-3 py-2">{t('charts.fs_stock_current')}</th>
+                  <th scope="col" className="text-caption font-black uppercase tracking-wider text-slate-400 text-center px-3 py-2">{t('charts.fs_stock_min')}</th>
+                  <th scope="col" className="text-caption font-black uppercase tracking-wider text-slate-400 text-center px-3 py-2">{t('charts.fs_rotation')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -424,7 +424,7 @@ export default function PerformanceOverview({
                       >
                         {item.name}
                       </Link>
-                      {item.cip && <div className="text-[10px] text-slate-400 font-mono">{item.cip}</div>}
+                      {item.cip && <div className="text-caption text-slate-400 font-mono">{item.cip}</div>}
                     </td>
                     <td className="px-3 py-2.5 text-center">
                       <span className="inline-flex items-center justify-center min-w-[28px] px-2 py-0.5 rounded-full bg-red-100 text-red-600 font-black text-xs">

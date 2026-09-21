@@ -85,7 +85,7 @@ export default function FacturationHeader({ hook, datamatrixEnabled, setDatamatr
             >
               <ShoppingCart className="size-3.5" />
               <span className="font-bold">{hook.ventesEnAttente.length}</span>
-              <span className="hidden sm:inline uppercase text-[10px] tracking-wider">{hook.t('facturation:actions.pending')}</span>
+              <span className="hidden sm:inline uppercase text-caption tracking-wider">{hook.t('facturation:actions.pending')}</span>
             </Button>
           )}
         </div>
@@ -93,9 +93,9 @@ export default function FacturationHeader({ hook, datamatrixEnabled, setDatamatr
         {/* Right: date + shortcuts */}
         <div className="flex flex-col items-end shrink-0">
           <span className="text-xs font-medium text-slate-500">{formatDateShort(new Date())}</span>
-          <div className="hidden sm:flex gap-3 text-[10px] text-slate-400 mt-0.5 uppercase font-semibold tracking-wider">
-            <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-slate-600 font-mono text-[10px]">/</kbd> {hook.t('facturation:shortcuts.search')}</span>
-            <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-slate-600 font-mono text-[10px]">F9</kbd> {hook.t('facturation:shortcuts.pay')}</span>
+          <div className="hidden sm:flex gap-3 text-caption text-slate-400 mt-0.5 uppercase font-semibold tracking-wider">
+            <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-slate-600 font-mono text-caption">/</kbd> {hook.t('facturation:shortcuts.search')}</span>
+            <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-slate-600 font-mono text-caption">F9</kbd> {hook.t('facturation:shortcuts.pay')}</span>
           </div>
         </div>
       </div>
@@ -162,11 +162,11 @@ export default function FacturationHeader({ hook, datamatrixEnabled, setDatamatr
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-bold text-amber-800 uppercase tracking-wide">{hook.t('facturation:modification_mode.title')}</p>
-            <div className="flex flex-wrap gap-3 text-[11px] text-amber-700 mt-0.5">
+            <div className="flex flex-wrap gap-3 text-label text-amber-700 mt-0.5">
               <span>{hook.t('facturation:modification_mode.original_total')}: <strong className="font-semibold">{formatCurrency(Math.round(hook.originalTotalTtc))}</strong></span>
               <span>{hook.t('facturation:modification_mode.new_total')}: <strong className="font-semibold">{formatCurrency(Math.round(hook.totals.totalTtc))}</strong></span>
               {hook.totals.totalTtc !== hook.originalTotalTtc && (
-                <Badge variant={hook.totals.totalTtc > hook.originalTotalTtc ? 'default' : 'destructive'} className="text-[10px] h-5">
+                <Badge variant={hook.totals.totalTtc > hook.originalTotalTtc ? 'default' : 'destructive'} className="text-caption h-5">
                   {hook.totals.totalTtc > hook.originalTotalTtc ? '+' : ''}{formatCurrency(Math.round(hook.totals.totalTtc - hook.originalTotalTtc))}
                   {hook.totals.totalTtc > hook.originalTotalTtc ? ` (${hook.t('facturation:modification_mode.to_collect')})` : ` (${hook.t('facturation:modification_mode.to_refund')})`}
                 </Badge>

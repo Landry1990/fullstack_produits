@@ -185,7 +185,7 @@ export default function LoginShadcn() {
               {/* Feature: Multi-Postes (style capture) */}
               <div className={cn(
                 "flex items-center gap-3.5 p-3.5 rounded-2xl",
-                isDark ? 'bg-slate-800/50' : 'bg-[#f0f4f8]'
+                isDark ? 'bg-slate-800/50' : 'bg-slate-100'
               )}>
                 <div className={cn(
                   "shrink-0 h-10 w-10 rounded-xl flex items-center justify-center",
@@ -199,7 +199,7 @@ export default function LoginShadcn() {
                       {t('features.multi_postes')}
                     </h4>
                     <span className={cn(
-                      "text-[10px] font-medium tracking-wide",
+                      "text-caption font-medium tracking-wide",
                       isDark ? 'text-slate-500' : 'text-slate-400'
                     )}>
                       Phase 2 • v2.1
@@ -217,7 +217,7 @@ export default function LoginShadcn() {
               {/* Feature: Sécurité */}
               <div className={cn(
                 "flex items-center gap-3.5 p-3.5 rounded-2xl",
-                isDark ? 'bg-slate-800/50' : 'bg-[#f0f4f8]'
+                isDark ? 'bg-slate-800/50' : 'bg-slate-100'
               )}>
                 <div className={cn(
                   "shrink-0 h-10 w-10 rounded-xl flex items-center justify-center",
@@ -251,7 +251,7 @@ export default function LoginShadcn() {
         {/* Right Panel - Form */}
         <div className={cn(
           "flex-1 flex items-center justify-center p-6 relative overflow-y-auto",
-          isDark ? 'bg-slate-950' : 'bg-[#eef2f6]'
+          isDark ? 'bg-slate-950' : 'bg-slate-50'
         )}>
           <Card className={cn(
             "w-full max-w-md border shadow-xl",

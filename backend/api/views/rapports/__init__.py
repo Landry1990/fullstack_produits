@@ -6,6 +6,7 @@ from api.pagination import StandardResultsSetPagination
 from .base import RapportBaseMixin
 from .finance import RapportFinanceMixin
 from .inventory import RapportInventoryMixin
+from .permissions import CanAccessReports
 from .sales import RapportSalesMixin
 
 
@@ -20,7 +21,7 @@ class RapportViewSet(
     ViewSet modulaire pour les rapports ZENITH.
     Regroupe les calculs de base, les inventaires, les ventes et la finance.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, CanAccessReports]
     
     @property
     def paginator(self):

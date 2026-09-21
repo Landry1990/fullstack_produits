@@ -17,12 +17,13 @@ import {
 import { Button } from './shadcn/button';
 import { Badge } from './shadcn/badge';
 import { Tabs, TabsList, TabsTrigger } from './shadcn/tabs';
+import { ErrorState } from './ui/ErrorState';
 
 const tabs = [
-    { id: 'pilotage' as const, label: 'Pilotage', icon: TrendingUp },
-    { id: 'unsold' as const, label: 'Invendus', icon: Clock },
-    { id: 'overstock' as const, label: 'Surstock', icon: Package },
-    { id: 'shortage' as const, label: 'Ruptures', icon: AlertTriangle },
+    { id: 'pilotage' as const, icon: TrendingUp },
+    { id: 'unsold' as const, icon: Clock },
+    { id: 'overstock' as const, icon: Package },
+    { id: 'shortage' as const, icon: AlertTriangle },
 ];
 
 const StockAnalysis = () => {
@@ -50,7 +51,7 @@ const StockAnalysis = () => {
 
     const handleExportExcel = () => {
         if (!data || activeTab === 'pilotage') return;
-        const tabLabel = t(`stock:analyse.tabs.${activeTab}`, currentTab.label);
+        const tabLabel = t(`stock:analyse.tabs.${activeTab}`);
         let records: Record<string, string | number>[] = [];
 
         if (activeTab === 'unsold') {
@@ -146,8 +147,8 @@ const StockAnalysis = () => {
                                     className="gap-1.5 px-3 py-1 text-xs data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow"
                                 >
                                     <Icon className="size-3.5" />
-                                    <span className="hidden sm:inline">{t(`stock:analyse.tabs.${tab.id}`, tab.label)}</span>
-                                    <span className="sm:hidden">{tab.label}</span>
+                                    <span className="hidden sm:inline">{t(`stock:analyse.tabs.${tab.id}`)}</span>
+                                    <span className="sm:hidden">{t(`stock:analyse.tabs.${tab.id}`)}</span>
                                 </TabsTrigger>
                             );
                         })}
@@ -169,7 +170,7 @@ const StockAnalysis = () => {
                                     </div>
                                     <div>
                                         <CardTitle className="text-base">
-                                            {t(`stock:analyse.tabs.${activeTab}`, currentTab.label)}
+                                            {t(`stock:analyse.tabs.${activeTab}`)}
                                         </CardTitle>
                                         <CardDescription className="text-xs">
                                             {t('stock:analyse.filter_description')}
@@ -200,7 +201,7 @@ const StockAnalysis = () => {
                                             <Package className="size-4" />
                                         </div>
                                         <div>
-                                            <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">
+                                            <p className="text-caption font-medium text-slate-500 uppercase tracking-wide">
                                                 {t('stock:analyse.articles')}
                                             </p>
                                             <p className="text-xl font-bold text-slate-900">{data.total_items}</p>
@@ -214,7 +215,7 @@ const StockAnalysis = () => {
                                             <TrendingUp className="size-4" />
                                         </div>
                                         <div>
-                                            <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">
+                                            <p className="text-caption font-medium text-slate-500 uppercase tracking-wide">
                                                 {activeTab === 'unsold' ? t('stock:analyse.value_unsold') :
                                                  activeTab === 'overstock' ? t('stock:analyse.value_overstock') :
                                                  t('stock:analyse.value_total')}
@@ -233,7 +234,7 @@ const StockAnalysis = () => {
                                                 <AlertTriangle className="size-4" />
                                             </div>
                                             <div>
-                                                <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">
+                                                <p className="text-caption font-medium text-slate-500 uppercase tracking-wide">
                                                     {t('stock:analyse.shortage.rupture_count', 'En rupture')}
                                                 </p>
                                                 <p className="text-xl font-bold text-red-700">{data.rupture_count ?? 0}</p>
@@ -249,7 +250,7 @@ const StockAnalysis = () => {
                                                 <AlertTriangle className="size-4" />
                                             </div>
                                             <div>
-                                                <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">
+                                                <p className="text-caption font-medium text-slate-500 uppercase tracking-wide">
                                                     {t('stock:analyse.shortage.critical_count', 'Alertes critiques')}
                                                 </p>
                                                 <p className="text-xl font-bold text-amber-600">{data.critical_count ?? 0}</p>
@@ -262,12 +263,7 @@ const StockAnalysis = () => {
 
                         {/* Table Card */}
                         <Card className="overflow-hidden flex flex-col flex-1 min-h-0">
-                            {error && (
-                                <div className="m-4 flex items-center gap-3 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700">
-                                    <X className="size-5 shrink-0" />
-                                    <span className="text-sm font-medium">{error}</span>
-                                </div>
-                            )}
+                            <ErrorState error={error} onRetry={() => actions.fetchData()} retrying={loading} className="m-4" />
 
                             <div className="flex-1 overflow-hidden min-h-0 flex flex-col">
                                 <StockAnalysisTable

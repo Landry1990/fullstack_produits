@@ -222,7 +222,7 @@ export default function ReapproRayon() {
             </div>
             <div>
                 <h1 className="text-2xl font-black text-slate-800 tracking-tight">{t('reappro.title', { defaultValue: 'Réapprovisionnement Rayon' })}</h1>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">{t('reappro.subtitle', { defaultValue: 'Gérer les transferts Réserve → Rayon' })}</p>
+                <p className="text-caption font-black text-slate-400 uppercase tracking-widest mt-0.5">{t('reappro.subtitle', { defaultValue: 'Gérer les transferts Réserve → Rayon' })}</p>
             </div>
           </div>
         </div>
@@ -230,7 +230,7 @@ export default function ReapproRayon() {
         <div className="flex flex-wrap items-center gap-3">
           <Link
             to="/app/reappro-history"
-            className="inline-flex items-center gap-2 h-9 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest bg-white text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 border border-slate-200 shadow-sm transition-all"
+            className="inline-flex items-center gap-2 h-9 px-4 rounded-xl text-caption font-black uppercase tracking-widest bg-white text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 border border-slate-200 shadow-sm transition-all"
           >
             <History className="size-3.5" />
             {t('common:history')}
@@ -238,14 +238,14 @@ export default function ReapproRayon() {
           <div className="flex items-center gap-1 bg-white p-1.5 rounded-xl shadow-sm border border-slate-200">
             <button
                 onClick={fetchNeedsRefill}
-                className="inline-flex items-center gap-2 h-8 px-3 rounded-lg text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-100 transition-colors"
+                className="inline-flex items-center gap-2 h-8 px-3 rounded-lg text-caption font-black uppercase tracking-widest text-slate-600 hover:bg-slate-100 transition-colors"
             >
                 {loading ? <span className="animate-spin rounded-full size-3.5 border-b-2 border-slate-400"></span> : <RefreshCw className="size-3.5" />}
                 {t('common:refresh')}
             </button>
             <button
                 onClick={() => window.print()}
-                className="inline-flex items-center gap-2 h-8 px-3 rounded-lg text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-100 transition-colors"
+                className="inline-flex items-center gap-2 h-8 px-3 rounded-lg text-caption font-black uppercase tracking-widest text-slate-600 hover:bg-slate-100 transition-colors"
             >
                 <Printer className="size-3.5" />
                 {t('common:print')}
@@ -255,7 +255,7 @@ export default function ReapproRayon() {
           <div className="flex items-center gap-2 bg-white p-1.5 rounded-xl shadow-sm border border-slate-200">
             <button
                 onClick={() => handleBulkAction('all')}
-                className="inline-flex items-center gap-2 h-8 px-3 rounded-lg text-[10px] font-black uppercase tracking-widest bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+                className="inline-flex items-center gap-2 h-8 px-3 rounded-lg text-caption font-black uppercase tracking-widest bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors"
                 disabled={loading || products.length === 0}
             >
                 <Truck className="size-3.5" />
@@ -272,7 +272,7 @@ export default function ReapproRayon() {
             <AlertCircle className="size-6" />
           </div>
           <div>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('stock:reappro.critical_alerts')}</p>
+            <p className="text-caption font-bold text-slate-400 uppercase tracking-widest">{t('stock:reappro.critical_alerts')}</p>
             <p className="text-2xl font-black text-slate-800">{stats.criticalProductsCount}</p>
           </div>
         </div>
@@ -281,7 +281,7 @@ export default function ReapproRayon() {
             <Truck className="size-6" />
           </div>
           <div>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('stock:reappro.suggested_volume')}</p>
+            <p className="text-caption font-bold text-slate-400 uppercase tracking-widest">{t('stock:reappro.suggested_volume')}</p>
             <p className="text-2xl font-black text-slate-800">{stats.totalToTransfer} <small className="text-xs text-slate-400">unités</small></p>
           </div>
         </div>
@@ -290,7 +290,7 @@ export default function ReapproRayon() {
             <Filter className="size-6" />
           </div>
           <div>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('stock:reappro.displayed_products')}</p>
+            <p className="text-caption font-bold text-slate-400 uppercase tracking-widest">{t('stock:reappro.displayed_products')}</p>
             <p className="text-2xl font-black text-slate-800">{stats.totalDisplayed}</p>
           </div>
         </div>
@@ -327,7 +327,7 @@ export default function ReapproRayon() {
 
           <div className="flex items-center gap-4">
             <label className="cursor-pointer flex items-center gap-3 bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50 transition-all">
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{t('stock:reappro.alerts_only')}</span>
+              <span className="text-caption font-black uppercase tracking-widest text-slate-500">{t('stock:reappro.alerts_only')}</span>
               <div className="relative inline-flex">
                 <input
                   type="checkbox"
@@ -346,20 +346,20 @@ export default function ReapproRayon() {
         {selectedIds.size > 0 && (
             <div className="px-6 py-3 bg-emerald-50 border-b border-emerald-100 flex items-center justify-between animate-in slide-in-from-top duration-300">
                 <div className="flex items-center gap-3">
-                    <div className="bg-emerald-600 text-white size-6 rounded-lg flex items-center justify-center text-[10px] font-black">
+                    <div className="bg-emerald-600 text-white size-6 rounded-lg flex items-center justify-center text-caption font-black">
                         {selectedIds.size}
                     </div>
                     <span className="text-xs font-black text-emerald-700 uppercase tracking-widest">{t('stock:reappro.selected_products')}</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <button
-                        className="inline-flex items-center h-7 px-3 rounded-lg text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 transition-colors"
+                        className="inline-flex items-center h-7 px-3 rounded-lg text-caption font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 transition-colors"
                         onClick={() => setSelectedIds(new Set())}
                     >
                         Annuler
                     </button>
                     <button
-                        className="inline-flex items-center h-7 px-4 rounded-lg text-[10px] font-black uppercase tracking-widest bg-emerald-600 text-white hover:bg-emerald-700 shadow-md transition-colors"
+                        className="inline-flex items-center h-7 px-4 rounded-lg text-caption font-black uppercase tracking-widest bg-emerald-600 text-white hover:bg-emerald-700 shadow-md transition-colors"
                         onClick={() => handleBulkAction('selection')}
                     >
                         {t('stock:reappro.transfer')}
@@ -382,12 +382,12 @@ export default function ReapproRayon() {
                         aria-label={t('stock:cadencier.select_all')}
                     />
                 </th>
-                <th className="text-[10px] font-black uppercase tracking-widest text-slate-400 py-3 text-left">{t('stock:reappro.columns.product')}</th>
-                <th className="text-[10px] font-black uppercase tracking-widest text-slate-400 py-3 text-left">{t('stock:reappro.columns.section_status')}</th>
-                <th className="text-[10px] font-black uppercase tracking-widest text-slate-400 py-3 text-center">{t('stock:reappro.columns.section')}</th>
-                <th className="text-[10px] font-black uppercase tracking-widest text-slate-400 py-3 text-center">{t('stock:reappro.columns.reserve')}</th>
-                <th className="text-[10px] font-black uppercase tracking-widest text-emerald-600 py-3 text-center">{t('stock:reappro.columns.suggestion')}</th>
-                <th className="text-[10px] font-black uppercase tracking-widest text-slate-400 py-3 text-right no-print">{t('stock:reappro.columns.actions')}</th>
+                <th className="text-caption font-black uppercase tracking-widest text-slate-400 py-3 text-left">{t('stock:reappro.columns.product')}</th>
+                <th className="text-caption font-black uppercase tracking-widest text-slate-400 py-3 text-left">{t('stock:reappro.columns.section_status')}</th>
+                <th className="text-caption font-black uppercase tracking-widest text-slate-400 py-3 text-center">{t('stock:reappro.columns.section')}</th>
+                <th className="text-caption font-black uppercase tracking-widest text-slate-400 py-3 text-center">{t('stock:reappro.columns.reserve')}</th>
+                <th className="text-caption font-black uppercase tracking-widest text-emerald-600 py-3 text-center">{t('stock:reappro.columns.suggestion')}</th>
+                <th className="text-caption font-black uppercase tracking-widest text-slate-400 py-3 text-right no-print">{t('stock:reappro.columns.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -435,7 +435,7 @@ export default function ReapproRayon() {
                       <td className="py-3">
                         <div className="flex flex-col">
                             <span className="text-xs font-black text-slate-800 max-w-[200px] truncate">{p.name}</span>
-                            <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest">{p.rayon_name || t('common:no_section')}</span>
+                            <span className="text-micro font-bold text-slate-300 uppercase tracking-widest">{p.rayon_name || t('common:no_section')}</span>
                         </div>
                       </td>
                       <td className="w-48">
@@ -443,11 +443,11 @@ export default function ReapproRayon() {
                             <div className="flex justify-between items-center px-1">
                                 <div className="flex items-center gap-1.5">
                                     <div className={`size-1.5 rounded-full ${isLow ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'}`}></div>
-                                    <span className={`text-[9px] font-black uppercase tracking-widest ${isLow ? 'text-red-500' : 'text-emerald-600'}`}>
+                                    <span className={`text-micro font-black uppercase tracking-widest ${isLow ? 'text-red-500' : 'text-emerald-600'}`}>
                                         {isLow ? t('stock:reappro.status.critical') : t('stock:reappro.status.ok')}
                                     </span>
                                 </div>
-                                <span className="text-[9px] font-black text-slate-300">{Math.round(percent)}%</span>
+                                <span className="text-micro font-black text-slate-300">{Math.round(percent)}%</span>
                             </div>
                             <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden flex">
                                 <div 
@@ -484,7 +484,7 @@ export default function ReapproRayon() {
                       </td>
                       <td className="text-right py-3 no-print">
                         <button
-                            className={`inline-flex items-center gap-2 h-9 px-3 rounded-xl text-[9px] font-black uppercase tracking-widest border border-transparent hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-700 group/btn transition-all ${
+                            className={`inline-flex items-center gap-2 h-9 px-3 rounded-xl text-micro font-black uppercase tracking-widest border border-transparent hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-700 group/btn transition-all ${
                               isLow ? 'text-emerald-600' : 'text-slate-300'
                             } disabled:opacity-30`}
                             onClick={() => handleTransfer(p)}
@@ -506,20 +506,20 @@ export default function ReapproRayon() {
         {/* Pagination Footer */}
         {products.length > itemsPerPage && (
             <div className="p-6 border-t border-slate-100 flex items-center justify-between bg-slate-50/10 no-print">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">
+                <span className="text-caption font-black uppercase tracking-widest text-slate-300">
                     Page {page} sur {totalPages} ({products.length} produits)
                 </span>
                 <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
                     <button
-                        className="inline-flex items-center justify-center h-7 px-3 rounded-lg text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-white disabled:opacity-30 transition-colors"
+                        className="inline-flex items-center justify-center h-7 px-3 rounded-lg text-caption font-black uppercase tracking-widest text-slate-500 hover:bg-white disabled:opacity-30 transition-colors"
                         disabled={page === 1}
                         onClick={() => setPage(page - 1)}
                     >
                         {t('common:previous')}
                     </button>
-                    <div className="px-3 text-[10px] font-black text-slate-700">{page}</div>
+                    <div className="px-3 text-caption font-black text-slate-700">{page}</div>
                     <button
-                        className="inline-flex items-center justify-center h-7 px-3 rounded-lg text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-white disabled:opacity-30 transition-colors"
+                        className="inline-flex items-center justify-center h-7 px-3 rounded-lg text-caption font-black uppercase tracking-widest text-slate-500 hover:bg-white disabled:opacity-30 transition-colors"
                         disabled={page === totalPages}
                         onClick={() => setPage(page + 1)}
                     >
@@ -563,13 +563,13 @@ export default function ReapproRayon() {
             <DialogFooter className="flex gap-3 mt-6 sm:flex-row">
               <Button
                 variant="outline"
-                className="flex-1 h-11 rounded-xl font-black text-[10px] uppercase tracking-widest border-slate-200 text-slate-600 hover:bg-slate-50"
+                className="flex-1 h-11 rounded-xl font-black text-caption uppercase tracking-widest border-slate-200 text-slate-600 hover:bg-slate-50"
                 onClick={() => setShowConfirmBulk(false)}
               >
                 {t('stock:reappro.modal.cancel')}
               </Button>
               <Button
-                className="flex-1 h-11 rounded-xl font-black text-[10px] uppercase tracking-widest bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/25"
+                className="flex-1 h-11 rounded-xl font-black text-caption uppercase tracking-widest bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/25"
                 onClick={() => { setShowConfirmBulk(false); executeBulkTransfer(pendingIds); }}
               >
                 <Truck className="size-3.5 mr-2" />
@@ -591,7 +591,7 @@ export default function ReapproRayon() {
                   <CheckCircle2 className="size-10 text-emerald-600" />
                 </div>
                 <div className="absolute -top-1 -right-1 size-5 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center">
-                  <span className="text-white text-[9px] font-black">✓</span>
+                  <span className="text-white text-micro font-black">✓</span>
                 </div>
               </div>
               <DialogHeader className="space-y-2">
@@ -605,7 +605,7 @@ export default function ReapproRayon() {
             </div>
             <div className="flex flex-col gap-3 mt-6">
               <Button
-                className="w-full h-11 rounded-xl font-black text-[10px] uppercase tracking-widest bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/25"
+                className="w-full h-11 rounded-xl font-black text-caption uppercase tracking-widest bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/25"
                 onClick={async () => { 
                   if (lastSessionIdRef.current) {
                     try {
@@ -626,14 +626,14 @@ export default function ReapproRayon() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Link
                   to="/app/reappro-history"
-                  className="inline-flex items-center justify-center h-11 rounded-xl font-black text-[10px] uppercase tracking-widest border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors gap-1.5"
+                  className="inline-flex items-center justify-center h-11 rounded-xl font-black text-caption uppercase tracking-widest border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors gap-1.5"
                 >
                   <History className="size-3.5" />
                   {t('stock:reappro.modal.view_history')}
                 </Link>
                 <Button
                   variant="outline"
-                  className="h-11 rounded-xl font-black text-[10px] uppercase tracking-widest border-slate-200 text-slate-600 hover:bg-slate-50"
+                  className="h-11 rounded-xl font-black text-caption uppercase tracking-widest border-slate-200 text-slate-600 hover:bg-slate-50"
                   onClick={() => setShowSuccessModal(false)}
                 >
                   {t('stock:reappro.modal.close')}

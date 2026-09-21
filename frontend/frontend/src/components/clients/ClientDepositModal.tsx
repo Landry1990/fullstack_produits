@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { gooeyToast } from 'goey-toast'
 import { useTranslation } from 'react-i18next'
-import { Plus, Minus, History, CreditCard, Banknote, Calendar } from 'lucide-react'
+import { Plus, Minus, History, CreditCard, Banknote, Calendar, Loader2 } from 'lucide-react'
 import PremiumModal from '../common/PremiumModal'
 import clientService from '../../services/clientService'
 import { formatCurrency, formatDateFr } from '../../utils/formatters'
@@ -190,7 +190,7 @@ export default function ClientDepositModal({ isOpen, onClose, client, onSuccess 
                                     className={`inline-flex items-center justify-center gap-2 px-12 py-3 rounded-xl text-sm font-bold transition-colors shadow-lg ${type === 'DEPOT' ? 'bg-primary text-white hover:bg-primary-focus shadow-indigo-500/20' : 'bg-error text-white hover:bg-error-focus shadow-red-500/20'}`}
                                     disabled={loading}
                                 >
-                                    {loading && <span className="inline-block size-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>}
+                                    {loading && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
                                     {type === 'DEPOT' ? t('common:add_deposit') : t('common:make_withdrawal')}
                                 </button>
                             </div>

@@ -77,8 +77,8 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
                       aria-label={t('common:maintenance.select_all', { defaultValue: 'Tout sélectionner' })}
                     />
                   </th>
-                  <th scope="col" className="py-2.5 px-3 text-left text-[10px] font-semibold uppercase tracking-wider w-32">{t('products:table.cip')}</th>
-                  <th scope="col" className="py-2.5 px-3 text-left text-[10px] font-semibold uppercase tracking-wider">{t('products:table.product', { defaultValue: 'Produit' })}</th>
+                  <th scope="col" className="py-2.5 px-3 text-left text-caption font-semibold uppercase tracking-wider w-32">{t('products:table.cip')}</th>
+                  <th scope="col" className="py-2.5 px-3 text-left text-caption font-semibold uppercase tracking-wider">{t('products:table.product', { defaultValue: 'Produit' })}</th>
                 </tr>
               </thead>
               <tbody className="bg-base-100 divide-y divide-base-200">
@@ -136,7 +136,7 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
                           <span className="truncate">{produit.name}</span>
                           {produit.is_supplier_exclusive && (
                             <span
-                              className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-success/10 text-success border border-emerald-100 shrink-0"
+                              className="inline-flex items-center px-1.5 py-0.5 rounded text-caption font-medium bg-success/10 text-success border border-emerald-100 shrink-0"
                               title={`${t('products:table.exclusivity', { defaultValue: 'Exclusivité' })}: ${produit.fournisseur_name || t('products:form.provider_placeholder')}`}
                             >
                               {t('products:table.exclusive_badge')}
@@ -199,7 +199,7 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
 
                        <div className="flex items-center gap-2 mb-2">
                            {produit.is_supplier_exclusive && (
-                               <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-success/10 text-success border border-emerald-100">{t('products:table.exclusive_badge')}</span>
+                               <span className="inline-flex items-center px-1.5 py-0.5 rounded text-caption font-medium bg-success/10 text-success border border-emerald-100">{t('products:table.exclusive_badge')}</span>
                            )}
                            <span className="text-xs text-base-content/50 font-mono font-medium tracking-tight">
                               {produit.cip1 || '-'}
@@ -208,7 +208,7 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
 
                         <div className="flex items-center justify-between w-full pt-1.5 border-t border-base-200">
                           <div className="flex items-center gap-1">
-                             <span className="text-[10px] text-base-content/50 font-medium uppercase">{t('products:table.stock')}</span>
+                             <span className="text-caption text-base-content/50 font-medium uppercase">{t('products:table.stock')}</span>
                              <span className={`text-xs font-semibold ${stock < 0 ? 'text-red-500' : stock === 0 ? 'text-base-content/50' : 'text-base-content'}`}>
                                 {stock}
                              </span>

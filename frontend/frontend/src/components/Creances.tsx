@@ -10,6 +10,7 @@ import { CreancePaiementModal } from './creances/modals/CreancePaiementModal';
 import { CreanceDetailsModal } from './creances/modals/CreanceDetailsModal';
 import { BulkPaiementModal } from './creances/modals/BulkPaiementModal';
 import SudoValidationModal from './common/SudoValidationModal';
+import { ErrorState } from './ui/ErrorState';
 
 import { Wallet, DollarSign } from 'lucide-react';
 import { normalizeNumberInput, formatCurrency } from '../utils/formatters';
@@ -34,7 +35,7 @@ export default function Creances() {
     }, [data.selectedIds, data.creances]);
 
     return (
-        <div className="h-full flex flex-col bg-slate-100 p-4 sm:p-6 gap-4 sm:gap-6 font-sans overflow-auto">
+        <div className="h-full flex flex-col bg-slate-100 p-4 sm:p-6 gap-4 sm:gap-6 font-sans overflow-auto max-w-[1600px] mx-auto w-full">
 
             {/* Header Area */}
             <div className="flex flex-col gap-6">
@@ -60,12 +61,12 @@ export default function Creances() {
                         {data.filters.selectedClient && data.selectedIds.length > 0 && !data.filters.showHistory && (
                             <div className="flex items-center gap-4 animate-in fade-in zoom-in duration-300">
                                 <div className="flex flex-col items-end">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('creances:selection')}</span>
+                                    <span className="text-caption font-black uppercase tracking-widest text-slate-400">{t('creances:selection')}</span>
                                     <span className="text-sm font-black text-emerald-600">{t('creances:invoices_count', { count: data.selectedIds.length })}</span>
                                 </div>
                                 <div className="h-8 w-px bg-slate-200"></div>
                                 <div className="flex flex-col items-end mr-2">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('creances:total_due')}</span>
+                                    <span className="text-caption font-black uppercase tracking-widest text-slate-400">{t('creances:total_due')}</span>
                                     <span className="text-sm font-black text-slate-800">{formatCurrency(Math.round(bulkTotalAmount))}</span>
                                 </div>
                                 <button
@@ -150,9 +151,7 @@ export default function Creances() {
             {/* Error handling */}
             {data.error && (
                 <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
-                    <div className="px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm font-medium shadow-sm">
-                        <span>{data.error}</span>
-                    </div>
+                    <ErrorState error={data.error} onRetry={data.refresh} retrying={data.loading} compact className="shadow-sm font-medium" />
                 </div>
             )}
 

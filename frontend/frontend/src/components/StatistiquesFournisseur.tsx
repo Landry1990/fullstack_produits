@@ -23,6 +23,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '.
 import { EmptyState } from './ui/EmptyState';
 import { Skeleton } from './ui/Skeleton';
 import SkeletonTable from './ui/SkeletonTable';
+import { PageContainer } from './ui/PageContainer';
 import { logger } from '../utils/logger'
 import financeService from '../services/financeService';
 import fournisseurService from '../services/fournisseurService';
@@ -211,11 +212,11 @@ export default function StatistiquesFournisseur() {
   }, [stats]);
 
   const Recharts = useRecharts();
-  if (!Recharts) return <div className="p-3 sm:p-6"><Skeleton className="h-96 w-full" /></div>;
+  if (!Recharts) return <PageContainer variant="dense"><Skeleton className="h-96 w-full" /></PageContainer>;
   const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } = Recharts;
 
   return (
-    <div className="p-3 sm:p-6 space-y-4 sm:space-y-6 animate-fade-in">
+    <PageContainer variant="dense" className="space-y-4 sm:space-y-6 animate-fade-in">
       <div className="flex flex-col gap-3 md:flex-row md:justify-between md:items-start">
         <div>
           <h1 className="text-2xl font-bold text-base-content">{t('title')}</h1>
@@ -621,7 +622,7 @@ export default function StatistiquesFournisseur() {
                   <option value="AUTRE">{t('payments_tab.modes.AUTRE')}</option>
                 </Select>
                 <div className="w-full">
-                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                  <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
                     {t('payments_tab.filters.from')}
                   </label>
                   <LocalizedDateInput
@@ -632,7 +633,7 @@ export default function StatistiquesFournisseur() {
                   />
                 </div>
                 <div className="w-full">
-                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                  <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
                     {t('payments_tab.filters.to')}
                   </label>
                   <LocalizedDateInput
@@ -762,6 +763,6 @@ export default function StatistiquesFournisseur() {
         </div>
       )}
 
-    </div>
+    </PageContainer>
   );
 }

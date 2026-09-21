@@ -105,6 +105,7 @@ const _navigate = useNavigate()
       setFacturesEnAttente(facturesList)
     } catch (err) {
       logger.error('Erreur lors du chargement des factures en attente:', err)
+      gooeyToast.error(getApiErrorDetail(err, t('messages.load_pending_error', { defaultValue: 'Erreur lors du chargement des factures en attente' })))
     } finally {
       fetchingRef.current = false
     }
@@ -473,13 +474,13 @@ const _navigate = useNavigate()
               <span className="hidden sm:inline">{t('shortcuts.title')}</span>
             </div>
             <div className="flex flex-wrap gap-3">
-              <span><kbd className="inline-block px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-mono">↑↓</kbd> {t('shortcuts.navigate')}</span>
-              <span><kbd className="inline-block px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-mono">{t('shortcuts.enter_key', 'Entrée')}</kbd> {t('shortcuts.cash_in')}</span>
-              <span><kbd className="inline-block px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-mono">{t('shortcuts.space_key', 'Espace')}</kbd> {t('shortcuts.view_products')}</span>
-              <span><kbd className="inline-block px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-mono">C</kbd> {t('shortcuts.coupon')}</span>
-              <span><kbd className="inline-block px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-mono">R</kbd> {t('shortcuts.refresh')}</span>
-              <span><kbd className="inline-block px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-mono">1-9</kbd> {t('shortcuts.quick_select')}</span>
-              <span><kbd className="inline-block px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-mono">Esc</kbd> {t('shortcuts.close')}</span>
+              <span><kbd className="inline-block px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-caption font-mono">↑↓</kbd> {t('shortcuts.navigate')}</span>
+              <span><kbd className="inline-block px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-caption font-mono">{t('shortcuts.enter_key', 'Entrée')}</kbd> {t('shortcuts.cash_in')}</span>
+              <span><kbd className="inline-block px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-caption font-mono">{t('shortcuts.space_key', 'Espace')}</kbd> {t('shortcuts.view_products')}</span>
+              <span><kbd className="inline-block px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-caption font-mono">C</kbd> {t('shortcuts.coupon')}</span>
+              <span><kbd className="inline-block px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-caption font-mono">R</kbd> {t('shortcuts.refresh')}</span>
+              <span><kbd className="inline-block px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-caption font-mono">1-9</kbd> {t('shortcuts.quick_select')}</span>
+              <span><kbd className="inline-block px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-caption font-mono">Esc</kbd> {t('shortcuts.close')}</span>
             </div>
           </div>
         </div>

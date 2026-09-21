@@ -55,18 +55,18 @@ export default function DatamatrixScanField({
                     spellCheck={false}
                 />
                 {status === 'idle' && (
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 hidden sm:block whitespace-nowrap pointer-events-none">
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-caption text-slate-400 hidden sm:block whitespace-nowrap pointer-events-none">
                         {t('facturation:datamatrix.enter_to_validate')}
                     </span>
                 )}
             </div>
             {status === 'success' && lastScanned && (
-                <p className="text-[11px] text-emerald-600 font-medium pl-1 truncate">
+                <p className="text-label text-emerald-600 font-medium pl-1 truncate">
                     ✓ {lastScanned}
                 </p>
             )}
             {status === 'error' && (
-                <p className="text-[11px] text-red-500 pl-1">
+                <p className="text-label text-red-500 pl-1">
                     {t('facturation:datamatrix.not_found')}
                 </p>
             )}

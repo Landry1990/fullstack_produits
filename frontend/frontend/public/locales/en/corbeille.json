@@ -1,6 +1,13 @@
 {
   "title": "Recycle Bin",
   "subtitle": "Deleted items · Restore or permanently delete",
+  "subtitle_count": "{{count}} item(s) pending deletion",
+  "date_groups": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "this_week": "This week",
+    "older": "Older"
+  },
   "tabs": {
     "all": "All",
     "produits": "Products",
@@ -33,7 +40,8 @@
     "empty_trash": "Empty Recycle Bin",
     "empty_all": "Empty All",
     "refresh": "Refresh",
-    "selected": "{{count}} selected"
+    "selected": "{{count}} selected",
+    "select_all": "Select all"
   },
   "badges": {
     "produit": "Product",

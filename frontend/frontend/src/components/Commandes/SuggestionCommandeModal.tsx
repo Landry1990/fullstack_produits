@@ -381,7 +381,7 @@ export default function SuggestionCommandeModal({
                       <div className="flex gap-2">
                         <Button
                           type="button"
-                          className="text-[10px] uppercase font-bold text-emerald-600 hover:text-emerald-700 hover:underline transition-colors h-auto p-0 bg-transparent shadow-none rounded-none"
+                          className="text-caption uppercase font-bold text-emerald-600 hover:text-emerald-700 hover:underline transition-colors h-auto p-0 bg-transparent shadow-none rounded-none"
                           onClick={() => {
                             const d = new Date(new Date().getTime() - 24 * 60 * 60 * 1000).toISOString().slice(0, 16)
                             setSuggestionParams(p => ({ ...p, dateDebut: d, dateFin: new Date().toISOString().slice(0, 16) }))
@@ -389,7 +389,7 @@ export default function SuggestionCommandeModal({
                         >24h</Button>
                         <Button
                           type="button"
-                          className="text-[10px] uppercase font-bold text-emerald-600 hover:text-emerald-700 hover:underline transition-colors h-auto p-0 bg-transparent shadow-none rounded-none"
+                          className="text-caption uppercase font-bold text-emerald-600 hover:text-emerald-700 hover:underline transition-colors h-auto p-0 bg-transparent shadow-none rounded-none"
                           onClick={() => {
                             const d = new Date().toISOString().slice(0, 10) + 'T00:00'
                             setSuggestionParams(p => ({ ...p, dateDebut: d, dateFin: new Date().toISOString().slice(0, 16) }))
@@ -474,7 +474,7 @@ export default function SuggestionCommandeModal({
                   </div>
                 </div>
                 <div className="text-right bg-emerald-700 text-white rounded-xl px-4 py-2.5">
-                  <div className="text-[10px] uppercase font-semibold text-emerald-200 flex items-center gap-1 justify-end mb-0.5">
+                  <div className="text-caption uppercase font-semibold text-emerald-200 flex items-center gap-1 justify-end mb-0.5">
                     <DollarSign className="size-3" />
                     {t('orders:suggestion_modal.total_estimated')}
                   </div>
@@ -543,16 +543,16 @@ export default function SuggestionCommandeModal({
                               <div className="font-semibold text-slate-800 flex items-center gap-1.5 flex-wrap text-sm">
                                 {item.produit_nom}
                                 {item.is_supplier_exclusive && (
-                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-700">{t('orders:suggestion_modal.exclusive_badge')}</span>
+                                  <span className="px-1.5 py-0.5 rounded text-micro font-bold bg-emerald-100 text-emerald-700">{t('orders:suggestion_modal.exclusive_badge')}</span>
                                 )}
                                 {(item.promis_count ?? 0) > 0 && (
-                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-700">{t('orders:suggestion_modal.promis_badge', { count: item.promis_count })}</span>
+                                  <span className="px-1.5 py-0.5 rounded text-micro font-bold bg-amber-100 text-amber-700">{t('orders:suggestion_modal.promis_badge', { count: item.promis_count })}</span>
                                 )}
                                 {item.en_rupture_fournisseur && (
-                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-red-100 text-red-600 animate-pulse">{t('orders:suggestion_modal.rupture_badge')}</span>
+                                  <span className="px-1.5 py-0.5 rounded text-micro font-bold bg-red-100 text-red-600 animate-pulse">{t('orders:suggestion_modal.rupture_badge')}</span>
                                 )}
                               </div>
-                              <span className="text-[11px] text-slate-400 font-mono">{t('orders:suggestion_modal.ref_prefix')} {item.produit_ref}</span>
+                              <span className="text-label text-slate-400 font-mono">{t('orders:suggestion_modal.ref_prefix')} {item.produit_ref}</span>
                             </div>
                           </TableCell>
                           <TableCell className="px-3 py-2.5 text-center">
@@ -571,7 +571,7 @@ export default function SuggestionCommandeModal({
                           <TableCell className="px-3 py-2.5 text-right">
                             <div className="flex flex-col items-end">
                               <span className="text-base font-bold text-emerald-600">{item.quantite_suggeree}</span>
-                              <span className="text-[10px] text-slate-400">
+                              <span className="text-caption text-slate-400">
                                 {formatPrice(item.prix_achat)} {t('common:currency_symbol', 'F')}/{t('common:units_short', 'u')}
                               </span>
                             </div>
@@ -582,12 +582,12 @@ export default function SuggestionCommandeModal({
                           <TableCell className="px-3 py-2.5">
                             <div className="flex items-center gap-1.5">
                               {item.score_urgence > 50 ? (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-600">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-caption font-bold bg-red-100 text-red-600">
                                   <AlertTriangle className="size-2.5" />
                                   {t('orders:suggestion_modal.critical_badge')}
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-500 uppercase">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-caption font-medium bg-slate-100 text-slate-500 uppercase">
                                   {t('orders:suggestion_modal.standard_badge')}
                                 </span>
                               )}

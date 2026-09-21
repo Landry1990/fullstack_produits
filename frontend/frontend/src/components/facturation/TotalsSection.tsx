@@ -58,19 +58,19 @@ export default function TotalsSection({
         {/* Subtotal & Discount row */}
         <div className="flex justify-between items-end border-b border-slate-200 pb-3">
           <div className="flex flex-col">
-            <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">{t('facturation:totals.subtotal')}</span>
+            <span className="text-caption text-slate-400 font-semibold uppercase tracking-wider">{t('facturation:totals.subtotal')}</span>
             <span className="text-sm font-bold text-slate-600">{formatCurrency(Math.round(totalHT))}</span>
           </div>
 
           <div className="flex flex-col items-end">
-            <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">{t('facturation:totals.discount')}</span>
+            <span className="text-caption text-slate-400 font-semibold uppercase tracking-wider">{t('facturation:totals.discount')}</span>
             <div className="flex items-center gap-2">
                <div className="flex items-center bg-slate-100 border border-slate-200 rounded-lg overflow-hidden">
                   <select
                     value={remiseMode}
                     onChange={(e) => setRemiseMode(e.target.value as 'montant' | 'taux')}
                     aria-label={`${t('facturation:totals.discount')} (F/%)`}
-                    className="bg-transparent text-[10px] text-slate-500 border-r border-slate-200 px-2 py-1 outline-none"
+                    className="bg-transparent text-caption text-slate-500 border-r border-slate-200 px-2 py-1 outline-none"
                   >
                     <option value="montant">F</option>
                     <option value="taux">%</option>
@@ -94,12 +94,12 @@ export default function TotalsSection({
         {tauxCouverture > 0 && (
           <div className="flex justify-between items-center py-2.5 px-3 bg-blue-50 border border-blue-200 rounded-xl">
              <div className="flex flex-col">
-                <span className="text-[10px] text-blue-600 font-bold uppercase tracking-wide">{t('facturation:totals.part_assurance')} ({tauxCouverture}%)</span>
+                <span className="text-caption text-blue-600 font-bold uppercase tracking-wide">{t('facturation:totals.part_assurance')} ({tauxCouverture}%)</span>
                 <span className="text-sm font-bold text-blue-700">{formatCurrency(Math.round(partAssurance))}</span>
              </div>
              <div className="text-right">
-                <span className="text-[9px] text-slate-400 uppercase font-semibold">{t('facturation:totals.total_ttc')}</span>
-                <div className="text-[10px] text-slate-500">{formatCurrency(Math.round(totalTTC))}</div>
+                <span className="text-micro text-slate-400 uppercase font-semibold">{t('facturation:totals.total_ttc')}</span>
+                <div className="text-caption text-slate-500">{formatCurrency(Math.round(totalTTC))}</div>
              </div>
           </div>
         )}
@@ -107,7 +107,7 @@ export default function TotalsSection({
         {/* Main Grand Total */}
         <div className="relative overflow-hidden group">
           <div className="flex flex-col items-end p-4 rounded-xl bg-emerald-50 border border-emerald-200 shadow-sm">
-             <span className="text-[11px] text-emerald-600 font-bold uppercase tracking-wider mb-1">
+             <span className="text-label text-emerald-600 font-bold uppercase tracking-wider mb-1">
                 {tauxCouverture > 0 ? t('facturation:totals.part_patient') : t('facturation:totals.total_ttc')}
              </span>
              <div className="flex items-baseline gap-2">
@@ -129,7 +129,7 @@ export default function TotalsSection({
           
           {/* Total HT */}
           <div className="flex flex-col items-center sm:items-end gap-1">
-            <span className="text-slate-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider leading-none">{t('facturation:totals.subtotal')}</span>
+            <span className="text-slate-400 text-caption sm:text-xs font-semibold uppercase tracking-wider leading-none">{t('facturation:totals.subtotal')}</span>
             <span className="font-bold text-lg sm:text-2xl text-slate-700 whitespace-nowrap">
                 {formatCurrency(Math.round(totalHT))}
             </span>
@@ -137,14 +137,14 @@ export default function TotalsSection({
 
           {/* Remise Globale */}
           <div className="flex flex-col items-center sm:items-end gap-1">
-            <span className="text-slate-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider leading-none">{t('facturation:totals.discount')}</span>
+            <span className="text-slate-400 text-caption sm:text-xs font-semibold uppercase tracking-wider leading-none">{t('facturation:totals.discount')}</span>
             <div className="flex items-center gap-1 sm:gap-2">
               <div className="flex shadow-sm border border-slate-200 rounded-lg overflow-hidden h-9 sm:h-10">
                 <select
                     value={remiseMode}
                     onChange={(e) => setRemiseMode(e.target.value as 'montant' | 'taux')}
                     aria-label={`${t('facturation:totals.discount')} (F/%)`}
-                    className="bg-slate-100 border-r border-slate-200 text-[10px] sm:text-xs text-slate-600 focus:bg-slate-50 px-2 outline-none"
+                    className="bg-slate-100 border-r border-slate-200 text-caption sm:text-xs text-slate-600 focus:bg-slate-50 px-2 outline-none"
                 >
                     <option value="montant">F</option>
                     <option value="taux">%</option>
@@ -169,7 +169,7 @@ export default function TotalsSection({
           {/* TVA */}
           {tvaAmount > 0 ? (
             <div className="flex flex-col items-center sm:items-end gap-1">
-                <span className="text-slate-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider leading-none">{t('facturation:totals.tva')}</span>
+                <span className="text-slate-400 text-caption sm:text-xs font-semibold uppercase tracking-wider leading-none">{t('facturation:totals.tva')}</span>
                 <span className="font-medium text-lg sm:text-2xl text-slate-500 italic">
                     {formatCurrency(Math.round(tvaAmount))}
                 </span>
@@ -180,8 +180,8 @@ export default function TotalsSection({
           {tauxCouverture > 0 && (
              <div className="flex flex-col items-center sm:items-end gap-1 px-4 border-l border-slate-200 py-0.5">
                 <div className="flex items-center gap-2">
-                    <span className="text-[10px] uppercase font-bold text-blue-600 tracking-wide">{t('facturation:totals.assurance_label')}</span>
-                    <Badge variant="secondary" className="text-[10px] h-5 bg-blue-100 text-blue-700">{tauxCouverture}%</Badge>
+                    <span className="text-caption uppercase font-bold text-blue-600 tracking-wide">{t('facturation:totals.assurance_label')}</span>
+                    <Badge variant="secondary" className="text-caption h-5 bg-blue-100 text-blue-700">{tauxCouverture}%</Badge>
                 </div>
                 <span className="font-bold text-lg sm:text-2xl text-blue-600">
                     {formatCurrency(Math.round(partAssurance))}
@@ -191,7 +191,7 @@ export default function TotalsSection({
 
           {/* Total TTC & Net à Payer */}
           <div className="flex flex-col items-center sm:items-end gap-1 pl-4 sm:pl-8 border-l-2 border-emerald-200">
-            <span className="text-emerald-600 text-[10px] sm:text-xs font-bold uppercase tracking-wider leading-none">
+            <span className="text-emerald-600 text-caption sm:text-xs font-bold uppercase tracking-wider leading-none">
                 {tauxCouverture > 0 ? t('facturation:totals.part_patient') : t('facturation:totals.total_ttc')}
             </span>
             <div className="flex items-baseline gap-1">
@@ -201,7 +201,7 @@ export default function TotalsSection({
             </div>
 
             {tauxCouverture > 0 && (
-                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">
+                <span className="text-caption font-semibold text-slate-400 uppercase tracking-wide">
                     {t('facturation:totals.total_ttc')}: {formatCurrency(Math.round(totalTTC))}
                 </span>
             )}

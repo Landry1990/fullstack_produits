@@ -111,7 +111,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
               <div className="absolute top-0 left-0 right-0 h-1" style={{ background: card.accent }} />
               
               <div className="flex items-start justify-between">
-                <p className="text-[10px] font-black uppercase tracking-widest text-base-content/40 leading-tight">
+                <p className="text-caption font-black uppercase tracking-widest text-base-content/40 leading-tight">
                   {card.title}
                 </p>
                 <div className={`size-8 rounded-xl flex items-center justify-center shrink-0 ${card.alert ? 'animate-pulse' : ''}`} style={{ background: card.accent + '15', color: card.accent }}>
@@ -124,7 +124,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
               </p>
 
               <div className="flex items-center gap-1.5 mt-auto">
-                <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                <span className={`inline-flex items-center gap-1 text-caption font-bold px-2 py-0.5 rounded-full ${
                   card.accent === '#ef4444' || card.accent === '#f97316' ? 'bg-error/10 text-error' : 'bg-info/10 text-info'
                 }`}>
                   {card.sub}
@@ -146,7 +146,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
               </div>
               <div>
                 <h2 className="text-sm font-black text-base-content tracking-tight uppercase">{t('providers:dashboard.charts.evolution_title')}</h2>
-                <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">{t('providers:dashboard.charts.evolution_subtitle')}</p>
+                <p className="text-caption font-bold text-base-content/30 uppercase tracking-widest">{t('providers:dashboard.charts.evolution_subtitle')}</p>
               </div>
             </div>
             <button onClick={() => refresh()} className="inline-flex items-center justify-center size-7 rounded-full text-base-content/60 hover:bg-base-200 opacity-40 hover:opacity-100 transition-opacity" aria-label={t('common:refresh')}>
@@ -205,7 +205,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
             </div>
             <div>
               <h2 className="text-sm font-black text-base-content tracking-tight uppercase">{t('providers:dashboard.charts.distribution_title')}</h2>
-              <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">{t('providers:dashboard.charts.distribution_subtitle')}</p>
+              <p className="text-caption font-bold text-base-content/30 uppercase tracking-widest">{t('providers:dashboard.charts.distribution_subtitle')}</p>
             </div>
           </div>
           
@@ -240,9 +240,9 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
                 <div key={item.name} className="flex items-center justify-between group">
                   <div className="flex items-center gap-2">
                     <div className="size-2 rounded-full" style={{ background: COLORS[i % COLORS.length] }} />
-                    <span className="text-[11px] font-bold text-base-content/70 truncate max-w-[120px]">{item.name}</span>
+                    <span className="text-label font-bold text-base-content/70 truncate max-w-[120px]">{item.name}</span>
                   </div>
-                  <span className="text-[11px] font-black text-base-content">{formatCurrency(item.value)}</span>
+                  <span className="text-label font-black text-base-content">{formatCurrency(item.value)}</span>
                 </div>
               ))}
             </div>
@@ -260,12 +260,12 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
             </div>
             <div>
               <h2 className="text-sm font-black text-base-content tracking-tight uppercase">{t('providers:dashboard.deadlines.title')}</h2>
-              <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">{t('providers:dashboard.deadlines.subtitle')}</p>
+              <p className="text-caption font-bold text-base-content/30 uppercase tracking-widest">{t('providers:dashboard.deadlines.subtitle')}</p>
             </div>
           </div>
           <button 
             onClick={onViewAllDeadlines}
-            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-base-content/60 hover:bg-base-200 text-[10px] font-black uppercase tracking-widest transition-colors"
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-base-content/60 hover:bg-base-200 text-caption font-black uppercase tracking-widest transition-colors"
           >
             {t('providers:dashboard.deadlines.view_all')} <ChevronRight className="size-3 ml-1" />
           </button>
@@ -274,7 +274,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
         <div className="overflow-auto flex-1">
           <table className="w-full">
             <thead>
-              <tr className="text-[10px] font-black uppercase text-base-content/40 bg-base-200/30 border-none">
+              <tr className="text-caption font-black uppercase text-base-content/40 bg-base-200/30 border-none">
                 <th className="pl-6">{t('providers:table.provider')}</th>
                 <th>{t('providers:finance.table.reference')}</th>
                 <th>{t('providers:schedule.table.due_date')}</th>
@@ -294,12 +294,12 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
                     <span className="font-black text-base-content text-sm">{ech.fournisseur_nom}</span>
                   </td>
                   <td>
-                    <span className="font-mono text-[11px] text-base-content/50 uppercase">{ech.numero_facture}</span>
+                    <span className="font-mono text-label text-base-content/50 uppercase">{ech.numero_facture}</span>
                   </td>
                   <td>
                     <div className="flex flex-col">
                       <span className="font-bold text-xs">{new Date(ech.date_echeance).toLocaleDateString(currentLocale, { day: 'numeric', month: 'short' })}</span>
-                      <span className={`text-[10px] font-bold ${ech.jours_restants < 0 ? 'text-red-500' : 'text-base-content/40'}`}>
+                      <span className={`text-caption font-bold ${ech.jours_restants < 0 ? 'text-red-500' : 'text-base-content/40'}`}>
                         {ech.jours_restants < 0 
                           ? t('providers:dashboard.deadlines.days_late', { count: Math.abs(ech.jours_restants) }) 
                           : t('providers:dashboard.deadlines.in_days', { count: ech.jours_restants })}
@@ -310,7 +310,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
                     <span className="font-black text-base-content text-sm">{formatCurrency(ech.montant_du)}</span>
                   </td>
                   <td className="text-center">
-                    <span className={`inline-flex items-center rounded-full font-black text-[9px] uppercase py-2 px-3 ${
+                    <span className={`inline-flex items-center rounded-full font-black text-micro uppercase py-2 px-3 ${
                       ech.status === 'EN RETARD' ? 'bg-error/10 text-error' : 
                       ech.status === "AUJOURD'HUI" ? 'bg-warning/10 text-warning' : 
                       'bg-success/10 text-success'

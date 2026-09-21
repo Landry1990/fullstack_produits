@@ -111,24 +111,24 @@ export default function StockResolutionModal({
                 <span className="text-sm font-medium">{t('stock_resolution.message')}</span>
             </div>
             <div className="flex items-center gap-2 w-full lg:w-auto">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mr-1 hidden lg:inline">{t('common:actions')}</span>
+                <span className="text-caption font-semibold uppercase tracking-wider text-slate-400 mr-1 hidden lg:inline">{t('common:actions')}</span>
                 <button
                     onClick={() => handleBulkAction('reduce')}
-                    className="inline-flex flex-1 lg:flex-none items-center justify-center whitespace-nowrap h-7 px-2.5 rounded-lg text-[11px] font-medium border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 hover:border-emerald-200 hover:text-emerald-600 transition-colors gap-1.5"
+                    className="inline-flex flex-1 lg:flex-none items-center justify-center whitespace-nowrap h-7 px-2.5 rounded-lg text-label font-medium border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 hover:border-emerald-200 hover:text-emerald-600 transition-colors gap-1.5"
                     title={t('stock_resolution.reduce_all')}
                 >
                     <ArrowDown className="size-3.5 text-emerald-500" /> <span className="hidden sm:inline">{t('stock_resolution.reduce')}</span>
                 </button>
                 <button
                     onClick={() => handleBulkAction('promis')}
-                    className="inline-flex flex-1 lg:flex-none items-center justify-center whitespace-nowrap h-7 px-2.5 rounded-lg text-[11px] font-medium border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 hover:border-blue-200 hover:text-blue-600 transition-colors gap-1.5"
+                    className="inline-flex flex-1 lg:flex-none items-center justify-center whitespace-nowrap h-7 px-2.5 rounded-lg text-label font-medium border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 hover:border-blue-200 hover:text-blue-600 transition-colors gap-1.5"
                     title={t('stock_resolution.promis_all')}
                 >
                     <History className="size-3.5 text-blue-500" /> <span className="hidden sm:inline">{t('stock_resolution.promised')}</span>
                 </button>
                 <button
                     onClick={() => handleBulkAction('force')}
-                    className="inline-flex flex-1 lg:flex-none items-center justify-center whitespace-nowrap h-7 px-2.5 rounded-lg text-[11px] font-medium border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 hover:border-red-200 hover:text-red-600 transition-colors gap-1.5"
+                    className="inline-flex flex-1 lg:flex-none items-center justify-center whitespace-nowrap h-7 px-2.5 rounded-lg text-label font-medium border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 hover:border-red-200 hover:text-red-600 transition-colors gap-1.5"
                     title={t('stock_resolution.force_all')}
                 >
                     <Zap className="size-3.5 text-red-500" /> <span className="hidden sm:inline">{t('stock_resolution.force')}</span>
@@ -140,11 +140,11 @@ export default function StockResolutionModal({
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-100/50">
-                <th className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-4 py-3">{t('common:product')}</th>
-                <th className="text-center text-[10px] font-black uppercase tracking-widest text-slate-400 px-4 py-3">{t('stock_resolution.demand')}</th>
-                <th className="text-center text-[10px] font-black uppercase tracking-widest text-slate-400 px-4 py-3">{t('stock_resolution.stock')}</th>
-                <th className="text-center text-[10px] font-black uppercase tracking-widest text-slate-400 px-4 py-3">{t('stock_resolution.missing')}</th>
-                <th className="text-center text-[10px] font-black uppercase tracking-widest text-slate-400 px-4 py-3">{t('stock_resolution.actions')}</th>
+                <th className="text-caption font-black uppercase tracking-widest text-slate-400 px-4 py-3">{t('common:product')}</th>
+                <th className="text-center text-caption font-black uppercase tracking-widest text-slate-400 px-4 py-3">{t('stock_resolution.demand')}</th>
+                <th className="text-center text-caption font-black uppercase tracking-widest text-slate-400 px-4 py-3">{t('stock_resolution.stock')}</th>
+                <th className="text-center text-caption font-black uppercase tracking-widest text-slate-400 px-4 py-3">{t('stock_resolution.missing')}</th>
+                <th className="text-center text-caption font-black uppercase tracking-widest text-slate-400 px-4 py-3">{t('stock_resolution.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -162,7 +162,7 @@ export default function StockResolutionModal({
                             </div>
                             <div className="flex flex-col">
                                 <span className="font-bold text-sm text-slate-800">{item.nom}</span>
-                                <span className="text-[10px] text-slate-400 font-mono tracking-tighter">{item.cip}</span>
+                                <span className="text-caption text-slate-400 font-mono tracking-tighter">{item.cip}</span>
                             </div>
                         </div>
                     </td>
@@ -177,7 +177,7 @@ export default function StockResolutionModal({
                         <div className="inline-flex p-0.5 bg-slate-100 rounded-lg gap-0.5">
                             <button
                                 onClick={() => handleSetAction(item.id, 'reduce')}
-                                className={`inline-flex items-center justify-center whitespace-nowrap h-7 px-2 rounded-md text-[10px] font-semibold transition-all gap-1 border-none ${
+                                className={`inline-flex items-center justify-center whitespace-nowrap h-7 px-2 rounded-md text-caption font-semibold transition-all gap-1 border-none ${
                                     currentAction === 'reduce'
                                         ? 'bg-white shadow-sm text-emerald-600 ring-1 ring-emerald-100'
                                         : 'text-slate-500 hover:bg-white/70 hover:text-emerald-600'
@@ -188,7 +188,7 @@ export default function StockResolutionModal({
                             </button>
                             <button
                                 onClick={() => handleSetAction(item.id, 'promis')}
-                                className={`inline-flex items-center justify-center whitespace-nowrap h-7 px-2 rounded-md text-[10px] font-semibold transition-all gap-1 border-none ${
+                                className={`inline-flex items-center justify-center whitespace-nowrap h-7 px-2 rounded-md text-caption font-semibold transition-all gap-1 border-none ${
                                     currentAction === 'promis'
                                         ? 'bg-white shadow-sm text-blue-600 ring-1 ring-blue-100'
                                         : 'text-slate-500 hover:bg-white/70 hover:text-blue-600'
@@ -199,7 +199,7 @@ export default function StockResolutionModal({
                             </button>
                             <button
                                 onClick={() => handleSetAction(item.id, 'force')}
-                                className={`inline-flex items-center justify-center whitespace-nowrap h-7 px-2 rounded-md text-[10px] font-semibold transition-all gap-1 border-none ${
+                                className={`inline-flex items-center justify-center whitespace-nowrap h-7 px-2 rounded-md text-caption font-semibold transition-all gap-1 border-none ${
                                     currentAction === 'force'
                                         ? 'bg-white shadow-sm text-red-600 ring-1 ring-red-100'
                                         : 'text-slate-500 hover:bg-white/70 hover:text-red-600'
@@ -225,7 +225,7 @@ export default function StockResolutionModal({
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="w-full">
-                        <label htmlFor="promis-client-name" className="block pb-1.5 text-[11px] font-bold uppercase text-slate-500 tracking-wide">
+                        <label htmlFor="promis-client-name" className="block pb-1.5 text-label font-bold uppercase text-slate-500 tracking-wide">
                             {t('stock_resolution.client_name')} <span className="lowercase font-normal text-slate-400">({t('stock_resolution.optional')})</span>
                         </label>
                         <input
@@ -238,7 +238,7 @@ export default function StockResolutionModal({
                         />
                     </div>
                     <div className="w-full">
-                        <label htmlFor="promis-client-phone" className="block pb-1.5 text-[11px] font-bold uppercase text-slate-500 tracking-wide">
+                        <label htmlFor="promis-client-phone" className="block pb-1.5 text-label font-bold uppercase text-slate-500 tracking-wide">
                             {t('stock_resolution.client_phone_for_promised_ticket')}
                         </label>
                         <input
