@@ -14,8 +14,9 @@ export interface AuditLog {
 
 export interface Statistics {
     total_logs: number;
-    actions_stats: Array<{ action: string; action_label: string; count: number }>;
-    top_users: Array<{ user_id: number; username: string; display_name: string; count: number }>;
+    actions_stats?: Array<{ action: string; action_label: string; count: number }>;
+    by_action: Record<string, number> | Array<{ action: string; count: number }>;
+    top_users: Array<{ user_id?: number; username: string; display_name?: string; count: number }>;
     recent_activity: {
         last_24h: number;
         last_7d: number;
@@ -33,9 +34,10 @@ export interface AuditLogResponse {
 export interface AuditFilters {
     page: number;
     action?: string;
+    action_in?: string;
     user?: string;
     model_name?: string;
     date_from?: string;
     date_to?: string;
-    search?: string;
+    q?: string;
 }
