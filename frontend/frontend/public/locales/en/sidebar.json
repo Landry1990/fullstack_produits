@@ -50,6 +50,9 @@
         "analyse": {
             "title": "Stock Analysis"
         },
+        "cadencier": {
+            "title": "Order Planner"
+        },
         "reappro": {
             "title": "Shelf Restocking"
         },

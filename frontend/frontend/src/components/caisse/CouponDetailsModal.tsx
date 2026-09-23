@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { formatCurrency } from '../../utils/formatters'
 import { escHtml, writePrintDocument } from '../../utils/print/printHelpers'
+import { useDocumentLocale } from '../../hooks/usePharmacySettings'
 import PremiumModal from '../common/PremiumModal'
 import type { CouponMonnaie, Facture } from '../../types'
 
@@ -22,12 +23,15 @@ export function CouponDetailsModal({
   settings
 }: CouponDetailsModalProps) {
   const { t } = useTranslation('caisse')
+  // Langue des documents imprimés (PharmacySettings.locale), découplée de l'UI.
+  const { lang: docLang, locale: docLocale } = useDocumentLocale()
+  const { t: docT } = useTranslation('printing', { lng: docLang })
 
   const handlePrintCoupon = () => {
     if (!coupon) return
     const win = window.open('about:blank', '', 'height=600,width=400')
     if (win) {
-      const dateStr = new Date(coupon.date_creation).toLocaleString('fr-FR', {
+      const dateStr = new Date(coupon.date_creation).toLocaleString(docLocale, {
         day: '2-digit', month: '2-digit', year: 'numeric',
         hour: '2-digit', minute: '2-digit'
       })
@@ -35,7 +39,7 @@ export function CouponDetailsModal({
       writePrintDocument(win, `<!DOCTYPE html>
 <html>
 <head>
-  <title>Coupon de Monnaie</title>
+  <title>${escHtml(docT('coupon.title'))}</title>
   <style>
     @media print {
       @page {
@@ -144,7 +148,7 @@ export function CouponDetailsModal({
 </head>
 <body>
   <div class="header">
-    <div class="pharmacy-name">${escHtml(settings.pharmacy_name || 'PHARMACIE')}</div>
+    <div class="pharmacy-name">${escHtml(settings.pharmacy_name || docT('coupon.pharmacy_fallback'))}</div>
     <div class="pharmacy-info">
       ${settings.city ? `${escHtml(settings.city)}` : ''}${settings.country ? `, ${escHtml(settings.country)}` : ''}<br>
       ${settings.phone ? `Tel: ${escHtml(settings.phone)}` : ''}<br>
@@ -154,45 +158,45 @@ export function CouponDetailsModal({
   </div>
   
   <div class="coupon-box">
-    <div class="coupon-label">Coupon de Monnaie</div>
+    <div class="coupon-label">${docT('coupon.title')}</div>
     <div class="coupon-number">#${escHtml(coupon.numero)}</div>
-    <div class="coupon-amount">${formatCurrency(Math.round(Number(coupon.montant)))}</div>
+    <div class="coupon-amount">${formatCurrency(Math.round(Number(coupon.montant)), docLocale)}</div>
   </div>
-  
+
   <div class="info-section">
     <div class="info-row">
-      <span class="info-label">Statut:</span>
+      <span class="info-label">${docT('coupon.status')}:</span>
       <span>${escHtml(coupon.status_display || coupon.status)}<span class="status-badge">${escHtml(coupon.status)}</span></span>
     </div>
     <div class="info-row">
-      <span class="info-label">Généré par:</span>
-      <span>${escHtml(coupon.cree_par_nom || 'Système')}</span>
+      <span class="info-label">${docT('coupon.generated_by')}:</span>
+      <span>${escHtml(coupon.cree_par_nom || docT('coupon.system'))}</span>
     </div>
     <div class="info-row">
-      <span class="info-label">Date:</span>
+      <span class="info-label">${docT('coupon.date')}:</span>
       <span>${dateStr}</span>
     </div>
     ${coupon.facture_origine ? `
     <div class="info-row">
-      <span class="info-label">Facture origine:</span>
+      <span class="info-label">${docT('coupon.origin_invoice')}:</span>
       <span>#${escHtml(coupon.facture_origine)}</span>
     </div>
     ` : ''}
   </div>
-  
+
   ${coupon.notes ? `
   <div class="notes">
-    <strong>Notes:</strong><br>
+    <strong>${docT('coupon.notes')}:</strong><br>
     ${escHtml(coupon.notes)}
   </div>
   ` : ''}
-  
+
   <div class="warning">
-    Ce coupon est valable uniquement dans cette pharmacie
+    ${docT('coupon.validity')}
   </div>
-  
+
   <div class="footer">
-    ${escHtml(settings.ticket_footer_message || 'Merci de votre visite !')}
+    ${escHtml(settings.ticket_footer_message || docT('ticket.visit_thanks'))}
   </div>
 </body>
 </html>`)

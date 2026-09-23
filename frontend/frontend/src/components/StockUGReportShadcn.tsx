@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { gooeyToast, GoeyToaster } from 'goey-toast';
 import { formatCurrency, formatNumber } from '../utils/formatters';
 import { writePrintDocument, escHtml } from '../utils/print/printHelpers';
+import { useDocumentLocale } from '../hooks/usePharmacySettings';
 
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
@@ -36,6 +37,9 @@ import { logger } from '../utils/logger'
 
 export default function StockUGReportShadcn() {
   const { t } = useTranslation(['stock', 'common']);
+  // Langue des documents imprimés (PharmacySettings.locale), découplée de l'UI.
+  const { lang: docLang, locale: docLocale } = useDocumentLocale();
+  const { t: docT } = useTranslation(['stock', 'common'], { lng: docLang });
   const [data, setData] = useState<UGReportData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -113,7 +117,7 @@ export default function StockUGReportShadcn() {
       writePrintDocument(win, `
         <html>
           <head>
-            <title>${escHtml(t('stock:rapport_ug.print_template.title'))} - ${formatDate(new Date())}</title>
+            <title>${escHtml(docT('stock:rapport_ug.print_template.title'))} - ${formatDate(new Date(), docLocale)}</title>
             <style>
               body { font-family: sans-serif; padding: 20px; color: #334155; }
               h1 { text-align: center; font-size: 24px; color: #1e293b; margin-bottom: 5px; }
@@ -133,53 +137,53 @@ export default function StockUGReportShadcn() {
             </style>
           </head>
           <body>
-            <h1>${t('stock:rapport_ug.title')}</h1>
-            <div class="subtitle">${t('stock:rapport_ug.print_template.situation', { date: formatDate(new Date()) })}</div>
+            <h1>${docT('stock:rapport_ug.title')}</h1>
+            <div class="subtitle">${docT('stock:rapport_ug.print_template.situation', { date: formatDate(new Date(), docLocale) })}</div>
 
             <div class="kpi-grid">
               <div class="kpi-card">
-                <div class="kpi-label">${t('stock:rapport_ug.stats.history_ug')}</div>
-                <div class="kpi-value">${formatNumber(data.global_total_ug)}</div>
+                <div class="kpi-label">${docT('stock:rapport_ug.stats.history_ug')}</div>
+                <div class="kpi-value">${formatNumber(data.global_total_ug, 0, docLocale)}</div>
               </div>
               <div class="kpi-card" style="border-left: 4px solid #10b981;">
-                <div class="kpi-label" style="color: #10b981;">${t('stock:rapport_ug.stats.current_stock_ug')}</div>
-                <div class="kpi-value">${formatNumber(data.global_total_ug_restantes)}</div>
+                <div class="kpi-label" style="color: #10b981;">${docT('stock:rapport_ug.stats.current_stock_ug')}</div>
+                <div class="kpi-value">${formatNumber(data.global_total_ug_restantes, 0, docLocale)}</div>
               </div>
               <div class="kpi-card">
-                <div class="kpi-label">${t('stock:rapport_ug.stats.estimated_value')}</div>
-                <div class="kpi-value">${formatCurrency(data.global_total_valeur)}</div>
+                <div class="kpi-label">${docT('stock:rapport_ug.stats.estimated_value')}</div>
+                <div class="kpi-value">${formatCurrency(data.global_total_valeur, docLocale)}</div>
               </div>
               <div class="kpi-card" style="border-left: 4px solid #3b82f6;">
-                <div class="kpi-label" style="color: #3b82f6;">${t('stock:rapport_ug.stats.latent_cash')}</div>
-                <div class="kpi-value">${formatCurrency(data.global_total_valeur_restante)}</div>
+                <div class="kpi-label" style="color: #3b82f6;">${docT('stock:rapport_ug.stats.latent_cash')}</div>
+                <div class="kpi-value">${formatCurrency(data.global_total_valeur_restante, docLocale)}</div>
               </div>
             </div>
 
             <table>
               <thead>
                 <tr>
-                  <th>${t('stock:rapport_ug.table.details.product')}</th>
-                  <th>${t('stock:rapport_ug.table.details.lot')}</th>
-                  <th style="text-align: right;">${t('stock:rapport_ug.table.details.received')}</th>
-                  <th style="text-align: right;">${t('stock:rapport_ug.table.details.remaining')}</th>
-                  <th style="text-align: right;">${t('stock:rapport_ug.table.details.val_rest')}</th>
+                  <th>${docT('stock:rapport_ug.table.details.product')}</th>
+                  <th>${docT('stock:rapport_ug.table.details.lot')}</th>
+                  <th style="text-align: right;">${docT('stock:rapport_ug.table.details.received')}</th>
+                  <th style="text-align: right;">${docT('stock:rapport_ug.table.details.remaining')}</th>
+                  <th style="text-align: right;">${docT('stock:rapport_ug.table.details.val_rest')}</th>
                 </tr>
               </thead>
               <tbody>
                 ${data.fournisseurs.map(f => `
                   <tr class="supplier-row">
-                    <td colspan="2">${escHtml(f.fournisseur_nom)} (${t('stock:rapport_ug.print_template.lots_count', { count: f.lots_count })})</td>
-                    <td style="text-align: right;">${formatNumber(f.total_ug)}</td>
-                    <td style="text-align: right;">${formatNumber(f.total_ug_restantes)}</td>
-                    <td style="text-align: right;">${formatCurrency(f.total_valeur_restante)}</td>
+                    <td colspan="2">${escHtml(f.fournisseur_nom)} (${docT('stock:rapport_ug.print_template.lots_count', { count: f.lots_count })})</td>
+                    <td style="text-align: right;">${formatNumber(f.total_ug, 0, docLocale)}</td>
+                    <td style="text-align: right;">${formatNumber(f.total_ug_restantes, 0, docLocale)}</td>
+                    <td style="text-align: right;">${formatCurrency(f.total_valeur_restante, docLocale)}</td>
                   </tr>
                   ${f.details.map(d => `
                     <tr>
                       <td style="padding-left: 25px;">${escHtml(d.produit_nom)}</td>
-                      <td style="color: #64748b; font-size: 9px; white-space: nowrap;">${t('stock:rapport_ug.print_template.lot_label')}: ${escHtml(d.lot_numero)}<br/>${t('stock:rapport_ug.print_template.invoice_label')}: ${escHtml(d.facture_numero)}</td>
-                      <td style="text-align: right;">${formatNumber(d.quantity_free)}</td>
-                      <td style="text-align: right; font-weight: bold; color: #10b981;">${formatNumber(d.quantity_free_remaining)}</td>
-                      <td style="text-align: right; font-weight: bold; color: #1d293b;">${formatCurrency(d.valeur_restante)}</td>
+                      <td style="color: #64748b; font-size: 9px; white-space: nowrap;">${docT('stock:rapport_ug.print_template.lot_label')}: ${escHtml(d.lot_numero)}<br/>${docT('stock:rapport_ug.print_template.invoice_label')}: ${escHtml(d.facture_numero)}</td>
+                      <td style="text-align: right;">${formatNumber(d.quantity_free, 0, docLocale)}</td>
+                      <td style="text-align: right; font-weight: bold; color: #10b981;">${formatNumber(d.quantity_free_remaining, 0, docLocale)}</td>
+                      <td style="text-align: right; font-weight: bold; color: #1d293b;">${formatCurrency(d.valeur_restante, docLocale)}</td>
                     </tr>
                   `).join('')}
                 `).join('')}
@@ -187,7 +191,7 @@ export default function StockUGReportShadcn() {
             </table>
 
             <div style="text-align: center; margin-top: 40px; font-size: 9px; color: #94a3b8; font-weight: bold; text-transform: uppercase;">
-              --- ${t('stock:rapport_ug.print_template.footer')} ---
+              --- ${docT('stock:rapport_ug.print_template.footer')} ---
             </div>
           </body>
         </html>
@@ -195,7 +199,7 @@ export default function StockUGReportShadcn() {
       win.onload = () => win.print();
       setTimeout(() => { if (win) win.print(); }, 500);
     }
-  }, [data, t]);
+  }, [data, docT, docLocale]);
 
   const kpiCards = useMemo(() => [
     {

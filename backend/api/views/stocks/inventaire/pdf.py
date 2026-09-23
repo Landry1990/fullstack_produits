@@ -20,12 +20,17 @@ from reportlab.platypus import (
     TableStyle,
 )
 
+from ....utils_doclang import T, format_doc_date, get_document_language
 
-def generate_ecarts_pdf(inventaire):
+
+def generate_ecarts_pdf(inventaire, lang=None):
     """
     Génère un PDF listant uniquement les écarts.
     Retourne une HttpResponse avec le PDF.
     """
+    if not lang:
+        lang = get_document_language()
+
     response = HttpResponse(content_type='application/pdf')
     filename = f"ecarts_inventaire_{inventaire.id}.pdf"
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
@@ -47,8 +52,8 @@ def generate_ecarts_pdf(inventaire):
     # Style économique
     styles.add(ParagraphStyle(name='Small', parent=styles['Normal'], fontSize=8, leading=10))
 
-    story.append(Paragraph(f"RAPPORT DES ÉCARTS - #{inventaire.id}", styles['Title']))
-    story.append(Paragraph(f"Date: {inventaire.date.strftime('%d/%m/%Y')}", styles['Normal']))
+    story.append(Paragraph(T(lang, 'invd_ecarts_title', id=inventaire.id), styles['Title']))
+    story.append(Paragraph(T(lang, 'invd_date', d=format_doc_date(inventaire.date, lang)), styles['Normal']))
     story.append(Spacer(1, 20))
 
     # Filtre: Ecart != 0 (exclude 0)
@@ -57,11 +62,11 @@ def generate_ecarts_pdf(inventaire):
     ).order_by('produit__rayon__name', 'produit__name')
 
     if not lignes.exists():
-        story.append(Paragraph("Aucun écart constaté.", styles['Normal']))
+        story.append(Paragraph(T(lang, 'invd_no_ecart'), styles['Normal']))
     else:
         grouped = {}
         for l in lignes:
-            r = l.produit.rayon.name if l.produit and l.produit.rayon else "AUTRES"
+            r = l.produit.rayon.name if l.produit and l.produit.rayon else T(lang, 'grp_autres')
             if r not in grouped:
                 grouped[r] = []
             grouped[r].append(l)
@@ -69,10 +74,10 @@ def generate_ecarts_pdf(inventaire):
         total_global_ecart = 0
 
         for rayon in sorted(grouped.keys()):
-            story.append(Paragraph(f"<b>RAYON: {rayon}</b>", styles['Heading3']))
+            story.append(Paragraph(f"<b>{T(lang, 'invd_rayon_prefix', r=rayon)}</b>", styles['Heading3']))
 
             # Colonnes ajoutées: ID, PMP
-            data = [['ID', 'Produit', 'PMP', 'Theo.', 'Phys.', 'Ecart', 'Val.']]
+            data = [['ID', T(lang, 'col_produit'), 'PMP', T(lang, 'invd_col_theo'), T(lang, 'invd_col_phys'), T(lang, 'invd_col_ecart'), T(lang, 'invd_col_val')]]
             total_rayon = 0
             for l in grouped[rayon]:
                 price = (l.produit.pmp if l.produit and l.produit.pmp > 0 else
@@ -88,7 +93,7 @@ def generate_ecarts_pdf(inventaire):
 
                 data.append([
                     str(l.produit.id) if l.produit else "-",
-                    Paragraph(l.produit.name[:50] if l.produit else "Inconnu", styles['Small']),
+                    Paragraph(l.produit.name[:50] if l.produit else T(lang, 'produit_inconnu'), styles['Small']),
                     price_display,
                     str(l.stock_theorique),
                     str(l.quantite_physique),
@@ -97,7 +102,7 @@ def generate_ecarts_pdf(inventaire):
                 ])
 
             total_global_ecart += total_rayon
-            data.append(['', '', '', '', '', 'TOTAL', f"{total_rayon:+.0f}"])
+            data.append(['', '', '', '', '', T(lang, 'row_total'), f"{total_rayon:+.0f}"])
 
             # Largeur totale dispo ~ 7.5 inches
             t = Table(
@@ -119,7 +124,7 @@ def generate_ecarts_pdf(inventaire):
         # Grand Total
         story.append(Spacer(1, 15))
         story.append(Paragraph(
-            f"TOTAL GLOBAL ÉCARTS (VALEUR): {total_global_ecart:+,.0f} F",
+            T(lang, 'invd_total_ecarts', v=f"{total_global_ecart:+,.0f}"),
             styles['Heading2']
         ))
 
@@ -130,11 +135,14 @@ def generate_ecarts_pdf(inventaire):
     return response
 
 
-def generate_etat_pdf(inventaire):
+def generate_etat_pdf(inventaire, lang=None):
     """
     Génère un PDF de l'état d'inventaire groupé par rayon.
     Retourne une HttpResponse avec le PDF.
     """
+    if not lang:
+        lang = get_document_language()
+
     response = HttpResponse(content_type='application/pdf')
     filename = f"inventaire_{inventaire.id}.pdf"
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
@@ -151,10 +159,10 @@ def generate_etat_pdf(inventaire):
     styles = getSampleStyleSheet()
 
     # Titles
-    story.append(Paragraph(f"ETAT D'INVENTAIRE #{inventaire.id}", styles['Title']))
-    story.append(Paragraph(f"Date: {inventaire.date.strftime('%d/%m/%Y')}", styles['Normal']))
+    story.append(Paragraph(T(lang, 'invd_etat_title', id=inventaire.id), styles['Title']))
+    story.append(Paragraph(T(lang, 'invd_date', d=format_doc_date(inventaire.date, lang)), styles['Normal']))
     if inventaire.description:
-        story.append(Paragraph(f"Description: {inventaire.description}", styles['Normal']))
+        story.append(Paragraph(T(lang, 'invd_desc', d=inventaire.description), styles['Normal']))
     story.append(Spacer(1, 20))
 
     # Data
@@ -164,15 +172,15 @@ def generate_etat_pdf(inventaire):
 
     grouped = {}
     for l in lignes:
-        r = l.produit.rayon.name if l.produit and l.produit.rayon else "AUTRES"
+        r = l.produit.rayon.name if l.produit and l.produit.rayon else T(lang, 'grp_autres')
         if r not in grouped:
             grouped[r] = []
         grouped[r].append(l)
 
     for rayon in sorted(grouped.keys()):
-        story.append(Paragraph(f"<b>RAYON: {rayon}</b>", styles['Heading3']))
+        story.append(Paragraph(f"<b>{T(lang, 'invd_rayon_prefix', r=rayon)}</b>", styles['Heading3']))
 
-        data = [['Produit', 'Theo.', 'Phys.', 'Ecart', 'Val.']]
+        data = [[T(lang, 'col_produit'), T(lang, 'invd_col_theo'), T(lang, 'invd_col_phys'), T(lang, 'invd_col_ecart'), T(lang, 'invd_col_val')]]
         total_val = 0
         for l in grouped[rayon]:
             price = l.produit.pmp if l.produit else 0
@@ -185,7 +193,7 @@ def generate_etat_pdf(inventaire):
                 f"{l.ecart:+}" if l.ecart != 0 else "0",
                 f"{val:+.0f}" if val != 0 else "0"
             ])
-        data.append(['', '', '', 'TOTAL', f"{total_val:+.0f}"])
+        data.append(['', '', '', T(lang, 'row_total'), f"{total_val:+.0f}"])
 
         t = Table(data, colWidths=[3*inch, 0.8*inch, 0.8*inch, 0.6*inch, 1*inch])
         t.setStyle(TableStyle([
@@ -205,7 +213,7 @@ def generate_etat_pdf(inventaire):
     return response
 
 
-def get_print_data(inventaire, group_by='rayon', is_report=False):
+def get_print_data(inventaire, group_by='rayon', is_report=False, lang=None):
     """
     Retourne les données structurées pour l'impression frontend (React).
     Supporte les feuilles de saisie et les rapports d'écarts.
@@ -218,6 +226,8 @@ def get_print_data(inventaire, group_by='rayon', is_report=False):
     Returns:
         dict avec les données structurées
     """
+    if not lang:
+        lang = get_document_language()
 
     lignes = inventaire.lignes.select_related(
         'produit', 'produit__rayon', 'produit__forme', 'produit__groupe', 'stock_lot'
@@ -239,19 +249,19 @@ def get_print_data(inventaire, group_by='rayon', is_report=False):
             group_name = (
                 l.produit.forme.nom
                 if l.produit and l.produit.forme and l.produit.forme.nom
-                else "SANS FORME"
+                else T(lang, 'grp_sans_forme')
             )
         elif group_by == 'groupe':
             group_name = (
                 l.produit.groupe.nom
                 if l.produit and l.produit.groupe and l.produit.groupe.nom
-                else "SANS GROUPE"
+                else T(lang, 'grp_sans_groupe')
             )
         else:
             group_name = (
                 l.produit.rayon.name
                 if l.produit and l.produit.rayon and l.produit.rayon.name
-                else "AUTRES"
+                else T(lang, 'grp_autres')
             )
 
         if group_name not in grouped:
@@ -293,11 +303,11 @@ def get_print_data(inventaire, group_by='rayon', is_report=False):
         })
 
     return {
-        'title': "RAPPORT D'INVENTAIRE" if is_report else "FEUILLE DE SAISIE INVENTAIRE",
+        'title': T(lang, 'invd_report_title') if is_report else T(lang, 'invd_sheet_title'),
         'subtitle': (
-            f"Réf: #{inventaire.id} - {inventaire.description}"
+            T(lang, 'invd_ref_desc', id=inventaire.id, desc=inventaire.description)
             if inventaire.description
-            else f"Réf: #{inventaire.id}"
+            else T(lang, 'invd_ref', id=inventaire.id)
         ),
         'date': inventaire.date.isoformat(),
         'groups': grouped,

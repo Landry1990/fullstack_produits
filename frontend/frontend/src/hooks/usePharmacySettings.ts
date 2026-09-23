@@ -1,1 +1,1 @@
-export { usePharmacySettings, type PharmacySettings } from '../context/PharmacySettingsContext';
+export { usePharmacySettings, useDocumentLocale, type PharmacySettings } from '../context/PharmacySettingsContext';

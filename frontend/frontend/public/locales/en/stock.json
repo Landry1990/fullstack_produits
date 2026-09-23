@@ -390,7 +390,17 @@
             "total_global_gap": "Total Global Discrepancy",
             "report_legend": "This report details discrepancies between theoretical stock and physical count.",
             "fill_legend": "Please fill in the 'Physical Qty' column during your count. Unlisted lots should be reported on the back.",
-            "global_gap": "Global Discrepancy"
+            "global_gap": "Global Discrepancy",
+            "title_report": "INVENTORY REPORT",
+            "title_sheet": "INVENTORY ENTRY SHEET",
+            "title_state": "INVENTORY STATUS BY {{group}}",
+            "group_label_rayon": "Department",
+            "group_label_forme": "Form",
+            "group_label_groupe": "Group",
+            "stock_machine": "System Stock",
+            "stock_non_zero": "Non-Zero Stock",
+            "stock_zero": "Zero Stock",
+            "ref": "Ref:"
         }
     },
     "ajustements": {

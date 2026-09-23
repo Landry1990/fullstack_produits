@@ -1,6 +1,8 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import i18next from 'i18next';
 import { formatNumber } from '../formatters';
+import { getDocumentLanguage, getDocumentLocale } from '../documentLang';
 import type { PharmacySettings } from '../../context/PharmacySettingsContext';
 
 interface PaiementDetail {
@@ -29,12 +31,15 @@ export function generateTicketReglementPdfDraft(data: TicketReglementData): jsPD
     const doc = new jsPDF('p', 'mm', 'a4');
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 15;
+    // Langue du document (PharmacySettings.locale), découplée de l'UI.
+    const docT = i18next.getFixedT(getDocumentLanguage(), 'printing');
+    const docLocale = getDocumentLocale();
 
     const fmt = (val: number | string | null | undefined) => {
         if (val == null || val === '') return '0';
         const num = Number(val);
         if (isNaN(num)) return '0';
-        return formatNumber(Math.round(num)).replace(/[\u00A0\u202F]/g, ' ');
+        return formatNumber(Math.round(num), 0, docLocale).replace(/[\u00A0\u202F]/g, ' ');
     };
 
     let y = 18;
@@ -54,7 +59,7 @@ export function generateTicketReglementPdfDraft(data: TicketReglementData): jsPD
         y += 5;
     }
     if (data.settings.phone) {
-        doc.text(`Tel: ${data.settings.phone}`, pageWidth / 2, y, { align: 'center' });
+        doc.text(`${docT('reglement.phone_short')}${data.settings.phone}`, pageWidth / 2, y, { align: 'center' });
         y += 5;
     }
     y += 6;
@@ -63,7 +68,7 @@ export function generateTicketReglementPdfDraft(data: TicketReglementData): jsPD
     doc.setFontSize(13);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(0, 0, 0);
-    doc.text('TICKET DE REGLEMENT', pageWidth / 2, y, { align: 'center' });
+    doc.text(docT('reglement.title'), pageWidth / 2, y, { align: 'center' });
     y += 9;
 
     // Info
@@ -74,17 +79,17 @@ export function generateTicketReglementPdfDraft(data: TicketReglementData): jsPD
     const leftCol = margin;
     const rightCol = pageWidth - margin;
 
-    doc.text(`Reference:`, leftCol, y);
+    doc.text(docT('reglement.reference'), leftCol, y);
     doc.text(data.reference, leftCol + 25, y);
-    doc.text(`Date:`, rightCol - 40, y);
-    doc.text(new Date(data.date).toLocaleDateString('fr-FR'), rightCol, y, { align: 'right' });
+    doc.text(docT('reglement.date'), rightCol - 40, y);
+    doc.text(new Date(data.date).toLocaleDateString(docLocale), rightCol, y, { align: 'right' });
     y += 6;
 
-    doc.text(`Client:`, leftCol, y);
+    doc.text(docT('reglement.client'), leftCol, y);
     doc.text(data.client_name, leftCol + 25, y);
     y += 6;
 
-    doc.text(`Mode:`, leftCol, y);
+    doc.text(docT('reglement.mode'), leftCol, y);
     doc.text(data.mode_paiement.toUpperCase(), leftCol + 25, y);
     y += 8;
 
@@ -103,13 +108,13 @@ export function generateTicketReglementPdfDraft(data: TicketReglementData): jsPD
             p.numero_facture || `-`,
             fmt(p.montant_total_facture),
             fmt(p.montant_paye),
-            isSoldee ? 'SOLDEE' : (resteApres > 0 ? `${fmt(resteApres)} reste` : '0'),
+            isSoldee ? docT('reglement.status_paid') : (resteApres > 0 ? docT('reglement.remaining_suffix', { amount: fmt(resteApres) }) : '0'),
         ];
     });
 
     autoTable(doc, {
         startY: y,
-        head: [['N', 'Facture', 'Total Facture', 'Montant Regle', 'Statut']],
+        head: [[docT('reglement.col_num'), docT('reglement.col_invoice'), docT('reglement.col_total'), docT('reglement.col_paid'), docT('reglement.col_status')]],
         body: tableData,
         theme: 'plain',
         headStyles: {
@@ -138,7 +143,7 @@ export function generateTicketReglementPdfDraft(data: TicketReglementData): jsPD
     doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(0, 0, 0);
-    doc.text('RECAPITULATIF', margin, y);
+    doc.text(docT('reglement.recap'), margin, y);
     y += 7;
 
     doc.setFont('helvetica', 'normal');
@@ -148,18 +153,18 @@ export function generateTicketReglementPdfDraft(data: TicketReglementData): jsPD
     const recapWidth = 80;
     const recapX = pageWidth - margin - recapWidth;
 
-    doc.text('Total des dettes:', recapX, y);
+    doc.text(docT('reglement.total_debts'), recapX, y);
     doc.text(`${fmt(data.total_dettes)} F`, pageWidth - margin, y, { align: 'right' });
     y += 5;
 
     doc.setFont('helvetica', 'normal');
-    doc.text('Montant regle:', recapX, y);
+    doc.text(docT('reglement.amount_paid'), recapX, y);
     doc.text(`${fmt(data.montant_regle)} F`, pageWidth - margin, y, { align: 'right' });
     y += 5;
 
     const reste = Number(data.reste_a_payer);
     doc.setFont('helvetica', 'normal');
-    doc.text('Reste a payer:', recapX, y);
+    doc.text(docT('reglement.balance_due'), recapX, y);
     doc.text(`${fmt(data.reste_a_payer)} F`, pageWidth - margin, y, { align: 'right' });
     y += 10;
 
@@ -168,18 +173,18 @@ export function generateTicketReglementPdfDraft(data: TicketReglementData): jsPD
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     if (reste > 0) {
-        doc.text(`Il reste ${fmt(data.reste_a_payer)} F a regler`, margin, y);
+        doc.text(docT('reglement.remaining_msg', { amount: fmt(data.reste_a_payer) }), margin, y);
     } else {
-        doc.text('Toutes les factures sont soldees.', margin, y);
+        doc.text(docT('reglement.all_paid_msg'), margin, y);
     }
     y += 12;
 
     // Footer
     doc.setTextColor(120, 120, 120);
     doc.setFontSize(8);
-    doc.text('Ce document est un justificatif de reglement.', pageWidth / 2, y, { align: 'center' });
+    doc.text(docT('reglement.justification'), pageWidth / 2, y, { align: 'center' });
     y += 5;
-    doc.text(`Genere le ${new Date().toLocaleString('fr-FR')}`, pageWidth / 2, y, { align: 'center' });
+    doc.text(docT('reglement.generated_on', { date: new Date().toLocaleString(docLocale) }), pageWidth / 2, y, { align: 'center' });
 
     return doc;
 }

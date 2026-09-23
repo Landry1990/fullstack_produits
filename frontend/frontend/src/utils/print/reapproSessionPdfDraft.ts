@@ -1,5 +1,7 @@
 import { jsPDF } from 'jspdf';
 import autoTable, { type RowInput } from 'jspdf-autotable';
+import i18next from 'i18next';
+import { getDocumentLanguage, getDocumentLocale } from '../documentLang';
 import type { PharmacySettings } from '../../hooks/usePharmacySettings';
 
 export interface ReapproAdjustment {
@@ -19,19 +21,19 @@ export interface ReapproSessionData {
   adjustments: ReapproAdjustment[];
 }
 
-const formatExpiry = (expiry: string | null | undefined) => {
+const formatExpiry = (expiry: string | null | undefined, locale: string) => {
   if (!expiry) return 'N/A';
   try {
     const date = new Date(expiry);
-    return date.toLocaleDateString('fr-FR', { month: '2-digit', year: 'numeric' });
+    return date.toLocaleDateString(locale, { month: '2-digit', year: 'numeric' });
   } catch {
     return 'N/A';
   }
 };
 
-const formatDateTime = (dateStr: string) => {
+const formatDateTime = (dateStr: string, locale: string) => {
   try {
-    return new Date(dateStr).toLocaleString('fr-FR', {
+    return new Date(dateStr).toLocaleString(locale, {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -51,6 +53,9 @@ export function generateReapproSessionPdfDraft(
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 15;
+  // Langue du document (PharmacySettings.locale), découplée de l'UI.
+  const docT = i18next.getFixedT(getDocumentLanguage(), 'printing');
+  const docLocale = getDocumentLocale();
 
   let y = 18;
 
@@ -64,12 +69,12 @@ export function generateReapproSessionPdfDraft(
   doc.setFontSize(9);
   doc.setTextColor(80, 80, 80);
   if (settings.address) { doc.text(settings.address, margin, y); y += 4; }
-  if (settings.phone) { doc.text(`Tel: ${settings.phone}`, margin, y); y += 4; }
+  if (settings.phone) { doc.text(`${docT('reglement.phone_short')}${settings.phone}`, margin, y); y += 4; }
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(11);
   doc.setTextColor(0, 0, 0);
-  doc.text('Confirmation de reapprovisionnement', pageWidth - margin, 18, { align: 'right' });
+  doc.text(docT('reappro.title'), pageWidth - margin, 18, { align: 'right' });
   doc.setFontSize(9);
   doc.text(`Session #${session.id}`, pageWidth - margin, 23, { align: 'right' });
 
@@ -90,36 +95,36 @@ export function generateReapproSessionPdfDraft(
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(60, 60, 60);
-  doc.text('Details de la session', margin + 4, boxY + 5);
+  doc.text(docT('reappro.session_details'), margin + 4, boxY + 5);
   doc.line(margin + 4, boxY + 6.5, margin + colW - 4, boxY + 6.5);
 
   doc.setFontSize(9);
   doc.setTextColor(0, 0, 0);
-  doc.text(`Date : ${formatDateTime(session.created_at)}`, margin + 4, boxY + 12);
-  doc.text(`Effectue par : ${session.user_name || 'Inconnu'}`, margin + 4, boxY + 18);
+  doc.text(`${docT('reappro.date')} ${formatDateTime(session.created_at, docLocale)}`, margin + 4, boxY + 12);
+  doc.text(`${docT('reappro.done_by')} ${session.user_name || docT('reappro.unknown_user')}`, margin + 4, boxY + 18);
 
   const col2X = margin + colW + 6;
   doc.rect(col2X, boxY, colW, boxH, 'S');
 
   doc.setFontSize(8);
   doc.setTextColor(60, 60, 60);
-  doc.text('Volume transfere', col2X + 4, boxY + 5);
+  doc.text(docT('reappro.volume'), col2X + 4, boxY + 5);
   doc.line(col2X + 4, boxY + 6.5, col2X + colW - 4, boxY + 6.5);
 
   doc.setFontSize(9);
   doc.setTextColor(0, 0, 0);
-  doc.text(`Produits : ${session.total_products}`, col2X + 4, boxY + 12);
-  doc.text(`Unites : ${session.total_units}`, col2X + 4, boxY + 18);
+  doc.text(`${docT('reappro.products')} ${session.total_products}`, col2X + 4, boxY + 12);
+  doc.text(`${docT('reappro.units')} ${session.total_units}`, col2X + 4, boxY + 18);
 
   const tableStartY = boxY + boxH + 10;
 
   autoTable(doc, {
     startY: tableStartY,
-    head: [['Produit', 'Lot', 'Peremption', 'Qte']],
+    head: [[docT('reappro.col_product'), docT('reappro.col_lot'), docT('reappro.col_expiry'), docT('reappro.col_qty')]],
     body: session.adjustments.map((adj) => [
-      adj.produit_name || 'Produit inconnu',
+      adj.produit_name || docT('reappro.unknown_product'),
       adj.lot_num || 'N/A',
-      formatExpiry(adj.expiry),
+      formatExpiry(adj.expiry, docLocale),
       { content: `+${adj.quantity_change}`, styles: { halign: 'right' as const } }
     ]) as unknown as RowInput[],
     theme: 'plain',
@@ -147,7 +152,7 @@ export function generateReapproSessionPdfDraft(
       doc.setFontSize(7);
       doc.setTextColor(100, 100, 100);
       doc.text(
-        `${settings.pharmacy_name || 'PHARMACIE'} - Document genere le ${new Date().toLocaleString('fr-FR')}`,
+        `${settings.pharmacy_name || 'PHARMACIE'} - ${docT('reappro.generated_on', { date: new Date().toLocaleString(docLocale) })}`,
         pageWidth / 2,
         pageHeight - 8,
         { align: 'center' }
@@ -163,8 +168,8 @@ export function generateReapproSessionPdfDraft(
 
     doc.setFontSize(9);
     doc.setTextColor(0, 0, 0);
-    doc.text(`Total produits : ${session.total_products}`, summaryX + 4, finalY + 6);
-    doc.text(`Total unites : ${session.total_units}`, summaryX + 4, finalY + 11);
+    doc.text(`${docT('reappro.total_products')} ${session.total_products}`, summaryX + 4, finalY + 6);
+    doc.text(`${docT('reappro.total_units')} ${session.total_units}`, summaryX + 4, finalY + 11);
   }
 
   return doc;

@@ -29,6 +29,7 @@ from api.models import (
     Produit,
     StockLot,
 )
+from api.utils_doclang import T, get_document_language
 from api.views.rapports.pdf_builders import build_rapport_pdf
 from api.views.rapports.tz_utils import parse_api_datetime
 
@@ -36,9 +37,13 @@ logger = logging.getLogger(__name__)
 
 # ── Helpers privés ────────────────────────────────────────────────────────────
 
-def _write_pharma_header(ws, PharmacySettings, title: str) -> None:
+def _write_pharma_header(ws, PharmacySettings, title: str, lang: str | None = None) -> None:
     """Écrit un en-tête pharmacie dans une feuille Excel."""
     from django.utils import timezone as tz
+
+    from api.utils_doclang import format_doc_date
+    if not lang:
+        lang = get_document_language()
     try:
         pharmacy = PharmacySettings.objects.get(pk=1)
         from api.utils.currency import get_pharmacy_name
@@ -47,7 +52,7 @@ def _write_pharma_header(ws, PharmacySettings, title: str) -> None:
             f"{pharmacy.address} - {pharmacy.city}".strip(" -")
             if (pharmacy.address or pharmacy.city) else ""
         )
-        pharma_phone = f"Tél : {pharmacy.phone}" if pharmacy.phone else ""
+        pharma_phone = T(lang, 'doc_tel', v=pharmacy.phone) if pharmacy.phone else ""
     except Exception:
         from api.utils.currency import get_pharmacy_name
         pharma_name = get_pharmacy_name()
@@ -56,8 +61,8 @@ def _write_pharma_header(ws, PharmacySettings, title: str) -> None:
     now_time = tz.now()
     if tz.is_aware(now_time):
         now_time = tz.localtime(now_time)
-    now_str = now_time.strftime("%d/%m/%Y à %H:%M")
-    for line in [pharma_name, pharma_address, pharma_phone, f"Édité le : {now_str}", "", title]:
+    now_str = format_doc_date(now_time, lang, with_time=True)
+    for line in [pharma_name, pharma_address, pharma_phone, T(lang, 'doc_edited', d=now_str), "", title]:
         ws.append([line])
     ws.append([])
 
@@ -212,7 +217,13 @@ class RapportFinanceMixin:
         except Exception:
             logger.exception("Échec de l'audit rapport_mensuel_pdf")
         data       = self._get_rapport_data(date_debut, date_fin, mois)
-        return build_rapport_pdf(data, f"RAPPORT MENSUEL — {mois}", f"rapport_{mois}.pdf")
+        lang       = get_document_language()
+        return build_rapport_pdf(
+            data,
+            T(lang, 'title_rapport_mensuel', mois=mois),
+            f"rapport_{mois}.pdf",
+            lang=lang,
+        )
 
     @action(detail=False, methods=['get'])
     def rapport_par_dates_pdf(self, request):
@@ -234,10 +245,12 @@ class RapportFinanceMixin:
         except Exception:
             logger.exception("Échec de l'audit rapport_par_dates_pdf")
         data = self._get_rapport_data(date_debut, date_fin_exclusive, f"{db_s} → {df_s}")
+        lang = get_document_language()
         return build_rapport_pdf(
             data,
-            f"RAPPORT D'ACTIVITÉ — {db_s} au {df_s}",
+            T(lang, 'title_rapport_activite', debut=db_s, fin=df_s),
             f"rapport_{db_s}_{df_s}.pdf",
+            lang=lang,
         )
 
     # ── Rapport général Excel ─────────────────────────────────────────────────
@@ -421,10 +434,13 @@ class RapportFinanceMixin:
         response['Content-Disposition'] = 'attachment; filename="export_comptable.csv"'
         response.write('\ufeff'.encode('utf8'))
 
+        lang = get_document_language()
+
         writer = csv.writer(response, delimiter=';')
-        writer.writerow(['Date', 'Heure', 'Facture #', 'Client', 'Status',
-                         'Total HT', 'Total TVA', 'Total TTC', 'Remise',
-                         'Mode de Paiement', 'Caissier'])
+        writer.writerow([T(lang, 'col_date'), T(lang, 'col_heure'), T(lang, 'col_num_facture'),
+                         T(lang, 'col_client'), T(lang, 'col_statut'),
+                         T(lang, 'col_total_ht'), T(lang, 'col_total_tva'), T(lang, 'col_total_ttc'),
+                         T(lang, 'col_remise'), T(lang, 'col_mode_paiement'), T(lang, 'col_caissier')])
 
         # OPTIMISATION: Prefetch des paiements complétés pour éviter N+1
         factures = (
@@ -443,24 +459,31 @@ class RapportFinanceMixin:
             .iterator(chunk_size=100)  # Streaming pour grandes exportations
         )
         modes_dict = dict(Caisse.MODES_PAIEMENT)
+        status_keys = {
+            Facture.Status.BROUILLON: 'st_brouillon',
+            Facture.Status.VALIDEE:   'st_validee',
+            Facture.Status.PAYEE:     'st_payee',
+            Facture.Status.ANNULEE:   'st_annulee',
+        }
         for f in factures:
             # Utilise les paiements préchargés
             modes = ", ".join(
                 str(modes_dict.get(m, m))
                 for m in {p.mode_paiement for p in f.completed_paiements}
             )
+            status_key = status_keys.get(f.status)
             writer.writerow([
-                f.date.strftime('%d/%m/%Y'),
+                format_doc_date(f.date, lang),
                 f.date.strftime('%H:%M'),
                 f.numero_facture or f.id,
-                f.client.name if f.client else 'Passage',
-                f.get_status_display(),
+                f.client.name if f.client else T(lang, 'client_passage'),
+                T(lang, status_key) if status_key else f.get_status_display(),
                 str(f.total_ht).replace('.', ','),
                 str(f.total_tva).replace('.', ','),
                 str(f.total_ttc).replace('.', ','),
                 str(f.remise).replace('.', ','),
                 modes,
-                f.created_by.get_full_name() if f.created_by else 'Système',
+                f.created_by.get_full_name() if f.created_by else T(lang, 'user_systeme'),
             ])
         return response
 

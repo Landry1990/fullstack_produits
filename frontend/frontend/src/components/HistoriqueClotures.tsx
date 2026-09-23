@@ -10,7 +10,7 @@ import BestCashierMetric from './BestCashierMetric'
 
 import { formatCurrency, normalizeNumberInput } from '../utils/formatters'
 import { useTranslation } from 'react-i18next'
-import { usePharmacySettings } from '../hooks/usePharmacySettings'
+import { usePharmacySettings, useDocumentLocale } from '../hooks/usePharmacySettings'
 import { useAuth } from '../context/AuthContext'
 import { Button } from './shadcn/button'
 import { Badge } from './shadcn/badge'
@@ -97,6 +97,9 @@ const formatDateForApi = (date: Date): string => {
 export default function HistoriqueClotures() {
   const { t } = useTranslation(['cash_closings', 'common'])
   const { settings: pharmacySettings } = usePharmacySettings()
+  // Langue des documents imprimés (PharmacySettings.locale), découplée de l'UI.
+  const { lang: docLang } = useDocumentLocale()
+  const { t: docT } = useTranslation(['cash_closings', 'common'], { lng: docLang })
   const { user: currentUser } = useAuth()
   const currentLocale = t('common:locale', { defaultValue: 'fr-FR' })
   const currencySymbol = t(['common:currency_symbol', 'currency_symbol'], 'F')
@@ -348,7 +351,7 @@ export default function HistoriqueClotures() {
       writePrintDocument(win, `
         <html>
           <head>
-            <title>{t('modal.print_title', { id: cloture.id })}</title>
+            <title>${docT('modal.print_title', { id: cloture.id })}</title>
             <style>
               @media print {
                 body { margin: 0; padding: 0; }

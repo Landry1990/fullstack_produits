@@ -24,6 +24,7 @@ import { formatDate } from '../utils/dateUtils'
 import SudoValidationModal from './common/SudoValidationModal'
 import { useSudo } from '../hooks/useSudo'
 import usePrint from '../hooks/usePrint'
+import { useDocumentLocale } from '../hooks/usePharmacySettings'
 import type { StockAdjustment } from '../types'
 import { Button } from './shadcn/button'
 import { Card, CardContent, CardHeader, CardTitle } from './shadcn/card'
@@ -126,6 +127,9 @@ const isExpiredByEndOfMonth = (dateString: string) => {
 
 export default function Perimes() {
   const { t } = useTranslation(['stock', 'common'])
+  // Langue des documents imprimés (PharmacySettings.locale), découplée de l'UI.
+  const { lang: docLang, locale: docLocale } = useDocumentLocale()
+  const { t: docT } = useTranslation(['stock', 'common'], { lng: docLang })
   const [lots, setLots] = useState<StockLot[]>([])
   const [stats, setStats] = useState<PerimesStats | null>(null)
   const [loading, setLoading] = useState(false)
@@ -328,47 +332,47 @@ export default function Perimes() {
 
     const content = `
       <div style="font-family: Arial, sans-serif; color: #333;">
-        <h3 style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px;">${t('stock:perimes.history.title')}</h3>
+        <h3 style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px;">${docT('stock:perimes.history.title')}</h3>
         <p style="text-align: center; font-size: 0.9em; margin-bottom: 20px;">
-          ${t('common:period')}: ${formatDate(dateDebut)} ${t('common:to').toLowerCase()} ${formatDate(dateFin)}
+          ${docT('common:period')}: ${formatDate(dateDebut, docLocale)} ${docT('common:to').toLowerCase()} ${formatDate(dateFin, docLocale)}
         </p>
-        
+
         <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 0.85em;">
           <thead>
             <tr style="background-color: #f3f4f6;">
-              <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">${t('stock:perimes.history.table.date')}</th>
-              <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">${t('stock:perimes.history.table.product')}</th>
-              <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">${t('stock:perimes.history.table.lot')}</th>
-              <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">${t('stock:perimes.history.table.qty')}</th>
-              <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">${t('stock:perimes.history.table.value')}</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">${docT('stock:perimes.history.table.date')}</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">${docT('stock:perimes.history.table.product')}</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">${docT('stock:perimes.history.table.lot')}</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">${docT('stock:perimes.history.table.qty')}</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">${docT('stock:perimes.history.table.value')}</th>
             </tr>
           </thead>
           <tbody>
             ${adjustments.map(adj => `
               <tr>
-                <td style="border: 1px solid #ddd; padding: 8px;">${formatDate(adj.created_at)}</td>
+                <td style="border: 1px solid #ddd; padding: 8px;">${formatDate(adj.created_at, docLocale)}</td>
                 <td style="border: 1px solid #ddd; padding: 8px;">${adj.produit_name}</td>
                 <td style="border: 1px solid #ddd; padding: 8px;">${adj.lot_number || '-'}</td>
                 <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${Math.abs(adj.quantity_change)}</td>
-                <td style="border: 1px solid #ddd; padding: 8px; text-align: right; font-weight: bold;">${formatCurrency(adj.valorisation)}</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: right; font-weight: bold;">${formatCurrency(adj.valorisation, docLocale)}</td>
               </tr>
             `).join('')}
           </tbody>
           <tfoot>
             <tr style="background-color: #f9fafb; font-weight: bold;">
-              <td colspan="4" style="border: 1px solid #ddd; padding: 8px; text-align: right;">${t('stock:perimes.history.total_valorization').toUpperCase()}</td>
-              <td style="border: 1px solid #ddd; padding: 8px; text-align: right; color: #dc2626;">${formatCurrency(totalVal)}</td>
+              <td colspan="4" style="border: 1px solid #ddd; padding: 8px; text-align: right;">${docT('stock:perimes.history.total_valorization').toUpperCase()}</td>
+              <td style="border: 1px solid #ddd; padding: 8px; text-align: right; color: #dc2626;">${formatCurrency(totalVal, docLocale)}</td>
             </tr>
           </tfoot>
         </table>
-        
+
         <div style="text-align: right; font-size: 0.8em; margin-top: 30px;">
-          <p>${t('stock:perimes.history_print_generated')} ${new Date().toLocaleString()}</p>
+          <p>${docT('stock:perimes.history_print_generated')} ${new Date().toLocaleString(docLocale)}</p>
         </div>
       </div>
     `
 
-    printWithTemplate(content, { title: t('stock:perimes.history.title'), width: 800 })
+    printWithTemplate(content, { title: docT('stock:perimes.history.title'), width: 800 })
   }
 
   const handleExportExcel = () => {

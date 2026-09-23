@@ -2,6 +2,354 @@
 
 ---
 
+## 2026-09-22 — 📄 Rapport de réapprovisionnement 100 % frontend
+
+Nettoyage final de la migration du rapport de réapprovisionnement vers jsPDF :
+
+- suppression complète de l'action backend ReportLab
+  `GET /api/reappro-sessions/{id}/generate_pdf/` et de ses imports/helpers PDF ;
+- `ReapproSessionViewSet` conserve uniquement les endpoints JSON lecture/liste,
+  nécessaires au générateur frontend ;
+- suppression de `produitService.getReapproSessionPdf()` (appel Blob inutilisé) ;
+- les téléchargements depuis `ReapproHistory` et `ReapproRayon` restent générés
+  localement via `generateReapproSessionPdfDraft` ;
+- langue documentaire, identité pharmacie, lots, péremptions et pagination
+  multi-pages restent pris en charge côté navigateur.
+
+Ajout de 3 tests frontend réels jsPDF : en-tête `%PDF`, langue anglaise/valeurs
+manquantes et pagination automatique de 120 lignes.
+
+Vérifié : 3/3 tests PDF, `tsc --noEmit` et `manage.py check` OK ; aucune référence
+à l'ancien endpoint dans le frontend ou dans la vue backend.
+
+Fichiers : `backend/api/views/stocks/reappro_history.py`,
+`frontend/frontend/src/services/produitService.ts`,
+`src/utils/print/__tests__/reapproSessionPdfDraft.test.ts`.
+
+---
+
+## 2026-09-22 — 📦 Tests commandes automatiques, réceptions et avoirs
+
+Ajout de `backend/api/tests/test_order_stock_edges.py` (11 tests) couvrant :
+
+- suggestions automatiques vides et seuils minimums `AND`/`OR` ;
+- création d'une commande `AUTO_SCHEDULE` et lignes valides ;
+- disparition d'un ou plusieurs produits suggérés ;
+- permissions de lecture/administration des planifications ;
+- refus du déclenchement d'un planning inactif ;
+- déclenchement manuel admin et mise à jour de `last_run` ;
+- réception avec unités payées + gratuites et coût effectif ;
+- idempotence d'une seconde clôture de commande ;
+- cycle déchargement/annulation d'un avoir fournisseur sans double mouvement.
+
+Anomalies détectées et corrigées :
+
+- une commande automatique vide était conservée si tous les produits suggérés
+  avaient été supprimés entre le calcul et la création ; elle est désormais
+  annulée atomiquement ;
+- tout utilisateur authentifié pouvait créer, modifier, supprimer ou déclencher
+  un planning automatique ; les mutations sont désormais réservées aux admins,
+  avec lecture conservée aux utilisateurs authentifiés.
+
+Vérifié : 11/11 nouveaux tests et **73/73 tests de régression** sur commandes,
+réceptions, stocks, inventaires, reconditionnements et mouvements.
+
+Fichiers : `backend/api/services/auto_order.py`,
+`api/views/commandes/schedules.py`, `api/tests/test_order_stock_edges.py`.
+
+---
+
+## 2026-09-22 — 🔐 Tests et durcissement des endpoints sensibles
+
+Ajout de `backend/api/tests/test_sensitive_permissions.py` (18 tests) couvrant
+les paramètres globaux, caisses physiques, définitions de POS, propriété des
+sessions, corbeille, administration système et sauvegardes.
+
+Failles détectées puis corrigées :
+
+- retrait du `cache_page` global sur `invoice-settings` et
+  `pharmacy-settings` : une réponse authentifiée mise en cache pouvait être
+  resservie à un visiteur non authentifié ;
+- lecture des paramètres conservée pour les utilisateurs authentifiés, mais
+  modification désormais réservée aux administrateurs (`IsAdminUser`) ;
+- création/modification/suppression des caisses physiques et définitions POS
+  réservées aux administrateurs ;
+- fermeture d'un poste limitée à son propriétaire ou à un superuser ;
+- fermeture robuste des anciens postes dont `date_ouverture` est absente
+  (fallback sur `created_at`).
+
+Tests complémentaires de corbeille : restauration admin, suppression définitive
+et protection absolue des superusers inactifs.
+
+Vérifié : 18/18 tests ciblés et 101/101 tests de régression
+sécurité/facturation/caisse/utilisateurs/suppressions réussis.
+
+Fichiers : `backend/api/urls.py`, `api/views/settings.py`,
+`api/views/ventes/caisse_poste.py`, `api/tests/test_sensitive_permissions.py`.
+
+---
+
+## 2026-09-22 — 🧪 Tests caisse et paiements — cas limites
+
+Ajout de `backend/api/tests/test_cash_payment_edges.py` avec 8 tests de
+régression supplémentaires :
+
+- idempotence de la création des paiements directs ;
+- rejet silencieux des montants nuls ou négatifs ;
+- conservation du mode, de la référence et du propriétaire du paiement ;
+- impossibilité pour un paiement de rouvrir une facture annulée ;
+- création unique de la créance automatique (`en_compte`) en tiers payant ;
+- utilisation et rattachement d'un coupon actif ;
+- rejet d'un coupon déjà utilisé sans réaffectation ;
+- isolation d'une clôture entre deux caisses physiques du même utilisateur.
+
+Vérifié avec les suites existantes de facturation/caisse/clôture : **58/58
+tests réussis**. Aucun changement de logique métier n'a été nécessaire.
+
+---
+
+## 2026-09-22 — 🧭 Fix actions des Alertes intelligentes Manager
+
+Les boutons des Alertes intelligentes pouvaient donner l'impression de
+déconnecter l'utilisateur : l'alerte de rupture pointait vers la route
+inexistante `/app/ruptures`, puis le catch-all renvoyait sur `/` (connexion).
+
+- Route de l'alerte rupture corrigée vers `/app/stock-analysis`.
+- Catch-all authentifié sécurisé vers `/app` au lieu de l'écran de connexion.
+- `HomeRedirector` renvoie désormais un utilisateur disposant de
+  `manager_sidebar` vers son tableau de bord manager.
+- Boutons d'action marqués explicitement `type="button"`.
+- Test de régression ajouté au dashboard backend.
+
+Vérifié : 3/3 tests Manager Dashboard, `tsc --noEmit` OK.
+
+Fichiers : `backend/api/views/dashboard/core.py`,
+`backend/api/tests/test_dashboard.py`,
+`frontend/frontend/src/components/DashboardManagerShadcn.tsx`,
+`frontend/frontend/src/components/auth/RouteGuards.tsx`, `src/routes.tsx`.
+
+---
+
+## 2026-09-22 — 🔎 Audit du mode encaissement direct / multi-caisse
+
+Audit sans modification du parcours `InvoiceSettings` → Facturation →
+`SaleFinalizer` → paiements → fermeture/clôture. Le diagnostic et le plan de
+correction différé sont conservés dans `AUDIT_MODE_MULTI_CAISSE.md`. Verdict : le moteur backend
+d'encaissement direct existe et ses tests unitaires passent, mais l'option n'est
+pas encore activable de façon fiable en production.
+
+Principaux constats :
+
+- `useMultiCaisse` initialise `centralizedCashRegister` à `true` sans lire
+  `InvoiceSettings.centralized_cash_register` : désactiver la caisse centrale
+  dans Paramètres ne change donc pas le parcours de vente frontend ;
+- le backend fait confiance au booléen envoyé par le client au lieu de lire la
+  configuration serveur ;
+- la fermeture d'un POS direct produit un récapitulatif mais ne crée pas de
+  `ClotureCaisse` avec comptage réel/billetage ;
+- les clôtures formelles filtrent principalement par utilisateur et caisse
+  physique, pas par session `PosteVente`, ce qui fragilise l'isolation de
+  plusieurs postes directs ;
+- le validateur sudo peut devenir le propriétaire du paiement (`Caisse.user`),
+  au lieu du vendeur/propriétaire du poste ;
+- les APIs de configuration et de gestion des postes utilisent seulement
+  `IsAuthenticated`, trop permissif pour des opérations administratives ;
+- le sélecteur de poste du modal de paiement est trompeur en mode direct : le
+  clic sur un autre POS sans caisse ne modifie pas le poste réellement envoyé.
+
+Vérification : 50 tests existants de facturation/caisse/clôture réussis. Ces
+tests confirment le moteur direct isolé, mais ne couvrent pas le câblage du
+réglage frontend ni la clôture de plusieurs POS directs concurrents.
+
+---
+
+## 2026-09-22 — 📋 Évaluation de préparation commerciale
+
+Ajout de `EVALUATION_COMMERCIALE.md` : évaluation générale de Zenith Pharma
+(note 8/10), points forts commercialisables, risques restant à traiter,
+priorités avant diffusion à grande échelle, stratégie de pilote multi-pharmacies
+et critères pour atteindre un niveau de maturité de 9/10.
+
+---
+
+## 2026-09-22 — 🔐 Synchronisation sidebar / gestion des droits
+
+La hiérarchie backend utilisée par Gestion Utilisateurs est réalignée avec les
+pages visibles dans la sidebar :
+
+- ajout des droits granulaires `ventes_avoirs_clients`,
+  `clients_consultation`, `clients_imc` et `inventaire_cadencier` ;
+- retrait des entrées obsolètes `settings_facture` et `settings_whatsapp` ;
+- correction du label Rapport UG et ajout du libellé Cadencier en français/anglais ;
+- les routes enfants acceptent désormais soit le droit parent, soit leur droit
+  granulaire (Ventes, Clients, Statistiques, Comptabilité, Divers et Paramètres),
+  conformément au comportement de la sidebar ;
+- Administration système et les autres pages admin restent réservées aux
+  superusers et ne sont pas proposées comme droits ordinaires.
+
+Ajout de `api/tests/test_menu_hierarchy.py` : unicité des clés, présence des
+nouveaux droits, absence des droits retirés et séparation admin/menus.
+Vérifié : 5/5 tests backend, `tsc --noEmit` OK.
+
+Fichiers : `backend/api/menu_hierarchy.py`,
+`backend/api/tests/test_menu_hierarchy.py`, `frontend/frontend/src/routes.tsx`,
+`public/locales/{fr,en}/sidebar.json`.
+
+---
+
+## 2026-09-22 — 🧭 Rafraîchissement du favicon Safari
+
+Safari conservait l'ancien favicon car l'URL `/favicon.png` n'avait pas changé.
+Les URLs du favicon, du raccourci, de l'icône Apple Touch et des icônes PWA
+sont désormais versionnées (`?v=20260922`) afin de forcer l'invalidation du
+cache Safari. Les attributs `sizes` et le fallback `rel="shortcut icon"` ont
+également été ajoutés. Build Vite validé et frontend déployé.
+
+Fichiers : `frontend/frontend/index.html`, `public/manifest.json`.
+
+---
+
+## 2026-09-22 — ✅ Tests automatisés de langue documentaire
+
+Ajout de `api/tests/test_document_language.py` (7 tests) couvrant :
+
+- sélection `fr`/`en` depuis `PharmacySettings.locale` et fallback français ;
+- parité stricte des clés `DOC_STRINGS` françaises et anglaises ;
+- traductions, clé inconnue et format des dates FR/EN ;
+- génération réelle du rapport Excel anglais (noms de feuilles et contenu) ;
+- génération réelle d'une facture PDF anglaise et validation de l'en-tête `%PDF`.
+
+Le smoke test Excel sur base vide a révélé et corrigé un bug préexistant dans
+`excel_general.py` : `sum([])` retournait un `int`, incompatible avec
+`.quantize()`. Le cumul démarre désormais avec `Decimal('0')`.
+
+Vérifié : `python manage.py test api.tests.test_document_language -v 1 --noinput`
+→ **7/7 tests réussis**.
+
+---
+
+## 2026-09-22 — 🌐 Langue des documents : PDFs & exports backend restants
+
+Seconde passe du chantier « langue des documents » : tous les générateurs
+de documents backend encore en français en dur utilisent désormais
+`utils_doclang` (source de vérité : `PharmacySettings.locale`).
+
+- **PDF** : `services/invoice_pdf.py` (facture/proforma), `ventes/creances.py`
+  (2 relevés), `etat_inventaire.py`, `ordonnancier_view.py`,
+  `stocks/inventaire/pdf.py` (état + écarts), `stocks/reappro_history.py`,
+  `commandes/pdf_generation.py` (étiquettes), `commandes/promis.py`
+  (ticket 80mm), `categories.py` (état rayon).
+- **Excel** : `rapports/excel_general.py` (19 feuilles — titres, en-têtes,
+  libellés de lignes, dates) + `excel_general_extra.py` ; refactor des lignes
+  de synthèse en tuples `(clé_i18n, valeur, genre)` — le formatage pilote le
+  genre, pas le libellé.
+- **CSV** : export comptable de `finance.py` (en-têtes + statuts + dates).
+- `utils_doclang.py` : `DOC_STRINGS` étendu à ~515 clés fr/en ; ajout de la
+  clé manquante `user_systeme` détectée au contrôle.
+
+### Vérifié (smoke tests réels en `lang='en'` forcée)
+
+- `build_rapport_general_excel` → 200, 19 feuilles toutes en anglais.
+- `generate_listing_excel` (inventaire) → en-têtes/colonnes/dates EN.
+- `generate_invoice_pdf`, `generate_etat_pdf`, `generate_ecarts_pdf` → PDF OK.
+- `manage.py check` : 0 issue ; imports post-déploiement OK.
+
+Fichiers : `api/utils_doclang.py`, `api/pdf_utils.py`,
+`api/services/invoice_pdf.py`, `api/ordonnancier_view.py`,
+`api/views/{categories,etat_inventaire}.py`,
+`api/views/commandes/{pdf_generation,promis}.py`,
+`api/views/ventes/creances.py`,
+`api/views/rapports/{excel_general,excel_general_extra,finance,inventory,pdf_builders}.py`,
+`api/views/stocks/inventaire/{listing_excel,pdf}.py`,
+`api/views/stocks/reappro_history.py`.
+
+Reste volontairement en dur : données (noms produits/clients), abréviations
+fiscales (NIU/RC), payloads JSON (`'Produit inconnu'` — affichés via les
+templates frontend déjà i18n).
+
+---
+
+## 2026-09-21 — 🌐 Langue des documents découplée de la langue UI (frontend)
+
+Tous les documents générés côté frontend (impressions HTML, templates React,
+PDF jsPDF) suivent désormais `PharmacySettings.locale` ('fr-FR' → français,
+'en-*' → anglais) au lieu de `i18n.language`. Changer la langue des documents
+ne change plus la langue de l'interface, et inversement.
+
+- **Nouveau** `src/utils/documentLang.ts` : store module-level (`setDocumentLanguage`,
+  `getDocumentLanguage`, `getDocumentLocale`) synchronisé par
+  `PharmacySettingsContext` pour les helpers non-React.
+- `PharmacySettingsContext` : nouvel export `useDocumentLocale()`
+  (`{ lang, locale }`) + préchargement des namespaces de documents
+  (`printing`, `reports`, `stock`, `cash_journal`, `cash_closings`,
+  `monthly_report`, `common`) pour la langue du document.
+- Templates React convertis (`useTranslation(ns, { lng: docLang })` +
+  dates/montants en `docLocale`) : `TicketTemplate`, `InvoiceTemplate`,
+  `RecapTemplate`, `StockValuationTemplate`, `InventairePrintTemplate`,
+  `AvoirPrintTemplate` (réécrit, clés `avoir.*`).
+- Helpers HTML (`utils/print/printHelpers.ts`, `printTemplates.ts`) :
+  `formatMoney`, `formatDateFr`, `getModeLabel` utilisent la locale/langue
+  du document par défaut ; templates clôture, promis, stock rayon,
+  inventaire, réception et ticket passent par `i18next.getFixedT(docLang)`.
+- Générateurs jsPDF convertis : `stockValuationPdf`, `reportPdfDraft`
+  (param `t` supprimé — docT interne), `reapproSessionPdfDraft`,
+  `relevePdfDraft`, `ticketReglementPdfDraft`.
+- `useJournalCaissePrinting` : impression de clôture via `docT`/`docLocale`
+  /`formatCurrencyDoc` ; `usePrint` : en-tête/pied de page doc-bound ;
+  `Perimes`, `StockUGReportShadcn`, `CouponDetailsModal`,
+  `HistoriqueClotures` : contenus imprimés doc-bound.
+- `PrintingTab` : nouveau sélecteur « Langue des documents »
+  (`locale` : fr-FR / en-US) persisté via `pharmacy-settings/`.
+- Traductions fr+en complétées : `printing.json` (sections `avoir`,
+  `reception`, `cloture`, `promis`, `stock_rayon`, `inventaire`, `coupon`,
+  `document`, `reglement`, `reappro`, `releve`), `reports.json`
+  (`stock_valuation.pdf_*`, `monthly_pdf`), `cash_journal.json` (`print.*`),
+  `stock.json` (impression inventaire), `pharmacy_settings.json`
+  (labels du sélecteur).
+
+Fichiers principaux : `src/utils/documentLang.ts` (nouveau),
+`src/context/PharmacySettingsContext.tsx`, `src/utils/dateUtils.ts`,
+`src/utils/print/*`, `src/components/printing/*`,
+`src/components/settings/PrintingTab.tsx`,
+`src/hooks/{usePrint,useCommandeActions,useCreanceActions,caisse/useJournalCaissePrinting}.ts`,
+`src/components/{HistoriqueClotures,Perimes,StockUGReportShadcn,RapportMensuel}.tsx`,
+`public/locales/{fr,en}/*.json`.
+
+⚠️ Vérification à finaliser : `npm run build` + typecheck (non lancés
+dans cette session — commandes indisponibles en arrière-plan).
+
+---
+
+## 2026-09-21 — 🌐 PDF rapports localisés selon `PharmacySettings.locale`
+
+Les PDF générés côté serveur dans `api/views/rapports/` suivaient
+toujours le français. Ils suivent désormais `PharmacySettings.locale`
+('fr-FR' → français, 'en-*' → anglais) :
+
+- **Nouveau** `api/utils_doclang.py` : `get_document_language()` (lecture
+  safe du `locale`, fallback 'fr'), dict `DOC_STRINGS` fr/en (~60 clés),
+  helper `T(lang, key, **kwargs)` et `format_doc_date()` (jj/mm/aaaa fr,
+  mm/dd/yyyy en).
+- `pdf_builders.py` : `build_rapport_pdf(..., lang=None)` — param
+  optionnel non cassant ; tous les labels (KPIs, sections, en-têtes de
+  colonnes, lignes financières, modes de paiement via codes `pay_*`,
+  détail mouvements) passent par `T()`.
+- `finance.py` : `rapport_mensuel_pdf` / `rapport_par_dates_pdf`
+  transmettent `lang` et des titres traduits ("MONTHLY REPORT — …",
+  "ACTIVITY REPORT — … to …").
+- `inventory.py` : `valeur_stock_pdf` entièrement traduit + `lang` passé
+  au header/footer pharma.
+- `pdf_utils.py` : `draw_pharma_footer` utilise le format de date local.
+
+Hors scope volontaire : exports Excel/CSV (non-PDF) et PDF hors
+`rapports/` (factures, tickets, inventaires, créances) — listés dans le
+rapport de la tâche.
+
+Fichiers : `api/utils_doclang.py` (nouveau), `api/pdf_utils.py`,
+`api/views/rapports/{pdf_builders,finance,inventory}.py`.
+
+---
+
 ## 2026-09-21 — 🖼️ Icônes navigateur/PWA régénérées depuis le nouveau logo
 
 Le favicon navigateur et les icônes PWA (barre des tâches, écran

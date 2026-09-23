@@ -79,6 +79,20 @@ export function PrintingTab({ formData, handleChange, t, invSettings, updateInvS
                 <option value={58}>{t('labels.paper_small')}</option>
               </Select>
             </div>
+            <div className="flex flex-col gap-1 mt-5">
+              <label>
+                <span className="text-sm font-bold text-slate-500">{t('labels.document_language')}</span>
+              </label>
+              <Select
+                size="lg"
+                value={formData.locale || 'fr-FR'}
+                onChange={(e) => handleChange('locale', e.target.value)}
+                className="rounded-xl"
+              >
+                <option value="fr-FR">{t('labels.document_language_fr')}</option>
+                <option value="en-US">{t('labels.document_language_en')}</option>
+              </Select>
+            </div>
           </div>
         </div>
 

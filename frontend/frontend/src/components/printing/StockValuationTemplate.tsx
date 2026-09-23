@@ -3,6 +3,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { type PharmacySettings } from './InvoiceTemplate';
 import { formatCurrency, formatNumber } from '../../utils/formatters';
+import { useDocumentLocale } from '../../context/PharmacySettingsContext';
 
 export interface StockValuationData {
     is_pmp: boolean;
@@ -31,9 +32,9 @@ interface StockValuationTemplateProps {
     data: StockValuationData;
 }
 
-const formatDate = (dateStr: string) => {
+const formatDate = (dateStr: string, locale: string) => {
     if (!dateStr) return '';
-    return new Date(dateStr).toLocaleDateString('fr-FR', {
+    return new Date(dateStr).toLocaleDateString(locale, {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
@@ -43,7 +44,8 @@ const formatDate = (dateStr: string) => {
 };
 
 const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ settings, data }) => {
-    const { t } = useTranslation(['reports', 'common']);
+    const { lang: docLang, locale: docLocale } = useDocumentLocale();
+    const { t } = useTranslation(['reports', 'common', 'printing'], { lng: docLang });
 
     const docTitle = data.is_pmp ? t('stock_valuation.doc_title_pmp') : t('stock_valuation.doc_title_vente');
     const typeLabel = data.is_pmp ? t('stock_valuation.valuation_pmp') : t('stock_valuation.valuation_vente');
@@ -66,10 +68,10 @@ const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ setting
                     <div className="space-y-1 text-base-content/60 max-w-sm text-[12px]">
                         <div className="whitespace-pre-line leading-tight italic">{settings.address}</div>
                         <div className="flex flex-col gap-1 mt-3 font-bold text-base-content/90">
-                            {settings.phone && <div className="flex items-center gap-2"><span>Tél : {settings.phone}</span></div>}
+                            {settings.phone && <div className="flex items-center gap-2"><span>{t('printing:invoice.tel')} : {settings.phone}</span></div>}
                             <div className="flex items-center gap-2 uppercase text-caption">
-                                {settings.niu && <span>NIU : {settings.niu}</span>}
-                                {settings.registre_commerce && <span>| RC : {settings.registre_commerce}</span>}
+                                {settings.niu && <span>{t('printing:invoice.niu')} : {settings.niu}</span>}
+                                {settings.registre_commerce && <span>| {t('printing:invoice.rc')} : {settings.registre_commerce}</span>}
                             </div>
                         </div>
                     </div>
@@ -83,7 +85,7 @@ const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ setting
                         {docTitle}
                     </div>
                     <div className="text-base-content/60 font-bold text-caption mt-2 uppercase">
-                         {formatDate(data.date)}
+                         {formatDate(data.date, docLocale)}
                     </div>
                 </div>
             </div>
@@ -111,7 +113,7 @@ const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ setting
                     <div className="text-right relative z-10">
                         <div className="text-caption uppercase font-black text-primary tracking-[0.3em] mb-2">{t('stock_valuation.total_general')}</div>
                         <div className="text-5xl font-black text-base-content tracking-tighter tabular-nums leading-none">
-                            {formatCurrency(data.total_ttc)}
+                            {formatCurrency(data.total_ttc, docLocale)}
                         </div>
                     </div>
                 </div>
@@ -128,15 +130,15 @@ const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ setting
                     <div className="space-y-3">
                         <div className="flex justify-between items-center px-4 py-4 bg-base-100 border border-slate-100 rounded-2xl shadow-sm">
                             <span className="text-label font-black uppercase text-base-content/50 tracking-widest">{t('stock_valuation.ht_total')}</span>
-                            <span className="text-lg font-black text-base-content">{formatCurrency(data.total_ht)}</span>
+                            <span className="text-lg font-black text-base-content">{formatCurrency(data.total_ht, docLocale)}</span>
                         </div>
                         <div className="flex justify-between items-center px-4 py-4 bg-base-100 border border-slate-100 rounded-2xl shadow-sm">
                             <span className="text-label font-black uppercase text-base-content/50 tracking-widest">{t('stock_valuation.tva_total')}</span>
-                            <span className="text-lg font-black text-base-content">{formatCurrency(data.total_tva)}</span>
+                            <span className="text-lg font-black text-base-content">{formatCurrency(data.total_tva, docLocale)}</span>
                         </div>
                         <div className="flex justify-between items-center px-4 py-5 bg-primary text-white rounded-2xl shadow-md ring-4 ring-primary/10">
                             <span className="text-label font-black uppercase tracking-widest">{t('stock_valuation.recap_title')} {data.is_pmp ? 'PMP' : 'TTC'}</span>
-                            <span className="text-xl font-black tabular-nums">{formatCurrency(data.total_ttc)}</span>
+                            <span className="text-xl font-black tabular-nums">{formatCurrency(data.total_ttc, docLocale)}</span>
                         </div>
                     </div>
                 </div>
@@ -160,9 +162,9 @@ const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ setting
                                 {data.tva_breakdown.map((item) => (
                                     <tr key={`tva-${item.rate}`} className="border-b border-slate-50 last:border-0">
                                         <td className="py-4 px-2 font-black text-primary bg-primary/5">{item.rate}%</td>
-                                        <td className="py-4 px-2 font-medium text-base-content/70">{formatNumber(item.ht, 0)}</td>
-                                        <td className="py-4 px-2 font-medium text-base-content/70">{formatNumber(item.tva, 0)}</td>
-                                        <td className="py-4 px-2 font-black text-base-content">{formatNumber(item.ttc, 0)}</td>
+                                        <td className="py-4 px-2 font-medium text-base-content/70">{formatNumber(item.ht, 0, docLocale)}</td>
+                                        <td className="py-4 px-2 font-medium text-base-content/70">{formatNumber(item.tva, 0, docLocale)}</td>
+                                        <td className="py-4 px-2 font-black text-base-content">{formatNumber(item.ttc, 0, docLocale)}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -176,7 +178,7 @@ const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ setting
                 <div className="mt-4 mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
                     <h2 className="text-sm font-black text-base-content uppercase tracking-widest border-b-2 border-slate-900 pb-2 mb-6 flex justify-between items-center">
                         <span>{t('stock_valuation.tva_breakdown_title')} – {getGroupLabel()}</span>
-                        <span className="text-caption text-slate-300 font-bold">{data.group_breakdown.length} {t('common.categories', 'Catégories')}</span>
+                        <span className="text-caption text-slate-300 font-bold">{data.group_breakdown.length} {t('stock_valuation.categories', { defaultValue: 'Catégories' })}</span>
                     </h2>
                     
                     <div className="bg-base-100 border-2 border-slate-100 rounded-3xl overflow-hidden shadow-sm">
@@ -195,18 +197,18 @@ const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ setting
                                         <td className="py-4 px-6 text-left font-black text-base-content">
                                             {item.name}
                                         </td>
-                                        <td className="py-4 px-4 text-right font-medium text-base-content/60 tabular-nums">{formatNumber(item.ht, 0)}</td>
-                                        <td className="py-4 px-4 text-right font-medium text-base-content/60 tabular-nums">{formatNumber(item.tva, 0)}</td>
+                                        <td className="py-4 px-4 text-right font-medium text-base-content/60 tabular-nums">{formatNumber(item.ht, 0, docLocale)}</td>
+                                        <td className="py-4 px-4 text-right font-medium text-base-content/60 tabular-nums">{formatNumber(item.tva, 0, docLocale)}</td>
                                         <td className="py-4 px-6 text-right font-black text-base-content tabular-nums bg-primary/5 group-hover:bg-primary/10">
-                                            {formatNumber(item.ttc, 0)}
+                                            {formatNumber(item.ttc, 0, docLocale)}
                                         </td>
                                     </tr>
                                 ))}
                                 <tr className="bg-base-200/50 font-black">
-                                    <td className="py-4 px-6 text-left uppercase text-micro tracking-widest text-base-content/50">Total Reconstitué</td>
-                                    <td className="py-4 px-4 text-right tabular-nums">{formatNumber(data.total_ht, 0)}</td>
-                                    <td className="py-4 px-4 text-right tabular-nums">{formatNumber(data.total_tva, 0)}</td>
-                                    <td className="py-4 px-6 text-right tabular-nums text-lg text-primary">{formatNumber(data.total_ttc, 0)}</td>
+                                    <td className="py-4 px-6 text-left uppercase text-micro tracking-widest text-base-content/50">{t('stock_valuation.total_reconstitue')}</td>
+                                    <td className="py-4 px-4 text-right tabular-nums">{formatNumber(data.total_ht, 0, docLocale)}</td>
+                                    <td className="py-4 px-4 text-right tabular-nums">{formatNumber(data.total_tva, 0, docLocale)}</td>
+                                    <td className="py-4 px-6 text-right tabular-nums text-lg text-primary">{formatNumber(data.total_ttc, 0, docLocale)}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -223,9 +225,9 @@ const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ setting
                             <span className="text-caption font-black uppercase tracking-widest text-base-content">{t('stock_valuation.note_title')}</span>
                         </div>
                         <p className="text-label leading-relaxed italic pr-12">
-                            {data.is_pmp 
-                                ? t('stock_valuation.note_body_pmp', { date: formatDate(data.date) })
-                                : t('stock_valuation.note_body_vente', { date: formatDate(data.date) })
+                            {data.is_pmp
+                                ? t('stock_valuation.note_body_pmp', { date: formatDate(data.date, docLocale) })
+                                : t('stock_valuation.note_body_vente', { date: formatDate(data.date, docLocale) })
                             }
                             <br />
                             {t('stock_valuation.certification')}

@@ -4,7 +4,7 @@ import Barcode from 'react-barcode';
 import type { TicketCaisse, PharmacySettings, FactureProduit, PaymentDetails } from '../../types';
 import { formatNumber } from '../../utils/formatters';
 import { useTranslation } from 'react-i18next';
-import i18n from '../../i18n';
+import { useDocumentLocale } from '../../context/PharmacySettingsContext';
 
 interface TicketTemplateProps {
   ticket: TicketCaisse;
@@ -12,9 +12,9 @@ interface TicketTemplateProps {
   ref?: Ref<HTMLDivElement>;
 }
 
-const formatDate = (dateStr: string) => {
+const formatDate = (dateStr: string, locale: string) => {
     try {
-        return new Date(dateStr).toLocaleString(i18n.language.startsWith('en') ? 'en-GB' : 'fr-FR', {
+        return new Date(dateStr).toLocaleString(locale, {
             day: '2-digit', month: '2-digit', year: 'numeric',
             hour: '2-digit', minute: '2-digit'
         });
@@ -23,10 +23,11 @@ const formatDate = (dateStr: string) => {
     }
 };
 
-const formatM = (val: number | string) => formatNumber(Math.round(Number(val)));
-
 export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) => {
-  const { t } = useTranslation('printing');
+  const { lang: docLang, locale: docLocale } = useDocumentLocale();
+  const { t } = useTranslation('printing', { lng: docLang });
+
+  const formatM = (val: number | string) => formatNumber(Math.round(Number(val)), 0, docLocale);
 
   const getProductName = (p: FactureProduit) => {
     if (!p) return t('ticket.unknown_article');
@@ -125,7 +126,7 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
               </tr>
               <tr>
                 <td>{t('invoice.date')}</td>
-                <td className="text-right">{formatDate(ticket.date_paiement)}</td>
+                <td className="text-right">{formatDate(ticket.date_paiement, docLocale)}</td>
               </tr>
               <tr>
                 <td className="pt-1 font-medium uppercase">{t('invoice.customer')}</td>

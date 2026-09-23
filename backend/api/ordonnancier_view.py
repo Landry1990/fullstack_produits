@@ -96,6 +96,9 @@ class OrdonnancierViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def export_pdf(self, request):
         """Exporter l'ordonnancier en PDF"""
+        from .utils_doclang import T, format_doc_date, get_document_language
+
+        lang = get_document_language()
         queryset = self.get_queryset()
         
         # Limiter pour la lisibilité
@@ -119,19 +122,19 @@ class OrdonnancierViewSet(viewsets.ModelViewSet):
             alignment=1,
             spaceAfter=10*mm
         )
-        elements.append(Paragraph("📋 ORDONNANCIER", title_style))
-        
+        elements.append(Paragraph(T(lang, 'ord_title'), title_style))
+
         # Info période
-        date_info = f"Généré le {timezone.now().strftime('%d/%m/%Y à %H:%M')}"
+        date_info = T(lang, 'doc_generated', d=format_doc_date(timezone.now(), lang, with_time=True))
         date_debut = request.query_params.get('date_debut', '')
         date_fin = request.query_params.get('date_fin', '')
         if date_debut or date_fin:
-            date_info += f" | Période: {date_debut or '...'} → {date_fin or '...'}"
+            date_info += T(lang, 'doc_period', d=date_debut or '...', f=date_fin or '...')
         elements.append(Paragraph(date_info, styles['Normal']))
         elements.append(Spacer(1, 5*mm))
-        
+
         # Tableau
-        data = [['N°', 'Date', 'Patient', 'Prescripteur', 'Médicaments', 'Surv.']]
+        data = [['N°', T(lang, 'col_date'), T(lang, 'ord_col_patient'), T(lang, 'ord_col_presc'), T(lang, 'ord_col_meds'), T(lang, 'ord_col_surv')]]
         
         for entry in entries:
             medicaments = ", ".join([f"{l.produit_nom} x{l.quantite}" for l in entry.lignes.all()])
@@ -139,7 +142,7 @@ class OrdonnancierViewSet(viewsets.ModelViewSet):
             
             data.append([
                 str(entry.numero_ordre),
-                entry.date_delivrance.strftime('%d/%m/%Y'),
+                format_doc_date(entry.date_delivrance, lang),
                 entry.patient_nom[:20] + '...' if len(entry.patient_nom) > 20 else entry.patient_nom,
                 entry.prescripteur_nom[:15] + '...' if len(entry.prescripteur_nom) > 15 else entry.prescripteur_nom,
                 medicaments[:40] + '...' if len(medicaments) > 40 else medicaments,
@@ -165,9 +168,9 @@ class OrdonnancierViewSet(viewsets.ModelViewSet):
         
         # Footer
         elements.append(Spacer(1, 10*mm))
-        footer_text = f"Total: {len(entries)} entrée(s)"
+        footer_text = T(lang, 'ord_footer_total', n=len(entries))
         if len(entries) >= limit:
-            footer_text += f" (limité à {limit})"
+            footer_text += T(lang, 'ord_footer_limit', n=limit)
         elements.append(Paragraph(footer_text, styles['Normal']))
         
         doc.build(elements)

@@ -222,25 +222,28 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             pharma_address = ''
             pharma_phone = ''
 
-        now_str = timezone.localtime(timezone.now()).strftime("%d/%m/%Y à %H:%M")
+        from ...utils_doclang import T, format_doc_date, get_document_language
+
+        lang = get_document_language()
+        now_str = format_doc_date(timezone.localtime(timezone.now()), lang, with_time=True)
 
         # ── Construction du classeur ──
         wb = openpyxl.Workbook()
         ws = wb.active
-        ws.title = "Créances"
+        ws.title = T(lang, 'cre_sheet')
 
         thin = Side(style='thin', color='BFBFBF')
         thin_border = Border(left=thin, right=thin, top=thin, bottom=thin)
 
         columns = [
-            ('Date', 12),
-            ('N° Facture', 18),
-            ('Client / Assurance', 30),
-            ('Bénéficiaire', 25),
-            ('Total TTC', 14),
-            ('Montant Payé', 14),
-            ('Reste à Payer', 14),
-            ('Statut', 12),
+            (T(lang, 'col_date'), 12),
+            (T(lang, 'col_num_facture'), 18),
+            (T(lang, 'cre_col_client_assurance'), 30),
+            (T(lang, 'cre_col_beneficiaire'), 25),
+            (T(lang, 'col_total_ttc'), 14),
+            (T(lang, 'cre_col_paye'), 14),
+            (T(lang, 'cre_col_reste'), 14),
+            (T(lang, 'col_statut'), 12),
         ]
         nb_cols = len(columns)
         for i, (_, width) in enumerate(columns, start=1):
@@ -250,12 +253,12 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         ws.append([pharma_name])
         ws.append([pharma_address])
         if pharma_phone:
-            ws.append([f"Tél : {pharma_phone}"])
-        ws.append([f"Édité le : {now_str}"])
+            ws.append([T(lang, 'doc_tel', v=pharma_phone)])
+        ws.append([T(lang, 'doc_edited', d=now_str)])
         ws.append([])
 
         # Titre
-        title = "Listing des Créances"
+        title = T(lang, 'cre_title')
         if client_id:
             from ...models import Client
             try:
@@ -264,15 +267,15 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             except Client.DoesNotExist:
                 pass
         elif history:
-            title += " — Historique"
+            title += T(lang, 'cre_title_history')
         else:
-            title += " — En attente"
+            title += T(lang, 'cre_title_pending')
         if date_debut and date_fin:
-            title += f" ({date_debut} au {date_fin})"
+            title += T(lang, 'cre_period_between', d=date_debut, f=date_fin)
         elif date_debut:
-            title += f" (à partir du {date_debut})"
+            title += T(lang, 'cre_period_from', d=date_debut)
         elif date_fin:
-            title += f" (jusqu'au {date_fin})"
+            title += T(lang, 'cre_period_until', f=date_fin)
 
         ws.append([title])
         ws.append([])
@@ -297,12 +300,12 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         for facture in queryset:
             montant_paye = getattr(facture, 'paid_amount', Decimal(0))
             reste = facture.total_ttc - montant_paye
-            client_name = facture.client_name_override or (facture.client.name if facture.client else 'Client de passage')
+            client_name = facture.client_name_override or (facture.client.name if facture.client else T(lang, 'client_passage'))
             ayant_droit = facture.ayant_droit.nom if hasattr(facture, 'ayant_droit') and facture.ayant_droit else ''
-            status_label = 'Payée' if reste <= 0 else 'En attente'
+            status_label = T(lang, 'cre_status_paid') if reste <= 0 else T(lang, 'cre_status_pending')
 
             vals = [
-                facture.date.strftime('%d/%m/%Y') if facture.date else '',
+                format_doc_date(facture.date, lang) if facture.date else '',
                 facture.numero_facture or str(facture.id),
                 client_name,
                 ayant_droit,
@@ -332,7 +335,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         if count > 0:
             row += 1
             ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=4)
-            cell = ws.cell(row=row, column=1, value=f"TOTAL ({count} facture(s))")
+            cell = ws.cell(row=row, column=1, value=T(lang, 'cre_total_line', n=count))
             cell.font = Font(name='Calibri', bold=True, size=10)
             cell.alignment = Alignment(horizontal='right')
             cell.border = thin_border
@@ -391,7 +394,10 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             return Response({'detail': 'Aucun paiement trouvé pour cette facture.'}, status=400)
 
         settings, _ = InvoiceSettings.objects.get_or_create(pk=1)
-        
+
+        from ...utils_doclang import T, format_doc_date, get_document_language
+        lang = get_document_language()
+
         response = HttpResponse(content_type='application/pdf')
         filename = f"recu_{paiement.id}_{facture.numero_facture or facture.id}.pdf"
         response['Content-Disposition'] = build_safe_content_disposition(filename, disposition='inline')
@@ -410,24 +416,24 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         address = settings.company_address or ""
         story.append(Paragraph(address.replace('\n', '<br/>'), style_normal))
         story.append(Spacer(1, 1*cm))
-        story.append(Paragraph("REÇU DE PAIEMENT", style_title))
-        
-        client_name = facture.client_name_override or (facture.client.name if facture.client else "Client")
-        date_paiement = paiement.date_paiement.strftime('%d/%m/%Y à %H:%M')
+        story.append(Paragraph(T(lang, 'recu_title'), style_title))
+
+        client_name = facture.client_name_override or (facture.client.name if facture.client else T(lang, 'col_client'))
+        date_paiement = format_doc_date(paiement.date_paiement, lang, with_time=True)
         ayant_droit = facture.ayant_droit.nom if hasattr(facture, 'ayant_droit') and facture.ayant_droit else None
-        
-        info_data = [[Paragraph("<b>Client :</b>", style_normal), Paragraph(client_name, style_normal)]]
+
+        info_data = [[Paragraph(f"<b>{T(lang, 'col_client')} :</b>", style_normal), Paragraph(client_name, style_normal)]]
         if facture.client:
             if getattr(facture.client, 'niu', None):
                 info_data.append([Paragraph("<b>NIU :</b>", style_normal), Paragraph(facture.client.niu, style_normal)])
             if getattr(facture.client, 'registre_commerce', None):
                 info_data.append([Paragraph("<b>RC :</b>", style_normal), Paragraph(facture.client.registre_commerce, style_normal)])
         if ayant_droit:
-            info_data.append([Paragraph("<b>Bénéficiaire :</b>", style_normal), Paragraph(ayant_droit, style_normal)])
+            info_data.append([Paragraph(f"<b>{T(lang, 'recu_lbl_beneficiaire')}</b>", style_normal), Paragraph(ayant_droit, style_normal)])
         info_data.extend([
-            [Paragraph("<b>Facture N° :</b>", style_normal), Paragraph(facture.numero_facture or str(facture.id), style_normal)],
-            [Paragraph("<b>Date du paiement :</b>", style_normal), Paragraph(date_paiement, style_normal)],
-            [Paragraph("<b>Mode de règlement :</b>", style_normal), Paragraph(paiement.get_mode_paiement_display(), style_normal)],
+            [Paragraph(f"<b>{T(lang, 'recu_lbl_facture')}</b>", style_normal), Paragraph(facture.numero_facture or str(facture.id), style_normal)],
+            [Paragraph(f"<b>{T(lang, 'recu_lbl_date_paiement')}</b>", style_normal), Paragraph(date_paiement, style_normal)],
+            [Paragraph(f"<b>{T(lang, 'recu_lbl_mode')}</b>", style_normal), Paragraph(paiement.get_mode_paiement_display(), style_normal)],
         ])
         
         info_table = Table(info_data, colWidths=[4*cm, 10*cm])
@@ -440,9 +446,9 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         reste_apres = reste_avant - paiement.montant
         
         amount_data = [
-            [Paragraph("Dette avant paiement", style_normal), f"{reste_avant:,.0f} F"],
-            [Paragraph("<b>MONTANT PAYÉ CE JOUR</b>", style_label), Paragraph(f"<b>{paiement.montant:,.0f} F</b>", style_label)],
-            [Paragraph("RESTE À PAYER", style_label), f"{reste_apres:,.0f} F"],
+            [Paragraph(T(lang, 'recu_dette_avant'), style_normal), f"{reste_avant:,.0f} F"],
+            [Paragraph(f"<b>{T(lang, 'recu_montant_paye')}</b>", style_label), Paragraph(f"<b>{paiement.montant:,.0f} F</b>", style_label)],
+            [Paragraph(T(lang, 'recu_reste'), style_label), f"{reste_apres:,.0f} F"],
         ]
         
         amount_table = Table(amount_data, colWidths=[10*cm, 4*cm])
@@ -456,8 +462,8 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         ]))
         story.append(amount_table)
         story.append(Spacer(1, 2*cm))
-        story.append(Paragraph("Merci de votre confiance.", ParagraphStyle('Thanks', parent=style_normal, alignment=1, italic=True)))
-        
+        story.append(Paragraph(T(lang, 'recu_thanks'), ParagraphStyle('Thanks', parent=style_normal, alignment=1, italic=True)))
+
         doc.build(story)
         buffer.seek(0)
         response.write(buffer.getvalue())
@@ -776,6 +782,10 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         
         try:
             settings, _ = InvoiceSettings.objects.get_or_create(pk=1)
+
+            from ...utils_doclang import T, format_doc_date, get_document_language
+            lang = get_document_language()
+
             response = HttpResponse(content_type='application/pdf')
             filename = f"recapitulatif_reglement_{releve.reference}.pdf"
             response['Content-Disposition'] = build_safe_content_disposition(filename, disposition='inline')
@@ -795,18 +805,19 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             style_title = ParagraphStyle('Title', parent=styles['Heading1'], fontSize=18, alignment=1, spaceAfter=20, textColor=primary_color)
             style_label = ParagraphStyle('Label', parent=styles['Normal'], fontName='Helvetica-Bold')
             
-            story.append(Paragraph(f"<b>{settings.company_name or 'Entreprise'}</b>", style_company))
+            story.append(Paragraph(f"<b>{settings.company_name or T(lang, 'company_fallback')}</b>", style_company))
             address = settings.company_address or ""
             if address:
                 story.append(Paragraph(address.replace('\n', '<br/>'), style_normal))
             story.append(Spacer(1, 1*cm))
-            story.append(Paragraph("RÉCAPITULATIF DE RÈGLEMENT", style_title))
-            
-            date_releve = releve.created_at.strftime('%d/%m/%Y à %H:%M') if releve.created_at else datetime.now().strftime('%d/%m/%Y à %H:%M')
-            client_name = releve.client.name if releve.client else "Client inconnu"
-            
+            story.append(Paragraph(T(lang, 'releve_title'), style_title))
+
+            _rel_dt = releve.created_at if releve.created_at else datetime.now()
+            date_releve = format_doc_date(_rel_dt, lang, with_time=True)
+            client_name = releve.client.name if releve.client else T(lang, 'client_inconnu')
+
             info_data = [
-                [Paragraph("<b>Client :</b>", style_normal), Paragraph(client_name, style_normal)],
+                [Paragraph(f"<b>{T(lang, 'col_client')} :</b>", style_normal), Paragraph(client_name, style_normal)],
             ]
             if releve.client:
                 if getattr(releve.client, 'niu', None):
@@ -815,8 +826,8 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
                     info_data.append([Paragraph("<b>RC :</b>", style_normal), Paragraph(releve.client.registre_commerce, style_normal)])
             
             info_data.extend([
-                [Paragraph("<b>Référence :</b>", style_normal), Paragraph(releve.reference or f"REL-{releve.id}", style_normal)],
-                [Paragraph("<b>Date :</b>", style_normal), Paragraph(date_releve, style_normal)],
+                [Paragraph(f"<b>{T(lang, 'releve_lbl_reference')}</b>", style_normal), Paragraph(releve.reference or f"REL-{releve.id}", style_normal)],
+                [Paragraph(f"<b>{T(lang, 'col_date')} :</b>", style_normal), Paragraph(date_releve, style_normal)],
             ])
             info_table = Table(info_data, colWidths=[5*cm, 9*cm])
             info_table.setStyle(TableStyle([('VALIGN', (0,0), (-1,-1), 'TOP'), ('BOTTOMPADDING', (0,0), (-1,-1), 4)]))
@@ -827,12 +838,12 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             paiements = releve.paiements_caisse.filter(statut='completee').order_by('date_paiement')
             
             if paiements.exists():
-                headers = ["Date", "Montant", "Mode", "Référence"]
+                headers = [T(lang, 'col_date'), T(lang, 'col_montant'), T(lang, 'col_mode'), T(lang, 'col_reference')]
                 table_data = [headers]
                 
                 for p in paiements:
                     try:
-                        date_str = p.date_paiement.strftime('%d/%m/%Y') if p.date_paiement else '-'
+                        date_str = format_doc_date(p.date_paiement, lang) if p.date_paiement else '-'
                         montant = f"{float(p.montant):,.0f} F"
                         mode = p.get_mode_paiement_display() or '-'
                         ref = p.reference_paiement or '-'
@@ -862,14 +873,14 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             
             story.append(Spacer(1, 1*cm))
             total_amount = float(releve.total_amount) if releve.total_amount else 0.0
-            total_data = [["", "", Paragraph("<b>TOTAL RÈGLEMENT :</b>", style_label), Paragraph(f"<b>{total_amount:,.0f} F</b>", style_label)]]
+            total_data = [["", "", Paragraph(f"<b>{T(lang, 'releve_total')}</b>", style_label), Paragraph(f"<b>{total_amount:,.0f} F</b>", style_label)]]
             total_table = Table(total_data, colWidths=[3.5*cm, 2.5*cm, 4*cm, 4*cm])
             total_table.setStyle(TableStyle([('ALIGN', (3, 0), (3, 0), 'RIGHT')]))
             story.append(total_table)
             
             story.append(Spacer(1, 2*cm))
-            story.append(Paragraph("Merci de votre confiance.", ParagraphStyle('Thanks', parent=style_normal, alignment=1, italic=True)))
-            
+            story.append(Paragraph(T(lang, 'recu_thanks'), ParagraphStyle('Thanks', parent=style_normal, alignment=1, italic=True)))
+
             doc.build(story)
             buffer.seek(0)
             response.write(buffer.getvalue())

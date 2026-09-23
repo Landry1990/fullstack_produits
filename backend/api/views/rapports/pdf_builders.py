@@ -9,11 +9,27 @@ from django.http import HttpResponse
 from api.security_utils import build_safe_content_disposition
 
 
-def build_rapport_pdf(data: dict, title_text: str, filename: str) -> HttpResponse:
+def build_rapport_pdf(
+    data: dict,
+    title_text: str,
+    filename: str,
+    lang: "str | None" = None,
+) -> HttpResponse:
     """
     Construit un PDF A4 complet (KPIs, encaissements, achats, clients pro,
     unités gratuites, TVA, créances, mouvements de caisse).
+
+    ``lang`` : 'fr' ou 'en'. Si absent, lu via
+    ``utils_doclang.get_document_language()`` (PharmacySettings.locale).
     """
+    from api.utils_doclang import (
+        DOC_STRINGS,
+        T,
+        format_doc_date,
+        get_document_language,
+    )
+    if not lang:
+        lang = get_document_language()
     from reportlab.lib import colors
     from reportlab.lib.enums import TA_CENTER, TA_RIGHT
     from reportlab.lib.pagesizes import A4
@@ -93,12 +109,12 @@ def build_rapport_pdf(data: dict, title_text: str, filename: str) -> HttpRespons
 
     # ── 1. KPIs ───────────────────────────────────────────────────────────────
     kpi_items = [
-        ('CA TTC',      format_currency(data['ca']['ca_ttc'])),
-        ('CA HT',       format_currency(data['ca']['ca_ht'])),
-        ('Marge Brute', format_currency(data['marge']['marge_brute'])),
-        ('Marge %',     f"{data['marge']['marge_pct']}%"),
-        ('Remises',     format_currency(data['ca']['total_remises'])),
-        ('Nb Ventes',   str(data['ca']['nb_ventes'])),
+        (T(lang, 'kpi_ca_ttc'),      format_currency(data['ca']['ca_ttc'])),
+        (T(lang, 'kpi_ca_ht'),       format_currency(data['ca']['ca_ht'])),
+        (T(lang, 'kpi_marge_brute'), format_currency(data['marge']['marge_brute'])),
+        (T(lang, 'kpi_marge_pct'),   f"{data['marge']['marge_pct']}%"),
+        (T(lang, 'kpi_remises'),     format_currency(data['ca']['total_remises'])),
+        (T(lang, 'kpi_nb_ventes'),   str(data['ca']['nb_ventes'])),
     ]
     s_kpi_val = ParagraphStyle(
         'KpiVal', fontSize=9, fontName='Helvetica-Bold',
@@ -123,26 +139,40 @@ def build_rapport_pdf(data: dict, title_text: str, filename: str) -> HttpRespons
     story += [t_kpi, Spacer(1, 4 * mm)]
 
     # ── 2. Encaissements (gauche) + Achats fournisseurs (droite) ──────────────
-    enc_rows = [[_ph('<b>Mode</b>', s_header), _ph('<b>Montant</b>', s_header_r)]]
+    enc_rows = [[
+        _ph(f"<b>{T(lang, 'col_mode')}</b>", s_header),
+        _ph(f"<b>{T(lang, 'col_montant')}</b>", s_header_r),
+    ]]
     for e in data.get('encaissements', []):
         montant = float(e.get('montant', 0))
         if montant > 0:
-            enc_rows.append([_ph(str(e.get('mode_label', '')), s_cell), _cur(montant, s_cell_r)])
+            # Le label FR du modèle (mode_label) est remplacé par la
+            # traduction du code de mode quand elle existe.
+            pay_key = f"pay_{e.get('mode', '')}"
+            mode_txt = T(lang, pay_key) if pay_key in DOC_STRINGS['fr'] else str(e.get('mode_label', ''))
+            enc_rows.append([_ph(mode_txt, s_cell), _cur(montant, s_cell_r)])
     if float(data.get('depots_total', 0)) > 0:
-        enc_rows.append([_ph('Dépôts', s_cell), _cur(data['depots_total'], s_cell_r)])
+        enc_rows.append([_ph(T(lang, 'row_depots'), s_cell), _cur(data['depots_total'], s_cell_r)])
     total_enc = (
         sum(float(e.get('montant', 0)) for e in data.get('encaissements', []))
         + float(data.get('depots_total', 0))
     )
-    enc_rows.append([_ph('<b>Total Encaissements</b>', s_cell_b), _ph(f'<b>{format_currency(total_enc)}</b>', s_cell_r)])
+    enc_rows.append([
+        _ph(f"<b>{T(lang, 'row_total_encaissements')}</b>", s_cell_b),
+        _ph(f'<b>{format_currency(total_enc)}</b>', s_cell_r),
+    ])
     if float(data.get('ventes_credit', 0)) > 0:
-        enc_rows.append([_ph('Ventes à crédit', s_cell), _cur(data['ventes_credit'], s_cell_r)])
+        enc_rows.append([_ph(T(lang, 'row_ventes_credit'), s_cell), _cur(data['ventes_credit'], s_cell_r)])
     if float(data.get('coupons_total', 0)) > 0:
-        enc_rows.append([_ph('Coupons', s_cell), _cur(data['coupons_total'], s_cell_r)])
+        enc_rows.append([_ph(T(lang, 'row_coupons'), s_cell), _cur(data['coupons_total'], s_cell_r)])
     t_enc = Table(enc_rows, colWidths=[half_w * 0.55, half_w * 0.45])
     t_enc.setStyle(_compact_style())
 
-    ach_rows = [[_ph('<b>Fournisseur</b>', s_header), _ph('<b>Cmd</b>', s_header_r), _ph('<b>Montant</b>', s_header_r)]]
+    ach_rows = [[
+        _ph(f"<b>{T(lang, 'col_fournisseur')}</b>", s_header),
+        _ph(f"<b>{T(lang, 'col_cmd')}</b>", s_header_r),
+        _ph(f"<b>{T(lang, 'col_montant')}</b>", s_header_r),
+    ]]
     achats = data.get('achats_par_fournisseur', [])
     for f in achats[:10]:
         ach_rows.append([
@@ -151,19 +181,27 @@ def build_rapport_pdf(data: dict, title_text: str, filename: str) -> HttpRespons
             _cur(f.get('montant_total', 0), s_cell_r),
         ])
     if not achats:
-        ach_rows.append([_ph('Aucun achat', s_cell), _ph('-', s_cell_r), _ph('-', s_cell_r)])
+        ach_rows.append([_ph(T(lang, 'row_aucun_achat'), s_cell), _ph('-', s_cell_r), _ph('-', s_cell_r)])
     total_ach = sum(float(f.get('montant_total', 0)) for f in achats)
-    ach_rows.append([_ph('<b>Total</b>', s_cell_b), _ph('', s_cell_r), _ph(f'<b>{format_currency(total_ach)}</b>', s_cell_r)])
+    ach_rows.append([
+        _ph(f"<b>{T(lang, 'row_total')}</b>", s_cell_b),
+        _ph('', s_cell_r),
+        _ph(f'<b>{format_currency(total_ach)}</b>', s_cell_r),
+    ])
     t_ach = Table(ach_rows, colWidths=[half_w * 0.50, half_w * 0.15, half_w * 0.35])
     t_ach.setStyle(_compact_style())
 
-    story.append(_ph('<b>💰 Encaissements & Achats</b>', s_section))
+    story.append(_ph(f"<b>{T(lang, 'section_enc_achats')}</b>", s_section))
     story.append(Table([[t_enc, t_ach]], colWidths=[half_w, half_w], hAlign='LEFT', style=_two_col_style()))
     story.append(Spacer(1, 4 * mm))
 
     # ── 3. Clients Pro (gauche) + Unités Gratuites (droite) ───────────────────
     pro = data.get('clients_professionnels', {})
-    pro_rows = [[_ph('<b>Client</b>', s_header), _ph('<b>CA</b>', s_header_r), _ph('<b>Reste</b>', s_header_r)]]
+    pro_rows = [[
+        _ph(f"<b>{T(lang, 'col_client')}</b>", s_header),
+        _ph(f"<b>{T(lang, 'col_ca')}</b>", s_header_r),
+        _ph(f"<b>{T(lang, 'col_reste')}</b>", s_header_r),
+    ]]
     for c in pro.get('top_clients', [])[:7]:
         pro_rows.append([
             _ph(str(c.get('client_nom', ''))[:25], s_cell),
@@ -171,7 +209,7 @@ def build_rapport_pdf(data: dict, title_text: str, filename: str) -> HttpRespons
             _cur(c.get('reste_a_payer', 0), s_cell_r),
         ])
     pro_rows.append([
-        _ph(f"<b>Total ({pro.get('taux_recouvrement_pct', 0):.0f}% recouv.)</b>", s_cell_b),
+        _ph(f"<b>{T(lang, 'row_total_recouv', pct=format(pro.get('taux_recouvrement_pct', 0), '.0f'))}</b>", s_cell_b),
         _ph(f"<b>{format_currency(pro.get('ca_total', 0))}</b>", s_cell_r),
         _ph(f"<b>{format_currency(pro.get('reste_a_payer', 0))}</b>", s_cell_r),
     ])
@@ -179,7 +217,11 @@ def build_rapport_pdf(data: dict, title_text: str, filename: str) -> HttpRespons
     t_pro.setStyle(_compact_style())
 
     ug = data.get('unites_gratuites', {})
-    ug_rows = [[_ph('<b>Produit</b>', s_header), _ph('<b>Qté</b>', s_header_r), _ph('<b>Valeur</b>', s_header_r)]]
+    ug_rows = [[
+        _ph(f"<b>{T(lang, 'col_produit')}</b>", s_header),
+        _ph(f"<b>{T(lang, 'col_qte')}</b>", s_header_r),
+        _ph(f"<b>{T(lang, 'col_valeur')}</b>", s_header_r),
+    ]]
     for p in ug.get('top_produits', [])[:7]:
         ug_rows.append([
             _ph(str(p.get('produit_nom', ''))[:25], s_cell),
@@ -187,21 +229,23 @@ def build_rapport_pdf(data: dict, title_text: str, filename: str) -> HttpRespons
             _cur(p.get('valeur_totale', 0), s_cell_r),
         ])
     ug_rows.append([
-        _ph(f"<b>Total ({ug.get('pct_du_ca', 0):.1f}% CA)</b>", s_cell_b),
+        _ph(f"<b>{T(lang, 'row_total_pct_ca', pct=format(ug.get('pct_du_ca', 0), '.1f'))}</b>", s_cell_b),
         _ph(f"<b>{ug.get('quantite_totale', 0)}</b>", s_cell_r),
         _ph(f"<b>{format_currency(ug.get('valeur_totale', 0))}</b>", s_cell_r),
     ])
     t_ug = Table(ug_rows, colWidths=[half_w * 0.45, half_w * 0.20, half_w * 0.35])
     t_ug.setStyle(_compact_style())
 
-    story.append(_ph('<b>👥 Clients Professionnels & Unités Gratuites</b>', s_section))
+    story.append(_ph(f"<b>{T(lang, 'section_clients_ug')}</b>", s_section))
     story.append(Table([[t_pro, t_ug]], colWidths=[half_w, half_w], hAlign='LEFT', style=_two_col_style()))
     story.append(Spacer(1, 4 * mm))
 
     # ── 4. TVA (gauche) + Créances + Mouvements Caisse (droite) ──────────────
     tva_rows = [[
-        _ph('<b>Taux</b>', s_header), _ph('<b>CA HT</b>', s_header_r),
-        _ph('<b>TVA</b>', s_header_r), _ph('<b>TTC</b>', s_header_r),
+        _ph(f"<b>{T(lang, 'col_taux')}</b>", s_header),
+        _ph(f"<b>{T(lang, 'kpi_ca_ht')}</b>", s_header_r),
+        _ph(f"<b>{T(lang, 'col_tva')}</b>", s_header_r),
+        _ph(f"<b>{T(lang, 'col_ttc')}</b>", s_header_r),
     ]]
     for tva in data.get('ca_par_tva', []):
         tva_rows.append([
@@ -215,7 +259,7 @@ def build_rapport_pdf(data: dict, title_text: str, filename: str) -> HttpRespons
 
     mvts = data.get('mouvements_caisse', {})
     t_cr = Table(
-        [[_ph('<b>Créances à Percevoir</b>', s_header),
+        [[_ph(f"<b>{T(lang, 'row_creances')}</b>", s_header),
           _ph(f"<b>{format_currency(data.get('creances_a_percevoir', 0))}</b>", s_header_r)]],
         colWidths=[half_w * 0.55, half_w * 0.45],
     )
@@ -231,10 +275,12 @@ def build_rapport_pdf(data: dict, title_text: str, filename: str) -> HttpRespons
 
     t_mvt = Table(
         [
-            [_ph('<b>Mouvements Caisse</b>', s_header), _ph('<b>Montant</b>', s_header_r)],
-            [_ph('Entrées diverses', s_cell),  _cur(mvts.get('total_entrees', 0), s_cell_r)],
-            [_ph('Sorties diverses', s_cell),  _cur(mvts.get('total_sorties', 0), s_cell_r)],
-            [_ph('<b>Solde</b>', s_cell_b),    _ph(f"<b>{format_currency(mvts.get('solde', 0))}</b>", s_cell_r)],
+            [_ph(f"<b>{T(lang, 'row_mvt_caisse')}</b>", s_header),
+             _ph(f"<b>{T(lang, 'col_montant')}</b>", s_header_r)],
+            [_ph(T(lang, 'row_entrees_diverses'), s_cell), _cur(mvts.get('total_entrees', 0), s_cell_r)],
+            [_ph(T(lang, 'row_sorties_diverses'), s_cell), _cur(mvts.get('total_sorties', 0), s_cell_r)],
+            [_ph(f"<b>{T(lang, 'row_solde')}</b>", s_cell_b),
+             _ph(f"<b>{format_currency(mvts.get('solde', 0))}</b>", s_cell_r)],
         ],
         colWidths=[half_w * 0.55, half_w * 0.45],
     )
@@ -251,28 +297,32 @@ def build_rapport_pdf(data: dict, title_text: str, filename: str) -> HttpRespons
         ]),
     )
 
-    story.append(_ph('<b>📊 TVA, Créances & Mouvements</b>', s_section))
+    story.append(_ph(f"<b>{T(lang, 'section_tva_creances')}</b>", s_section))
     story.append(Table([[t_tva, right_stack]], colWidths=[half_w, half_w], hAlign='LEFT', style=_two_col_style()))
 
     # ── 5. Détail mouvements de caisse ────────────────────────────────────────
     mvt_liste = mvts.get('liste', [])
     if mvt_liste:
         story.append(Spacer(1, 4 * mm))
-        story.append(_ph('<b>📋 Détail des Mouvements de Caisse</b>', s_section))
+        story.append(_ph(f"<b>{T(lang, 'section_detail_mvt')}</b>", s_section))
         detail_rows = [[
-            _ph('<b>Date</b>', s_header),
-            _ph('<b>Type</b>', s_header),
-            _ph('<b>Motif</b>', s_header),
-            _ph('<b>Utilisateur</b>', s_header),
-            _ph('<b>Montant</b>', s_header_r),
+            _ph(f"<b>{T(lang, 'col_date')}</b>", s_header),
+            _ph(f"<b>{T(lang, 'col_type')}</b>", s_header),
+            _ph(f"<b>{T(lang, 'col_motif')}</b>", s_header),
+            _ph(f"<b>{T(lang, 'col_utilisateur')}</b>", s_header),
+            _ph(f"<b>{T(lang, 'col_montant')}</b>", s_header_r),
         ]]
         for m in mvt_liste[:15]:
             is_entree = m.get('type') == 'ENTREE'
+            raw_date = m.get('date', '')
+            date_txt = format_doc_date(raw_date, lang) if hasattr(raw_date, 'strftime') else str(raw_date)[:10]
+            user_val = m.get('user', '')
+            user_txt = T(lang, 'user_unknown') if user_val == 'Inconnu' else str(user_val)
             detail_rows.append([
-                _ph(str(m.get('date', ''))[:10], s_cell),
-                _ph('Entrée' if is_entree else 'Sortie', s_cell),
+                _ph(date_txt, s_cell),
+                _ph(T(lang, 'row_entree' if is_entree else 'row_sortie'), s_cell),
                 _ph(str(m.get('motif', ''))[:35], s_cell),
-                _ph(str(m.get('user', ''))[:15], s_cell),
+                _ph(user_txt[:15], s_cell),
                 _ph(f"{'+'  if is_entree else '-'}{format_currency(m.get('montant', 0))}", s_cell_r),
             ])
         t_detail = Table(detail_rows, colWidths=[W * 0.13, W * 0.10, W * 0.37, W * 0.18, W * 0.22])
@@ -281,8 +331,8 @@ def build_rapport_pdf(data: dict, title_text: str, filename: str) -> HttpRespons
 
     # ── Build ─────────────────────────────────────────────────────────────────
     def _on_page(canvas, doc):
-        draw_pharma_header(canvas, doc, title="RAPPORT")
-        draw_pharma_footer(canvas, doc)
+        draw_pharma_header(canvas, doc, title=T(lang, 'doc_report'), lang=lang)
+        draw_pharma_footer(canvas, doc, lang=lang)
 
     doc.build(story, onFirstPage=_on_page, onLaterPages=_on_page)
 
