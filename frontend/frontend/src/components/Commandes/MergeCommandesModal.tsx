@@ -15,6 +15,7 @@ import {
 } from '../shadcn/dialog';
 import { Select } from '../shadcn/select';
 import { Skeleton } from '../ui/Skeleton';
+import { Loader2 } from 'lucide-react';
 
 interface MergeCommandesModalProps {
     isOpen: boolean;
@@ -22,7 +23,7 @@ interface MergeCommandesModalProps {
     selectedOrderIds: Set<number>;
     fournisseurs: Fournisseur[];
     commandesEndpoint: string;
-    onMergeSuccess: (mergedCount: number, targetOrderId: number) => void;
+    onMergeSuccess: (mergedCount: number, targetOrderId: number, mergedIds: number[]) => void;
 }
 
 export default function MergeCommandesModal({
@@ -37,6 +38,7 @@ export default function MergeCommandesModal({
     const [mergeTargetOrderId, setMergeTargetOrderId] = useState<number | null>(null);
     const [mergeOrdersDetails, setMergeOrdersDetails] = useState<Commande[]>([]);
     const [loadingMergeDetails, setLoadingMergeDetails] = useState(false);
+    const [merging, setMerging] = useState(false);
 
     useEffect(() => {
         if (isOpen && selectedOrderIds.size > 0) {
@@ -76,6 +78,7 @@ export default function MergeCommandesModal({
             return;
         }
 
+        setMerging(true);
         try {
             await Promise.all(orderIdsToMerge.map(async (sourceOrderId) => {
                 await api.post(`${commandesEndpoint}${mergeTargetOrderId}/merge/`, {
@@ -83,7 +86,7 @@ export default function MergeCommandesModal({
                 });
             }));
 
-            onMergeSuccess(orderIdsToMerge.length, mergeTargetOrderId);
+            onMergeSuccess(orderIdsToMerge.length, mergeTargetOrderId, orderIdsToMerge);
             onClose();
 
         } catch (err: unknown) {
@@ -91,6 +94,8 @@ export default function MergeCommandesModal({
             const errObj = err as { response?: { data?: { error?: string } } };
             const msg = errObj?.response?.data?.error || t('orders:merge_modal.merge_error');
             gooeyToast.error(msg);
+        } finally {
+            setMerging(false);
         }
     };
 
@@ -197,18 +202,20 @@ export default function MergeCommandesModal({
                             </div>
 
                             <div className="flex justify-end gap-3 pt-2">
-                                <Button 
-                                    type="button" 
-                                    variant="ghost" 
+                                <Button
+                                    type="button"
+                                    variant="ghost"
                                     onClick={onClose}
+                                    disabled={merging}
                                 >
                                     {t('orders:merge_modal.cancel')}
                                 </Button>
-                                <Button 
-                                    type="button" 
+                                <Button
+                                    type="button"
                                     onClick={handleMergeOrders}
-                                    disabled={!mergeTargetOrderId}
+                                    disabled={!mergeTargetOrderId || merging}
                                 >
+                                    {merging && <Loader2 className="size-4 animate-spin" />}
                                     {t('orders:merge_modal.merge_btn')}
                                 </Button>
                             </div>

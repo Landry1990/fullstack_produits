@@ -268,10 +268,10 @@ export interface SupplierAnalysisItem {
 }
 
 // Supplier Analysis Hook
-export const useAnalyseFournisseurs = () => {
+export const useAnalyseFournisseurs = (dateDebut?: string, dateFin?: string) => {
     return useQuery<SupplierAnalysisItem[]>({
-        queryKey: ['finance', 'analyse-fournisseurs'],
-        queryFn: () => financeService.getAnalyseFournisseurs(),
+        queryKey: ['finance', 'analyse-fournisseurs', dateDebut, dateFin],
+        queryFn: () => financeService.getAnalyseFournisseurs({ date_debut: dateDebut, date_fin: dateFin }),
         staleTime: 1000 * 60 * 60,
     });
 };
@@ -306,18 +306,18 @@ export interface RepartitionAchatsData {
 }
 
 // Advanced Analysis Hooks
-export const useComparaisonPrix = () => {
+export const useComparaisonPrix = (dateDebut?: string, dateFin?: string) => {
     return useQuery<ProduitComparaison[]>({
-        queryKey: ['finance', 'comparaison-prix'],
-        queryFn: () => financeService.getComparaisonPrix(),
+        queryKey: ['finance', 'comparaison-prix', dateDebut, dateFin],
+        queryFn: () => financeService.getComparaisonPrix({ date_debut: dateDebut, date_fin: dateFin }),
         staleTime: 1000 * 60 * 60 * 4, // 4 hours
     });
 };
 
-export const useRepartitionAchats = () => {
+export const useRepartitionAchats = (dateDebut?: string, dateFin?: string) => {
     return useQuery<RepartitionAchatsData>({
-        queryKey: ['finance', 'repartition-achats'],
-        queryFn: () => financeService.getRepartitionAchats(),
+        queryKey: ['finance', 'repartition-achats', dateDebut, dateFin],
+        queryFn: () => financeService.getRepartitionAchats({ date_debut: dateDebut, date_fin: dateFin }),
         staleTime: 1000 * 60 * 60 * 4, // 4 hours
     });
 };

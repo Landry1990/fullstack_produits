@@ -15,6 +15,7 @@ import { Button } from './shadcn/button';
 import { Card, CardContent } from './shadcn/card';
 import { cn } from '../lib/utils';
 import { useConfirm } from '../hooks/useConfirm';
+import { consumePostLoginRedirect } from '../utils/postLoginRedirect';
 import { logger } from '../utils/logger'
 
 const getDeviceType = () => {
@@ -93,7 +94,8 @@ export default function LoginShadcn() {
 
       const { token, username: loggedInUsername, is_superuser, allowed_menus, can_cash_out, can_do_returns, can_sell_negative_stock, role } = response.data;
       login({ username: loggedInUsername, token, is_superuser, allowed_menus, can_cash_out, can_do_returns, can_sell_negative_stock, role });
-      navigate('/app');
+      // Revient sur la page où l'utilisateur était avant la déconnexion, si mémorisée
+      navigate(consumePostLoginRedirect() || '/app');
     } catch (err) {
       logger.error('Login error:', err);
       const e = err as { response?: { status: number } };

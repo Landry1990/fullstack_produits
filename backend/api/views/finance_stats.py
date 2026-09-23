@@ -2,7 +2,7 @@
 Finance Statistics ViewSet - Refactorisé.
 Les services sous-jacents sont dans api/services/finance_*.py
 """
-from datetime import timedelta
+from datetime import date, timedelta
 from decimal import Decimal
 
 import numpy as np
@@ -57,6 +57,16 @@ from ..services.finance_predictions import (
 
 class FinanceStatsViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
+
+    @staticmethod
+    def _parse_iso_date(value):
+        """Parse une date ISO (YYYY-MM-DD). Retourne None si absente ou invalide."""
+        if not value:
+            return None
+        try:
+            return date.fromisoformat(value)
+        except (ValueError, TypeError):
+            return None
 
     # ── 1. CA Evolution ──────────────────────────────────
     @action(detail=False, methods=['get'])
@@ -554,10 +564,12 @@ class FinanceStatsViewSet(viewsets.ViewSet):
 
         from ..models import Fournisseur, StockAdjustment, StockLot
         today = timezone.localtime(timezone.now()).date()
-        start_date = today - relativedelta(months=12)
+        start_date = self._parse_iso_date(request.query_params.get('date_debut')) or today - relativedelta(months=12)
+        end_date = self._parse_iso_date(request.query_params.get('date_fin')) or today
 
         fournisseurs = list(Fournisseur.objects.filter(
-            stocklot__date_reception__date__gte=start_date
+            stocklot__date_reception__date__gte=start_date,
+            stocklot__date_reception__date__lte=end_date
         ).distinct())
 
         if not fournisseurs:
@@ -568,7 +580,8 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         # 1. Récupérer TOUS les lots de ces fournisseurs en UNE SEULE requête
         all_lots = StockLot.objects.filter(
             fournisseur_id__in=fournisseur_ids,
-            date_reception__date__gte=start_date
+            date_reception__date__gte=start_date,
+            date_reception__date__lte=end_date
         ).order_by('date_reception')
 
         # Grouper les lots par fournisseur en mémoire
@@ -580,7 +593,8 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         all_adjustments = StockAdjustment.objects.filter(
             stock_lot__fournisseur_id__in=fournisseur_ids,
             reason_type__in=['AVARIE', 'CASSE', 'ERR_ENTREE', 'PERIME'],
-            created_at__date__gte=start_date
+            created_at__date__gte=start_date,
+            created_at__date__lte=end_date
         ).values('stock_lot__fournisseur_id').annotate(
             count=Count('id')
         )
@@ -636,10 +650,12 @@ class FinanceStatsViewSet(viewsets.ViewSet):
 
         from ..models import StockLot
         today = timezone.localtime(timezone.now()).date()
-        start_date = today - relativedelta(months=12)
+        start_date = self._parse_iso_date(request.query_params.get('date_debut')) or today - relativedelta(months=12)
+        end_date = self._parse_iso_date(request.query_params.get('date_fin')) or today
 
         produits_multi_source = StockLot.objects.filter(
-            date_reception__date__gte=start_date
+            date_reception__date__gte=start_date,
+            date_reception__date__lte=end_date
         ).exclude(
             Q(fournisseur__isnull=True) | Q(fournisseur__name__iexact='Inconnu')
         ).values('produit').annotate(
@@ -654,7 +670,8 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         # Une seule requête d'agrégation pour tous les produits d'intérêt
         all_lots = StockLot.objects.filter(
             produit_id__in=product_ids,
-            date_reception__date__gte=start_date
+            date_reception__date__gte=start_date,
+            date_reception__date__lte=end_date
         ).values('produit_id', 'produit__name', 'fournisseur__name').annotate(
             avg_price=Avg('price_cost')
         )
@@ -688,10 +705,12 @@ class FinanceStatsViewSet(viewsets.ViewSet):
     def repartition_achats(self, request):
         from ..models import StockLot
         today = timezone.localtime(timezone.now()).date()
-        start_date = today - relativedelta(months=12)
+        start_date = self._parse_iso_date(request.query_params.get('date_debut')) or today - relativedelta(months=12)
+        end_date = self._parse_iso_date(request.query_params.get('date_fin')) or today
 
         achats = StockLot.objects.filter(
-            date_reception__date__gte=start_date
+            date_reception__date__gte=start_date,
+            date_reception__date__lte=end_date
         ).exclude(
             Q(fournisseur__isnull=True) | Q(fournisseur__name__iexact='Inconnu')
         ).values('fournisseur__id', 'fournisseur__name').annotate(

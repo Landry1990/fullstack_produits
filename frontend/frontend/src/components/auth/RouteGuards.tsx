@@ -1,8 +1,9 @@
-import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useAutoLogout } from '../../hooks/useAutoLogout';
+import { savePostLoginRedirect } from '../../utils/postLoginRedirect';
 
 const LoadingSpinner = () => (
   <div className="h-screen flex items-center justify-center">
@@ -12,12 +13,21 @@ const LoadingSpinner = () => (
 
 export const ProtectedRoute = () => {
   const { isAuthenticated, loading } = useAuth();
-  
+  const location = useLocation();
+
   // Initialize inactivity auto-logout tracking
   useAutoLogout();
 
+  // Mémorise la page demandée pour y revenir après reconnexion
+  // (déconnexion par inactivité, logout manuel, accès direct non authentifié)
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      savePostLoginRedirect(location.pathname + location.search);
+    }
+  }, [loading, isAuthenticated, location]);
+
   if (loading) return <LoadingSpinner />;
-  return isAuthenticated ? <Outlet /> : <Navigate to="/" />;
+  return isAuthenticated ? <Outlet /> : <Navigate to="/" replace />;
 };
 
 export const AdminRoute = ({ children }: { children: React.ReactNode }) => {

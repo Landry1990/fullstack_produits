@@ -6,6 +6,7 @@
     "error_loading": "Error loading promotions",
     "fetch_error": "Could not fetch promotions",
     "delete_confirm": "Are you sure you want to delete this promotion?",
+    "delete_success": "Promotion deleted",
     "delete_error": "Delete failed: {{message}}",
     "list": {
         "table": {
@@ -18,10 +19,12 @@
         },
         "types": {
             "discount": "Discount",
-            "special_offer": "Special Offer"
+            "special_offer": "Special Offer",
+            "bundle": "Bundle"
         },
         "discount": {
-            "buy_get": "Buy {{buy}}, Get {{get}} Free"
+            "buy_get": "Buy {{buy}}, Get {{get}} Free",
+            "bundle": "Bundle: {{value}} {{currency}}"
         },
         "period": {
             "indefinite": "Indefinite"
@@ -42,6 +45,15 @@
         "general_info": "General Information",
         "pack_name": "Offer / Pack Name",
         "pack_placeholder": "Ex: Summer Sale, Health Pack...",
+        "description": "Description",
+        "description_placeholder": "Promotion description (optional)",
+        "application_mode": "Application mode",
+        "modes": {
+            "auto_show": "Auto display",
+            "auto_suggest": "Auto suggest",
+            "auto_apply": "Auto apply"
+        },
+        "active_label": "Active promotion",
         "start_date": "Start Date",
         "end_date": "End Date (Optional)",
         "type_value": "Type and Value",
@@ -76,9 +88,10 @@
             }
         },
         "status": {
+            "label": "Status",
             "loading": "Saving...",
             "ready": "Ready",
-            "total_fixed": "Total fixed: {{value}} F"
+            "total_fixed": "Fixed total: {{value}} {{currency}}"
         },
         "actions": {
             "cancel": "Cancel",

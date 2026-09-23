@@ -13,6 +13,11 @@ import api from '../../services/api';
 import { useEffect, useCallback } from 'react';
 import { Button } from '../shadcn/button';
 import { Badge } from '../shadcn/badge';
+import { Input } from '../shadcn/input';
+import { Select } from '../shadcn/select';
+import { Checkbox } from '../shadcn/checkbox';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../shadcn/dialog';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../shadcn/table';
 import { cn } from '../../lib/utils';
 import { logger } from '../../utils/logger'
 import { LocalizedDateInput } from '../LocalizedDateInput';
@@ -30,9 +35,10 @@ interface SelectedProduct extends SearchResult {
 const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialData }) => {
     const { t } = useTranslation(['promotions', 'common']);
     const [name, setName] = useState(initialData?.name || '');
-    const [description] = useState(initialData?.description || '');
+    const [description, setDescription] = useState(initialData?.description || '');
     const [discountType, setDiscountType] = useState<DiscountType>(initialData?.discount_type || DiscountType.PERCENTAGE);
-    const [applicationMode] = useState<ApplicationMode>(initialData?.application_mode || ApplicationMode.AUTO_APPLY);
+    const [applicationMode, setApplicationMode] = useState<ApplicationMode>(initialData?.application_mode || ApplicationMode.AUTO_APPLY);
+    const [active, setActive] = useState(initialData?.active ?? true);
     const [value, setValue] = useState(initialData?.value || 0);
     const [buyQuantity, setBuyQuantity] = useState(initialData?.buy_quantity || 1);
     const [getQuantity, setGetQuantity] = useState(initialData?.get_quantity || 0);
@@ -96,6 +102,32 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
         addProduct(product as SearchResult);
         resetSearch();
     };
+
+    const [productResults, setProductResults] = useState<SearchResult[]>([]);
+    const [searchLoading, setSearchLoading] = useState(false);
+
+    useEffect(() => {
+        if (searchQuery.length < 2) {
+            setProductResults([]);
+            return;
+        }
+        const timer = setTimeout(async () => {
+            setSearchLoading(true);
+            try {
+                const response = await api.get('produits/', {
+                    params: { search: searchQuery, page_size: 20 }
+                });
+                const data = response.data;
+                setProductResults(Array.isArray(data) ? data : data.results || []);
+            } catch (e) {
+                logger.error('PromotionForm product search error', e);
+                setProductResults([]);
+            } finally {
+                setSearchLoading(false);
+            }
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
 
     const handleIncrement = useCallback((idx: number) => {
         setSelectedProducts(prev => {
@@ -164,8 +196,8 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
             buy_quantity: Number(buyQuantity),
             get_quantity: Number(getQuantity),
             start_date: new Date(startDate).toISOString(),
-            end_date: endDate ? new Date(endDate).toISOString() : null,
-            active: true,
+            end_date: endDate ? new Date(`${endDate}T23:59:59.999`).toISOString() : null,
+            active,
             priority: 1,
         };
 
@@ -197,28 +229,25 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-            <div
-                className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[92vh] overflow-hidden flex flex-col"
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="promotion-form-title"
-            >
+        <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+            <DialogContent size="xl" hideCloseButton className="w-[92vw] max-w-7xl max-h-[88vh] overflow-hidden flex flex-col p-0 gap-0">
                 {/* Header */}
-                <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                    <div>
-                        <h2 id="promotion-form-title" className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                            {initialData ? <Tag className="text-emerald-600" /> : <Plus className="text-emerald-600" />}
-                            {initialData ? t('promotions:form.title_edit') : t('promotions:form.title_new')}
-                        </h2>
-                        <p className="text-sm text-slate-500">{t('promotions:form.subtitle')}</p>
+                <DialogHeader className="p-4 sm:p-6 border-b border-slate-100 bg-slate-50/50 space-y-0">
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <DialogTitle className="text-xl sm:text-2xl font-bold text-slate-800 flex items-center gap-2">
+                                {initialData ? <Tag className="text-emerald-600" /> : <Plus className="text-emerald-600" />}
+                                {initialData ? t('promotions:form.title_edit') : t('promotions:form.title_new')}
+                            </DialogTitle>
+                            <DialogDescription>{t('promotions:form.subtitle')}</DialogDescription>
+                        </div>
+                        <Button variant="ghost" size="icon" onClick={onClose} className="size-10 rounded-full" aria-label={t('common:close')}>
+                            <X size={24} aria-hidden="true" />
+                        </Button>
                     </div>
-                    <Button variant="ghost" size="icon" onClick={onClose} className="size-10 rounded-full" aria-label={t('common:close')}>
-                        <X size={24} aria-hidden="true" />
-                    </Button>
-                </div>
-                
-                <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6">
+                </DialogHeader>
+
+                <form id="promotion-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {/* Info Section */}
                         <div className="md:col-span-2 space-y-6">
@@ -228,14 +257,26 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                 </h3>
                                 <div>
                                     <label htmlFor="promo-pack-name" className="block text-sm font-semibold text-slate-700 mb-1">{t('promotions:form.pack_name')}</label>
-                                    <input
+                                    <Input
                                         id="promo-pack-name"
                                         type="text"
-                                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all"
+                                        disableUppercase
+                                        className="rounded-lg focus-visible:ring-emerald-300 focus-visible:ring-offset-0"
                                         value={name}
                                         onChange={e => setName(e.target.value)}
                                         placeholder={t('promotions:form.pack_placeholder')}
                                         required
+                                    />
+                                </div>
+                                <div>
+                                    <label htmlFor="promo-description" className="block text-sm font-semibold text-slate-700 mb-1">{t('promotions:form.description')}</label>
+                                    <textarea
+                                        id="promo-description"
+                                        rows={2}
+                                        className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 placeholder:text-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 transition-all resize-none"
+                                        value={description}
+                                        onChange={e => setDescription(e.target.value)}
+                                        placeholder={t('promotions:form.description_placeholder')}
                                     />
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -261,9 +302,9 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                 <h3 className="text-xs font-bold uppercase text-slate-400 tracking-wider">{t('promotions:form.type_value')}</h3>
                                 <div>
                                     <label htmlFor="promo-type" className="block text-sm font-semibold text-slate-700 mb-1">{t('promotions:form.promo_type')}</label>
-                                    <select
+                                    <Select
                                         id="promo-type"
-                                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all"
+                                        className="font-semibold focus-visible:ring-emerald-300 focus-visible:ring-offset-0"
                                         value={discountType}
                                         onChange={e => setDiscountType(e.target.value as DiscountType)}
                                     >
@@ -271,8 +312,31 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                         <option value={DiscountType.FIXED_AMOUNT}>{t('promotions:form.types.fixed')}</option>
                                         <option value={DiscountType.BUY_X_GET_Y}>{t('promotions:form.types.buy_get')}</option>
                                         <option value={DiscountType.BUNDLE}>{t('promotions:form.types.bundle')}</option>
-                                    </select>
+                                    </Select>
                                 </div>
+
+                                <div>
+                                    <label htmlFor="promo-mode" className="block text-sm font-semibold text-slate-700 mb-1">{t('promotions:form.application_mode')}</label>
+                                    <Select
+                                        id="promo-mode"
+                                        className="font-semibold focus-visible:ring-emerald-300 focus-visible:ring-offset-0"
+                                        value={applicationMode}
+                                        onChange={e => setApplicationMode(e.target.value as ApplicationMode)}
+                                    >
+                                        <option value={ApplicationMode.AUTO_SHOW}>{t('promotions:form.modes.auto_show')}</option>
+                                        <option value={ApplicationMode.AUTO_SUGGEST}>{t('promotions:form.modes.auto_suggest')}</option>
+                                        <option value={ApplicationMode.AUTO_APPLY}>{t('promotions:form.modes.auto_apply')}</option>
+                                    </Select>
+                                </div>
+
+                                <label htmlFor="promo-active" className="flex items-center gap-2 text-sm font-semibold text-slate-700 cursor-pointer">
+                                    <Checkbox
+                                        id="promo-active"
+                                        checked={active}
+                                        onCheckedChange={(checked) => setActive(checked === true)}
+                                    />
+                                    {t('promotions:form.active_label')}
+                                </label>
 
                                 {(discountType === DiscountType.PERCENTAGE || discountType === DiscountType.FIXED_AMOUNT || discountType === DiscountType.BUNDLE) && (
                                     <div className="bg-white p-3 rounded-lg border border-slate-200">
@@ -280,10 +344,10 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                             {discountType === DiscountType.BUNDLE ? t('promotions:form.labels.pack_price') : t('promotions:form.labels.discount_value')}
                                         </label>
                                         <div className="relative">
-                                            <input
+                                            <Input
                                                 id="promo-value"
                                                 type="number"
-                                                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-2xl font-black text-emerald-600 h-14 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all"
+                                                className="text-2xl font-black text-emerald-600 h-14 rounded-lg focus-visible:ring-emerald-300 focus-visible:ring-offset-0"
                                                 value={value}
                                                 onChange={e => {
                                                     const parsed = e.target.value ? Number(e.target.value) : undefined;
@@ -301,14 +365,14 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                         <div className="bg-white p-2 rounded-lg border border-slate-200">
                                             <label htmlFor="promo-buy-qty" className="block text-caption font-bold uppercase text-slate-500">{t('promotions:form.labels.buy')}</label>
-                                            <input id="promo-buy-qty" type="number" className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm font-bold focus:outline-none focus:border-emerald-300" value={buyQuantity} onChange={e => {
+                                            <Input id="promo-buy-qty" type="number" className="h-9 font-bold focus-visible:ring-emerald-300 focus-visible:ring-offset-0" value={buyQuantity} onChange={e => {
                                                 const parsed = e.target.value ? Number(e.target.value) : undefined;
                                                 setBuyQuantity(prev => (parsed !== undefined && !Number.isNaN(parsed) && parsed > 0 ? parsed : prev));
                                             }} min="1" />
                                         </div>
                                         <div className="bg-white p-2 rounded-lg border border-slate-200">
                                             <label htmlFor="promo-get-qty" className="block text-caption font-bold uppercase text-slate-500">{t('promotions:form.labels.get')}</label>
-                                            <input id="promo-get-qty" type="number" className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm font-bold text-emerald-600 focus:outline-none focus:border-emerald-300" value={getQuantity} onChange={e => {
+                                            <Input id="promo-get-qty" type="number" className="h-9 font-bold text-emerald-600 focus-visible:ring-emerald-300 focus-visible:ring-offset-0" value={getQuantity} onChange={e => {
                                                 const parsed = e.target.value ? Number(e.target.value) : undefined;
                                                 setGetQuantity(prev => (parsed !== undefined && !Number.isNaN(parsed) && parsed >= 0 ? parsed : prev));
                                             }} />
@@ -334,60 +398,59 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                             <ProductSearch
                                 searchQuery={searchQuery}
                                 setSearchQuery={handleSearchChange}
-                                results={[]}
-                                loading={false}
+                                results={productResults}
+                                loading={searchLoading}
                                 modes={['products']}
                                 onSelect={handleAddProduct}
                                 searchInputRef={searchInputRef}
                                 handleKeyDown={handleKeyDown}
                                 getItemProps={getItemProps}
-                                placeholder={t('promotions.form.products.search_placeholder')}
+                                placeholder={t('promotions:form.products.search_placeholder')}
                             />
                         </div>
                     </div>
 
                         {/* Selected Products Table */}
-                        <div className="mt-6 border border-slate-200 rounded-2xl overflow-hidden overflow-x-auto shadow-sm bg-white">
-                            <table className="w-full text-sm">
-                                <thead className="bg-slate-50 border-b border-slate-100">
-                                    <tr className="text-slate-500 uppercase text-caption tracking-widest">
-                                        <th className="py-3 px-4 text-left">{t('promotions:form.products.table.product')}</th>
-                                        <th className="py-3 px-4 text-center">{t('promotions:form.products.table.stock')}</th>
-                                        <th className="py-3 px-4 text-center w-32">{t('promotions:form.products.table.qty')}</th>
-                                        <th className="py-3 px-4 text-right">{t('promotions:form.products.table.unit_price')}</th>
-                                        {discountType !== DiscountType.BUNDLE && <th className="py-3 px-4 text-right">{t('promotions:form.products.table.discount_effect')}</th>}
-                                        <th className="py-3 px-4 w-20"></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
+                        <div className="mt-6">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="hover:bg-transparent">
+                                        <TableHead>{t('promotions:form.products.table.product')}</TableHead>
+                                        <TableHead className="text-center">{t('promotions:form.products.table.stock')}</TableHead>
+                                        <TableHead className="text-center w-32">{t('promotions:form.products.table.qty')}</TableHead>
+                                        <TableHead className="text-right">{t('promotions:form.products.table.unit_price')}</TableHead>
+                                        {discountType !== DiscountType.BUNDLE && <TableHead className="text-right">{t('promotions:form.products.table.discount_effect')}</TableHead>}
+                                        <TableHead className="w-20"></TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
                                     {selectedProducts.length === 0 ? (
-                                        <tr>
-                                            <td colSpan={6} className="text-center py-16">
+                                        <TableRow className="hover:bg-transparent">
+                                            <TableCell colSpan={6} className="text-center py-16">
                                                 <div className="flex flex-col items-center gap-3 text-slate-400">
                                                     <Search size={48} strokeWidth={1} />
                                                     <p className="italic">{t('promotions:form.products.table.empty')}</p>
                                                 </div>
-                                            </td>
-                                        </tr>
+                                            </TableCell>
+                                        </TableRow>
                                     ) : (
                                         selectedProducts.map((p: SelectedProduct, idx: number) => (
-                                            <tr
+                                            <TableRow
                                                 key={p.id}
                                                 className={cn(
-                                                    "hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0",
                                                     tableSelectedIndex === idx ? 'bg-emerald-50/50 ring-1 ring-inset ring-emerald-200' : ''
                                                 )}
                                             >
-                                                <td className="py-3 px-4">
+                                                <TableCell>
                                                     <div className="font-semibold text-slate-800">{p.name}</div>
                                                     <div className="text-caption font-mono text-slate-400">{p.cip1 ? String(p.cip1) : '#'+p.id}</div>
-                                                </td>
-                                                <td className="py-3 px-4 text-center">
+                                                </TableCell>
+                                                <TableCell className="text-center">
                                                     <span className={cn("font-bold", p.stock !== undefined && p.stock <= 0 ? 'text-red-500' : 'text-emerald-600')}>
                                                         {p.stock ?? t('common:not_available')}
                                                     </span>
-                                                </td>
-                                                <td className="py-3 px-4">
+                                                </TableCell>
+                                                <TableCell>
                                                     <div className="flex items-center justify-center">
                                                         <div className="flex items-center bg-slate-100 rounded-lg p-1 border border-slate-200">
                                                             <Button
@@ -421,12 +484,12 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                                             ><Plus size={12} aria-hidden="true" /></Button>
                                                         </div>
                                                     </div>
-                                                </td>
-                                                <td className="py-3 px-4 text-right font-medium text-slate-600">
-                                                    {p.selling_price} {t('common:currency')}
-                                                </td>
+                                                </TableCell>
+                                                <TableCell className="text-right font-medium text-slate-600">
+                                                    {p.selling_price != null ? `${p.selling_price} ${t('common:currency')}` : t('common:not_available')}
+                                                </TableCell>
                                                 {discountType !== DiscountType.BUNDLE && (
-                                                    <td className="py-3 px-4 text-right">
+                                                    <TableCell className="text-right">
                                                          <Badge variant="secondary" className="text-xs font-bold">
                                                             {discountType === DiscountType.BUY_X_GET_Y ? (
                                                                 t('promotions:form.products.table.offered', { count: getQuantity })
@@ -434,9 +497,9 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                                                 discountType === DiscountType.PERCENTAGE ? `-${value}%` : `-${value} ${t('common:currency')}`
                                                             )}
                                                          </Badge>
-                                                    </td>
+                                                    </TableCell>
                                                 )}
-                                                <td className="py-3 px-4 text-center">
+                                                <TableCell className="text-center">
                                                     <Button
                                                         type="button"
                                                         variant="ghost"
@@ -447,32 +510,32 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                                     >
                                                         <Trash2 size={18} aria-hidden="true" />
                                                     </Button>
-                                                </td>
-                                            </tr>
+                                                </TableCell>
+                                            </TableRow>
                                         ))
                                     )}
-                                </tbody>
-                            </table>
+                                </TableBody>
+                            </Table>
                         </div>
                 </form>
 
                 {/* Footer */}
-                <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-between items-center">
+                <DialogFooter className="p-4 sm:p-6 border-t border-slate-100 bg-slate-50 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
                     <div className="flex gap-4 text-xs font-bold text-slate-400 uppercase">
-                        <span>Status: {loading ? t('promotions:form.status.loading') : t('promotions:form.status.ready')}</span>
+                        <span>{t('promotions:form.status.label')}: {loading ? t('promotions:form.status.loading') : t('promotions:form.status.ready')}</span>
                         {discountType === DiscountType.BUNDLE && (
-                            <span className="text-violet-600">{t('promotions:form.status.total_fixed', { value })}</span>
+                            <span className="text-violet-600">{t('promotions:form.status.total_fixed', { value, currency: t('common:currency') })}</span>
                         )}
                     </div>
                     <div className="flex gap-3">
                         <Button type="button" variant="outline" className="px-6" onClick={onClose} disabled={loading}>{t('promotions:form.actions.cancel')}</Button>
-                        <Button type="submit" className="px-10 bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-200" onClick={handleSubmit} disabled={loading}>
+                        <Button type="submit" form="promotion-form" className="px-10 bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-200" disabled={loading}>
                             {loading ? <span className="inline-block size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : t('promotions:form.actions.save')}
                         </Button>
                     </div>
-                </div>
-            </div>
-        </div>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 };
 

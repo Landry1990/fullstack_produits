@@ -6,6 +6,18 @@
         "to": "To",
         "refresh": "Refresh"
     },
+    "links": {
+        "manage_suppliers": "Manage suppliers"
+    },
+    "period": {
+        "label": "Period",
+        "presets": {
+            "month": "Current month",
+            "90d": "Last 90 days",
+            "12m": "Last 12 months",
+            "custom": "Custom"
+        }
+    },
     "tabs": {
         "sales": "Sales & Margins",
         "performance": "Performance (Scoring)",
@@ -58,7 +70,8 @@
             "product": "Product",
             "max_gap": "Max Gap",
             "offers": "Offers (Avg Price)",
-            "best_price": "Best Price"
+            "best_price": "Best Price",
+            "no_data": "No significant price gap detected"
         }
     },
     "concentration_tab": {

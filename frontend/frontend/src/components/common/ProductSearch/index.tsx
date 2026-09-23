@@ -373,7 +373,7 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
               onClick={() => setSelectedDci?.(null)}
             >
               <ArrowLeft className="size-3.5 mr-1" />
-              Retour
+              {t('common:back')}
             </Button>
           </div>
           <div className="max-h-80 overflow-y-auto space-y-0.5">

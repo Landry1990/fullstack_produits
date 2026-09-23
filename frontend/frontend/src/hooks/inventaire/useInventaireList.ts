@@ -145,12 +145,16 @@ export const useInventaireList = () => {
         });
         if (!confirmed) return;
         setDeleting(true);
+        const originalInventaires = inventaires;
+        const originalTotalCount = totalCount;
+        setInventaires(prev => prev.filter(inv => inv.id !== id));
+        setTotalCount(prev => Math.max(0, prev - 1));
         try {
             await api.delete(`inventaires/${id}/`);
             gooeyToast.success(t('common:messages.success_delete'));
-            setInventaires(prev => prev.filter(inv => inv.id !== id));
-            setTotalCount(prev => Math.max(0, prev - 1));
         } catch (error) {
+            setInventaires(originalInventaires);
+            setTotalCount(originalTotalCount);
             logger.error(error);
             gooeyToast.error(getApiErrorDetail(error, t('common:messages.error_deleting')));
         } finally {
@@ -160,9 +164,11 @@ export const useInventaireList = () => {
 
     return {
         inventaires,
+        setInventaires,
         loading,
         deleting,
         totalCount,
+        setTotalCount,
         currentPage,
         totalPages,
         nextPage,

@@ -140,6 +140,11 @@ export function usePromisData(): UsePromisDataReturn {
     }), [promisList]);
 
     // --- Actions ---
+    const setPromisStatus = (ids: Iterable<number>, status: Promis['status']) => {
+        const idSet = new Set(ids);
+        setPromisList(prev => prev.map(p => idSet.has(p.id) ? { ...p, status } : p));
+    };
+
     const handleDelivrer = async (id: number) => {
         const confirmed = await confirm({
             title: t('stock:promis.actions.deliver', 'Marquer comme délivré'),
@@ -148,12 +153,13 @@ export function usePromisData(): UsePromisDataReturn {
             confirmText: t('stock:promis.actions.deliver', 'Délivrer')
         });
         if (!confirmed) return;
+        setPromisStatus([id], 'DEL');
         try {
             await promisService.delivrer(id);
-            fetchPromis();
         } catch (err) {
             gooeyToast.error(t('stock:promis.messages.deliver_error', 'Erreur lors de la livraison'));
             logger.error(err);
+            fetchPromis();
         }
     };
 
@@ -169,13 +175,14 @@ export function usePromisData(): UsePromisDataReturn {
     };
 
     const verifySudoAndCancel = async (id: number) => {
+        setPromisStatus([id], 'ANN');
         try {
             const data = await promisService.annulerEtReintegrer(id);
             gooeyToast.success(data.message);
-            fetchPromis();
         } catch (err) {
             gooeyToast.error(t('stock:promis.messages.cancel_error', 'Erreur lors de l\'annulation'));
             logger.error(err);
+            fetchPromis();
         }
     };
 
@@ -242,14 +249,15 @@ export function usePromisData(): UsePromisDataReturn {
         if (!confirmed) return;
 
         setBulkLoading(true);
+        setPromisStatus(selectedIds, 'DEL');
+        setSelectedIds(new Set());
         try {
             const data = await promisService.bulkDelivrer(Array.from(selectedIds));
             gooeyToast.success(t('stock:promis.messages.bulk_delivery_success', { count: data.delivered, defaultValue: `${data.delivered} promis livrés` }));
-            setSelectedIds(new Set());
-            fetchPromis();
         } catch (err) {
             gooeyToast.error(t('stock:promis.messages.bulk_delivery_error', 'Erreur lors de la livraison multiple'));
             logger.error(err);
+            fetchPromis();
         } finally {
             setBulkLoading(false);
         }
@@ -269,14 +277,15 @@ export function usePromisData(): UsePromisDataReturn {
 
     const verifySudoAndBulkCancel = async () => {
         setBulkLoading(true);
+        setPromisStatus(selectedIds, 'ANN');
+        setSelectedIds(new Set());
         try {
             const data = await promisService.bulkAnnuler(Array.from(selectedIds));
             gooeyToast.success(t('stock:promis.messages.bulk_cancel_success', { count: data.cancelled, defaultValue: `${data.cancelled} promis annulés` }));
-            setSelectedIds(new Set());
-            fetchPromis();
         } catch (err) {
             gooeyToast.error(t('stock:promis.messages.bulk_cancel_error', 'Erreur lors de l\'annulation multiple'));
             logger.error(err);
+            fetchPromis();
         } finally {
             setBulkLoading(false);
         }

@@ -1,8 +1,11 @@
+import logging
 from datetime import date, timedelta
 
+from django.core.cache import cache
 from django.db import transaction
 from django.db.models import DecimalField, F, OuterRef, ProtectedError, Subquery, Sum
 from django.db.models.functions import Lower
+from django.utils import timezone
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -26,6 +29,8 @@ from ..services.supplier_finance import (
     build_supplier_statement,
 )
 from ..sudo_utils import validate_sudo_mode
+
+logger = logging.getLogger(__name__)
 
 
 class FournisseurViewSet(viewsets.ModelViewSet):
@@ -220,12 +225,16 @@ class FournisseurViewSet(viewsets.ModelViewSet):
         """
         Retourne des statistiques consolidées pour le tableau de bord fournisseurs.
         """
-        import traceback
         from decimal import Decimal
 
         from django.db.models import F, Sum
         from django.utils import timezone
-        
+
+        CACHE_KEY = 'supplier_dashboard_stats'
+        cached = cache.get(CACHE_KEY)
+        if cached is not None:
+            return Response(cached)
+
         try:
             today = timezone.localtime(timezone.now()).date()
             
@@ -328,16 +337,19 @@ class FournisseurViewSet(viewsets.ModelViewSet):
                     'dette': float(max(dette_brute, Decimal('0.00')))
                 })
 
-            return Response({
+            data = {
                 'total_dette': float(total_dette),
                 'nb_fournisseurs_actifs': fournisseurs.count(),
                 'stats_echeances': stats_echeances,
                 'repartition_dette': repartition,
                 'prochaines_echeances': prochaines_echeances,
                 'evolution_dette': evolution
-            })
-        except Exception as e:
-            return Response({'error': str(e), 'trace': traceback.format_exc()}, status=500)
+            }
+            cache.set(CACHE_KEY, data, 120)
+            return Response(data)
+        except Exception:
+            logger.exception("Erreur lors du calcul des statistiques fournisseurs (dashboard_stats)")
+            return Response({'error': 'Erreur interne lors du calcul des statistiques fournisseurs.'}, status=500)
 
     @action(detail=False, methods=['post'])
     def bulk_delete(self, request):

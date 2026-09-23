@@ -2,6 +2,362 @@
 
 ---
 
+## 2026-09-23 — 🎨 Promotions : migration complète vers shadcn/ui
+
+La page Promotions n'utilisait shadcn que pour `Button`/`Badge` ; migration du
+reste de l'UI vers le kit shadcn du projet (conformité règle "tout nouveau
+composant en shadcn") :
+
+- **Modale** : overlay fait main (`fixed inset-0 bg-black/60`) remplacé par
+  `Dialog`/`DialogContent`/`DialogHeader`/`DialogTitle`/`DialogDescription`/
+  `DialogFooter` — focus trap, Escape et aria gérés nativement par Radix.
+- **Champs** : `<input>` natifs → `Input` (avec `disableUppercase` sur le nom
+  pour préserver la casse) ; `<select>` natifs → `Select` ; checkbox native →
+  `Checkbox` Radix (`onCheckedChange`).
+- **Tableaux** : `<table>` HTML brut → `Table`/`TableHeader`/`TableBody`/
+  `TableRow`/`TableHead`/`TableCell` (liste + produits du formulaire).
+- **Conteneur** : div carte custom → `Card`.
+- La `Textarea` shadcn n'a pas été utilisée pour la description : elle force
+  les majuscules sans opt-out, ce qui aurait altéré les données saisies
+  (textarea natif conservé, stylé à l'identique).
+
+Aucun changement fonctionnel — rendu uniquement.
+
+Vérifié : `tsc --noEmit` OK ; build Vite + `deploy.ps1 -Target frontend` OK.
+
+Fichiers : `src/components/Promotions/PromotionForm.tsx`,
+`src/components/Promotions/PromotionList.tsx`.
+
+---
+
+## 2026-09-23 — 🐛 Promotions : correction recherche produits + bugs & traductions
+
+Audit du module Promotions suite au signalement de bugs et soucis i18n :
+
+- **Recherche produits cassée (critique)** : `PromotionForm` passait
+  `results={[]}` et `loading={false}` en dur à `ProductSearch` — le dropdown
+  n'affichait jamais de produit. Ajout du fetch debouncé
+  `api.get('produits/', {search, page_size: 20})` (même pattern que `AvoirsForm`).
+- **Soumission formulaire** : le bouton Enregistrer était hors du `<form>` et
+  déclenchait `handleSubmit` via `onClick` ; passage au pattern HTML standard
+  (`form` id + attribut `form` sur le bouton) — chemin de soumission unique.
+- **BUNDLE invisible dans la liste** : `getDiscountLabel` ne gérait pas le type
+  `BUNDLE` (colonne Détail vide) ; badge "Pack" violet ajouté.
+- **Impossible de désactiver une promo** : le payload forçait `active: true` à
+  chaque save et aucun toggle n'existait → ajout d'une case "Promotion active",
+  d'un champ `description` et d'un sélecteur `application_mode` (les 3 champs
+  étaient figés sans setter).
+- **`end_date` exclusive** : une promo "jusqu'au 30/09" expirait le 30 à 00h00 ;
+  envoi désormais de `T23:59:59.999` (fin de journée incluse).
+- **Suppression** : rendue optimiste avec rollback + toast de succès +
+  extraction d'erreur sûre (`getApiErrorDetail`).
+- **Écran d'erreur** : ajout d'un bouton "Réessayer".
+- **Traductions** : placeholder de recherche sans préfixe `:` affichait la clé
+  brute ; `Status:` hardcodé en anglais ; devise "F" hardcodée dans
+  `total_fixed` → token `common:currency` ; `Retour` hardcodé dans
+  `ProductSearch` (vue DCI) → nouvelle clé `common:back` fr/en.
+
+Vérifié : `tsc --noEmit` OK ; JSON fr/en valides ; build Vite +
+`deploy.ps1 -Target frontend` OK.
+
+Fichiers : `src/components/Promotions/PromotionForm.tsx`,
+`src/components/Promotions/PromotionList.tsx`,
+`src/components/common/ProductSearch/index.tsx`,
+`public/locales/{fr,en}/promotions.json`, `public/locales/{fr,en}/common.json`.
+
+---
+
+## 2026-09-23 — ⚡ Mise à jour optimiste — lot 2 (fournisseurs, inventaire, organisation, compta, challenges)
+
+Deuxième vague de mises à jour **optimistes** (modification UI immédiate,
+rollback + resync en cas d'erreur) sur les modules restants identifiés :
+
+- **Fournisseurs** (`useFournisseurs.ts`) : `executeDeleteFournisseur` et
+  `executeBulkDeleteFournisseurs` retirent les lignes et la sélection avant
+  l'appel API ; restauration complète (liste + sélection + fiche) si erreur.
+- **Avoirs fournisseurs** (`useAvoirsData.ts`) : `handleDelete` retire l'avoir
+  et repasse en vue liste immédiatement ; rollback sur échec.
+- **Inventaire — suppression** (`useInventaireList.ts`) : `handleDelete`
+  retire l'inventaire et décrémente le compteur avant la requête DELETE ;
+  rollback si erreur.
+- **Organisation** (`CategoryManager.tsx`, `ConfigOptionManager.tsx`) :
+  suppressions simple et "tout supprimer" appliquées localement d'abord,
+  avec restauration de la liste si une erreur survient.
+- **Comptabilité** (`useAccounting.ts`) : `deleteCompte` ajoute un `onMutate`
+  React Query (snapshot, filtre du cache, rollback `onError`).
+- **Challenges** (`useChallenges.ts`) : `useDeleteChallenge` retire le
+  challenge des listes en cache en `onMutate`, supprime la query détail et
+  restaure les snapshots en cas d'erreur.
+
+Vérifié : `tsc --noEmit` OK ; 32 tests (Fournisseurs, Avoirs, Inventaire,
+Commandes, cache commandes, StatistiquesFournisseur) OK ; build Vite +
+`deploy.ps1 -Target frontend` OK.
+
+Fichiers : `src/hooks/useFournisseurs.ts`, `src/hooks/useAvoirsData.ts`,
+`src/hooks/inventaire/useInventaireList.ts`,
+`src/components/common/CategoryManager.tsx`,
+`src/components/common/ConfigOptionManager.tsx`,
+`src/hooks/useAccounting.ts`, `src/hooks/useChallenges.ts`.
+
+---
+
+## 2026-09-23 — ⚡ Mise à jour optimiste sur 5 modules critiques (lot haute priorité)
+
+Suite à la correction sur les Commandes, extension du même principe de mise à
+jour **optimiste** (modification UI immédiate, resync serveur en arrière-plan,
+rollback si erreur) à 5 autres actions fréquentes :
+
+- **Ventes / Historique factures** (`useSalesData.ts`) : `deleteFacture`,
+  `bulkDeleteFactures` et `handleDeleteBrouillons` retirent immédiatement les
+  lignes de l'état local avant l'appel API ; `fetchFactures` / `fetchPageInit`
+  resynchronisent ensuite, avec restauration de l'état initial en cas d'erreur.
+- **Promis** (`usePromisData.ts`) : `handleDelivrer`, `handleAnnuler`,
+  `handleBulkDelivrer`, `handleBulkAnnuler` changent le statut localement avant
+  l'appel API. En cas d'erreur, `fetchPromis()` resynchronise.
+- **Produits** (`useProduits.ts`) : `useBulkDelete` ajoute un `onMutate` qui
+  retire les produits du cache React Query avant la requête ; `onError`
+  invalide pour restaurer.
+- **Avoirs clients** (`useClientCredits.ts`) : `useDeleteClientCredit`,
+  `useUpdateClientCredit` et `useValidateClientCredit` utilisent désormais un
+  snapshot des listes en cache, mise à jour optimiste, puis invalidation.
+- **Inventaire — fusion** (`useInventaireMerge.ts` + `useInventaireList.ts` +
+  `Inventaire.tsx`) : les inventaires sources sont retirés de la liste et le
+  compteur est mis à jour immédiatement après confirmation, avant les appels
+  `merge/`. Le resync s'effectue en arrière-plan.
+
+Vérifié : `tsc --noEmit` OK ; 18 tests (`Inventaire` + `Commandes`) OK ;
+build Vite + `deploy.ps1 -Target frontend` OK.
+
+Fichiers : `src/hooks/useSalesData.ts`, `src/hooks/usePromisData.ts`,
+`src/hooks/useProduits.ts`, `src/hooks/useClientCredits.ts`,
+`src/hooks/inventaire/useInventaireList.ts`,
+`src/hooks/inventaire/useInventaireMerge.ts`,
+`src/components/Inventaire.tsx`.
+
+---
+
+## 2026-09-23 — ⚡ Commandes : suppression/fusion plus réactives
+
+Le retrait visuel d'une commande après suppression ou fusion était bloqué
+par l'attente de la réponse serveur, puis par un refetch complet. Les
+opérations semblaient donc lentes côté UI :
+
+- **Suppression (single + bulk)** : la commande est retirée du cache React
+  Query **immédiatement** après confirmation Sudo, et la vue revient à la
+  liste sans attendre l'appel `DELETE`. En cas d'erreur serveur, un
+  `fetchCommandes()` (invalidate) resynchronise l'état réel.
+- **Fusion** : après les appels `merge/`, les commandes sources sont
+  retirées du cache immédiatement, et l'invalidation des queries est
+  lancée **sans `await`** — la vue revient instantanément à la liste. Un
+  état `merging` avec spinner a été ajouté sur le bouton de fusion pour
+  éviter les double-clics et indiquer le travail en cours.
+
+Fichiers : `src/hooks/useCommandeActions.ts`,
+`src/hooks/commandes/useCommandeListSelection.tsx`,
+`src/components/Commandes/MergeCommandesModal.tsx`,
+`src/hooks/commandes/__tests__/commandeCache.test.ts` (nouveau).
+
+Vérifié : `tsc --noEmit` OK ; 4 tests helper + 6 tests Commandes OK.
+
+---
+
+## 2026-09-23 — 🔐 Retour sur la page courante après reconnexion
+
+Quand la session se termine (401 token expiré, déconnexion par inactivité,
+logout manuel, ou accès direct à un lien `/app/**` sans session), l'utilisateur
+était toujours renvoyé sur `/app` après re-login. La page courante est
+désormais mémorisée puis restaurée :
+
+- **Nouveau helper** `src/utils/postLoginRedirect.ts` :
+  `savePostLoginRedirect()` / `consumePostLoginRedirect()`. Clé
+  `post_login_redirect` en **localStorage** (le sessionStorage est entièrement
+  vidé par `clearAuthSession()`). N'accepte que les chemins `/app/**`,
+  exclut les pages d'impression transitoires, re-valide à la lecture
+  (anti open-redirect), consommation unique.
+- **`api.ts`** : le handler 401 sauvegarde `pathname + search` **après**
+  `clearAuthSession()` (son `memStorage.clear()` purge aussi le repli
+  mémoire) et avant la redirection vers `/`.
+- **`RouteGuards.tsx`** : `ProtectedRoute` mémorise la location via effet
+  quand `!isAuthenticated` — couvre l'auto-logout d'inactivité
+  (`useAutoLogout` → `logout()`), le logout manuel et les deep links.
+  `<Navigate to="/" />` reçoit `replace`.
+- **`LoginShadcn.tsx`** : après `login()`, `navigate(saved || '/app')`.
+  Si la page restaurée n'est pas permise pour le nouvel utilisateur,
+  `PermissionRoute` renvoie vers `/app` → `HomeRedirector` (comportement
+  existant inchangé).
+
+Vérifié : `tsc --noEmit` OK ; 8 nouveaux tests helper + 17 tests RouteGuards
+OK ; build Vite + `deploy.ps1 -Target all` OK.
+
+Fichiers : `src/utils/postLoginRedirect.ts` (nouveau),
+`src/utils/__tests__/postLoginRedirect.test.ts` (nouveau),
+`src/services/api.ts`, `src/components/auth/RouteGuards.tsx`,
+`src/components/LoginShadcn.tsx`.
+
+---
+
+## 2026-09-23 — 📊 Stats fournisseurs — Lot 2 : période globale + liens croisés + unification
+
+Second lot de la refonte UI/UX stats fournisseurs (les 2 pages restent
+**séparées** `/app/fournisseurs` ↔ `/app/statistiques-fournisseurs`, reliées
+par des boutons croisés) :
+
+- **Sélecteur de période global** dans `StatistiquesFournisseur` : presets
+  Mois courant / 90 jours / 12 mois / Personnalisé, visible pour tous les
+  onglets sauf Paiements (qui garde ses propres filtres). Pilote l'onglet
+  Ventes (axios) **et** les onglets Performance/Prix/Concentration via les
+  hooks React Query (dates dans la `queryKey` → refetch auto). Édition
+  manuelle d'une date → bascule en preset « Personnalisé ».
+- **Backend** : `analyse_fournisseurs`, `comparaison_prix_achat` et
+  `repartition_achats` acceptent désormais `date_debut`/`date_fin` ISO
+  (défaut 12 mois glissants, valeur invalide ignorée sans 400) via le
+  helper `_parse_iso_date` de `FinanceStatsViewSet`.
+- **`dashboard_stats` mis en cache 120 s** sous la clé dédiée
+  `supplier_dashboard_stats` (le décorateur `cache_dashboard_stats`
+  n'était pas utilisable : sa clé `dashboard_stats` collisionne avec le
+  dashboard principal). Le `traceback` n'est plus renvoyé dans la
+  réponse 500 → `logger.exception` + message générique.
+- **Liens croisés** : bouton « Gérer les fournisseurs » (Building2) dans
+  l'en-tête de StatistiquesFournisseur → `/app/fournisseurs` ; bouton
+  « Voir les statistiques » (BarChart3) dans l'en-tête de Fournisseurs →
+  `/app/statistiques-fournisseurs`.
+- **Unification couleurs** : `StatistiquesFournisseur` (sky→`info`,
+  purple→`info`, hex→`success-soft`/`success-strong`, emerald→`success`,
+  indigo→`primary`) et `SupplierDashboard` (accents hex→`var(--color-*)`,
+  `color-mix` pour les alpha, bloc erreur→`ErrorState`, palette PieChart
+  sur tokens).
+- **Fix pré-existant** : `bulk_delete` utilisait `timezone.now()` sans
+  import module-level → `from django.utils import timezone` ajouté en
+  tête de `fournisseurs.py`.
+
+Vérifié : `manage.py check` OK ; `analyse_fournisseurs` /
+`comparaison_prix_achat` / `repartition_achats` → 200 avec dates, sans
+dates et avec date invalide ; `dashboard_stats` 200 ×2 + cache confirmé ;
+`tsc --noEmit` OK ; 8/8 tests (StatistiquesFournisseur + ModuleFinancier)
+OK ; build Vite + `deploy.ps1 -Target all` OK.
+
+Fichiers : `backend/api/views/{finance_stats,fournisseurs}.py`,
+`frontend/frontend/src/hooks/useFinanceStats.ts`,
+`src/services/financeService.ts`,
+`src/components/StatistiquesFournisseur.tsx`,
+`src/components/Fournisseurs.tsx`,
+`src/components/fournisseurs/SupplierDashboard.tsx`,
+`public/locales/{fr,en}/{supplier_stats,providers}.json`.
+
+---
+
+## 2026-09-23 — 📊 Stats fournisseurs — Lot 1 : correctifs UI/data
+
+Premier lot de la refonte UI/UX de la page "Statistiques par Fournisseur"
+(`/app/statistiques-fournisseurs`) — correctifs rapides sans changement
+d'architecture :
+
+- **Total payé réel** : la carte « Total Payé (période filtrée) » affichait la
+  somme de la **page courante** (20 lignes) au lieu du total filtré. Nouvel
+  endpoint `GET /api/paiements-fournisseurs/totaux/` qui applique les mêmes
+  filtres (fournisseur, mode, dates, search) via `filter_queryset`, appelé en
+  parallèle de la liste paginée.
+- **Onglets migrés vers `shadcn/Tabs`** (Radix) : focus clavier natif,
+  `aria-selected` géré, suppression des `<a role="tab">` faits main.
+  **Persistance F5** de l'onglet via `location.state.activeSupplierStatsTab`
+  (même pattern que `Fournisseurs.tsx`).
+- **Responsive** : les 5 tableaux sont désormais wrappés dans
+  `overflow-x-auto` avec `min-w-[640px]` (l'onglet Paiements à 7 colonnes
+  débordait sur écran 14"/mobile).
+- **EmptyState** ajouté sur l'onglet « Comparateur Prix » quand aucun écart
+  n'est détecté (clé `prices_tab.table.no_data` fr/en).
+- **Cohérence** : `ui/Badge` supprimé du fichier — `shadcn/badge` uniquement
+  (`destructive`, `outline`, className amber pour warning). Fix double slash
+  dans `financeService.deletePaiement`.
+
+Vérifié : `tsc --noEmit` OK, 5/5 tests `StatistiquesFournisseur` OK,
+`manage.py check` OK, endpoint `totaux` testé dans le conteneur
+(total 3 895 343 / 22 paiements, filtres ESP/search/dates OK),
+build Vite + `deploy.ps1 -Target all` OK.
+
+Fichiers : `backend/api/views/paiements.py`,
+`frontend/frontend/src/services/financeService.ts`,
+`src/components/StatistiquesFournisseur.tsx`,
+`public/locales/{fr,en}/supplier_stats.json`.
+
+---
+
+## 2026-09-23 — 🧭 Tests frontend critiques : guards, alertes manager, multi-caisse
+
+Lot 5 (et dernier) du chantier de couverture des tests — 29 tests frontend :
+
+- `components/auth/__tests__/RouteGuards.test.tsx` (17 tests) :
+  `ProtectedRoute` (spinner, redirection `/`, rendu authentifié),
+  `AdminRoute` (non-admin → `/app/facturation`, superuser OK, sans user → `/`),
+  `HomeRedirector` (superuser → dashboard, CAISSIER → caisse centrale,
+  `manager_sidebar` → manager dashboard, fallback facturation),
+  `PermissionRoute` (non-auth → `/login`, bypass superuser, permission
+  accordée/refusée → `/app` sans déconnexion, tableau de permissions,
+  `requireAll`) ;
+- `components/__tests__/ManagerDashboardAlerts.test.tsx` (6 tests) :
+  état vide, `type="button"` des actions, **régression navigation** —
+  clic alerte rupture → `/app/stock-analysis` sans jamais retomber sur
+  le login, tri par priorité, compteur de danger ;
+- `hooks/__tests__/useMultiCaisse.test.tsx` (6 tests) : détection
+  multi-postes, sélection automatique de la caisse de mon poste,
+  pas de re-sélection si caisse déjà choisie, résilience aux erreurs
+  réseau, setter `centralizedCashRegister`.
+
+`AlertsShadcn` et le type `DashboardAlert` sont désormais exportés de
+`DashboardManagerShadcn.tsx` pour permettre les tests (changement
+d'export uniquement, aucun comportement modifié).
+
+Vérifié : 29/29 tests OK, `tsc --noEmit` propre, build Vite + déploiement
+frontend OK.
+
+Fichiers : `frontend/frontend/src/components/DashboardManagerShadcn.tsx`,
+`src/components/auth/__tests__/RouteGuards.test.tsx`,
+`src/components/__tests__/ManagerDashboardAlerts.test.tsx`,
+`src/hooks/__tests__/useMultiCaisse.test.tsx`.
+
+---
+
+## 2026-09-23 — 🛡️ Tests exploitation + correctifs sécurité administration système
+
+Ajout de `backend/api/tests/test_system_admin_exploitation.py` (35 tests) — Lot 4
+du chantier de couverture des tests — couvrant :
+
+- **Keyday** : déterminisme, format 6 caractères, validation du code du jour,
+  tolérance casse/espaces, rejet des codes invalides ;
+- **Licence** : statut public, preview invalide, installation/suppression
+  refusées sans identifiants, suppression via keyday, installation complète
+  (JWT mocké), rejet matériel non reconnu ;
+- **Notifications licence** : authentification requise, dismiss, 404 ;
+- **Sauvegardes** : liste vide, fichiers avec checksum, `run_backup`
+  succès/échec `pg_dump`, endpoints réservés aux admins ;
+- **Restauration** : paramètres manquants (400), fichier inexistant (404) ;
+- **Mise à jour** : `update_status` idle/timeout, `run_update` sans script (404)
+  et sans Internet (503), format HH:MM invalide, planification par défaut et
+  désactivation via `update-time.conf` ;
+- **Explorateur de chemins** : rejet `/etc`, `/root`, `/home` ; autorisation
+  `/`, `/backups`, `/mnt/*`, `/opt/*`.
+
+### Failles révélées par les tests et corrigées (`system_admin.py`)
+
+1. **Traversée de chemin dans `restore`** : un `filename` comme `../secret.sql`
+   pouvait faire passer un fichier hors du dossier `backups/` à la commande
+   `restore_database`. Le nom doit désormais être un basename strict résidant
+   directement dans le dossier de sauvegardes (rejet 400).
+2. **Whitelist `browse` inopérante** : la racine `/` figurait dans
+   `_ALLOWED_BROWSE_ROOTS` ; comme `/` est parent de tout chemin, la restriction
+   ne filtrait rien. `/` n'est désormais autorisée que comme point de départ
+   exact — `/etc`, `/root`, `/home` → 403.
+3. **Regex HH:MM permissive** : `set_update_schedule` et `update_schedule`
+   acceptaient `29:59` ; regex resserrée en `([01][0-9]|2[0-3]):[0-5][0-9]`.
+
+Vérifié : 35/35 nouveaux tests OK, 18/18 tests permissions sensibles OK,
+backend déployé, `_is_path_allowed` validé dans le conteneur.
+
+Fichiers : `backend/api/views/system_admin.py`,
+`backend/api/tests/test_system_admin_exploitation.py`.
+
+---
+
 ## 2026-09-22 — 📄 Rapport de réapprovisionnement 100 % frontend
 
 Nettoyage final de la migration du rapport de réapprovisionnement vers jsPDF :

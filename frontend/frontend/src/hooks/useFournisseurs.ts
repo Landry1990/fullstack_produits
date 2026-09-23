@@ -340,12 +340,16 @@ export function useFournisseurs() {
   }
 
   const executeDeleteFournisseur = async (id: number, validatorId?: number, password?: string) => {
+    const previousFournisseurs = fournisseurs;
+    const previousSelectedFournisseur = selectedFournisseur;
+    setFournisseurs(prev => prev.filter(f => f.id !== id));
+    setSelectedFournisseur(null);
     try {
       await api.delete(`fournisseurs/${id}/`, { data: { validated_by_id: validatorId, sudo_password: password } });
-      setFournisseurs(prev => prev.filter(f => f.id !== id));
-      setSelectedFournisseur(null);
       gooeyToast.success(t('providers:messages.delete_success'));
     } catch (err: unknown) {
+      setFournisseurs(previousFournisseurs);
+      setSelectedFournisseur(previousSelectedFournisseur);
       const axiosErr = err as { response?: { status?: number; data?: { detail?: string; message?: string; error?: string } }; message?: string };
       if (axiosErr?.response) {
         if (axiosErr.response?.status === 500 || (axiosErr.response?.data?.detail && String(axiosErr.response.data.detail).includes('protected'))) {
@@ -363,16 +367,22 @@ export function useFournisseurs() {
   }
 
   const executeBulkDeleteFournisseurs = async (validatorId?: number, password?: string) => {
+    const selectedIdsSet = new Set(selectedIds);
+    const previousFournisseurs = fournisseurs;
+    const previousSelectedIds = selectedIds;
+    const previousSelectedFournisseur = selectedFournisseur;
+    setFournisseurs(prev => prev.filter(f => !selectedIdsSet.has(f.id!)));
+    setSelectedIds([]);
+    if (selectedFournisseur && selectedIdsSet.has(selectedFournisseur.id!)) {
+      setSelectedFournisseur(null);
+    }
     try {
-      await api.post('fournisseurs/bulk_delete/', { ids: selectedIds, validated_by_id: validatorId, sudo_password: password });
-      const selectedIdsSet = new Set(selectedIds);
-      setFournisseurs(prev => prev.filter(f => !selectedIdsSet.has(f.id!)));
-      setSelectedIds([]);
-      if (selectedFournisseur && selectedIdsSet.has(selectedFournisseur.id!)) {
-        setSelectedFournisseur(null);
-      }
-      gooeyToast.success(t('providers:messages.bulk_delete_success', { count: selectedIds.length }));
+      await api.post('fournisseurs/bulk_delete/', { ids: previousSelectedIds, validated_by_id: validatorId, sudo_password: password });
+      gooeyToast.success(t('providers:messages.bulk_delete_success', { count: previousSelectedIds.length }));
     } catch (err) {
+      setFournisseurs(previousFournisseurs);
+      setSelectedIds(previousSelectedIds);
+      setSelectedFournisseur(previousSelectedFournisseur);
       gooeyToast.error(getApiErrorDetail(err, t('providers:messages.bulk_delete_error')));
       logger.error(err);
       throw err;

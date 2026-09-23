@@ -35,7 +35,7 @@ interface KPIData {
   rate: number;
 }
 
-interface DashboardAlert {
+export interface DashboardAlert {
   id?: string | number;
   type: string;
   priority?: number;
@@ -207,7 +207,7 @@ const iconMap: Record<string, React.ReactNode> = {
   trophy: <Trophy className="size-4" />,
 };
 
-function AlertsShadcn({ alerts }: { alerts?: DashboardAlert[] }) {
+export function AlertsShadcn({ alerts }: { alerts?: DashboardAlert[] }) {
   const { t } = useTranslation(['dashboard', 'common']);
   const navigate = useNavigate();
 

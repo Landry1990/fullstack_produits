@@ -366,13 +366,17 @@ export function useAvoirsData(): UseAvoirsDataReturn {
 
     const handleDelete = async (avoir: Avoir) => {
         if (!confirm(t('avoirs.confirms.delete_avoir', { numero: avoir.numero }))) return;
+        const originalAvoirs = avoirs;
+        const originalViewMode = viewMode;
+        setAvoirs(prev => prev.filter(a => a.id !== avoir.id));
+        if (viewMode === 'DETAILS') setViewMode('LIST');
         try {
             setLoading(true);
             await avoirService.delete(avoir.id);
             gooeyToast.success(t('avoirs.toasts.delete_success'));
-            setAvoirs(avoirs.filter(a => a.id !== avoir.id));
-            if (viewMode === 'DETAILS') setViewMode('LIST');
         } catch (err: unknown) {
+            setAvoirs(originalAvoirs);
+            if (originalViewMode === 'DETAILS') setViewMode(originalViewMode);
             const error = err as { response?: { data?: { error?: string } }; message?: string };
             gooeyToast.error(t('avoirs.toasts.delete_error') + ': ' + (error.response?.data?.error || error.message));
         } finally {
