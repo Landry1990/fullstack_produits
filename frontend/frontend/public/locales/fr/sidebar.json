@@ -50,6 +50,9 @@
         "analyse": {
             "title": "Analyse Stock"
         },
+        "cadencier": {
+            "title": "Cadencier"
+        },
         "reappro": {
             "title": "Réappro Rayon"
         },

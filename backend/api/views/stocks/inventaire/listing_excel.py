@@ -17,6 +17,7 @@ except ImportError:
     HAS_OPENPYXL = False
 
 from api.models import PharmacySettings, Produit, StockLot, MouvementStock
+from api.utils_doclang import T, format_doc_date, get_document_language
 from django.db.models import Q
 
 # ---------------------------------------------------------------------------
@@ -51,6 +52,7 @@ def generate_listing_excel(
     inventaire_id: int | None = None,
     blind: bool = False,
     stock_location: str = 'tous',
+    lang: str | None = None,
 ):
     """
     Génère un fichier Excel du listing de stock courant (Produit.stock).
@@ -71,14 +73,17 @@ def generate_listing_excel(
     if not HAS_OPENPYXL:
         return HttpResponse("openpyxl non installé", status=500)
 
+    if not lang:
+        lang = get_document_language()
+
     # ------------------------------------------------------------------
     # 1. Récupération des données
     # ------------------------------------------------------------------
     if inventaire_id:
-        rows = _get_rows_from_inventaire(inventaire_id, group_by, stock_filter, filter_id)
+        rows = _get_rows_from_inventaire(inventaire_id, group_by, stock_filter, filter_id, lang=lang)
         listing_type = 'inventaire'
     else:
-        rows = _get_rows_from_stock(group_by, stock_filter, filter_id, stock_location=stock_location)
+        rows = _get_rows_from_stock(group_by, stock_filter, filter_id, stock_location=stock_location, lang=lang)
         listing_type = 'blind' if blind else 'stock'
 
     # ------------------------------------------------------------------
@@ -95,20 +100,20 @@ def generate_listing_excel(
         pharma_phone = ''
 
     from django.utils import timezone as tz
-    now_str = tz.localtime(tz.now()).strftime("%d/%m/%Y à %H:%M")
+    now_str = format_doc_date(tz.localtime(tz.now()), lang, with_time=True)
 
     group_labels = {
-        'rayon': 'Rayon',
-        'forme': 'Forme galénique',
-        'groupe': 'Groupe thérapeutique',
-        'fournisseur': 'Fournisseur',
+        'rayon': T(lang, 'col_rayon'),
+        'forme': T(lang, 'lx_grp_forme'),
+        'groupe': T(lang, 'lx_grp_groupe'),
+        'fournisseur': T(lang, 'col_fournisseur'),
     }
     group_label = group_labels.get(group_by, group_by.capitalize())
 
     stock_filter_labels = {
-        'tous': 'Tous les stocks',
-        'zero': 'Stocks nuls (Qté = 0)',
-        'non_zero': 'Stocks non nuls (Qté > 0)',
+        'tous': T(lang, 'lx_flt_tous'),
+        'zero': T(lang, 'lx_flt_zero'),
+        'non_zero': T(lang, 'lx_flt_nonzero'),
     }
     stock_label = stock_filter_labels.get(stock_filter, stock_filter)
 
@@ -117,7 +122,7 @@ def generate_listing_excel(
     # ------------------------------------------------------------------
     wb = Workbook()
     ws = wb.active
-    ws.title = "Listing Stock (Lots)" if listing_type == 'stock' else ("Listing Inventaire" if listing_type == 'inventaire' else "Listing Inventaire Aveugle")
+    ws.title = T(lang, 'lx_sheet_stock') if listing_type == 'stock' else (T(lang, 'lx_sheet_inv') if listing_type == 'inventaire' else T(lang, 'lx_sheet_blind'))
 
     thin_border = _make_border('thin')
     medium_border = _make_border('medium')
@@ -135,31 +140,31 @@ def generate_listing_excel(
     if listing_type == 'inventaire':
         columns = [
             ('CIP', 14),
-            ('Désignation', 38),
-            ('N° Lot', 14),
-            ('Exp. Lot', 12),
-            ('Stock Théo.', 12),
-            ('Qté Comptée', 12),
-            ('Écart', 10),
+            (T(lang, 'col_designation'), 38),
+            (T(lang, 'col_lot'), 14),
+            (T(lang, 'lx_col_exp_lot'), 12),
+            (T(lang, 'lx_col_stock_theo'), 12),
+            (T(lang, 'lx_col_qte_comptee'), 12),
+            (T(lang, 'lx_col_ecart'), 10),
             ('PMP', 12),
-            ('Val. Écart', 14),
+            (T(lang, 'lx_col_val_ecart'), 14),
         ]
     elif listing_type == 'blind':
         # Afficher la colonne (forme ou rayon) qui n'est PAS le critère de regroupement
         # car le regroupement est déjà dans l'en-tête de section
         if group_by == 'rayon':
-            secondary_col = ('Forme', 16)
+            secondary_col = (T(lang, 'col_forme'), 16)
         elif group_by == 'forme':
-            secondary_col = ('Rayon', 14)
+            secondary_col = (T(lang, 'col_rayon'), 14)
         else:
-            secondary_col = ('Rayon', 14)
+            secondary_col = (T(lang, 'col_rayon'), 14)
         columns = [
             ('ID', 8),
-            ('Désignation', 38),
+            (T(lang, 'col_designation'), 38),
             secondary_col,
-            ('N° Lot', 14),
-            ('Exp. Lot', 12),
-            ('Qté Comptée', 14),
+            (T(lang, 'col_lot'), 14),
+            (T(lang, 'lx_col_exp_lot'), 12),
+            (T(lang, 'lx_col_qte_comptee'), 14),
         ]
     else:
         # Colonnes de stock selon l'emplacement choisi :
@@ -167,24 +172,24 @@ def generate_listing_excel(
         # - 'rayon'   : uniquement Stock Rayon (quantity_remaining)
         # - 'tous'    : les deux colonnes
         if stock_location == 'reserve':
-            stock_cols = [('Stock Rés.', 12)]
+            stock_cols = [(T(lang, 'lx_col_stock_res'), 12)]
         elif stock_location == 'rayon':
-            stock_cols = [('Stock Rayon', 12)]
+            stock_cols = [(T(lang, 'lx_col_stock_rayon'), 12)]
         else:
-            stock_cols = [('Stock Rayon', 10), ('Stock Rés.', 10)]
+            stock_cols = [(T(lang, 'lx_col_stock_rayon'), 10), (T(lang, 'lx_col_stock_res'), 10)]
 
         columns = [
             ('ID', 8),
             ('CIP', 14),
-            ('Désignation', 38),
-            ('Forme', 16),
-            ('Rayon', 14),
-            ('N° Lot', 14),
-            ('Exp. Lot', 12),
+            (T(lang, 'col_designation'), 38),
+            (T(lang, 'col_forme'), 16),
+            (T(lang, 'col_rayon'), 14),
+            (T(lang, 'col_lot'), 14),
+            (T(lang, 'lx_col_exp_lot'), 12),
             *stock_cols,
             ('PMP', 12),
-            ('Val. Stock', 14),
-            ('Prix Vente', 12),
+            (T(lang, 'lx_col_val_stock'), 14),
+            (T(lang, 'col_prix_vente'), 12),
         ]
 
     nb_cols = len(columns)
@@ -200,7 +205,7 @@ def generate_listing_excel(
 
     # Ligne titre principale
     ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=nb_cols)
-    cell = ws.cell(row=row, column=1, value="LISTING D'INVENTAIRE DE STOCK")
+    cell = ws.cell(row=row, column=1, value=T(lang, 'lx_title'))
     cell.font = font_title
     cell.fill = _header_fill('1F4E79')
     cell.alignment = Alignment(horizontal='center', vertical='center')
@@ -222,18 +227,18 @@ def generate_listing_excel(
 
     if pharma_phone:
         ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=nb_cols)
-        ws.cell(row=row, column=1, value=f"Tél : {pharma_phone}").alignment = Alignment(horizontal='center')
+        ws.cell(row=row, column=1, value=T(lang, 'doc_tel', v=pharma_phone)).alignment = Alignment(horizontal='center')
         ws.cell(row=row, column=1).font = font_info
         row += 1
 
     # Infos du listing
     ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=nb_cols)
     source_label = {
-        'stock': 'Stock courant (par lots)',
-        'inventaire': 'Inventaire',
-        'blind': "Inventaire à l'aveugle (sans stock théorique)",
-    }.get(listing_type, 'Stock courant')
-    info_text = f"Édité le : {now_str}  |  Source : {source_label}  |  Regroupement : {group_label}  |  Filtre : {stock_label}"
+        'stock': T(lang, 'lx_src_stock'),
+        'inventaire': T(lang, 'lx_src_inv'),
+        'blind': T(lang, 'lx_src_blind'),
+    }.get(listing_type, T(lang, 'lx_src_default'))
+    info_text = T(lang, 'lx_info_line', now=now_str, src=source_label, grp=group_label, flt=stock_label)
     cell = ws.cell(row=row, column=1, value=info_text)
     cell.font = font_info
     cell.fill = PatternFill(fill_type='solid', fgColor='F2F2F2')
@@ -385,7 +390,7 @@ def generate_listing_excel(
         # Sous-total groupe (fin)
         subtotal_cols = 4
         ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=subtotal_cols)
-        subtotal_label = f"  Total {group_name}  —  {nb_refs} réf.  |  {nb_lots} lot(s)  |  {group_total_stock} boîte(s)"
+        subtotal_label = T(lang, 'lx_subtotal', g=group_name, r=nb_refs, l=nb_lots, s=group_total_stock)
         cell = ws.cell(row=row, column=1, value=subtotal_label)
         cell.font = font_subtotal
         cell.fill = _subtotal_fill()
@@ -430,7 +435,7 @@ def generate_listing_excel(
     # 7. TOTAL GÉNÉRAL
     # ------------------------------------------------------------------
     ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=4)
-    cell = ws.cell(row=row, column=1, value=f"  TOTAL GÉNÉRAL  ({grand_total_refs} réf. / {grand_total_lines} lot(s))")
+    cell = ws.cell(row=row, column=1, value=T(lang, 'lx_grand_total', r=grand_total_refs, l=grand_total_lines))
     cell.font = Font(name='Calibri', bold=True, size=10, color='FFFFFF')
     cell.fill = _header_fill('1F4E79')
     cell.alignment = Alignment(horizontal='right', vertical='center')
@@ -493,7 +498,7 @@ def generate_listing_excel(
 # Source de données : Stock courant (Produit)
 # ---------------------------------------------------------------------------
 
-def _get_rows_from_stock(group_by: str, stock_filter: str, filter_id=None, stock_location: str = 'tous'):
+def _get_rows_from_stock(group_by: str, stock_filter: str, filter_id=None, stock_location: str = 'tous', lang: str | None = None):
     """
     Construit le dict {group_name: [rows]} à partir des lots de stock (StockLot).
     Une ligne par lot, avec N° lot, date expiration, quantité restante et PMP.
@@ -503,6 +508,9 @@ def _get_rows_from_stock(group_by: str, stock_filter: str, filter_id=None, stock
       - 'rayon'   : lots avec quantity_remaining > 0 (stock rayon)
       - 'reserve' : lots avec quantity_reserved > 0 (stock réserve)
     """
+    if not lang:
+        lang = get_document_language()
+
     qs = StockLot.objects.filter(
         produit__isnull=False,
         produit__is_active=True,
@@ -573,7 +581,7 @@ def _get_rows_from_stock(group_by: str, stock_filter: str, filter_id=None, stock
     for lot in qs:
         p = lot.produit
         seen_produit_ids.add(p.id)
-        group_name = _get_group_name(p, group_by, lot=lot)
+        group_name = _get_group_name(p, group_by, lot=lot, lang=lang)
         if group_name not in grouped:
             grouped[group_name] = []
 
@@ -586,7 +594,7 @@ def _get_rows_from_stock(group_by: str, stock_filter: str, filter_id=None, stock
 
         lot_expiration = ''
         if lot.date_expiration:
-            lot_expiration = lot.date_expiration.strftime('%d/%m/%Y')
+            lot_expiration = format_doc_date(lot.date_expiration, lang)
 
         grouped[group_name].append({
             'produit_id': p.id,
@@ -623,7 +631,7 @@ def _get_rows_from_stock(group_by: str, stock_filter: str, filter_id=None, stock
                 prod_qs = prod_qs.filter(fournisseur_id=filter_id)
 
         for p in prod_qs.order_by('name'):
-            group_name = _get_group_name(p, group_by)
+            group_name = _get_group_name(p, group_by, lang=lang)
             if group_name not in grouped:
                 grouped[group_name] = []
             pmp = float(p.pmp or p.cost_price or 0)
@@ -661,7 +669,7 @@ def _get_rows_from_stock(group_by: str, stock_filter: str, filter_id=None, stock
                 prod_qs = prod_qs.filter(fournisseur_id=filter_id)
 
         for p in prod_qs.order_by('name'):
-            group_name = _get_group_name(p, group_by)
+            group_name = _get_group_name(p, group_by, lang=lang)
             if group_name not in grouped:
                 grouped[group_name] = []
             pmp = float(p.pmp or p.cost_price or 0)
@@ -692,11 +700,14 @@ def _get_rows_from_stock(group_by: str, stock_filter: str, filter_id=None, stock
 # Source de données : Lignes d'un inventaire
 # ---------------------------------------------------------------------------
 
-def _get_rows_from_inventaire(inventaire_id: int, group_by: str, stock_filter: str, filter_id=None):
+def _get_rows_from_inventaire(inventaire_id: int, group_by: str, stock_filter: str, filter_id=None, lang: str | None = None):
     """
     Construit le dict {group_name: [rows]} à partir des lignes d'un inventaire.
     """
     from api.models import LigneInventaire
+
+    if not lang:
+        lang = get_document_language()
 
     qs = LigneInventaire.objects.filter(inventaire_id=inventaire_id).select_related(
         'produit', 'produit__rayon', 'produit__forme', 'produit__groupe',
@@ -735,7 +746,7 @@ def _get_rows_from_inventaire(inventaire_id: int, group_by: str, stock_filter: s
         if not p:
             continue
 
-        group_name = _get_group_name(p, group_by, lot=ligne.stock_lot)
+        group_name = _get_group_name(p, group_by, lot=ligne.stock_lot, lang=lang)
         if group_name not in grouped:
             grouped[group_name] = []
 
@@ -747,7 +758,7 @@ def _get_rows_from_inventaire(inventaire_id: int, group_by: str, stock_filter: s
         if ligne.stock_lot:
             lot_numero = ligne.stock_lot.lot or ''
             if ligne.stock_lot.date_expiration:
-                lot_expiration = ligne.stock_lot.date_expiration.strftime('%d/%m/%Y')
+                lot_expiration = format_doc_date(ligne.stock_lot.date_expiration, lang)
 
         grouped[group_name].append({
             'produit_id': p.id,
@@ -769,13 +780,15 @@ def _get_rows_from_inventaire(inventaire_id: int, group_by: str, stock_filter: s
 # Helper : nom du groupe
 # ---------------------------------------------------------------------------
 
-def _get_group_name(produit, group_by: str, lot=None) -> str:
+def _get_group_name(produit, group_by: str, lot=None, lang: str | None = None) -> str:
+    if not lang:
+        lang = get_document_language()
     if group_by == 'rayon':
-        return produit.rayon.name if produit.rayon else 'SANS RAYON'
+        return produit.rayon.name if produit.rayon else T(lang, 'grp_sans_rayon').upper()
     elif group_by == 'forme':
-        return produit.forme.nom if produit.forme else 'SANS FORME'
+        return produit.forme.nom if produit.forme else T(lang, 'grp_sans_forme').upper()
     elif group_by == 'groupe':
-        return produit.groupe.nom if produit.groupe else 'SANS GROUPE'
+        return produit.groupe.nom if produit.groupe else T(lang, 'grp_sans_groupe').upper()
     elif group_by == 'fournisseur':
         # Priorité : fournisseur du lot (FK) > nom sauvegardé du lot > fournisseur du produit
         if lot and lot.fournisseur:
@@ -784,5 +797,5 @@ def _get_group_name(produit, group_by: str, lot=None) -> str:
             return lot.fournisseur_nom
         if produit.fournisseur:
             return produit.fournisseur.name
-        return 'SANS FOURNISSEUR'
-    return 'AUTRES'
+        return T(lang, 'grp_sans_fournisseur')
+    return T(lang, 'grp_autres')

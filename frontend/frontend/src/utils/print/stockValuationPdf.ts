@@ -1,7 +1,8 @@
 import { jsPDF } from 'jspdf';
 import autoTable, { type RowInput } from 'jspdf-autotable';
+import i18next from 'i18next';
 import { formatCurrency } from '../formatters';
-import { getLocale } from '../dateUtils';
+import { getDocumentLanguage, getDocumentLocale } from '../documentLang';
 import type { PharmacySettings } from '../../context/PharmacySettingsContext';
 
 interface StockValuationData {
@@ -33,7 +34,9 @@ export function generateStockValuationPdf(
   const doc = new jsPDF('p', 'mm', 'a4');
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 15;
-  const currentLocale = getLocale();
+  // Langue du document (PharmacySettings.locale), découplée de l'UI.
+  const docT = i18next.getFixedT(getDocumentLanguage(), ['reports', 'common']);
+  const currentLocale = getDocumentLocale();
   const currencySymbol = settings.currency_symbol || 'FCFA';
 
   const fmt = (val: number | string | undefined | null) => {
@@ -42,8 +45,7 @@ export function generateStockValuationPdf(
       .replace(/[\u00A0\u202F]/g, ' ');
   };
 
-  const _typeLabel = data.is_pmp ? "Coût d'Achat (PMP)" : 'Prix de Vente (TTC)';
-  const docTitle = `Valeur Stock (${data.is_pmp ? 'PMP' : 'VENTE'})`;
+  const docTitle = docT(data.is_pmp ? 'stock_valuation.doc_title_pmp' : 'stock_valuation.doc_title_vente');
 
   // --- Header ---
   doc.setFont('helvetica', 'normal');
@@ -56,7 +58,7 @@ export function generateStockValuationPdf(
   doc.setTextColor(100, 100, 100);
   let headerY = 26;
   if (settings.address) { doc.text(settings.address, margin, headerY); headerY += 4; }
-  if (settings.phone) { doc.text(`Tél: ${settings.phone}`, margin, headerY); headerY += 4; }
+  if (settings.phone) { doc.text(`${docT('common:phone_short')}${settings.phone}`, margin, headerY); headerY += 4; }
   if (settings.niu) { doc.text(`NIU: ${settings.niu}`, margin, headerY); headerY += 4; }
 
   doc.setFont('helvetica', 'normal');
@@ -66,8 +68,8 @@ export function generateStockValuationPdf(
   doc.setFontSize(9);
   doc.setTextColor(100, 100, 100);
   const dateStr = data.date
-    ? new Date(data.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-    : new Date().toLocaleString('fr-FR');
+    ? new Date(data.date).toLocaleDateString(currentLocale, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+    : new Date().toLocaleString(currentLocale);
   doc.text(dateStr, pageWidth - margin, 26, { align: 'right' });
 
   doc.setDrawColor(200, 200, 200);
@@ -77,13 +79,13 @@ export function generateStockValuationPdf(
   let currentY = headerY + 10;
   doc.setFontSize(11);
   doc.setTextColor(0, 0, 0);
-  doc.text('RÉCAPITULATIF GÉNÉRAL', margin, currentY);
+  doc.text(docT('stock_valuation.pdf_recap_general'), margin, currentY);
   currentY += 5;
 
   const summaryBody: unknown[][] = [
-    ['Valeur Totale HT', fmt(data.total_ht)],
-    ['Montant Total TVA', fmt(data.total_tva)],
-    [`Valeur Totale ${data.is_pmp ? 'PMP' : 'TTC'}`, fmt(data.total_ttc)],
+    [docT('stock_valuation.pdf_total_ht'), fmt(data.total_ht)],
+    [docT('stock_valuation.tva_total'), fmt(data.total_tva)],
+    [docT('stock_valuation.pdf_total_value', { type: data.is_pmp ? 'PMP' : 'TTC' }), fmt(data.total_ttc)],
   ];
 
   autoTable(doc, {
@@ -98,7 +100,7 @@ export function generateStockValuationPdf(
 
   // --- TVA Breakdown ---
   doc.setFontSize(11);
-  doc.text('RÉPARTITION PAR TAUX DE TVA', margin, currentY);
+  doc.text(docT('stock_valuation.pdf_tva_breakdown_title'), margin, currentY);
   currentY += 5;
 
   const tvaBody: unknown[][] = data.tva_breakdown.map(item => [
@@ -108,7 +110,7 @@ export function generateStockValuationPdf(
     fmt(item.ttc),
   ]);
   tvaBody.push([
-    { content: 'TOTAL', styles: { fontStyle: 'normal' } },
+    { content: docT('stock_valuation.pdf_total'), styles: { fontStyle: 'normal' } },
     { content: fmt(data.total_ht), styles: { fontStyle: 'normal' } },
     { content: fmt(data.total_tva), styles: { fontStyle: 'normal' } },
     { content: fmt(data.total_ttc), styles: { fontStyle: 'normal' } },
@@ -116,7 +118,7 @@ export function generateStockValuationPdf(
 
   autoTable(doc, {
     startY: currentY,
-    head: [['Taux TVA', 'Base HT', 'Montant TVA', 'Total Reconstitué']],
+    head: [[docT('stock_valuation.pdf_tva_rate'), docT('stock_valuation.tva_table_base'), docT('stock_valuation.tva_table_tva'), docT('stock_valuation.total_reconstitue')]],
     body: tvaBody as unknown as RowInput[],
     theme: 'plain',
     headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'normal' },
@@ -135,13 +137,13 @@ export function generateStockValuationPdf(
   if (data.group_breakdown && data.group_breakdown.length > 0) {
     if (currentY > 240) { doc.addPage(); currentY = 20; }
 
-    const groupLabel = data.group_by === 'rayon' ? 'Rayon'
-      : data.group_by === 'forme' ? 'Forme'
-      : data.group_by === 'groupe' ? 'Groupe'
-      : 'Catégorie';
+    const groupLabel = data.group_by === 'rayon' ? docT('stock_valuation.group_by_rayon')
+      : data.group_by === 'forme' ? docT('stock_valuation.group_by_forme')
+      : data.group_by === 'groupe' ? docT('stock_valuation.group_by_groupe')
+      : docT('stock_valuation.category_header');
 
     doc.setFontSize(11);
-    doc.text(`RÉPARTITION PAR ${groupLabel.toUpperCase()}`, margin, currentY);
+    doc.text(docT('stock_valuation.pdf_group_breakdown_title', { group: groupLabel.toUpperCase() }), margin, currentY);
     currentY += 5;
 
     const groupBody: unknown[][] = data.group_breakdown.map(item => [
@@ -151,7 +153,7 @@ export function generateStockValuationPdf(
       fmt(item.ttc),
     ]);
     groupBody.push([
-      { content: 'TOTAL', styles: { fontStyle: 'normal' } },
+      { content: docT('stock_valuation.pdf_total'), styles: { fontStyle: 'normal' } },
       { content: fmt(data.total_ht), styles: { fontStyle: 'normal' } },
       { content: fmt(data.total_tva), styles: { fontStyle: 'normal' } },
       { content: fmt(data.total_ttc), styles: { fontStyle: 'normal' } },
@@ -159,7 +161,7 @@ export function generateStockValuationPdf(
 
     autoTable(doc, {
       startY: currentY,
-      head: [[groupLabel, 'Base HT', 'Montant TVA', 'Total TTC']],
+      head: [[groupLabel, docT('stock_valuation.tva_table_base'), docT('stock_valuation.tva_table_tva'), docT('stock_valuation.pdf_total_ttc')]],
       body: groupBody as unknown as RowInput[],
       theme: 'plain',
       headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'normal' },
@@ -180,8 +182,8 @@ export function generateStockValuationPdf(
   doc.setFontSize(8);
   doc.setTextColor(120, 120, 120);
   const noteText = data.is_pmp
-    ? "Note : Cette valorisation est fondée sur le PMP stocké en base."
-    : "Note : Cette valorisation est fondée sur les prix de vente publics actuels.";
+    ? docT('stock_valuation.note_body_pmp', { date: dateStr })
+    : docT('stock_valuation.note_body_vente', { date: dateStr });
   doc.text(noteText, margin, currentY);
 
   // --- Footer on all pages ---
@@ -191,7 +193,7 @@ export function generateStockValuationPdf(
     doc.setFontSize(7);
     doc.setTextColor(150, 150, 150);
     doc.text(
-      `${settings.pharmacy_name} · Récapitulatif Valeur Stock · Page ${i} / ${pageCount}`,
+      `${settings.pharmacy_name} · ${docT('stock_valuation.pdf_footer')} · Page ${i} / ${pageCount}`,
       pageWidth / 2,
       doc.internal.pageSize.height - 10,
       { align: 'center' }

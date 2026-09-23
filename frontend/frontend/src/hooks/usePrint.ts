@@ -1,7 +1,7 @@
 import { useCallback, useRef } from 'react';
 import { gooeyToast } from 'goey-toast';
 import { escHtml, writePrintDocument } from '../utils/print/printHelpers';
-import { usePharmacySettings } from './usePharmacySettings';
+import { usePharmacySettings, useDocumentLocale } from './usePharmacySettings';
 import { formatDateTime } from '../utils/dateUtils';
 import { useTranslation } from 'react-i18next';
 import { logger } from '../utils/logger'
@@ -79,6 +79,9 @@ export interface UsePrintReturn {
 function usePrint(): UsePrintReturn {
   const { settings } = usePharmacySettings();
   const { t } = useTranslation('common');
+  // Langue des documents (PharmacySettings.locale), découplée de l'UI.
+  const { lang: docLang, locale: docLocale } = useDocumentLocale();
+  const { t: docT } = useTranslation(['common', 'printing'], { lng: docLang });
   const printRef = useRef<HTMLDivElement>(null);
 
   /**
@@ -162,29 +165,29 @@ function usePrint(): UsePrintReturn {
       <div class="print-header">
         <h2>${escHtml(settings.pharmacy_name || 'PHARMACIE')}</h2>
         ${settings.address ? `<p>${escHtml(settings.address)}</p>` : ''}
-        ${settings.phone ? `<p>Tél: ${escHtml(settings.phone)}</p>` : ''}
+        ${settings.phone ? `<p>${escHtml(docT('common:phone_short'))}${escHtml(settings.phone)}</p>` : ''}
         ${settings.email ? `<p>${escHtml(settings.email)}</p>` : ''}
         ${settings.niu ? `<p>NIU: ${escHtml(settings.niu)}</p>` : ''}
         ${settings.registre_commerce ? `<p>RC: ${escHtml(settings.registre_commerce)}</p>` : ''}
       </div>
     `;
-  }, [settings]);
+  }, [settings, docT]);
 
   /**
    * Génère le pied de page
    */
   const getFooterHTML = useCallback((message?: string) => {
-    const footerText = message || settings?.ticket_footer_message || 'Merci de votre visite !';
+    const footerText = message || settings?.ticket_footer_message || docT('printing:ticket.visit_thanks');
     return `
       <div class="print-footer">
         <p>${escHtml(footerText)}</p>
         <p style="margin-top: 5px; font-size: 0.7em;">
-          ${t('print.printed_on', { defaultValue: 'Imprimé le' })} ${formatDateTime(new Date())}
+          ${docT('common:printed_on')} ${formatDateTime(new Date(), docLocale)}
         </p>
       </div>
     `;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings]);
+  }, [settings, docLocale, docT]);
 
   /**
    * Ouvre une fenêtre d'impression avec le contenu HTML

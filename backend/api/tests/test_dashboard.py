@@ -15,7 +15,7 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from ..models import FactureProduitAllocation, Produit
+from ..models import FactureProduitAllocation, PharmacySettings, Produit
 from .factories import TestDataFactory
 
 
@@ -427,6 +427,31 @@ class DashboardManagerStatsTestCase(APITestCase):
         health_response = self.client.get('/api/statistiques/stock_health/')
         self.assertEqual(health_response.status_code, status.HTTP_200_OK)
         self.assertEqual(health_response.data['dead_stock']['count'], 1)
+
+    def test_shortage_alert_links_to_existing_stock_analysis_route(self):
+        """L'action d'une alerte de rupture ne doit pas renvoyer vers une route inexistante."""
+        PharmacySettings.objects.update_or_create(
+            pk=1,
+            defaults={'shortage_alert_threshold': 0},
+        )
+        Produit.objects.create(
+            name='Produit en rupture',
+            stock=0,
+            stock_minimum=5,
+            cost_price=Decimal('100'),
+            selling_price=Decimal('200'),
+            is_active=True,
+        )
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        shortage_alert = next(
+            (a for a in response.data['alerts'] if a['title_key'] == 'manager_dashboard.alerts.shortage_title'),
+            None,
+        )
+        self.assertIsNotNone(shortage_alert)
+        self.assertEqual(shortage_alert['action_route'], '/app/stock-analysis')
 
 
 class DashboardRevenueChartTestCase(APITestCase):

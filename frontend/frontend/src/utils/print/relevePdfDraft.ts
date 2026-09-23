@@ -1,6 +1,8 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import i18next from 'i18next';
 import { formatNumber } from '../formatters';
+import { getDocumentLanguage, getDocumentLocale } from '../documentLang';
 import type { PharmacySettings } from '../../context/PharmacySettingsContext';
 
 interface ReleveCreance {
@@ -55,18 +57,21 @@ export function generateRelevePdfDraft(data: RelevePdfData): jsPDF {
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 15;
     const includeProducts = data.includeProducts || false;
+    // Langue du document (PharmacySettings.locale), découplée de l'UI.
+    const docT = i18next.getFixedT(getDocumentLanguage(), 'printing');
+    const docLocale = getDocumentLocale();
 
     const fmt = (val: number | string) =>
-        formatNumber(Math.round(Number(val) || 0)).replace(/[\u00A0\u202F]/g, ' ');
+        formatNumber(Math.round(Number(val) || 0), 0, docLocale).replace(/[\u00A0\u202F]/g, ' ');
 
     const fmtDate = (d?: string | null) => {
-        if (!d) return "Aujourd'hui";
-        return new Date(d).toLocaleDateString('fr-FR', {
+        if (!d) return docT('releve.today');
+        return new Date(d).toLocaleDateString(docLocale, {
             day: '2-digit', month: '2-digit', year: 'numeric',
         });
     };
 
-    const today = new Date().toLocaleDateString('fr-FR', {
+    const today = new Date().toLocaleDateString(docLocale, {
         day: '2-digit', month: '2-digit', year: 'numeric',
     });
 
@@ -88,20 +93,20 @@ export function generateRelevePdfDraft(data: RelevePdfData): jsPDF {
         doc.text(lines, margin, hy);
         hy += lines.length * 4;
     }
-    if (data.settings.phone) { doc.text(`Tel : ${data.settings.phone}`, margin, hy); hy += 4; }
+    if (data.settings.phone) { doc.text(`${docT('reglement.phone_short')}${data.settings.phone}`, margin, hy); hy += 4; }
     if (data.settings.niu) { doc.text(`NIU : ${data.settings.niu}`, margin, hy); hy += 4; }
     if (data.settings.registre_commerce) { doc.text(`RCCM : ${data.settings.registre_commerce}`, margin, hy); }
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(15);
     doc.setTextColor(0, 0, 0);
-    doc.text(includeProducts ? 'RELEVE DE FACTURES DETAILLE' : 'RELEVE DE FACTURES', pageWidth - margin, 18, { align: 'right' });
+    doc.text(docT(includeProducts ? 'releve.title_detailed' : 'releve.title'), pageWidth - margin, 18, { align: 'right' });
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(100, 100, 100);
-    doc.text(`Ref : ${ref}`, pageWidth - margin, 25, { align: 'right' });
-    doc.text(`Edite le ${today}`, pageWidth - margin, 30, { align: 'right' });
+    doc.text(`${docT('releve.ref')} ${ref}`, pageWidth - margin, 25, { align: 'right' });
+    doc.text(docT('releve.issued_on', { date: today }), pageWidth - margin, 30, { align: 'right' });
 
     doc.setDrawColor(120, 120, 120);
     doc.setLineWidth(0.3);
@@ -119,7 +124,7 @@ export function generateRelevePdfDraft(data: RelevePdfData): jsPDF {
     doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(80, 80, 80);
-    doc.text('CLIENT', margin + 4, blockY + 5);
+    doc.text(docT('releve.client'), margin + 4, blockY + 5);
     doc.line(margin + 4, blockY + 6.5, margin + colW - 4, blockY + 6.5);
 
     doc.setFont('helvetica', 'normal');
@@ -133,7 +138,7 @@ export function generateRelevePdfDraft(data: RelevePdfData): jsPDF {
     doc.setFontSize(8);
     doc.setTextColor(60, 60, 60);
     if (data.client.address) { doc.text(data.client.address, margin + 4, cy); cy += 4; }
-    if (data.client.phone) { doc.text(`Tel : ${data.client.phone}`, margin + 4, cy); cy += 4; }
+    if (data.client.phone) { doc.text(`${docT('reglement.phone_short')}${data.client.phone}`, margin + 4, cy); cy += 4; }
     if (data.client.niu) { doc.text(`NIU : ${data.client.niu}`, margin + 4, cy); cy += 4; }
     if (data.client.registre_commerce) { doc.text(`RC : ${data.client.registre_commerce}`, margin + 4, cy); }
 
@@ -143,14 +148,14 @@ export function generateRelevePdfDraft(data: RelevePdfData): jsPDF {
     doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(80, 80, 80);
-    doc.text('PERIODE COUVERTE', col2X + 4, blockY + 5);
+    doc.text(docT('releve.period'), col2X + 4, blockY + 5);
     doc.line(col2X + 4, blockY + 6.5, col2X + colW - 4, blockY + 6.5);
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     doc.setTextColor(0, 0, 0);
-    doc.text(`Du : ${fmtDate(data.periode.date_debut)}`, col2X + 4, blockY + 13);
-    doc.text(`Au : ${fmtDate(data.periode.date_fin)}`, col2X + 4, blockY + 20);
+    doc.text(`${docT('releve.from')} ${fmtDate(data.periode.date_debut)}`, col2X + 4, blockY + 13);
+    doc.text(`${docT('releve.to')} ${fmtDate(data.periode.date_fin)}`, col2X + 4, blockY + 20);
 
     // Table
     const tableStartY = blockY + blockH + 8;
@@ -167,7 +172,7 @@ export function generateRelevePdfDraft(data: RelevePdfData): jsPDF {
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(0, 0, 0);
             doc.text(`${fmtDate(creance.date)}  ${creance.numero_facture || '-'}  ${creance.ayant_droit ? creance.ayant_droit.toUpperCase() : '-'}`, margin + 3, currentY + 5);
-            doc.text(`TTC: ${fmt(creance.montant_total)}  Regle: ${fmt(creance.montant_paye)}  Reste: ${fmt(creance.reste_a_payer)}`, pageWidth - margin - 3, currentY + 5, { align: 'right' });
+            doc.text(`${docT('releve.ttc')} ${fmt(creance.montant_total)}  ${docT('releve.paid')} ${fmt(creance.montant_paye)}  ${docT('releve.remaining')} ${fmt(creance.reste_a_payer)}`, pageWidth - margin - 3, currentY + 5, { align: 'right' });
             currentY += 7;
 
             // Tableau des produits
@@ -182,7 +187,7 @@ export function generateRelevePdfDraft(data: RelevePdfData): jsPDF {
             if (productRows.length > 0) {
                 autoTable(doc, {
                     startY: currentY,
-                    head: [['Produit', 'Qté', 'P.U.', 'Remise', 'Total ligne']],
+                    head: [[docT('releve.col_product'), docT('releve.col_qty'), docT('releve.col_pu'), docT('releve.col_discount'), docT('releve.col_line_total')]],
                     body: productRows,
                     theme: 'plain',
                     headStyles: {
@@ -216,7 +221,7 @@ export function generateRelevePdfDraft(data: RelevePdfData): jsPDF {
             } else {
                 doc.setFontSize(7);
                 doc.setTextColor(150, 150, 150);
-                doc.text('  (aucun produit)', margin + 8, currentY + 4);
+                doc.text(`  ${docT('releve.no_products')}`, margin + 8, currentY + 4);
                 currentY += 8;
             }
 
@@ -247,7 +252,7 @@ export function generateRelevePdfDraft(data: RelevePdfData): jsPDF {
 
         autoTable(doc, {
             startY: tableStartY,
-            head: [['Date', 'N Facture', 'Beneficiaire', 'Total TTC', 'Regle', 'Reste']],
+            head: [[docT('releve.col_date'), docT('releve.col_invoice_num'), docT('releve.col_beneficiary'), docT('releve.col_total_ttc'), docT('releve.col_paid'), docT('releve.col_remaining')]],
             body: rows,
             theme: 'plain',
             headStyles: {
@@ -299,12 +304,12 @@ export function generateRelevePdfDraft(data: RelevePdfData): jsPDF {
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(0, 0, 0);
 
-    doc.text('Total Facture :', totX, finalY + 7);
+    doc.text(docT('releve.total_invoiced'), totX, finalY + 7);
     doc.setFont('helvetica', 'normal');
     doc.text(`${fmt(data.totaux.total_factures)} F`, pageWidth - margin, finalY + 7, { align: 'right' });
 
     doc.setFont('helvetica', 'normal');
-    doc.text('Total Regle :', totX, finalY + 13);
+    doc.text(docT('releve.total_paid'), totX, finalY + 13);
     doc.setFont('helvetica', 'normal');
     doc.text(`${fmt(data.totaux.total_paye)} F`, pageWidth - margin, finalY + 13, { align: 'right' });
 
@@ -312,7 +317,7 @@ export function generateRelevePdfDraft(data: RelevePdfData): jsPDF {
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
-    doc.text('NET A PAYER :', totX, finalY + 22);
+    doc.text(docT('releve.net_to_pay'), totX, finalY + 22);
     doc.text(`${fmt(data.totaux.total_reste)} F`, pageWidth - margin, finalY + 22, { align: 'right' });
 
     // Signatures
@@ -324,8 +329,8 @@ export function generateRelevePdfDraft(data: RelevePdfData): jsPDF {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(100, 100, 100);
-    doc.text('SIGNATURE CLIENT', margin + 25, sigY + 5, { align: 'center' });
-    doc.text('LA DIRECTION', pageWidth - margin - 25, sigY + 5, { align: 'center' });
+    doc.text(docT('releve.client_signature'), margin + 25, sigY + 5, { align: 'center' });
+    doc.text(docT('releve.management'), pageWidth - margin - 25, sigY + 5, { align: 'center' });
 
     doc.setDrawColor(150, 150, 150);
     doc.setLineWidth(0.3);
@@ -337,7 +342,7 @@ export function generateRelevePdfDraft(data: RelevePdfData): jsPDF {
     doc.setFontSize(7);
     doc.setTextColor(120, 120, 120);
     doc.text(
-        `${data.settings.pharmacy_name || 'PHARMACIE'} - Document genere le ${today}`,
+        `${data.settings.pharmacy_name || 'PHARMACIE'} - ${docT('releve.generated_on', { date: today })}`,
         pageWidth / 2,
         pageHeight - 8,
         { align: 'center' }

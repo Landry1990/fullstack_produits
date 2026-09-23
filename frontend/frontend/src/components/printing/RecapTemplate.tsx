@@ -1,6 +1,7 @@
 import { formatDate as formatLocaleDate } from '../../utils/dateUtils';
 import { formatNumber, formatCurrency } from '../../utils/formatters';
 import { useTranslation } from 'react-i18next';
+import { useDocumentLocale } from '../../context/PharmacySettingsContext';
 import type { PharmacySettings } from './InvoiceTemplate';
 
 export interface RecapFactureItem {
@@ -51,7 +52,8 @@ const formatExpiryDate = (dateStr: string) => {
 };
 
 const RecapTemplate: React.FC<RecapTemplateProps> = ({ settings, data }) => {
-  const { t } = useTranslation('printing');
+  const { lang: docLang, locale: docLocale } = useDocumentLocale();
+  const { t } = useTranslation('printing', { lng: docLang });
 
   // Build flat product list across all factures
   const allLines: { ticket: string; date: string; name: string; qty: number; price: number; total: number; lot?: string; dateExp?: string; cancelled?: boolean }[] = []
@@ -160,13 +162,13 @@ const RecapTemplate: React.FC<RecapTemplateProps> = ({ settings, data }) => {
             <div className="space-y-1 text-label">
                 <div className="flex justify-between">
                     <span className="text-base-content/60">{t('recap.generated_on', { defaultValue: 'Généré le' })} :</span>
-                    <span className="font-bold">{new Date().toLocaleDateString('fr-FR')}</span>
+                    <span className="font-bold">{new Date().toLocaleDateString(docLocale)}</span>
                 </div>
                 {data.recap.periode.debut && (
                   <div className="flex justify-between">
                       <span className="text-base-content/60">{t('recap.period', { defaultValue: 'Période' })} :</span>
                       <span className="font-bold">
-                        {formatLocaleDate(data.recap.periode.debut)} — {formatLocaleDate(data.recap.periode.fin || '')}
+                        {formatLocaleDate(data.recap.periode.debut, docLocale)} — {formatLocaleDate(data.recap.periode.fin || '', docLocale)}
                       </span>
                   </div>
                 )}
@@ -199,7 +201,7 @@ const RecapTemplate: React.FC<RecapTemplateProps> = ({ settings, data }) => {
                         {line.ticket && line.cancelled && <div className="text-[7px] font-sans uppercase font-black text-base-content/60 no-underline">{t('recap.cancelled_label', { defaultValue: 'ANNULÉ' })}</div>}
                       </td>
                       <td className="py-2 px-2 text-base-content/60 text-micro">
-                        {line.date ? new Date(line.date).toLocaleDateString('fr-FR') : ''}
+                        {line.date ? new Date(line.date).toLocaleDateString(docLocale) : ''}
                       </td>
                       <td className="py-2 px-3">
                           <div className={`font-bold text-base-content text-[10.5px] uppercase leading-tight ${line.cancelled ? 'line-through' : ''}`}>{line.name}</div>
@@ -211,8 +213,8 @@ const RecapTemplate: React.FC<RecapTemplateProps> = ({ settings, data }) => {
                           )}
                       </td>
                       <td className={`py-2 px-2 text-center align-middle font-bold text-base-content ${line.cancelled ? 'line-through' : ''}`}>{line.qty || ''}</td>
-                      <td className={`py-2 px-2 text-right align-middle text-base-content/80 font-medium ${line.cancelled ? 'line-through' : ''}`}>{line.price > 0 ? formatNumber(line.price, 0) : ''}</td>
-                      <td className={`py-2 px-3 text-right align-middle font-black text-base-content text-[10.5px] ${line.cancelled ? 'line-through' : ''}`}>{line.total > 0 ? formatNumber(line.total, 0) : ''}</td>
+                      <td className={`py-2 px-2 text-right align-middle text-base-content/80 font-medium ${line.cancelled ? 'line-through' : ''}`}>{line.price > 0 ? formatNumber(line.price, 0, docLocale) : ''}</td>
+                      <td className={`py-2 px-3 text-right align-middle font-black text-base-content text-[10.5px] ${line.cancelled ? 'line-through' : ''}`}>{line.total > 0 ? formatNumber(line.total, 0, docLocale) : ''}</td>
                   </tr>
                 ))}
             </tbody>
@@ -251,7 +253,7 @@ const RecapTemplate: React.FC<RecapTemplateProps> = ({ settings, data }) => {
                     <div className="grid grid-cols-[1fr,115px] items-center px-1 text-base-content/60">
                         <span className="text-micro uppercase font-bold tracking-widest pl-1">{t('invoice.subtotal_ht')}</span>
                         <div className="text-right font-mono font-bold text-base-content pr-2">
-                          {formatCurrency(Math.round(data.recap.total_ht))}
+                          {formatCurrency(Math.round(data.recap.total_ht), docLocale)}
                         </div>
                     </div>
 
@@ -259,16 +261,16 @@ const RecapTemplate: React.FC<RecapTemplateProps> = ({ settings, data }) => {
                       <div className="grid grid-cols-[1fr,115px] items-center px-1 text-base-content/60">
                           <span className="text-micro uppercase font-bold tracking-widest pl-1">{t('invoice.taxes_tva')}</span>
                           <div className="text-right font-mono font-bold text-base-content pr-2">
-                            {formatCurrency(Math.round(data.recap.total_tva))}
+                            {formatCurrency(Math.round(data.recap.total_tva), docLocale)}
                           </div>
                       </div>
                     )}
-                    
+
                     {data.recap.total_remise > 0 && (
                       <div className="grid grid-cols-[1fr,115px] items-center px-1 py-1 bg-error/10/50 rounded-md text-error border border-red-100/50">
                           <span className="text-micro uppercase font-black tracking-widest pl-1">{t('invoice.discount_label')}</span>
                           <div className="text-right font-mono font-black pr-2">
-                            -{formatCurrency(Math.round(data.recap.total_remise))}
+                            -{formatCurrency(Math.round(data.recap.total_remise), docLocale)}
                           </div>
                       </div>
                     )}
@@ -282,7 +284,7 @@ const RecapTemplate: React.FC<RecapTemplateProps> = ({ settings, data }) => {
                             {t('recap.total_label', { defaultValue: 'TOTAL GÉNÉRAL' })}
                           </span>
                           <div className="text-right font-black font-mono tracking-tighter pr-2 text-xl">
-                            {formatCurrency(Math.round(data.recap.total_ttc))}
+                            {formatCurrency(Math.round(data.recap.total_ttc), docLocale)}
                           </div>
                         </div>
                     </div>

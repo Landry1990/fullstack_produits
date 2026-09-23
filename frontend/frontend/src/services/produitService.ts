@@ -210,13 +210,6 @@ const produitService = {
     getReapproSessionDetails: async (sessionId: number): Promise<ReapproSessionData> => {
         const response = await api.get<ReapproSessionData>(`reappro-sessions/${sessionId}/`);
         return response.data;
-    },
-
-    getReapproSessionPdf: async (sessionId: number): Promise<Blob> => {
-        const response = await api.get(`reappro-sessions/${sessionId}/generate_pdf/`, {
-            responseType: 'blob'
-        });
-        return response.data;
     }
 };
 

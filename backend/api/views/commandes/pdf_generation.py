@@ -12,12 +12,16 @@ from reportlab.platypus import PageBreak, Paragraph, SimpleDocTemplate, Spacer, 
 logger = logging.getLogger(__name__)
 
 
-def generate_labels_pdf(commande, label_format='40x20'):
+def generate_labels_pdf(commande, label_format='40x20', lang=None):
     """Génère un PDF d'étiquettes pour les produits d'une commande.
 
     Format: 40x20mm ou 30x15mm (paramètre label_format).
     Contenu: nom produit, lot, fournisseur, code-barres (CIP), date d'entrée, prix de vente.
     """
+    from api.utils_doclang import T, format_doc_date, get_document_language
+
+    if not lang:
+        lang = get_document_language()
     # Dimensions en mm convertis en points (1mm = 2.83465 points)
     mm_to_points = 2.83465
     if label_format == '30x15':
@@ -43,7 +47,7 @@ def generate_labels_pdf(commande, label_format='40x20'):
 
         # Utiliser la date de clôture (réception effective) si disponible, sinon date commande
         ref_date = commande.date_cloture if commande.date_cloture else commande.date
-        date_entree = ref_date.strftime('%d/%m/%Y') if ref_date else ""
+        date_entree = format_doc_date(ref_date, lang) if ref_date else ""
 
         fournisseur_name = commande.fournisseur.name if commande.fournisseur else ""
         invoice_ref = commande.numero_facture if commande.numero_facture else ""
@@ -217,7 +221,7 @@ def generate_labels_pdf(commande, label_format='40x20'):
         # Ligne 2: Fournisseur (Gauche) + Facture (Droite)
         if label_data['fournisseur'] or label_data.get('invoice_ref'):
             fourn_text = label_data['fournisseur'][:15]
-            inv_text = f"Fact:{label_data['invoice_ref'][:8]}" if label_data.get('invoice_ref') else ""
+            inv_text = T(lang, 'lbl_fact_prefix', v=label_data['invoice_ref'][:8]) if label_data.get('invoice_ref') else ""
 
             style_tiny_right = ParagraphStyle(
                 'TinyRight',

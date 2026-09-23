@@ -754,7 +754,17 @@
             "total_global_gap": "Total Global des Écarts",
             "report_legend": "Ce rapport détaille les écarts constatés entre le stock théorique et le comptage physique.",
             "fill_legend": "Veuillez remplir la colonne 'Qté Physique' lors de votre comptage. Les lots non listés doivent être signalés au verso.",
-            "global_gap": "Écart Global"
+            "global_gap": "Écart Global",
+            "title_report": "RAPPORT D'INVENTAIRE",
+            "title_sheet": "FEUILLE DE SAISIE INVENTAIRE",
+            "title_state": "ÉTAT D'INVENTAIRE PAR {{group}}",
+            "group_label_rayon": "Rayon",
+            "group_label_forme": "Forme",
+            "group_label_groupe": "Groupe",
+            "stock_machine": "Stock Machine",
+            "stock_non_zero": "Stocks Non Nuls",
+            "stock_zero": "Stock à Zéro",
+            "ref": "Réf :"
         }
     },
     "ajustements": {

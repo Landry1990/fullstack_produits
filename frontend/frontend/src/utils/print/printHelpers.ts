@@ -3,6 +3,7 @@ import DOMPurify from 'dompurify';
 import { formatDateTime } from '../dateUtils';
 import { formatNumber } from '../formatters';
 import { logger } from '../logger';
+import { getDocumentLanguage, getDocumentLocale } from '../documentLang';
 import type { Commande, CommandeProduit } from '../../types';
 
 /**
@@ -49,19 +50,21 @@ export function escHtml(value: unknown): string {
 }
 
 /**
- * Formate un nombre en format monétaire français pour l'impression
+ * Formate un nombre en format monétaire pour l'impression.
+ * Par défaut : locale du document (PharmacySettings.locale), pas celle de l'UI.
  */
-export function formatMoney(value: number | string): string {
+export function formatMoney(value: number | string, locale?: string): string {
   const num = Math.round(parseFloat(String(value)));
-  return formatNumber(num);
+  return formatNumber(num, 0, locale ?? getDocumentLocale());
 }
 
 /**
- * Formate une date pour l'impression (inclut l'heure par défaut)
+ * Formate une date pour l'impression (inclut l'heure par défaut).
+ * Par défaut : locale du document (PharmacySettings.locale), pas celle de l'UI.
  */
-export function formatDateFr(dateString: string): string {
+export function formatDateFr(dateString: string, locale?: string): string {
   if (!dateString) return '';
-  return formatDateTime(dateString);
+  return formatDateTime(dateString, locale ?? getDocumentLocale());
 }
 
 /**
@@ -96,9 +99,13 @@ function _printTotal(label: string, value: string): string {
 }
 
 /**
- * Retourne le libellé d'un mode de paiement
+ * Retourne le libellé d'un mode de paiement dans la langue du document
+ * (PharmacySettings.locale), pas celle de l'interface.
  */
 export function getModeLabel(mode: string): string {
+  const docLang = getDocumentLanguage();
+  const docT = i18next.getFixedT(docLang);
+
   const keys: Record<string, string> = {
     especes: 'common:payment_modes.cash',
     cheque: 'common:payment_modes.check',
@@ -109,13 +116,13 @@ export function getModeLabel(mode: string): string {
     coupon: 'common:payment_modes.coupon',
     en_compte: 'common:payment_modes.recouvrement'
   };
-  
+
   const key = keys[mode];
-  if (key && i18next.exists(key)) {
-    return i18next.t(key);
+  if (key && i18next.exists(key, { lng: docLang })) {
+    return docT(key);
   }
-  
-  const fallbacks: Record<string, string> = {
+
+  const fallbacksFr: Record<string, string> = {
     especes: 'Espèces',
     cheque: 'Chèque',
     carte: 'Carte',
@@ -125,6 +132,17 @@ export function getModeLabel(mode: string): string {
     coupon: 'Coupon de Monnaie',
     en_compte: 'En Compte'
   };
+  const fallbacksEn: Record<string, string> = {
+    especes: 'Cash',
+    cheque: 'Check',
+    carte: 'Card',
+    virement: 'Transfer',
+    om: 'Orange Money',
+    momo: 'Mobile Money',
+    coupon: 'Money Coupon',
+    en_compte: 'On Account'
+  };
+  const fallbacks = docLang === 'en' ? fallbacksEn : fallbacksFr;
   return fallbacks[mode] || mode?.toUpperCase() || 'N/A';
 }
 
@@ -196,11 +214,13 @@ export function buildTicketPrintHtml(ticketWidth: number, content: string, style
     FORCE_BODY: true,
     RETURN_TRUSTED_TYPE: false,
   })
+  const docLang = getDocumentLanguage();
+  const docT = i18next.getFixedT(docLang, 'printing');
 
   return `<!DOCTYPE html>
-<html lang="fr">
+<html lang="${docLang}">
 <head>
-  <title>Ticket de Caisse</title>
+  <title>${escHtml(docT('document.ticket_title'))}</title>
   <base href="${window.location.origin}/">
   <!-- Polices système uniquement : évite tout appel réseau (Google Fonts) pour fonctionner offline. -->
   ${safeStyleTags}
@@ -315,6 +335,9 @@ function _computeReceptionTotals(produits: CommandeProduit[]) {
  * Génère le document HTML complet pour l'impression d'un bon de réception.
  */
 export function buildReceptionPrintHtml(commande: Commande, companyInfo: { name?: string; address?: string; tel?: string; niu?: string; rc?: string }, mode: 'normal' | 'inkless' = 'inkless'): string {
+  const docLang = getDocumentLanguage();
+  const docLocale = getDocumentLocale();
+  const docT = i18next.getFixedT(docLang, 'printing');
   const produits = (commande.produits || []) as CommandeProduit[];
   const { totalHT, totalTVA, totalLignes, totalUnites, totalGratuites, totalMarge } = _computeReceptionTotals(produits);
   const isInkless = mode === 'inkless';
@@ -338,14 +361,14 @@ export function buildReceptionPrintHtml(commande: Commande, companyInfo: { name?
   const fournisseurName = escHtml(commande.fournisseur_nom || 'N/A');
   const ref = escHtml(commande.numero_facture || `CMD-${commande.id}`);
   const dateEmission = commande.date ? formatDateFr(commande.date) : '';
-  const dateImpression = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  const dateImpression = new Date().toLocaleDateString(docLocale, { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + new Date().toLocaleTimeString(docLocale, { hour: '2-digit', minute: '2-digit' });
   const saisiePar = escHtml(commande.created_by_name || 'N/A');
-  const cloturePar = escHtml(commande.closed_by_name || 'System Administrator');
+  const cloturePar = escHtml(commande.closed_by_name || docT('reception.system_admin'));
 
   const rowsHtml = produits.map((p) => {
-    const nom = escHtml(p.produit_nom || (typeof p.produit === 'object' ? p.produit.name : `Produit #${p.produit}`) || '');
+    const nom = escHtml(p.produit_nom || (typeof p.produit === 'object' ? p.produit.name : docT('reception.product_fallback', { id: p.produit })) || '');
     const lot = escHtml(p.lot || '');
-    const exp = p.date_expiration ? new Date(p.date_expiration).toLocaleDateString('fr-FR', { month: '2-digit', year: 'numeric' }).replace('/', '/') : '';
+    const exp = p.date_expiration ? new Date(p.date_expiration).toLocaleDateString(docLocale, { month: '2-digit', year: 'numeric' }).replace('/', '/') : '';
     const cip = escHtml(p.produit_cip || (typeof p.produit === 'object' ? p.produit.cip1 : '') || '');
     const qty = p.quantity || 0;
     const free = p.unites_gratuites || 0;
@@ -358,7 +381,7 @@ export function buildReceptionPrintHtml(commande: Commande, companyInfo: { name?
     return `
       <tr>
         <td>
-          <div class="product-line"><span class="product-name">${nom}</span>${lot ? `<span class="product-lot">LOT: ${lot}${exp ? `&nbsp;|&nbsp;EXP: ${exp}` : ''}</span>` : ''}</div>
+          <div class="product-line"><span class="product-name">${nom}</span>${lot ? `<span class="product-lot">${docT('reception.lot')}: ${lot}${exp ? `&nbsp;|&nbsp;${docT('reception.exp')}: ${exp}` : ''}</span>` : ''}</div>
         </td>
         <td class="text-center">${cip}</td>
         <td class="text-center">${stockAvant > 0 ? stockAvant : 0}</td>
@@ -372,9 +395,9 @@ export function buildReceptionPrintHtml(commande: Commande, companyInfo: { name?
   }).join('');
 
   return `<!DOCTYPE html>
-<html lang="fr">
+<html lang="${docLang}">
 <head>
-  <title>Bon de Réception N°${commande.id}</title>
+  <title>${escHtml(docT('reception.doc_title_numbered', { id: commande.id }))}</title>
   <base href="${window.location.origin}/">
   <style>
     @page { size: A4; margin: 12mm 10mm 15mm 10mm; }
@@ -430,39 +453,39 @@ export function buildReceptionPrintHtml(commande: Commande, companyInfo: { name?
     <div class="header">
       <div class="company-info">
         <div class="name">${companyName}</div>
-        <div class="meta">${companyAddress}${companyAddress ? '<br/>' : ''}Tél: ${companyTel}${companyTel ? '' : ''}${companyNiu || companyRc ? '<br/>' : ''}${companyNiu ? `NIU: ${companyNiu}` : ''}${companyNiu && companyRc ? ' | ' : ''}${companyRc ? `RC: ${companyRc}` : ''}</div>
+        <div class="meta">${companyAddress}${companyAddress ? '<br/>' : ''}${docT('reception.tel')}: ${companyTel}${companyTel ? '' : ''}${companyNiu || companyRc ? '<br/>' : ''}${companyNiu ? `NIU: ${companyNiu}` : ''}${companyNiu && companyRc ? ' | ' : ''}${companyRc ? `RC: ${companyRc}` : ''}</div>
       </div>
       <div style="text-align: right;">
-        <div class="doc-type">Bon de Réception</div>
-        <div class="doc-ref">RÉF: ${ref}</div>
+        <div class="doc-type">${docT('reception.doc_title')}</div>
+        <div class="doc-ref">${docT('reception.ref')}: ${ref}</div>
       </div>
     </div>
 
     <div class="info-grid">
       <div class="info-box">
-        <h3>Fournisseur</h3>
+        <h3>${docT('reception.supplier')}</h3>
         <div class="value">${fournisseurName}</div>
       </div>
       <div class="info-box" style="text-align: right;">
-        <h3>Détails de Réception</h3>
-        <div class="sub"><b>Date d'émission:</b> ${dateEmission}</div>
-        <div class="sub"><b>Imprimé le:</b> ${dateImpression}</div>
-        <div class="sub"><b>Saisie par:</b> ${saisiePar}</div>
-        <div class="sub"><b>Clôturée par:</b> ${cloturePar}</div>
+        <h3>${docT('reception.details')}</h3>
+        <div class="sub"><b>${docT('reception.emission_date')}:</b> ${dateEmission}</div>
+        <div class="sub"><b>${docT('reception.printed_on')}:</b> ${dateImpression}</div>
+        <div class="sub"><b>${docT('reception.entered_by')}:</b> ${saisiePar}</div>
+        <div class="sub"><b>${docT('reception.closed_by')}:</b> ${cloturePar}</div>
       </div>
     </div>
 
     <table>
       <thead>
         <tr>
-          <th>Produit / Désignation</th>
-          <th class="text-center">CIP / Code</th>
-          <th class="text-center">stAnt</th>
-          <th class="text-center">Qté</th>
-          <th class="text-center">U.G</th>
-          <th class="text-center">Stock</th>
-          <th class="text-right">PA HT</th>
-          <th class="text-right">Total HT</th>
+          <th>${docT('reception.col_product')}</th>
+          <th class="text-center">${docT('reception.col_cip')}</th>
+          <th class="text-center">${docT('reception.col_stock_before')}</th>
+          <th class="text-center">${docT('reception.col_qty')}</th>
+          <th class="text-center">${docT('reception.col_free')}</th>
+          <th class="text-center">${docT('reception.col_stock')}</th>
+          <th class="text-right">${docT('reception.col_pa_ht')}</th>
+          <th class="text-right">${docT('reception.col_total_ht')}</th>
         </tr>
       </thead>
       <tbody>
@@ -472,20 +495,20 @@ export function buildReceptionPrintHtml(commande: Commande, companyInfo: { name?
 
     <div class="summary">
       <div class="summary-left">
-        <span><b>Lignes:</b> ${totalLignes}</span>
-        <span><b>Unités:</b> ${totalUnites}</span>
-        <span><b>Gratuites:</b> ${totalGratuites}</span>
+        <span><b>${docT('reception.lines')}:</b> ${totalLignes}</span>
+        <span><b>${docT('reception.units')}:</b> ${totalUnites}</span>
+        <span><b>${docT('reception.free_units')}:</b> ${totalGratuites}</span>
       </div>
       <div class="totals-box">
-        <div class="cell"><span class="lbl">Total HT</span><span class="val">${formatMoney(totalHT)} F</span></div>
-        <div class="cell"><span class="lbl">TVA</span><span class="val">${formatMoney(totalTVA)} F</span></div>
-        <div class="cell total"><span class="lbl">Total TTC</span><span class="val">${formatMoney(totalTTC)} F</span></div>
-        <div class="cell margin"><span class="lbl">Marge</span><span class="val">${formatMoney(totalMarge)} F</span></div>
+        <div class="cell"><span class="lbl">${docT('reception.total_ht')}</span><span class="val">${formatMoney(totalHT)} F</span></div>
+        <div class="cell"><span class="lbl">${docT('reception.tva')}</span><span class="val">${formatMoney(totalTVA)} F</span></div>
+        <div class="cell total"><span class="lbl">${docT('reception.total_ttc')}</span><span class="val">${formatMoney(totalTTC)} F</span></div>
+        <div class="cell margin"><span class="lbl">${docT('reception.margin')}</span><span class="val">${formatMoney(totalMarge)} F</span></div>
       </div>
     </div>
 
-    <div class="footer-note">Ce document atteste la réception physique des articles mentionnés dans les stocks de l'établissement.</div>
-    <div class="print-footer">Logiciel de Gestion Zenith Pharma - Document Interne</div>
+    <div class="footer-note">${docT('reception.footer_note')}</div>
+    <div class="print-footer">${docT('reception.print_footer')}</div>
   </div>
   <script>
     window.onload = () => {

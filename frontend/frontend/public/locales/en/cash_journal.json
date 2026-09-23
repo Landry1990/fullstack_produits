@@ -63,7 +63,13 @@
         "cashier": "Cashier",
         "manager": "Manager",
         "footer": "Generated on {{date}} - Pharmacy Management Software",
-        "window_title": "Cash Register Closing"
+        "window_title": "Cash Register Closing",
+        "pharmacy_sales": "Pharmacy Sales",
+        "misc_sales": "Misc. Sales",
+        "total_sales": "Total Sales",
+        "default_cashier": "Cashier",
+        "default_admin": "Admin",
+        "default_pharmacy": "My Pharmacy"
     },
     "table": {
         "date_time": "DATE & TIME",

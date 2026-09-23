@@ -123,7 +123,10 @@ class InvoiceConfigurationView(APIView):
     API View pour gérer la configuration des factures.
     Singleton: récupère ou crée l'unique configuration.
     """
-    permission_classes = [IsAuthenticated] # Ou IsAdminUser selon besoins
+
+    def get_permissions(self):
+        permission_classes = [permissions.IsAdminUser] if self.request.method == 'PUT' else [IsAuthenticated]
+        return [permission() for permission in permission_classes]
 
     def get(self, request):
         config, _created = InvoiceSettings.objects.get_or_create(pk=1)
@@ -153,7 +156,10 @@ class PharmacySettingsView(APIView):
     API View pour gérer les paramètres de la pharmacie.
     Singleton: récupère ou crée l'unique configuration.
     """
-    permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        permission_classes = [permissions.IsAdminUser] if self.request.method == 'PUT' else [IsAuthenticated]
+        return [permission() for permission in permission_classes]
 
     def get(self, request):
         from django.utils import timezone

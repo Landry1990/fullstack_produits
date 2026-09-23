@@ -1,6 +1,7 @@
 import { formatDate as formatLocaleDate } from '../../utils/dateUtils';
 import { formatNumber, formatCurrency } from '../../utils/formatters';
 import { useTranslation } from 'react-i18next';
+import { useDocumentLocale } from '../../context/PharmacySettingsContext';
 
 // Interfaces matching FacturePrintSerializer
 export interface InvoiceClient {
@@ -82,7 +83,7 @@ interface InvoiceTemplateProps {
   isBonDeLivraison?: boolean;
 }
 
-const formatDate = (dateStr: string) => formatLocaleDate(dateStr);
+const formatDate = (dateStr: string, locale?: string) => formatLocaleDate(dateStr, locale);
 
 const formatExpiryDate = (dateStr: string) => {
   if (!dateStr) return '';
@@ -97,7 +98,8 @@ const calculateHTUnit = (priceTTC: number, tva: number) => {
 };
 
 const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBonDeLivraison }) => {
-  const { t } = useTranslation('printing');
+  const { lang: docLang, locale: docLocale } = useDocumentLocale();
+  const { t } = useTranslation('printing', { lng: docLang });
 
   const totalQuantity = data.produits.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -168,7 +170,7 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
               {data.client_solde_depot && Number(data.client_solde_depot) > 0 && (
                 <div className="mt-2 pt-2 border-t border-slate-100 flex justify-between items-center">
                     <span className="text-caption font-black text-base-content/50 uppercase tracking-tighter">{t('invoice.remaining_deposit')}</span>
-                    <span className="font-black text-base-content text-sm">{formatCurrency(Number(data.client_solde_depot))}</span>
+                    <span className="font-black text-base-content text-sm">{formatCurrency(Number(data.client_solde_depot), docLocale)}</span>
                 </div>
               )}
             </div>
@@ -181,7 +183,7 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
             <div className="space-y-1 text-label">
                 <div className="flex justify-between">
                     <span className="text-base-content/60">{t('invoice.date')} :</span>
-                    <span className="font-bold">{formatDate(data.date)}</span>
+                    <span className="font-bold">{formatDate(data.date, docLocale)}</span>
                 </div>
                 <div className="flex justify-between border-t border-slate-100 pt-1 mt-1">
                     <span className="text-base-content/60">{t('invoice.entered_by')} :</span>
@@ -232,9 +234,9 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
                               )}
                           </td>
                           <td className="py-2 px-2 text-center align-middle font-bold text-base-content">{item.quantity}</td>
-                          <td className="py-2 px-2 text-right align-middle text-base-content/80 font-medium">{formatNumber(htUnit, 0)}</td>
-                          <td className="py-2 px-2 text-right align-middle text-red-400 font-medium">{item.discount > 0 ? `-${formatNumber(item.discount, 0)}` : '-'}</td>
-                          <td className="py-2 px-3 text-right align-middle font-black text-base-content text-[10.5px]">{formatNumber(totalLineNetHT, 0)}</td>
+                          <td className="py-2 px-2 text-right align-middle text-base-content/80 font-medium">{formatNumber(htUnit, 0, docLocale)}</td>
+                          <td className="py-2 px-2 text-right align-middle text-red-400 font-medium">{item.discount > 0 ? `-${formatNumber(item.discount, 0, docLocale)}` : '-'}</td>
+                          <td className="py-2 px-3 text-right align-middle font-black text-base-content text-[10.5px]">{formatNumber(totalLineNetHT, 0, docLocale)}</td>
                       </tr>
                     );
                 })}
@@ -272,16 +274,16 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
                               data.tva_analysis.map((line, tvaIdx) => (
                                   <tr key={`tva-${line.taux}`} className="text-base-content/90">
                                       <td className="py-1 text-left font-bold uppercase">TVA-{tvaIdx+1}</td>
-                                      <td className="py-1 text-right font-medium">{formatNumber(Number(line.taux), 2)}%</td>
-                                      <td className="py-1 text-right">{formatNumber(line.base_ht, 0)}</td>
-                                      <td className="py-1 text-right font-bold text-base-content">{formatNumber(line.montant_tva, 0)}</td>
+                                      <td className="py-1 text-right font-medium">{formatNumber(Number(line.taux), 2, docLocale)}%</td>
+                                      <td className="py-1 text-right">{formatNumber(line.base_ht, 0, docLocale)}</td>
+                                      <td className="py-1 text-right font-bold text-base-content">{formatNumber(line.montant_tva, 0, docLocale)}</td>
                                   </tr>
                               ))
                           ) : (
                             <tr className="text-base-content/90">
                                 <td className="py-1 text-left font-bold">{t('invoice.vat_exo')}</td>
                                 <td className="py-1 text-right">0%</td>
-                                <td className="py-1 text-right">{formatNumber(data.total_ht, 0)}</td>
+                                <td className="py-1 text-right">{formatNumber(data.total_ht, 0, docLocale)}</td>
                                 <td className="py-1 text-right font-bold">0</td>
                             </tr>
                           )}
@@ -306,7 +308,7 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
                     <div className="grid grid-cols-[1fr,115px] items-center px-1 text-base-content/60">
                         <span className="text-micro uppercase font-bold tracking-widest pl-1">{t('invoice.subtotal_ht')}</span>
                         <div className="text-right font-mono font-bold text-base-content pr-2">
-                          {formatCurrency(Math.round(Number(data.total_ht)))}
+                          {formatCurrency(Math.round(Number(data.total_ht)), docLocale)}
                         </div>
                     </div>
 
@@ -314,16 +316,16 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
                       <div className="grid grid-cols-[1fr,115px] items-center px-1 text-base-content/60">
                           <span className="text-micro uppercase font-bold tracking-widest pl-1">{t('invoice.taxes_tva')}</span>
                           <div className="text-right font-mono font-bold text-base-content pr-2">
-                            {formatCurrency(Math.round(Number(data.total_tva)))}
+                            {formatCurrency(Math.round(Number(data.total_tva)), docLocale)}
                           </div>
                       </div>
                     )}
-                    
+
                     {data.remise > 0 && (
                       <div className="grid grid-cols-[1fr,115px] items-center px-1 py-1 bg-error/10/50 rounded-md text-error border border-red-100/50">
                           <span className="text-micro uppercase font-black tracking-widest pl-1">{t('invoice.discount_label')}</span>
                           <div className="text-right font-mono font-black pr-2">
-                            -{formatCurrency(Math.round(Number(data.remise)))}
+                            -{formatCurrency(Math.round(Number(data.remise)), docLocale)}
                           </div>
                       </div>
                     )}
@@ -345,7 +347,7 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
                           <div className={`text-right font-black font-mono tracking-tighter pr-2 ${
                              (data.part_assurance ?? 0) > 0 ? 'text-lg' : 'text-xl'
                           }`}>
-                            {formatCurrency(Math.round(Number(data.total_ttc)))}
+                            {formatCurrency(Math.round(Number(data.total_ttc)), docLocale)}
                           </div>
                         </div>
                     </div>
@@ -356,13 +358,13 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
                         <div className="grid grid-cols-[1fr,115px] items-center px-1 py-0.5 text-base-content/80">
                           <span className="text-micro uppercase font-bold tracking-widest pl-1">{t('invoice.part_patient')}</span>
                           <div className="text-right font-mono font-bold text-base-content text-base pr-2 text-right">
-                            {formatCurrency(Math.round(Number(data.part_client ?? 0)))}
+                            {formatCurrency(Math.round(Number(data.part_client ?? 0)), docLocale)}
                           </div>
                         </div>
                         <div className="bg-success rounded-lg shadow-sm text-white grid grid-cols-[1fr,115px] items-center px-1 py-2.5 ring-1 ring-emerald-700/10">
                           <span className="text-micro uppercase font-black tracking-[0.1em] pl-1">{t('invoice.part_assurance')}</span>
                           <div className="text-right font-mono font-black text-lg leading-none pr-2 text-right">
-                            {formatCurrency(Math.round(Number(data.part_assurance ?? 0)))}
+                            {formatCurrency(Math.round(Number(data.part_assurance ?? 0)), docLocale)}
                           </div>
                         </div>
                       </div>

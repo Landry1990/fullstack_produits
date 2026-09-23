@@ -63,7 +63,13 @@
         "cashier": "Caissier",
         "manager": "Responsable",
         "footer": "Généré le {{date}} - Logiciel de Gestion Pharmacie",
-        "window_title": "Clôture Caisse"
+        "window_title": "Clôture Caisse",
+        "pharmacy_sales": "Ventes Pharmacie",
+        "misc_sales": "Ventes Diverses",
+        "total_sales": "Total Ventes",
+        "default_cashier": "Caissier",
+        "default_admin": "Admin",
+        "default_pharmacy": "Ma Pharmacie"
     },
     "table": {
         "date_time": "DATE & HEURE",

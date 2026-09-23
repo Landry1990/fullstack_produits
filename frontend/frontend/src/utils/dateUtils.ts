@@ -111,8 +111,10 @@ const DATETIME_OPTIONS: Intl.DateTimeFormatOptions = {
 
 /**
  * Fonction de base pour formater une date
+ * @param locale Locale explicite (ex: locale des documents via useDocumentLocale) —
+ *               par défaut la langue de l'interface.
  */
-export function formatDate(date: string | Date | null | undefined): string {
+export function formatDate(date: string | Date | null | undefined, locale?: string): string {
     if (!date) return '-';
     try {
         let d: Date;
@@ -126,7 +128,7 @@ export function formatDate(date: string | Date | null | undefined): string {
             d = new Date(date);
         }
         if (isNaN(d.getTime())) return '-';
-        return d.toLocaleDateString(getLocale(), DATE_OPTIONS);
+        return d.toLocaleDateString(locale || getLocale(), DATE_OPTIONS);
     } catch {
         return '-';
     }
@@ -134,8 +136,10 @@ export function formatDate(date: string | Date | null | undefined): string {
 
 /**
  * Formate une date avec l'heure
+ * @param locale Locale explicite (ex: locale des documents via useDocumentLocale) —
+ *               par défaut la langue de l'interface.
  */
-export function formatDateTime(date: string | Date | null | undefined): string {
+export function formatDateTime(date: string | Date | null | undefined, locale?: string): string {
     if (!date) return '-';
     try {
         let d: Date;
@@ -149,7 +153,7 @@ export function formatDateTime(date: string | Date | null | undefined): string {
             d = new Date(date);
         }
         if (isNaN(d.getTime())) return '-';
-        return d.toLocaleString(getLocale(), DATETIME_OPTIONS);
+        return d.toLocaleString(locale || getLocale(), DATETIME_OPTIONS);
     } catch {
         return '-';
     }

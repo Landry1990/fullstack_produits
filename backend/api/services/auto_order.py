@@ -84,6 +84,14 @@ def create_order_from_suggestions(schedule, suggestions, total_ht):
             except Produit.DoesNotExist:
                 logger.warning(f"Produit {item['produit_id']} introuvable, ignoré")
 
+        if nb_created == 0:
+            commande.delete()
+            logger.warning(
+                "Commande AUTO annulée pour %s : aucun produit suggéré n'existe encore.",
+                schedule.fournisseur.name,
+            )
+            return None, 0
+
     logger.info(
         f"Commande AUTO #{commande.id} ({numero}) créée: "
         f"{nb_created} produits, total HT={total_ht_decimal} F"

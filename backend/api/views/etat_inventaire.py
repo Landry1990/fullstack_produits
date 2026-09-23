@@ -35,9 +35,23 @@ class EtatInventairePDFView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        from ..utils_doclang import T, format_doc_date, get_document_language
+
+        lang = get_document_language()
         group_by = request.query_params.get('group_by', '').upper()
         stock_display = request.query_params.get('stock_display', 'MACHINE').upper()
         filter_id = request.query_params.get('filter_id', None)
+
+        group_labels = {
+            'FORME': T(lang, 'einv_group_forme'),
+            'RAYON': T(lang, 'einv_group_rayon'),
+            'GROUPE': T(lang, 'einv_group_groupe'),
+        }
+        stock_labels = {
+            'MACHINE': T(lang, 'einv_stock_machine'),
+            'NON_ZERO': T(lang, 'einv_stock_nonzero'),
+            'ZERO': T(lang, 'einv_stock_zero'),
+        }
 
         if group_by not in ['FORME', 'RAYON', 'GROUPE']:
             return Response(
@@ -94,11 +108,11 @@ class EtatInventairePDFView(APIView):
 
         for produit in produits:
             if group_by == 'FORME':
-                key = produit.forme.nom if produit.forme else 'Sans Forme'
+                key = produit.forme.nom if produit.forme else T(lang, 'grp_sans_forme')
             elif group_by == 'RAYON':
-                key = produit.rayon.name if produit.rayon else 'Sans Rayon'
+                key = produit.rayon.name if produit.rayon else T(lang, 'grp_sans_rayon')
             elif group_by == 'GROUPE':
-                key = produit.groupe.nom if produit.groupe else 'Sans Groupe'
+                key = produit.groupe.nom if produit.groupe else T(lang, 'grp_sans_groupe')
 
             if key not in grouped_data:
                 grouped_data[key] = []
@@ -153,10 +167,10 @@ class EtatInventairePDFView(APIView):
             paginated = all_items[start:start + page_size]
 
             return Response({
-                'title': f"ÉTAT D'INVENTAIRE PAR {group_by}",
+                'title': T(lang, 'einv_title_grouped', g=group_labels[group_by]),
                 'filter_name': filter_name,
                 'group_label': group_by,
-                'stock_label': 'Stock Machine' if stock_display == 'MACHINE' else ('Stocks Non Nuls' if stock_display == 'NON_ZERO' else 'Stock à Zéro'),
+                'stock_label': stock_labels.get(stock_display, stock_labels['ZERO']),
                 'date': datetime.now().isoformat(),
                 'count': total_items,
                 'page': page,
@@ -213,16 +227,16 @@ class EtatInventairePDFView(APIView):
         )
 
         # En-tête
-        group_label = {'FORME': 'FORME', 'RAYON': 'RAYON', 'GROUPE': 'GROUPE'}[group_by]
-        stock_label = 'Stock Machine' if stock_display == 'MACHINE' else ('Stocks Non Nuls' if stock_display == 'NON_ZERO' else 'Stock à Zéro')
-        date_str = datetime.now().strftime('%d/%m/%Y à %H:%M')
-        
+        group_label = group_labels[group_by]
+        stock_label = stock_labels.get(stock_display, stock_labels['ZERO'])
+        date_str = format_doc_date(datetime.now(), lang, with_time=True)
+
         # Titre avec filtre si applicable
         if filter_name:
-            story.append(Paragraph(f"ÉTAT D'INVENTAIRE - {group_label}: {filter_name}", title_style))
+            story.append(Paragraph(T(lang, 'einv_title_filtered', g=group_label, name=filter_name), title_style))
         else:
-            story.append(Paragraph(f"ÉTAT D'INVENTAIRE PAR {group_label}", title_style))
-        story.append(Paragraph(f"Option: {stock_label} | Imprimé le {date_str}", small_style))
+            story.append(Paragraph(T(lang, 'einv_title_grouped', g=group_label), title_style))
+        story.append(Paragraph(T(lang, 'einv_option_line', opt=stock_label, d=date_str), small_style))
         story.append(Spacer(1, 5*mm))
 
         # Tableau par groupe
@@ -234,10 +248,10 @@ class EtatInventairePDFView(APIView):
             
             # Compter les produits uniques
             unique_products = len({item['id'] for item in items})
-            story.append(Paragraph(f"<b>{group_name}</b> ({unique_products} produits)", group_style))
-            
+            story.append(Paragraph(f"<b>{group_name}</b> {T(lang, 'einv_products_count', n=unique_products)}", group_style))
+
             # Données du tableau
-            table_data = [['ID', 'CIP1', 'Libellé', 'Lot', 'Stock', 'PV', 'Qté Physique']]
+            table_data = [['ID', 'CIP1', T(lang, 'col_libelle'), T(lang, 'col_lot_simple'), T(lang, 'col_stock'), T(lang, 'einv_col_pv'), T(lang, 'einv_col_qte_phys')]]
             
             for item in items:
                 # Pour les lignes de lot, afficher le lot en évidence

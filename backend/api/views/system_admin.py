@@ -28,7 +28,11 @@ def _is_path_allowed(target: Path) -> bool:
         return False
     for root in _ALLOWED_BROWSE_ROOTS:
         root_path = Path(root).resolve()
-        if resolved == root_path or root_path in resolved.parents:
+        if resolved == root_path:
+            return True
+        # '/' n'est autorisée que comme point de départ de navigation —
+        # ses enfants doivent être couverts par une autre racine explicite.
+        if root != '/' and root_path in resolved.parents:
             return True
     return False
 
@@ -250,7 +254,25 @@ class SystemAdminViewSet(ViewSet):
                 backup_path = temp_path
             elif filename:
                 backup_dir = _get_backup_dir()
+                # Anti-traversée : le nom doit être un simple nom de fichier
+                # situé directement dans le dossier de backups.
+                if Path(filename).name != filename:
+                    return Response(
+                        {'detail': 'Nom de fichier invalide'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
                 backup_path = backup_dir / filename
+                try:
+                    if backup_path.resolve().parent != backup_dir.resolve():
+                        return Response(
+                            {'detail': 'Nom de fichier invalide'},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                except (OSError, RuntimeError):
+                    return Response(
+                        {'detail': 'Nom de fichier invalide'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
                 if not backup_path.exists():
                     return Response(
                         {'detail': f'Fichier introuvable: {filename}'},
@@ -682,7 +704,7 @@ class SystemAdminViewSet(ViewSet):
                     content = f.read().strip()
                 if content.startswith('DISABLED'):
                     auto_update_enabled = False
-                elif re.match(r'^[0-2][0-9]:[0-5][0-9]$', content):
+                elif re.match(r'^([01][0-9]|2[0-3]):[0-5][0-9]$', content):
                     update_time = content
             except Exception:
                 pass
@@ -751,7 +773,7 @@ class SystemAdminViewSet(ViewSet):
 
         # Valider le format HH:MM
         import re
-        if not re.match(r'^[0-2][0-9]:[0-5][0-9]$', update_time):
+        if not re.match(r'^([01][0-9]|2[0-3]):[0-5][0-9]$', update_time):
             return Response({
                 'success': False,
                 'message': 'Format invalide. Utilisez HH:MM (ex: 02:00, 03:30)',

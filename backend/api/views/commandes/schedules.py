@@ -24,6 +24,11 @@ class OrderScheduleViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = StandardResultsSetPagination
 
+    def get_permissions(self):
+        admin_actions = {'create', 'update', 'partial_update', 'destroy', 'trigger_now'}
+        permission_classes = [permissions.IsAdminUser] if self.action in admin_actions else [permissions.IsAuthenticated]
+        return [permission() for permission in permission_classes]
+
     def get_queryset(self):
         queryset = super().get_queryset()
         fournisseur_id = self.request.query_params.get('fournisseur')
