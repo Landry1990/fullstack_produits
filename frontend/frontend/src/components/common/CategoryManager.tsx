@@ -256,12 +256,21 @@ export default function CategoryManager({
     });
     if (!confirmed) return;
 
+    const originalCategories = categories;
+    const originalSelectedCategory = selectedCategory;
+    const originalTotalCount = totalCount;
+    setCategories(prev => prev.filter(c => c.id !== id));
+    setTotalCount(prev => Math.max(0, prev - 1));
+    if (selectedCategory?.id === id) setSelectedCategory(null);
+
     try {
       await api.delete(`${apiPath.replace(/^\/api\//, '')}${id}/`);
       gooeyToast.success(t('stock:organisation.category_manager.trash_success', { name }));
-      if (selectedCategory?.id === id) setSelectedCategory(null);
       fetchCategories();
     } catch {
+      setCategories(originalCategories);
+      setTotalCount(originalTotalCount);
+      setSelectedCategory(originalSelectedCategory);
       gooeyToast.error(t('common:messages.error_deleting'));
     }
   };
@@ -281,11 +290,18 @@ export default function CategoryManager({
     if (!confirmed) return;
 
     const basePath = apiPath.replace(/^\/api\//, '');
+    const originalCategories = categories;
+    const originalTotalCount = totalCount;
+    const originalSelectedCategory = selectedCategory;
+    setCategories([]);
+    setTotalCount(0);
+    setSelectedCategory(null);
+
     let successCount = 0;
     let errorCount = 0;
 
     const deleteResults = await Promise.all(
-      categories.map(async (cat) => {
+      originalCategories.map(async (cat) => {
         try {
           await api.delete(`${basePath}${cat.id}/`);
           return true;
@@ -297,14 +313,18 @@ export default function CategoryManager({
     successCount = deleteResults.filter(Boolean).length;
     errorCount = deleteResults.filter((r) => !r).length;
 
+    if (errorCount > 0) {
+      setCategories(originalCategories);
+      setTotalCount(originalTotalCount);
+      setSelectedCategory(originalSelectedCategory);
+      gooeyToast.error(t('stock:organisation.category_manager.delete_all_error'));
+      return;
+    }
+
     if (successCount > 0) {
       gooeyToast.success(t('stock:organisation.category_manager.delete_all_success', { count: successCount, type }));
     }
-    if (errorCount > 0) {
-      gooeyToast.error(t('stock:organisation.category_manager.delete_all_error'));
-    }
 
-    setSelectedCategory(null);
     fetchCategories();
   };
 

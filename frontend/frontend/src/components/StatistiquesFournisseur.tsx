@@ -1,8 +1,8 @@
-import { useState, useEffect, useMemo, type ReactNode } from 'react';
-import { Loader2, ChevronLeft, ChevronRight, Download, AlertTriangle } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Loader2, ChevronLeft, ChevronRight, Download, AlertTriangle, Building2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import api from '../services/api';
-import { Badge } from './ui/Badge';
 import { formatCurrency } from '../utils/formatters';
 import { formatDate as formatDateDisplay } from '../utils/dateUtils';
 import { useRecharts } from '../hooks/useRecharts';
@@ -15,7 +15,8 @@ import { useTranslation } from 'react-i18next';
 import { Button } from './shadcn/button';
 import { Card, CardContent, CardTitle } from './shadcn/card';
 import { Progress } from './shadcn/progress';
-import { Badge as ShadcnBadge } from './shadcn/badge';
+import { Badge } from './shadcn/badge';
+import { Tabs, TabsList, TabsTrigger } from './shadcn/tabs';
 import { Input } from './ui/Input';
 import { LocalizedDateInput } from './LocalizedDateInput';
 import { Select } from './ui/Select';
@@ -53,7 +54,16 @@ const formatDate = (date: Date) => {
 
 export default function StatistiquesFournisseur() {
   const { t, i18n } = useTranslation(['supplier_stats', 'common']);
-  const [activeTab, setActiveTab] = useState('ventes');
+  const location = useLocation();
+  const navigate = useNavigate();
+  // Persiste l'onglet actif dans l'historique du navigateur pour qu'il survive à un F5.
+  const [activeTab, setActiveTabState] = useState<string>(
+    () => (location.state as { activeSupplierStatsTab?: string } | null)?.activeSupplierStatsTab || 'ventes'
+  );
+  const setActiveTab = (tab: string) => {
+    setActiveTabState(tab);
+    navigate(location.pathname, { replace: true, state: { ...(location.state || {}), activeSupplierStatsTab: tab } });
+  };
 
   const [stats, setStats] = useState<StatsFournisseur[]>([]);
   const [loading, setLoading] = useState(false);
@@ -65,21 +75,23 @@ export default function StatistiquesFournisseur() {
   const [dateFin, setDateFin] = useState(() => {
     return formatDate(new Date());
   });
+  // Preset de période : 'month' = mois courant (défaut), '90d', '12m', 'custom' = dates libres
+  const [periodPreset, setPeriodPreset] = useState<'month' | '90d' | '12m' | 'custom'>('month');
 
-  // Hooks pour les nouvelles analyses
-  const { data: supplierAnalysis, isLoading: loadingAnalysis } = useAnalyseFournisseurs();
-  const { data: prixComparaison, isLoading: loadingPrix } = useComparaisonPrix();
-  const { data: repartitionAchats, isLoading: loadingRepartition } = useRepartitionAchats();
+  // Hooks pour les nouvelles analyses (période synchronisée avec le sélecteur global)
+  const { data: supplierAnalysis, isLoading: loadingAnalysis } = useAnalyseFournisseurs(dateDebut, dateFin);
+  const { data: prixComparaison, isLoading: loadingPrix } = useComparaisonPrix(dateDebut, dateFin);
+  const { data: repartitionAchats, isLoading: loadingRepartition } = useRepartitionAchats(dateDebut, dateFin);
 
 
-  const fetchStats = async () => {
+  const fetchStats = async (debut: string = dateDebut, fin: string = dateFin) => {
     try {
       setLoading(true);
 
       const response = await api.get('statistiques/ca_par_fournisseur/', {
         params: {
-          date_debut: dateDebut,
-          date_fin: dateFin
+          date_debut: debut,
+          date_fin: fin
         }
       });
 
@@ -91,6 +103,39 @@ export default function StatistiquesFournisseur() {
     }
   };
 
+  // Applique un preset de période : recalcule les bornes puis recharge l'onglet ventes.
+  // En mode 'custom', on laisse l'utilisateur ajuster les dates puis cliquer sur Actualiser.
+  const applyPreset = (preset: 'month' | '90d' | '12m' | 'custom') => {
+    setPeriodPreset(preset);
+    if (preset === 'custom') return;
+
+    const today = new Date();
+    const debut = new Date(today);
+    if (preset === 'month') {
+      debut.setDate(1); // 1er du mois
+    } else if (preset === '90d') {
+      debut.setDate(debut.getDate() - 89); // aujourd'hui - 89j → aujourd'hui
+    } else {
+      debut.setMonth(debut.getMonth() - 12); // 12 derniers mois
+    }
+    const debutStr = formatDate(debut);
+    const finStr = formatDate(today);
+    setDateDebut(debutStr);
+    setDateFin(finStr);
+    fetchStats(debutStr, finStr);
+  };
+
+  // Toute modification manuelle d'une borne bascule le sélecteur en mode 'custom'
+  const handleDateDebutChange = (value: string) => {
+    setDateDebut(value);
+    setPeriodPreset('custom');
+  };
+
+  const handleDateFinChange = (value: string) => {
+    setDateFin(value);
+    setPeriodPreset('custom');
+  };
+
   useEffect(() => {
     fetchStats();
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -99,6 +144,7 @@ export default function StatistiquesFournisseur() {
   // ── TAB PAIEMENTS: Historique généralisé des paiements fournisseurs ──
   const [paiements, setPaiements] = useState<PaiementFournisseur[]>([]);
   const [paiementsCount, setPaiementsCount] = useState(0);
+  const [paiementsTotals, setPaiementsTotals] = useState<{ total_montant: number; count: number } | null>(null);
   const [loadingPaiements, setLoadingPaiements] = useState(false);
   const [exportingPaiements, setExportingPaiements] = useState(false);
   const [fournisseursList, setFournisseursList] = useState<Fournisseur[]>([]);
@@ -120,17 +166,24 @@ export default function StatistiquesFournisseur() {
   const fetchPaiementsHistory = async () => {
     setLoadingPaiements(true);
     try {
-      const data = await financeService.getPaiementsHistory({
+      const filterParams = {
         fournisseur: paiementFournisseurFilter ? Number(paiementFournisseurFilter) : undefined,
         mode_paiement: paiementModeFilter || undefined,
         date_debut: paiementDateDebut || undefined,
         date_fin: paiementDateFin || undefined,
         search: paiementSearch || undefined,
-        page: paiementPage,
-        page_size: PAIEMENT_PAGE_SIZE
-      });
+      };
+      const [data, totals] = await Promise.all([
+        financeService.getPaiementsHistory({
+          ...filterParams,
+          page: paiementPage,
+          page_size: PAIEMENT_PAGE_SIZE
+        }),
+        financeService.getPaiementsTotals(filterParams),
+      ]);
       setPaiements(data.results || []);
       setPaiementsCount(data.count || 0);
+      setPaiementsTotals(totals);
     } catch (error) {
       logger.error('Erreur lors du chargement des paiements fournisseurs', error);
     } finally {
@@ -195,10 +248,6 @@ export default function StatistiquesFournisseur() {
     }
   };
 
-  const paiementsTotalMontant = useMemo(() => {
-    return paiements.reduce((acc, p) => acc + Number(p.montant), 0);
-  }, [paiements]);
-
   const paiementTotalPages = Math.max(1, Math.ceil(paiementsCount / PAIEMENT_PAGE_SIZE));
 
   // Totaux Ventes
@@ -218,61 +267,89 @@ export default function StatistiquesFournisseur() {
   return (
     <PageContainer variant="dense" className="space-y-4 sm:space-y-6 animate-fade-in">
       <div className="flex flex-col gap-3 md:flex-row md:justify-between md:items-start">
-        <div>
-          <h1 className="text-2xl font-bold text-base-content">{t('title')}</h1>
-          <p className="text-sm text-base-content/80">{t('subtitle')}</p>
+        <div className="flex flex-wrap items-center gap-3">
+          <div>
+            <h1 className="text-2xl font-bold text-base-content">{t('title')}</h1>
+            <p className="text-sm text-base-content/80">{t('subtitle')}</p>
+          </div>
+          <Button
+            variant="outline" size="sm"
+            onClick={() => navigate('/app/fournisseurs')}
+          >
+            <Building2 className="size-4" />
+            {t('links.manage_suppliers')}
+          </Button>
         </div>
-        
-        {/* Date Filter only for Sales Tab currently */}
-        {activeTab === 'ventes' && (
-            <div className="flex flex-col sm:flex-row sm:items-end gap-2 bg-base-100 p-2 sm:p-3 rounded-lg shadow-sm border border-base-200 w-full md:w-auto">
+
+        {/* Sélecteur de période global : s'applique à tous les onglets sauf 'paiements'
+            (qui possède ses propres filtres de dates) */}
+        {activeTab !== 'paiements' && (
+            <div className="flex flex-col gap-2 bg-base-100 p-2 sm:p-3 rounded-lg shadow-sm border border-base-200 w-full md:w-auto">
+            <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-xs font-medium text-base-content/70 mr-1">{t('period.label')}</span>
+                {(['month', '90d', '12m', 'custom'] as const).map((preset) => (
+                <Button
+                    key={preset}
+                    variant={periodPreset === preset ? 'default' : 'outline'}
+                    size="sm"
+                    className="h-7 px-2.5"
+                    onClick={() => applyPreset(preset)}
+                >
+                    {t(`period.presets.${preset}`)}
+                </Button>
+                ))}
+            </div>
+            <div className="flex flex-col sm:flex-row sm:items-end gap-2">
             <div className="flex flex-col gap-1 w-full sm:w-40">
                 <label className="flex flex-col py-1"><span className="text-sm font-medium text-xs">{t('filters.from')}</span></label>
-                <LocalizedDateInput 
-                
-                className="w-full rounded-lg border border-base-300 bg-base-100 h-9 text-xs px-3 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
+                <LocalizedDateInput
+
+                className="w-full rounded-lg border border-base-300 bg-base-100 h-9 text-xs px-3 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                 value={dateDebut}
-                onChange={(e) => setDateDebut(e.target.value)}
+                onChange={(e) => handleDateDebutChange(e.target.value)}
                 aria-label={t('filters.from')}
                 />
             </div>
             <div className="flex flex-col gap-1 w-full sm:w-40">
                 <label className="flex flex-col py-1"><span className="text-sm font-medium text-xs">{t('filters.to')}</span></label>
-                <LocalizedDateInput 
-                
-                className="w-full rounded-lg border border-base-300 bg-base-100 h-9 text-xs px-3 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
+                <LocalizedDateInput
+
+                className="w-full rounded-lg border border-base-300 bg-base-100 h-9 text-xs px-3 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                 value={dateFin}
-                onChange={(e) => setDateFin(e.target.value)}
+                onChange={(e) => handleDateFinChange(e.target.value)}
                 aria-label={t('filters.to')}
                 />
             </div>
-            <Button 
-                variant="default" size="sm" className="w-full sm:w-auto h-10"
-                onClick={fetchStats}
+            <Button
+                variant="default" size="sm" className="w-full sm:w-auto h-9"
+                onClick={() => fetchStats()}
                 disabled={loading}
             >
                 {loading ? <Loader2 className="size-3 animate-spin" /> : t('filters.refresh')}
             </Button>
             </div>
+            </div>
         )}
       </div>
 
       {/* Tabs Navigation */}
-      <div className="w-full max-w-full overflow-x-auto pb-1 -mx-1 px-1 sm:mx-0 sm:px-0">
-        <div role="tablist" className="inline-flex bg-base-100 p-1 rounded-lg border border-base-200 gap-1 w-max min-w-full sm:min-w-0 sm:w-fit">
-        <a role="tab" aria-selected={activeTab === 'ventes'} tabIndex={0} className={`px-4 py-1.5 text-sm font-medium rounded-md cursor-pointer transition-colors whitespace-nowrap ${activeTab === 'ventes' ? 'bg-primary text-primary-content' : 'text-base-content/60 hover:bg-base-200'}`} onClick={() => setActiveTab('ventes')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveTab('ventes'); } }}>{t('tabs.sales')}</a>
-        <a role="tab" aria-selected={activeTab === 'performance'} tabIndex={0} className={`px-4 py-1.5 text-sm font-medium rounded-md cursor-pointer transition-colors whitespace-nowrap ${activeTab === 'performance' ? 'bg-primary text-primary-content' : 'text-base-content/60 hover:bg-base-200'}`} onClick={() => setActiveTab('performance')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveTab('performance'); } }}>{t('tabs.performance')}</a>
-        <a role="tab" aria-selected={activeTab === 'prix'} tabIndex={0} className={`px-4 py-1.5 text-sm font-medium rounded-md cursor-pointer transition-colors whitespace-nowrap ${activeTab === 'prix' ? 'bg-primary text-primary-content' : 'text-base-content/60 hover:bg-base-200'}`} onClick={() => setActiveTab('prix')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveTab('prix'); } }}>{t('tabs.price_comparison')}</a>
-        <a role="tab" aria-selected={activeTab === 'concentration'} tabIndex={0} className={`px-4 py-1.5 text-sm font-medium rounded-md cursor-pointer transition-colors whitespace-nowrap ${activeTab === 'concentration' ? 'bg-primary text-primary-content' : 'text-base-content/60 hover:bg-base-200'}`} onClick={() => setActiveTab('concentration')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveTab('concentration'); } }}>{t('tabs.concentration')}</a>
-        <a role="tab" aria-selected={activeTab === 'paiements'} tabIndex={0} className={`px-4 py-1.5 text-sm font-medium rounded-md cursor-pointer transition-colors whitespace-nowrap ${activeTab === 'paiements' ? 'bg-primary text-primary-content' : 'text-base-content/60 hover:bg-base-200'}`} onClick={() => setActiveTab('paiements')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveTab('paiements'); } }}>{t('tabs.payments')}</a>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <div className="w-full max-w-full overflow-x-auto pb-1 -mx-1 px-1 sm:mx-0 sm:px-0">
+          <TabsList className="w-max min-w-full sm:min-w-0 sm:w-fit bg-base-100 border border-base-200">
+            <TabsTrigger value="ventes">{t('tabs.sales')}</TabsTrigger>
+            <TabsTrigger value="performance">{t('tabs.performance')}</TabsTrigger>
+            <TabsTrigger value="prix">{t('tabs.price_comparison')}</TabsTrigger>
+            <TabsTrigger value="concentration">{t('tabs.concentration')}</TabsTrigger>
+            <TabsTrigger value="paiements">{t('tabs.payments')}</TabsTrigger>
+          </TabsList>
         </div>
-      </div>
+      </Tabs>
 
       {/* TAB 1: VENTES (Existing Content) */}
       {activeTab === 'ventes' && (
         <div className="space-y-6 animate-fade-in">
            {/* Info Box */}
-            <div className="flex items-start gap-3 p-4 rounded-lg bg-sky-50 text-sky-800 dark:bg-sky-900/20 dark:text-sky-400 border border-sky-200 dark:border-sky-800 shadow-sm">
+            <div className="flex items-start gap-3 p-4 rounded-lg bg-info/10 text-info border border-info/20 shadow-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 size-6">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
@@ -310,7 +387,7 @@ export default function StatistiquesFournisseur() {
                 <Card className="bg-base-100 shadow-sm border border-base-200">
                 <CardContent className="p-4">
                     <p className="text-sm font-medium text-base-content/70">{t('sales_tab.cards.units_sold')}</p>
-                    <h3 className="text-2xl font-bold text-purple-600">{totaux.quantite_vendue}</h3>
+                    <h3 className="text-2xl font-bold text-info">{totaux.quantite_vendue}</h3>
                 </CardContent>
                 </Card>
             </div>
@@ -337,7 +414,8 @@ export default function StatistiquesFournisseur() {
 
             {/* Tableau détaillé */}
             <Card className="bg-base-100 shadow-sm border border-base-200">
-                <Table className="table-fixed">
+                <div className="overflow-x-auto">
+                <Table className="table-fixed min-w-[640px]">
                     <TableHeader>
                         <TableRow>
                             <TableHead className="w-[25%] px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('sales_tab.table.supplier')}</TableHead>
@@ -373,6 +451,7 @@ export default function StatistiquesFournisseur() {
                         )}
                     </TableBody>
                 </Table>
+                </div>
             </Card>
         </div>
       )}
@@ -399,7 +478,8 @@ export default function StatistiquesFournisseur() {
           ) : (
             <Card className="overflow-hidden">
               <CardContent className="p-0">
-                <Table className="table-fixed">
+                <div className="overflow-x-auto">
+                <Table className="table-fixed min-w-[640px]">
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-48 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('concentration_tab.table.supplier')}</TableHead>
@@ -425,9 +505,9 @@ export default function StatistiquesFournisseur() {
                           <TableRow key={item.id}>
                             <TableCell className="px-3 py-2 font-medium text-slate-900">{item.nom}</TableCell>
                             <TableCell className="px-3 py-2 text-center">
-                              <ShadcnBadge className={scoreColor}>
+                              <Badge className={scoreColor}>
                                 {item.score_global}/100
-                              </ShadcnBadge>
+                              </Badge>
                             </TableCell>
                             <TableCell className="px-3 py-2">
                               <div className="font-semibold text-sm text-slate-700">
@@ -453,6 +533,7 @@ export default function StatistiquesFournisseur() {
                     )}
                   </TableBody>
                 </Table>
+                </div>
               </CardContent>
             </Card>
           )}
@@ -462,7 +543,7 @@ export default function StatistiquesFournisseur() {
       {/* TAB 3: COMPARATEUR PRIX */}
       {activeTab === 'prix' && (
         <div className="space-y-6 animate-fade-in">
-             <div className="flex items-start gap-3 p-4 rounded-lg bg-[#dcfce7] text-[#14532d] dark:bg-emerald-900/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 shadow-sm">
+             <div className="flex items-start gap-3 p-4 rounded-lg bg-success-soft text-success-strong border border-success shadow-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 <div>
                 <h3 className="font-bold">{t('prices_tab.alert_title')}</h3>
@@ -476,7 +557,8 @@ export default function StatistiquesFournisseur() {
                  </div>
             ) : (
                 <Card className="bg-base-100 shadow-sm border border-base-200">
-                    <Table className="table-fixed">
+                    <div className="overflow-x-auto">
+                    <Table className="table-fixed min-w-[640px]">
                         <TableHeader>
                             <TableRow>
                                 <TableHead className="w-[25%] px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('prices_tab.table.product')}</TableHead>
@@ -486,18 +568,28 @@ export default function StatistiquesFournisseur() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {prixComparaison?.reduce<ReactNode[]>((rows, prod) => {
-                                if (prod.ecart_pourcentage <= 0) return rows;
-                                rows.push(
+                            {(() => {
+                                const filtered = (prixComparaison ?? []).filter((prod) => prod.ecart_pourcentage > 0);
+                                if (filtered.length === 0) {
+                                    return (
+                                        <TableRow>
+                                            <TableCell colSpan={4} className="px-3 py-8">
+                                                <EmptyState compact title={t('prices_tab.table.no_data')} />
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                }
+                                return filtered.map((prod) => (
                                     <TableRow key={prod.id}>
                                         <TableCell className="px-3 py-2 font-medium max-w-xs truncate" title={prod.produit}>{prod.produit}</TableCell>
                                         <TableCell className="px-3 py-2 text-center">
-                                            <Badge variant={
-                                                prod.ecart_pourcentage > 20 ? 'error' :
-                                                prod.ecart_pourcentage > 5 ? 'warning' : 'ghost'
-                                            }>
-                                                {prod.ecart_pourcentage}%
-                                            </Badge>
+                                            {prod.ecart_pourcentage > 20 ? (
+                                                <Badge variant="destructive">{prod.ecart_pourcentage}%</Badge>
+                                            ) : prod.ecart_pourcentage > 5 ? (
+                                                <Badge className="bg-amber-500 text-white border-transparent">{prod.ecart_pourcentage}%</Badge>
+                                            ) : (
+                                                <Badge variant="outline">{prod.ecart_pourcentage}%</Badge>
+                                            )}
                                         </TableCell>
                                         <TableCell className="px-3 py-2 align-top">
                                             {prod.offres.map((offre) => (
@@ -513,11 +605,11 @@ export default function StatistiquesFournisseur() {
                                             {formatCurrency(Math.round(prod.meilleur_prix), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}
                                         </TableCell>
                                     </TableRow>
-                                );
-                                return rows;
-                            }, [])}
+                                ));
+                            })()}
                         </TableBody>
                     </Table>
+                    </div>
                 </Card>
             )}
         </div>
@@ -555,8 +647,8 @@ export default function StatistiquesFournisseur() {
                                 </ResponsiveContainer>
                             </div>
                             
-                            <div className="flex-1">
-                                <Table className="table-fixed">
+                            <div className="flex-1 w-full overflow-x-auto">
+                                <Table className="table-fixed min-w-[560px]">
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead className="w-12 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">{t('concentration_tab.table.color')}</TableHead>
@@ -668,18 +760,20 @@ export default function StatistiquesFournisseur() {
             </CardContent>
           </Card>
 
-          {/* Cartes Résumé (page courante) */}
+          {/* Cartes Résumé (total serveur, tous filtres appliqués) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card className="shadow-sm border border-slate-200">
               <CardContent className="p-4">
                 <p className="text-sm font-medium text-slate-500">{t('payments_tab.cards.total_paid')}</p>
-                <h3 className="text-2xl font-bold text-emerald-600">{formatCurrency(Math.round(paiementsTotalMontant), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</h3>
+                <h3 className="text-2xl font-bold text-success">
+                  {formatCurrency(Math.round(paiementsTotals?.total_montant ?? 0), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}
+                </h3>
               </CardContent>
             </Card>
             <Card className="shadow-sm border border-slate-200">
               <CardContent className="p-4">
                 <p className="text-sm font-medium text-slate-500">{t('payments_tab.cards.payments_count')}</p>
-                <h3 className="text-2xl font-bold text-indigo-600">{paiementsCount}</h3>
+                <h3 className="text-2xl font-bold text-primary">{paiementsTotals?.count ?? paiementsCount}</h3>
               </CardContent>
             </Card>
           </div>
@@ -687,7 +781,8 @@ export default function StatistiquesFournisseur() {
           {/* Tableau */}
           <Card className="shadow-sm border border-slate-200">
             <CardContent className="p-0">
-              <Table className="table-fixed">
+              <div className="overflow-x-auto">
+              <Table className="table-fixed min-w-[720px]">
                   <TableHeader>
                     <TableRow>
                       <TableHead className="px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('payments_tab.table.date')}</TableHead>
@@ -722,7 +817,7 @@ export default function StatistiquesFournisseur() {
                           <TableCell className="px-3 py-2 whitespace-nowrap text-slate-700">{formatDateDisplay(p.date_paiement)}</TableCell>
                           <TableCell className="px-3 py-2 font-medium text-slate-900">{p.fournisseur_name}</TableCell>
                           <TableCell className="px-3 py-2 text-right font-bold text-slate-900">{formatCurrency(Math.round(Number(p.montant)), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</TableCell>
-                          <TableCell className="px-3 py-2"><Badge variant="outline" size="sm">{t(`payments_tab.modes.${p.mode_paiement}`)}</Badge></TableCell>
+                          <TableCell className="px-3 py-2"><Badge variant="outline">{t(`payments_tab.modes.${p.mode_paiement}`)}</Badge></TableCell>
                           <TableCell className="px-3 py-2 text-xs text-slate-600">{p.reference || '-'}</TableCell>
                           <TableCell className="px-3 py-2 text-xs text-slate-600 max-w-xs truncate">
                             {p.commandes_liees && p.commandes_liees.length > 0
@@ -735,6 +830,7 @@ export default function StatistiquesFournisseur() {
                     )}
                   </TableBody>
                 </Table>
+              </div>
 
               {/* Pagination */}
               {paiementsCount > PAIEMENT_PAGE_SIZE && (

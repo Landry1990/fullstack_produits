@@ -8,11 +8,14 @@ import { formatDate } from '../../utils/dateUtils';
 import PromotionForm from './PromotionForm';
 import { Button } from '../shadcn/button';
 import { Badge } from '../shadcn/badge';
+import { Card } from '../shadcn/card';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../shadcn/table';
 import { cn } from '../../lib/utils';
 import { Plus, Pencil, Trash2, Tag, CalendarDays } from 'lucide-react';
 import { EmptyState } from '../ui/EmptyState';
 import { Skeleton } from '../ui/Skeleton';
 import { useConfirm } from '../../hooks/useConfirm';
+import { getApiErrorDetail } from '../../utils/errorHandling';
 import { logger } from '../../utils/logger'
 
 
@@ -51,6 +54,8 @@ const PromotionList: React.FC = () => {
                 return `-${promo.value} ${t('common:currency')}`;
             case DiscountType.BUY_X_GET_Y:
                 return t('promotions:list.discount.buy_get', { buy: promo.buy_quantity, get: promo.get_quantity });
+            case DiscountType.BUNDLE:
+                return t('promotions:list.discount.bundle', { value: promo.value, currency: t('common:currency') });
             default:
                 return '';
         }
@@ -64,12 +69,15 @@ const PromotionList: React.FC = () => {
             variant: 'danger'
         });
         if (!confirmed) return;
+        const previousPromotions = promotions;
+        setPromotions(prev => prev.filter(p => p.id !== id));
         try {
             await api.delete(`promotions/${id}/`);
-            setPromotions(promotions.filter(p => p.id !== id));
+            gooeyToast.success(t('promotions:delete_success'));
         } catch (error: unknown) {
+            setPromotions(previousPromotions);
             logger.error("Delete failed", error);
-            gooeyToast.error(t('promotions:delete_error', { message: error.message || error }));
+            gooeyToast.error(t('promotions:delete_error', { message: getApiErrorDetail(error, '') }));
         }
     };
 
@@ -95,13 +103,23 @@ const PromotionList: React.FC = () => {
     if (error) return (
       <div className="min-h-screen bg-slate-50 p-6 flex flex-col items-center justify-center gap-4">
         <p className="text-red-600 font-bold text-lg">{error}</p>
+        <Button
+          variant="outline"
+          onClick={() => {
+            setError(null);
+            setLoading(true);
+            fetchPromotions();
+          }}
+        >
+          {t('common:retry')}
+        </Button>
       </div>
     );
 
     return (
         <div className="h-full flex flex-col bg-slate-50 p-3 sm:p-6 gap-4 sm:gap-6 font-sans">
           {/* Header */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col p-4 sm:p-6">
+          <Card className="flex flex-col p-4 sm:p-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
               <div>
                 <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{t('promotions:title')}</h1>
@@ -132,44 +150,43 @@ const PromotionList: React.FC = () => {
                 />
             )}
 
-            <div className="overflow-x-auto -mx-2 px-2">
-                <table className="min-w-full divide-y divide-slate-200">
-                    <thead className="bg-slate-100">
-                        <tr>
-                            <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">{t('promotions:list.table.name')}</th>
-                            <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">{t('promotions:list.table.type')}</th>
-                            <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">{t('promotions:list.table.detail')}</th>
-                            <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">{t('promotions:list.table.period')}</th>
-                            <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">{t('promotions:list.table.status')}</th>
-                            <th className="px-4 py-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">{t('promotions:list.table.actions')}</th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-slate-200">
+            <Table>
+                    <TableHeader>
+                        <TableRow className="hover:bg-transparent">
+                            <TableHead>{t('promotions:list.table.name')}</TableHead>
+                            <TableHead>{t('promotions:list.table.type')}</TableHead>
+                            <TableHead>{t('promotions:list.table.detail')}</TableHead>
+                            <TableHead>{t('promotions:list.table.period')}</TableHead>
+                            <TableHead>{t('promotions:list.table.status')}</TableHead>
+                            <TableHead className="text-right">{t('promotions:list.table.actions')}</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
                         {promotions.map((promo) => (
-                            <tr key={promo.id} className="hover:bg-slate-50 transition-colors">
-                                <td className="px-4 py-3 whitespace-nowrap text-sm font-semibold text-slate-700">{promo.name}</td>
-                                <td className="px-4 py-3 whitespace-nowrap text-sm">
-                                    <Badge variant={promo.discount_type === DiscountType.BUY_X_GET_Y ? 'secondary' : 'default'} className={cn(promo.discount_type === DiscountType.BUY_X_GET_Y && 'bg-purple-100 text-purple-700 border-transparent shadow-none')}>
+                            <TableRow key={promo.id}>
+                                <TableCell className="whitespace-nowrap font-semibold">{promo.name}</TableCell>
+                                <TableCell className="whitespace-nowrap">
+                                    <Badge variant={promo.discount_type !== DiscountType.PERCENTAGE && promo.discount_type !== DiscountType.FIXED_AMOUNT ? 'secondary' : 'default'} className={cn(promo.discount_type === DiscountType.BUY_X_GET_Y && 'bg-purple-100 text-purple-700 border-transparent shadow-none', promo.discount_type === DiscountType.BUNDLE && 'bg-violet-100 text-violet-700 border-transparent shadow-none')}>
                                       <Tag className="size-3 mr-1" />
-                                      {promo.discount_type === DiscountType.BUY_X_GET_Y ? t('promotions:list.types.special_offer') : t('promotions:list.types.discount')}
+                                      {promo.discount_type === DiscountType.BUY_X_GET_Y ? t('promotions:list.types.special_offer') : promo.discount_type === DiscountType.BUNDLE ? t('promotions:list.types.bundle') : t('promotions:list.types.discount')}
                                     </Badge>
-                                </td>
-                                <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-700 font-bold">
+                                </TableCell>
+                                <TableCell className="whitespace-nowrap font-bold">
                                     {getDiscountLabel(promo)}
-                                </td>
-                                <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-500">
+                                </TableCell>
+                                <TableCell className="whitespace-nowrap text-slate-500">
                                     <div className="flex items-center gap-1.5">
                                       <CalendarDays className="size-3.5 text-slate-400" />
                                       {formatDate(promo.start_date)}
                                       {promo.end_date ? ` - ${formatDate(promo.end_date)}` : ` ${t('promotions:list.period.indefinite')}`}
                                     </div>
-                                </td>
-                                <td className="px-4 py-3 whitespace-nowrap">
+                                </TableCell>
+                                <TableCell className="whitespace-nowrap">
                                     <Badge variant={promo.active ? 'default' : 'destructive'} className={cn(!promo.active && 'bg-red-100 text-red-700 border-transparent shadow-none')}>
                                         {promo.active ? t('promotions:list.status.active') : t('promotions:list.status.inactive')}
                                     </Badge>
-                                </td>
-                                <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+                                </TableCell>
+                                <TableCell className="whitespace-nowrap text-right font-medium">
                                     <div className="flex justify-end gap-2">
                                       <Button
                                         variant="ghost"
@@ -190,25 +207,24 @@ const PromotionList: React.FC = () => {
                                         <Trash2 className="size-4" />
                                       </Button>
                                     </div>
-                                </td>
-                            </tr>
+                                </TableCell>
+                            </TableRow>
                         ))}
                         {promotions.length === 0 && (
-                          <tr>
-                            <td colSpan={6} className="h-64 text-center">
+                          <TableRow className="hover:bg-transparent">
+                            <TableCell colSpan={6} className="h-64 text-center">
                               <EmptyState
                                 compact
                                 icon={<Tag className="size-6" />}
                                 title={t('promotions:no_promotions')}
                                 className="h-full"
                               />
-                            </td>
-                          </tr>
+                            </TableCell>
+                          </TableRow>
                         )}
-                    </tbody>
-                </table>
-            </div>
-          </div>
+                    </TableBody>
+                </Table>
+          </Card>
         </div>
     );
 };

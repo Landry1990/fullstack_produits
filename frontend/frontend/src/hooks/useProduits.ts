@@ -262,6 +262,21 @@ export const useBulkDelete = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (ids: number[]) => produitService.bulkDelete(ids),
+        onMutate: async (ids) => {
+            await queryClient.cancelQueries({ queryKey: ['produits'] });
+            const idSet = new Set(ids);
+            queryClient.setQueriesData<ProduitsResponse>({ queryKey: ['produits'] }, (old) => {
+                if (!old) return old;
+                return {
+                    ...old,
+                    results: old.results.filter((p) => !idSet.has(p.id)),
+                    count: Math.max(0, (old.count || 0) - ids.length),
+                };
+            });
+        },
+        onError: () => {
+            queryClient.invalidateQueries({ queryKey: ['produits'] });
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['produits'] });
         }

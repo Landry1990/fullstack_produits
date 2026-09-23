@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useDebounce } from 'use-debounce';
 import api from '../services/api';
 import { challengesService } from '../services/challengesService';
-import type { Challenge, ChallengeListParams, ChallengePayload } from '../types';
+import type { Challenge, ChallengeListParams, ChallengePayload, ChallengeListResponse } from '../types';
 
 export const CHALLENGES_KEY = 'challenges';
 
@@ -53,6 +53,25 @@ export const useDeleteChallenge = () => {
     const qc = useQueryClient();
     return useMutation({
         mutationFn: ({ id, sudoPassword }: DeleteArgs) => challengesService.delete(id, sudoPassword),
+        onMutate: async ({ id }) => {
+            await qc.cancelQueries({ queryKey: [CHALLENGES_KEY] });
+            const previousLists = qc.getQueriesData<ChallengeListResponse>({ queryKey: [CHALLENGES_KEY, 'list'] });
+            qc.setQueriesData<ChallengeListResponse>({ queryKey: [CHALLENGES_KEY, 'list'] }, (old) => {
+                if (!old) return old;
+                return {
+                    ...old,
+                    results: old.results.filter((c: Challenge) => c.id !== id),
+                    count: Math.max(0, old.count - 1),
+                };
+            });
+            qc.removeQueries({ queryKey: [CHALLENGES_KEY, 'detail', id] });
+            return { previousLists };
+        },
+        onError: (_err, _vars, context) => {
+            context?.previousLists.forEach(([key, data]) => {
+                qc.setQueryData(key, data);
+            });
+        },
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: [CHALLENGES_KEY] });
         },
