@@ -46,6 +46,8 @@ export default function InventaireComponent() {
         selectedInventaireIds: listLogic.selectedInventaireIds,
         inventaires: listLogic.inventaires,
         setSelectedInventaireIds: listLogic.setSelectedInventaireIds,
+        setInventaires: listLogic.setInventaires,
+        setTotalCount: listLogic.setTotalCount,
         fetchInventaires: listLogic.fetchInventaires,
         activeInventaire: editorLogic.activeInventaire,
         handleEdit: editorLogic.handleEdit,

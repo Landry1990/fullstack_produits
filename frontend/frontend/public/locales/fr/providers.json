@@ -184,6 +184,9 @@
         },
         "regler_btn": "Régler la sélection ({{amount}} F)"
     },
+    "links": {
+        "view_stats": "Voir les statistiques"
+    },
     "dashboard": {
         "tabs": {
             "overview": "Vue d'ensemble",

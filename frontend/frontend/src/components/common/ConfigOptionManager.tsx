@@ -109,11 +109,13 @@ export default function ConfigOptionManager({
     });
     if (!confirmed) return;
 
+    const originalOptions = options;
+    setOptions(prev => prev.filter(o => o.id !== id));
     try {
       await api.delete(`configuration-options/${id}/`);
       gooeyToast.success(t('common:messages.success_delete'));
-      setOptions(prev => prev.filter(o => o.id !== id));
     } catch {
+      setOptions(originalOptions);
       gooeyToast.error(t('common:messages.error_deleting'));
     }
   };

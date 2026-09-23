@@ -13,12 +13,22 @@ import {
 import { useRecharts } from '../../hooks/useRecharts';
 import { formatCurrency } from '../../utils/formatters';
 import { useSupplierDashboard } from '../../hooks/useSupplierDashboard';
-import { Button } from '../shadcn/button';
 import { Skeleton } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
+import { ErrorState } from '../ui/ErrorState';
 import { useTranslation } from 'react-i18next';
 
-const COLORS = ['#10b981', '#6366f1', '#f59e0b', '#ef4444', '#a855f7', '#64748b'];
+// Palette alignée sur les tokens sémantiques du design system (index.css @theme).
+// Les références var(--color-*) s'adaptent au thème (clair / midnight) ;
+// les hex restent pour les teintes sans token dédié (violet, ardoise).
+const COLORS = [
+  'var(--color-success)',  // ex-#10b981
+  'var(--color-info)',     // ex-#6366f1 → info (bleu médical)
+  'var(--color-warning)',  // ex-#f59e0b (identique au token)
+  'var(--color-error)',    // ex-#ef4444 (identique au token)
+  '#a855f7',               // violet — aucun token dédié dans @theme
+  '#64748b',               // ardoise — aucun token dédié dans @theme
+];
 
 const getStatusKey = (status: string) => {
   const normalized = status?.toUpperCase().replace(/\s+/g, '_').replace(/'/g, '') ?? '';
@@ -56,10 +66,8 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
 
   if (error || !stats) {
     return (
-      <div className="flex items-start gap-3 p-4 rounded-lg bg-[#fee2e2] text-[#7f1d1d] dark:bg-red-900/20 dark:text-red-400 border border-red-200 dark:border-red-800 shadow-lg rounded-2xl">
-        <AlertCircle className="size-6" />
-        <span>{error || t('providers:messages.load_error')}</span>
-        <Button variant="ghost" size="sm" onClick={() => refresh()}>{t('common:retry')}</Button>
+      <div className="p-4">
+        <ErrorState error={error || t('providers:messages.load_error')} onRetry={() => refresh()} />
       </div>
     );
   }
@@ -70,7 +78,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
       value: formatCurrency(stats?.total_dette ?? 0),
       sub: t('providers:dashboard.kpis.active_providers', { count: stats?.nb_fournisseurs_actifs ?? 0 }),
       icon: TrendingDown,
-      accent: '#10b981',
+      accent: 'var(--color-success)',
       isPositive: true,
     },
     {
@@ -78,7 +86,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
       value: formatCurrency(stats?.stats_echeances?.en_retard ?? 0),
       sub: t('providers:dashboard.kpis.late_schedules', { count: stats?.stats_echeances?.count_retard ?? 0 }),
       icon: AlertCircle,
-      accent: '#059669',
+      accent: 'var(--color-primary)',
       isPositive: false,
       alert: (stats?.stats_echeances?.count_retard ?? 0) > 0
     },
@@ -87,7 +95,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
       value: formatCurrency(stats?.stats_echeances?.aujourdhui ?? 0),
       sub: t('providers:dashboard.kpis.immediate_pay'),
       icon: Clock,
-      accent: '#34d399',
+      accent: 'color-mix(in srgb, var(--color-success) 80%, white)',
       isPositive: true,
     },
     {
@@ -95,7 +103,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
       value: formatCurrency(stats?.stats_echeances?.a_venir ?? 0),
       sub: t('providers:dashboard.kpis.upcoming'),
       icon: Calendar,
-      accent: '#6ee7b7',
+      accent: 'color-mix(in srgb, var(--color-success) 55%, white)',
       isPositive: true,
     }
   ];
@@ -114,7 +122,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
                 <p className="text-caption font-black uppercase tracking-widest text-base-content/40 leading-tight">
                   {card.title}
                 </p>
-                <div className={`size-8 rounded-xl flex items-center justify-center shrink-0 ${card.alert ? 'animate-pulse' : ''}`} style={{ background: card.accent + '15', color: card.accent }}>
+                <div className={`size-8 rounded-xl flex items-center justify-center shrink-0 ${card.alert ? 'animate-pulse' : ''}`} style={{ background: `color-mix(in srgb, ${card.accent} 10%, transparent)`, color: card.accent }}>
                   <card.icon className="size-4" />
                 </div>
               </div>
@@ -125,7 +133,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
 
               <div className="flex items-center gap-1.5 mt-auto">
                 <span className={`inline-flex items-center gap-1 text-caption font-bold px-2 py-0.5 rounded-full ${
-                  card.accent === '#ef4444' || card.accent === '#f97316' ? 'bg-error/10 text-error' : 'bg-info/10 text-info'
+                  card.accent === 'var(--color-error)' || card.accent === 'var(--color-warning)' ? 'bg-error/10 text-error' : 'bg-info/10 text-info'
                 }`}>
                   {card.sub}
                 </span>
@@ -159,11 +167,11 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
               <AreaChart data={stats?.evolution_dette ?? []} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorDette" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="var(--color-success)" stopOpacity={0.2}/>
+                    <stop offset="95%" stopColor="var(--color-success)" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-base-300)" />
                 <XAxis 
                   dataKey="month" 
                   axisLine={false} 
@@ -186,7 +194,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
                 <Area 
                   type="monotone" 
                   dataKey="dette" 
-                  stroke="#10b981" 
+                  stroke="var(--color-success)"
                   strokeWidth={3} 
                   fillOpacity={1} 
                   fill="url(#colorDette)" 
@@ -299,7 +307,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
                   <td>
                     <div className="flex flex-col">
                       <span className="font-bold text-xs">{new Date(ech.date_echeance).toLocaleDateString(currentLocale, { day: 'numeric', month: 'short' })}</span>
-                      <span className={`text-caption font-bold ${ech.jours_restants < 0 ? 'text-red-500' : 'text-base-content/40'}`}>
+                      <span className={`text-caption font-bold ${ech.jours_restants < 0 ? 'text-error' : 'text-base-content/40'}`}>
                         {ech.jours_restants < 0 
                           ? t('providers:dashboard.deadlines.days_late', { count: Math.abs(ech.jours_restants) }) 
                           : t('providers:dashboard.deadlines.in_days', { count: ech.jours_restants })}

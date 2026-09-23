@@ -53,6 +53,27 @@ class PaiementFournisseurViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @action(detail=False, methods=['get'])
+    def totaux(self, request):
+        """
+        Retourne le total des paiements correspondant aux filtres actifs
+        (fournisseur, mode_paiement, dates, search) indépendamment de la pagination.
+        """
+        from decimal import Decimal
+
+        from django.db.models import Count, DecimalField, Sum, Value
+        from django.db.models.functions import Coalesce
+
+        qs = self.filter_queryset(self.get_queryset())
+        totals = qs.aggregate(
+            total_montant=Coalesce(Sum('montant'), Value(Decimal('0'), output_field=DecimalField())),
+            count=Count('id'),
+        )
+        return Response({
+            'total_montant': float(totals['total_montant']),
+            'count': totals['count'],
+        })
+
+    @action(detail=False, methods=['get'])
     def recap_journalier(self, request):
         """
         Génère un récapitulatif des paiements par date et fournisseur.

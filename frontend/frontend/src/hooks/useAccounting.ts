@@ -221,11 +221,22 @@ export const useAccounting = () => {
 
     const deleteCompte = useMutation({
         mutationFn: (id: number) => api.delete(`compta/comptes/${id}/`),
+        onMutate: async (id) => {
+            await queryClient.cancelQueries({ queryKey: ['accounting', 'comptes'] });
+            const previousComptes = queryClient.getQueryData<Compte[]>(['accounting', 'comptes']);
+            queryClient.setQueryData<Compte[]>(['accounting', 'comptes'], (old) =>
+                old ? old.filter(c => c.id !== id) : old
+            );
+            return { previousComptes };
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['accounting', 'comptes'] });
             gooeyToast.success(t('messages.account_deleted'));
         },
-        onError: (error: unknown) => {
+        onError: (error: unknown, _id, context) => {
+            if (context?.previousComptes) {
+                queryClient.setQueryData(['accounting', 'comptes'], context.previousComptes);
+            }
             const e = error as { response?: { data?: { detail?: string } } };
             const msg = e.response?.data?.detail || t('messages.account_delete_error');
             gooeyToast.error(msg);

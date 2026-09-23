@@ -68,14 +68,66 @@ export const useUpdateClientCredit = () => {
     return useMutation({
         mutationFn: ({ id, data }: { id: number; data: Partial<ClientCreditCreatePayload> }) =>
             clientCreditService.update(id, data),
+        onMutate: async ({ id, data }) => {
+            await queryClient.cancelQueries({ queryKey: [QUERY_KEY] });
+            const previous = snapshotCreditLists(queryClient);
+            updateCreditInLists(queryClient, id, data as Partial<ClientCredit>);
+            return { previous };
+        },
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
             queryClient.invalidateQueries({ queryKey: [QUERY_KEY, variables.id] });
             gooeyToast.success(t('messages.updated'));
         },
-        onError: (err: unknown) => {
+        onError: (err: unknown, _variables, context) => {
+            if (context?.previous) restoreCreditLists(queryClient, context.previous);
             gooeyToast.error(getApiErrorDetail(err, t('messages.update_error')));
         },
+    });
+};
+
+type CreditsListData = ClientCreditsListResponse | undefined;
+
+const snapshotCreditLists = (queryClient: ReturnType<typeof useQueryClient>): [readonly unknown[][], CreditsListData][] => {
+    return queryClient.getQueriesData<CreditsListData>({ queryKey: [QUERY_KEY] })
+        .filter((entry): entry is [readonly unknown[], CreditsListData] => Array.isArray(entry) && entry.length === 2)
+        .map(([key, data]) => [key as readonly unknown[], data]);
+};
+
+const restoreCreditLists = (
+    queryClient: ReturnType<typeof useQueryClient>,
+    snapshot: [readonly unknown[][], CreditsListData][]
+) => {
+    snapshot.forEach(([key, data]) => {
+        queryClient.setQueryData(key, data);
+    });
+};
+
+const removeCreditFromLists = (
+    queryClient: ReturnType<typeof useQueryClient>,
+    id: number
+) => {
+    queryClient.setQueriesData<ClientCreditsListResponse>({ queryKey: [QUERY_KEY] }, (old) => {
+        if (!old) return old;
+        return {
+            ...old,
+            results: old.results.filter((c: ClientCredit) => c.id !== id),
+            count: Math.max(0, (old.count || 0) - 1),
+        };
+    });
+};
+
+const updateCreditInLists = (
+    queryClient: ReturnType<typeof useQueryClient>,
+    id: number,
+    patch: Partial<ClientCredit>
+) => {
+    queryClient.setQueriesData<ClientCreditsListResponse>({ queryKey: [QUERY_KEY] }, (old) => {
+        if (!old) return old;
+        return {
+            ...old,
+            results: old.results.map((c: ClientCredit) => c.id === id ? { ...c, ...patch } : c),
+        };
     });
 };
 
@@ -85,11 +137,18 @@ export const useDeleteClientCredit = () => {
 
     return useMutation({
         mutationFn: (id: number) => clientCreditService.delete(id),
+        onMutate: async (id) => {
+            await queryClient.cancelQueries({ queryKey: [QUERY_KEY] });
+            const previous = snapshotCreditLists(queryClient);
+            removeCreditFromLists(queryClient, id);
+            return { previous };
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
             gooeyToast.success(t('messages.deleted'));
         },
-        onError: (err: unknown) => {
+        onError: (err: unknown, _id, context) => {
+            if (context?.previous) restoreCreditLists(queryClient, context.previous);
             gooeyToast.error(getApiErrorDetail(err, t('messages.delete_error')));
         },
     });
@@ -102,12 +161,19 @@ export const useValidateClientCredit = () => {
     return useMutation({
         mutationFn: ({ id, payload }: { id: number; payload: ClientCreditValidatePayload }) =>
             clientCreditService.validate(id, payload),
+        onMutate: async ({ id }) => {
+            await queryClient.cancelQueries({ queryKey: [QUERY_KEY] });
+            const previous = snapshotCreditLists(queryClient);
+            updateCreditInLists(queryClient, id, { status: 'VALIDATED', is_validated: true } as Partial<ClientCredit>);
+            return { previous };
+        },
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
             queryClient.invalidateQueries({ queryKey: [QUERY_KEY, variables.id] });
             gooeyToast.success(t('messages.validated'));
         },
-        onError: (err: unknown) => {
+        onError: (err: unknown, _variables, context) => {
+            if (context?.previous) restoreCreditLists(queryClient, context.previous);
             gooeyToast.error(getApiErrorDetail(err, t('messages.validate_error')));
         },
     });

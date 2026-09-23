@@ -18,7 +18,7 @@ interface UseCommandeActionsProps {
     user: User | null;
 }
 
-function removeCommandeFromCache(queryClient: QueryClient, idToRemove: number) {
+export function removeCommandeFromCache(queryClient: QueryClient, idToRemove: number) {
     queryClient.setQueriesData({ queryKey: ['commandes'] }, (old: unknown) => {
         if (!old || typeof old !== 'object') return old;
         const data = old as PaginatedResponse<Commande>;
@@ -31,7 +31,7 @@ function removeCommandeFromCache(queryClient: QueryClient, idToRemove: number) {
     });
 }
 
-function removeCommandesFromCache(queryClient: QueryClient, idsToRemove: number[]) {
+export function removeCommandesFromCache(queryClient: QueryClient, idsToRemove: number[]) {
     const idSet = new Set(idsToRemove);
     queryClient.setQueriesData({ queryKey: ['commandes'] }, (old: unknown) => {
         if (!old || typeof old !== 'object') return old;
@@ -164,14 +164,17 @@ export function useCommandeActions({
     const handleDeleteCommande = async (commande: Commande, sudoCredentials?: SudoCredentials) => {
         if (executingAction) return;
         setExecutingAction(true);
+        // Optimiste : retirer la commande immédiatement de la liste,
+        // en cas d'échec le refetch restaure l'état réel
+        removeCommandeFromCache(queryClient, commande.id);
+        setSelectedCommande(null);
+        setViewMode('LIST');
         try {
             await commandeService.delete(commande.id, sudoCredentials);
             gooeyToast.success(t('orders:messages.delete_success'));
-            removeCommandeFromCache(queryClient, commande.id);
             fetchCommandes();
-            setSelectedCommande(null);
-            setViewMode('LIST');
         } catch (err) {
+            fetchCommandes();
             gooeyToast.error(getApiErrorDetail(err, t('orders:messages.delete_error')));
             throw err;
         } finally {
@@ -317,14 +320,16 @@ export function useCommandeActions({
     const handleBulkDelete = async (ids: number[], sudoCredentials?: SudoCredentials) => {
         if (executingAction || ids.length === 0) return;
         setExecutingAction(true);
+        // Optimiste : retirer les commandes immédiatement de la liste
+        removeCommandesFromCache(queryClient, ids);
         try {
             await commandeService.bulkDelete(ids, sudoCredentials);
             gooeyToast.success(t('orders:messages.bulk_delete_success', { count: ids.length }));
-            removeCommandesFromCache(queryClient, ids);
             fetchCommandes();
             setSelectedCommande(null);
             setViewMode('LIST');
         } catch (err) {
+            fetchCommandes();
             gooeyToast.error(t('orders:messages.bulk_delete_error'));
             throw err;
         } finally {

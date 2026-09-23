@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Building2, LayoutDashboard, List } from 'lucide-react';
+import { Building2, LayoutDashboard, List, BarChart3 } from 'lucide-react';
 import { useFournisseurs } from '../hooks/useFournisseurs';
 import FournisseursList from './fournisseurs/FournisseursList';
 import FournisseurDetails from './fournisseurs/FournisseurDetails';
@@ -47,7 +47,16 @@ export default function Fournisseurs() {
            </div>
         </div>
 
-        <div className="bg-slate-100 p-1 rounded-lg flex gap-1 self-stretch sm:self-auto">
+        <div className="flex items-center gap-2 self-stretch sm:self-auto">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/app/statistiques-fournisseurs')}
+            className="gap-2 shrink-0"
+          >
+            <BarChart3 className="size-4" /> {t('providers:links.view_stats')}
+          </Button>
+          <div className="bg-slate-100 p-1 rounded-lg flex gap-1 flex-1 sm:flex-none">
           <Button
             variant="ghost"
             size="sm"
@@ -70,6 +79,7 @@ export default function Fournisseurs() {
           >
             <List className="size-4" /> {t('providers:dashboard.tabs.management')}
           </Button>
+          </div>
         </div>
       </div>
 

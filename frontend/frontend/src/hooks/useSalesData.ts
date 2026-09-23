@@ -136,18 +136,30 @@ export const useSalesData = () => {
 
     const handleDeleteBrouillons = async () => {
         if (!(await confirm({ title: t('common:confirmation'), message: t('messages.delete_drafts_confirm'), confirmText: t('common:confirm'), variant: 'danger' }))) return;
+        // Mise à jour optimiste : retirer les brouillons visibles avant l'appel serveur
+        const originalFactures = factures;
+        const originalTotalItems = totalItems;
+        const brouillonIds = new Set(factures.filter(f => f.status === 'BROUILLON').map(f => f.id));
+        setFactures(prev => prev.filter(f => !brouillonIds.has(f.id)));
+        setTotalItems(prev => Math.max(0, prev - brouillonIds.size));
         try {
             await venteService.deleteBrouillons();
             gooeyToast.success(t('messages.delete_drafts_success'));
-            fetchFactures(currentPage);
+            fetchPageInit();
         } catch (error) {
             logger.error(error);
             gooeyToast.error(t('messages.delete_drafts_error'));
+            setFactures(originalFactures);
+            setTotalItems(originalTotalItems);
         }
     };
 
     const deleteFacture = async (id: number) => {
         if (!(await confirm({ title: t('common:confirmation'), message: t('confirm_delete'), confirmText: t('common:confirm'), variant: 'danger' }))) return;
+        const originalFactures = factures;
+        const originalTotalItems = totalItems;
+        setFactures(prev => prev.filter(f => f.id !== id));
+        setTotalItems(prev => Math.max(0, prev - 1));
         try {
             await venteService.deleteFacture(id);
             gooeyToast.success(t('messages.delete_success'));
@@ -155,11 +167,18 @@ export const useSalesData = () => {
         } catch (error) {
             logger.error(error);
             gooeyToast.error(t('messages.delete_error'));
+            setFactures(originalFactures);
+            setTotalItems(originalTotalItems);
         }
     };
 
     const bulkDeleteFactures = async (ids: number[]) => {
         if (!(await confirm({ title: t('common:confirmation'), message: t('confirm_bulk_delete', { count: ids.length }), confirmText: t('common:confirm'), variant: 'danger' }))) return;
+        const originalFactures = factures;
+        const originalTotalItems = totalItems;
+        const idSet = new Set(ids);
+        setFactures(prev => prev.filter(f => !idSet.has(f.id)));
+        setTotalItems(prev => Math.max(0, prev - ids.length));
         try {
             await venteService.bulkDelete(ids);
             gooeyToast.success(t('messages.bulk_delete_success'));
@@ -167,6 +186,8 @@ export const useSalesData = () => {
         } catch (error) {
             logger.error(error);
             gooeyToast.error(t('messages.bulk_delete_error'));
+            setFactures(originalFactures);
+            setTotalItems(originalTotalItems);
         }
     };
 

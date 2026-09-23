@@ -184,6 +184,9 @@
         },
         "regler_btn": "Pay selection ({{amount}} F)"
     },
+    "links": {
+        "view_stats": "View statistics"
+    },
     "dashboard": {
         "tabs": {
             "overview": "Overview",

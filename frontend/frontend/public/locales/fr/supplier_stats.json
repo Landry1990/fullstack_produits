@@ -6,6 +6,18 @@
         "to": "Au",
         "refresh": "Actualiser"
     },
+    "links": {
+        "manage_suppliers": "Gérer les fournisseurs"
+    },
+    "period": {
+        "label": "Période",
+        "presets": {
+            "month": "Mois courant",
+            "90d": "90 derniers jours",
+            "12m": "12 derniers mois",
+            "custom": "Personnalisé"
+        }
+    },
     "tabs": {
         "sales": "Ventes & Marges",
         "performance": "Performance (Scoring)",
@@ -58,7 +70,8 @@
             "product": "Produit",
             "max_gap": "Écart Max",
             "offers": "Offres (Prix Moyen)",
-            "best_price": "Meilleur Prix"
+            "best_price": "Meilleur Prix",
+            "no_data": "Aucun écart de prix significatif détecté"
         }
     },
     "concentration_tab": {

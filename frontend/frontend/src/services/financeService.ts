@@ -63,18 +63,18 @@ const financeService = {
         return response.data as MarginAnalysisData;
     },
 
-    getAnalyseFournisseurs: async (): Promise<SupplierAnalysisItem[]> => {
-        const response = await api.get('finance-stats/analyse_fournisseurs/');
+    getAnalyseFournisseurs: async (params?: { date_debut?: string; date_fin?: string }): Promise<SupplierAnalysisItem[]> => {
+        const response = await api.get('finance-stats/analyse_fournisseurs/', { params });
         return response.data as SupplierAnalysisItem[];
     },
 
-    getComparaisonPrix: async (): Promise<ProduitComparaison[]> => {
-        const response = await api.get('finance-stats/comparaison_prix_achat/');
+    getComparaisonPrix: async (params?: { date_debut?: string; date_fin?: string }): Promise<ProduitComparaison[]> => {
+        const response = await api.get('finance-stats/comparaison_prix_achat/', { params });
         return response.data as ProduitComparaison[];
     },
 
-    getRepartitionAchats: async (): Promise<RepartitionAchatsData> => {
-        const response = await api.get('finance-stats/repartition_achats/');
+    getRepartitionAchats: async (params?: { date_debut?: string; date_fin?: string }): Promise<RepartitionAchatsData> => {
+        const response = await api.get('finance-stats/repartition_achats/', { params });
         return response.data as RepartitionAchatsData;
     },
 
@@ -118,6 +118,17 @@ const financeService = {
         return response.data as { count: number; results: PaiementFournisseur[] };
     },
 
+    getPaiementsTotals: async (params: {
+        fournisseur?: number;
+        mode_paiement?: string;
+        date_debut?: string;
+        date_fin?: string;
+        search?: string;
+    }): Promise<{ total_montant: number; count: number }> => {
+        const response = await api.get('paiements-fournisseurs/totaux/', { params });
+        return response.data as { total_montant: number; count: number };
+    },
+
     getPaiementsHistoryAll: async (params: {
         fournisseur?: number;
         mode_paiement?: string;
@@ -146,7 +157,7 @@ const financeService = {
     },
 
     deletePaiement: async (id: number): Promise<void> => {
-        await api.delete(`paiements-fournisseurs/${id}//`); // Fix double slash if needed, but api.ts has / at end
+        await api.delete(`paiements-fournisseurs/${id}/`);
     }
 };
 

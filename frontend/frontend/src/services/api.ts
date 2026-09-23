@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { gooeyToast } from 'goey-toast';
 import { safeStorage } from '../utils/storage';
+import { savePostLoginRedirect } from '../utils/postLoginRedirect';
 import * as navigationService from './navigationService';
 import i18n from '../i18n';
 
@@ -188,6 +189,8 @@ api.interceptors.response.use(
             clearAuthSession();
 
             if (!onLoginPage) {
+                // Après clearAuthSession : son clear() purge aussi le repli mémoire
+                savePostLoginRedirect(currentPath + window.location.search);
                 setTimeout(() => {
                     navigationService.navigate('/', { replace: true });
                 }, 300);

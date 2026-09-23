@@ -11,6 +11,8 @@ interface UseInventaireMergeProps {
     selectedInventaireIds: Set<number>;
     inventaires: Inventaire[];
     setSelectedInventaireIds: (ids: Set<number>) => void;
+    setInventaires?: React.Dispatch<React.SetStateAction<Inventaire[]>>;
+    setTotalCount?: React.Dispatch<React.SetStateAction<number>>;
     fetchInventaires: () => void;
     activeInventaire: Inventaire | null;
     handleEdit: (inv: Inventaire) => void;
@@ -22,6 +24,8 @@ export const useInventaireMerge = ({
     selectedInventaireIds,
     inventaires,
     setSelectedInventaireIds,
+    setInventaires,
+    setTotalCount,
     fetchInventaires,
     activeInventaire,
     handleEdit,
@@ -93,29 +97,34 @@ export const useInventaireMerge = ({
         if (!confirmed) return;
 
         setMerging(true);
+        const sourceIds = isListMode
+            ? Array.from(selectedInventaireIds).filter(id => id !== targetId)
+            : (selectedMergeSource ? [selectedMergeSource] : []);
+
+        // Mise à jour optimiste : retirer les inventaires sources de la liste
+        if (setInventaires) {
+            const idSet = new Set(sourceIds);
+            setInventaires(prev => prev.filter(inv => !idSet.has(inv.id)));
+            if (setTotalCount) setTotalCount(prev => Math.max(0, prev - sourceIds.length));
+        }
+        setSelectedInventaireIds(new Set());
+
         try {
             if (isListMode) {
-                // List Mode: Merge multiple sources into selected target
-                const sources = Array.from(selectedInventaireIds).filter(id => id !== targetId);
-                let successCount = 0;
-
-                await Promise.all(sources.map(sourceId =>
+                await Promise.all(sourceIds.map(sourceId =>
                     api.post(`inventaires/${targetId}/merge/`, {
                         source_inventaire_id: sourceId
                     })
                 ));
-                successCount = sources.length;
-
-                gooeyToast.success(t('inventaire.merge.success_count', { count: successCount }));
-                setSelectedInventaireIds(new Set());
+                gooeyToast.success(t('inventaire.merge.success_count', { count: sourceIds.length }));
                 fetchInventaires();
             } else {
-                // Detail Mode: Merge single external source into active inventory
                 await api.post(`inventaires/${activeInventaire?.id}/merge/`, {
                     source_inventaire_id: selectedMergeSource
                 });
                 gooeyToast.success(t('inventaire.merge.success'));
                 if (activeInventaire) handleEdit(activeInventaire);
+                fetchInventaires();
             }
 
             setShowMergeModal(false);
@@ -123,6 +132,7 @@ export const useInventaireMerge = ({
         } catch (err: unknown) {
             logger.error("Erreur fusion", err);
             gooeyToast.error(getApiErrorDetail(err, t('inventaire.merge.error', { defaultValue: 'Erreur lors de la fusion' })));
+            fetchInventaires();
         } finally {
             setMerging(false);
         }

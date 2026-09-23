@@ -6,6 +6,7 @@
     "error_loading": "Erreur lors du chargement des promotions",
     "fetch_error": "Impossible de récupérer les promotions",
     "delete_confirm": "Voulez-vous vraiment supprimer cette promotion ?",
+    "delete_success": "Promotion supprimée",
     "delete_error": "Erreur lors de la suppression : {{message}}",
     "list": {
         "table": {
@@ -18,10 +19,12 @@
         },
         "types": {
             "discount": "Remise",
-            "special_offer": "Offre Spéciale"
+            "special_offer": "Offre Spéciale",
+            "bundle": "Pack"
         },
         "discount": {
-            "buy_get": "Achetez {{buy}}, Recevez {{get}} Offert(s)"
+            "buy_get": "Achetez {{buy}}, Recevez {{get}} Offert(s)",
+            "bundle": "Pack : {{value}} {{currency}}"
         },
         "period": {
             "indefinite": "Indéfinie"
@@ -42,6 +45,15 @@
         "general_info": "Informations Générales",
         "pack_name": "Nom de l'offre / Pack",
         "pack_placeholder": "Ex: Promo Été, Pack Santé...",
+        "description": "Description",
+        "description_placeholder": "Description de la promotion (optionnel)",
+        "application_mode": "Mode d'application",
+        "modes": {
+            "auto_show": "Affichage automatique",
+            "auto_suggest": "Proposition automatique",
+            "auto_apply": "Remise automatique"
+        },
+        "active_label": "Promotion active",
         "start_date": "Date de début",
         "end_date": "Date de fin (Optionnel)",
         "type_value": "Type et Valeur",
@@ -76,9 +88,10 @@
             }
         },
         "status": {
+            "label": "Statut",
             "loading": "Enregistrement...",
             "ready": "Prêt",
-            "total_fixed": "Total fixe: {{value}} F"
+            "total_fixed": "Total fixe: {{value}} {{currency}}"
         },
         "actions": {
             "cancel": "Annuler",
