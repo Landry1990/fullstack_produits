@@ -494,7 +494,7 @@ class DashboardCoreMixin(viewsets.ViewSet):
                 'message_key': 'manager_dashboard.alerts.shortage_msg',
                 'params': {'count': shortages},
                 'action_key': 'manager_dashboard.alerts.action_stock',
-                'action_route': '/app/ruptures'
+                'action_route': '/app/stock-analysis'
             })
     
         # --- IMPORTANT DEBTORS ALERT ---

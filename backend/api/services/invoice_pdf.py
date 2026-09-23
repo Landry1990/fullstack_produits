@@ -7,10 +7,11 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm, inch
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
+from api.utils_doclang import T, get_document_language
 from api.utils_licence import valider_licence_systeme
 
 
-def _header_footer(canvas, doc, company_info, facture_info, facture):
+def _header_footer(canvas, doc, company_info, facture_info, facture, lang='fr'):
     canvas.saveState()
     styles = getSampleStyleSheet()
     _page_width, page_height = letter
@@ -19,8 +20,8 @@ def _header_footer(canvas, doc, company_info, facture_info, facture):
 
     header_data = [
         [
-            Paragraph(f"<b>{company_info['name']}</b><br/>{company_info['address']}<br/>Tel: {company_info['tel']}", styles['Normal']),
-            Paragraph("<b>FACTURE</b>", styles['h1'])
+            Paragraph(f"<b>{company_info['name']}</b><br/>{company_info['address']}<br/>{T(lang, 'inv_lbl_tel')} {company_info['tel']}", styles['Normal']),
+            Paragraph(f"<b>{T(lang, 'inv_facture')}</b>", styles['h1'])
         ]
     ]
     header_table = Table(header_data, colWidths=[content_width / 2, content_width / 2])
@@ -34,8 +35,8 @@ def _header_footer(canvas, doc, company_info, facture_info, facture):
 
     info_data = [
         [
-            Paragraph(f"<b>Client:</b><br/>{facture_info['client_name']}<br/>{facture_info['client_address']}<br/>Tel: {facture_info['client_phone']}", styles['Normal']),
-            Paragraph(f"<b>Facture N°:</b> {facture_info['facture_id']}<br/><b>Date:</b> {facture_info['date_facture']}<br/><b>Statut:</b> {facture.get_status_display()}", styles['Normal'])
+            Paragraph(f"<b>{T(lang, 'inv_lbl_client')}</b><br/>{facture_info['client_name']}<br/>{facture_info['client_address']}<br/>{T(lang, 'inv_lbl_tel')} {facture_info['client_phone']}", styles['Normal']),
+            Paragraph(f"<b>{T(lang, 'inv_lbl_invoice_no')}</b> {facture_info['facture_id']}<br/><b>{T(lang, 'inv_lbl_date')}</b> {facture_info['date_facture']}<br/><b>{T(lang, 'inv_lbl_statut')}</b> {facture.get_status_display()}", styles['Normal'])
         ]
     ]
     info_table = Table(info_data, colWidths=[content_width / 2, content_width / 2])
@@ -46,12 +47,16 @@ def _header_footer(canvas, doc, company_info, facture_info, facture):
     ]))
     _, info_height = info_table.wrapOn(canvas, content_width, doc.topMargin)
     info_table.drawOn(canvas, margin, page_height - doc.topMargin - header_height - 0.1 * inch - info_height - 0.1 * inch)
-    canvas.drawString(margin, 0.75 * inch, f"Page {doc.page}")
-    canvas.drawRightString(margin + content_width, 0.75 * inch, f"Total TTC: {facture.total_ttc} F")
+    canvas.drawString(margin, 0.75 * inch, T(lang, 'inv_page', n=doc.page))
+    canvas.drawRightString(margin + content_width, 0.75 * inch, f"{T(lang, 'inv_total_ttc_lbl')} {facture.total_ttc} F")
     canvas.restoreState()
 
 
-def generate_invoice_pdf(facture, settings, is_proforma=False):
+def generate_invoice_pdf(facture, settings, is_proforma=False, lang=None):
+    from api.utils_doclang import format_doc_date
+
+    if not lang:
+        lang = get_document_language()
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=2 * cm, leftMargin=2 * cm, topMargin=2 * cm, bottomMargin=2 * cm)
     story = []
@@ -66,18 +71,19 @@ def generate_invoice_pdf(facture, settings, is_proforma=False):
     company_name = payload.get('pharmacie_nom') if valid and payload and payload.get('pharmacie_nom') else settings.company_name
     company_address = settings.company_address.replace('\n', '<br/>')
     company_block = [Paragraph(f"<b>{company_name}</b>", style_company), Paragraph(company_address, style_normal)]
-    invoice_date = (facture.date_document or facture.date).strftime('%d/%m/%Y à %H:%M')
-    client_name = facture.client_name_override or (facture.client.name if facture.client else 'Client de passage')
-    invoice_details = f"<b>N° Facture: {facture.numero_facture or facture.id}</b><br/>Date: {invoice_date}<br/>Client: {client_name}"
+    _inv_dt = facture.date_document or facture.date
+    invoice_date = f"{format_doc_date(_inv_dt, lang)} {T(lang, 'doc_at')} {_inv_dt.strftime('%H:%M')}"
+    client_name = facture.client_name_override or (facture.client.name if facture.client else T(lang, 'client_passage'))
+    invoice_details = f"<b>{T(lang, 'inv_lbl_n_facture')} {facture.numero_facture or facture.id}</b><br/>{T(lang, 'inv_lbl_date')} {invoice_date}<br/>{T(lang, 'inv_lbl_client')} {client_name}"
     if facture.client:
         if facture.client.phone:
-            invoice_details += f"<br/>Tel: {facture.client.phone}"
+            invoice_details += f"<br/>{T(lang, 'inv_lbl_tel')} {facture.client.phone}"
         if getattr(facture.client, 'niu', None):
             invoice_details += f"<br/>NIU: {facture.client.niu}"
         if getattr(facture.client, 'registre_commerce', None):
             invoice_details += f"<br/>RC: {facture.client.registre_commerce}"
 
-    document_title = 'PROFORMA' if is_proforma else 'FACTURE'
+    document_title = T(lang, 'inv_proforma') if is_proforma else T(lang, 'inv_facture')
     if is_proforma and not facture.numero_facture:
         facture.numero_facture = f'PROFORMA-{facture.id}'
     layout = settings.header_layout
@@ -110,7 +116,7 @@ def generate_invoice_pdf(facture, settings, is_proforma=False):
         ])
 
     story.append(Spacer(1, 1 * cm))
-    rows = [[Paragraph('<b>Désignation</b>', style_normal), Paragraph('<b>Qté</b>', style_center), Paragraph('<b>P.U</b>', style_right), Paragraph('<b>Total</b>', style_right)]]
+    rows = [[Paragraph(f"<b>{T(lang, 'col_designation')}</b>", style_normal), Paragraph(f"<b>{T(lang, 'col_qte')}</b>", style_center), Paragraph(f"<b>{T(lang, 'inv_col_pu')}</b>", style_right), Paragraph(f"<b>{T(lang, 'row_total')}</b>", style_right)]]
     for item in facture.produits.all():
         total_line = item.quantity * item.selling_price
         rows.append([
@@ -131,10 +137,10 @@ def generate_invoice_pdf(facture, settings, is_proforma=False):
     ]))
     story.extend([items_table, Spacer(1, 1 * cm)])
     totals_table = Table([
-        ['Sous-total :', f'{facture.total_ht:,.0f} F'],
-        ['TVA :', f'{facture.total_tva:,.0f} F'],
-        ['Remise :', f'{facture.remise:,.0f} F'],
-        ['TOTAL À PAYER :', f'{facture.total_ttc:,.0f} F'],
+        [T(lang, 'inv_subtotal'), f'{facture.total_ht:,.0f} F'],
+        [T(lang, 'inv_tva'), f'{facture.total_tva:,.0f} F'],
+        [T(lang, 'inv_remise'), f'{facture.remise:,.0f} F'],
+        [T(lang, 'inv_total_payer'), f'{facture.total_ttc:,.0f} F'],
     ], colWidths=[4 * cm, 4 * cm])
     totals_table.setStyle(TableStyle([('ALIGN', (0, 0), (-1, -1), 'RIGHT'), ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'), ('LINEABOVE', (0, -1), (-1, -1), 1, colors.black)]))
     story.append(totals_table)
@@ -149,6 +155,6 @@ def generate_invoice_pdf(facture, settings, is_proforma=False):
         'client_name': client_name,
         'client_address': facture.client.address if facture.client and facture.client.address else '',
         'client_phone': facture.client.phone if facture.client and facture.client.phone else '',
-    }, facture))
+    }, facture, lang=lang))
     buffer.seek(0)
     return buffer

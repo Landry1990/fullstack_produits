@@ -5,6 +5,8 @@ import { gooeyToast } from 'goey-toast';
 import { useAuth } from './AuthContext';
 import { useLicence } from './LicenceContext';
 import { logger } from '../utils/logger'
+import i18n from '../i18n';
+import { setDocumentLanguage } from '../utils/documentLang';
 
 export interface PharmacySettings {
   id: number;
@@ -223,6 +225,21 @@ export const PharmacySettingsProvider = ({ children }: { children: ReactNode }) 
     pharmacy_name: licence?.pharmacie_nom || settings.pharmacy_name
   };
 
+  // Synchronise la langue des documents (utils/documentLang) pour les helpers
+  // non-React, et précharge les namespaces i18n de cette langue pour que
+  // i18n.getFixedT(docLang) fonctionne hors composants.
+  useEffect(() => {
+    const locale = effectiveSettings.locale || 'fr-FR';
+    setDocumentLanguage(locale);
+    const docLang = locale.toLowerCase().startsWith('en') ? 'en' : 'fr';
+    // Namespaces utilisés par les documents générés (impression HTML + PDF).
+    // loadNamespaces les enregistre ET les charge pour la langue courante ;
+    // loadLanguages(docLang) charge ensuite tous les ns connus pour docLang
+    // (i18next met en cache — pas de requête si déjà chargées).
+    const docNamespaces = ['printing', 'reports', 'stock', 'cash_journal', 'cash_closings', 'monthly_report', 'common'];
+    void i18n.loadNamespaces(docNamespaces).then(() => i18n.loadLanguages(docLang));
+  }, [effectiveSettings.locale]);
+
   // Mémoriser l'objet value pour éviter les re-renders inutiles
   const contextValue = useMemo(() => ({
     settings: effectiveSettings,
@@ -247,4 +264,21 @@ export const usePharmacySettings = () => {
     throw new Error('usePharmacySettings must be used within a PharmacySettingsProvider');
   }
   return context;
+};
+
+/**
+ * Langue/locale à utiliser pour les documents générés (impression, PDF).
+ *
+ * Découplée de la langue de l'interface (i18n.language) : la source de vérité
+ * est `PharmacySettings.locale` ('fr-FR' | 'en-US'). Défaut français tant que
+ * les paramètres ne sont pas chargés.
+ *
+ * - `lang`   : 'fr' | 'en' — pour `useTranslation(ns, { lng: lang })`
+ * - `locale` : 'fr-FR' | 'en-US' — pour toLocaleString / Intl.NumberFormat
+ */
+export const useDocumentLocale = (): { lang: 'fr' | 'en'; locale: string } => {
+  const { settings } = usePharmacySettings();
+  const locale = settings?.locale || 'fr-FR';
+  const lang: 'fr' | 'en' = locale.toLowerCase().startsWith('en') ? 'en' : 'fr';
+  return { lang, locale };
 };

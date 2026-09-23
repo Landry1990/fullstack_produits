@@ -22,6 +22,7 @@ MENU_HIERARCHY = [
         'submenus': [
             {'key': 'ventes_consultation', 'labelKey': 'sidebar:ventes.consultation'},
             {'key': 'ventes_historique', 'labelKey': 'sidebar:ventes.historique'},
+            {'key': 'ventes_avoirs_clients', 'labelKey': 'sidebar:ventes.avoirs_clients'},
             {'key': 'ventes_journal', 'labelKey': 'sidebar:ventes.journal'},
             {'key': 'ventes_clotures', 'labelKey': 'sidebar:ventes.clotures'},
             {'key': 'ventes_ordonnancier', 'labelKey': 'sidebar:ventes.ordonnancier'},
@@ -49,7 +50,14 @@ MENU_HIERARCHY = [
         ],
     },
     {'key': 'fournisseurs', 'labelKey': 'sidebar:fournisseurs.title'},
-    {'key': 'clients', 'labelKey': 'sidebar:clients'},
+    {
+        'key': 'clients',
+        'labelKey': 'sidebar:clients',
+        'submenus': [
+            {'key': 'clients_consultation', 'labelKey': 'sidebar:clients_consultation'},
+            {'key': 'clients_imc', 'labelKey': 'sidebar:clients_imc'},
+        ],
+    },
     {'key': 'creances', 'labelKey': 'sidebar:creances'},
     {
         'key': 'inventaire',
@@ -58,6 +66,7 @@ MENU_HIERARCHY = [
             {'key': 'inventaire_saisie', 'labelKey': 'sidebar:stock.inventaire.title'},
             {'key': 'inventaire_journal', 'labelKey': 'sidebar:stock.journal'},
             {'key': 'inventaire_analyse', 'labelKey': 'sidebar:stock.analyse.title'},
+            {'key': 'inventaire_cadencier', 'labelKey': 'sidebar:stock.cadencier.title'},
             {'key': 'inventaire_reappro', 'labelKey': 'sidebar:stock.reappro.title'},
             {'key': 'inventaire_avoirs', 'labelKey': 'sidebar:stock.avoirs'},
             {'key': 'inventaire_promis', 'labelKey': 'sidebar:stock.promis'},
@@ -65,7 +74,7 @@ MENU_HIERARCHY = [
             {'key': 'inventaire_perimes', 'labelKey': 'sidebar:stock.perimes.title'},
             {'key': 'inventaire_organisation', 'labelKey': 'sidebar:stock.organisation.title'},
             {'key': 'inventaire_etats', 'labelKey': 'sidebar:stock.etats_inventaire.title'},
-            {'key': 'inventaire_rapport_ug', 'labelKey': 'sidebar:stock.rapport_ug'},
+            {'key': 'inventaire_rapport_ug', 'labelKey': 'sidebar:stock.rapport_ug.title'},
         ],
     },
     {
@@ -87,9 +96,7 @@ MENU_HIERARCHY = [
         'key': 'settings',
         'labelKey': 'sidebar:parametres.title',
         'submenus': [
-            {'key': 'settings_facture', 'labelKey': 'sidebar:parametres.facture'},
             {'key': 'settings_pharmacie', 'labelKey': 'sidebar:parametres.pharmacie'},
-            {'key': 'settings_whatsapp', 'labelKey': 'sidebar:parametres.whatsapp'},
             {'key': 'settings_telegram', 'labelKey': 'sidebar:parametres.telegram'},
         ],
     },

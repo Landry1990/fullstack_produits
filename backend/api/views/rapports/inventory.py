@@ -373,21 +373,23 @@ class RapportInventoryMixin:
             get_pharma_summary_table_style,
             get_pharma_table_style,
         )
-        
+        from api.utils_doclang import T, get_document_language
+
+        lang = get_document_language()
         valorisation = request.query_params.get('valorisation', 'ACHAT')
         stock_type = request.query_params.get('type', 'tous')
-        
+
         # Sélectionner la méthode de calcul selon le type
         if stock_type == 'pharmacie':
             data = self._get_valeur_stock_pharmacie_data(valorisation)
-            type_suffix = " - PHARMACIE (sans divers)"
+            type_suffix = T(lang, 'stock_type_pharmacie')
         elif stock_type == 'divers':
             data = self._get_valeur_stock_divers_data(valorisation)
-            type_suffix = " - DIVERS"
+            type_suffix = ""
         else:
             data = self._get_valeur_stock_summary_data(valorisation)
             type_suffix = ""
-        
+
         is_pmp = data['is_pmp']
 
         # 2. Construction du PDF
@@ -397,22 +399,25 @@ class RapportInventoryMixin:
         )
         story = []
         styles = get_pharma_styles()
-        
+
         story.append(Spacer(1, 5*mm))
-        
+
         # --- Section 1: Récapitulatif Global ---
-        type_label = "COÛT D'ACHAT (PMP)" if is_pmp else "PRIX DE VENTE (TTC)"
-        doc_title = f"VALEUR STOCK{type_suffix} ({'ACHAT PMP' if is_pmp else 'VENTE'})" if is_pmp else f"VALEUR STOCK{type_suffix} ({'VENTE'})" if stock_type != 'divers' else f"VALEUR STOCK DIVERS ({'VENTE'})"
-        doc_title = f"VALEUR STOCK{type_suffix} ({'PMP' if is_pmp else 'VENTE'})" if stock_type != 'divers' else f"VALEUR STOCK DIVERS ({'PMP' if is_pmp else 'VENTE'})"
-        
-        story.append(Paragraph(f"RÉCAPITULATIF GÉNÉRAL — {type_label}", styles['PharmaSubtitle']))
+        type_label = T(lang, 'stock_type_label_pmp' if is_pmp else 'stock_type_label_vente')
+        valo_label = T(lang, 'stock_valo_pmp' if is_pmp else 'stock_valo_vente')
+        if stock_type == 'divers':
+            doc_title = T(lang, 'stock_doc_title_divers', valo=valo_label)
+        else:
+            doc_title = T(lang, 'stock_doc_title', suffix=type_suffix, valo=valo_label)
+
+        story.append(Paragraph(T(lang, 'stock_recap_title', label=type_label), styles['PharmaSubtitle']))
         story.append(Spacer(1, 3*mm))
-        
+
         summary_data = [
-            ["MÉTHODE DE VALORISATION", "MONTANT RECONSTITUÉ"],
-            ["Valeur Totale HT", format_currency(data['total_ht'])],
-            ["Montant Total TVA", format_currency(data['total_tva'])],
-            [f"VALEUR TOTALE {('PMP' if is_pmp else 'TTC')}", format_currency(data['total_ttc'])]
+            [T(lang, 'stock_col_methode'), T(lang, 'stock_col_montant')],
+            [T(lang, 'stock_row_ht'), format_currency(data['total_ht'])],
+            [T(lang, 'stock_row_tva'), format_currency(data['total_tva'])],
+            [T(lang, 'stock_row_total', valo=valo_label), format_currency(data['total_ttc'])]
         ]
         
         t_summary = Table(summary_data, colWidths=[9*cm, 7*cm])
@@ -422,10 +427,15 @@ class RapportInventoryMixin:
         story.append(Spacer(1, 12*mm))
         
         # --- Section 2: Répartition par TVA ---
-        story.append(Paragraph("RÉPARTITION DÉTAILLÉE PAR TAUX DE TVA", styles['PharmaSubtitle']))
+        story.append(Paragraph(T(lang, 'stock_tva_title'), styles['PharmaSubtitle']))
         story.append(Spacer(1, 3*mm))
-        
-        tva_header = ["Taux TVA", "Base HT", "Montant TVA", "Total Reconstitué"]
+
+        tva_header = [
+            T(lang, 'stock_col_taux_tva'),
+            T(lang, 'stock_col_base_ht'),
+            T(lang, 'stock_col_montant_tva'),
+            T(lang, 'stock_col_total_reconstitue'),
+        ]
         tva_data = [tva_header]
         
         for item in data['tva_breakdown']:
@@ -442,13 +452,13 @@ class RapportInventoryMixin:
         
         # --- Section 3: Notes ---
         story.append(Spacer(1, 20*mm))
-        methode_desc = "fondée sur le PMP stocké en base." if is_pmp else "fondée sur les prix de vente publics actuels."
-        story.append(Paragraph(f"<b>Note comptable :</b> Cette valorisation est {methode_desc}", styles['PharmaSmall']))
-        
+        methode_desc = T(lang, 'stock_desc_pmp' if is_pmp else 'stock_desc_vente')
+        story.append(Paragraph(T(lang, 'stock_note', desc=methode_desc), styles['PharmaSmall']))
+
         doc.build(
-            story, 
-            onFirstPage=lambda c, d: (draw_pharma_header(c, d, title=doc_title), draw_pharma_footer(c, d)),
-            onLaterPages=lambda c, d: (draw_pharma_header(c, d, title=doc_title), draw_pharma_footer(c, d))
+            story,
+            onFirstPage=lambda c, d: (draw_pharma_header(c, d, title=doc_title, lang=lang), draw_pharma_footer(c, d, lang=lang)),
+            onLaterPages=lambda c, d: (draw_pharma_header(c, d, title=doc_title, lang=lang), draw_pharma_footer(c, d, lang=lang))
         )
         
         suffix = "pmp" if is_pmp else "vente"

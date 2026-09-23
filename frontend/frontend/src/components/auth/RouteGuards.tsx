@@ -40,6 +40,7 @@ export const HomeRedirector = () => {
   if (user.role === 'CAISSIER') return <Navigate to="/app/caisse-centralisee" />;
   
   const allowed = user.allowed_menus || [];
+  if (allowed.includes('manager_sidebar')) return <Navigate to="/app/manager-dashboard" />;
   if (allowed.includes('dashboard')) return <Navigate to="/app/dashboard" />;
   if (allowed.includes('facturation')) return <Navigate to="/app/facturation" />;
   if (allowed.includes('caisse')) return <Navigate to="/app/caisse-centralisee" />;

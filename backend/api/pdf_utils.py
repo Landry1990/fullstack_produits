@@ -224,10 +224,11 @@ def draw_pharma_footer(canvas, doc, additional_info=None, lang='fr'):
     page_label = "Page"
     canvas.drawString(doc.leftMargin, 45, f"{page_label} {page_num}")
     
-    # Date et heure (centre)
-    at_label = "à" if lang == 'fr' else "at"
-    fmt = "%d/%m/%Y" + f" {at_label} " + "%H:%M"
-    date_text = datetime.now().strftime(fmt)
+    # Date et heure (centre) — format local : jj/mm/aaaa (fr), mm/dd/yyyy (en)
+    from api.utils_doclang import format_doc_date
+    at_label = "at" if lang == 'en' else "à"
+    now = datetime.now()
+    date_text = f"{format_doc_date(now, lang)} {at_label} {now.strftime('%H:%M')}"
     text_width = canvas.stringWidth(date_text, 'Helvetica', 8)
     x_center = (doc.width + 2*doc.leftMargin - text_width) / 2
     canvas.drawString(x_center, 45, date_text)

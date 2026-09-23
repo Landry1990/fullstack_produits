@@ -259,6 +259,7 @@ function AlertsShadcn({ alerts }: { alerts?: DashboardAlert[] }) {
                   <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{t(alert.message_key, alert.params) as string}</p>
                   {alert.action_key && alert.action_route && (
                     <button
+                      type="button"
                       onClick={() => navigate(alert.action_route)}
                       className={`mt-2 inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${style.badgeClass} hover:opacity-80 transition-opacity`}
                     >

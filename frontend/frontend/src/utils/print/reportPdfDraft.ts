@@ -1,9 +1,10 @@
 import { jsPDF } from 'jspdf';
 import autoTable, { type RowInput } from 'jspdf-autotable';
-import { formatCurrency, formatDateFr } from '../formatters';
-import { getLocale } from '../dateUtils';
+import i18next from 'i18next';
+import { formatCurrency } from '../formatters';
+import { formatDate } from '../dateUtils';
+import { getDocumentLanguage, getDocumentLocale } from '../documentLang';
 import type { PharmacySettings } from '../../context/PharmacySettingsContext';
-import type { TFunction } from 'i18next';
 
 interface RapportData {
   mois: string;
@@ -86,13 +87,14 @@ interface RapportData {
 export async function generateMonthlyReportPdfDraft(
   data: RapportData,
   settings: PharmacySettings,
-  periodeLabel: string,
-  t: TFunction
+  periodeLabel: string
 ) {
   const doc = new jsPDF('p', 'mm', 'a4');
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 15;
-  const currentLocale = getLocale();
+  // Langue du document (PharmacySettings.locale), découplée de l'UI.
+  const docT = i18next.getFixedT(getDocumentLanguage(), ['monthly_report', 'reports', 'common']);
+  const currentLocale = getDocumentLocale();
   const currencySymbol = settings.currency_symbol || 'FCFA';
 
   const fmt = (val: number) => {
@@ -111,15 +113,15 @@ export async function generateMonthlyReportPdfDraft(
   doc.setTextColor(80, 80, 80);
   let headerY = 26;
   if (settings.address) { doc.text(settings.address, margin, headerY); headerY += 4; }
-  if (settings.phone) { doc.text(`Tel: ${settings.phone}`, margin, headerY); headerY += 4; }
+  if (settings.phone) { doc.text(`${docT('printing:reglement.phone_short', { defaultValue: 'Tel: ' })}${settings.phone}`, margin, headerY); headerY += 4; }
   if (settings.niu) { doc.text(`NIU: ${settings.niu}`, margin, headerY); headerY += 4; }
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(13);
   doc.setTextColor(0, 0, 0);
-  doc.text("RAPPORT D'ACTIVITE", pageWidth - margin, 20, { align: 'right' });
+  doc.text(docT('reports:monthly_pdf.title'), pageWidth - margin, 20, { align: 'right' });
   doc.setFontSize(9);
-  doc.text(`Periode : ${periodeLabel}`, pageWidth - margin, 26, { align: 'right' });
+  doc.text(docT('reports:monthly_pdf.period', { label: periodeLabel }), pageWidth - margin, 26, { align: 'right' });
 
   doc.setDrawColor(120, 120, 120);
   doc.setLineWidth(0.3);
@@ -128,7 +130,7 @@ export async function generateMonthlyReportPdfDraft(
   // KPIs Section
   doc.setFontSize(10);
   doc.setTextColor(0, 0, 0);
-  doc.text('RESUME DES PERFORMANCES', margin, 44);
+  doc.text(docT('reports:monthly_pdf.summary'), margin, 44);
 
   const kpiY = 48;
   const kpiBoxWidth = (pageWidth - 2 * margin - 16) / 5;
@@ -136,11 +138,11 @@ export async function generateMonthlyReportPdfDraft(
   const panierMoyen = data.ca.nb_ventes > 0 ? data.ca.ca_ttc / data.ca.nb_ventes : 0;
 
   const kpis = [
-    { label: "CA TTC", value: fmt(data.ca.ca_ttc) },
-    { label: "REM. TOTALES", value: fmt(data.ca.total_remises) },
-    { label: "MARGE BRUTE", value: fmt(data.marge.marge_brute) },
-    { label: "COUT ACHAT", value: fmt(data.marge.cout_achat) },
-    { label: "PANIER MOYEN", value: fmt(panierMoyen) }
+    { label: docT('reports:monthly_pdf.kpi_ca_ttc'), value: fmt(data.ca.ca_ttc) },
+    { label: docT('reports:monthly_pdf.kpi_remises'), value: fmt(data.ca.total_remises) },
+    { label: docT('reports:monthly_pdf.kpi_marge'), value: fmt(data.marge.marge_brute) },
+    { label: docT('reports:monthly_pdf.kpi_cout'), value: fmt(data.marge.cout_achat) },
+    { label: docT('reports:monthly_pdf.kpi_panier'), value: fmt(panierMoyen) }
   ];
 
   kpis.forEach((kpi, i) => {
@@ -171,7 +173,7 @@ export async function generateMonthlyReportPdfDraft(
   const totalTax = data.ca_par_tva.reduce((sum, t) => sum + t.montant_tva, 0);
   const totalTTC = data.ca_par_tva.reduce((sum, t) => sum + t.ca_ttc, 0);
   tvaTableBody.push([
-    { content: 'TOTAL', styles: { fontStyle: 'normal' } },
+    { content: docT('reports:stock_valuation.pdf_total'), styles: { fontStyle: 'normal' } },
     { content: fmt(totalHT), styles: { fontStyle: 'normal' } },
     { content: fmt(totalTax), styles: { fontStyle: 'normal' } },
     { content: fmt(totalTTC), styles: { fontStyle: 'normal' } }
@@ -179,7 +181,7 @@ export async function generateMonthlyReportPdfDraft(
 
   autoTable(doc, {
     startY: currentY,
-    head: [[t('tva.rate'), t('tva.ht'), t('tva.tax'), t('tva.ttc')]],
+    head: [[docT('monthly_report:tva.rate'), docT('monthly_report:tva.ht'), docT('monthly_report:tva.tax'), docT('monthly_report:tva.ttc')]],
     body: tvaTableBody as unknown as RowInput[],
     theme: 'plain',
     headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'normal' },
@@ -191,13 +193,13 @@ export async function generateMonthlyReportPdfDraft(
   // Encaissements
   const encTableBody: unknown[][] = data.encaissements.map(e => [e.mode_label, fmt(e.montant)]);
   encTableBody.push([
-    { content: 'TOTAL ENCAISSEMENTS', styles: { fontStyle: 'normal' } },
+    { content: docT('reports:monthly_pdf.total_encaissements'), styles: { fontStyle: 'normal' } },
     { content: fmt(data.encaissements.reduce((sum, e) => sum + e.montant, 0) + data.depots_total), styles: { fontStyle: 'normal' } }
   ]);
 
   autoTable(doc, {
     startY: currentY,
-    head: [[t('encaissements.mode'), t('encaissements.amount')]],
+    head: [[docT('monthly_report:encaissements.mode'), docT('monthly_report:encaissements.amount')]],
     body: encTableBody as unknown as RowInput[],
     theme: 'plain',
     headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'normal' },
@@ -212,14 +214,14 @@ export async function generateMonthlyReportPdfDraft(
 
     const supplierBody: unknown[][] = data.achats_par_fournisseur.map(f => [f.fournisseur_nom, f.nb_commandes, fmt(f.montant_total)]);
     supplierBody.push([
-        { content: 'TOTAL ACHATS', styles: { fontStyle: 'normal' } },
+        { content: docT('reports:monthly_pdf.total_achats'), styles: { fontStyle: 'normal' } },
         { content: data.achats_par_fournisseur.reduce((sum, f) => sum + f.nb_commandes, 0).toString(), styles: { fontStyle: 'normal' } },
         { content: fmt(data.achats_par_fournisseur.reduce((sum, f) => sum + f.montant_total, 0)), styles: { fontStyle: 'normal' } }
     ]);
 
     autoTable(doc, {
       startY: currentY,
-      head: [[t('suppliers.name'), t('suppliers.orders'), t('suppliers.amount')]],
+      head: [[docT('monthly_report:suppliers.name'), docT('monthly_report:suppliers.orders'), docT('monthly_report:suppliers.amount')]],
       body: supplierBody as unknown as RowInput[],
       theme: 'plain',
       headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'normal' },
@@ -235,7 +237,7 @@ export async function generateMonthlyReportPdfDraft(
 
     const proBody: unknown[][] = data.clients_professionnels.top_clients.map(c => [c.client_nom, fmt(c.ca_total), fmt(c.montant_paye), fmt(c.reste_a_payer)]);
     proBody.push([
-        { content: 'TOTAL CLIENTS PRO', styles: { fontStyle: 'normal' } },
+        { content: docT('reports:monthly_pdf.total_clients_pro'), styles: { fontStyle: 'normal' } },
         { content: fmt(data.clients_professionnels.top_clients.reduce((sum, c) => sum + c.ca_total, 0)), styles: { fontStyle: 'normal' } },
         { content: fmt(data.clients_professionnels.top_clients.reduce((sum, c) => sum + c.montant_paye, 0)), styles: { fontStyle: 'normal' } },
         { content: fmt(data.clients_professionnels.top_clients.reduce((sum, c) => sum + c.reste_a_payer, 0)), styles: { fontStyle: 'normal' } }
@@ -243,7 +245,7 @@ export async function generateMonthlyReportPdfDraft(
 
     autoTable(doc, {
       startY: currentY,
-      head: [[t('pro_clients.title'), t('pro_clients.ca_total'), t('pro_clients.paid'), t('pro_clients.balance')]],
+      head: [[docT('monthly_report:pro_clients.title'), docT('monthly_report:pro_clients.ca_total'), docT('monthly_report:pro_clients.paid'), docT('monthly_report:pro_clients.balance')]],
       body: proBody as unknown as RowInput[],
       theme: 'plain',
       headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'normal' },
@@ -259,14 +261,14 @@ export async function generateMonthlyReportPdfDraft(
 
     const freeBody: unknown[][] = data.unites_gratuites.top_produits.map(p => [p.produit_nom, p.quantite_gratuite, fmt(p.valeur_totale)]);
     freeBody.push([
-        { content: 'TOTAL UNITES GRATUITES', styles: { fontStyle: 'normal' } },
+        { content: docT('reports:monthly_pdf.total_free_units'), styles: { fontStyle: 'normal' } },
         { content: data.unites_gratuites.top_produits.reduce((sum, p) => sum + p.quantite_gratuite, 0).toString(), styles: { fontStyle: 'normal' } },
         { content: fmt(data.unites_gratuites.top_produits.reduce((sum, p) => sum + p.valeur_totale, 0)), styles: { fontStyle: 'normal' } }
     ]);
 
     autoTable(doc, {
       startY: currentY,
-      head: [["UNITES GRATUITES (TOP PRODUITS)", t('free_units.qty'), t('free_units.value')]],
+      head: [[docT('reports:monthly_pdf.free_units_title'), docT('monthly_report:free_units.qty'), docT('monthly_report:free_units.value')]],
       body: freeBody as unknown as RowInput[],
       theme: 'plain',
       headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'normal' },
@@ -281,9 +283,9 @@ export async function generateMonthlyReportPdfDraft(
     if (currentY > 250) { doc.addPage(); currentY = 20; }
     autoTable(doc, {
       startY: currentY,
-      head: [[t('caisse_mvts.date'), t('caisse_mvts.type'), t('caisse_mvts.reason'), t('encaissements.amount')]],
+      head: [[docT('monthly_report:caisse_mvts.date'), docT('monthly_report:caisse_mvts.type'), docT('monthly_report:caisse_mvts.reason'), docT('monthly_report:encaissements.amount')]],
       body: data.mouvements_caisse.liste.map(m => [
-        formatDateFr(m.date),
+        formatDate(m.date, currentLocale),
         m.type,
         m.motif,
         fmt(m.montant)
@@ -302,7 +304,7 @@ export async function generateMonthlyReportPdfDraft(
     doc.setFontSize(7);
     doc.setTextColor(120, 120, 120);
     doc.text(
-      `Document genere le ${new Date().toLocaleString('fr-FR')} - Page ${i} / ${pageCount}`,
+      docT('reports:monthly_pdf.generated_footer', { date: new Date().toLocaleString(currentLocale), page: i, total: pageCount }),
       pageWidth / 2,
       doc.internal.pageSize.height - 10,
       { align: 'center' }

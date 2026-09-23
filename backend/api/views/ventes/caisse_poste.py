@@ -5,7 +5,7 @@ from django.db.models import Count, Q, Sum
 from django.utils import timezone
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 
 from ...models import Caisse, Facture, PosteCaisse, PosteVente
@@ -26,6 +26,10 @@ class PosteCaisseViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['nom', 'code']
 
+    def get_permissions(self):
+        permission_classes = [IsAdminUser] if self.action in {'create', 'update', 'partial_update', 'destroy'} else [IsAuthenticated]
+        return [permission() for permission in permission_classes]
+
 
 class PosteVenteViewSet(viewsets.ModelViewSet):
     """
@@ -34,6 +38,10 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
     queryset = PosteVente.objects.all().select_related('caisse', 'vendeur')
     serializer_class = PosteVenteSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        permission_classes = [IsAdminUser] if self.action in {'create', 'update', 'partial_update', 'destroy'} else [IsAuthenticated]
+        return [permission() for permission in permission_classes]
 
     @action(detail=False, methods=['get'])
     def actives(self, request):
@@ -186,6 +194,11 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
     def fermer(self, request, pk=None):
         """Ferme un poste de vente."""
         poste = self.get_object()
+        if poste.vendeur_id != request.user.id and not request.user.is_superuser:
+            return Response(
+                {"detail": "Vous ne pouvez fermer que votre propre point de vente."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         if not poste.est_actif:
             return Response({
                 "detail": f"Le point de vente {poste.nom} est déjà fermé."
@@ -204,9 +217,10 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         # OPTIMISATION : définir paiements_qs une seule fois (était dupliqué)
+        session_start = poste.date_ouverture or poste.created_at
         paiements_qs = Caisse.objects.filter(
             facture__poste_vente=poste,
-            date_paiement__gte=poste.date_ouverture,
+            date_paiement__gte=session_start,
             statut='completee'
         ).exclude(mode_paiement__in=['en_compte', 'depot'])
 

@@ -3,6 +3,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { PharmacySettings } from './InvoiceTemplate';
 import { formatNumber as formatNumberStandard } from '../../utils/formatters';
+import { useDocumentLocale } from '../../context/PharmacySettingsContext';
 
 export interface InventaireItem {
     id: number | string;
@@ -39,9 +40,9 @@ interface InventairePrintTemplateProps {
     data: InventairePrintData;
 }
 
-const formatDate = (dateStr: string) => {
+const formatDate = (dateStr: string, locale: string) => {
     if (!dateStr) return '';
-    return new Date(dateStr).toLocaleDateString('fr-FR', {
+    return new Date(dateStr).toLocaleDateString(locale, {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
@@ -50,14 +51,9 @@ const formatDate = (dateStr: string) => {
     });
 };
 
-const formatNumber = (num: number | undefined) => {
-    if (num === undefined) return '-';
-    return formatNumberStandard(num);
-};
-
-const formatExpiration = (dateStr?: string | null) => {
+const formatExpiration = (dateStr: string | null | undefined, locale: string) => {
     if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString('fr-FR', {
+    return new Date(dateStr).toLocaleDateString(locale, {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric'
@@ -65,8 +61,42 @@ const formatExpiration = (dateStr?: string | null) => {
 };
 
 const InventairePrintTemplate: React.FC<InventairePrintTemplateProps> = ({ settings, data }) => {
-    const { t } = useTranslation(['stock', 'common']);
+    const { lang: docLang, locale: docLocale } = useDocumentLocale();
+    const { t } = useTranslation(['stock', 'common'], { lng: docLang });
     const sortedGroups = Object.keys(data.groups).sort();
+
+    const formatNumber = (num: number | undefined) => {
+        if (num === undefined) return '-';
+        return formatNumberStandard(num, 0, docLocale);
+    };
+
+    // Les libellés structurels (title/subtitle/group_label/stock_label) arrivent
+    // déjà formatés depuis le backend en français : on les retraduit ici dans la
+    // langue du document en reconnaissant les valeurs connues.
+    const groupKey = (data.group_label || '').toLowerCase();
+    const displayGroupLabel = ['rayon', 'forme', 'groupe'].includes(groupKey)
+        ? t(`stock:inventaire.print.group_label_${groupKey}`)
+        : data.group_label;
+
+    const stockLabelMap: Record<string, string> = {
+        'Stock Machine': t('stock:inventaire.print.stock_machine'),
+        'Stocks Non Nuls': t('stock:inventaire.print.stock_non_zero'),
+        'Stock à Zéro': t('stock:inventaire.print.stock_zero'),
+    };
+    const displayStockLabel = data.stock_label
+        ? (stockLabelMap[data.stock_label] ?? data.stock_label)
+        : undefined;
+
+    const titleMap: Record<string, string> = {
+        "RAPPORT D'INVENTAIRE": t('stock:inventaire.print.title_report'),
+        "FEUILLE DE SAISIE INVENTAIRE": t('stock:inventaire.print.title_sheet'),
+    };
+    const displayTitle = titleMap[data.title]
+        ?? (data.title?.toUpperCase().startsWith("ÉTAT D'INVENTAIRE")
+            ? t('stock:inventaire.print.title_state', { group: (displayGroupLabel || data.group_label || '').toUpperCase() })
+            : data.title);
+
+    const displaySubtitle = data.subtitle?.replace(/^Réf\s*:/, t('stock:inventaire.print.ref'));
 
     return (
         <div data-theme="light" className="bg-white p-4 max-w-[210mm] mx-auto text-slate-900 font-sans text-label leading-tight shadow-none print:shadow-none print:max-w-none print:w-full relative">
@@ -134,10 +164,10 @@ const InventairePrintTemplate: React.FC<InventairePrintTemplateProps> = ({ setti
 
                 <div className="text-right">
                     <div className="border-2 border-slate-900 text-slate-900 px-6 py-2 rounded-sm text-xl font-black mb-2 inline-block uppercase tracking-wider">
-                        {data.title}
+                        {displayTitle}
                     </div>
                     <div className="text-slate-900/60 font-bold text-caption uppercase tracking-widest">
-                        {t('common:printed_on')}{formatDate(data.date)}
+                        {t('common:printed_on')}{formatDate(data.date, docLocale)}
                     </div>
                 </div>
             </div>
@@ -147,18 +177,18 @@ const InventairePrintTemplate: React.FC<InventairePrintTemplateProps> = ({ setti
                 <div className="space-y-1">
                     {data.filter_name && (
                         <div>
-                            <span className="text-slate-900/40 uppercase font-bold mr-2">{data.group_label}:</span>
+                            <span className="text-slate-900/40 uppercase font-bold mr-2">{displayGroupLabel}:</span>
                             <span className="font-bold text-slate-900">{data.filter_name}</span>
                         </div>
                     )}
                     {data.stock_label && (
                         <div>
                             <span className="text-slate-900/40 uppercase font-bold mr-2">{t('common:option')}</span>
-                            <span className="font-bold text-emerald-600">{data.stock_label}</span>
+                            <span className="font-bold text-emerald-600">{displayStockLabel}</span>
                         </div>
                     )}
                 </div>
-                {data.subtitle && <div className="font-medium italic">{data.subtitle}</div>}
+                {displaySubtitle && <div className="font-medium italic">{displaySubtitle}</div>}
             </div>
 
             {/* Main Content Area */}
@@ -210,7 +240,7 @@ const InventairePrintTemplate: React.FC<InventairePrintTemplateProps> = ({ setti
                                             {item.lot_numero || '-'}
                                         </td>
                                         <td className="py-1.5 px-2 text-center font-medium text-slate-900/70">
-                                            {formatExpiration(item.lot_expiration)}
+                                            {formatExpiration(item.lot_expiration, docLocale)}
                                         </td>
                                         {data.is_report ? (
                                             <>

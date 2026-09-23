@@ -321,6 +321,9 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         """
         Génère un ticket PDF 80mm x 80mm en double (pharmacie + client).
         """
+        from ...utils_doclang import T, format_doc_date, get_document_language
+
+        lang = get_document_language()
         promis = self.get_object()
         
         # Taille ticket 80mm x 80mm (environ 227 x 227 points)
@@ -334,73 +337,73 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         def draw_ticket(y_offset, title):
             # Titre
             c.setFont("Helvetica-Bold", 10)
-            c.drawCentredString(ticket_width / 2, y_offset + ticket_height - 15, "TICKET PROMIS")
+            c.drawCentredString(ticket_width / 2, y_offset + ticket_height - 15, T(lang, 'prm_ticket_title'))
             c.setFont("Helvetica", 8)
             c.drawCentredString(ticket_width / 2, y_offset + ticket_height - 28, f"({title})")
-            
+
             # Ligne séparatrice
             c.line(10, y_offset + ticket_height - 35, ticket_width - 10, y_offset + ticket_height - 35)
-            
+
             # Date
             c.setFont("Helvetica", 8)
-            date_str = promis.date_promis.strftime('%d/%m/%Y %H:%M')
-            c.drawString(10, y_offset + ticket_height - 50, f"Date: {date_str}")
+            date_str = format_doc_date(promis.date_promis, lang, with_time=True)
+            c.drawString(10, y_offset + ticket_height - 50, f"{T(lang, 'col_date')}: {date_str}")
             c.drawRightString(ticket_width - 10, y_offset + ticket_height - 50, f"N° {promis.id}")
-            
+
             # Client
             c.setFont("Helvetica-Bold", 9)
-            c.drawString(10, y_offset + ticket_height - 70, "CLIENT:")
+            c.drawString(10, y_offset + ticket_height - 70, T(lang, 'prm_client'))
             c.setFont("Helvetica", 9)
             client_name = promis.client_display[:25] if len(promis.client_display) > 25 else promis.client_display
             c.drawString(50, y_offset + ticket_height - 70, client_name)
-            
+
             # Téléphone
             c.setFont("Helvetica", 8)
             phone = promis.client_phone_display or "N/A"
-            c.drawString(10, y_offset + ticket_height - 85, f"Tél: {phone}")
-            
+            c.drawString(10, y_offset + ticket_height - 85, T(lang, 'prm_tel', v=phone))
+
             # Ligne séparatrice
             c.line(10, y_offset + ticket_height - 95, ticket_width - 10, y_offset + ticket_height - 95)
-            
+
             # Produit
             c.setFont("Helvetica-Bold", 9)
-            c.drawString(10, y_offset + ticket_height - 110, "PRODUIT PROMIS:")
-            
+            c.drawString(10, y_offset + ticket_height - 110, T(lang, 'prm_produit'))
+
             c.setFont("Helvetica", 9)
             produit_name = promis.produit.name[:30] if len(promis.produit.name) > 30 else promis.produit.name
             c.drawString(10, y_offset + ticket_height - 125, produit_name)
-            
+
             # Quantité
             c.setFont("Helvetica-Bold", 12)
-            c.drawCentredString(ticket_width / 2, y_offset + ticket_height - 150, f"Quantité: {promis.quantite}")
-            
+            c.drawCentredString(ticket_width / 2, y_offset + ticket_height - 150, T(lang, 'prm_quantite', n=promis.quantite))
+
             # Ligne séparatrice
             c.line(10, y_offset + ticket_height - 165, ticket_width - 10, y_offset + ticket_height - 165)
-            
+
             # Message
             c.setFont("Helvetica-Oblique", 7)
-            c.drawCentredString(ticket_width / 2, y_offset + ticket_height - 180, "Conservez ce ticket comme preuve")
-            c.drawCentredString(ticket_width / 2, y_offset + ticket_height - 190, "de votre réservation.")
-            
+            c.drawCentredString(ticket_width / 2, y_offset + ticket_height - 180, T(lang, 'prm_keep1'))
+            c.drawCentredString(ticket_width / 2, y_offset + ticket_height - 190, T(lang, 'prm_keep2'))
+
             # Statut
             c.setFont("Helvetica-Bold", 8)
-            c.drawCentredString(ticket_width / 2, y_offset + ticket_height - 210, f"Statut: {promis.get_status_display()}")
-            
+            c.drawCentredString(ticket_width / 2, y_offset + ticket_height - 210, T(lang, 'prm_statut', s=promis.get_status_display()))
+
             # Cadre
             c.rect(5, y_offset + 5, ticket_width - 10, ticket_height - 10)
-        
+
         # Dessiner le ticket pharmacie (en haut)
-        draw_ticket(ticket_height + 10, "EXEMPLAIRE PHARMACIE")
-        
+        draw_ticket(ticket_height + 10, T(lang, 'prm_copy_pharmacy'))
+
         # Ligne de découpe
         c.setDash(3, 3)
         c.line(0, ticket_height + 5, ticket_width, ticket_height + 5)
         c.setDash()
         c.setFont("Helvetica", 6)
-        c.drawCentredString(ticket_width / 2, ticket_height + 7, "✂ DECOUPER ICI ✂")
-        
+        c.drawCentredString(ticket_width / 2, ticket_height + 7, T(lang, 'prm_cut'))
+
         # Dessiner le ticket client (en bas)
-        draw_ticket(0, "EXEMPLAIRE CLIENT")
+        draw_ticket(0, T(lang, 'prm_copy_client'))
         
         c.showPage()
         c.save()
@@ -416,6 +419,9 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         Génère un ticket unique pour une liste de Promis.
         Attend un payload JSON: { "ids": [1, 2, 3] }
         """
+        from ...utils_doclang import T, format_doc_date, get_document_language
+
+        lang = get_document_language()
         promis_ids = request.data.get('ids', [])
         if not promis_ids:
             return Response({'detail': 'Aucun ID fourni.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -427,7 +433,7 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         # On suppose que tous les promis sont pour le même client
         first_promis = promis_list.first()
         client = first_promis.client
-        client_name = first_promis.client_name or (client.name if client else "Client Inconnu")
+        client_name = first_promis.client_name or (client.name if client else T(lang, 'client_inconnu'))
         client_phone = first_promis.client_phone or (client.phone if client else "")
 
         # Génération du PDF (Ticket 80mm)
@@ -462,18 +468,18 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
 
         # En-tête
         elements.append(Paragraph("<b>Djadeu Pharmacy</b>", style_center))
-        elements.append(Paragraph("TICKET PROMIS (RELIQUAT)", style_center))
+        elements.append(Paragraph(T(lang, 'prm_group_title'), style_center))
         elements.append(Spacer(1, 2*mm))
-        
-        elements.append(Paragraph(f"Client: {client_name}", style_normal))
+
+        elements.append(Paragraph(f"{T(lang, 'col_client')}: {client_name}", style_normal))
         if client_phone:
-            elements.append(Paragraph(f"Tel: {client_phone}", style_normal))
-        
-        elements.append(Paragraph(f"Date: {first_promis.date_promis.strftime('%d/%m/%Y %H:%M')}", style_normal))
+            elements.append(Paragraph(T(lang, 'prm_tel', v=client_phone), style_normal))
+
+        elements.append(Paragraph(f"{T(lang, 'col_date')}: {format_doc_date(first_promis.date_promis, lang, with_time=True)}", style_normal))
         elements.append(Spacer(1, 2*mm))
 
         # Tableau des produits promis
-        data = [['Produit', 'Qté']]
+        data = [[T(lang, 'col_produit'), T(lang, 'col_qte')]]
         for promis in promis_list:
             data.append([
                 Paragraph(promis.produit.name, style_normal),
@@ -492,7 +498,7 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         elements.append(table)
 
         elements.append(Spacer(1, 5*mm))
-        elements.append(Paragraph("Veuillez conserver ce ticket pour récupérer vos produits.", style_center))
+        elements.append(Paragraph(T(lang, 'prm_keep_group'), style_center))
         
         doc.build(elements)
         pdf = buffer.getvalue()

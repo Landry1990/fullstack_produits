@@ -162,22 +162,22 @@ export const router = createBrowserRouter([
           { path: 'commandes/directes', ...perm(['commandes', 'commandes_dir'], Commandes, { forcedType: 'DIR' }) },
 
           // ── Ventes ──
-          { path: 'ventes', ...perm('ventes_consultation', Ventes) },
+          { path: 'ventes', ...perm(['ventes', 'ventes_consultation'], Ventes) },
           { path: 'facturation', ...perm('facturation', Facturation) },
-          { path: 'caisse-centralisee', ...perm('caisse', CaisseCentralisee) },
-          { path: 'promotions', ...perm('ventes_promotions', PromotionList) },
-          { path: 'historique-ventes', ...perm('ventes_historique', HistoriqueVentes) },
-          { path: 'avoirs-clients', ...perm('ventes_avoirs_clients', ClientCredits) },
-          { path: 'recap-client', ...perm('ventes_consultation', RecapClient) },
-          { path: 'ordonnancier', ...perm('ventes_ordonnancier', OrdonnancierPage) },
-          { path: 'journal-caisse', ...perm('ventes_journal', JournalCaisse) },
-          { path: 'historique-clotures', ...perm('ventes_clotures', HistoriqueClotures) },
+          { path: 'caisse-centralisee', ...perm(['ventes', 'caisse'], CaisseCentralisee) },
+          { path: 'promotions', ...perm(['ventes', 'ventes_promotions'], PromotionList) },
+          { path: 'historique-ventes', ...perm(['ventes', 'ventes_historique'], HistoriqueVentes) },
+          { path: 'avoirs-clients', ...perm(['ventes', 'ventes_avoirs_clients'], ClientCredits) },
+          { path: 'recap-client', ...perm(['ventes', 'ventes_consultation'], RecapClient) },
+          { path: 'ordonnancier', ...perm(['ventes', 'ventes_ordonnancier'], OrdonnancierPage) },
+          { path: 'journal-caisse', ...perm(['ventes', 'ventes_journal'], JournalCaisse) },
+          { path: 'historique-clotures', ...perm(['ventes', 'ventes_clotures'], HistoriqueClotures) },
 
           // ── Tiers ──
           { path: 'fournisseurs', ...perm('fournisseurs', Fournisseurs) },
-          { path: 'clients', ...perm('clients', Clients) },
+          { path: 'clients', ...perm(['clients', 'clients_consultation'], Clients) },
           { path: 'fidelite', ...perm('clients', LoyaltyPage) },
-          { path: 'outils/imc', ...perm('clients', BMICalculator) },
+          { path: 'outils/imc', ...perm(['clients', 'clients_imc'], BMICalculator) },
           { path: 'creances', ...perm('creances', Creances) },
           { path: 'statistiques-fournisseurs', ...perm('statistiques_fournisseurs', StatistiquesFournisseur) },
 
@@ -205,28 +205,28 @@ export const router = createBrowserRouter([
           { path: 'historique-achats/directes', ...perm('commandes_dir_history', HistoriqueAchats, { forcedType: 'DIR' }) },
 
           // ── Statistiques & Rapports ──
-          { path: 'rapports-mensuels', ...perm('statistiques_mensuels', RapportMensuel) },
-          { path: 'centre-rapports', ...perm('statistiques_rapports', CentreRapports) },
-          { path: 'analyse-abc', ...perm('statistiques_abc', AnalyseABC) },
-          { path: 'analyse-marges-produit', ...perm('statistiques_finances', AnalyseMargesProduit) },
-          { path: 'module-financier', ...perm('statistiques_finances', ModuleFinancier) },
-          { path: 'classement-vendeurs', ...perm('statistiques_vendeurs', ClassementVendeurs) },
-          { path: 'challenges', ...perm('statistiques_challenges', ChallengesPage) },
-          { path: 'analyse-temporelle', ...perm('statistiques_temporelle', AnalyseTemporelle) },
-          { path: 'guide-financier', ...perm('statistiques_guide', GuideFinancier) },
-          { path: 'compta/dashboard', ...perm('compta_dashboard', Comptabilite, { defaultTab: 'dashboard' }) },
-          { path: 'compta/grand-livre', ...perm('compta_grand_livre', Comptabilite, { defaultTab: 'grand-livre' }) },
-          { path: 'compta/balance', ...perm('compta_balance', Comptabilite, { defaultTab: 'balance' }) },
-          { path: 'compta/resultat', ...perm('compta_resultat', Comptabilite, { defaultTab: 'resultat' }) },
-          { path: 'compta/charges', ...perm('compta_charges', Comptabilite, { defaultTab: 'charges' }) },
-          { path: 'compta/plan-comptable', ...perm('compta_plan', Comptabilite, { defaultTab: 'plan' }) },
+          { path: 'rapports-mensuels', ...perm(['statistiques', 'statistiques_mensuels'], RapportMensuel) },
+          { path: 'centre-rapports', ...perm(['statistiques', 'statistiques_rapports'], CentreRapports) },
+          { path: 'analyse-abc', ...perm(['statistiques', 'statistiques_abc'], AnalyseABC) },
+          { path: 'analyse-marges-produit', ...perm(['statistiques', 'statistiques_finances'], AnalyseMargesProduit) },
+          { path: 'module-financier', ...perm(['statistiques', 'statistiques_finances'], ModuleFinancier) },
+          { path: 'classement-vendeurs', ...perm(['statistiques', 'statistiques_vendeurs'], ClassementVendeurs) },
+          { path: 'challenges', ...perm(['statistiques', 'statistiques_challenges'], ChallengesPage) },
+          { path: 'analyse-temporelle', ...perm(['statistiques', 'statistiques_temporelle'], AnalyseTemporelle) },
+          { path: 'guide-financier', ...perm(['statistiques', 'statistiques_guide'], GuideFinancier) },
+          { path: 'compta/dashboard', ...perm(['compta', 'compta_dashboard'], Comptabilite, { defaultTab: 'dashboard' }) },
+          { path: 'compta/grand-livre', ...perm(['compta', 'compta_grand_livre'], Comptabilite, { defaultTab: 'grand-livre' }) },
+          { path: 'compta/balance', ...perm(['compta', 'compta_balance'], Comptabilite, { defaultTab: 'balance' }) },
+          { path: 'compta/resultat', ...perm(['compta', 'compta_resultat'], Comptabilite, { defaultTab: 'resultat' }) },
+          { path: 'compta/charges', ...perm(['compta', 'compta_charges'], Comptabilite, { defaultTab: 'charges' }) },
+          { path: 'compta/plan-comptable', ...perm(['compta', 'compta_plan'], Comptabilite, { defaultTab: 'plan' }) },
 
           // ── Gestion Divers ──
-          { path: 'divers/ca', ...perm('divers_ca', GestionDivers, { defaultTab: 'ca' }) },
-          { path: 'divers/commandes', ...perm('divers_commandes', GestionDivers, { defaultTab: 'commandes' }) },
+          { path: 'divers/ca', ...perm(['divers', 'divers_ca'], GestionDivers, { defaultTab: 'ca' }) },
+          { path: 'divers/commandes', ...perm(['divers', 'divers_commandes'], GestionDivers, { defaultTab: 'commandes' }) },
 
           // ── Communication ──
-          { path: 'telegram-history', ...perm('settings_telegram', TelegramHistory) },
+          { path: 'telegram-history', ...perm(['settings', 'settings_telegram'], TelegramHistory) },
 
           // ── Aide ──
           { path: 'aide-formation', ...perm('aide_formation', HelpTraining) },
@@ -243,10 +243,10 @@ export const router = createBrowserRouter([
           { path: 'corbeille', ...perm('corbeille', Corbeille) },
 
           // ── Paramètres ──
-          { path: 'pharmacy-settings', ...perm('settings_pharmacie', PharmacySettingsForm) },
+          { path: 'pharmacy-settings', ...perm(['settings', 'settings_pharmacie'], PharmacySettingsForm) },
 
           // ── Catch-all ──
-          { path: '*', element: <Navigate to="/" replace /> },
+          { path: '*', element: <Navigate to="/app" replace /> },
         ],
       },
     ],

@@ -41,6 +41,9 @@ class CategorieViewSet(viewsets.ModelViewSet):
         Inclut les produits des sous-rayons si applicable.
         Paramètre optionnel: exclude_zero=true pour masquer les stocks à 0.
         """
+        from ..utils_doclang import T, format_doc_date, get_document_language
+
+        lang = get_document_language()
         rayon = self.get_object()
         exclude_zero = request.query_params.get('exclude_zero', 'false').lower() == 'true'
         
@@ -67,15 +70,15 @@ class CategorieViewSet(viewsets.ModelViewSet):
         styles = getSampleStyleSheet()
         
         # Header
-        title_text = f"ETAT DE STOCK - RAYON: {rayon.name.upper()}"
+        title_text = T(lang, 'cat_title_rayon', name=rayon.name.upper())
         if exclude_zero:
-            title_text += " (Non-Nuls)"
+            title_text += T(lang, 'cat_nonzero')
         story.append(Paragraph(title_text, styles['Title']))
-        story.append(Paragraph(f"Date: {datetime.now().strftime('%d/%m/%Y %H:%M')}", styles['Normal']))
+        story.append(Paragraph(T(lang, 'invd_date', d=format_doc_date(datetime.now(), lang, with_time=True)), styles['Normal']))
         story.append(Spacer(1, 20))
-        
+
         # Content
-        data = [['ID', 'Produit', 'CIP', 'Stock', 'PMP', 'Valeur', 'Rayon']]
+        data = [['ID', T(lang, 'col_produit'), 'CIP', T(lang, 'col_stock'), 'PMP', T(lang, 'col_valeur'), T(lang, 'col_rayon')]]
         total_valeur = 0
         total_items = 0
         
@@ -95,8 +98,8 @@ class CategorieViewSet(viewsets.ModelViewSet):
                 rayon_name
             ])
             
-        data.append(['', '', '', f"Tot: {total_items}", 'TOTAL', f"{total_valeur:.0f} F", ''])
-        
+        data.append(['', '', '', T(lang, 'cat_tot', n=total_items), T(lang, 'row_total'), f"{total_valeur:.0f} F", ''])
+
         t = Table(data, colWidths=[0.4*inch, 2.6*inch, 0.9*inch, 0.6*inch, 0.8*inch, 0.9*inch, 1.3*inch])
         t.setStyle(TableStyle([
             ('GRID', (0,0), (-1,-2), 1, colors.black),
@@ -105,10 +108,10 @@ class CategorieViewSet(viewsets.ModelViewSet):
             ('LINEBELOW', (0,-2), (-1,-2), 1, colors.black),
             ('FONTNAME', (0,-1), (-1,-1), 'Helvetica-Bold')
         ]))
-        
+
         story.append(t)
         doc.build(story)
-        
+
         pdf = buffer.getvalue()
         buffer.close()
         response.write(pdf)
@@ -119,6 +122,9 @@ class CategorieViewSet(viewsets.ModelViewSet):
         """
         Génère un PDF pour les produits sans rayon assigné.
         """
+        from ..utils_doclang import T, format_doc_date, get_document_language
+
+        lang = get_document_language()
         exclude_zero = request.query_params.get('exclude_zero', 'false').lower() == 'true'
         
         produits = Produit.objects.filter(rayon__isnull=True).order_by('name')
@@ -140,14 +146,14 @@ class CategorieViewSet(viewsets.ModelViewSet):
         story = []
         styles = getSampleStyleSheet()
         
-        title_text = "ETAT DE STOCK - SANS RAYON"
+        title_text = T(lang, 'cat_title_sans')
         if exclude_zero:
-             title_text += " (Non-Nuls)"
+             title_text += T(lang, 'cat_nonzero')
         story.append(Paragraph(title_text, styles['Title']))
-        story.append(Paragraph(f"Date: {datetime.now().strftime('%d/%m/%Y %H:%M')}", styles['Normal']))
+        story.append(Paragraph(T(lang, 'invd_date', d=format_doc_date(datetime.now(), lang, with_time=True)), styles['Normal']))
         story.append(Spacer(1, 20))
-        
-        data = [['ID', 'Produit', 'CIP', 'Stock', 'PMP', 'Valeur', 'Rayon']]
+
+        data = [['ID', T(lang, 'col_produit'), 'CIP', T(lang, 'col_stock'), 'PMP', T(lang, 'col_valeur'), T(lang, 'col_rayon')]]
         total_valeur = 0
         total_items = 0
         
@@ -166,8 +172,8 @@ class CategorieViewSet(viewsets.ModelViewSet):
                 "" # Sans rayon obviously
             ])
             
-        data.append(['', '', '', f"Tot: {total_items}", 'TOTAL', f"{total_valeur:.0f} F", ''])
-        
+        data.append(['', '', '', T(lang, 'cat_tot', n=total_items), T(lang, 'row_total'), f"{total_valeur:.0f} F", ''])
+
         t = Table(data, colWidths=[0.4*inch, 2.6*inch, 0.9*inch, 0.6*inch, 0.8*inch, 0.9*inch, 1.3*inch])
         t.setStyle(TableStyle([
             ('GRID', (0,0), (-1,-2), 1, colors.black),
@@ -176,10 +182,10 @@ class CategorieViewSet(viewsets.ModelViewSet):
             ('LINEBELOW', (0,-2), (-1,-2), 1, colors.black),
             ('FONTNAME', (0,-1), (-1,-1), 'Helvetica-Bold')
         ]))
-        
+
         story.append(t)
         doc.build(story)
-        
+
         pdf = buffer.getvalue()
         buffer.close()
         response.write(pdf)
