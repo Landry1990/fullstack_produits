@@ -27,6 +27,7 @@ interface CaisseModalsProps {
   ticketCaisse: TicketCaisse | null
   pharmacySettings: unknown
   onSendWhatsApp: () => Promise<void>
+  onSendTelegram: () => Promise<void>
   onCloseTicketPreview: () => void
   loading: boolean
   // Coupon generate
@@ -85,6 +86,7 @@ export function CaisseModals({
   ticketCaisse,
   pharmacySettings,
   onSendWhatsApp,
+  onSendTelegram,
   onCloseTicketPreview,
   loading,
   isGenererCouponModalOpen,
@@ -143,6 +145,7 @@ export function CaisseModals({
             ticket={ticketCaisse}
             settings={pharmacySettings}
             onSendWhatsApp={onSendWhatsApp}
+            onSendTelegram={onSendTelegram}
             loading={loading}
           />
         </Suspense>

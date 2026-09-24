@@ -146,16 +146,22 @@ describe('HomeRedirector', () => {
         expect(screen.getByText('CAISSE')).toBeInTheDocument();
     });
 
-    it('manager_sidebar → /app/manager-dashboard', () => {
-        mockAuth.user = { id: 3, username: 'mgr', allowed_menus: ['manager_sidebar'] };
+    it('manager + facturation → /app/facturation (non-admin)', () => {
+        mockAuth.user = { id: 3, username: 'mgr', allowed_menus: ['manager_sidebar', 'facturation'] };
         renderHome();
-        expect(screen.getByText('MANAGER')).toBeInTheDocument();
+        expect(screen.getByText('FACTURATION')).toBeInTheDocument();
     });
 
-    it('dashboard menu → /app/dashboard', () => {
+    it('dashboard menu + facturation → /app/facturation (non-admin)', () => {
         mockAuth.user = { id: 4, username: 'u', allowed_menus: ['dashboard', 'facturation'] };
         renderHome();
-        expect(screen.getByText('DASHBOARD')).toBeInTheDocument();
+        expect(screen.getByText('FACTURATION')).toBeInTheDocument();
+    });
+
+    it('manager sans permission facturation → fallback /app/manager-dashboard', () => {
+        mockAuth.user = { id: 6, username: 'mgr2', allowed_menus: ['manager_sidebar'] };
+        renderHome();
+        expect(screen.getByText('MANAGER')).toBeInTheDocument();
     });
 
     it('aucun menu → fallback /app/facturation', () => {

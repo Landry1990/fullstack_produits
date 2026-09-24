@@ -310,6 +310,24 @@ const _navigate = useNavigate()
     }
   }
 
+  // Envoi Telegram (PDF de la facture vers le chat configuré)
+  const handleSendTelegram = async () => {
+    if (!ticketCaisse || !ticketCaisse.facture || typeof ticketCaisse.facture === 'number') return
+
+    const facture = ticketCaisse.facture as unknown as { id: number }
+
+    setLoading(true)
+    try {
+      const response = await api.post(`factures/${facture.id}/send_telegram/`)
+      gooeyToast.success(response.data.detail || t('messages.telegram_sent'))
+    } catch (err) {
+      logger.error('Erreur envoi Telegram:', err)
+      gooeyToast.error(getApiErrorDetail(err, t('messages.telegram_send_error')))
+    } finally {
+      setLoading(false)
+    }
+  }
+
 
 
   // Annuler une facture
@@ -506,6 +524,7 @@ const _navigate = useNavigate()
         ticketCaisse={ticketCaisse}
         pharmacySettings={pharmacySettings}
         onSendWhatsApp={handleSendWhatsApp}
+        onSendTelegram={handleSendTelegram}
         onCloseTicketPreview={() => setShowTicketPreview(false)}
         loading={loading}
         // Coupon generate

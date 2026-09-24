@@ -56,7 +56,8 @@ i18n
             'planning',
             'recap',
             'loyalty',
-            'challenges'
+            'challenges',
+            'telegram'
         ],
         defaultNS: 'common',
         interpolation: {
