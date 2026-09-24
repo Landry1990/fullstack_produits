@@ -1,10 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import api from '../services/api';
 import { useTranslation } from 'react-i18next';
+import { gooeyToast } from 'goey-toast';
 import { formatDateTime } from '../utils/dateUtils';
-import { Search, RefreshCcw, CheckCircle2, XCircle, Clock, FileText, User, Hash, Loader2 } from 'lucide-react';
+import {
+    Search, RefreshCcw, CheckCircle2, XCircle, Clock, FileText, User, Hash,
+    Loader2, Download, Send, AlertTriangle, Paperclip,
+} from 'lucide-react';
 import { Button } from './shadcn/button';
-import { Badge } from './ui/Badge';
+import { Badge } from './shadcn/badge';
+import { Select } from './shadcn/select';
+import { Input } from './shadcn/input';
+import {
+    Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from './shadcn/table';
+import { PageContainer } from './ui/PageContainer';
 import { logger } from '../utils/logger'
 
 interface TelegramLog {
@@ -17,47 +27,56 @@ interface TelegramLog {
     status: string;
     status_display: string;
     has_attachment: boolean;
+    attachment_path: string | null;
     created_at: string;
-    sent_at: string;
+    sent_at: string | null;
     sent_by_name: string;
-    facture_numero: string;
+    facture_numero: string | null;
 }
 
-const getStatusIcon = (status: string) => {
-    switch (status) {
-        case 'SENT': return <CheckCircle2 className="size-4 text-success" />;
-        case 'FAILED': return <XCircle className="size-4 text-error" />;
-        case 'READ': return <CheckCircle2 className="size-4 text-info fill-info/20" />;
-        default: return <Clock className="size-4 text-warning" />;
-    }
-};
+const PAGE_SIZE = 20;
+const TYPES = ['RAPPORT', 'FACTURE', 'PROMIS', 'RAPPEL', 'MANUEL'];
+const STATUSES = ['PENDING', 'SENT', 'DELIVERED', 'FAILED'];
 
-const getStatusClass = (status: string): 'success' | 'error' | 'primary' | 'warning' => {
-    switch (status) {
-        case 'SENT': return 'success';
-        case 'FAILED': return 'error';
-        case 'READ': return 'primary';
-        default: return 'warning';
-    }
+const STATUS_STYLE: Record<string, { icon: React.ReactNode; classes: string }> = {
+    SENT: { icon: <CheckCircle2 className="size-3" />, classes: 'bg-emerald-100 text-emerald-700 border-transparent' },
+    DELIVERED: { icon: <CheckCircle2 className="size-3" />, classes: 'bg-sky-100 text-sky-700 border-transparent' },
+    FAILED: { icon: <XCircle className="size-3" />, classes: 'bg-red-100 text-red-700 border-transparent' },
+    PENDING: { icon: <Clock className="size-3" />, classes: 'bg-amber-100 text-amber-700 border-transparent' },
 };
 
 const TelegramHistory: React.FC = () => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['telegram', 'common']);
     const [logs, setLogs] = useState<TelegramLog[]>([]);
+    const [count, setCount] = useState(0);
+    const [page, setPage] = useState(1);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
-    const [filterType, setFilterType] = useState('ALL');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [filterType, setFilterType] = useState('');
+    const [filterStatus, setFilterStatus] = useState('');
+
+    useEffect(() => {
+        const timer = window.setTimeout(() => { setDebouncedSearch(searchTerm.trim()); setPage(1); }, 400);
+        return () => window.clearTimeout(timer);
+    }, [searchTerm]);
 
     const fetchLogs = async () => {
         setLoading(true);
+        setError(false);
         try {
-            const params: unknown = {};
-            if (filterType !== 'ALL') params.type = filterType;
-            
+            const params: Record<string, string | number> = { page, page_size: PAGE_SIZE };
+            if (filterType) params.type = filterType;
+            if (filterStatus) params.status = filterStatus;
+            if (debouncedSearch) params.search = debouncedSearch;
+
             const response = await api.get('telegram-logs/', { params });
             setLogs(Array.isArray(response.data) ? response.data : response.data.results || []);
-        } catch (error) {
-            logger.error('Erreur lors du chargement de l\'historique Telegram:', error);
+            setCount(response.data?.count ?? 0);
+        } catch (err) {
+            logger.error('Erreur lors du chargement de l\'historique Telegram:', err);
+            setError(true);
         } finally {
             setLoading(false);
         }
@@ -66,136 +85,176 @@ const TelegramHistory: React.FC = () => {
     useEffect(() => {
         fetchLogs();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filterType]);
+    }, [filterType, filterStatus, debouncedSearch, page]);
 
-    const filteredLogs = logs.filter(log => 
-        log.recipient_chat_id.includes(searchTerm) || 
-        log.recipient_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        log.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        log.facture_numero?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const exportCSV = async () => {
+        try {
+            const params = new URLSearchParams();
+            if (filterType) params.set('type', filterType);
+            if (filterStatus) params.set('status', filterStatus);
+            if (debouncedSearch) params.set('search', debouncedSearch);
+            const response = await api.get(`telegram-logs/export_csv/${params.size ? `?${params}` : ''}`, { responseType: 'blob' });
+            const url = URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `telegram_logs_${new Date().toISOString().slice(0, 10)}.csv`;
+            link.click();
+            URL.revokeObjectURL(url);
+        } catch {
+            gooeyToast.error(t('messages.export_error'));
+        }
+    };
+
+    const totalPages = Math.max(1, Math.ceil(count / PAGE_SIZE));
 
     return (
-        <div className="h-full flex flex-col bg-base-200 p-4 md:p-6 lg:p-8 gap-4 sm:gap-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-base-100 p-6 rounded-2xl shadow-sm border border-base-200">
-                <div>
-                    <h1 className="text-2xl font-black text-base-content flex items-center gap-3">
-                        <div className="p-2 bg-info/10 rounded-lg">
-                            <svg className="size-6 text-info" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
-                            </svg>
-                        </div>
-                        Historique Telegram
-                    </h1>
-                    <p className="text-base-content/60 text-sm mt-1">
-                        Consultez tous les messages Telegram envoyés depuis le système (rapports, factures, etc.)
-                    </p>
+        <PageContainer variant="dense" className="lg:px-10">
+            <div className="flex flex-wrap items-start justify-between gap-3 mb-5">
+                <div className="flex items-center gap-3">
+                    <div className="p-2.5 bg-sky-600 text-white rounded-xl"><Send className="size-5" /></div>
+                    <div>
+                        <h2 className="text-2xl font-black text-slate-800">{t('title')}</h2>
+                        <p className="text-sm text-slate-500">{t('subtitle')}</p>
+                    </div>
                 </div>
-                <Button 
-                    onClick={fetchLogs} 
-                    variant="outline" size="sm" className="gap-2 rounded-xl"
-                    disabled={loading}
-                >
-                    <RefreshCcw className={`size-4 ${loading ? 'animate-spin' : ''}`} />
-                    Actualiser
-                </Button>
+                <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={exportCSV} className="border-emerald-200 text-emerald-700 hover:border-emerald-500 hover:text-emerald-700">
+                        <Download className="size-3.5" />{t('export_csv')}
+                    </Button>
+                    <Button onClick={fetchLogs} variant="outline" size="sm" className="gap-2" disabled={loading}>
+                        <RefreshCcw className={`size-3.5 ${loading ? 'animate-spin' : ''}`} />
+                        {t('refresh')}
+                    </Button>
+                </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="md:col-span-3 relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-base-content/40" />
-                    <input 
-                        type="text" 
-                        placeholder={t('audit:search_telegram_placeholder')} 
-                        className="w-full pl-12 rounded-xl bg-base-100 shadow-sm border border-base-200 h-10 text-sm px-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+            {error && (
+                <div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 border border-red-200 mb-4 text-sm text-red-700">
+                    <AlertTriangle className="size-4" />
+                    {t('view.load_error')}
+                    <Button variant="outline" size="sm" onClick={fetchLogs} className="ml-auto">{t('view.retry')}</Button>
+                </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+                <div className="relative sm:col-span-2">
+                    <Search className="absolute left-2.5 top-2.5 size-3.5 text-slate-400 pointer-events-none" />
+                    <Input
+                        disableUppercase
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onChange={e => setSearchTerm(e.target.value)}
+                        placeholder={t('filters.search_placeholder')}
+                        aria-label={t('filters.search_label')}
+                        className="w-full h-9 pl-8 text-xs"
                     />
                 </div>
-                <select 
-                    className="w-full rounded-xl bg-base-100 shadow-sm border border-base-200 h-10 text-sm px-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                    value={filterType}
-                    onChange={(e) => setFilterType(e.target.value)}
-                >
-                    <option value="ALL">Tous les types</option>
-                    <option value="RAPPORT">Rapports Flash</option>
-                    <option value="FACTURE">Factures</option>
-                    <option value="PROMIS">Rappels Promis</option>
-                    <option value="MANUEL">Envois Manuels</option>
-                </select>
+                <label className="text-caption font-black uppercase text-slate-500">
+                    {t('filters.type_label')}
+                    <Select value={filterType} onChange={e => { setFilterType(e.target.value); setPage(1); }} className="mt-1 h-9 text-xs">
+                        <option value="">{t('filters.all_types')}</option>
+                        {TYPES.map(type => <option key={type} value={type}>{t(`types.${type}`)}</option>)}
+                    </Select>
+                </label>
+                <label className="text-caption font-black uppercase text-slate-500">
+                    {t('filters.status_label')}
+                    <Select value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setPage(1); }} className="mt-1 h-9 text-xs">
+                        <option value="">{t('filters.all_status')}</option>
+                        {STATUSES.map(status => <option key={status} value={status}>{t(`statuses.${status}`)}</option>)}
+                    </Select>
+                </label>
             </div>
 
-            <div className="bg-base-100 rounded-2xl shadow-sm border border-base-200 overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
-                        <thead>
-                            <tr className="bg-base-200/50">
-                                <th>Date & Expéditeur</th>
-                                <th>Destinataire</th>
-                                <th>Message</th>
-                                <th>Type</th>
-                                <th>Statut</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {loading ? (
-                                <tr>
-                                    <td colSpan={5} className="text-center py-10">
-                                        <Loader2 className="size-8 animate-spin text-primary" />
-                                    </td>
-                                </tr>
-                            ) : filteredLogs.length === 0 ? (
-                                <tr>
-                                    <td colSpan={5} className="text-center py-10 text-base-content/50">
-                                        Aucun log trouvé
-                                    </td>
-                                </tr>
-                            ) : filteredLogs.map(log => (
-                                <tr key={log.id} className="hover:bg-base-200/30 transition-colors">
-                                    <td>
+            <div className="flex gap-2 items-center mb-2 text-xs font-black text-slate-500 uppercase">
+                <Send className="size-3.5" />
+                <span className="text-sky-600 bg-sky-50 px-2 py-0.5 rounded-full">{count} {t('view.items')}</span>
+            </div>
+
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>{t('table.date_sender')}</TableHead>
+                            <TableHead>{t('table.recipient')}</TableHead>
+                            <TableHead>{t('table.message')}</TableHead>
+                            <TableHead>{t('table.type')}</TableHead>
+                            <TableHead>{t('table.status')}</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {loading ? (
+                            <TableRow>
+                                <TableCell colSpan={5} className="text-center py-10">
+                                    <Loader2 className="size-8 animate-spin text-sky-500 mx-auto" />
+                                </TableCell>
+                            </TableRow>
+                        ) : logs.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={5} className="text-center py-12">
+                                    <p className="font-bold text-slate-500">{t('view.empty_title')}</p>
+                                    <p className="text-sm text-slate-400">{t('view.empty_subtitle')}</p>
+                                </TableCell>
+                            </TableRow>
+                        ) : logs.map(log => {
+                            const statusCfg = STATUS_STYLE[log.status] || STATUS_STYLE.PENDING;
+                            return (
+                                <TableRow key={log.id}>
+                                    <TableCell>
                                         <div className="flex flex-col gap-1">
-                                            <span className="font-bold text-sm">
-                                                {formatDateTime(log.created_at)}
-                                            </span>
-                                            <span className="text-xs flex items-center gap-1 text-base-content/60">
-                                                <User className="size-3" /> {log.sent_by_name || 'Système'}
+                                            <span className="font-bold text-sm">{formatDateTime(log.created_at)}</span>
+                                            <span className="text-xs flex items-center gap-1 text-slate-500">
+                                                <User className="size-3" /> {log.sent_by_name || t('view.system_user')}
                                             </span>
                                         </div>
-                                    </td>
-                                    <td>
+                                    </TableCell>
+                                    <TableCell>
                                         <div className="flex flex-col gap-1">
-                                            <span className="font-bold text-sm">{log.recipient_name || 'Inconnu'}</span>
-                                            <span className="text-xs flex items-center gap-1 font-mono text-base-content/70">
-                                                <Hash className="size-3 text-info" /> {log.recipient_chat_id}
+                                            <span className="font-bold text-sm">{log.recipient_name || t('view.unknown_recipient')}</span>
+                                            <span className="text-xs flex items-center gap-1 font-mono text-slate-500">
+                                                <Hash className="size-3 text-sky-500" /> {log.recipient_chat_id}
                                             </span>
                                         </div>
-                                    </td>
-                                    <td>
+                                    </TableCell>
+                                    <TableCell>
                                         <div className="max-w-md">
                                             <p className="text-sm line-clamp-2" title={log.message}>{log.message}</p>
-                                            {log.facture_numero && (
-                                                <Badge variant="ghost" size="sm" className="gap-1 mt-1 font-mono whitespace-nowrap">
-                                                    <FileText className="size-2" /> {log.facture_numero}
-                                                </Badge>
-                                            )}
+                                            <div className="flex flex-wrap gap-1 mt-1">
+                                                {log.facture_numero && (
+                                                    <Badge variant="outline" className="gap-1 font-mono whitespace-nowrap border-transparent bg-slate-100 text-slate-600">
+                                                        <FileText className="size-3" /> {log.facture_numero}
+                                                    </Badge>
+                                                )}
+                                                {log.has_attachment && (
+                                                    <Badge variant="outline" className="gap-1 whitespace-nowrap border-transparent bg-sky-50 text-sky-600" title={log.attachment_path || ''}>
+                                                        <Paperclip className="size-3" /> {t('view.attachment')}
+                                                    </Badge>
+                                                )}
+                                            </div>
                                         </div>
-                                    </td>
-                                    <td>
-                                        <Badge variant="ghost" size="sm" className="font-semibold">{log.type_display}</Badge>
-                                    </td>
-                                    <td>
-                                        <Badge variant={getStatusClass(log.status)} size="sm" className="gap-1 font-bold text-caption">
-                                            {getStatusIcon(log.status)}
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge variant="outline" className="font-semibold border-transparent bg-slate-100 text-slate-600">{log.type_display}</Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge variant="outline" className={`gap-1 font-bold ${statusCfg.classes}`}>
+                                            {statusCfg.icon}
                                             {log.status_display}
                                         </Badge>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })}
+                    </TableBody>
+                </Table>
             </div>
-        </div>
+
+            {!loading && totalPages > 1 && (
+                <div className="flex justify-center items-center gap-3 mt-6">
+                    <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>{t('common:pagination.prev')}</Button>
+                    <span className="text-xs text-slate-500">{t('view.page', { page, total: totalPages })}</span>
+                    <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>{t('common:pagination.next')}</Button>
+                </div>
+            )}
+        </PageContainer>
     );
 };
 

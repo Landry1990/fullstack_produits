@@ -227,6 +227,8 @@
         "client_name_update_error": "Erreur lors de la mise à jour du client",
         "whatsapp_sent": "Ticket envoyé par WhatsApp !",
         "whatsapp_send_error": "Erreur lors de l'envoi WhatsApp",
+        "telegram_sent": "Facture envoyée sur Telegram !",
+        "telegram_send_error": "Erreur lors de l'envoi Telegram",
         "quantity_updated": "Quantité mise à jour : {{qty}} x {{product}}",
         "quantity_cart_empty": "Aucun produit dans le panier pour appliquer une quantité",
         "pending_sale_success": "Vente mise en attente",

@@ -318,6 +318,21 @@ export function useFacturationActions({
         }
     }, [ui.ticketCaisse, t, setLoading])
 
+    const handleSendTelegram = useCallback(async () => {
+        if (!ui.ticketCaisse || !ui.ticketCaisse.facture || typeof ui.ticketCaisse.facture === 'number') return
+        const facture = ui.ticketCaisse.facture as unknown as { id: number }
+
+        setLoading(true)
+        try {
+            const response = await api.post(`factures/${facture.id}/send_telegram/`)
+            gooeyToast.success(response.data.detail || t('facturation:messages.telegram_sent'))
+        } catch (err) {
+            gooeyToast.error(getApiErrorDetail(err, t('facturation:messages.telegram_send_error')))
+        } finally {
+            setLoading(false)
+        }
+    }, [ui.ticketCaisse, t, setLoading])
+
     const handleOrdonnanceSave = useCallback(async (data: OrdonnanceData) => {
         setLoading(true);
         try {
@@ -582,6 +597,7 @@ export function useFacturationActions({
         handleConfirmPrintClientName,
         ouvrirModalPaiement,
         handleSendWhatsApp,
+        handleSendTelegram,
         handleOrdonnanceSave,
         handleQuantityShortcut,
         handleLotSelect,

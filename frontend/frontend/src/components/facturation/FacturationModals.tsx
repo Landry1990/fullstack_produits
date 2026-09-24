@@ -95,6 +95,7 @@ export default function FacturationModals({ hook, showOpenPosteModal, setShowOpe
         ticket={hook.ticketCaisse}
         settings={hook.pharmacySettings}
         onSendWhatsApp={hook.handleSendWhatsApp}
+        onSendTelegram={hook.handleSendTelegram}
       />
       </Suspense>
 

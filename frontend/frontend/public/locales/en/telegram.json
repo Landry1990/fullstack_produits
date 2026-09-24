@@ -1,0 +1,48 @@
+{
+    "title": "Telegram History",
+    "subtitle": "All Telegram messages and documents sent from the system (reports, invoices, reminders…)",
+    "refresh": "Refresh",
+    "export_csv": "Export CSV",
+    "filters": {
+        "search_placeholder": "Search (message, recipient, chat ID, invoice no.)…",
+        "search_label": "Search Telegram history",
+        "type_label": "Type",
+        "status_label": "Status",
+        "all_types": "All types",
+        "all_status": "All statuses"
+    },
+    "types": {
+        "FACTURE": "Invoice Send",
+        "PROMIS": "Promis Availability",
+        "MANUEL": "Manual Send",
+        "RAPPEL": "Payment Reminder",
+        "RAPPORT": "Flash Report"
+    },
+    "statuses": {
+        "PENDING": "Pending",
+        "SENT": "Sent",
+        "FAILED": "Failed",
+        "DELIVERED": "Delivered"
+    },
+    "table": {
+        "date_sender": "Date & Sender",
+        "recipient": "Recipient",
+        "message": "Message",
+        "type": "Type",
+        "status": "Status"
+    },
+    "view": {
+        "empty_title": "No Telegram messages",
+        "empty_subtitle": "No send matches your search criteria.",
+        "load_error": "Error loading Telegram history",
+        "retry": "Retry",
+        "system_user": "System",
+        "unknown_recipient": "Unknown",
+        "attachment": "Attachment",
+        "items": "sends",
+        "page": "Page {{page}} / {{total}}"
+    },
+    "messages": {
+        "export_error": "CSV export error"
+    }
+}

@@ -124,6 +124,104 @@ class TelegramService:
         return '', ''
 
     @staticmethod
+    def send_document(file_bytes: bytes, filename: str, caption: str = '',
+                      bot_token: str | None = None, chat_id: str | None = None,
+                      message_type: str = 'FACTURE', recipient_name: str = '',
+                      facture=None, client=None, user=None) -> tuple[bool, str]:
+        """
+        Envoie un document (PDF, etc.) via le bot Telegram (sendDocument).
+        Retourne (success: bool, message: str).
+        Enregistre l'envoi dans TelegramLog avec has_attachment=True.
+        """
+        from .models import TelegramLog
+
+        if not bot_token or not chat_id:
+            token, cid = TelegramService._get_credentials()
+            bot_token = bot_token or token
+            chat_id = chat_id or cid
+
+        log = TelegramLog.objects.create(
+            recipient_chat_id=chat_id or '',
+            recipient_name=recipient_name or 'Pharmacienne',
+            message=(caption or filename)[:1000],
+            type=message_type,
+            status=TelegramLog.Status.PENDING,
+            has_attachment=True,
+            attachment_path=filename,
+            facture=facture,
+            client=client,
+            sent_by=user
+        )
+
+        if not bot_token:
+            log.status = TelegramLog.Status.FAILED
+            log.provider_response = "Token bot Telegram manquant"
+            log.save()
+            return False, "Token bot Telegram manquant"
+        if not chat_id:
+            log.status = TelegramLog.Status.FAILED
+            log.provider_response = "Chat ID manquant"
+            log.save()
+            return False, "Chat ID manquant"
+
+        # Telegram limite les légendes de documents à 1024 caractères
+        if caption and len(caption) > 1024:
+            caption = caption[:1020] + "\n…"
+
+        url = f"https://api.telegram.org/bot{bot_token}/sendDocument"
+        form_data = {"chat_id": chat_id, "parse_mode": "HTML"}
+        if caption:
+            form_data["caption"] = caption
+        files = {"document": (filename, file_bytes, "application/pdf")}
+
+        @retry_with_backoff(
+            max_retries=2,
+            base_delay=1.0,
+            max_delay=5.0,
+            exceptions=(requests.exceptions.RequestException,),
+        )
+        def _do_request():
+            resp = requests.post(url, data=form_data, files=files, timeout=30)
+            data = resp.json()
+            if resp.status_code == 200 and data.get('ok'):
+                return data
+            error_desc = data.get('description', 'Erreur inconnue')
+            error_code = data.get('error_code', resp.status_code)
+            raise requests.exceptions.HTTPError(
+                f"Erreur {error_code}: {error_desc}",
+                response=resp
+            )
+
+        try:
+            data = _do_request()
+            logger.info(f"[Telegram] Document {filename} envoyé à chat_id={chat_id}")
+            log.status = TelegramLog.Status.SENT
+            log.sent_at = timezone.now()
+            log.provider_message_id = str(data.get('result', {}).get('message_id', ''))
+            log.provider_response = str(data)
+            log.save()
+            return True, "Document envoyé avec succès ✅"
+
+        except requests.exceptions.HTTPError as e:
+            logger.warning(f"[Telegram] {e}")
+            log.status = TelegramLog.Status.FAILED
+            log.provider_response = str(e)
+            log.save()
+            return False, str(e)
+        except requests.exceptions.RequestException as e:
+            logger.error(f"[Telegram] Échec après retries: {e}")
+            log.status = TelegramLog.Status.FAILED
+            log.provider_response = f"Échec après retries: {e!s}"
+            log.save()
+            return False, f"Échec après retries: {e!s}"
+        except Exception as e:
+            logger.error(f"[Telegram] Exception: {e}")
+            log.status = TelegramLog.Status.FAILED
+            log.provider_response = str(e)
+            log.save()
+            return False, str(e)
+
+    @staticmethod
     def send_message(text: str, bot_token: str | None = None, chat_id: str | None = None, parse_mode: str = 'HTML',
                      message_type: str = 'RAPPORT', recipient_name: str = '',
                      facture=None, client=None, user=None) -> tuple[bool, str]:

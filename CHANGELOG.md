@@ -2,6 +2,107 @@
 
 ---
 
+## 2026-09-24 — 🏠 Page d'accueil : facturation pour tous les non-admins
+
+`HomeRedirector` (`components/auth/RouteGuards.tsx`) redirigeait les
+non-superusers selon `allowed_menus` (manager-dashboard, dashboard, etc.).
+Nouvelle règle : **tout utilisateur non-admin démarre sur `/app/facturation`**.
+
+- `is_superuser` → `/app/dashboard` (inchangé)
+- `CAISSIER` → `/app/caisse-centralisee` (inchangé)
+- Tout autre utilisateur → `/app/facturation`
+- Fallback anti-boucle : si l'utilisateur n'a pas la permission `facturation`,
+  redirection vers son premier menu accessible (caisse, manager, dashboard,
+  produits, ventes) pour éviter un cycle `/app ↔ /app/facturation` via
+  `PermissionRoute`.
+
+Tests `RouteGuards` mis à jour (18/18 OK) : cas manager/dashboard avec et sans
+permission `facturation` couverts.
+
+---
+
+## 2026-09-24 — 📋 Historique Telegram : refonte shadcn + filtres + export CSV
+
+Suite du chantier « exports Telegram » (lot A : page historique). La page
+`TelegramHistory` était encore en DaisyUI avec textes FR hardcodés, aucune
+pagination réelle et une recherche limitée aux ~20 logs de la page courante.
+
+### Backend (`api/views/communication.py`)
+
+- `TelegramLogViewSet` : nouveau paramètre `search` (message, destinataire,
+  chat ID, n° facture — `Q` + `icontains`), `select_related` sur
+  `facture`/`client`/`sent_by` (évite le N+1 du serializer).
+- Nouvelle action `GET /api/telegram-logs/export_csv/` — export CSV (max
+  10 000 lignes, `;`, BOM UTF-8) des logs filtrés, écrit un `AuditLog` EXPORT.
+  `provider_response` volontairement exclu (réponses API brutes).
+
+### Frontend (`TelegramHistory.tsx` réécrit, `i18n.ts`)
+
+- Migration complète shadcn : `PageContainer`, `Table`, `Badge`, `Select`,
+  `Input`, `Button` — style aligné sur `JournalAudit` (page sœur).
+- Namespace i18n `telegram` (fr + en) créé et enregistré — tous les textes
+  hardcodés remplacés (le placeholder pointait même vers une clé
+  `audit:search_telegram_placeholder` inexistante).
+- Pagination serveur (précédent/suivant, 20/page, compteur total) — avant,
+  seule la 1ʳᵉ page API était affichée.
+- Recherche débouncée (400 ms) côté serveur + filtre statut ajouté + filtre
+  type complet (`RAPPEL` manquant).
+- Statut `DELIVERED` géré (icône `READ` fantôme supprimée), badge « Pièce
+  jointe » sur les logs `has_attachment`, état d'erreur avec bouton Réessayer,
+  bouton « Exporter CSV » qui propage les filtres actifs.
+
+### Vérifié
+
+`manage.py check` OK · `search`/`status`/`export_csv` testés dans le
+conteneur (200 + CSV correct) · `tsc --noEmit` 0 erreur · build OK ·
+`deploy.ps1 -Target all` déployé.
+
+---
+
+## 2026-09-24 — 📨 Exports Telegram : envoi de documents (facture PDF)
+
+Première brique du chantier « exports Telegram » (lot D : envoi de documents) —
+le service ne savait envoyer que du texte, les champs `has_attachment` /
+`attachment_path` de `TelegramLog` restaient inutilisés.
+
+### Backend
+
+- `api/telegram_service.py` : nouvelle méthode `TelegramService.send_document()`
+  — POST multipart vers l'API `sendDocument` (caption HTML ≤1024 car., timeout
+  30 s, mêmes retries exponentiels que `send_message`). Crée un `TelegramLog`
+  avec `has_attachment=True`, `attachment_path`, `type=FACTURE`, `facture`,
+  `client`, `sent_by`.
+- `api/views/ventes/facture_mixins/print_actions.py` : nouvelle action
+  `POST /api/factures/{id}/send_telegram/` (miroir de `send_whatsapp`) —
+  vérifie `telegram_enabled`, génère le PDF via `generate_invoice_pdf`, envoie
+  vers le `chat_id` configuré avec caption (n° facture, client, total), écrit
+  l'audit log. 400 si Telegram désactivé, 502 si l'API Telegram échoue.
+- **Bug pré-existant corrigé** : `AuditLog.Action.AUTRE` n'existe pas
+  (`OTHER`) — `send_whatsapp` et `send_telegram` levaient un `AttributeError`
+  dans l'audit, transformant tout envoi réussi en 500.
+
+### Frontend
+
+- `useFacturationActions.ts` : `handleSendTelegram` (pas de prompt numéro —
+  le chat_id vient des paramètres).
+- `facturation/TicketPreviewModal.tsx` : bouton Telegram (icône `Send`, style
+  sky) affiché si `settings.telegram_enabled`, à côté du bouton WhatsApp.
+- `CaisseCentralisee.tsx` + `caisse/CaisseModals.tsx` +
+  `caisse/CaisseTicketPreviewModal.tsx` : même bouton sur le ticket de caisse.
+- i18n : `common:telegram.send_invoice` / `invoice_sent` +
+  `messages.telegram_sent` / `telegram_send_error` dans `caisse.json` et
+  `facturation.json` (fr + en).
+
+### Vérifié
+
+`manage.py check` OK · route résolue `FactureViewSet.send_telegram` · test
+end-to-end dans le conteneur : 400 si désactivé, log `TelegramLog`
+(type=FACTURE, attachment, facture, sent_by) + audit `OTHER` écrits, 502
+propre sur échec API · `tsc --noEmit` 0 erreur · build OK · déployé
+`deploy.ps1 -Target all`.
+
+---
+
 ## 2026-09-23 — 🎨 Promotions : migration complète vers shadcn/ui
 
 La page Promotions n'utilisait shadcn que pour `Button`/`Badge` ; migration du

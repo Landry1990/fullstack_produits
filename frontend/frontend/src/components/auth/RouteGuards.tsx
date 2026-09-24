@@ -48,13 +48,20 @@ export const HomeRedirector = () => {
 
   // Les caissiers atterrissent directement sur la caisse centrale
   if (user.role === 'CAISSIER') return <Navigate to="/app/caisse-centralisee" />;
-  
+
+  // Tous les autres utilisateurs (non-admin) démarrent sur la facturation
   const allowed = user.allowed_menus || [];
+  if (allowed.length === 0 || allowed.includes('facturation')) {
+    return <Navigate to="/app/facturation" />;
+  }
+
+  // Fallback si l'utilisateur n'a pas la permission facturation :
+  // éviter une boucle /app ↔ /app/facturation via PermissionRoute
+  if (allowed.includes('caisse')) return <Navigate to="/app/caisse-centralisee" />;
   if (allowed.includes('manager_sidebar')) return <Navigate to="/app/manager-dashboard" />;
   if (allowed.includes('dashboard')) return <Navigate to="/app/dashboard" />;
-  if (allowed.includes('facturation')) return <Navigate to="/app/facturation" />;
-  if (allowed.includes('caisse')) return <Navigate to="/app/caisse-centralisee" />;
   if (allowed.includes('produits')) return <Navigate to="/app/produits" />;
-  
-  return <Navigate to="/app/facturation" />; // Fallback safer
+  if (allowed.includes('ventes_consultation')) return <Navigate to="/app/ventes" />;
+
+  return <Navigate to="/app/facturation" />;
 };
