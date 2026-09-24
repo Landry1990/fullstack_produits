@@ -99,7 +99,9 @@
         "flash_report": "Rapport Flash Telegram",
         "inventory_report": "Rapport Inventaire Telegram",
         "monthly_report": "Rapport Mensuel Telegram",
-        "send_report": "Envoyer le résumé sur Telegram"
+        "send_report": "Envoyer le résumé sur Telegram",
+        "send_invoice": "Envoyer la facture PDF sur Telegram",
+        "invoice_sent": "Facture envoyée sur Telegram !"
     },
     "actions_title": "Actions",
     "sort": {

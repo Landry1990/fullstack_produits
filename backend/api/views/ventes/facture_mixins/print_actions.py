@@ -70,7 +70,7 @@ class FacturePrintMixin:
 
             log_audit(
                 request.user,
-                AuditLog.Action.AUTRE,
+                AuditLog.Action.OTHER,
                 'Facture',
                 facture.id,
                 f"Envoi facture {facture.numero_facture} via WhatsApp à {recipient_number}",
@@ -83,6 +83,61 @@ class FacturePrintMixin:
 
         except Exception as e:
             logger.error(f"Erreur envoi WhatsApp: {e!s}")
+            return Response({'detail': f"Erreur lors de l'envoi : {e!s}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=['post'])
+    @transaction.atomic
+    def send_telegram(self, request, pk=None):
+        """
+        Envoie la facture en PDF via le bot Telegram (vers le chat_id configuré).
+        """
+        facture = self.get_object()
+
+        from ....models import PharmacySettings
+        from ....telegram_service import TelegramService
+
+        pharmacy_settings = PharmacySettings.objects.first()
+        if not pharmacy_settings or not pharmacy_settings.telegram_enabled:
+            return Response({'detail': "L'intégration Telegram n'est pas activée dans les paramètres."}, status=status.HTTP_400_BAD_REQUEST)
+
+        settings, _ = InvoiceSettings.objects.get_or_create(pk=1)
+
+        try:
+            buffer = generate_invoice_pdf(facture, settings)
+            filename = f"facture_{facture.numero_facture or facture.id}.pdf"
+            client_name = facture.client_name_override or (facture.client.name if facture.client else '')
+            caption = (
+                f"🧾 <b>Facture {facture.numero_facture or facture.id}</b>\n"
+                f"👤 {client_name}\n"
+                f"💰 {facture.total_ttc:,.0f} FCFA"
+            )
+
+            success, message = TelegramService.send_document(
+                buffer.getvalue(),
+                filename,
+                caption=caption,
+                message_type='FACTURE',
+                recipient_name=client_name,
+                facture=facture,
+                client=facture.client,
+                user=request.user,
+            )
+
+            log_audit(
+                request.user,
+                AuditLog.Action.OTHER,
+                'Facture',
+                facture.id,
+                f"Envoi facture {facture.numero_facture} via Telegram",
+                request=request
+            )
+
+            if success:
+                return Response({'detail': message})
+            return Response({'detail': message}, status=status.HTTP_502_BAD_GATEWAY)
+
+        except Exception as e:
+            logger.error(f"Erreur envoi Telegram: {e!s}")
             return Response({'detail': f"Erreur lors de l'envoi : {e!s}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=True, methods=['get'])

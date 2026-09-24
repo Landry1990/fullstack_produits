@@ -1,8 +1,10 @@
+import csv
+import io
 import mimetypes
 from pathlib import Path
 
 from django.db import models
-from django.http import FileResponse
+from django.http import FileResponse, HttpResponse
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
@@ -136,16 +138,18 @@ class TelegramLogViewSet(viewsets.ReadOnlyModelViewSet):
     """
     Historique des messages Telegram.
     """
-    queryset = TelegramLog.objects.all().order_by('-created_at')
+    queryset = TelegramLog.objects.select_related('facture', 'client', 'sent_by').order_by('-created_at')
     serializer_class = TelegramLogSerializer
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
         qs = super().get_queryset()
-        type_filter = self.request.query_params.get('type')
-        status_filter = self.request.query_params.get('status')
-        client_id = self.request.query_params.get('client')
+        params = self.request.query_params
+        type_filter = params.get('type')
+        status_filter = params.get('status')
+        client_id = params.get('client')
+        search = (params.get('search') or '').strip()
 
         if type_filter:
             qs = qs.filter(type=type_filter)
@@ -153,8 +157,57 @@ class TelegramLogViewSet(viewsets.ReadOnlyModelViewSet):
             qs = qs.filter(status=status_filter)
         if client_id:
             qs = qs.filter(client_id=client_id)
+        if search:
+            qs = qs.filter(
+                models.Q(message__icontains=search) |
+                models.Q(recipient_name__icontains=search) |
+                models.Q(recipient_chat_id__icontains=search) |
+                models.Q(facture__numero_facture__icontains=search)
+            )
 
         return qs
+
+    @action(detail=False, methods=['get'])
+    def export_csv(self, request):
+        """Exporte les logs Telegram filtrés au format CSV (max 10 000 lignes)."""
+        from ..audit_helpers import log_audit
+        from ..models import AuditLog
+
+        qs = self.get_queryset()[:10000]
+
+        output = io.StringIO()
+        writer = csv.writer(output, delimiter=';', quoting=csv.QUOTE_MINIMAL)
+        writer.writerow(['Date création', 'Date envoi', 'Expéditeur', 'Destinataire', 'Chat ID', 'Type', 'Statut', 'Facture', 'Pièce jointe', 'Message'])
+
+        for log in qs.iterator(chunk_size=1000):
+            writer.writerow([
+                log.created_at.strftime('%Y-%m-%d %H:%M:%S') if log.created_at else '',
+                log.sent_at.strftime('%Y-%m-%d %H:%M:%S') if log.sent_at else '',
+                log.sent_by.username if log.sent_by else 'Système',
+                log.recipient_name or '',
+                log.recipient_chat_id or '',
+                log.get_type_display(),
+                log.get_status_display(),
+                log.facture.numero_facture if log.facture else '',
+                log.attachment_path or '',
+                (log.message or '').replace('\n', ' ').replace('\r', ' '),
+            ])
+
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.EXPORT,
+            model_name='TelegramLog',
+            object_id=0,
+            description="Export CSV de l'historique Telegram",
+            details={'filtres': request.GET.dict()},
+            request=request,
+        )
+
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = 'attachment; filename="telegram_logs.csv"'
+        response.write('\ufeff')
+        response.write(output.getvalue())
+        return response
 
 
 class InternalMessageViewSet(viewsets.ModelViewSet):

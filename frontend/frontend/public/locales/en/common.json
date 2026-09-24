@@ -98,7 +98,9 @@
         "flash_report": "Telegram Flash Report",
         "inventory_report": "Telegram Inventory Report",
         "monthly_report": "Telegram Monthly Report",
-        "send_report": "Send summary to Telegram"
+        "send_report": "Send summary to Telegram",
+        "send_invoice": "Send invoice PDF to Telegram",
+        "invoice_sent": "Invoice sent to Telegram!"
     },
     "actions_title": "Actions",
     "sort": {

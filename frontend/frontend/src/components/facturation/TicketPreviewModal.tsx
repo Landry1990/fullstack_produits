@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { X, MessageCircle } from 'lucide-react'
+import { X, MessageCircle, Send } from 'lucide-react'
 import { TicketTemplate } from '../printing/TicketTemplate'
 import { buildTicketPrintHtml } from '../../utils/print/printHelpers'
 import { gooeyToast } from 'goey-toast'
@@ -12,6 +12,7 @@ interface TicketPreviewModalProps {
   ticket: TicketCaisse | null
   settings: PharmacySettings | null
   onSendWhatsApp?: () => void
+  onSendTelegram?: () => void
 }
 
 export default function TicketPreviewModal({
@@ -19,7 +20,8 @@ export default function TicketPreviewModal({
   onClose,
   ticket,
   settings,
-  onSendWhatsApp
+  onSendWhatsApp,
+  onSendTelegram
 }: TicketPreviewModalProps) {
   const { t } = useTranslation(['facturation', 'common'])
 
@@ -89,6 +91,17 @@ export default function TicketPreviewModal({
              >
                <MessageCircle className="size-4" />
                WhatsApp
+             </button>
+          )}
+
+          {settings?.telegram_enabled && onSendTelegram && (
+             <button
+               className="inline-flex items-center justify-center h-9 px-4 rounded-lg text-sm font-medium text-sky-700 bg-sky-50 border border-sky-200 hover:bg-sky-100 transition-colors gap-2"
+               onClick={onSendTelegram}
+               title={t('common:telegram.send_invoice')}
+             >
+               <Send className="size-4" />
+               Telegram
              </button>
           )}
 

@@ -111,6 +111,8 @@
         "save_payment_error": "Erreur lors de l'enregistrement du paiement",
         "whatsapp_send_error": "Erreur lors de l'envoi WhatsApp",
         "whatsapp_sent": "Ticket envoyé par WhatsApp !",
+        "telegram_sent": "Facture envoyée sur Telegram !",
+        "telegram_send_error": "Erreur lors de l'envoi Telegram",
         "bulk_cancel_error": "Erreur lors de la vidange",
         "cancel_invoice_success": "Facture annulée",
         "cancel_invoice_error": "Erreur lors de l'annulation",

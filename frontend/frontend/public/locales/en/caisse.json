@@ -111,6 +111,8 @@
         "save_payment_error": "Error saving payment",
         "whatsapp_send_error": "Error sending WhatsApp",
         "whatsapp_sent": "Ticket sent by WhatsApp!",
+        "telegram_sent": "Invoice sent to Telegram!",
+        "telegram_send_error": "Error sending to Telegram",
         "bulk_cancel_error": "Error during bulk cancel",
         "cancel_invoice_success": "Invoice cancelled",
         "cancel_invoice_error": "Error cancelling invoice",

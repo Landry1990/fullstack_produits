@@ -226,6 +226,8 @@
         "client_name_update_error": "Error updating customer name",
         "whatsapp_sent": "Ticket sent via WhatsApp!",
         "whatsapp_send_error": "Error sending WhatsApp",
+        "telegram_sent": "Invoice sent to Telegram!",
+        "telegram_send_error": "Error sending to Telegram",
         "quantity_updated": "Quantity updated: {{qty}} x {{product}}",
         "quantity_cart_empty": "No product in the cart to apply a quantity",
         "pending_sale_success": "Sale put on hold",

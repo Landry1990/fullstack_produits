@@ -1,0 +1,48 @@
+{
+    "title": "Historique Telegram",
+    "subtitle": "Tous les messages et documents Telegram envoyés depuis le système (rapports, factures, rappels…)",
+    "refresh": "Actualiser",
+    "export_csv": "Exporter CSV",
+    "filters": {
+        "search_placeholder": "Rechercher (message, destinataire, chat ID, n° facture)…",
+        "search_label": "Rechercher dans l'historique Telegram",
+        "type_label": "Type",
+        "status_label": "Statut",
+        "all_types": "Tous les types",
+        "all_status": "Tous les statuts"
+    },
+    "types": {
+        "FACTURE": "Envoi Facture",
+        "PROMIS": "Disponibilité Promis",
+        "MANUEL": "Envoi Manuel",
+        "RAPPEL": "Rappel Paiement",
+        "RAPPORT": "Rapport Flash"
+    },
+    "statuses": {
+        "PENDING": "En attente",
+        "SENT": "Envoyé",
+        "FAILED": "Échec",
+        "DELIVERED": "Reçu"
+    },
+    "table": {
+        "date_sender": "Date & Expéditeur",
+        "recipient": "Destinataire",
+        "message": "Message",
+        "type": "Type",
+        "status": "Statut"
+    },
+    "view": {
+        "empty_title": "Aucun message Telegram",
+        "empty_subtitle": "Aucun envoi ne correspond à vos critères de recherche.",
+        "load_error": "Erreur lors du chargement de l'historique Telegram",
+        "retry": "Réessayer",
+        "system_user": "Système",
+        "unknown_recipient": "Inconnu",
+        "attachment": "Pièce jointe",
+        "items": "envois",
+        "page": "Page {{page}} / {{total}}"
+    },
+    "messages": {
+        "export_error": "Erreur lors de l'export CSV"
+    }
+}
