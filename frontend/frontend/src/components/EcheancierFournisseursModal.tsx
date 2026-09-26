@@ -63,7 +63,7 @@ const statusBadgeVariant = (status: Echeance['status']) => {
 };
 
 export default function EcheancierFournisseursModal({ isOpen, onClose, onPointer }: Props) {
-  const { t } = useTranslation(['providers', 'common']);
+  const { t, i18n } = useTranslation(['providers', 'common', 'suppliers']);
   const [echeances, setEcheances] = useState<Echeance[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -86,7 +86,7 @@ export default function EcheancierFournisseursModal({ isOpen, onClose, onPointer
       const { data } = await api.get('fournisseurs/echeancier/');
       setEcheances(data);
     } catch (err: unknown) {
-      setError(err.response?.data?.message || err.message || 'Erreur de chargement');
+      setError(err.response?.data?.message || err.message || t('suppliers:errors.load'));
     } finally {
       setLoading(false);
     }
@@ -111,6 +111,15 @@ export default function EcheancierFournisseursModal({ isOpen, onClose, onPointer
       return acc;
     }, { total: 0, late: 0, today: 0, upcoming: 0 });
   }, [filteredEcheances]);
+
+  const statusLabel = (status: Echeance['status']) => {
+    switch (status) {
+      case 'EN RETARD': return t('providers:schedule.status_late');
+      case "AUJOURD'HUI": return t('providers:schedule.status_today');
+      case 'À VENIR': return t('providers:schedule.status_upcoming');
+      default: return status;
+    }
+  };
 
   const summaryCards = [
     { label: t('providers:schedule.summary.total'), amount: summary.total, icon: Wallet, variant: 'primary' as const },
@@ -234,13 +243,13 @@ export default function EcheancierFournisseursModal({ isOpen, onClose, onPointer
                       </TableCell>
                       <TableCell className="text-center">
                         <div className="font-semibold text-sm text-base-content">
-                          {new Date(e.date_echeance).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                          {new Date(e.date_echeance).toLocaleDateString(i18n.language.startsWith('en') ? 'en-GB' : 'fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
                         </div>
                       </TableCell>
                       <TableCell className="text-center">
                         <Badge variant={statusBadgeVariant(e.status)} size="sm">
-                          {e.status}
-                          {e.jours_restants < 0 ? ` (${Math.abs(e.jours_restants)}j)` : e.jours_restants > 0 ? ` (dans ${e.jours_restants}j)` : ''}
+                          {statusLabel(e.status)}
+                          {e.jours_restants < 0 ? ` ${t('providers:schedule.late_suffix', { count: Math.abs(e.jours_restants) })}` : e.jours_restants > 0 ? ` ${t('providers:schedule.in_days', { count: e.jours_restants })}` : ''}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-center">

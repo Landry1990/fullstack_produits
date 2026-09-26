@@ -24,8 +24,7 @@ import { addRecentProducts } from '../utils/recentProducts';
 import clientService from '../services/clientService';
 import produitService from '../services/produitService';
 import venteService from '../services/venteService';
-import caisseService from '../services/caisseService';
-import promisService from '../services/promisService';
+import api from '../services/api';
 import ordonnancierService from '../services/ordonnancierService';
 import { logger } from '../utils/logger'
 
@@ -224,7 +223,7 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
                         const effectiveQty = ligne.quantite - (ligne.isPromis ? (ligne.promisQuantity || 0) : 0);
                         // On autorise la vente si stock suffisant OU si une validation Sudo est présente (Vente forcée)
                         if (effectiveQty > 0 && realProd.stock < effectiveQty && !params.sudo_password) {
-                            const errorMsg = `⚠️ STOCK INSUFFISANT EN TEMPS RÉEL !\nLe produit "${ligne.produit.name}" a été vendu sur un autre poste.\nStock actuel disponible : ${realProd.stock}\nQuantité demandée : ${effectiveQty}`;
+                            const errorMsg = t('messages.stock_insufficient_realtime', { name: ligne.produit.name, stock: realProd.stock, qty: effectiveQty });
                             setError(errorMsg);
                             onError?.(errorMsg);
                             gooeyToast.error(errorMsg, {
@@ -344,7 +343,7 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
                 try {
                     const { generatePromisTicketDraft } = await import('../utils/print/promisPdfDraft');
                     generatePromisTicketDraft({
-                        client_name: finalFacture.client_name || params.manualClientName || 'Client',
+                        client_name: finalFacture.client_name || params.manualClientName || t('common:passerby_client'),
                         client_phone: params.lignesFacture.find(l => l.promisPhone)?.promisPhone,
                         items: promisLines.map(l => ({
                             id: 0,
@@ -372,7 +371,7 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
                 const clientNameForTicket = finalFacture.client_name_override
                     || finalFacture.client_name
                     || params.manualClientName
-                    || 'Client de passage';
+                    || t('common:passerby_client');
 
                 // L'impression A4 pour le flux normal est gérée par le callback onSuccess
                 // (qui utilise pendingPrintWindowRef ouvert par handlePaymentClick)
@@ -488,26 +487,28 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
 
             let resteAEnregistrer = montantADevoir;
 
-            const [_, updatedFacture] = await Promise.all([
-                Promise.all(paiementsList.map(async (p) => {
-                    const isRefund = montantADevoir < 0;
-                    if (!isRefund && resteAEnregistrer <= 0) return;
-                    if (isRefund && resteAEnregistrer >= 0) return;
+            // Calculer les montants plafonnés avant envoi (1 seule requête bulk)
+            const paiementPayloads = paiementsList.map((p) => {
+                const isRefund = montantADevoir < 0;
+                if (!isRefund && resteAEnregistrer <= 0) return null;
+                if (isRefund && resteAEnregistrer >= 0) return null;
 
-                    const montantReel = isRefund
-                        ? Math.max(p.montant, resteAEnregistrer)
-                        : Math.min(p.montant, resteAEnregistrer);
-                    const payload = {
-                        facture_id: facture.id,
-                        mode_paiement: p.mode,
-                        montant: montantReel,
-                        reference: reference || null,
-                        statut: 'completee',
-                    };
-                    await caisseService.createPaiement(payload);
-                    resteAEnregistrer -= montantReel;
-                    totalVerse += montantReel;
-                })),
+                const montantReel = isRefund
+                    ? Math.max(p.montant, resteAEnregistrer)
+                    : Math.min(p.montant, resteAEnregistrer);
+                resteAEnregistrer -= montantReel;
+                totalVerse += montantReel;
+                return {
+                    facture: facture.id,
+                    mode_paiement: p.mode,
+                    montant: montantReel,
+                    reference: reference || null,
+                    statut: 'completee',
+                };
+            }).filter((p): p is NonNullable<typeof p> => p !== null);
+
+            const [_, updatedFacture] = await Promise.all([
+                api.post('caisse/bulk_create/', { items: paiementPayloads }),
                 venteService.update(facture.id, { status: 'PAY' })
             ]);
 
@@ -521,20 +522,20 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
             if (promisLines.length > 0) {
                 sideEffects.push((async () => {
                     try {
-                        await Promise.all(promisLines.map(l =>
-                            promisService.create({
+                        await api.post('promis/bulk_create/', {
+                            items: promisLines.map(l => ({
                                 facture: facture.id,
                                 produit: l.produit.id,
                                 quantite: l.promisQuantity,
                                 client_phone: params.promisPhone || l.promisPhone || '',
                                 client_name: params.promisClientName || '',
                                 client: facture.client || undefined,
-                            })
-                        ));
+                            }))
+                        });
                         
                         const { generatePromisTicketDraft: genPromis } = await import('../utils/print/promisPdfDraft');
                         genPromis({
-                            client_name: updatedFacture.client_name || params.manualClientName || 'Client',
+                            client_name: updatedFacture.client_name || params.manualClientName || t('common:passerby_client'),
                             client_phone: params.promisPhone || params.lignesFacture.find(l => l.promisPhone)?.promisPhone,
                             items: promisLines.map(l => ({
                                 id: 0,
@@ -590,7 +591,7 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
             // Priorité: client_name_override > client_name > nom du client > 'Client de passage'
             const clientNameForTicket = updatedFacture.client_name_override
                 || updatedFacture.client_name
-                || 'Client de passage';
+                || t('common:passerby_client');
 
             const ticketCaisse: TicketCaisse = {
                 id: updatedFacture.id,

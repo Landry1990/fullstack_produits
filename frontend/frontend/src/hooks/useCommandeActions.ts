@@ -188,7 +188,7 @@ export function useCommandeActions({
 
         // Mise à jour optimistique : passer immédiatement le statut à CLOT
         // dans l'UI et dans le cache pour que le badge change sans attendre
-        const optimisticCommande = { ...commande, status: 'CLOT', status_display: 'Clôturée' };
+        const optimisticCommande = { ...commande, status: 'CLOT', status_display: t('orders:status.clot') };
         setSelectedCommande(optimisticCommande);
         updateCommandeInCache(queryClient, optimisticCommande);
 

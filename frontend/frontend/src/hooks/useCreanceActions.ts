@@ -216,7 +216,7 @@ export const useCreanceActions = ({
                 try {
                     // Récupérer le nom du client depuis les créances
                     const firstCreance = filteredCreances.find(c => c.id === selectedIds[0]);
-                    const clientName = firstCreance?.client_name || 'Client';
+                    const clientName = firstCreance?.client_name || t('common:passerby_client');
                     
                     console.log('=== BULK PAYMENT RESPONSE ===');
                     console.log('Total dettes:', data.total_dettes);

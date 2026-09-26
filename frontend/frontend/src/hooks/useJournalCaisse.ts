@@ -131,7 +131,7 @@ export function useJournalCaisse() {
       if (usersData) setUsers(usersData);
     } catch (err) {
       if (err instanceof Error && err.name === 'CanceledError') return;
-      setError(t('table.loading_error') || 'Erreur lors du chargement des données');
+      setError(t('table.loading_error'));
       logger.error('Erreur page_init caisse:', err);
     } finally {
       setLoading(false);

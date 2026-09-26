@@ -130,6 +130,8 @@
         "status_late": "🔴 Late",
         "status_today": "🟠 Today",
         "status_upcoming": "🟢 Upcoming",
+        "late_suffix": "({{count}}d)",
+        "in_days": "(in {{count}}d)",
         "summary": {
             "total": "Total Due",
             "late": "Late",
@@ -166,6 +168,9 @@
         "period_d2": "2nd Decade (11-20)",
         "period_d3": "3rd Decade (21-end)",
         "period_custom": "Custom Dates",
+        "biweekly": "Fortnights",
+        "decades": "Decades",
+        "select_statement_aria": "Select statement of {{date}}",
         "start_label": "Start",
         "end_label": "End",
         "total_period": "Period Total",

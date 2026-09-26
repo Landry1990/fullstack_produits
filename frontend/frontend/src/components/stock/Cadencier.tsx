@@ -177,7 +177,7 @@ const Cadencier: React.FC = () => {
     const state = { createFromCadencier: { products, orderType } };
 
     if (orderType === 'DIV') {
-      navigate('/app/divers/commandes', { state });
+      navigate('/app/divers/ca?tab=commandes', { state });
     } else {
       navigate('/app/commandes/locales', { state });
     }
@@ -273,7 +273,7 @@ const Cadencier: React.FC = () => {
 
                   <div className="md:col-span-2">
                     <select
-                      aria-label={t('stock:cadencier.type_label')}
+                      aria-label={t('stock:cadencier.type')}
                       value={filters.type}
                       onChange={(e) => handleFilterChange('type', e.target.value)}
                       className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm focus:ring-1 focus:ring-emerald-500 focus:outline-none"
@@ -285,7 +285,7 @@ const Cadencier: React.FC = () => {
 
                   <div className="md:col-span-2">
                     <select
-                      aria-label={t('stock:cadencier.coverage_label')}
+                      aria-label={t('stock:cadencier.coverage')}
                       value={String(filters.coverage_days)}
                       onChange={(e) => handleFilterChange('coverage_days', parseInt(e.target.value))}
                       className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm focus:ring-1 focus:ring-emerald-500 focus:outline-none"
@@ -298,7 +298,7 @@ const Cadencier: React.FC = () => {
 
                   <div className="md:col-span-2">
                     <select
-                      aria-label={t('stock:cadencier.rayon_label')}
+                      aria-label={t('stock:cadencier.rayon')}
                       value={filters.rayon}
                       onChange={(e) => handleFilterChange('rayon', e.target.value)}
                       className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm focus:ring-1 focus:ring-emerald-500 focus:outline-none"
@@ -310,7 +310,7 @@ const Cadencier: React.FC = () => {
 
                   <div className="md:col-span-2">
                     <select
-                      aria-label={t('stock:cadencier.provider_label')}
+                      aria-label={t('stock:cadencier.fournisseur')}
                       value={filters.fournisseur}
                       onChange={(e) => handleFilterChange('fournisseur', e.target.value)}
                       className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm focus:ring-1 focus:ring-emerald-500 focus:outline-none"
@@ -374,7 +374,7 @@ const Cadencier: React.FC = () => {
                       {t('stock:cadencier.total_ht', 'Montant total HT')}
                     </p>
                     <p className="text-xl font-bold text-slate-900">{formatCurrency(Math.round(totalHt))}</p>
-                    <p className="text-xs text-slate-400">{t('stock:cadencier.coverage', 'Couverture')}: {filters.coverage_days} j</p>
+                    <p className="text-xs text-slate-400">{t('stock:cadencier.coverage', 'Couverture')}: {filters.coverage_days} {t('stock:analyse.day_short', 'j')}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -535,7 +535,7 @@ const Cadencier: React.FC = () => {
                             <Checkbox
                               checked={isSelected}
                               onCheckedChange={() => toggleSelection(item.produit_id)}
-                              aria-label={`Sélectionner ${item.produit_nom}`}
+                              aria-label={t('stock:reappro.select_product_aria', { name: item.produit_nom })}
                             />
                           </TableCell>
                           <TableCell className="px-3 py-2">
@@ -565,7 +565,7 @@ const Cadencier: React.FC = () => {
                               item.couverture_jours < 7 ? 'text-red-600' :
                               item.couverture_jours < 14 ? 'text-amber-600' : 'text-blue-600'
                             )}>
-                              {item.couverture_jours === 9999 ? '∞' : `${item.couverture_jours} j`}
+                              {item.couverture_jours === 9999 ? '∞' : `${item.couverture_jours} ${t('stock:analyse.day_short', 'j')}`}
                             </span>
                           </TableCell>
                           <TableCell className="px-3 py-2 text-center font-semibold text-slate-700 text-sm">
@@ -604,7 +604,7 @@ const Cadencier: React.FC = () => {
           {totalPages > 1 && (
             <div className="px-4 py-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
               <p className="text-sm text-slate-500">
-                Page <span className="font-semibold text-slate-900">{page}</span> sur <span className="font-semibold text-slate-900">{totalPages}</span>
+                {t('common:pagination.page_info', { page, total: totalPages, defaultValue: `Page ${page} sur ${totalPages}` })}
               </p>
               <div className="flex items-center gap-2">
                 <Button

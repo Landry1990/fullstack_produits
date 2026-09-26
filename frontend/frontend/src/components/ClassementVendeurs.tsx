@@ -194,7 +194,7 @@ export default function ClassementVendeurs() {
               <div className="mt-4 space-y-1">
                 <p className="text-2xl font-bold">{formatMoney(v.chiffre_affaires, t('common:currency'))}</p>
                 <p className="text-sm opacity-80">
-                  {v.nbre_ventes} ventes · Panier: {formatMoney(v.panier_moyen, t('common:currency'))}
+                  {v.nbre_ventes} {t('sellers:ranking.sales_count')} · {t('sellers:ranking.avg_basket')}: {formatMoney(v.panier_moyen, t('common:currency'))}
                 </p>
               </div>
             </div>

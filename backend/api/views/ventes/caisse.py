@@ -70,25 +70,25 @@ class CaisseViewSet(CaisseReportingMixin, CaisseClotureMixin, BaseViewSetConfig,
 
     @idempotent_action
     @transaction.atomic
-    def create(self, request, *args, **kwargs):
-        try:
-            montant = Decimal(str(request.data.get('montant', 0)))
-        except (InvalidOperation, TypeError, ValueError):
-            montant = Decimal(0)
-        if montant < Decimal(0):
-            return Response({'detail': "Le montant d'un paiement ne peut pas être négatif."}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Bloquer l'encaissement si l'utilisateur n'a pas de point de vente actif
+    def _check_poste_vente(self, request):
+        """Bloquer l'encaissement si l'utilisateur n'a pas de point de vente actif."""
         from ...models import PosteVente
         if not PosteVente.objects.filter(vendeur=request.user, est_actif=True).exists():
             return Response(
                 {'detail': "Vous n'avez aucun point de vente actif. Veuillez ouvrir un point de vente avant d'encaisser."},
                 status=status.HTTP_403_FORBIDDEN
             )
+        return None
 
-        # Cap montant at remaining balance before serializer validation
-        facture_id = request.data.get('facture')
-        mode = request.data.get('mode_paiement', '')
+    def _cap_montant(self, data):
+        """Cap le montant au reste à payer de la facture (copie et retourne les données)."""
+        try:
+            montant = Decimal(str(data.get('montant', 0)))
+        except (InvalidOperation, TypeError, ValueError):
+            montant = Decimal(0)
+
+        facture_id = data.get('facture') or data.get('facture_id')
+        mode = data.get('mode_paiement', '')
         if facture_id and mode not in ('en_compte', 'recouvrement'):
             from ...models import Facture as FactureModel
             try:
@@ -102,18 +102,77 @@ class CaisseViewSet(CaisseReportingMixin, CaisseClotureMixin, BaseViewSetConfig,
                 montant_du = part if (part is not None and part >= Decimal(0)) else facture_obj.total_ttc
                 reste = max(Decimal(0), montant_du - deja_paye)
                 if montant > reste:
-                    # Make request.data mutable and cap the amount
-                    data = request.data.copy()
+                    data = data.copy()
                     data['montant'] = str(reste)
-                    request._full_data = data
             except FactureModel.DoesNotExist:
+                pass
+        return data
+
+    def create(self, request, *args, **kwargs):
+        try:
+            montant = Decimal(str(request.data.get('montant', 0)))
+        except (InvalidOperation, TypeError, ValueError):
+            montant = Decimal(0)
+        if montant < Decimal(0):
+            return Response({'detail': "Le montant d'un paiement ne peut pas être négatif."}, status=status.HTTP_400_BAD_REQUEST)
+
+        error_res = self._check_poste_vente(request)
+        if error_res:
+            return error_res
+
+        capped = self._cap_montant(request.data)
+        if capped is not request.data:
+            request._full_data = capped
+
+        _validation_user, error_res = validate_sudo_mode(request, permission_attr='can_cash_out')
+        if error_res:
+            return error_res
+
+        # Alias : le frontend envoie historiquement facture_id
+        if 'facture' not in request.data and request.data.get('facture_id') is not None:
+            data = request.data.copy()
+            data['facture'] = data['facture_id']
+            request._full_data = data
+
+        return super().create(request, *args, **kwargs)
+
+    @action(detail=False, methods=['post'])
+    @transaction.atomic
+    def bulk_create(self, request):
+        """Enregistre plusieurs paiements en une seule requête (mêmes règles que create)."""
+        items = request.data if isinstance(request.data, list) else request.data.get('items')
+        if not isinstance(items, list) or not items:
+            return Response({'detail': "Une liste d'items est requise."}, status=status.HTTP_400_BAD_REQUEST)
+        if len(items) > 50:
+            return Response({'detail': 'Trop de paiements (max 50).'}, status=status.HTTP_400_BAD_REQUEST)
+
+        error_res = self._check_poste_vente(request)
+        if error_res:
+            return error_res
+
+        for item in items:
+            try:
+                if Decimal(str(item.get('montant', 0))) < Decimal(0):
+                    return Response({'detail': "Le montant d'un paiement ne peut pas être négatif."}, status=status.HTTP_400_BAD_REQUEST)
+            except (InvalidOperation, TypeError, ValueError):
                 pass
 
         _validation_user, error_res = validate_sudo_mode(request, permission_attr='can_cash_out')
         if error_res:
             return error_res
 
-        return super().create(request, *args, **kwargs)
+        created = []
+        for item in items:
+            data = item.copy()
+            # Alias : le frontend envoie historiquement facture_id
+            if 'facture' not in data and data.get('facture_id') is not None:
+                data['facture'] = data['facture_id']
+            data = self._cap_montant(data)
+            serializer = self.get_serializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            created.append(serializer.data)
+        return Response(created, status=status.HTTP_201_CREATED)
 
     def perform_create(self, serializer):
         # Note: We always use self.request.user as the 'owner' of the payment (the person at the station),

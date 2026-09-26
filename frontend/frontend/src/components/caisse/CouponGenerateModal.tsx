@@ -58,7 +58,7 @@ export function CouponGenerateModal({
             id="coupon-amount"
             type="number"
             className="w-full h-12 rounded-lg border border-slate-200 bg-white px-3 text-2xl font-bold text-center text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-            placeholder="Ex: 250"
+            placeholder={t('coupons.generate_modal.amount_placeholder', { defaultValue: 'Ex: 250' })}
             value={montant}
             onChange={(e) => onMontantChange(e.target.value)}
             autoFocus
@@ -70,7 +70,7 @@ export function CouponGenerateModal({
           <textarea
             id="coupon-notes"
             className="w-full h-20 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-none"
-            placeholder={t('movement_modal.description_placeholder')}
+            placeholder={t('journal.movement_modal.description_placeholder')}
             value={notes}
             onChange={(e) => onNotesChange(e.target.value)}
           ></textarea>

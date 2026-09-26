@@ -160,7 +160,11 @@
         "add_title": "Add a new tax",
         "add_btn": "Add VAT",
         "success_add": "VAT added successfully",
-        "error_add": "Error adding VAT"
+        "error_add": "Error adding VAT rate",
+        "error_load": "Error loading VAT rates",
+        "error_duplicate": "This VAT rate already exists ({{rate}}%)",
+        "error_update": "Error updating VAT rate",
+        "error_delete": "Error deleting VAT rate"
     },
     "header": "Pharmacy Configuration",
     "fields": {
@@ -191,7 +195,9 @@
         "pos_deleted": "Sales point deleted.",
         "pos_delete_error": "Error deleting sales point",
         "pos_closed": "Sales point closed.",
-        "pos_close_error": "Error closing sales point"
+        "pos_close_error": "Error closing sales point",
+        "pos_confirm_delete": "Delete this sales point?",
+        "pos_confirm_close": "Close this sales point?"
     },
     "buttons": {
         "logo_importing": "Import...",

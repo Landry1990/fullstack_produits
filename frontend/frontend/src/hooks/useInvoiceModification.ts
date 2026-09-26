@@ -40,35 +40,40 @@ export const useInvoiceModification = ({
         return
       }
 
-      // 2. Récupérer les détails complets de tous les produits
-      const productPromises = fullFacture.produits.map(async (p: unknown) => {
-        try {
-          const response = await api.get(`produits/${p.produit}/`)
+      // 2. Récupérer les détails complets de tous les produits (1 seule requête bulk)
+      const productIds = fullFacture.produits.map((p: { produit: number }) => p.produit)
+      let productMap = new Map<number, { id: number; name: string; stock: number; cip?: string; tva?: string }>()
+      try {
+        const { data: fullProducts } = await api.post('produits/bulk-detail/', { ids: productIds })
+        productMap = new Map(fullProducts.map((prod: { id: number }) => [prod.id, prod]))
+      } catch (err) {
+        logger.error('Failed to bulk-fetch products:', err)
+      }
+
+      const cartItems = fullFacture.produits.map((p: { produit: number; produit_nom?: string; selling_price: number; quantity: number; discount?: number }) => {
+        const prod = productMap.get(p.produit)
+        if (prod) {
           return {
-            id: response.data.id,
-            name: response.data.name,
+            id: prod.id,
+            name: prod.name,
             price: p.selling_price,
             quantity: p.quantity,
-            stock: response.data.stock,
+            stock: prod.stock,
             discount: p.discount || 0,
-            cip: response.data.cip,
-            tva: response.data.tva
-          }
-        } catch (err) {
-          logger.error(`Failed to fetch product ${p.produit}:`, err)
-          // Fallback avec données minimales
-          return {
-            id: p.produit,
-            name: p.produit_nom || 'Produit',
-            price: p.selling_price,
-            quantity: p.quantity,
-            stock: 9999,
-            discount: p.discount || 0
+            cip: prod.cip,
+            tva: prod.tva
           }
         }
+        // Fallback avec données minimales
+        return {
+          id: p.produit,
+          name: p.produit_nom || 'Produit',
+          price: p.selling_price,
+          quantity: p.quantity,
+          stock: 9999,
+          discount: p.discount || 0
+        }
       })
-
-      const cartItems = await Promise.all(productPromises)
 
       // 3. Annuler la facture originale
       await api.post(`factures/${facture.id}/annuler/`, { motif: 'Modification (Reload)' })

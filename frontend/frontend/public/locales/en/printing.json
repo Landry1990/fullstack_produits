@@ -11,6 +11,7 @@
     "validated_by": "Validated by",
     "payment_method": "Payment",
     "cash": "CASH",
+    "email": "Email",
     "designation": "Description",
     "qty": "Qty",
     "unit_price_ht": "Unit Price (excl. VAT)",
@@ -81,6 +82,10 @@
     "cashier": "Cashier",
     "subtotal_label": "SUBTOTAL",
     "discount_minus": "DISCOUNT (-)",
+    "line_discount": "Line discount",
+    "gross_subtotal": "GROSS TOTAL",
+    "line_discounts_minus": "LINE DISCOUNTS (-)",
+    "global_discount_minus": "GLOBAL DISCOUNT (-)",
     "net_a_payer_cfa": "NET TO PAY (CFA)",
     "cash_received": "Cash received",
     "change_returned": "CHANGE RETURNED",
@@ -191,7 +196,20 @@
     "expected_date": "Expected date",
     "notes": "Notes / Instructions",
     "present_coupon": "Present this voucher to collect your order.",
-    "generated_on": "Document generated on {{date}}"
+    "generated_on": "Document generated on {{date}}",
+    "ticket_title": "PROMISED TICKET",
+    "store_copy": "STORE COPY",
+    "customer_copy": "CUSTOMER COPY",
+    "client_label": "CUSTOMER:",
+    "ref_transaction": "Transaction Ref: #{{id}}",
+    "col_product": "Product",
+    "col_qty": "Qty",
+    "code": "Code: {{code}}",
+    "status_paid": "STATUS: PAID",
+    "status_to_pay": "STATUS: TO PAY",
+    "keep_for_pickup": "Keep for pickup",
+    "promis_no": "Promise No.: {{ids}}",
+    "cut_here": "- - - Cut here - - -"
   },
   "stock_rayon": {
     "title": "Stock Status",
@@ -303,5 +321,19 @@
     "client_signature": "CUSTOMER SIGNATURE",
     "management": "MANAGEMENT",
     "generated_on": "Document generated on {{date}}"
+  },
+  "export": {
+    "tel": "Tel: {{phone}}",
+    "edited_on": "Generated on: {{date}} at {{time}}"
+  },
+  "print_page": {
+    "default_title": "Printing",
+    "loading": "Loading document...",
+    "incomplete_data": "Incomplete data",
+    "timeout_error": "Timed out while loading the document. The catalogue may be too large; please use a filter (section/form/group).",
+    "data_not_found": "Summary data not found.",
+    "load_error": "Error while loading data. {{detail}}",
+    "print_failed": "Unable to start printing. Please use the Ctrl+P shortcut.",
+    "printing": "Printing..."
   }
 }

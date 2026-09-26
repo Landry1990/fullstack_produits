@@ -103,7 +103,7 @@ export default function FinanceFournisseurModal({
   prefilledMontant,
   commandeIds,
 }: FinanceFournisseurModalProps) {
-  const { t } = useTranslation(['providers', 'common']);
+  const { t } = useTranslation(['providers', 'common', 'suppliers']);
   const confirm = useConfirm();
   const {
     paiements,
@@ -256,11 +256,11 @@ export default function FinanceFournisseurModal({
               <AlertCircle className="h-4 w-4 text-base-content/40" />
               <div>
                 <span className="text-xs font-semibold text-base-content/70 block">
-                  {t('providers:details.debt_balance')} (restant)
+                  {t('providers:details.debt_balance')} ({t('suppliers:finance.remaining_suffix')})
                 </span>
                 {totalPaye > 0 && totalDu > 0 && (
                   <span className="text-caption text-base-content/40">
-                    {formatCurrency(totalPaye)} payé sur {formatCurrency(totalDu)} dû
+                    {t('suppliers:finance.paid_of_due', { paid: formatCurrency(totalPaye), due: formatCurrency(totalDu) })}
                   </span>
                 )}
               </div>
@@ -376,11 +376,11 @@ export default function FinanceFournisseurModal({
               <div className="px-5 py-2.5 bg-base-100/60 backdrop-blur flex items-center gap-2">
                 <CalendarClock className="h-4 w-4 text-base-content/60" />
                 <h4 className="font-semibold text-sm text-base-content/90">
-                  Échéancier — {echeances.length} échéance(s)
+                  {t('suppliers:finance.echeancier_title', { count: echeances.length })}
                 </h4>
                 {normalizeNumberInput(montant) > 0 && (
                   <Badge variant="success" size="sm" className="ml-auto">
-                    Aperçu répartition
+                    {t('suppliers:finance.allocation_preview')}
                   </Badge>
                 )}
               </div>
@@ -391,18 +391,18 @@ export default function FinanceFournisseurModal({
                   </div>
                 ) : echeances.length === 0 ? (
                   <div className="text-center py-2.5 text-xs text-base-content/40">
-                    Aucune échéance en attente
+                    {t('suppliers:finance.no_pending')}
                   </div>
                 ) : (
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="text-xs py-1.5">Facture</TableHead>
-                        <TableHead className="text-xs py-1.5 text-right">Total</TableHead>
-                        <TableHead className="text-xs py-1.5 text-right">Payé</TableHead>
-                        <TableHead className="text-xs py-1.5 text-right">Reste</TableHead>
+                        <TableHead className="text-xs py-1.5">{t('suppliers:finance.col_invoice')}</TableHead>
+                        <TableHead className="text-xs py-1.5 text-right">{t('suppliers:finance.col_total')}</TableHead>
+                        <TableHead className="text-xs py-1.5 text-right">{t('suppliers:finance.col_paid')}</TableHead>
+                        <TableHead className="text-xs py-1.5 text-right">{t('suppliers:finance.col_remaining')}</TableHead>
                         {normalizeNumberInput(montant) > 0 && (
-                          <TableHead className="text-xs py-1.5 text-right text-emerald-600">Alloué</TableHead>
+                          <TableHead className="text-xs py-1.5 text-right text-emerald-600">{t('suppliers:finance.col_allocated')}</TableHead>
                         )}
                       </TableRow>
                     </TableHeader>

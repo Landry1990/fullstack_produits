@@ -145,8 +145,8 @@ export const CouponPanel: React.FC<CouponPanelProps> = ({
                         <div className="font-medium text-slate-700 whitespace-nowrap">
                           {new Date(coupon.date_utilisation!).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' })} {new Date(coupon.date_utilisation!).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                         </div>
-                        <div className="truncate max-w-[80px] text-slate-400" title={coupon.utilise_par_nom || 'N/A'}>
-                          {t('coupons.by', { name: coupon.utilise_par_nom || 'N/A' })}
+                        <div className="truncate max-w-[80px] text-slate-400" title={coupon.utilise_par_nom || t('coupons.na')}>
+                          {t('coupons.by', { name: coupon.utilise_par_nom || t('coupons.na') })}
                         </div>
                       </>
                     ) : '-'}

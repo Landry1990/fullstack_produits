@@ -76,10 +76,11 @@ const createTicketData = (
   paiements: { mode: string; montant: number }[],
   montantTotal: number,
   montantAEncaisser: number,
-  user: unknown
+  user: unknown,
+  fallbackClientName: string
 ): TicketCaisse => {
   const rendu = montantTotal - montantAEncaisser
-  const clientName = facture.client_name_override || facture.client_name || 'Client de passage'
+  const clientName = facture.client_name_override || facture.client_name || fallbackClientName
 
   return {
     id: facture.id,
@@ -125,7 +126,7 @@ export const useCaissePayment = ({
   const enregistrerPaiement = useCallback(async (
     paiementsValides: { mode: string; montant: number }[],
     user: unknown,
-    successMessage: string = 'Paiement enregistré'
+    successMessage?: string
   ) => {
     if (!selectedFacture) return
 
@@ -174,7 +175,7 @@ export const useCaissePayment = ({
       const { data: factureFinale } = await api.get<Facture>(`factures/${factureValidee.id}/`)
 
       // 7. Créer le ticket
-      const ticketData = createTicketData(factureFinale, paiementsValides, montantTotal, montantAEncaisser, user)
+      const ticketData = createTicketData(factureFinale, paiementsValides, montantTotal, montantAEncaisser, user, t('table.passerby_client'))
       setTicketCaisse(ticketData)
 
       // 8. Fermer modale et afficher ticket
@@ -196,7 +197,7 @@ export const useCaissePayment = ({
         })
       }
 
-      gooeyToast.success(successMessage)
+      gooeyToast.success(successMessage ?? t('payment.success'))
       onSuccess?.()
     } catch (err) {
       logger.error('Erreur lors du paiement:', err)

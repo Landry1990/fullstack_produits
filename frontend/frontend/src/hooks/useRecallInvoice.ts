@@ -34,7 +34,7 @@ export function useRecallInvoice({ onInvoiceLoaded, t }: UseRecallInvoiceOptions
       } else if (status === 400) {
         gooeyToast.error(t('facturation:messages.invoice_not_modifiable'))
       } else {
-        gooeyToast.error(t('facturation:messages.devis_load_error') || 'Erreur lors du chargement de la facture')
+        gooeyToast.error(t('facturation:messages.devis_load_error'))
       }
     } finally {
       setIsRecalling(false)

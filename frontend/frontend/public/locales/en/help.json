@@ -115,5 +115,21 @@
     "no_results": "No tutorials found",
     "try_again": "Try another keyword",
     "videos_count": "video"
+  },
+  "tips": {
+    "title": "Tips",
+    "score_title": "Stock Health Score (Expert Steering)",
+    "score_intro": "The score is automatically computed on <0>5 criteria</0>, each with a different weight:",
+    "crit_availability": "<0>Availability</0> — few stockouts",
+    "crit_fluidity": "<0>Fluidity</0> — no dormant stock on active products",
+    "crit_coverage": "<0>Coverage</0> — stock between 15 and 90 days of sales",
+    "crit_activity": "<0>Activity</0> — products sold in the last 30 days",
+    "crit_immobilization": "<0>Immobilization</0> — little capital tied up in dead stock",
+    "score_good": "≥ 80% Good",
+    "score_medium": "50–79% Medium",
+    "score_critical": "< 50% Critical",
+    "print_title": "Monthly Report Printing",
+    "print_ink_tip": "To save ink, use the <0>« PDF »</0> button rather than Ctrl+P. The PDF is generated in black and white without colored backgrounds.",
+    "print_browser_tip": "If printing from the browser: uncheck <0>« Background graphics »</0> in print options."
   }
 }

@@ -93,7 +93,11 @@ function usePrint(): UsePrintReturn {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
       }
+      svg * { shape-rendering: crispEdges; }
       body {
         font-family: 'Courier New', Courier, monospace;
         padding: 0;
@@ -197,7 +201,7 @@ function usePrint(): UsePrintReturn {
     options: PrintOptions = {}
   ) => {
     const {
-      title = 'Impression',
+      title = docT('printing:print_page.default_title'),
       width = 400,
       height = 600,
       autoClose = true,
@@ -225,7 +229,7 @@ function usePrint(): UsePrintReturn {
     }
 
     return printWindow;
-  }, []);
+  }, [docT]);
 
   /**
    * Imprimer du contenu HTML brut
@@ -257,7 +261,7 @@ function usePrint(): UsePrintReturn {
       <html>
         <head>
           <meta charset="UTF-8">
-          <title>${printOptions.title || 'Impression'}</title>
+          <title>${printOptions.title || docT('printing:print_page.default_title')}</title>
           <style>
             ${getBaseStyles()}
             ${customStyles}
@@ -274,7 +278,7 @@ function usePrint(): UsePrintReturn {
     `;
 
     openPrintWindow(fullHTML, printOptions);
-  }, [getBaseStyles, getHeaderHTML, getFooterHTML, openPrintWindow]);
+  }, [getBaseStyles, getHeaderHTML, getFooterHTML, openPrintWindow, docT]);
 
   /**
    * Ouvrir une page d'impression dédiée

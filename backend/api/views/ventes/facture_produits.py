@@ -23,6 +23,25 @@ class FactureProduitViewSet(viewsets.ModelViewSet):
     filterset_fields = ['produit', 'facture']
     permission_classes = [IsAuthenticated]
 
+    @action(detail=False, methods=['post'])
+    @transaction.atomic
+    def bulk_create(self, request):
+        """
+        Crée plusieurs lignes de facture en une seule requête.
+        Accepte soit une liste d'items, soit {"items": [...]}.
+        """
+        items = request.data if isinstance(request.data, list) else request.data.get('items')
+
+        if not isinstance(items, list) or not items:
+            return Response({'detail': 'Une liste d\'items est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+        if len(items) > 500:
+            return Response({'detail': 'Trop de lignes (max 500).'}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = self.get_serializer(data=items, many=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
     @action(detail=True, methods=['post'])
     @transaction.atomic
     def envoi_rappel_renouvellement(self, request, pk=None):

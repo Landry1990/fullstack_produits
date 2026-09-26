@@ -94,15 +94,17 @@ export default function UserHeader() {
             )}
           </button>
 
-          {/* Feedback Button */}
-          <button
-            onClick={() => setIsFeedbackOpen(true)}
-            className="p-2 rounded-full hover:bg-emerald-50 transition-colors"
-            title={t('common:feedback')}
-            aria-label={t('common:feedback')}
-          >
-            <MessageCircle size={16} className="text-slate-500" />
-          </button>
+          {/* Feedback Button — réservé aux admins */}
+          {user?.is_superuser && (
+            <button
+              onClick={() => setIsFeedbackOpen(true)}
+              className="p-2 rounded-full hover:bg-emerald-50 transition-colors"
+              title={t('common:feedback.label')}
+              aria-label={t('common:feedback.label')}
+            >
+              <MessageCircle size={16} className="text-slate-500" />
+            </button>
+          )}
 
           {/* Language Switcher — toujours visible */}
           <div className="flex items-center gap-0.5 bg-slate-100 rounded-lg p-0.5">
@@ -250,10 +252,12 @@ export default function UserHeader() {
         currentUser={user}
       />
 
-      <FeedbackModal 
-        isOpen={isFeedbackOpen}
-        onClose={() => setIsFeedbackOpen(false)}
-      />
+      {user?.is_superuser && (
+        <FeedbackModal
+          isOpen={isFeedbackOpen}
+          onClose={() => setIsFeedbackOpen(false)}
+        />
+      )}
     </>
   );
 }

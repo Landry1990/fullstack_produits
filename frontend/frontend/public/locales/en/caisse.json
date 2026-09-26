@@ -46,10 +46,14 @@
         "unit_price_short": "U.P",
         "total": "Total",
         "total_ttc": "Total TTC",
-        "no_products": "No products"
+        "no_products": "No products",
+        "open_cash_register_first": "Please open your register first",
+        "decrease_quantity": "Decrease quantity",
+        "increase_quantity": "Increase quantity"
     },
     "ticket": {
-        "title": "Receipt"
+        "title": "Receipt",
+        "invoice_a4": "A4 Invoice"
     },
     "coupons": {
         "title": "Coupon Management",
@@ -78,6 +82,7 @@
         "generate_modal": {
             "title": "Generate Coupon",
             "amount": "Amount",
+            "amount_placeholder": "e.g.: 250",
             "notes": "Notes (optional)",
             "cancel": "Cancel",
             "confirm": "Generate"
@@ -127,7 +132,11 @@
         "session_reactivated": "Point of sale reactivated.",
         "session_opened": "Point of sale opened.",
         "error_opening": "Error opening.",
-        "error_loading_posts": "Error loading points of sale."
+        "error_loading_posts": "Error loading points of sale.",
+        "insufficient_deposit": "Insufficient deposit balance",
+        "select_post": "Please select a cash register.",
+        "caisse_opened": "Register opened.",
+        "error_loading_caisses": "Error loading cash registers"
     },
     "confirm_cancel_invoice": "Do you really want to cancel invoice #{{numero}}?",
     "confirm_modify_invoice": "Modify this invoice?\nIt will be removed from the list and reloaded in the sales screen.",
@@ -164,7 +173,10 @@
         "confirm": "Confirm payment",
         "success": "Payment recorded",
         "amount_input_hint": "Enter amount then press Enter to choose mode",
-        "mode_navigation_hint": "← → to navigate, Enter to confirm mode"
+        "mode_navigation_hint": "← → to navigate, Enter to confirm mode",
+        "add": "Add",
+        "remove": "Remove",
+        "mode_button_hint": "←→ to navigate, Enter to confirm, Esc to go back"
     },
     "stats_pending_title": "Pending",
     "stats_pending_desc": "invoice(s) to process",
@@ -255,7 +267,9 @@
             "paid": "PAID",
             "cancelled": "CANCELLED",
             "pending": "PENDING",
-            "grouped_releve": "Grouped Doc"
+            "grouped_releve": "Grouped Doc",
+            "ref_label": "Ref:",
+            "no_transaction_desc": "No transactions match your current filters."
         },
         "pagination": {
             "showing": "Showing",
@@ -292,6 +306,8 @@
             "theoretical_formula": "Cash sales + Recoveries + Entries - Exits + Fund",
             "breakdown_placeholder": "Tap to count cash",
             "breakdown_open": "Open cash breakdown",
+            "real_amount_placeholder": "Enter the actual amount",
+            "breakdown_optional_hint": "Optional cash breakdown — click the icon to detail your notes",
             "breakdown": {
                 "title": "Cash Breakdown",
                 "subtitle": "Count your notes and coins, the total goes back to the field",
@@ -450,6 +466,12 @@
     "bulk_cancel_selected_count": "{{count}} invoice(s) selected",
     "bulk_cancel_pending_count": "{{count}} invoice(s) pending",
     "bulk_cancel_batch_processing": "Batch processing...",
+    "bulk_cancel_title": "Empty the register",
+    "bulk_cancel_tooltip": "Cancel selected invoices (or all) with stock reintegration",
+    "bulk_cancel_selected": "Empty",
+    "bulk_cancel_all": "Empty the register",
+    "bulk_cancel_warning": "All selected invoices will be cancelled. Stock from already validated invoices will be automatically reintegrated. This action is irreversible.",
+    "bulk_cancel_confirm": "Empty the register",
     "poste_label": "Post: ",
     "all_posts": "All posts",
     "cash_session": {
@@ -476,7 +498,11 @@
         "select_post": "Select a station",
         "initial_amount": "Initial amount",
         "amount_hint": "Opening amount",
-        "open_btn": "Open register"
+        "open_btn": "Open register",
+        "status_open": "Register open",
+        "status_closed": "Register closed",
+        "details_by_mode": "Details by payment method",
+        "open_to_cash_title": "Open a register to cash in"
     },
     "open_point_vente": {
         "title": "Open a point of sale",
@@ -497,6 +523,7 @@
         "required_message": "Billing is locked until a point of sale is opened.",
         "activate_long": "Reactivate my point of sale",
         "open_long": "Open a point of sale",
+        "reactivate": "Reactivate",
         "banner": {
             "active_message": "You have a point of sale open on another session. Click to reactivate it.",
             "required_message": "No point of sale open. Open one to lock this workstation on billing.",

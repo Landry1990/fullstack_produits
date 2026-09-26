@@ -130,6 +130,8 @@
         "status_late": "🔴 En retard",
         "status_today": "🟠 Aujourd'hui",
         "status_upcoming": "🟢 À venir",
+        "late_suffix": "({{count}}j)",
+        "in_days": "(dans {{count}}j)",
         "summary": {
             "total": "Total échéances",
             "late": "En retard",
@@ -166,6 +168,9 @@
         "period_d2": "2ème Décade (11-20)",
         "period_d3": "3ème Décade (21-fin)",
         "period_custom": "Dates personnalisées",
+        "biweekly": "Quinzaines",
+        "decades": "Décades",
+        "select_statement_aria": "Sélectionner relevé du {{date}}",
         "start_label": "Début",
         "end_label": "Fin",
         "total_period": "Total Période",

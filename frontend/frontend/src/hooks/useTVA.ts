@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import api from '../services/api';
 import type { TVA } from '../types';
 import { logger } from '../utils/logger'
 
 export function useTVA() {
+    const { t } = useTranslation('pharmacy_settings');
     const [tvaList, setTvaList] = useState<TVA[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -19,7 +21,7 @@ export function useTVA() {
         } catch (err: unknown) {
             if ((err as { name?: string })?.name === 'CanceledError') return;
             logger.error('Error fetching TVAs:', err);
-            setError('Erreur lors du chargement des taux de TVA');
+            setError(t('tva.error_load'));
         } finally {
             setLoading(false);
         }
@@ -32,13 +34,13 @@ export function useTVA() {
             return { success: true };
         } catch (err: unknown) {
             logger.error('Error adding TVA:', err);
-            let message = 'Erreur lors de l\'ajout de la TVA';
+            let message = t('tva.error_add');
 
             const error = err as { response?: { data?: { taux?: unknown; detail?: string } | string } };
             if (error.response?.data) {
                 const data = error.response.data;
                 if (typeof data === 'object' && data.taux) {
-                    message = `Ce taux de TVA existe déjà (${taux}%)`;
+                    message = t('tva.error_duplicate', { rate: taux });
                 } else if (typeof data === 'string') {
                     message = data;
                 } else if (typeof data === 'object' && data.detail) {
@@ -58,7 +60,7 @@ export function useTVA() {
             return true;
         } catch (err: unknown) {
             logger.error('Error updating TVA:', err);
-            setError('Erreur lors de la modification de la TVA');
+            setError(t('tva.error_update'));
             return false;
         }
     };
@@ -70,7 +72,7 @@ export function useTVA() {
             return true;
         } catch (err: unknown) {
             logger.error('Error deleting TVA:', err);
-            setError('Erreur lors de la suppression de la TVA');
+            setError(t('tva.error_delete'));
             return false;
         }
     };

@@ -59,7 +59,14 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
   const totalTTC = Math.round(Number(ticket.montant || facture?.total_ttc || 0));
   const totalTVA = facture ? Math.round(Number(facture.total_tva || 0)) : 0;
   const totalHT = totalTTC - totalTVA;
-  const remise = facture ? Number(facture.remise) : 0;
+  const remiseGlobale = facture ? Number(facture.remise || 0) : 0;
+  const totalRemisesLignes = produits.reduce((sum: number, p: FactureProduit) => (
+      sum + Math.abs(Number(p.quantity || 0)) * Number(p.discount || 0)
+  ), 0);
+  const sousTotalBrut = produits.reduce((sum: number, p: FactureProduit) => (
+      sum + Math.abs(Number(p.quantity || 0)) * Number(p.selling_price || 0)
+  ), 0);
+  const hasDiscount = totalRemisesLignes > 0 || remiseGlobale > 0;
   const ticketWidth = settings.ticket_paper_width || 80;
   
   const clientName = ticket.client_name 
@@ -91,13 +98,13 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
       <div className="text-center mb-2">
         {settings.logo && (
           <div className="mb-2">
-            <img src={settings.logo} alt="Logo" className="h-12 inline-block grayscale object-contain" />
+            <img src={settings.logo} alt={t('common:aria.logo', { defaultValue: 'Logo' })} className="h-12 inline-block grayscale object-contain" />
           </div>
         )}
         <h2 className="mb-1 text-sm font-bold uppercase leading-none tracking-tight">
             {settings.pharmacy_name || t('ticket.invoice')}
         </h2>
-        <div className="mb-2 border-b border-black/25" style={{ width: '66.666%', marginLeft: 'auto', marginRight: 'auto' }}></div>
+        <div className="mb-2 border-b border-black/40" style={{ width: '66.666%', marginLeft: 'auto', marginRight: 'auto' }}></div>
         <div className="text-micro leading-tight">
             {settings.address && <p className="mb-1 font-medium">{settings.address}</p>}
             <div className="font-mono text-[8px]">
@@ -111,7 +118,7 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
       </div>
 
       {/* TICKET INFO */}
-      <div className="my-2 space-y-1 border-b border-black/20 pb-2">
+      <div className="my-2 space-y-1 border-b border-black/35 pb-2">
           {ticket.is_duplicate && (
               <div className="text-center font-black text-xs uppercase mb-1 underline">
                   *** {t('ticket.duplicate')} ***
@@ -133,13 +140,13 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
                 <td className="pt-1 text-right text-caption font-medium uppercase">{clientName}</td>
               </tr>
               {ticket.client_solde_depot && Number(ticket.client_solde_depot) > 0 && (
-                <tr className="mt-1 border-t border-black/20">
+                <tr className="mt-1 border-t border-black/35">
                   <td className="py-1 font-medium uppercase">{t('invoice.remaining_deposit')}</td>
                   <td className="py-1 text-right text-caption font-medium">{formatM(ticket.client_solde_depot)}</td>
                 </tr>
               )}
               {ticket.client_points_fidelite !== undefined && ticket.client_points_fidelite !== null && (
-                <tr className={ticket.client_solde_depot && Number(ticket.client_solde_depot) > 0 ? "" : "mt-1 border-t border-black/20"}>
+                <tr className={ticket.client_solde_depot && Number(ticket.client_solde_depot) > 0 ? "" : "mt-1 border-t border-black/35"}>
                   <td className="py-1 font-medium uppercase">{t('ticket.points_fidelity')}</td>
                   <td className="py-1 text-right text-caption font-medium">{ticket.client_points_fidelite} {t('ticket.pts')}</td>
                 </tr>
@@ -160,7 +167,7 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
       <div className="mb-2">
           <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
             <thead>
-              <tr className="border-b border-black/30 text-micro font-semibold uppercase">
+              <tr className="border-b border-black/40 text-micro font-semibold uppercase">
                 <th className="py-1 text-left" style={{ width: '55%' }}>{t('invoice.designation')}</th>
                 <th className="py-1 text-center" style={{ width: '15%' }}>{t('ticket.qty')}</th>
                 <th className="py-1 text-right" style={{ width: '30%' }}>{t('ticket.total')}</th>
@@ -170,15 +177,22 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
               {produits.map((p: FactureProduit, _idx: number) => {
                 const qty = Math.abs(p.quantity);
                 const price = Number(p.selling_price || 0);
-                const lineTotal = qty * price;
+                const unitDiscount = Number(p.discount || 0);
+                const lineDiscount = qty * unitDiscount;
+                const lineTotal = qty * (price - unitDiscount);
                 
                 return (
                   <tr key={p.id ?? p.produit ?? `row-${p.produit_nom ?? p.lot}`}>
                     <td className="py-1 align-top leading-tight overflow-hidden">
                         <div className="font-medium uppercase" style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{getProductName(p)}</div>
-                        <div className="text-[8px] font-mono italic">
+                        <div className="text-[8px] font-mono font-medium">
                             {qty} x {formatM(price)}
                         </div>
+                        {lineDiscount > 0 && (
+                          <div className="text-[8px] font-mono font-medium">
+                            {t('ticket.line_discount')}: -{formatM(lineDiscount)}
+                          </div>
+                        )}
                     </td>
                     <td className="py-1 text-center align-top font-mono">{qty}</td>
                     <td className="py-1 text-right align-top font-mono font-medium">{formatM(lineTotal)}</td>
@@ -191,21 +205,28 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
 
       {/* TOTALS */}
       <div className="mt-2 space-y-1">
-        {remise > 0 && (
+        {hasDiscount && (
             <div className="flex justify-between text-micro font-bold">
-                <span>{t('ticket.subtotal_label')}</span>
-                <span className="font-mono">{formatM(totalTTC + remise)}</span>
-            </div>
-        )}
-        
-        {remise > 0 && (
-            <div className="flex justify-between text-caption font-medium">
-                <span>{t('ticket.discount_minus')}</span>
-                <span className="font-mono">-{formatM(remise)}</span>
+                <span>{t('ticket.gross_subtotal')}</span>
+                <span className="font-mono">{formatM(sousTotalBrut)}</span>
             </div>
         )}
 
-        <div className="flex items-center justify-between border-y border-black/30 py-1.5 font-semibold">
+        {totalRemisesLignes > 0 && (
+            <div className="flex justify-between text-caption font-medium">
+                <span>{t('ticket.line_discounts_minus')}</span>
+                <span className="font-mono">-{formatM(totalRemisesLignes)}</span>
+            </div>
+        )}
+        
+        {remiseGlobale > 0 && (
+            <div className="flex justify-between text-caption font-medium">
+                <span>{t('ticket.global_discount_minus')}</span>
+                <span className="font-mono">-{formatM(remiseGlobale)}</span>
+            </div>
+        )}
+
+        <div className="flex items-center justify-between border-y border-black/40 py-1.5 font-semibold">
             <span className="text-caption uppercase tracking-tight">{t('ticket.net_a_payer_cfa')}</span>
             <span className="font-mono text-sm tabular-nums">
                 {formatM(totalTTC)}
@@ -213,7 +234,7 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
         </div>
 
         {(ticket.total_lettres || facture?.total_lettres) && (
-            <div className="border-b border-black/20 py-1.5 text-center text-micro font-medium italic uppercase">
+            <div className="border-b border-black/35 py-1.5 text-center text-micro font-medium italic uppercase">
                 {ticket.total_lettres || facture?.total_lettres}
             </div>
         )}
@@ -241,7 +262,7 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
 
         {/* CHANGE */}
         {(Number(ticket.montant_verse) > 0 || Number(ticket.rendu) > 0) && (
-          <div className="mt-2 space-y-1 border-t border-black/20 pt-2">
+          <div className="mt-2 space-y-1 border-t border-black/35 pt-2">
             {Number(ticket.montant_verse) > 0 && (
                 <div className="flex justify-between text-micro">
                     <span className="uppercase italic">{t('ticket.cash_received')}</span>
@@ -260,14 +281,14 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
 
       {/* TAXES */}
       {totalTVA > 0 && (
-        <div className="mt-3 border-t border-black/20 pt-2 text-center font-mono text-[8px] italic">
+        <div className="mt-3 border-t border-black/35 pt-2 text-center font-mono text-[8px] font-medium">
           {t('ticket.base_ht')}: {formatM(totalHT)} | {t('ticket.tva')}: {formatM(totalTVA)}
         </div>
       )}
 
       {/* FOOTER */}
       <div className="mt-4 text-center">
-        <div className="mb-3 border-t border-black/20 pt-3">
+        <div className="mb-3 border-t border-black/35 pt-3">
             <p className="text-caption font-medium whitespace-pre-line">{settings.ticket_footer_message || t('ticket.visit_thanks')}</p>
         </div>
         
@@ -287,7 +308,7 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
             </div>
         )}
 
-        <div className="mt-5 border-t border-black/15 pt-2 text-[7px] font-medium uppercase tracking-[0.2em]">
+        <div className="mt-5 border-t border-black/35 pt-2 text-[8px] font-semibold uppercase tracking-[0.2em]">
           ZENITH POS SYSTEM
         </div>
       </div>

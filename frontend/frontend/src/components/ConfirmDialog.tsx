@@ -8,6 +8,7 @@ import {
 } from './shadcn/dialog';
 import { Button } from './shadcn/button';
 import { AlertTriangle, Info, CheckCircle, XCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface ConfirmDialogProps {
   isOpen: boolean
@@ -47,14 +48,17 @@ export default function ConfirmDialog({
   isOpen,
   title,
   message,
-  confirmText = 'Confirmer',
-  cancelText = 'Annuler',
+  confirmText,
+  cancelText,
   variant = 'warning',
   onConfirm,
   onCancel
 }: ConfirmDialogProps) {
+  const { t } = useTranslation('common');
   const config = variantConfig[variant];
   const Icon = config.icon;
+  const confirmLabel = confirmText ?? t('common:confirm');
+  const cancelLabel = cancelText ?? t('common:cancel');
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onCancel()}>
@@ -83,14 +87,14 @@ export default function ConfirmDialog({
             onClick={onCancel}
             className="text-slate-600 hover:text-slate-900"
           >
-            {cancelText}
+            {cancelLabel}
           </Button>
           <Button
             size="sm"
             onClick={onConfirm}
             className={config.confirmClass}
           >
-            {confirmText}
+            {confirmLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

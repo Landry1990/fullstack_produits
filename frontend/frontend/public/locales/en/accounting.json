@@ -156,12 +156,12 @@
     },
     "ohada_categories": {
         "loyer": "Rent (Lease)",
-        "energie": "Water & Electricity",
-        "salaires": "Staff Salaries",
-        "impots": "Taxes and Duties",
+        "energie": "Water & Electricity (ENEO/CAMWATER)",
+        "salaires": "Staff salaries",
+        "impots": "Taxes & Duties",
         "internet": "Internet & Phone",
-        "fournitures": "Office Supplies",
-        "autre": "Other expense..."
+        "fournitures": "Office supplies",
+        "autre": "Other charge..."
     },
     "messages": {
         "entry_saved": "Entry saved successfully",

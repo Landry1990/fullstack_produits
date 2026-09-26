@@ -375,9 +375,6 @@ DOC_STRINGS = {
         'reap_empty': 'Aucun produit enregistré pour cette session.',
         'reap_doc_title': 'CONFIRMATION DE RÉAPPROVISIONNEMENT',
 
-        # ── pdf_generation.py (étiquettes commandes) ─────────────────────────
-        'lbl_fact_prefix': 'Fact:{v}',
-
         # ── promis.py (tickets) ──────────────────────────────────────────────
         'prm_ticket_title': 'TICKET PROMIS',
         'prm_copy_pharmacy': 'EXEMPLAIRE PHARMACIE',
@@ -936,9 +933,6 @@ DOC_STRINGS = {
         'reap_col_expiry': 'EXPIRY',
         'reap_empty': 'No product recorded for this session.',
         'reap_doc_title': 'RESTOCKING CONFIRMATION',
-
-        # ── pdf_generation.py (étiquettes commandes) ─────────────────────────
-        'lbl_fact_prefix': 'Inv:{v}',
 
         # ── promis.py (tickets) ──────────────────────────────────────────────
         'prm_ticket_title': 'PROMISE TICKET',

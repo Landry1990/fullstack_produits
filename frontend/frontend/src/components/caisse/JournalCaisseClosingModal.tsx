@@ -286,7 +286,7 @@ export default function JournalCaisseClosingModal({ state }: Props) {
                       }}
                       tabIndex={0}
                       role="button"
-                      aria-label={t('closing.breakdown_open', { defaultValue: 'Ouvrir le billetage' })}
+                      aria-label={t('caisse:journal.closing.breakdown_open', { defaultValue: 'Ouvrir le billetage' })}
                     >
                       <input
                         id="closing-real-amount"
@@ -294,24 +294,24 @@ export default function JournalCaisseClosingModal({ state }: Props) {
                         readOnly
                         tabIndex={-1}
                         aria-hidden="true"
-                        placeholder={t('closing.breakdown_placeholder', { defaultValue: 'Touchez pour billetter' })}
+                        placeholder={t('caisse:journal.closing.breakdown_placeholder', { defaultValue: 'Touchez pour billetter' })}
                         className="w-full h-12 px-4 rounded-lg bg-slate-100 border border-slate-200 font-black text-2xl text-center text-slate-700 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all cursor-pointer"
                         value={actualAmount}
                         onFocus={() => setIsBreakdownOpen(true)}
                       />
-                      <span className="absolute right-6 top-1/2 -translate-y-1/2 font-black text-slate-300 pointer-events-none">{t('common:currency')}</span>
+                      <span className="absolute right-6 top-1/2 -translate-y-1/2 font-black text-slate-300 pointer-events-none">{t('currency_symbol')}</span>
                     </div>
                   ) : (
                     <div className="relative flex-1">
                       <input
                         id="closing-real-amount"
                         type="number"
-                        placeholder={t('closing.real_amount_placeholder', { defaultValue: 'Saisissez le montant réel' })}
+                        placeholder={t('caisse:journal.closing.real_amount_placeholder', { defaultValue: 'Saisissez le montant réel' })}
                         className="w-full h-12 px-4 rounded-lg bg-slate-100 border border-slate-200 font-black text-2xl text-center text-slate-700 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all"
                         value={actualAmount}
                         onChange={(e) => { setActualAmount(e.target.value); setBreakdown(null); setBilletage(null); }}
                       />
-                      <span className="absolute right-6 top-1/2 -translate-y-1/2 font-black text-slate-300 pointer-events-none">{t('common:currency')}</span>
+                      <span className="absolute right-6 top-1/2 -translate-y-1/2 font-black text-slate-300 pointer-events-none">{t('currency_symbol')}</span>
                     </div>
                   )}
                   <Button
@@ -319,15 +319,15 @@ export default function JournalCaisseClosingModal({ state }: Props) {
                     variant="outline"
                     className="h-12 px-3 border-emerald-300 text-emerald-700 hover:bg-emerald-50 shrink-0"
                     onClick={() => setIsBreakdownOpen(true)}
-                    title={t('closing.breakdown_open', { defaultValue: 'Ouvrir le billetage' })}
-                    aria-label={t('closing.breakdown_open', { defaultValue: 'Ouvrir le billetage' })}
+                    title={t('caisse:journal.closing.breakdown_open', { defaultValue: 'Ouvrir le billetage' })}
+                    aria-label={t('caisse:journal.closing.breakdown_open', { defaultValue: 'Ouvrir le billetage' })}
                   >
                     <Banknote className="size-5" />
                   </Button>
                 </div>
                 {!billetageObligatoire && (
                   <p className="mt-1 text-caption text-slate-400 font-bold">
-                    {t('closing.breakdown_optional_hint', { defaultValue: 'Billetage optionnel — cliquez l\'icône pour détailler vos coupures' })}
+                    {t('caisse:journal.closing.breakdown_optional_hint', { defaultValue: 'Billetage optionnel — cliquez l\'icône pour détailler vos coupures' })}
                   </p>
                 )}
                 {computed && computed.gap !== null && (

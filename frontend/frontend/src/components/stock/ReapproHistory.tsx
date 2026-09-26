@@ -126,10 +126,10 @@ export default function ReapproHistory() {
             </div>
             <div>
               <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">
-                Historique Réappro
+                {t('stock:reappro_history.title')}
               </h1>
               <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mt-0.5">
-                Suivi des transferts Réserve → Rayon
+                {t('stock:reappro_history.subtitle')}
               </p>
             </div>
           </div>
@@ -153,12 +153,12 @@ export default function ReapproHistory() {
           <Table className="table-fixed">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-28 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">Session</TableHead>
-                <TableHead className="w-36 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">Date & Heure</TableHead>
-                <TableHead className="w-32 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">Utilisateur</TableHead>
-                <TableHead className="px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">Produits</TableHead>
-                <TableHead className="w-20 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">Unités</TableHead>
-                <TableHead className="w-24 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-right">Actions</TableHead>
+                <TableHead className="w-28 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('stock:reappro_history.col_session')}</TableHead>
+                <TableHead className="w-36 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('stock:reappro_history.col_date')}</TableHead>
+                <TableHead className="w-32 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('stock:reappro_history.col_user')}</TableHead>
+                <TableHead className="px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">{t('common:products')}</TableHead>
+                <TableHead className="w-20 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">{t('stock:reappro_history.col_units')}</TableHead>
+                <TableHead className="w-24 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-right">{t('common:actions_title')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -179,7 +179,7 @@ export default function ReapproHistory() {
                     <EmptyState
                       compact
                       icon={<History className="size-6" />}
-                      title="Aucun historique trouvé"
+                      title={t('stock:reappro_history.no_history')}
                     />
                   </TableCell>
                 </TableRow>
@@ -205,7 +205,7 @@ export default function ReapproHistory() {
                           <User className="size-3 text-slate-500" />
                         </div>
                         <span className="text-sm font-medium text-slate-700">
-                          {session.user_name || 'Inconnu'}
+                          {session.user_name || t('stock:reappro_history.unknown_user')}
                         </span>
                       </div>
                     </TableCell>
@@ -227,7 +227,7 @@ export default function ReapproHistory() {
                           leftIcon={<Eye className="size-3.5" />}
                           onClick={() => setSelectedSession(session)}
                         >
-                          Voir
+                          {t('common:view')}
                         </Button>
                         <Button
                           variant="outline"
@@ -265,10 +265,10 @@ export default function ReapproHistory() {
                 </div>
                 <div>
                   <DialogTitle className="text-lg font-semibold text-slate-900">
-                    Détails du réappro #{selectedSession?.id}
+                    {t('stock:reappro_history.details_title', { id: selectedSession?.id })}
                   </DialogTitle>
                   <DialogDescription className="text-sm text-slate-500">
-                    Transfert Réserve → Rayon
+                    {t('stock:reappro_history.details_desc')}
                   </DialogDescription>
                 </div>
               </div>
@@ -279,17 +279,17 @@ export default function ReapproHistory() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Card variant="bordered" padding="md" className="rounded-xl">
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
-                  Résumé
+                  {t('stock:reappro_history.summary')}
                 </p>
                 <p className="text-sm font-semibold text-slate-800">
-                  {selectedSession?.total_products} produits transférés
+                  {t('stock:reappro_history.products_transferred', { count: selectedSession?.total_products ?? 0 })}
                   <br />
-                  {selectedSession?.total_units} unités au total
+                  {t('stock:reappro_history.units_total', { count: selectedSession?.total_units ?? 0 })}
                 </p>
               </Card>
               <Card variant="bordered" padding="md" className="rounded-xl">
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
-                  Effectué le
+                  {t('stock:reappro_history.performed_on')}
                 </p>
                 <p className="text-sm font-semibold text-slate-800">
                   {selectedSession && new Date(selectedSession.created_at).toLocaleString()}
@@ -301,9 +301,9 @@ export default function ReapproHistory() {
               <Table className="table-fixed">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">Produit</TableHead>
-                    <TableHead className="px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">Lot / Exp</TableHead>
-                    <TableHead className="px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">Qté</TableHead>
+                    <TableHead className="px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('common:product')}</TableHead>
+                    <TableHead className="px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('stock:reappro_history.col_lot_exp')}</TableHead>
+                    <TableHead className="px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">{t('stock:reappro_history.col_qty')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -333,7 +333,7 @@ export default function ReapproHistory() {
 
             <DialogFooter className="pt-2">
               <Button variant="outline" onClick={() => setSelectedSession(null)}>
-                Fermer
+                {t('common:close')}
               </Button>
               {selectedSession && (
                 <Button
@@ -341,7 +341,7 @@ export default function ReapproHistory() {
                   onClick={() => handleDownloadPdf(selectedSession)}
                   disabled={downloadingId === selectedSession.id}
                 >
-                  Télécharger la confirmation
+                  {t('stock:reappro_history.download_confirmation')}
                 </Button>
               )}
             </DialogFooter>

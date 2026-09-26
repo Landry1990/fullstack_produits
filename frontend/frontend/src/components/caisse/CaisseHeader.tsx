@@ -151,7 +151,7 @@ export function CaisseHeader({
                 onClick={onBulkCancelClick}
                 disabled={selectedFactureIds.size === 0 && facturesCount === 0}
                 className="inline-flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-semibold bg-red-600 text-white shadow-sm hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                title={t('bulk_cancel_title', { defaultValue: 'Annuler les factures sélectionnées (ou toutes) avec réintégration stock' })}
+                title={t('bulk_cancel_tooltip', { defaultValue: 'Annuler les factures sélectionnées (ou toutes) avec réintégration stock' })}
               >
                 <Trash2 className="size-4" />
                 <span className="hidden sm:inline">

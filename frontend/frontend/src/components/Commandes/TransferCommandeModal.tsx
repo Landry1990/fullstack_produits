@@ -147,7 +147,7 @@ export default function TransferCommandeModal({
                 await api.post('commande-produits/', payload);
             }));
 
-            const fournisseurName = fournisseurs.find(f => f.id === parseInt(transferTargetFournisseur))?.name || t('common:unknown');
+            const fournisseurName = fournisseurs.find(f => f.id === parseInt(transferTargetFournisseur))?.name || t('orders:transfer_modal.unknown_supplier');
             onTransferSuccess(selectedProducts.length, fournisseurName, newCommande.id);
             onClose();
 

@@ -195,9 +195,9 @@ export default function ModuleFinancier() {
               <h3 className="text-sm font-medium opacity-80">
                 {t('kpis.dsi', 'Jours Stock (DSI)')}
               </h3>
-              <p className="text-3xl font-bold">{kpis.dsi} j</p>
+              <p className="text-3xl font-bold">{kpis.dsi} {t('days_suffix')}</p>
               <p className="text-xs text-white/70">
-                Stock: {formatMoneyFull(kpis.stock_value)}
+                {t('common:stock')}: {formatMoneyFull(kpis.stock_value)}
               </p>
             </div>
           </div>
@@ -214,7 +214,7 @@ export default function ModuleFinancier() {
                 {kpis.croissance_mensuelle >= 0 ? '+' : ''}{kpis.croissance_mensuelle}%
               </p>
               <p className="text-xs text-white/70">
-                CA: {formatMoneyFull(kpis.ca_mois)}
+                {t('kpis.ca_label')}: {formatMoneyFull(kpis.ca_mois)}
               </p>
             </div>
           </div>
@@ -246,7 +246,7 @@ export default function ModuleFinancier() {
                         : 'text-slate-500 hover:bg-slate-50'
                     }`}
                   >
-                    {d}j
+                    {d}{t('days_suffix')}
                   </button>
                 ))}
               </div>
@@ -432,7 +432,7 @@ export default function ModuleFinancier() {
                 </h3>
                 {margesData && (
                   <Badge variant="default" className="text-sm">
-                    Taux moyen: {margesData.taux_moyen}%
+                    {t('summary_stats.avg_rate', { rate: margesData.taux_moyen })}
                   </Badge>
                 )}
               </div>
@@ -585,7 +585,7 @@ export default function ModuleFinancier() {
                     <tr className="text-slate-400 text-xs">
                       <th className="text-left px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 w-12">#</th>
                       <th className="text-left px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('product', 'Produit')}</th>
-                      <th className="text-right px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">CA</th>
+                      <th className="text-right px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('marge_produit.ca')}</th>
                       <th className="text-right px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('margin', 'Marge')}</th>
                       <th className="text-right px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">%</th>
                     </tr>
@@ -663,7 +663,7 @@ export default function ModuleFinancier() {
                       tick={{ fontSize: 11 }}
                     />
                     <Tooltip formatter={tooltipFormatterMoney} />
-                    <Bar dataKey="ca" fill="#3B82F6" name="CA" />
+                    <Bar dataKey="ca" fill="#3B82F6" name={t('marge_produit.ca')} />
                     <Bar dataKey="marge" fill="#10B981" name={t('margin', 'Marge')} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -675,7 +675,7 @@ export default function ModuleFinancier() {
                   <thead className="sticky top-0 z-10 bg-white">
                     <tr className="text-slate-400 text-xs">
                       <th className="text-left px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{categoryType === 'rayon' ? t('category.rayon', 'Rayon') : categoryType === 'groupe' ? t('category.groupe', 'Groupe') : t('category.forme', 'Forme')}</th>
-                      <th className="text-right px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">CA</th>
+                      <th className="text-right px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('marge_produit.ca')}</th>
                       <th className="text-right px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('margin', 'Marge')}</th>
                       <th className="text-right px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('margin_rate', 'Taux')}</th>
                       <th className="text-right px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">%</th>
@@ -957,14 +957,14 @@ export default function ModuleFinancier() {
                           </div>
                         </td>
                         <td className="text-center px-3 py-2">
-                          <div className="flex flex-col items-center gap-1" title={`${qualiteIncidents} incidents`}>
+                          <div className="flex flex-col items-center gap-1" title={t('supplier.incidents_count', { count: qualiteIncidents })}>
                             <div className="w-20 h-2 bg-slate-200 rounded-full overflow-hidden">
                               <div className={`h-full rounded-full ${qualiteScore >= 90 ? 'bg-emerald-500' : 'bg-red-500'}`} style={{ width: `${qualiteScore}%` }} />
                             </div>
                           </div>
                         </td>
                         <td className="text-center px-3 py-2">
-                          <div className="flex flex-col items-center gap-1" title={`${regulariteLivraisons} livraisons`}>
+                          <div className="flex flex-col items-center gap-1" title={t('supplier.deliveries_count', { count: regulariteLivraisons })}>
                             <div className="w-20 h-2 bg-slate-200 rounded-full overflow-hidden">
                               <div className="h-full bg-blue-500 rounded-full" style={{ width: `${regulariteScore}%` }} />
                             </div>

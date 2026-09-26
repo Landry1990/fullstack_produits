@@ -2,6 +2,7 @@
  * Utility to extract readable error messages from API responses.
  * Handles diverse formats (Django REST Framework, standard HTTP errors, etc.)
  */
+import i18n from '../i18n';
 
 interface _StartErrorExtraction {
     title?: string;
@@ -28,7 +29,7 @@ export function getApiErrorDetail(err: unknown, fallback: string): string {
 }
 
 export function extractErrorMessage(err: unknown): string {
-    if (!err) return "Une erreur inconnue est survenue.";
+    if (!err) return i18n.t('common:errors.unknown', { defaultValue: 'Une erreur inconnue est survenue.' });
 
     const errObj = err as Record<string, unknown>;
 
@@ -42,14 +43,14 @@ export function extractErrorMessage(err: unknown): string {
         if (status >= 500) {
             // Parfois Django renvoie du HTML en mode debug, on évite de l'afficher brut
             if (typeof data === 'string' && data.includes('<!DOCTYPE html>')) {
-                return `Erreur Serveur (${status}) : Veuillez contacter le support technique.`;
+                return i18n.t('common:errors.server_support', { status, defaultValue: `Erreur Serveur (${status}) : Veuillez contacter le support technique.` });
             }
             // Si l'API renvoie un message JSON explicite même en 500 (rare mais possible)
             if (data && typeof data === 'object' && 'detail' in data) {
-                return `Erreur Serveur (${status}) : ${data.detail}`;
+                return i18n.t('common:errors.server_detail', { status, detail: String(data.detail), defaultValue: `Erreur Serveur (${status}) : ${String(data.detail)}` });
             }
 
-            return `Erreur Serveur (${status}) : Veuillez réessayer plus tard.`;
+            return i18n.t('common:errors.server_retry', { status, defaultValue: `Erreur Serveur (${status}) : Veuillez réessayer plus tard.` });
         }
 
         // Cas Erreur Client (400, 403, 404...)
@@ -99,12 +100,12 @@ export function extractErrorMessage(err: unknown): string {
     if (errObj.message) {
         const msg = String(errObj.message);
         if (msg === 'Network Error') {
-            return "Erreur de connexion : Impossible de joindre le serveur.";
+            return i18n.t('common:errors.connection', { defaultValue: 'Erreur de connexion : Impossible de joindre le serveur.' });
         }
         return msg;
     }
 
     // 3. Fallback
-    return typeof err === 'string' ? err : "Une erreur inattendue est survenue.";
+    return typeof err === 'string' ? err : i18n.t('common:errors.unexpected', { defaultValue: 'Une erreur inattendue est survenue.' });
 }
 

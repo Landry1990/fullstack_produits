@@ -121,19 +121,19 @@ const StockHealthDashboard: React.FC = () => {
                         <div className="relative group/tooltip">
                             <Info className="size-4 text-slate-400 hover:text-slate-700 transition-colors cursor-help" />
                             <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-72 hidden group-hover/tooltip:block z-[100] bg-white border border-slate-200 rounded-2xl shadow-xl p-4 text-left">
-                                <h4 className="font-bold text-sm text-slate-700 mb-2">Interprétation du Score</h4>
+                                <h4 className="font-bold text-sm text-slate-700 mb-2">{t('stock:health_dashboard.interpretation.title')}</h4>
                                 <ul className="text-caption space-y-2">
                                     <li className="flex items-start gap-2">
                                         <span className="text-emerald-600 font-bold w-12 shrink-0">&ge; 80%</span>
-                                        <span className="text-slate-600"><strong>Sain</strong> : Stock optimal, peu de ruptures, rotation fluide.</span>
+                                        <span className="text-slate-600"><strong>{t('stock:health_dashboard.interpretation.healthy_label')}</strong> : {t('stock:health_dashboard.interpretation.healthy')}</span>
                                     </li>
                                     <li className="flex items-start gap-2">
                                         <span className="text-amber-500 font-bold w-12 shrink-0">50-79%</span>
-                                        <span className="text-slate-600"><strong>Moyen</strong> : Attention à l'accumulation de stock dormant ou aux ruptures à venir.</span>
+                                        <span className="text-slate-600"><strong>{t('stock:health_dashboard.interpretation.medium_label')}</strong> : {t('stock:health_dashboard.interpretation.medium')}</span>
                                     </li>
                                     <li className="flex items-start gap-2">
                                         <span className="text-red-500 font-bold w-12 shrink-0">&lt; 50%</span>
-                                        <span className="text-slate-600"><strong>Critique</strong> : Fort dysfonctionnement. Trop de liquidités immobilisées ou trop de ventes manquées.</span>
+                                        <span className="text-slate-600"><strong>{t('stock:health_dashboard.interpretation.critical_label')}</strong> : {t('stock:health_dashboard.interpretation.critical')}</span>
                                     </li>
                                 </ul>
                             </div>
@@ -164,8 +164,8 @@ const StockHealthDashboard: React.FC = () => {
                             <div className="relative group/tip">
                                 <Info className="size-3.5 text-red-300 hover:text-red-500 transition-colors cursor-help" />
                                 <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-72 hidden group-hover/tip:block z-[100] bg-white border border-slate-200 rounded-2xl shadow-xl p-4 text-left">
-                                    <h4 className="font-bold text-sm text-red-500 mb-1">Ventes Manquées</h4>
-                                    <p className="text-xs text-slate-600 whitespace-normal leading-relaxed">Estimation de la perte de chiffre d'affaires sur les 30 derniers jours à cause des ruptures de stock sur des produits habituellement très demandés.</p>
+                                    <h4 className="font-bold text-sm text-red-500 mb-1">{t('stock:health_dashboard.missed_sales.title')}</h4>
+                                    <p className="text-xs text-slate-600 whitespace-normal leading-relaxed">{t('stock:health_dashboard.missed_sales.desc')}</p>
                                 </div>
                             </div>
                         </div>
@@ -213,8 +213,8 @@ const StockHealthDashboard: React.FC = () => {
                             <div className="relative group/tip">
                                 <Info className="size-3.5 text-amber-400 hover:text-amber-600 transition-colors cursor-help" />
                                 <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-72 hidden group-hover/tip:block z-[100] bg-white border border-slate-200 rounded-2xl shadow-xl p-4 text-left">
-                                    <h4 className="font-bold text-sm text-blue-600 mb-1">Stock Dormant</h4>
-                                    <p className="text-xs text-slate-600 whitespace-normal leading-relaxed">Valeur d'achat totale des produits qui n'ont fait l'objet d'aucune vente depuis plus de {data.dead_stock.days_threshold} jours. C'est de l'argent immobilisé qui bloque votre trésorerie.</p>
+                                    <h4 className="font-bold text-sm text-blue-600 mb-1">{t('stock:health_dashboard.dormant_stock.title')}</h4>
+                                    <p className="text-xs text-slate-600 whitespace-normal leading-relaxed">{t('stock:health_dashboard.dormant_stock.desc', { days: data.dead_stock.days_threshold })}</p>
                                 </div>
                             </div>
                         </div>
@@ -262,8 +262,8 @@ const StockHealthDashboard: React.FC = () => {
                             <div className="relative group/tip">
                                 <Info className="size-3 text-slate-400 hover:text-slate-700 transition-colors cursor-help" />
                                 <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-56 hidden group-hover/tip:block z-[100] bg-white border border-slate-200 rounded-2xl shadow-xl p-3 text-left">
-                                    <h4 className="font-bold text-sm text-slate-700 mb-1">Disponibilité</h4>
-                                    <p className="text-xs text-slate-500 whitespace-normal">Pourcentage de vos produits en catalogue qui sont actuellement en stock (quantité &gt; 0).</p>
+                                    <h4 className="font-bold text-sm text-slate-700 mb-1">{t('stock:health_dashboard.availability.title')}</h4>
+                                    <p className="text-xs text-slate-500 whitespace-normal">{t('stock:health_dashboard.availability.desc')}</p>
                                 </div>
                             </div>
                         </div>
@@ -288,8 +288,8 @@ const StockHealthDashboard: React.FC = () => {
                             <div className="relative group/tip">
                                 <Info className="size-3 text-slate-400 hover:text-slate-700 transition-colors cursor-help" />
                                 <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-56 hidden group-hover/tip:block z-[100] bg-white border border-slate-200 rounded-2xl shadow-xl p-3 text-left">
-                                    <h4 className="font-bold text-sm text-slate-700 mb-1">Taux de rupture</h4>
-                                    <p className="text-xs text-slate-500 whitespace-normal">Part des produits pertinents (en stock ou avec activité récente) qui sont actuellement en rupture.</p>
+                                    <h4 className="font-bold text-sm text-slate-700 mb-1">{t('stock:health_dashboard.rupture_rate.title')}</h4>
+                                    <p className="text-xs text-slate-500 whitespace-normal">{t('stock:health_dashboard.rupture_rate.desc')}</p>
                                 </div>
                             </div>
                         </div>
@@ -314,8 +314,8 @@ const StockHealthDashboard: React.FC = () => {
                             <div className="relative group/tip">
                                 <Info className="size-3 text-slate-400 hover:text-slate-700 transition-colors cursor-help" />
                                 <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-56 hidden group-hover/tip:block z-[100] bg-white border border-slate-200 rounded-2xl shadow-xl p-3 text-left">
-                                    <h4 className="font-bold text-sm text-slate-700 mb-1">Rotation</h4>
-                                    <p className="text-xs text-slate-500 whitespace-normal">Part de vos produits qui ont généré au moins une vente récemment, indiquant la fluidité de votre stock.</p>
+                                    <h4 className="font-bold text-sm text-slate-700 mb-1">{t('stock:health_dashboard.rotation.title')}</h4>
+                                    <p className="text-xs text-slate-500 whitespace-normal">{t('stock:health_dashboard.rotation.desc')}</p>
                                 </div>
                             </div>
                         </div>
@@ -340,8 +340,8 @@ const StockHealthDashboard: React.FC = () => {
                             <div className="relative group/tip">
                                 <Info className="size-3 text-slate-400 hover:text-slate-700 transition-colors cursor-help" />
                                 <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-56 hidden group-hover/tip:block z-[100] bg-white border border-slate-200 rounded-2xl shadow-xl p-3 text-left">
-                                    <h4 className="font-bold text-sm text-slate-700 mb-1">Ruptures Imminentes</h4>
-                                    <p className="text-xs text-slate-500 whitespace-normal">Nombre de produits dont le niveau de stock a atteint ou est en dessous du seuil minimum défini.</p>
+                                    <h4 className="font-bold text-sm text-slate-700 mb-1">{t('stock:health_dashboard.imminent_ruptures.title')}</h4>
+                                    <p className="text-xs text-slate-500 whitespace-normal">{t('stock:health_dashboard.imminent_ruptures.desc')}</p>
                                 </div>
                             </div>
                         </div>
@@ -366,8 +366,8 @@ const StockHealthDashboard: React.FC = () => {
                             <div className="relative group/tip">
                                 <Info className="size-3 text-slate-400 hover:text-slate-700 transition-colors cursor-help" />
                                 <div className="absolute right-0 top-full mt-2 w-56 hidden group-hover/tip:block z-[100] bg-white border border-slate-200 rounded-2xl shadow-xl p-3 text-left">
-                                    <h4 className="font-bold text-sm text-slate-700 mb-1">Valeur Totale</h4>
-                                    <p className="text-xs text-slate-500 whitespace-normal">Valeur totale d'achat de l'ensemble de votre stock physique disponible.</p>
+                                    <h4 className="font-bold text-sm text-slate-700 mb-1">{t('stock:health_dashboard.total_value.title')}</h4>
+                                    <p className="text-xs text-slate-500 whitespace-normal">{t('stock:health_dashboard.total_value.desc')}</p>
                                 </div>
                             </div>
                         </div>

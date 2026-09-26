@@ -15,13 +15,11 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
   const { t } = useTranslation('common');
   const [loading, setLoading] = useState(false);
   
-  const [formData, setFormData] = useState<Omit<Feedback, 'id' | 'user' | 'username' | 'status' | 'admin_response' | 'responded_at' | 'responded_by' | 'created_at' | 'updated_at'>>({
+  const [formData, setFormData] = useState<Omit<Feedback, 'id' | 'user' | 'username' | 'status' | 'admin_response' | 'responded_at' | 'responded_by' | 'created_at' | 'updated_at' | 'page_url' | 'browser_info'>>({
     category: 'OTHER',
     priority: 'MEDIUM',
     subject: '',
     description: '',
-    page_url: window.location.href,
-    browser_info: navigator.userAgent,
   });
 
   const categoryOptions = [
@@ -49,18 +47,17 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
 
     setLoading(true);
     try {
-      const result = await feedbackService.create(formData);
+      await feedbackService.create({
+        ...formData,
+        page_url: window.location.href,
+        browser_info: navigator.userAgent,
+      });
       gooeyToast.success(t('feedback.success', 'Feedback envoyé avec succès'));
-      if (result.email_sent === false) {
-        gooeyToast.error(t('feedback.email_failed', "L'email de notification n'a pas pu être envoyé — vérifiez la configuration SMTP"), { duration: 6000 });
-      }
       setFormData({
         category: 'OTHER',
         priority: 'MEDIUM',
         subject: '',
         description: '',
-        page_url: window.location.href,
-        browser_info: navigator.userAgent,
       });
       onClose();
     } catch (error) {
@@ -167,7 +164,8 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
               value={formData.subject}
               onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
               placeholder={t('feedback.subject_placeholder', 'Résumez votre feedback en quelques mots')}
-              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 outline-none transition-all text-gray-700"
+              maxLength={200}
+              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 outline-none transition-all text-gray-700 normal-case"
               required
             />
           </div>
@@ -183,7 +181,7 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder={t('feedback.description_placeholder', 'Décrivez votre feedback en détail...')}
               rows={5}
-              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 outline-none transition-all text-gray-700 resize-none"
+              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 outline-none transition-all text-gray-700 resize-none normal-case"
               required
             />
           </div>
@@ -195,7 +193,7 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
               onClick={onClose}
               className="px-6 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
             >
-              {t('common.cancel', 'Annuler')}
+              {t('common:cancel', 'Annuler')}
             </button>
             <button
               type="submit"
@@ -205,7 +203,7 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
               {loading ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
-                  {t('common.sending', 'Envoi...')}
+                  {t('common:sending', 'Envoi...')}
                 </>
               ) : (
                 <>

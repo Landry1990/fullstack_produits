@@ -52,8 +52,8 @@ export const BulkPaiementModal: React.FC<BulkPaiementModalProps> = ({
                         </div>
                         <div className="text-xs text-slate-500">
                             {form.montantTotalBulk && parseFloat(form.montantTotalBulk) > 0
-                                ? `Règlement partiel: ${formatCurrency(parseFloat(form.montantTotalBulk))} / ${formatCurrency(totalAmount)}`
-                                : 'Règlement total des factures sélectionnées'
+                                ? t('creances:bulk_payment.partial_title', { x: formatCurrency(parseFloat(form.montantTotalBulk)), y: formatCurrency(totalAmount) })
+                                : t('creances:bulk_payment.full_title')
                             }
                         </div>
                     </div>
@@ -74,12 +74,12 @@ export const BulkPaiementModal: React.FC<BulkPaiementModalProps> = ({
                     {/* Montant personnalisé - Paiement partiel */}
                     <div className="space-y-1.5">
                         <label htmlFor="bulk-montant" className="text-caption font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
-                            <Wallet className="size-3" /> Montant à régler (optionnel)
+                            <Wallet className="size-3" /> {t('creances:bulk_payment.amount_label')}
                         </label>
                         <input
                             id="bulk-montant"
                             type="number"
-                            placeholder={`Max: ${formatCurrency(totalAmount)} - Laisser vide pour tout régler`}
+                            placeholder={t('creances:bulk_payment.amount_placeholder', { x: formatCurrency(totalAmount) })}
                             value={form.montantTotalBulk}
                             onChange={(e) => {
                                 const val = e.target.value;
@@ -92,8 +92,8 @@ export const BulkPaiementModal: React.FC<BulkPaiementModalProps> = ({
                         />
                         <p className="text-caption text-slate-400 ml-1">
                             {form.montantTotalBulk
-                                ? `Restera à payer: ${formatCurrency(totalAmount - parseFloat(form.montantTotalBulk || '0'))}`
-                                : 'Laisser vide pour régler le total des factures'
+                                ? t('creances:bulk_payment.remaining', { x: formatCurrency(totalAmount - parseFloat(form.montantTotalBulk || '0')) })
+                                : t('creances:bulk_payment.empty_hint')
                             }
                         </p>
                     </div>

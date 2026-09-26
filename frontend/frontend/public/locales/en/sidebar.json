@@ -118,7 +118,8 @@
         "pharmacie": "Pharmacy Information",
         "telegram": "Telegram History",
         "etiquettes": "Label Templates",
-        "imprimantes": "Printer Configuration"
+        "imprimantes": "Printer Configuration",
+        "admin_system": "System Administration"
     },
     "maintenance": "Maintenance",
     "sauvegardes": "Backups",
@@ -147,5 +148,7 @@
         "parametres": "Settings & Admin"
     },
     "toggle_menu": "Toggle menu",
-    "close_menu": "Close menu"
+    "close_menu": "Close menu",
+    "expand": "Expand",
+    "collapse": "Collapse"
 }

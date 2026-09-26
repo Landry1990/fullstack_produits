@@ -35,11 +35,11 @@ const GRAVITY_COLORS: Record<string, 'error' | 'warning' | 'primary' | 'ghost'> 
   PRECAUTION: 'ghost',
 };
 
-const GRAVITY_LABELS: Record<string, string> = {
-  CONTRE_INDIQUE: 'Contre-indiqué',
-  DECONSEILLE: 'Déconseillé',
-  A_PRENDRE_EN_COMPTE: 'À prendre en compte',
-  PRECAUTION: 'Précaution',
+const GRAVITY_KEYS: Record<string, string> = {
+  CONTRE_INDIQUE: 'products:interactions.gravity_contre_indique',
+  DECONSEILLE: 'products:interactions.gravity_deconseille',
+  A_PRENDRE_EN_COMPTE: 'products:interactions.gravity_a_prendre_en_compte',
+  PRECAUTION: 'products:interactions.gravity_precaution',
 };
 
 export default function InteractionsManager() {
@@ -201,12 +201,12 @@ export default function InteractionsManager() {
       {/* Stats interactions */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <div className="p-4 rounded-2xl border border-base-200 bg-base-100">
-          <div className="text-caption font-bold uppercase tracking-widest opacity-40">Total</div>
+          <div className="text-caption font-bold uppercase tracking-widest opacity-40">{t('products:interactions.total')}</div>
           <div className="text-2xl font-black">{stats?.total ?? '-'}</div>
         </div>
         {(['CONTRE_INDIQUE', 'DECONSEILLE', 'A_PRENDRE_EN_COMPTE', 'PRECAUTION'] as const).map(g => (
           <div key={g} className="p-4 rounded-2xl border border-base-200 bg-base-100">
-            <div className="text-caption font-bold uppercase tracking-widest opacity-40">{GRAVITY_LABELS[g]}</div>
+            <div className="text-caption font-bold uppercase tracking-widest opacity-40">{t(GRAVITY_KEYS[g])}</div>
             <div className="text-2xl font-black">{stats?.by_gravity?.[g] ?? 0}</div>
           </div>
         ))}
@@ -302,7 +302,7 @@ export default function InteractionsManager() {
                     <td className="px-3 py-2 font-bold text-sm">{inter.substance_b_nom}</td>
                     <td className="px-3 py-2">
                       <Badge variant={GRAVITY_COLORS[inter.gravity] || 'ghost'} size="sm">
-                        {GRAVITY_LABELS[inter.gravity] || inter.gravity}
+                        {GRAVITY_KEYS[inter.gravity] ? t(GRAVITY_KEYS[inter.gravity]) : inter.gravity}
                       </Badge>
                     </td>
                     <td className="px-3 py-2 text-xs text-base-content/70 max-w-md truncate" title={inter.description}>{inter.description}</td>
@@ -322,7 +322,7 @@ export default function InteractionsManager() {
         {totalPages > 1 && (
           <div className="flex justify-center gap-2 p-4 border-t border-base-200">
             <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>{t('products:interactions.previous')}</Button>
-            <span className="text-sm py-1 opacity-60 font-medium">Page {page} / {totalPages}</span>
+            <span className="text-sm py-1 opacity-60 font-medium">{t('products:dci.page_x_of_y', { page, total: totalPages })}</span>
             <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>{t('products:interactions.next')}</Button>
           </div>
         )}
@@ -331,70 +331,70 @@ export default function InteractionsManager() {
       {/* Modal Add/Edit */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowModal(false)}>
-          <div className="bg-base-100 rounded-2xl p-6 w-full max-w-lg shadow-2xl" role="dialog" aria-modal="true" aria-label={editingId ? 'Modifier l\'interaction' : 'Nouvelle interaction'} onClick={e => e.stopPropagation()}>
-            <h2 className="text-lg font-bold mb-4">{editingId ? 'Modifier l\'interaction' : 'Nouvelle interaction'}</h2>
+          <div className="bg-base-100 rounded-2xl p-6 w-full max-w-lg shadow-2xl" role="dialog" aria-modal="true" aria-label={editingId ? t('products:interactions.edit_title') : t('products:interactions.new_title')} onClick={e => e.stopPropagation()}>
+            <h2 className="text-lg font-bold mb-4">{editingId ? t('products:interactions.edit_title') : t('products:interactions.new_title')}</h2>
             <div className="space-y-4">
               <div>
-                <label className="text-xs font-bold uppercase tracking-wider opacity-50">Substance A</label>
+                <label className="text-xs font-bold uppercase tracking-wider opacity-50">{t('products:interactions.substance_a')}</label>
                 <select
                   className="w-full rounded-xl bg-base-200/50 border-none h-10 text-sm px-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all mt-1"
-                  aria-label="Substance A"
+                  aria-label={t('products:interactions.substance_a')}
                   value={formSubA}
                   onChange={e => setFormSubA(Number(e.target.value))}
                 >
-                  <option value="">Choisir...</option>
+                  <option value="">{t('products:interactions.choose')}</option>
                   {substances.map(s => <option key={s.id} value={s.id}>{s.nom}</option>)}
                 </select>
               </div>
               <div>
-                <label className="text-xs font-bold uppercase tracking-wider opacity-50">Substance B</label>
+                <label className="text-xs font-bold uppercase tracking-wider opacity-50">{t('products:interactions.substance_b')}</label>
                 <select
                   className="w-full rounded-xl bg-base-200/50 border-none h-10 text-sm px-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all mt-1"
-                  aria-label="Substance B"
+                  aria-label={t('products:interactions.substance_b')}
                   value={formSubB}
                   onChange={e => setFormSubB(Number(e.target.value))}
                 >
-                  <option value="">Choisir...</option>
+                  <option value="">{t('products:interactions.choose')}</option>
                   {substances.map(s => <option key={s.id} value={s.id}>{s.nom}</option>)}
                 </select>
               </div>
               <div>
-                <label className="text-xs font-bold uppercase tracking-wider opacity-50">Gravité</label>
+                <label className="text-xs font-bold uppercase tracking-wider opacity-50">{t('products:interactions.gravity')}</label>
                 <select
                   className="w-full rounded-xl bg-base-200/50 border-none h-10 text-sm px-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all mt-1"
-                  aria-label="Gravité"
+                  aria-label={t('products:interactions.gravity')}
                   value={formGravity}
                   onChange={e => setFormGravity(e.target.value)}
                 >
-                  <option value="PRECAUTION">Précaution d'emploi</option>
-                  <option value="A_PRENDRE_EN_COMPTE">À prendre en compte</option>
-                  <option value="DECONSEILLE">Déconseillé</option>
-                  <option value="CONTRE_INDIQUE">Contre-indiqué</option>
+                  <option value="PRECAUTION">{t('products:interactions.gravity_precaution')}</option>
+                  <option value="A_PRENDRE_EN_COMPTE">{t('products:interactions.gravity_a_prendre_en_compte')}</option>
+                  <option value="DECONSEILLE">{t('products:interactions.gravity_deconseille')}</option>
+                  <option value="CONTRE_INDIQUE">{t('products:interactions.gravity_contre_indique')}</option>
                 </select>
               </div>
               <div>
-                <label className="text-xs font-bold uppercase tracking-wider opacity-50">Description / Conduite à tenir</label>
+                <label className="text-xs font-bold uppercase tracking-wider opacity-50">{t('products:interactions.description_label')}</label>
                 <textarea
                   className="w-full rounded-xl bg-base-200/50 border-none mt-1"
                   rows={3}
-                  aria-label="Description / Conduite à tenir"
+                  aria-label={t('products:interactions.description_label')}
                   value={formDescription}
                   onChange={e => setFormDescription(e.target.value)}
                   placeholder={t('products:interactions.risk_placeholder')}
                 />
               </div>
               {formSubA && formSubB && formSubA === formSubB && (
-                <div className="text-error text-sm font-medium">Les deux substances doivent être différentes.</div>
+                <div className="text-error text-sm font-medium">{t('products:interactions.different_substances_error')}</div>
               )}
             </div>
             <div className="flex gap-2 justify-end mt-6">
-              <Button variant="ghost" className="rounded-xl" onClick={() => setShowModal(false)}>Annuler</Button>
+              <Button variant="ghost" className="rounded-xl" onClick={() => setShowModal(false)}>{t('common:cancel')}</Button>
               <Button
                 variant="default" className="rounded-xl"
                 disabled={saving || !formSubA || !formSubB || formSubA === formSubB}
                 onClick={handleSave}
               >
-                {saving ? <Loader2 className="size-4 animate-spin" /> : (editingId ? 'Mettre à jour' : 'Créer')}
+                {saving ? <Loader2 className="size-4 animate-spin" /> : (editingId ? t('products:interactions.update') : t('products:interactions.create'))}
               </Button>
             </div>
           </div>

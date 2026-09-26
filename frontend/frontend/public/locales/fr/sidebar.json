@@ -119,7 +119,8 @@
         "pharmacie": "Informations Pharmacie",
         "telegram": "Historique Telegram",
         "etiquettes": "Modèles d'étiquettes",
-        "imprimantes": "Configuration Imprimantes"
+        "imprimantes": "Configuration Imprimantes",
+        "admin_system": "Administration Système"
     },
     "maintenance": "Entretien",
     "sauvegardes": "Sauvegardes",
@@ -147,5 +148,7 @@
         "parametres": "Paramètres & Admin"
     },
     "toggle_menu": "Basculer le menu",
-    "close_menu": "Fermer le menu"
+    "close_menu": "Fermer le menu",
+    "expand": "Déplier",
+    "collapse": "Replier"
 }

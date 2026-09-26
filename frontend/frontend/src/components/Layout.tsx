@@ -34,7 +34,7 @@ function LayoutContent() {
       <div className={`flex flex-col h-dvh bg-base-100 transition-colors duration-300 relative overflow-hidden`}>
         <div className="shrink-0 z-50 flex items-center justify-between bg-emerald-600 text-white px-4 py-2 shadow-md">
           <div className="flex items-center gap-3">
-            <span className="font-bold text-sm uppercase tracking-wide">Mode point de vente</span>
+            <span className="font-bold text-sm uppercase tracking-wide">{t('common:pos_mode.title')}</span>
             {activePoste && (
               <span className="text-xs bg-emerald-700 px-2 py-0.5 rounded">
                 {activePoste.nom}
@@ -47,7 +47,7 @@ function LayoutContent() {
             onClick={() => closePoste()}
             variant="ghost" size="sm" className="text-white hover:bg-emerald-700 h-6 px-2 text-xs"
           >
-            Fermer le point
+            {t('common:pos_mode.close')}
           </Button>
         </div>
         <main className="flex-1 overflow-hidden">

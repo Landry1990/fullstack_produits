@@ -179,7 +179,8 @@
             "created_by_prefix": "By",
             "actions": "Actions",
             "no_description": "-",
-            "empty": "No inventory found"
+            "empty": "No inventory found",
+            "select_item": "Select inventory #{{id}}"
         },
         "detail": {
             "back": "← Back",
@@ -528,6 +529,8 @@
             "warnings": "warnings",
             "selected": "{{count}} item(s) selected",
             "generate_order": "Generate Order",
+            "rupture_count": "Out of stock",
+            "critical_count": "Critical alerts",
             "urgency": {
                 "critical": "Critical (< 7d)",
                 "warning": "Warning (< 14d)",
@@ -551,7 +554,10 @@
         "value_total": "Total value",
         "ready_to_order": "Ready to be added to an order",
         "selection": "Selection",
-        "select_all": "Select all"
+        "select_all": "Select all",
+        "articles_count": "{{count}} items",
+        "export_excel": "Export to Excel",
+        "export_excel_short": "Excel"
     },
     "abc": {
         "title": "ABC Analysis",
@@ -729,7 +735,11 @@
             "sudo_validate_title": "Return Validation - {{numero}}",
             "sudo_validate_message": "Confirm validation of supplier return <strong>{{numero}}</strong>?<br/>This will reinstate products in stock (or adjust depending on type).",
             "sudo_bulk_validate_title": "Bulk Validation - {{count}} returns",
-            "sudo_bulk_validate_message": "Confirm validation of <strong>{{count}} supplier returns</strong>?<br/>Stock will be reinstated for all."
+            "sudo_bulk_validate_message": "Confirm validation of <strong>{{count}} supplier returns</strong>?<br/>Stock will be reinstated for all.",
+            "sudo_decharge_title": "Unload stock — {{numero}}",
+            "sudo_decharge_message": "This action will physically remove {{count}} product(s) from stock and record the movements. Irreversible action.",
+            "sudo_annule_title": "Cancel unload — {{numero}}",
+            "sudo_annule_message": "This action will restore {{count}} product(s) to stock and cancel the unload movements."
         },
         "toasts": {
             "select_supplier": "Please select a supplier",
@@ -755,14 +765,28 @@
             "bulk_validate_error": "Error during bulk validation",
             "ligne_deleted": "Line deleted",
             "ligne_delete_error": "Error deleting line",
-            "dechargement_cancelled": "Discharge cancelled. Stock restored."
+            "dechargement_cancelled": "Discharge cancelled. Stock restored.",
+            "auto_validated": "Return automatically validated (all lines closed)"
         },
         "confirms": {
             "back_to_list": "Are you sure you want to leave? Unsaved changes will be lost.",
             "back_unloaded": "Stock has not been unloaded. Are you sure you want to return to the list without unloading?",
             "delete_avoir": "Are you sure you want to delete draft return {{numero}}?",
             "bulk_delete": "Delete these {{count}} draft returns?",
-            "delete_ligne": "Delete this line from the return?"
+            "delete_ligne": "Delete this line from the return?",
+            "validate_avoir": "Validate return {{numero}}? Status will change to \"Validated\".",
+            "bulk_validate": "Validate {{count}} selected return(s)?"
+        },
+        "avoirs_lot_modal": {
+            "select_lot": "Select a lot",
+            "available_lots": "Available lots in stock",
+            "no_lots": "No lot available in stock for this product.",
+            "col_lot": "Lot",
+            "col_expiry": "Expiry",
+            "col_stock": "Stock",
+            "col_price": "Purchase price",
+            "days_left": "({{days}}d)",
+            "choose": "Choose"
         }
     },
     "promis": {
@@ -881,6 +905,7 @@
         "top_perimes": "Expired Products in Stock",
         "risk_lots": "At-Risk Lots",
         "no_result": "No at-risk lot found",
+        "view_all_lots": "View all {{count}} lots →",
         "history": {
             "print": "Print",
             "excel": "Excel",
@@ -968,7 +993,15 @@
             "delete_success": "Relation deleted",
             "delete_error": "Error during deletion",
             "transform_success": "Transformation completed successfully",
-            "transform_error": "Error during transformation"
+            "transform_error": "Error during transformation",
+            "transform_confirm_title": "Confirm transformation",
+            "transform_confirm_message": "Transform {{qty}} {{source}} into {{destQty}} {{dest}}?",
+            "transform_confirm_btn": "Yes, transform",
+            "reverse_confirm_title": "Cancel this transformation",
+            "reverse_confirm_message": "Cancel the transformation of {{qty}} {{source}} into {{destQty}} {{dest}}? Stock will be restored automatically.",
+            "reverse_confirm_btn": "Yes, cancel",
+            "reverse_success": "Transformation cancelled successfully",
+            "reverse_error": "Error during cancellation"
         },
         "modal_relation": {
             "title": "New Transformation Relation",
@@ -999,6 +1032,8 @@
             "lots_consumed": "Lots to be consumed (FEFO)",
             "selected": "selected",
             "available": "available",
+            "available_one": "available",
+            "available_other": "available",
             "remaining": "rem.",
             "lot_qty_mismatch": "The sum of selected lots ({{selected}}) must equal the quantity to transform ({{total}})."
         },
@@ -1016,7 +1051,10 @@
             "units": "UNITS",
             "transformer": "Transformer",
             "no_relations": "No relation configured",
-            "no_stock_tooltip": "Insufficient source stock to transform"
+            "no_stock_tooltip": "Insufficient source stock to transform",
+            "reversed": "Cancelled",
+            "reversal": "Cancellation",
+            "reverse_btn": "Cancel"
         }
     },
     "organisation": {
@@ -1034,6 +1072,7 @@
             "success_save": "{{type}} saved successfully",
             "success_delete": "{{type}} deleted successfully",
             "trash_success": "« {{name}} » moved to trash.",
+            "trash_confirm_msg": "\"{{name}}\" will be moved to trash. You can restore it from the Trash page.",
             "delete_confirm_title": "Delete this item?",
             "delete_confirm_msg": "This action is irreversible and will affect associated products.",
             "search": "Search a {{type}}...",
@@ -1360,6 +1399,8 @@
         "cap": "CAP",
         "reserve": "Reserve",
         "suggested": "Suggested",
+        "select_product_aria": "Select {{name}}",
+        "products_to_transfer": "{{count}} product(s) to transfer",
         "status": {
             "critical": "Critical Alert",
             "ok": "Correct Level"
@@ -1413,6 +1454,7 @@
         "empty": "No products to display in the schedule",
         "error_loading": "Error loading schedule",
         "no_selection": "Please select at least one product",
+        "days_option": "{{days}} days",
         "urgence": {
             "rupture": "Out of stock",
             "alerte": "Alert",
@@ -1499,5 +1541,90 @@
         "generating": "Generating…",
         "export_excel": "Export to Excel",
         "print": "Print"
+    },
+    "validation": {
+        "weights_sum_100": "The sum of weights must equal 100"
+    },
+    "lot_selection": {
+        "title": "Lot allocation",
+        "subtitle": "{{name}} — Qty: {{qty}}",
+        "auto_fefo": "AUTOMATIC (FEFO)",
+        "auto_fefo_desc": "The system will automatically select lots expiring first.",
+        "col_lot": "Lot",
+        "col_expiry": "Expiry",
+        "col_stock": "Stock",
+        "col_price": "Price",
+        "col_qty": "Qty",
+        "received_on": "Received on {{date}}",
+        "qty_lot_aria": "Quantity lot {{lot}}",
+        "select_lot_aria": "Select lot {{lot}}",
+        "no_specific_lot": "No specific lot available. Global stock will be used.",
+        "allocated": "Allocated:",
+        "missing_units": "{{count}} unit(s) missing",
+        "excess_units": "Excess of {{count}} unit(s)",
+        "fefo": "FEFO"
+    },
+    "lots": {
+        "load_error": "Unable to load product lots",
+        "no_date": "no date",
+        "fallback": "Lot {{id}}"
+    },
+    "health_dashboard": {
+        "interpretation": {
+            "title": "Score Interpretation",
+            "healthy_label": "Healthy",
+            "healthy": "Optimal stock, few shortages, smooth rotation.",
+            "medium_label": "Medium",
+            "medium": "Watch for dormant stock accumulation or upcoming shortages.",
+            "critical_label": "Critical",
+            "critical": "Severe dysfunction. Too much capital tied up or too many missed sales."
+        },
+        "missed_sales": {
+            "title": "Missed Sales",
+            "desc": "Estimated revenue loss over the last 30 days due to stockouts on usually high-demand products."
+        },
+        "dormant_stock": {
+            "title": "Dormant Stock",
+            "desc": "Total purchase value of products with no sale for over {{days}} days. This is frozen capital blocking your cash flow."
+        },
+        "availability": {
+            "title": "Availability",
+            "desc": "Percentage of your catalogue products currently in stock (qty > 0)."
+        },
+        "rupture_rate": {
+            "title": "Stockout rate",
+            "desc": "Share of relevant products (in stock or recently active) currently out of stock."
+        },
+        "rotation": {
+            "title": "Rotation",
+            "desc": "Share of your products that generated at least one recent sale, indicating stock fluidity."
+        },
+        "imminent_ruptures": {
+            "title": "Imminent Stockouts",
+            "desc": "Number of products whose stock level has reached or fallen below the defined minimum threshold."
+        },
+        "total_value": {
+            "title": "Total Value",
+            "desc": "Total purchase value of your entire available physical stock."
+        }
+    },
+    "reappro_history": {
+        "title": "Replenishment History",
+        "subtitle": "Tracking Reserve → Shelf transfers",
+        "col_session": "Session",
+        "col_date": "Date & Time",
+        "col_user": "User",
+        "col_units": "Units",
+        "col_lot_exp": "Lot / Exp",
+        "col_qty": "Qty",
+        "no_history": "No history found",
+        "unknown_user": "Unknown",
+        "details_title": "Replenishment details #{{id}}",
+        "details_desc": "Reserve → Shelf transfer",
+        "summary": "Summary",
+        "products_transferred": "{{count}} products transferred",
+        "units_total": "{{count}} units total",
+        "performed_on": "Performed on",
+        "download_confirmation": "Download confirmation"
     }
 }

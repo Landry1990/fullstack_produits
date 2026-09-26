@@ -1,5 +1,7 @@
 import jsPDF from 'jspdf';
+import i18next from 'i18next';
 import { formatDateTime, getLocalDateString } from '../dateUtils';
+import { getDocumentLanguage, getDocumentLocale } from '../documentLang';
 import type { PharmacySettings } from '../../hooks/usePharmacySettings';
 import type { ProduitModel } from '../../types';
 
@@ -24,6 +26,8 @@ export interface PromisTicketData {
 export const generatePromisTicketDraft = (data: PromisTicketData) => {
     const width = data.pharmacy.ticket_paper_width || 80;
     const estimatedHeight = 140 + (data.items.length * 10 * 2) + 40;
+    const docT = i18next.getFixedT(getDocumentLanguage(), 'printing');
+    const docLocale = getDocumentLocale();
 
     const doc = new jsPDF({
         orientation: 'p',
@@ -52,7 +56,7 @@ export const generatePromisTicketDraft = (data: PromisTicketData) => {
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(80, 80, 80);
         if (data.pharmacy.phone) {
-            doc.text(`Tel: ${data.pharmacy.phone}`, centerX, currentY, { align: 'center' });
+            doc.text(`${docT('reglement.phone_short')}${data.pharmacy.phone}`, centerX, currentY, { align: 'center' });
             currentY += 3;
         }
         if (data.pharmacy.city) {
@@ -63,7 +67,7 @@ export const generatePromisTicketDraft = (data: PromisTicketData) => {
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(0, 0, 0);
-        doc.text('TICKET PROMIS', centerX, currentY, { align: 'center' });
+        doc.text(docT('promis.ticket_title'), centerX, currentY, { align: 'center' });
         currentY += 4;
         doc.setFontSize(7);
         doc.setFont('helvetica', 'normal');
@@ -76,19 +80,19 @@ export const generatePromisTicketDraft = (data: PromisTicketData) => {
         doc.setFontSize(8);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(0, 0, 0);
-        doc.text('CLIENT:', 5, currentY);
+        doc.text(docT('promis.client_label'), 5, currentY);
         doc.setFont('helvetica', 'normal');
         doc.text(data.client_name, 20, currentY);
         currentY += 4;
         if (data.client_phone) {
-            doc.text(`Tel: ${data.client_phone}`, 20, currentY);
+            doc.text(`${docT('reglement.phone_short')}${data.client_phone}`, 20, currentY);
             currentY += 4;
         }
 
-        doc.text(`Date: ${formatDateTime(new Date())}`, 5, currentY);
+        doc.text(`${docT('reglement.date')} ${formatDateTime(new Date(), docLocale)}`, 5, currentY);
         currentY += 4;
         if (data.facture_id) {
-            doc.text(`Ref Transaction: #${data.facture_id}`, 5, currentY);
+            doc.text(docT('promis.ref_transaction', { id: data.facture_id }), 5, currentY);
             currentY += 4;
         }
 
@@ -97,8 +101,8 @@ export const generatePromisTicketDraft = (data: PromisTicketData) => {
 
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(0, 0, 0);
-        doc.text('Produit', 5, currentY);
-        doc.text('Qte', width - 12, currentY, { align: 'right' });
+        doc.text(docT('promis.col_product'), 5, currentY);
+        doc.text(docT('promis.col_qty'), width - 12, currentY, { align: 'right' });
         currentY += 4;
 
         doc.setFont('helvetica', 'normal');
@@ -120,7 +124,7 @@ export const generatePromisTicketDraft = (data: PromisTicketData) => {
             if (item.produit?.cip1 || item.produit?.cip2) {
                 const code = item.produit.cip1 || item.produit.cip2;
                 doc.setFontSize(6);
-                doc.text(`Code: ${code}`, 5, currentY + (lineCount * 3));
+                doc.text(docT('promis.code', { code }), 5, currentY + (lineCount * 3));
                 doc.setFontSize(7.5);
                 barcodeHeight = 3;
             }
@@ -135,33 +139,33 @@ export const generatePromisTicketDraft = (data: PromisTicketData) => {
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(8);
         doc.setTextColor(0, 0, 0);
-        const statusText = data.is_paid ? 'STATUT: PAYE' : 'STATUT: A REGLER';
+        const statusText = data.is_paid ? docT('promis.status_paid') : docT('promis.status_to_pay');
         doc.text(statusText, centerX, currentY, { align: 'center' });
         currentY += 5;
 
         doc.setFont('helvetica', 'italic');
         doc.setFontSize(6);
         doc.setTextColor(80, 80, 80);
-        doc.text('A conserver pour le retrait', centerX, currentY, { align: 'center' });
+        doc.text(docT('promis.keep_for_pickup'), centerX, currentY, { align: 'center' });
         currentY += 4;
 
         if (data.items.length > 0) {
             const ids = data.items.map(i => i.id).join(', ');
-            doc.text(`N Promis: ${ids}`, centerX, currentY, { align: 'center' });
+            doc.text(docT('promis.promis_no', { ids }), centerX, currentY, { align: 'center' });
             currentY += 4;
         }
     };
 
-    drawTicketCopy('EXEMPLAIRE PHARMACIE');
+    drawTicketCopy(docT('promis.store_copy'));
     currentY += 4;
 
     doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(80, 80, 80);
-    doc.text('- - - Decouper ici - - -', centerX, currentY, { align: 'center' });
+    doc.text(docT('promis.cut_here'), centerX, currentY, { align: 'center' });
     currentY += 6;
 
-    drawTicketCopy('EXEMPLAIRE CLIENT');
+    drawTicketCopy(docT('promis.customer_copy'));
 
     const now = new Date();
     const ts = getLocalDateString(now).replace(/-/g, '') + String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0');

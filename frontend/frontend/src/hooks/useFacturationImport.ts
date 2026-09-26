@@ -25,16 +25,15 @@ export function useFacturationImport({ cart, t }: UseFacturationImportOptions) {
         }
         const toastId = gooeyToast.loading(t('facturation:messages.adding_pack'))
         try {
-            const itemPromises = pack.pack_items.map(async (item: { product: number; quantity: number }) => {
-                try {
-                    const { data: product } = await api.get<ProduitModel>(`produits/${item.product}/`)
-                    return { product, quantity: item.quantity }
-                } catch {
-                    return null
-                }
-            })
-            const results = await Promise.all(itemPromises)
-            const items = results.filter((i): i is { product: ProduitModel, quantity: number } => i !== null)
+            const ids = pack.pack_items.map((item: { product: number; quantity: number }) => item.product)
+            const { data: products } = await api.post<ProduitModel[]>('produits/bulk-detail/', { ids })
+            const productMap = new Map(products.map((p) => [p.id, p]))
+            const items = pack.pack_items
+                .map((item: { product: number; quantity: number }) => {
+                    const product = productMap.get(item.product)
+                    return product ? { product, quantity: item.quantity } : null
+                })
+                .filter((i): i is { product: ProduitModel, quantity: number } => i !== null)
 
             if (items.length === 0) {
                 gooeyToast.error(t('facturation:messages.pack_items_error'), { id: toastId })
@@ -52,9 +51,9 @@ export function useFacturationImport({ cart, t }: UseFacturationImportOptions) {
                 }
             })
             cart.bulkAddProduits(itemsToBulkAdd)
-            gooeyToast.success(t('facturation.messages.pack_added', { name: pack.name }), { id: toastId })
+            gooeyToast.success(t('facturation:messages.pack_added', { name: pack.name }), { id: toastId })
         } catch {
-            gooeyToast.error(t('facturation.messages.pack_error'), { id: toastId })
+            gooeyToast.error(t('facturation:messages.pack_error'), { id: toastId })
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [cart.bulkAddProduits, t])

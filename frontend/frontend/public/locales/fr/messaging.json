@@ -98,5 +98,21 @@
     "error_sent": "Échec de l'envoi",
     "new_notification": "Vous avez reçu un nouveau message interne !",
     "view": "Voir"
+  },
+  "whatsapp_report": {
+    "inventory_title": "RAPPORT INVENTAIRE {{name}}",
+    "reference": "Référence:",
+    "statistics": "Statistiques",
+    "products_scanned": "Produits scannés",
+    "discrepancies_detected": "Écarts détectés",
+    "total_discrepancy_value": "Valeur totale des écarts",
+    "top_discrepancies": "Principaux écarts",
+    "flash_title": "RAPPORT FLASH {{name}}",
+    "revenue": "Chiffre d'affaires",
+    "sales_count": "Nombre de ventes",
+    "products_in_stock": "Produits en stock",
+    "low_stock_alerts": "Alertes stock bas",
+    "expiring_soon": "Produits périmant bientôt",
+    "generated_by": "Généré par PharmaGest"
   }
 }

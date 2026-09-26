@@ -210,11 +210,11 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
               <label className="block text-caption font-bold uppercase text-base-content/40 mb-1">{t('providers:pointage_modal.target_period')}</label>
               <select className="w-full md:w-48 h-10 rounded-xl border border-base-300 bg-base-100 px-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20" value={periodeType} onChange={e => setPeriodeType(e.target.value)}>
                 <option value="MENSUELLER">{t('providers:pointage_modal.period_full')}</option>
-                <optgroup label="Quinzaines">
+                <optgroup label={t('providers:pointage_modal.biweekly')}>
                   <option value="QUINZAINE_1">{t('providers:pointage_modal.period_q1')}</option>
                   <option value="QUINZAINE_2">{t('providers:pointage_modal.period_q2')}</option>
                 </optgroup>
-                <optgroup label="Décades">
+                <optgroup label={t('providers:pointage_modal.decades')}>
                   <option value="DECADE_1">{t('providers:pointage_modal.period_d1')}</option>
                   <option value="DECADE_2">{t('providers:pointage_modal.period_d2')}</option>
                   <option value="DECADE_3">{t('providers:pointage_modal.period_d3')}</option>
@@ -320,7 +320,7 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
                               className="size-4 rounded border-slate-300 accent-emerald-600 focus:ring-emerald-500 cursor-pointer" 
                               checked={isPointed}
                               onChange={() => {}} // Handle on TR click
-                              aria-label={`Sélectionner relevé du ${formatDateLong(new Date(f.date_cloture))}`}
+                              aria-label={t('providers:pointage_modal.select_statement_aria', { date: formatDateLong(new Date(f.date_cloture)) })}
                             />
                           </td>
                           <td>

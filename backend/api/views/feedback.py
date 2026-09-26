@@ -1,8 +1,10 @@
 """
 Feedback API views
 """
+import threading
+
 from rest_framework import serializers
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -25,8 +27,8 @@ class FeedbackSerializer(serializers.ModelSerializer):
 
 
 class FeedbackListView(APIView):
-    """API view for creating and listing feedbacks."""
-    permission_classes = [IsAuthenticated]
+    """API view for creating and listing feedbacks. Réservé aux admins."""
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         """List feedbacks for the current user."""
@@ -39,18 +41,20 @@ class FeedbackListView(APIView):
         serializer = FeedbackSerializer(data=request.data)
         if serializer.is_valid():
             feedback = serializer.save(user=request.user)
-            # Send email notification
-            email_sent = email_service.send_feedback_notification(feedback)
-            return Response({
-                **dict(serializer.data),
-                'email_sent': email_sent,
-            }, status=201)
+            # Envoi SMTP en thread daemon : ne pas bloquer la réponse si le
+            # serveur mail est lent ou non configuré (fréquent chez les clients).
+            threading.Thread(
+                target=email_service.send_feedback_notification,
+                args=(feedback,),
+                daemon=True,
+            ).start()
+            return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
 
 
 class FeedbackDetailView(APIView):
-    """API view for retrieving a specific feedback."""
-    permission_classes = [IsAuthenticated]
+    """API view for retrieving a specific feedback. Réservé aux admins."""
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request, pk):
         """Retrieve a specific feedback."""

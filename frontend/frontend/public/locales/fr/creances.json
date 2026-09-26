@@ -112,6 +112,14 @@
         "cancel": "Annuler",
         "confirm_payment": "Confirmer le Règlement"
     },
+    "bulk_payment": {
+        "partial_title": "Règlement partiel: {{x}} / {{y}}",
+        "full_title": "Règlement total des factures sélectionnées",
+        "amount_label": "Montant à régler (optionnel)",
+        "amount_placeholder": "Max: {{x}} - Laisser vide pour tout régler",
+        "remaining": "Restera à payer: {{x}}",
+        "empty_hint": "Laisser vide pour régler le total des factures"
+    },
     "toasts": {
         "error_print_receipt": "Erreur lors de l'impression du reçu",
         "error_print_statement": "Erreur lors de la génération du relevé",

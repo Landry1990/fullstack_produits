@@ -18,8 +18,8 @@ interface PreviewData {
 }
 
 const LicenceScreen = () => {
-    const { t } = useTranslation('auth');
-    const [hardwareId, setHardwareId] = useState<string>(t('loading', { ns: 'common' }));
+    const { t, i18n } = useTranslation('auth');
+    const [hardwareId, setHardwareId] = useState<string>('');
     const [cle, setCle] = useState('');
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState<{ is_valid: boolean; message: string; payload?: Record<string, unknown> } | null>(null);
@@ -145,7 +145,7 @@ const LicenceScreen = () => {
                             </p>
                             <div className="flex items-center gap-2">
                                 <code className="flex-1 block px-3 py-2 bg-slate-950 text-blue-300 rounded-lg text-sm font-mono border border-slate-800">
-                                    {hardwareId}
+                                    {hardwareId || t('common:loading')}
                                 </code>
                                 <button
                                     type="button"
@@ -210,7 +210,7 @@ const LicenceScreen = () => {
                                     <div>
                                         <p className="text-caption text-base-content/60 uppercase font-bold">{t('licence.expires')}</p>
                                         <p className="text-white text-sm">
-                                            {new Date(previewData.exp * 1000).toLocaleDateString()}
+                                            {new Date(previewData.exp * 1000).toLocaleDateString(i18n.language)}
                                         </p>
                                     </div>
                                 </div>

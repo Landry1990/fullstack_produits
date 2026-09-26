@@ -65,7 +65,7 @@ export default function LoginShadcn() {
   const handleResetLicence = async () => {
     const confirmed = await confirm({
       title: t('common:confirmation'),
-      message: 'Êtes-vous sûr de vouloir supprimer la licence actuelle ? Le système se verrouillera à nouveau.',
+      message: t('auth:licence.licence_delete_confirm'),
       confirmText: t('common:confirm'),
       variant: 'danger'
     });
@@ -105,7 +105,7 @@ export default function LoginShadcn() {
       } else if (e.response.status === 400 || e.response.status === 401) {
         msg = t('common:messages.login_invalid', { defaultValue: 'Identifiant ou mot de passe incorrect' });
       } else if (e.response.status === 429) {
-        msg = 'Trop de tentatives de connexion. Attendez 1 minute avant de réessayer.';
+        msg = t('auth:too_many_attempts');
       } else if (e.response.status === 403) {
         msg = t('common:messages.forbidden', { defaultValue: 'Accès interdit.' });
       } else if (e.response.status >= 500) {
@@ -122,7 +122,7 @@ export default function LoginShadcn() {
 
   const currentTime = new Date();
   const hours = currentTime.getHours();
-  const greeting = hours < 12 ? 'Bonjour' : hours < 18 ? 'Bon après-midi' : 'Bonsoir';
+  const greeting = hours < 12 ? t('auth:greeting_morning') : hours < 18 ? t('auth:greeting_afternoon') : t('auth:greeting_evening');
 
   return (
     <div className={cn(

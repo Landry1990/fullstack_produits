@@ -61,7 +61,7 @@ const StockAnalysis = () => {
                 [t('stock:analyse.columns.current_stock', 'Stock actuel')]: item.stock,
                 [t('stock:analyse.columns.last_purchase', 'Dernier achat')]: formatDate(item.dernier_achat),
                 [t('stock:analyse.columns.last_sale', 'Dernière vente')]: formatDate(item.derniere_vente),
-                [t('stock:analyse.columns.inactive_since', 'Inactif depuis')]: item.days_since_sale != null ? `${item.days_since_sale} j` : '-',
+                [t('stock:analyse.columns.inactive_since', 'Inactif depuis')]: item.days_since_sale != null ? `${item.days_since_sale} ${t('stock:analyse.day_short', 'j')}` : '-',
                 [t('stock:analyse.columns.cost_price', "Prix d'achat")]: item.cost_price,
                 [t('stock:analyse.columns.stock_value', 'Valeur stock')]: item.value,
             }));
@@ -118,7 +118,7 @@ const StockAnalysis = () => {
                     {activeTab !== 'pilotage' && data && !loading && (
                         <div className="flex items-center gap-2 self-start sm:self-auto">
                             <Badge variant="outline" className="text-xs">
-                                {data.total_items} articles · {formatCurrency(Math.round(data.total_value))}
+                                {t('stock:analyse.articles_count', { count: data.total_items })} · {formatCurrency(Math.round(data.total_value))}
                             </Badge>
                             <Button
                                 variant="outline"
@@ -129,7 +129,7 @@ const StockAnalysis = () => {
                                 aria-label={t('stock:analyse.export_excel', 'Exporter Excel')}
                             >
                                 <FileSpreadsheet className="size-4 mr-1.5 text-emerald-600" />
-                                <span className="hidden sm:inline">{t('stock:analyse.export_excel', 'Excel')}</span>
+                                <span className="hidden sm:inline">{t('stock:analyse.export_excel_short', 'Excel')}</span>
                             </Button>
                         </div>
                     )}
@@ -280,7 +280,7 @@ const StockAnalysis = () => {
                             {!loading && data && data.total_pages && data.total_pages > 1 && (
                                 <div className="px-4 py-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
                                     <p className="text-sm text-slate-500">
-                                        Page <span className="font-semibold text-slate-900">{data.current_page}</span> sur <span className="font-semibold text-slate-900">{data.total_pages}</span>
+                                        {t('common:pagination.page_info', { page: data.current_page, total: data.total_pages })}
                                     </p>
                                     <div className="flex items-center gap-2">
                                         <Button

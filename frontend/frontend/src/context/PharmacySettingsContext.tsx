@@ -160,7 +160,7 @@ export const PharmacySettingsProvider = ({ children }: { children: ReactNode }) 
       setError(null);
     } catch (err) {
       logger.error('Error fetching pharmacy settings:', err);
-      setError('Erreur lors du chargement des paramètres');
+      setError(i18n.t('common:errors.settings_load'));
       setSettings(DEFAULT_SETTINGS);
     } finally {
       setLoading(false);

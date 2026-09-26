@@ -227,7 +227,7 @@ function GestionVitrine({
                       <Checkbox
                         checked={selectedIds.has(product.id)}
                         onChange={() => toggleSelection(product.id)}
-                        aria-label={`Sélectionner ${product.name}`}
+                        aria-label={t('gestion.select_product', { name: product.name })}
                       />
                     </TableCell>
                     <TableCell className="px-3 py-2">

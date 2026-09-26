@@ -115,5 +115,21 @@
     "no_results": "Aucun tutoriel trouvé",
     "try_again": "Essayez un autre mot-clé",
     "videos_count": "vidéo"
+  },
+  "tips": {
+    "title": "Astuces",
+    "score_title": "Score de Santé du Stock (Pilotage Expert)",
+    "score_intro": "Le score est calculé automatiquement sur <0>5 critères</0>, chacun avec un poids différent :",
+    "crit_availability": "<0>Disponibilité</0> — peu de ruptures de stock",
+    "crit_fluidity": "<0>Fluidité</0> — pas de stock dormant sur produits actifs",
+    "crit_coverage": "<0>Couverture</0> — stock entre 15 et 90 jours de ventes",
+    "crit_activity": "<0>Activité</0> — produits vendus dans les 30 derniers jours",
+    "crit_immobilization": "<0>Immobilisation</0> — peu de capital bloqué en stock mort",
+    "score_good": "≥ 80% Bon",
+    "score_medium": "50–79% Moyen",
+    "score_critical": "< 50% Critique",
+    "print_title": "Impression Rapport Mensuel",
+    "print_ink_tip": "Pour économiser l'encre, utiliser le bouton <0>« PDF »</0> plutôt que Ctrl+P. Le PDF est généré en noir et blanc sans fonds colorés.",
+    "print_browser_tip": "Si vous imprimez depuis le navigateur : décocher <0>« Graphiques en arrière-plan »</0> dans les options d'impression."
   }
 }

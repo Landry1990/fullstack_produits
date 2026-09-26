@@ -96,7 +96,7 @@ export default function OmnisearchResults({
         {loading ? (
           <div className="flex flex-col items-center gap-2">
             <span className="inline-block w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-            <span>Recherche en cours…</span>
+            <span>{t('omnisearch.searching', 'Recherche en cours…')}</span>
           </div>
         ) : (
           t('omnisearch.empty', 'Aucun résultat trouvé.')
@@ -191,7 +191,7 @@ export default function OmnisearchResults({
               </div>
               <div className="flex-1 flex flex-col items-start">
                 <span className="font-bold group-aria-selected:text-indigo-500">{client.name}</span>
-                <span className="text-caption text-slate-500 font-bold">{client.phone || client.email || 'Aucun contact'}</span>
+                <span className="text-caption text-slate-500 font-bold">{client.phone || client.email || t('omnisearch.no_contact', 'Aucun contact')}</span>
               </div>
             </CommandItem>
           ))}
@@ -217,7 +217,7 @@ export default function OmnisearchResults({
               <div className="flex-1 flex flex-col items-start overflow-hidden">
                 <span className="font-bold truncate w-full group-aria-selected:text-blue-600">{f.numero_facture}</span>
                 <span className="text-caption text-slate-500 font-medium uppercase font-mono">
-                  {f.client_name || 'Client de passage'} • {formatDate(f.date)}
+                  {f.client_name || t('passerby_client')} • {formatDate(f.date)}
                 </span>
               </div>
               <Badge variant="outline" className="ml-2 shrink-0 text-xs font-black tracking-tight group-aria-selected:bg-blue-600 group-aria-selected:text-white group-aria-selected:border-blue-600 transition-colors">
@@ -245,7 +245,7 @@ export default function OmnisearchResults({
                 <ShoppingCart className="size-4 text-amber-500" />
               </div>
               <div className="flex-1 flex flex-col items-start overflow-hidden">
-                <span className="font-bold truncate w-full group-aria-selected:text-blue-600">{o.fournisseur_nom || 'Grossiste'}</span>
+                <span className="font-bold truncate w-full group-aria-selected:text-blue-600">{o.fournisseur_nom || t('omnisearch.wholesaler', 'Grossiste')}</span>
                 <span className="text-caption text-slate-500 font-medium uppercase">
                   {formatDate(o.date)} • {o.status_display}
                 </span>
@@ -273,7 +273,7 @@ export default function OmnisearchResults({
               </div>
               <div className="flex-1 flex flex-col items-start overflow-hidden">
                 <span className="font-bold truncate w-full group-aria-selected:text-blue-600">{s.name}</span>
-                <span className="text-caption text-slate-500 font-medium uppercase">{s.phone || s.email || 'Contact N/A'}</span>
+                <span className="text-caption text-slate-500 font-medium uppercase">{s.phone || s.email || t('omnisearch.no_contact', 'Aucun contact')}</span>
               </div>
             </CommandItem>
           ))}

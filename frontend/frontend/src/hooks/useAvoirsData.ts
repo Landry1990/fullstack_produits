@@ -8,6 +8,7 @@ import { useSudo } from './useSudo';
 import avoirService from '../services/avoirService';
 import fournisseurService from '../services/fournisseurService';
 import produitService from '../services/produitService';
+import api from '../services/api';
 import { useAvoirsStore, type ViewMode } from '../stores/useAvoirsStore';
 import { logger } from '../utils/logger'
 
@@ -326,30 +327,27 @@ export function useAvoirsData(): UseAvoirsDataReturn {
                 await avoirService.update(editingAvoirId, avoirPayload);
                 avoirId = editingAvoirId;
                 const existingLignes = selectedAvoir?.produits || [];
-                await Promise.all(
-                    existingLignes.map(l => avoirService.deleteLigne(l.id).catch(() => { }))
-                );
+                if (existingLignes.length > 0) {
+                    await api.post('ligne-avoirs/bulk_delete/', { ids: existingLignes.map(l => l.id) }).catch(() => { });
+                }
             } else {
                 const newAvoir = await avoirService.create(avoirPayload);
                 avoirId = newAvoir.id;
             }
 
-            const linePromises = lignes.map(ligne => {
-                const produitId = typeof ligne.produit === 'object' ? ligne.produit.id : ligne.produit;
-                return avoirService.createLigne({
+            await api.post('ligne-avoirs/bulk_create/', {
+                items: lignes.map(ligne => ({
                     avoir: avoirId,
-                    produit: produitId,
+                    produit: typeof ligne.produit === 'object' ? ligne.produit.id : ligne.produit,
                     stock_lot: ligne.stock_lot || null,
                     quantity: ligne.quantity,
                     price: ligne.price,
                     lot: ligne.lot,
                     date_expiration: ligne.date_expiration || undefined,
                     motif: ligne.motif || ''
-                });
+                }))
             });
-
-            await Promise.all(linePromises);
-            gooeyToast.success(editingAvoirId ? 'Avoir modifié avec succès' : 'Avoir créé avec succès (Brouillon)');
+            gooeyToast.success(editingAvoirId ? t('avoirs.toasts.update_success') : t('avoirs.toasts.save_success'));
             setEditingAvoirId(null);
             const updatedAvoir = await avoirService.getById(avoirId);
             setSelectedAvoir(updatedAvoir);
@@ -385,7 +383,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
     };
 
     const handleValidate = async (avoir: Avoir) => {
-        if (!confirm(`Valider l'avoir ${avoir.numero} ? Le statut passera à "Validé".`)) return;
+        if (!confirm(t('avoirs.confirms.validate_avoir', { numero: avoir.numero }))) return;
         try {
             setSavingValidation(true);
             const updated = await avoirService.valider(avoir.id);
@@ -394,7 +392,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
             if (viewMode === 'DETAILS') setSelectedAvoir(updated);
         } catch (err: unknown) {
             const error = err as { response?: { data?: { error?: string } }; message?: string };
-            gooeyToast.error(t('avoirs.toasts.validate_error') + ': ' + (error.response?.data?.error || error.message || 'Erreur inconnue'));
+            gooeyToast.error(t('avoirs.toasts.validate_error') + ': ' + (error.response?.data?.error || error.message || t('common:messages.error_generic')));
         } finally {
             setSavingValidation(false);
         }
@@ -420,8 +418,8 @@ export function useAvoirsData(): UseAvoirsDataReturn {
                 setLoading(false);
             }
         }, {
-            title: `Décharger stock — ${avoir.numero}`,
-            message: `Cette action va retirer physiquement ${avoir.produits?.length || 0} produit(s) du stock et enregistrer les mouvements. Action irréversible.`,
+            title: t('avoirs.modals.sudo_decharge_title', { numero: avoir.numero }),
+            message: t('avoirs.modals.sudo_decharge_message', { count: avoir.produits?.length || 0 }),
             permission: 'can_manage_avoirs'
         });
     };
@@ -446,8 +444,8 @@ export function useAvoirsData(): UseAvoirsDataReturn {
                 setLoading(false);
             }
         }, {
-            title: `Annuler déchargement — ${avoir.numero}`,
-            message: `Cette action va réintégrer ${avoir.produits?.length || 0} produit(s) dans le stock et annuler les mouvements de déchargement.`,
+            title: t('avoirs.modals.sudo_annule_title', { numero: avoir.numero }),
+            message: t('avoirs.modals.sudo_annule_message', { count: avoir.produits?.length || 0 }),
             permission: 'can_manage_avoirs'
         });
     };
@@ -682,7 +680,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
     const handleBulkValidate = async () => {
         const count = selectedIds.size;
         if (count === 0) return;
-        if (!confirm(`Valider ${count} avoir(s) sélectionné(s) ?`)) return;
+        if (!confirm(t('avoirs.confirms.bulk_validate', { count }))) return;
 
         setBulkLoading(true);
         try {

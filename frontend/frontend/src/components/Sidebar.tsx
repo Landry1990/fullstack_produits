@@ -48,7 +48,7 @@ const routePrefetchMap: Record<string, () => Promise<unknown>> = {
   '/app/promotions': () => import('./Promotions/PromotionList'),
   '/app/module-financier': () => import('./ModuleFinancier'),
   '/app/divers/ca': () => import('./divers/GestionDivers'),
-  '/app/divers/commandes': () => import('./divers/GestionDivers'),
+  '/app/divers/stock': () => import('./divers/GestionDivers'),
   '/app/classement-vendeurs': () => import('./ClassementVendeurs'),
   '/app/challenges': () => import('./challenges/ChallengesPage'),
   '/app/analyse-temporelle': () => import('./AnalyseTemporelle'),
@@ -238,6 +238,7 @@ export default function Sidebar() {
       )
     },
     {
+      path: '/app/divers/ca',
       label: t('divers.title', 'Gestion Divers'),
       key: 'divers',
       category: 'rapports',
@@ -245,11 +246,7 @@ export default function Sidebar() {
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
         </svg>
-      ),
-      submenus: [
-        { path: '/app/divers/ca', label: t('divers.ca', 'CA Divers'), key: 'divers_ca' },
-        { path: '/app/divers/commandes', label: t('divers.commandes', 'Commandes Divers'), key: 'divers_commandes' }
-      ]
+      )
     },
     {
       label: t('parametres.title'),
@@ -262,7 +259,7 @@ export default function Sidebar() {
         // { path: '/app/invoice-settings', label: t('parametres.facture'), key: 'settings_facture' }, (removed)
         { path: '/app/pharmacy-settings', label: t('parametres.pharmacie'), key: 'settings_pharmacie' },
         { path: '/app/telegram-history', label: t('parametres.telegram', 'Historique Telegram'), key: 'settings_telegram' },
-        { path: '/app/systeme', label: 'Administration Système', key: 'settings_systeme' },
+        { path: '/app/systeme', label: t('parametres.admin_system'), key: 'settings_systeme' },
       ]
     },
     { path: '/app/aide-formation', label: t('aide_formation'), key: 'aide_formation', category: 'parametres', icon: (
@@ -339,7 +336,8 @@ export default function Sidebar() {
     const hasLegacyCategory = 
       (item.key === 'commandes_loc' && allowedSet.has('commandes')) ||
       (item.key === 'commandes_dir' && allowedSet.has('commandes')) ||
-      (item.key === 'vitrine' && allowedSet.has('produits'));
+      (item.key === 'vitrine' && allowedSet.has('produits')) ||
+      (item.key === 'divers' && (allowedSet.has('divers_ca') || allowedSet.has('divers_commandes')));
 
     if (item.submenus) {
       // Filter submenus: only show if explicitly allowed OR if parent is fully allowed
@@ -609,7 +607,7 @@ export default function Sidebar() {
           <button
             onClick={toggleCollapse}
             className="hidden lg:flex shrink-0 size-7 rounded-lg bg-white/10 hover:bg-white/20 text-white/50 hover:text-white items-center justify-center transition-all"
-            title={effectiveCollapsed ? 'Déplier' : 'Replier'}
+            title={effectiveCollapsed ? t('sidebar:expand') : t('sidebar:collapse')}
           >
             {effectiveCollapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
           </button>

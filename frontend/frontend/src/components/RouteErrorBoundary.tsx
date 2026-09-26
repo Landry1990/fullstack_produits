@@ -1,10 +1,12 @@
 import { useEffect } from 'react';
 import { useRouteError, useNavigate, isRouteErrorResponse } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
 import { Button } from './shadcn/button';
 import { logger } from '../utils/logger'
 
 export default function RouteErrorBoundary() {
+  const { t } = useTranslation('common');
   const error = useRouteError() as Record<string, unknown> | null;
   const navigate = useNavigate();
 
@@ -37,14 +39,14 @@ export default function RouteErrorBoundary() {
       <div className="min-h-screen flex items-center justify-center bg-base-200 p-4">
         <div className="w-96 bg-base-100 shadow-xl rounded-2xl border border-base-200 p-6 items-center text-center">
             <Loader2 className="size-8 animate-spin text-primary" />
-            <h2 className="text-lg font-bold mt-4">Mise à jour détectée</h2>
-            <p className="py-2 text-sm text-base-content/60">Rechargement de l'application en cours...</p>
+            <h2 className="text-lg font-bold mt-4">{t('error_boundary.update_detected')}</h2>
+            <p className="py-2 text-sm text-base-content/60">{t('error_boundary.reloading_app')}</p>
         </div>
       </div>
     );
   }
 
-  let displayError = 'Erreur inconnue';
+  let displayError = t('error_boundary.unknown_error');
   if (isRouteErrorResponse(error)) {
     displayError = `${error.status} ${error.statusText}: ${error.data}`;
   } else if (error instanceof Error) {
@@ -63,9 +65,9 @@ export default function RouteErrorBoundary() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          <h2 className="text-lg font-bold text-red-500 mb-2">Oups ! Une erreur est survenue.</h2>
+          <h2 className="text-lg font-bold text-red-500 mb-2">{t('error_boundary.oops')}</h2>
           <p className="text-sm text-base-content/70 mb-4">
-            L'application a rencontré un problème inattendu lors de l'affichage de cette page.
+            {t('error_boundary.unexpected_page')}
           </p>
           <div className="bg-base-200 p-3 rounded-lg w-full text-left overflow-x-auto mb-6">
             <code className="text-xs text-red-500 font-mono whitespace-pre-wrap">{displayError}</code>
@@ -78,7 +80,7 @@ export default function RouteErrorBoundary() {
                 window.location.reload();
               }}
             >
-              Accueil
+              {t('error_boundary.home')}
             </Button>
             <Button 
               variant="default" className="flex-1"
@@ -87,7 +89,7 @@ export default function RouteErrorBoundary() {
                 window.location.reload();
               }}
             >
-              Rafraîchir
+              {t('error_boundary.refresh')}
             </Button>
           </div>
       </div>

@@ -164,7 +164,7 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                                                 <input
                                                     id={`lot-input-${idx}`}
                                                     type="number"
-                                                    aria-label={`Quantité lot ${lot.lot}`}
+                                                    aria-label={t('stock:lot_selection.qty_lot_aria', { lot: lot.lot })}
                                                     className="w-full h-10 text-center font-mono font-bold text-sm rounded-lg border border-slate-200 bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
                                                     value={lotQuantities[lot.id.toString()] ?? ''}
                                                     onChange={e => setLotQuantities(prev => ({ ...prev, [lot.id.toString()]: e.target.value }))}

@@ -250,9 +250,9 @@ export default function CategoryManager({
   const handleDelete = async (id: number, name: string) => {
     const confirmed = await confirm({
       title: t('stock:organisation.category_manager.delete_confirm_title'),
-      message: `« ${name} » sera déplacé en corbeille. Vous pourrez le restaurer depuis la page Corbeille.`,
+      message: t('stock:organisation.category_manager.trash_confirm_msg', { name }),
       variant: 'danger',
-      confirmText: 'Mettre en corbeille'
+      confirmText: t('products:category.move_to_trash')
     });
     if (!confirmed) return;
 

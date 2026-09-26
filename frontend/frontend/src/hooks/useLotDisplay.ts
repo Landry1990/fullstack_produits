@@ -19,7 +19,7 @@ export function useLotDisplay({ ligne, t }: UseLotDisplayParams) {
     if (manualAllocs && manualAllocs.length > 0) {
       if (manualAllocs.length === 1) {
         const a = manualAllocs[0]
-        const parts = [a.lotText || `Lot ${a.lotId}`]
+        const parts = [a.lotText || t('stock:lots.fallback', { id: a.lotId, defaultValue: `Lot ${a.lotId}` })]
         if (a.lotExpiration) {
           const d = new Date(a.lotExpiration)
           parts.push(`${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`)
@@ -43,7 +43,7 @@ export function useLotDisplay({ ligne, t }: UseLotDisplayParams) {
       const firstLot = fefoPreview[0]
       return `${t('facturation:cart_extra.auto_prefix')} • ${firstLot.lot} +${totalLots - 1}`
     }
-    const parts = [ligne.lotText || `Lot ${ligne.lotId}`]
+    const parts = [ligne.lotText || t('stock:lots.fallback', { id: ligne.lotId, defaultValue: `Lot ${ligne.lotId}` })]
     if (ligne.lotExpiration) {
       const d = new Date(ligne.lotExpiration)
       parts.push(`${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`)
@@ -61,7 +61,7 @@ export function useLotDisplay({ ligne, t }: UseLotDisplayParams) {
       return [
         t('facturation:cart_extra.manual_allocation'),
         ...manualAllocs.map(a => {
-          const exp = a.lotExpiration ? new Date(a.lotExpiration).toLocaleDateString('fr-FR') : 'sans date'
+          const exp = a.lotExpiration ? new Date(a.lotExpiration).toLocaleDateString('fr-FR') : t('stock:lots.no_date', { defaultValue: 'sans date' })
           return `${a.lotText || a.lotId} × ${a.quantity} (exp ${exp})`
         })
       ].join('\n')
@@ -71,7 +71,7 @@ export function useLotDisplay({ ligne, t }: UseLotDisplayParams) {
       return [
         t('facturation:cart_extra.fefo_automatic'),
         ...fefoPreview.map(p => {
-          const exp = p.expiration ? new Date(p.expiration).toLocaleDateString('fr-FR') : 'sans date'
+          const exp = p.expiration ? new Date(p.expiration).toLocaleDateString('fr-FR') : t('stock:lots.no_date', { defaultValue: 'sans date' })
           return `${p.lot} × ${p.qty} (exp ${exp})`
         })
       ].join('\n')

@@ -13,6 +13,7 @@
         "publish": "Publier en Ligne",
         "unpublish": "Retirer de la Vitrine",
         "cancel": "Annuler",
+        "select_product": "Sélectionner {{name}}",
         "table": {
             "product": "Produit",
             "rayon": "Rayon",
