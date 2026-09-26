@@ -9,7 +9,21 @@
         "behind_msg": "This station's clock is behind (CMOS battery?). This may cause errors in invoices, receipts and reports.",
         "copy_script": "Copy sync script",
         "copied": "Script copied!",
-        "script_hint": "Run as administrator (PowerShell)"
+        "script_hint": "Run as administrator (PowerShell)",
+        "seconds_one": "{{count}} second",
+        "seconds_other": "{{count}} seconds",
+        "minutes_one": "{{count}} minute",
+        "minutes_other": "{{count}} minutes",
+        "hours_one": "{{count}} hour",
+        "hours_other": "{{count}} hours"
+    },
+    "aria": {
+        "select": "Select",
+        "select_item": "Select item",
+        "close_dialog": "Close dialog",
+        "scan_preview": "Scan preview",
+        "logo": "Logo",
+        "zenith_logo": "Zenith Pharma"
     },
     "lock": {
         "document": "this document",
@@ -40,6 +54,7 @@
     "product": "Product",
     "cancel": "Cancel",
     "save": "Save",
+    "sending": "Sending...",
     "save_error": "Error during saving",
     "deposit": "Deposit",
     "balance": "Balance",
@@ -75,7 +90,17 @@
     "status_title": "Status",
     "supplier": "Supplier",
     "status": {
-        "draft": "Draft"
+        "draft": "Draft",
+        "payée": "Paid",
+        "payee": "Paid",
+        "validée": "Validated",
+        "validee": "Validated",
+        "annulée": "Cancelled",
+        "annulee": "Cancelled",
+        "en attente": "Pending",
+        "partielle": "Partial",
+        "clôturée": "Closed",
+        "cloturee": "Closed"
     },
     "no_number": "No number",
     "stock": "Stock",
@@ -213,14 +238,14 @@
     "date_format_long": "MMMM dd, yyyy",
     "date_locale": "en-US",
     "sudo": {
-        "validate_title": "Administrative Validation",
-        "validate_subtitle": "Validation by a superuser (owner)",
+        "validate_title": "Validation required",
+        "validate_subtitle": "Validation by an authorized user",
         "validate_as": "Validate as",
-        "validate_admin": "(Select an administrator)",
+        "validate_admin": "(Select an authorized user)",
         "validate_me": "Myself (Current user)",
-        "validate_password": "Owner password",
-        "validate_required": "(Required to validate)",
-        "validate_hint": "Enter the owner/pharmacist password",
+        "validate_password": "Password",
+        "validate_required": "(Required)",
+        "validate_hint": "Enter the password of a user with the required permission",
         "cancel": "Cancel",
         "confirm": "Confirm validation",
         "title": "Validation Required",
@@ -373,6 +398,9 @@
     "omnisearch": {
         "placeholder": "Search (products, clients, navigation)...",
         "empty": "No results found.",
+        "searching": "Searching…",
+        "no_contact": "No contact",
+        "wholesaler": "Wholesaler",
         "groups": {
             "actions": "Quick Actions",
             "navigation": "Quick Navigation",
@@ -433,7 +461,10 @@
             "supplier": "Supplier",
             "items": "Items",
             "status": "Status",
-            "date": "Date"
+            "date": "Date",
+            "unit": "unit",
+            "more_items": "...and {{count}} more item(s)",
+            "open_detail_hint": "Click or press Enter to open details"
         }
     },
     "substitution": {
@@ -466,6 +497,33 @@
         "expired_title": "LICENCE EXPIRED:",
         "expired_message": "System access will be restricted. Contact your administrator immediately."
     },
+    "startup": {
+        "title": "Connection failed",
+        "subtitle": "The backend server did not respond after {{max}} attempts.",
+        "attempt": "Starting up... Attempt {{attempts}}/{{max}}",
+        "loading": "System is starting...",
+        "redirect_licence": "Redirecting to licence page...",
+        "retry": "Retry",
+        "checklist": {
+            "intro": "Check that:",
+            "backend": "The backend is running (docker compose up)",
+            "licence": "The licence is valid",
+            "db": "The database is accessible"
+        }
+    },
+    "error_boundary": {
+        "update_detected": "Update detected",
+        "reloading": "Reloading...",
+        "reloading_app": "Reloading the application...",
+        "oops": "Oops! Something went wrong.",
+        "unexpected": "The application encountered an unexpected problem.",
+        "unexpected_page": "The application encountered an unexpected problem while displaying this page.",
+        "refresh": "Refresh",
+        "refresh_page": "Refresh page",
+        "home": "Home",
+        "back_home": "Back to home",
+        "unknown_error": "Unknown error"
+    },
     "auto_saving": "Auto saving...",
     "search": "search",
     "navigate": "navigate",
@@ -493,7 +551,30 @@
     "lot": "Lot",
     "unknown_product_deleted": "Unknown product (deleted)",
     "messaging": "Internal Messaging",
-    "feedback": "Feedback",
+    "feedback": {
+        "label": "Feedback",
+        "title": "Send Feedback",
+        "subtitle": "Help us improve the application",
+        "category_label": "Category",
+        "category_bug": "Bug / Error",
+        "category_feature": "New feature",
+        "category_improvement": "Improvement",
+        "category_question": "Question",
+        "category_other": "Other",
+        "priority_label": "Priority",
+        "priority_low": "Low",
+        "priority_medium": "Medium",
+        "priority_high": "High",
+        "priority_urgent": "Urgent",
+        "subject_label": "Subject",
+        "subject_placeholder": "Summarize your feedback in a few words",
+        "description_label": "Description",
+        "description_placeholder": "Describe your feedback in detail...",
+        "send": "Send",
+        "success": "Feedback sent successfully",
+        "error": "Error while sending feedback",
+        "error_required": "Please fill in the subject and description"
+    },
     "french": "French",
     "english": "English",
     "account": "Account",
@@ -502,5 +583,21 @@
     "dark_mode": "Dark Mode",
     "update_license": "Update License",
     "logout": "Logout",
-    "command_palette": "Command Palette"
+    "command_palette": "Command Palette",
+    "pos_mode": {
+        "title": "POS mode",
+        "close": "Close terminal"
+    },
+    "errors": {
+        "unknown": "An unknown error occurred.",
+        "server_support": "Server error ({{status}}): Please contact technical support.",
+        "server_detail": "Server error ({{status}}): {{detail}}",
+        "server_retry": "Server error ({{status}}): Please try again later.",
+        "connection": "Connection error: Unable to reach the server.",
+        "unexpected": "An unexpected error occurred.",
+        "module_timeout": "Timeout: Module loading took too long",
+        "settings_load": "Error loading settings"
+    },
+    "no_section": "No shelf",
+    "info": "Info"
 }

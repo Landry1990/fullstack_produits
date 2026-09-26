@@ -1,6 +1,7 @@
 import { Suspense, useState, useEffect } from 'react'
 import { RouterProvider } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { useLicenceShortcut } from './hooks/useLicenceShortcut'
 import { useVersionCheck } from './hooks/useVersionCheck'
 import { AuthProvider } from './context/AuthContext'
@@ -22,6 +23,7 @@ import { LoadingScreen } from './components/common/LoadingScreen'
 const MAX_ATTEMPTS = 10; // ~50 secondes d'attente max
 
 function BackendHealthCheck({ children }: { children: React.ReactNode }) {
+  const { t } = useTranslation('common');
   const [attempts, setAttempts] = useState(0);
 
   const { data, errorUpdatedAt } = useQuery({
@@ -65,7 +67,7 @@ function BackendHealthCheck({ children }: { children: React.ReactNode }) {
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="size-8 animate-spin text-primary" />
           <p className="text-caption font-black uppercase tracking-[0.2em] text-base-content/40">
-            Redirection vers la page de licence...
+            {t('common:startup.redirect_licence')}
           </p>
         </div>
       </div>
@@ -81,19 +83,19 @@ function BackendHealthCheck({ children }: { children: React.ReactNode }) {
         <div className="flex flex-col items-center gap-4 max-w-md px-4">
           <span className="text-4xl text-red-500">⚠️</span>
           <p className="text-caption font-black uppercase tracking-[0.2em] text-red-500 animate-pulse">
-            Connexion impossible
+            {t('common:startup.title')}
           </p>
           <p className="text-caption text-base-content/50 text-center">
-            Le serveur backend ne répond pas après {MAX_ATTEMPTS} tentatives.
+            {t('common:startup.subtitle', { max: MAX_ATTEMPTS })}
           </p>
           <div className="flex flex-col gap-2 text-center">
             <p className="text-caption text-base-content/30">
-              Vérifiez que :
+              {t('common:startup.checklist.intro')}
             </p>
             <ul className="text-caption text-base-content/40 list-disc list-inside text-left">
-              <li>Le backend est démarré (docker compose up)</li>
-              <li>La licence est valide</li>
-              <li>La base de données est accessible</li>
+              <li>{t('common:startup.checklist.backend')}</li>
+              <li>{t('common:startup.checklist.licence')}</li>
+              <li>{t('common:startup.checklist.db')}</li>
             </ul>
           </div>
           <button 
@@ -101,7 +103,7 @@ function BackendHealthCheck({ children }: { children: React.ReactNode }) {
             onClick={() => window.location.reload()}
             className="mt-4 h-9 px-4 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors"
           >
-            Réessayer
+            {t('common:startup.retry')}
           </button>
         </div>
       </div>
@@ -110,7 +112,7 @@ function BackendHealthCheck({ children }: { children: React.ReactNode }) {
 
   return (
     <LoadingScreen
-      message={attempts > 0 ? `Démarrage... Tentative ${attempts}/${MAX_ATTEMPTS}` : 'Démarrage du système en cours...'}
+      message={attempts > 0 ? t('common:startup.attempt', { attempts, max: MAX_ATTEMPTS }) : t('common:startup.loading')}
       size="lg"
     />
   );

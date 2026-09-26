@@ -184,7 +184,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
         const clientNameForTicket = fullFacture.client_name_override 
             || fullFacture.client_name 
             || (typeof fullFacture.client === 'object' ? (fullFacture.client as Client).name : undefined) 
-            || 'Client de passage';
+            || t('common:passerby_client');
         
         const ticket: TicketCaisse = {
             id: fullFacture.session_ticket_number || fullFacture.id,
@@ -302,7 +302,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
 
     // --- GENERER AVOIR ---
     const handleGenerateAvoir = async (facture: Facture) => {
-        const toastId = gooeyToast.loading(t('sales.messages.loading_details', { defaultValue: 'Génération de l\'avoir...' }));
+        const toastId = gooeyToast.loading(t('sales:messages.loading_details', { defaultValue: 'Génération de l\'avoir...' }));
         try {
             const response = await api.get(`factures/${facture.id}/generer_avoir/`);
             const avoirData = response.data;

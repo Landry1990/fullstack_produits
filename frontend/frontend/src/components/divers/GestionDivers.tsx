@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   ShoppingBag, 
   DollarSign, 
@@ -13,22 +14,26 @@ import {
   Warehouse,
   ArrowLeft,
   Eye,
+  Boxes,
+  Download,
 } from 'lucide-react';
 import api from '../../services/api';
 import { formatDate, formatDateTime, formatDateShort, formatDateLong, getLocalDateString } from '../../utils/dateUtils';
+import { formatNumber } from '../../utils/formatters';
 import { gooeyToast } from 'goey-toast';
 import Commandes from '../Commandes';
 import { useCommandesStore } from '../../stores/useCommandesStore';
-import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
+import { Button } from '../shadcn/button';
 import { LocalizedDateInput } from '../LocalizedDateInput';
-import { Card } from '../ui/Card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
+import { Card } from '../shadcn/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../shadcn/tabs';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '../shadcn/table';
 import { Skeleton } from '../ui/Skeleton';
 import { logger } from '../../utils/logger'
+import { usePharmacySettings } from '../../hooks/usePharmacySettings';
+import { exportToExcel } from '../../utils/excelExport';
 
 interface VenteDivers {
   id: number;
@@ -79,12 +84,36 @@ interface StockDiversResponse {
     tva: number;
     ttc: number;
   }>;
+  details?: Array<{
+    lot_id: number;
+    lot: string;
+    produit_id: number;
+    produit: string;
+    rayon: string | null;
+    quantity: number;
+    unit_price: number;
+    tva_rate: number;
+    ht: number;
+    tva: number;
+    ttc: number;
+    date_expiration: string | null;
+  }>;
   date: string;
 }
 
-const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = ({ defaultTab = 'ca' }) => {
-  const { t } = useTranslation('orders');
-  const [activeTab, setActiveTab] = useState<'ca' | 'commandes' | 'stock'>(() => defaultTab);
+type DiversTab = 'ca' | 'commandes' | 'stock';
+
+const GestionDivers: React.FC<{ defaultTab?: DiversTab }> = ({ defaultTab = 'ca' }) => {
+  const { t, i18n } = useTranslation('orders');
+  const { settings: pharmacySettings } = usePharmacySettings();
+  const numberLocale = i18n.resolvedLanguage?.startsWith('en') ? 'en-US' : 'fr-FR';
+  const formatAmount = (value: number) => formatNumber(Number(value || 0), 0, numberLocale);
+  const formatRate = (value: number) => formatNumber(Number(value || 0), 2, numberLocale);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const queryTab = new URLSearchParams(location.search).get('tab');
+  const initialTab: DiversTab = queryTab === 'commandes' ? 'commandes' : defaultTab;
+  const [activeTab, setActiveTab] = useState<DiversTab>(() => initialTab);
   const [loading, setLoading] = useState(false);
   const [ventes, setVentes] = useState<VenteDivers[]>([]);
   const [totalCA, setTotalCA] = useState(0);
@@ -98,6 +127,8 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
   const [stockData, setStockData] = useState<StockDiversResponse | null>(null);
   const [stockLoading, setStockLoading] = useState(false);
   const [valorisation, setValorisation] = useState<'ACHAT' | 'VENTE'>('ACHAT');
+  const [detailsPage, setDetailsPage] = useState(1);
+  const detailsPageSize = 20;
   const isInitialMount = useRef(true);
 
   // Vue journalière
@@ -180,7 +211,7 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
     setSelectedDate(date);
     setViewMode('detail');
     setPage(1);
-    fetchVentesDiverses(1);
+    // Le useEffect relance fetchVentesDiverses avec le nouveau selectedDate
   };
 
   const handleBackToDaily = () => {
@@ -196,6 +227,7 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
         params: { valorisation }
       });
       setStockData(response.data);
+      setDetailsPage(1);
     } catch (error) {
       logger.error('Error fetching divers stock:', error);
       gooeyToast.error(t('divers.error_load_stock'));
@@ -214,60 +246,100 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
   // Reset page quand les dates changent
   const handleFilter = () => {
     setPage(1);
-    fetchVentesDiverses(1);
+    if (viewMode === 'daily') fetchVentesJournalieres();
+    else fetchVentesDiverses(1);
   };
 
   const totalPages = Math.ceil(totalCount / pageSize);
 
+  useEffect(() => {
+    const tabFromUrl: DiversTab = new URLSearchParams(location.search).get('tab') === 'commandes'
+      ? 'commandes'
+      : defaultTab;
+    setActiveTab(tabFromUrl);
+  }, [defaultTab, location.search]);
+
+  const handleTabChange = (tab: DiversTab) => {
+    setActiveTab(tab);
+    if (tab === 'stock') navigate('/app/divers/stock');
+    else if (tab === 'commandes') navigate('/app/divers/ca?tab=commandes');
+    else navigate('/app/divers/ca');
+  };
+
+  const tabMeta = {
+    ca: {
+      title: t('divers.revenue_tab'),
+      description: t('divers.revenue_description'),
+      icon: DollarSign,
+      iconClass: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400',
+    },
+    commandes: {
+      title: t('divers.orders_tab'),
+      description: t('divers.orders_description'),
+      icon: ShoppingBag,
+      iconClass: 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400',
+    },
+    stock: {
+      title: t('divers.stock_tab'),
+      description: t('divers.stock_description'),
+      icon: Warehouse,
+      iconClass: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400',
+    },
+  } satisfies Record<DiversTab, { title: string; description: string; icon: React.ElementType; iconClass: string }>;
+  const activeMeta = tabMeta[activeTab];
+  const ActiveIcon = activeMeta.icon;
+
   return (
-    <div className="p-6 h-full flex flex-col space-y-6">
+    <div className="p-4 sm:p-6 h-full flex flex-col space-y-5 bg-slate-50/50 dark:bg-slate-950/30">
       <div className="flex items-center gap-3">
-        <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-          <Package className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+        <div className={`p-2.5 rounded-xl ${activeMeta.iconClass}`}>
+          <ActiveIcon className="h-6 w-6" aria-hidden="true" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t('divers.revenue_tab')}</h1>
-          <p className="text-sm text-muted-foreground">{t('divers.imported_products_management')}</p>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{activeMeta.title}</h1>
+          <p className="text-sm text-muted-foreground">{activeMeta.description}</p>
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'ca' | 'commandes' | 'stock')} className="flex-1 flex flex-col min-h-0">
-        <TabsList className="grid w-full grid-cols-3 max-w-md">
-          <TabsTrigger value="ca" className="gap-2">
-            <DollarSign className="h-4 w-4" />
-            {t('divers.revenue')}
+      <Tabs value={activeTab} onValueChange={(value) => handleTabChange(value as DiversTab)} className="flex-1 flex flex-col min-h-0">
+        <TabsList className="grid h-auto w-full grid-cols-1 sm:grid-cols-3 gap-2 bg-transparent p-0">
+          <TabsTrigger value="ca" className="h-auto min-h-16 justify-start gap-3 border-2 border-transparent bg-white px-4 py-3 shadow-sm data-[state=active]:border-emerald-500 data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-800 dark:bg-slate-950 dark:data-[state=active]:bg-emerald-950/40 dark:data-[state=active]:text-emerald-300">
+            <DollarSign className="h-5 w-5 shrink-0" aria-hidden="true" />
+            <span className="text-left"><span className="block font-semibold">{t('divers.revenue_tab')}</span><span className="hidden lg:block text-xs font-normal opacity-70">{t('divers.revenue_tab_hint')}</span></span>
           </TabsTrigger>
-          <TabsTrigger value="commandes" className="gap-2">
-            <ShoppingBag className="h-4 w-4" />
-            {t('divers.orders_tab')}
+          <TabsTrigger value="commandes" className="h-auto min-h-16 justify-start gap-3 border-2 border-transparent bg-white px-4 py-3 shadow-sm data-[state=active]:border-amber-500 data-[state=active]:bg-amber-50 data-[state=active]:text-amber-800 dark:bg-slate-950 dark:data-[state=active]:bg-amber-950/40 dark:data-[state=active]:text-amber-300">
+            <ShoppingBag className="h-5 w-5 shrink-0" aria-hidden="true" />
+            <span className="text-left"><span className="block font-semibold">{t('divers.orders_tab')}</span><span className="hidden lg:block text-xs font-normal opacity-70">{t('divers.orders_tab_hint')}</span></span>
           </TabsTrigger>
-          <TabsTrigger value="stock" className="gap-2">
-            <Warehouse className="h-4 w-4" />
-            {t('divers.stock_tab')}
+          <TabsTrigger value="stock" className="h-auto min-h-16 justify-start gap-3 border-2 border-transparent bg-white px-4 py-3 shadow-sm data-[state=active]:border-emerald-500 data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-800 dark:bg-slate-950 dark:data-[state=active]:bg-emerald-950/40 dark:data-[state=active]:text-emerald-300">
+            <Warehouse className="h-5 w-5 shrink-0" aria-hidden="true" />
+            <span className="text-left"><span className="block font-semibold">{t('divers.stock_tab')}</span><span className="hidden lg:block text-xs font-normal opacity-70">{t('divers.stock_tab_hint')}</span></span>
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="ca" className="flex-1 flex flex-col min-h-0 space-y-6 mt-6 data-[state=inactive]:hidden">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card className="lg:col-span-2 p-6 flex flex-wrap items-center gap-4">
-              <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+        <TabsContent value="ca" className="flex-1 flex flex-col min-h-0 space-y-4 mt-4 data-[state=inactive]:hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_20rem] gap-3">
+            <Card className="p-3 flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2 w-full sm:w-[190px]">
                 <Calendar className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden="true" />
-                <LocalizedDateInput value={dateRange.debut} onChange={(e) => setDateRange({ ...dateRange, debut: e.target.value })} className="h-9" aria-label={t('common:from')} />
+                <LocalizedDateInput value={dateRange.debut} onChange={(e) => setDateRange({ ...dateRange, debut: e.target.value })} className="h-8 min-w-0" aria-label={t('common:from')} />
               </div>
-              <span className="text-muted-foreground font-medium text-sm">{t('divers.to_date')}</span>
-              <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+              <span className="hidden sm:inline text-muted-foreground font-medium text-xs">{t('divers.to_date')}</span>
+              <div className="flex items-center gap-2 w-full sm:w-[190px]">
                 <Calendar className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden="true" />
-                <LocalizedDateInput value={dateRange.fin} onChange={(e) => setDateRange({ ...dateRange, fin: e.target.value })} className="h-9" aria-label={t('common:to')} />
+                <LocalizedDateInput value={dateRange.fin} onChange={(e) => setDateRange({ ...dateRange, fin: e.target.value })} className="h-8 min-w-0" aria-label={t('common:to')} />
               </div>
-              <Button onClick={handleFilter} variant="outline" className="gap-2 ml-auto border-emerald-600 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800">
-                <Filter className="h-4 w-4" />
+              <Button onClick={handleFilter} variant="outline" size="sm" className="ml-auto border-emerald-600 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800">
+                <Filter className="h-3.5 w-3.5" />
                 {t('divers.filter')}
               </Button>
             </Card>
-            <Card className="bg-emerald-600 text-white border-emerald-600 p-6 flex flex-col justify-center">
-              <p className="text-emerald-100 text-xs font-semibold uppercase tracking-wider">{t('divers.revenue')}</p>
-              <h2 className="text-3xl font-bold mt-1">{totalCA.toLocaleString()} {t('divers.currency')}</h2>
-              <div className="mt-3 flex items-center text-emerald-100 text-xs">
+            <Card className="bg-emerald-600 text-white border-emerald-600 px-4 py-3 flex items-center justify-between gap-4">
+              <div>
+                <p className="text-emerald-100 text-[10px] font-semibold uppercase tracking-wider">{t('divers.revenue')}</p>
+                <h2 className="text-2xl font-bold leading-tight mt-0.5">{formatAmount(totalCA)} {t('divers.currency')}</h2>
+              </div>
+              <div className="flex items-center whitespace-nowrap text-emerald-100 text-[10px]">
                 <CalendarDays className="h-3 w-3 mr-1" />
                 {formatDateShort(dateRange.debut)} → {formatDateShort(dateRange.fin)}
               </div>
@@ -275,7 +347,7 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
           </div>
 
           <Card className="flex-1 flex flex-col min-h-0 overflow-hidden p-0">
-            <div className="px-6 py-4 border-b flex justify-between items-center bg-muted/30">
+            <div className="px-4 py-3 border-b flex justify-between items-center bg-muted/30">
               <h3 className="font-semibold flex items-center gap-2 text-sm">
                 {viewMode === 'daily' ? (
                   <>
@@ -289,15 +361,60 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
                   </>
                 )}
               </h3>
-              {viewMode === 'detail' && (
-                <Button variant="outline" size="sm" onClick={handleBackToDaily} className="gap-2">
-                  <ArrowLeft className="h-4 w-4" /> {t('divers.back_to_days')}
+              <div className="flex items-center gap-2">
+                {viewMode === 'detail' && (
+                  <Button variant="outline" size="sm" onClick={handleBackToDaily} className="gap-2">
+                    <ArrowLeft className="h-4 w-4" /> {t('divers.back_to_days')}
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-emerald-200 text-emerald-700 hover:border-emerald-500 hover:bg-emerald-50"
+                  disabled={viewMode === 'daily' ? dailyVentes.length === 0 : ventes.length === 0}
+                  onClick={() => {
+                    const currency = t('divers.currency');
+                    if (viewMode === 'daily') {
+                      const rows = dailyVentes.map((day) => ({
+                        [t('divers.table.date')]: formatDateLong(day.date),
+                        [t('divers.daily_products')]: day.nb_produits,
+                        [t('divers.daily_qty')]: day.total_quantity,
+                        [t('divers.daily_invoices')]: day.nb_factures,
+                        [`${t('divers.daily_total_ca')} (${currency})`]: day.total_ca,
+                      }));
+                      exportToExcel(rows, pharmacySettings, {
+                        sheetName: t('divers.sheet_ca'),
+                        filename: `ca_divers_${dateRange.debut}_${dateRange.fin}.xlsx`,
+                        title: `${t('divers.daily_sales_title')} — ${formatDateShort(dateRange.debut)} → ${formatDateShort(dateRange.fin)}`,
+                        printA4Portrait: true,
+                      });
+                    } else {
+                      const rows = ventes.map((v) => ({
+                        [t('divers.table.date')]: v.date ? formatDateTime(v.date) : '',
+                        [t('divers.table.invoice')]: v.facture_numero,
+                        [t('divers.table.product')]: v.produit_name,
+                        [t('divers.table.lot')]: v.lot,
+                        [t('divers.table.qty')]: v.quantity,
+                        [t('divers.table.unit_price')]: v.selling_price,
+                        [`${t('divers.table.total')} (${currency})`]: v.total,
+                      }));
+                      exportToExcel(rows, pharmacySettings, {
+                        sheetName: t('divers.sheet_sales'),
+                        filename: `ventes_divers_${selectedDate ?? getLocalDateString()}.xlsx`,
+                        title: `${t('divers.detail_sales')} — ${selectedDate ? formatDate(selectedDate) : ''}`,
+                        printA4Portrait: true,
+                      });
+                    }
+                  }}
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  {t('divers.export_excel')}
                 </Button>
-              )}
+              </div>
             </div>
             <div className="flex-1 overflow-auto">
               {viewMode === 'daily' ? (
-                <Table>
+                <Table className="[&_td]:py-2 [&_th]:h-9 [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:bg-slate-50 [&_thead_th]:z-10">
                   <TableHeader>
                     <TableRow>
                       <TableHead>{t('divers.table.date')}</TableHead>
@@ -341,7 +458,7 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
                           <TableCell className="text-right">{day.nb_produits}</TableCell>
                           <TableCell className="text-right">{day.total_quantity}</TableCell>
                           <TableCell className="text-right">{day.nb_factures}</TableCell>
-                          <TableCell className="text-right font-bold text-emerald-600">{day.total_ca.toLocaleString()} {t('divers.currency')}</TableCell>
+                          <TableCell className="text-right font-bold text-emerald-600">{formatAmount(day.total_ca)} {t('divers.currency')}</TableCell>
                           <TableCell className="text-center">
                             <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleViewDetail(day.date); }} className="text-emerald-600 h-8 w-8 p-0" aria-label={t('common:details')}>
                               <Eye className="h-4 w-4" aria-hidden="true" />
@@ -353,7 +470,7 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
                   </TableBody>
                 </Table>
               ) : (
-                <Table>
+                <Table className="[&_td]:py-2 [&_th]:h-9 [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:bg-slate-50 [&_thead_th]:z-10">
                   <TableHeader>
                     <TableRow>
                       <TableHead>{t('divers.table.date')}</TableHead>
@@ -379,13 +496,13 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
                     ) : (
                       ventes.map((v) => (
                         <TableRow key={v.id}>
-                          <TableCell className="text-muted-foreground">{v.date ? formatDateTime(v.date) : 'N/A'}</TableCell>
+                          <TableCell className="text-muted-foreground">{v.date ? formatDateTime(v.date) : t('divers.not_available')}</TableCell>
                           <TableCell className="font-medium text-emerald-600">{v.facture_numero}</TableCell>
                           <TableCell>{v.produit_name}</TableCell>
                           <TableCell className="font-mono text-xs text-slate-600">{v.lot}</TableCell>
                           <TableCell className="text-right font-medium">{v.quantity}</TableCell>
-                          <TableCell className="text-right text-muted-foreground">{v.selling_price.toLocaleString()}</TableCell>
-                          <TableCell className="text-right font-bold text-emerald-600">{v.total.toLocaleString()} {t('divers.currency')}</TableCell>
+                          <TableCell className="text-right text-muted-foreground">{formatAmount(v.selling_price)}</TableCell>
+                          <TableCell className="text-right font-bold text-emerald-600">{formatAmount(v.total)} {t('divers.currency')}</TableCell>
                         </TableRow>
                       ))
                     )}
@@ -394,7 +511,7 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
               )}
             </div>
             {viewMode === 'daily' && dailyVentes.length > 0 && (
-              <div className="px-6 py-4 border-t bg-muted/30">
+              <div className="px-4 py-3 border-t bg-muted/30">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div className="flex items-center gap-6 text-sm">
                     <span className="text-muted-foreground"><strong className="text-slate-700">{dailyVentes.reduce((s, d) => s + d.nb_produits, 0)}</strong> {t('divers.products_count')}</span>
@@ -402,13 +519,13 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
                     <span className="text-muted-foreground"><strong className="text-slate-700">{dailyVentes.reduce((s, d) => s + d.nb_factures, 0)}</strong> {t('divers.invoices_count')}</span>
                   </div>
                   <div className="text-lg font-bold text-emerald-600">
-                    {t('divers.total_label')} : {totalCA.toLocaleString()} {t('divers.currency')}
+                    {t('divers.total_label')} : {formatAmount(totalCA)} {t('divers.currency')}
                   </div>
                 </div>
               </div>
             )}
             {viewMode === 'detail' && totalPages > 1 && (
-              <div className="px-6 py-4 border-t flex items-center justify-between bg-muted/30">
+              <div className="px-4 py-3 border-t flex items-center justify-between bg-muted/30">
                 <span className="text-sm text-muted-foreground">{t('divers.page_label')} {page} {t('divers.of_label')} {totalPages} · {totalCount} {t('divers.results')}</span>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}>
@@ -427,15 +544,15 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
           <Commandes forcedType="DIV" />
         </TabsContent>
 
-        <TabsContent value="stock" className="flex-1 min-h-0 overflow-auto space-y-6 mt-6 data-[state=inactive]:hidden">
-          <Card className="p-6">
-            <div className="flex items-center gap-4 flex-wrap">
-              <span className="text-sm font-medium">{t('divers.valuation_method')}</span>
+        <TabsContent value="stock" className="flex-1 min-h-0 overflow-auto space-y-4 mt-4 data-[state=inactive]:hidden">
+          <Card className="p-3">
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('divers.valuation_method')}</span>
               <div className="flex gap-2">
-                <Button variant={valorisation === 'ACHAT' ? 'primary' : 'outline'} size="sm" onClick={() => setValorisation('ACHAT')} aria-pressed={valorisation === 'ACHAT'}>
+                <Button variant={valorisation === 'ACHAT' ? 'default' : 'outline'} size="sm" onClick={() => setValorisation('ACHAT')} aria-pressed={valorisation === 'ACHAT'} className={valorisation === 'ACHAT' ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20' : 'hover:border-emerald-500 hover:text-emerald-600'}>
                   {t('divers.purchase_cost')}
                 </Button>
-                <Button variant={valorisation === 'VENTE' ? 'primary' : 'outline'} size="sm" onClick={() => setValorisation('VENTE')} aria-pressed={valorisation === 'VENTE'}>
+                <Button variant={valorisation === 'VENTE' ? 'default' : 'outline'} size="sm" onClick={() => setValorisation('VENTE')} aria-pressed={valorisation === 'VENTE'} className={valorisation === 'VENTE' ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20' : 'hover:border-emerald-500 hover:text-emerald-600'}>
                   {t('divers.selling_price')}
                 </Button>
               </div>
@@ -443,37 +560,37 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
           </Card>
 
           {stockLoading ? (
-            <Card className="p-12 text-center">
+            <Card className="p-10 text-center">
               <Skeleton className="h-8 w-8 rounded-full mx-auto" />
               <p className="mt-4 text-muted-foreground">{t('divers.loading_valuation')}</p>
             </Card>
           ) : stockData ? (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card className="bg-emerald-600 text-white border-emerald-600 p-6">
-                  <p className="text-emerald-100 text-xs font-semibold uppercase tracking-wider">{t('divers.total_value_ttc')}</p>
-                  <h2 className="text-3xl font-bold mt-1">{stockData.total_ttc.toLocaleString()} {t('divers.currency')}</h2>
-                  <p className="mt-2 text-emerald-100 text-xs">{stockData.type_valorisation === 'PMP' ? t('divers.purchase_cost') : t('divers.selling_price')}</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <Card className="bg-emerald-600 text-white border-emerald-600 px-4 py-3">
+                  <p className="text-emerald-100 text-[10px] font-semibold uppercase tracking-wider">{t('divers.total_value_ttc')}</p>
+                  <h2 className="text-xl sm:text-2xl font-bold leading-tight mt-0.5">{formatAmount(stockData.total_ttc)} {t('divers.currency')}</h2>
+                  <p className="mt-1 text-emerald-100 text-[10px]">{stockData.type_valorisation === 'PMP' ? t('divers.purchase_cost') : t('divers.selling_price')}</p>
                 </Card>
-                <Card className="p-6">
-                  <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">{t('divers.value_ht')}</p>
-                  <h2 className="text-2xl font-bold mt-1">{stockData.total_ht.toLocaleString()} {t('divers.currency')}</h2>
+                <Card className="px-4 py-3">
+                  <p className="text-muted-foreground text-[10px] font-semibold uppercase tracking-wider">{t('divers.value_ht')}</p>
+                  <h2 className="text-lg sm:text-xl font-bold leading-tight mt-0.5">{formatAmount(stockData.total_ht)} {t('divers.currency')}</h2>
                 </Card>
-                <Card className="p-6">
-                  <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">{t('divers.total_vat')}</p>
-                  <h2 className="text-2xl font-bold mt-1">{stockData.total_tva.toLocaleString()} {t('divers.currency')}</h2>
+                <Card className="px-4 py-3">
+                  <p className="text-muted-foreground text-[10px] font-semibold uppercase tracking-wider">{t('divers.total_vat')}</p>
+                  <h2 className="text-lg sm:text-xl font-bold leading-tight mt-0.5">{formatAmount(stockData.total_tva)} {t('divers.currency')}</h2>
                 </Card>
               </div>
 
               <Card className="overflow-hidden p-0">
-                <div className="px-6 py-4 border-b bg-muted/30">
+                <div className="px-4 py-3 border-b bg-muted/30">
                   <h3 className="font-semibold flex items-center gap-2 text-sm">
                     <ClipboardList className="h-4 w-4 text-emerald-600" />
                     {t('divers.vat_breakdown')}
                   </h3>
                 </div>
-                <div className="overflow-x-auto">
-                  <Table>
+                <div className="overflow-auto max-h-[55vh]">
+                  <Table className="[&_td]:py-2 [&_th]:h-9 [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:bg-slate-50 [&_thead_th]:z-10">
                     <TableHeader>
                       <TableRow>
                         <TableHead>{t('divers.table.vat_rate')}</TableHead>
@@ -485,10 +602,10 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
                     <TableBody>
                       {stockData.tva_breakdown.map((item) => (
                         <TableRow key={item.rate}>
-                          <TableCell className="font-medium">{item.rate}%</TableCell>
-                          <TableCell className="text-right text-muted-foreground">{item.ht.toLocaleString()} {t('divers.currency')}</TableCell>
-                          <TableCell className="text-right text-muted-foreground">{item.tva.toLocaleString()} {t('divers.currency')}</TableCell>
-                          <TableCell className="text-right font-bold text-emerald-600">{item.ttc.toLocaleString()} {t('divers.currency')}</TableCell>
+                          <TableCell className="font-medium">{formatRate(item.rate)}%</TableCell>
+                          <TableCell className="text-right text-muted-foreground">{formatAmount(item.ht)} {t('divers.currency')}</TableCell>
+                          <TableCell className="text-right text-muted-foreground">{formatAmount(item.tva)} {t('divers.currency')}</TableCell>
+                          <TableCell className="text-right font-bold text-emerald-600">{formatAmount(item.ttc)} {t('divers.currency')}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -497,14 +614,14 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
               </Card>
 
               <Card className="overflow-hidden p-0">
-                <div className="px-6 py-4 border-b bg-muted/30">
+                <div className="px-4 py-3 border-b bg-muted/30">
                   <h3 className="font-semibold flex items-center gap-2 text-sm">
                     <Package className="h-4 w-4 text-emerald-600" />
                     {t('divers.section_breakdown')}
                   </h3>
                 </div>
-                <div className="overflow-x-auto">
-                  <Table>
+                <div className="overflow-auto max-h-[55vh]">
+                  <Table className="[&_td]:py-2 [&_th]:h-9 [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:bg-slate-50 [&_thead_th]:z-10">
                     <TableHeader>
                       <TableRow>
                         <TableHead>{t('divers.table.section')}</TableHead>
@@ -517,15 +634,102 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
                       {stockData.rayon_breakdown.map((item) => (
                         <TableRow key={item.name}>
                           <TableCell className="font-medium">{item.name}</TableCell>
-                          <TableCell className="text-right text-muted-foreground">{item.ht.toLocaleString()} {t('divers.currency')}</TableCell>
-                          <TableCell className="text-right text-muted-foreground">{item.tva.toLocaleString()} {t('divers.currency')}</TableCell>
-                          <TableCell className="text-right font-bold text-emerald-600">{item.ttc.toLocaleString()} {t('divers.currency')}</TableCell>
+                          <TableCell className="text-right text-muted-foreground">{formatAmount(item.ht)} {t('divers.currency')}</TableCell>
+                          <TableCell className="text-right text-muted-foreground">{formatAmount(item.tva)} {t('divers.currency')}</TableCell>
+                          <TableCell className="text-right font-bold text-emerald-600">{formatAmount(item.ttc)} {t('divers.currency')}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
                 </div>
               </Card>
+
+              {stockData.details && stockData.details.length > 0 && (() => {
+                const detailsTotalPages = Math.ceil(stockData.details.length / detailsPageSize);
+                const safeDetailsPage = Math.min(detailsPage, detailsTotalPages);
+                const pagedDetails = stockData.details.slice((safeDetailsPage - 1) * detailsPageSize, safeDetailsPage * detailsPageSize);
+                return (
+                <Card className="overflow-hidden p-0">
+                  <div className="px-4 py-3 border-b bg-muted/30 flex items-center justify-between gap-3 flex-wrap">
+                    <h3 className="font-semibold flex items-center gap-2 text-sm">
+                      <Boxes className="h-4 w-4 text-emerald-600" />
+                      {t('divers.lot_details')}
+                    </h3>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-emerald-200 text-emerald-700 hover:border-emerald-500 hover:bg-emerald-50"
+                      onClick={() => {
+                        const rows = (stockData.details ?? []).map((item) => ({
+                          [t('divers.table.product')]: item.produit,
+                          [t('divers.table.lot')]: item.lot,
+                          [t('divers.table.section')]: item.rayon || t('divers.unclassified'),
+                          [t('divers.table.remaining_qty')]: item.quantity,
+                          [t('divers.table.unit_price')]: item.unit_price,
+                          [`${t('divers.table.vat_rate')} (%)`]: item.tva_rate,
+                          [t('divers.table.base_ht')]: item.ht,
+                          [t('divers.table.vat_amount')]: item.tva,
+                          [t('divers.table.expiry')]: item.date_expiration ? formatDate(item.date_expiration) : '',
+                          [t('divers.table.total_ttc')]: item.ttc,
+                        }));
+                        exportToExcel(rows, pharmacySettings, {
+                          sheetName: t('divers.sheet_lots'),
+                          filename: `lots_divers_${valorisation.toLowerCase()}_${getLocalDateString()}.xlsx`,
+                          title: `${t('divers.lot_details')} — ${stockData.type_valorisation === 'PMP' ? t('divers.purchase_cost') : t('divers.selling_price')}`,
+                          printA4Portrait: true,
+                        });
+                      }}
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                      {t('divers.export_excel')}
+                    </Button>
+                  </div>
+                  <div className="overflow-auto max-h-[55vh]">
+                    <Table className="[&_td]:py-2 [&_th]:h-9 [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:bg-slate-50 [&_thead_th]:z-10">
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>{t('divers.table.product')}</TableHead>
+                          <TableHead>{t('divers.table.lot')}</TableHead>
+                          <TableHead>{t('divers.table.section')}</TableHead>
+                          <TableHead className="text-right">{t('divers.table.remaining_qty')}</TableHead>
+                          <TableHead className="text-right">{t('divers.table.unit_price')}</TableHead>
+                          <TableHead className="text-right">{t('divers.table.vat_rate')}</TableHead>
+                          <TableHead>{t('divers.table.expiry')}</TableHead>
+                          <TableHead className="text-right">{t('divers.table.total_ttc')}</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {pagedDetails.map((item) => (
+                          <TableRow key={item.lot_id}>
+                            <TableCell className="font-medium">{item.produit}</TableCell>
+                            <TableCell className="text-muted-foreground">{item.lot || '—'}</TableCell>
+                            <TableCell className="text-muted-foreground">{item.rayon || t('divers.unclassified')}</TableCell>
+                            <TableCell className="text-right">{formatAmount(item.quantity)}</TableCell>
+                            <TableCell className="text-right text-muted-foreground">{formatAmount(item.unit_price)} {t('divers.currency')}</TableCell>
+                            <TableCell className="text-right text-muted-foreground">{formatRate(item.tva_rate)}%</TableCell>
+                            <TableCell className="text-muted-foreground">{item.date_expiration ? formatDate(item.date_expiration) : t('divers.no_expiry')}</TableCell>
+                            <TableCell className="text-right font-bold text-emerald-600">{formatAmount(item.ttc)} {t('divers.currency')}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  {detailsTotalPages > 1 && (
+                    <div className="px-4 py-3 border-t bg-muted/30 flex items-center justify-between gap-3 flex-wrap">
+                      <span className="text-xs text-muted-foreground">{t('divers.page_label')} {safeDetailsPage} {t('divers.of_label')} {detailsTotalPages} · {stockData.details.length} {t('divers.results')}</span>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={() => setDetailsPage(p => Math.max(1, p - 1))} disabled={safeDetailsPage <= 1}>
+                          <ChevronLeft className="h-4 w-4 mr-1" /> {t('divers.previous')}
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => setDetailsPage(p => Math.min(detailsTotalPages, p + 1))} disabled={safeDetailsPage >= detailsTotalPages}>
+                          {t('divers.next')} <ChevronRight className="h-4 w-4 ml-1" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </Card>
+                );
+              })()}
             </>
           ) : (
             <Card className="p-12 text-center">

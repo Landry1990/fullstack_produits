@@ -224,7 +224,7 @@ export default function CommandeForm({
                     <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-caption font-sans border border-slate-200">F2</kbd> {t('orders:form.shortcuts.search')}</span>
                     <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-caption font-sans border border-slate-200">F4</kbd> {t('orders:form.shortcuts.provider')}</span>
                     <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-caption font-sans border border-slate-200">Ctrl+A</kbd> {t('orders:form.shortcuts.select_all')}</span>
-                    <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-caption font-sans border border-slate-200">Shift+Entrée</kbd> {t('orders:product_details')}</span>
+                    <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-caption font-sans border border-slate-200">{t('orders:form.shortcuts.shift_enter')}</kbd> {t('orders:product_details')}</span>
                   </div>
                 </div>
             </div>

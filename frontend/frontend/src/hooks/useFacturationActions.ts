@@ -1,3 +1,4 @@
+
 import { useCallback } from 'react';
 import type { TFunction } from 'i18next';
 import api from '../services/api';
@@ -20,7 +21,7 @@ export interface UseFacturationActionsProps {
     apiBaseUrl?: string;
     cart: {
         lignesFacture: LigneFacture[];
-        setLignesFacture: (lignes: LigneFacture[]) => void;
+        setLignesFacture: React.Dispatch<React.SetStateAction<LigneFacture[]>>;
     };
     clientsHook: ReturnType<typeof useFacturationClients>;
     ui: ReturnType<typeof useFacturationUI>;
@@ -114,7 +115,7 @@ export function useFacturationActions({
                 }
             })
 
-            await Promise.all(produitsPayload.map((payload) => api.post('facture-produits/', payload)))
+            await api.post('facture-produits/bulk_create/', { items: produitsPayload })
 
             printWindow.location.href = `/app/print-invoice/${createdFacture.id}?type=proforma`
             printWindow.focus?.()
@@ -199,9 +200,7 @@ export function useFacturationActions({
                 }
             })
 
-            await Promise.all(produitsPayload.map(payload =>
-                api.post('facture-produits/', payload)
-            ))
+            await api.post('facture-produits/bulk_create/', { items: produitsPayload })
 
             printWindow.location.href = `/app/print-invoice/${createdFacture.id}?type=BL`
             printWindow.focus?.()
@@ -304,7 +303,7 @@ export function useFacturationActions({
         if (!ui.ticketCaisse || !ui.ticketCaisse.facture || typeof ui.ticketCaisse.facture === 'number') return
         const facture = ui.ticketCaisse.facture as unknown as { id: number; client: number | { phone?: string }; client_phone?: string }
         const clientPhone = (typeof facture.client === 'object' ? facture.client?.phone : '') || facture.client_phone
-        const phone = window.prompt(t('facturation.messages.enter_whatsapp_number') || 'Entrez le numéro WhatsApp', clientPhone || '')
+        const phone = window.prompt(t('facturation:messages.enter_whatsapp_number', { defaultValue: 'Entrez le numéro WhatsApp' }), clientPhone || '')
         if (!phone) return
 
         setLoading(true)
@@ -445,7 +444,7 @@ export function useFacturationActions({
                     return {
                         ...l,
                         lotId: null,
-                        lotText: `${allocations.length} lots`,
+                        lotText: t('facturation:cart_extra.lots_count', { count: allocations.length }),
                         lotExpiration: null,
                         lotSellingPrice: null,
                         lotAllocations: allocations,
@@ -499,11 +498,11 @@ export function useFacturationActions({
 
     const mettreEnAttente = useCallback(() => {
         if (cart.lignesFacture.length === 0) {
-            setError('Impossible de mettre en attente une vente vide')
+            setError(t('facturation:messages.cannot_suspend_empty'))
             return
         }
         if (pendingSales.ventesEnAttente.length >= 4) {
-            setError('Maximum 4 ventes en attente atteint')
+            setError(t('facturation:messages.max_pending_sales', { max: 4 }))
             return
         }
         const clientName = !clientsHook.useManualClient && clientsHook.selectedClient
@@ -538,7 +537,7 @@ export function useFacturationActions({
         if (cart.lignesFacture.length > 0) {
             ui.setConfirmModal({
                 isOpen: true,
-                message: t('facturation.messages.cancel_sale_confirm', { defaultValue: 'Êtes-vous sûr de vouloir annuler cette vente en cours ? Tout le panier sera perdu.' }),
+                message: t('facturation:messages.cancel_sale_confirm', { defaultValue: 'Êtes-vous sûr de vouloir annuler cette vente en cours ? Tout le panier sera perdu.' }),
                 onConfirm: () => _resetSale()
             })
             return
@@ -581,7 +580,7 @@ export function useFacturationActions({
     const supprimerVenteEnAttente = useCallback((id: number) => {
         ui.setConfirmModal({
             isOpen: true,
-            message: "Voulez-vous vraiment supprimer cette vente en attente ?",
+            message: t('facturation:messages.pending_sale_delete_confirm'),
             onConfirm: () => {
                 pendingSales.deletePendingSale(id);
                 ui.setConfirmModal(null);

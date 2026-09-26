@@ -54,7 +54,7 @@ export const OpenCashSessionModal: React.FC<OpenCashSessionModalProps> = ({
         handleOpenSession(available[0].id)
       }
     } catch {
-      gooeyToast.error(t('messages.error_loading_posts', { defaultValue: 'Erreur chargement postes de caisse' }))
+      gooeyToast.error(t('messages.error_loading_caisses', { defaultValue: 'Erreur chargement postes de caisse' }))
     } finally {
       setLoadingCaisses(false)
     }
@@ -83,7 +83,7 @@ export const OpenCashSessionModal: React.FC<OpenCashSessionModalProps> = ({
     try {
       const poste = await cashSessionService.openPosteVente(id, fondCaisse || undefined)
       setActivePosteVente(poste)
-      gooeyToast.success(t('messages.session_opened', { defaultValue: 'Caisse ouverte.' }))
+      gooeyToast.success(t('messages.caisse_opened', { defaultValue: 'Caisse ouverte.' }))
       onSessionOpened(poste)
       onClose()
       setFondCaisse('')

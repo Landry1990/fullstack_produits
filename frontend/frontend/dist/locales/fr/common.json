@@ -9,7 +9,21 @@
         "behind_msg": "L'horloge de ce poste est en retard (pile CMOS ?). Cela peut causer des erreurs dans les factures, tickets et rapports.",
         "copy_script": "Copier le script de synchro",
         "copied": "Script copié !",
-        "script_hint": "À exécuter en tant qu'administrateur (PowerShell)"
+        "script_hint": "À exécuter en tant qu'administrateur (PowerShell)",
+        "seconds_one": "{{count}} seconde",
+        "seconds_other": "{{count}} secondes",
+        "minutes_one": "{{count}} minute",
+        "minutes_other": "{{count}} minutes",
+        "hours_one": "{{count}} heure",
+        "hours_other": "{{count}} heures"
+    },
+    "aria": {
+        "select": "Sélectionner",
+        "select_item": "Sélectionner l'élément",
+        "close_dialog": "Fermer la boîte de dialogue",
+        "scan_preview": "Aperçu du scan",
+        "logo": "Logo",
+        "zenith_logo": "Zenith Pharma"
     },
     "all": "Tous",
     "lock": {
@@ -41,6 +55,7 @@
     "product": "Produit",
     "cancel": "Annuler",
     "save": "Enregistrer",
+    "sending": "Envoi...",
     "save_error": "Erreur lors de l'enregistrement",
     "deposit": "Dépôt",
     "balance": "Solde",
@@ -76,7 +91,17 @@
     "status_title": "Statut",
     "supplier": "Fournisseur",
     "status": {
-        "draft": "Brouillon"
+        "draft": "Brouillon",
+        "payée": "Payée",
+        "payee": "Payée",
+        "validée": "Validée",
+        "validee": "Validée",
+        "annulée": "Annulée",
+        "annulee": "Annulée",
+        "en attente": "En attente",
+        "partielle": "Partielle",
+        "clôturée": "Clôturée",
+        "cloturee": "Clôturée"
     },
     "no_number": "Sans numéro",
     "stock": "Stock",
@@ -230,14 +255,14 @@
     "date_format_long": "dd MMMM yyyy",
     "date_locale": "fr-FR",
     "sudo": {
-        "validate_title": "Validation Administrative",
-        "validate_subtitle": "Validation par un titulaire (superuser)",
+        "validate_title": "Validation requise",
+        "validate_subtitle": "Validation par un utilisateur autorisé",
         "validate_as": "Valider au nom de",
-        "validate_admin": "(Sélectionner un administrateur)",
+        "validate_admin": "(Sélectionner un utilisateur autorisé)",
         "validate_me": "Moi-même (Utilisateur actuel)",
-        "validate_password": "Mot de passe titulaire",
-        "validate_required": "(Requis pour valider)",
-        "validate_hint": "Saisissez le mot de passe du titulaire/pharmacien",
+        "validate_password": "Mot de passe",
+        "validate_required": "(Requis)",
+        "validate_hint": "Saisissez le mot de passe d'un utilisateur disposant des droits requis",
         "cancel": "Annuler",
         "confirm": "Confirmer la validation",
         "title": "Validation Requise",
@@ -407,6 +432,9 @@
     "omnisearch": {
         "placeholder": "Rechercher (produits, clients, navigation)...",
         "empty": "Aucun résultat trouvé.",
+        "searching": "Recherche en cours…",
+        "no_contact": "Aucun contact",
+        "wholesaler": "Grossiste",
         "groups": {
             "actions": "Actions Rapides",
             "navigation": "Navigation Rapide",
@@ -467,7 +495,10 @@
             "supplier": "Fournisseur",
             "items": "Articles",
             "status": "Statut",
-            "date": "Date"
+            "date": "Date",
+            "unit": "unité",
+            "more_items": "...et {{count}} article(s) supplémentaire(s)",
+            "open_detail_hint": "Cliquez ou appuyez sur Entrée pour ouvrir le détail"
         }
     },
     "licence_toast": {
@@ -482,6 +513,33 @@
         "update": "Mettre à jour",
         "expired_title": "LICENCE EXPIRÉE :",
         "expired_message": "L'accès au système sera restreint. Contactez votre administrateur immédiatement."
+    },
+    "startup": {
+        "title": "Connexion impossible",
+        "subtitle": "Le serveur backend ne répond pas après {{max}} tentatives.",
+        "attempt": "Démarrage... Tentative {{attempts}}/{{max}}",
+        "loading": "Démarrage du système en cours...",
+        "redirect_licence": "Redirection vers la page de licence...",
+        "retry": "Réessayer",
+        "checklist": {
+            "intro": "Vérifiez que :",
+            "backend": "Le backend est démarré (docker compose up)",
+            "licence": "La licence est valide",
+            "db": "La base de données est accessible"
+        }
+    },
+    "error_boundary": {
+        "update_detected": "Mise à jour détectée",
+        "reloading": "Rechargement en cours...",
+        "reloading_app": "Rechargement de l'application en cours...",
+        "oops": "Oups ! Une erreur est survenue.",
+        "unexpected": "L'application a rencontré un problème inattendu.",
+        "unexpected_page": "L'application a rencontré un problème inattendu lors de l'affichage de cette page.",
+        "refresh": "Rafraîchir",
+        "refresh_page": "Rafraîchir la page",
+        "home": "Accueil",
+        "back_home": "Retour à l'accueil",
+        "unknown_error": "Erreur inconnue"
     },
     "auto_saving": "Sauvegarde auto...",
     "search": "recherche",
@@ -509,7 +567,30 @@
     "lot": "Lot",
     "unknown_product_deleted": "Produit inconnu (supprimé)",
     "messaging": "Messagerie Interne",
-    "feedback": "Feedback",
+    "feedback": {
+        "label": "Feedback",
+        "title": "Envoyer un Feedback",
+        "subtitle": "Aidez-nous à améliorer l'application",
+        "category_label": "Catégorie",
+        "category_bug": "Bug / Erreur",
+        "category_feature": "Nouvelle fonctionnalité",
+        "category_improvement": "Amélioration",
+        "category_question": "Question",
+        "category_other": "Autre",
+        "priority_label": "Priorité",
+        "priority_low": "Faible",
+        "priority_medium": "Moyenne",
+        "priority_high": "Haute",
+        "priority_urgent": "Urgente",
+        "subject_label": "Sujet",
+        "subject_placeholder": "Résumez votre feedback en quelques mots",
+        "description_label": "Description",
+        "description_placeholder": "Décrivez votre feedback en détail...",
+        "send": "Envoyer",
+        "success": "Feedback envoyé avec succès",
+        "error": "Erreur lors de l'envoi du feedback",
+        "error_required": "Veuillez remplir le sujet et la description"
+    },
     "french": "Français",
     "english": "English",
     "account": "Compte",
@@ -518,5 +599,21 @@
     "dark_mode": "Mode Sombre",
     "update_license": "Mettre à jour la licence",
     "logout": "Déconnexion",
-    "command_palette": "Command Palette"
+    "command_palette": "Command Palette",
+    "pos_mode": {
+        "title": "Mode point de vente",
+        "close": "Fermer le point"
+    },
+    "errors": {
+        "unknown": "Une erreur inconnue est survenue.",
+        "server_support": "Erreur Serveur ({{status}}) : Veuillez contacter le support technique.",
+        "server_detail": "Erreur Serveur ({{status}}) : {{detail}}",
+        "server_retry": "Erreur Serveur ({{status}}) : Veuillez réessayer plus tard.",
+        "connection": "Erreur de connexion : Impossible de joindre le serveur.",
+        "unexpected": "Une erreur inattendue est survenue.",
+        "module_timeout": "Timeout : Le chargement du module a pris trop de temps",
+        "settings_load": "Erreur lors du chargement des paramètres"
+    },
+    "no_section": "Aucun rayon",
+    "info": "Info"
 }

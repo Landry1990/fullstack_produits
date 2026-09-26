@@ -414,6 +414,21 @@ class PurgeViewSet(ViewSet):
                 else:
                     secondary_msg = f" (Note: Chemin secondaire {settings.secondary_backup_path} inaccessible)"
 
+            try:
+                from api.audit_helpers import log_audit
+                from api.models.audit import AuditLog
+                log_audit(
+                    user=request.user,
+                    action=AuditLog.Action.EXPORT,
+                    model_name='Backup',
+                    object_id=0,
+                    description='Sauvegarde manuelle de la base de données',
+                    details={'secondary_copy': bool(secondary_msg and 'effectuée' in secondary_msg)},
+                    request=request,
+                )
+            except Exception:
+                pass  # Ne pas faire échouer la sauvegarde si l'audit échoue
+
             return Response({
                 'message': f'Sauvegarde terminée avec succès.{secondary_msg}',
                 'details': output
@@ -460,6 +475,20 @@ class PurgeViewSet(ViewSet):
             
             # Clean up
             os.unlink(tmp_path)
+
+            try:
+                from api.audit_helpers import log_audit
+                from api.models.audit import AuditLog
+                log_audit(
+                    user=request.user,
+                    action=AuditLog.Action.OTHER,
+                    model_name='Backup',
+                    object_id=0,
+                    description=f"Restauration de la base de données depuis {file_obj.name}",
+                    request=request,
+                )
+            except Exception:
+                pass
 
             return Response({
                 'message': 'Base de données restaurée avec succès.',
@@ -629,7 +658,7 @@ class PurgeViewSet(ViewSet):
         from api.models import Produit
 
         wb = openpyxl.Workbook()
-        ws = wb.active
+        ws = wb.active or wb.create_sheet()
         ws.title = "Produits"
         ws.append(['cip1', 'cip2', 'cip3', 'nom', 'prix_achat', 'prix_vente', 'tva', 'stock'])
 

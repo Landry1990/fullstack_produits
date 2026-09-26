@@ -135,10 +135,10 @@ export default function CatalogDCIAddModal({
         {/* Compteur de sélection */}
         <div className="flex items-center justify-between">
           <span className="text-sm font-semibold text-base-content/70">
-            {selected.size > 0 ? `${selected.size} sélectionné(s)` : 'Aucune sélection'}
+            {selected.size > 0 ? t('products:dci.selected_count', { count: selected.size }) : t('products:dci.no_selection')}
           </span>
           {results.length > 0 && (
-            <span className="text-xs text-base-content/50">{results.length} résultat(s)</span>
+            <span className="text-xs text-base-content/50">{t('products:dci.results_count', { count: results.length })}</span>
           )}
         </div>
 
@@ -153,7 +153,7 @@ export default function CatalogDCIAddModal({
           ) : results.length === 0 ? (
             <div className="p-8 text-center opacity-40">
               <p className="text-sm font-medium">
-                {searchQuery ? 'Aucun résultat pour cette recherche' : 'Commencez à taper pour rechercher'}
+                {searchQuery ? t('products:dci.no_results_for_search') : t('products:dci.start_typing')}
               </p>
             </div>
           ) : (
@@ -183,13 +183,13 @@ export default function CatalogDCIAddModal({
                     <div className="flex justify-between items-start">
                       <h4 className="font-bold text-sm uppercase leading-tight truncate">{prod.name}</h4>
                       {alreadyLinked && (
-                        <Badge variant="success" size="sm" className="font-bold">Déjà associé</Badge>
+                        <Badge variant="success" size="sm" className="font-bold">{t('products:dci.already_linked')}</Badge>
                       )}
                     </div>
                     <div className="flex items-center gap-3 mt-1 text-xs opacity-60">
-                      <span>{prod.forme_name || 'Forme inconnue'}</span>
+                      <span>{prod.forme_name || t('products:dci.unknown_form')}</span>
                       <Badge variant={prod.stock > 0 ? 'success' : 'error'} size="sm" className="h-4 px-1 text-micro">
-                        {prod.stock} en stock
+                        {t('products:dci.in_stock', { count: prod.stock })}
                       </Badge>
                       <span className="font-bold text-primary">{prod.selling_price} F</span>
                     </div>
@@ -216,7 +216,7 @@ export default function CatalogDCIAddModal({
             ) : (
               <>
                 <span>+</span>
-                <span>Associer {selected.size > 0 ? `(${selected.size})` : ''}</span>
+                <span>{t('products:dci.link')} {selected.size > 0 ? `(${selected.size})` : ''}</span>
               </>
             )}
           </Button>

@@ -225,7 +225,15 @@ export function buildTicketPrintHtml(ticketWidth: number, content: string, style
   <!-- Polices système uniquement : évite tout appel réseau (Google Fonts) pour fonctionner offline. -->
   ${safeStyleTags}
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box; margin: 0; padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    svg * { shape-rendering: crispEdges; }
     @media print {
       @page { 
         size: ${ticketWidth}mm auto; 
@@ -343,7 +351,6 @@ export function buildReceptionPrintHtml(commande: Commande, companyInfo: { name?
   const isInkless = mode === 'inkless';
   const primaryColor = isInkless ? '#334155' : '#0f172a';
   const lightColor = isInkless ? '#94a3b8' : '#64748b';
-  const borderColor = isInkless ? '#cbd5e1' : '#0f172a';
   const headerBorder = isInkless ? '1px dashed #94a3b8' : '2px solid #0f172a';
   const tableHeaderBg = isInkless ? 'transparent' : '#f1f5f9';
   const tableBorder = isInkless ? '1px dashed #cbd5e1' : '2px solid #0f172a';

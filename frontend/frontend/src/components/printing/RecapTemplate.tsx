@@ -102,7 +102,7 @@ const RecapTemplate: React.FC<RecapTemplateProps> = ({ settings, data }) => {
         {/* Left: Pharmacy Info */}
         <div className="flex-1 flex items-start gap-4">
             {settings.logo && (
-              <img src={settings.logo} alt="Logo" className="w-20 h-20 object-contain shrink-0" />
+              <img src={settings.logo} alt={t('common:aria.logo', { defaultValue: 'Logo' })} className="w-20 h-20 object-contain shrink-0" />
             )}
             <div>
             <h1 className="text-2xl font-black uppercase tracking-tight text-base-content mb-1 leading-none">
@@ -136,10 +136,10 @@ const RecapTemplate: React.FC<RecapTemplateProps> = ({ settings, data }) => {
         {/* Right: Document Info Boxed */}
         <div className="text-right">
             <div className="border-2 border-slate-900 text-base-content px-6 py-2 rounded-sm text-lg font-black mb-2 inline-block uppercase tracking-wider">
-                {t('recap.document_title', { defaultValue: 'RÉCAPITULATIF' })}
+                {t('recap:document_title', { defaultValue: 'RÉCAPITULATIF' })}
             </div>
             <div className="text-base-content/60 font-bold text-caption uppercase tracking-widest">
-                {data.recap.nombre_factures} {t('recap.tickets_label', { defaultValue: 'ticket(s)' })}
+                {data.recap.nombre_factures} {t('recap:tickets_label', { defaultValue: 'ticket(s)' })}
             </div>
         </div>
       </div>
@@ -157,23 +157,23 @@ const RecapTemplate: React.FC<RecapTemplateProps> = ({ settings, data }) => {
 
         <div className="bg-base-100 p-4 rounded-xl border border-base-200">
             <div className="text-micro uppercase tracking-widest font-black text-base-content/40 mb-2 border-b border-slate-100 pb-1.5">
-                {t('recap.details_title', { defaultValue: 'Détails' })}
+                {t('recap:details_title', { defaultValue: 'Détails' })}
             </div>
             <div className="space-y-1 text-label">
                 <div className="flex justify-between">
-                    <span className="text-base-content/60">{t('recap.generated_on', { defaultValue: 'Généré le' })} :</span>
+                    <span className="text-base-content/60">{t('recap:generated_on', { defaultValue: 'Généré le' })} :</span>
                     <span className="font-bold">{new Date().toLocaleDateString(docLocale)}</span>
                 </div>
                 {data.recap.periode.debut && (
                   <div className="flex justify-between">
-                      <span className="text-base-content/60">{t('recap.period', { defaultValue: 'Période' })} :</span>
+                      <span className="text-base-content/60">{t('recap:period', { defaultValue: 'Période' })} :</span>
                       <span className="font-bold">
                         {formatLocaleDate(data.recap.periode.debut, docLocale)} — {formatLocaleDate(data.recap.periode.fin || '', docLocale)}
                       </span>
                   </div>
                 )}
                 <div className="flex justify-between border-t border-slate-100 pt-1 mt-1">
-                    <span className="text-base-content/60">{t('recap.nb_tickets', { defaultValue: 'Nb. tickets' })} :</span>
+                    <span className="text-base-content/60">{t('recap:nb_tickets', { defaultValue: 'Nb. tickets' })} :</span>
                     <span className="font-bold">{data.recap.nombre_factures}</span>
                 </div>
             </div>
@@ -185,12 +185,12 @@ const RecapTemplate: React.FC<RecapTemplateProps> = ({ settings, data }) => {
         <table className="w-full mb-4 border-collapse">
             <thead className="table-header-group">
                 <tr className="bg-base-200/50 text-base-content border-b-2 border-slate-900 text-micro uppercase tracking-[0.1em]">
-                    <th className="py-2.5 px-3 text-left font-black rounded-l w-24">{t('recap.col_ticket', { defaultValue: 'Ticket' })}</th>
+                    <th className="py-2.5 px-3 text-left font-black rounded-l w-24">{t('recap:col_ticket', { defaultValue: 'Ticket' })}</th>
                     <th className="py-2.5 px-2 text-left font-black w-20">{t('invoice.date', { defaultValue: 'Date' })}</th>
                     <th className="py-2.5 px-3 text-left font-black">{t('invoice.designation')}</th>
                     <th className="py-2.5 px-2 text-center font-black w-12">{t('invoice.qty')}</th>
-                    <th className="py-2.5 px-2 text-right font-black w-24">{t('recap.col_pu', { defaultValue: 'P.U. TTC' })}</th>
-                    <th className="py-2.5 px-3 text-right font-black w-28 rounded-r">{t('recap.col_total', { defaultValue: 'Total' })}</th>
+                    <th className="py-2.5 px-2 text-right font-black w-24">{t('recap:col_pu', { defaultValue: 'P.U. TTC' })}</th>
+                    <th className="py-2.5 px-3 text-right font-black w-28 rounded-r">{t('recap:col_total', { defaultValue: 'Total' })}</th>
                 </tr>
             </thead>
             <tbody className="text-caption">
@@ -198,7 +198,7 @@ const RecapTemplate: React.FC<RecapTemplateProps> = ({ settings, data }) => {
                   <tr key={`${line.ticket}-${line.name}-${line.qty}-${line.price}-${line.total}`} className={`group border-b border-slate-50 hover:bg-base-200/30 transition-colors break-inside-avoid ${line.cancelled ? 'opacity-40' : ''}`}>
                       <td className="py-2 px-3 font-mono font-bold text-base-content/80">
                         <span className={line.cancelled ? 'line-through' : ''}>{line.ticket}</span>
-                        {line.ticket && line.cancelled && <div className="text-[7px] font-sans uppercase font-black text-base-content/60 no-underline">{t('recap.cancelled_label', { defaultValue: 'ANNULÉ' })}</div>}
+                        {line.ticket && line.cancelled && <div className="text-[7px] font-sans uppercase font-black text-base-content/60 no-underline">{t('recap:cancelled_label', { defaultValue: 'ANNULÉ' })}</div>}
                       </td>
                       <td className="py-2 px-2 text-base-content/60 text-micro">
                         {line.date ? new Date(line.date).toLocaleDateString(docLocale) : ''}
@@ -225,7 +225,7 @@ const RecapTemplate: React.FC<RecapTemplateProps> = ({ settings, data }) => {
                <span>{t('invoice.lines')} : <span className="text-base-content">{allLines.length}</span></span>
                <span>{t('invoice.items')} : <span className="text-base-content">{totalQuantity}</span></span>
              </div>
-             <div className="text-base-content/30 italic">{t('recap.non_accounting', { defaultValue: 'Document non comptable' })}</div>
+             <div className="text-base-content/30 italic">{t('recap:non_accounting', { defaultValue: 'Document non comptable' })}</div>
         </div>
       </div>
 
@@ -237,10 +237,10 @@ const RecapTemplate: React.FC<RecapTemplateProps> = ({ settings, data }) => {
             <div className="flex-1">
                 <div className="bg-base-200/50 border border-slate-100 rounded-lg p-3">
                     <div className="text-[8.5px] uppercase tracking-[0.2em] font-black text-base-content/40 mb-1.5">
-                      {t('recap.note_title', { defaultValue: 'Note' })}
+                      {t('recap:note_title', { defaultValue: 'Note' })}
                     </div>
                     <div className="text-caption text-base-content/70 italic">
-                      {t('recap.note_body', { defaultValue: 'Ce document est un récapitulatif des achats établi à la demande du client. Il ne constitue pas une facture au sens comptable.' })}
+                      {t('recap:note_body', { defaultValue: 'Ce document est un récapitulatif des achats établi à la demande du client. Il ne constitue pas une facture au sens comptable.' })}
                     </div>
                 </div>
             </div>
@@ -281,7 +281,7 @@ const RecapTemplate: React.FC<RecapTemplateProps> = ({ settings, data }) => {
                     <div className="mx-0 rounded-lg py-2.5 shadow-sm bg-slate-900 text-white overflow-hidden relative">
                         <div className="grid grid-cols-[1fr,115px] items-center px-1">
                           <span className="text-[8px] uppercase font-black tracking-[0.2em] pl-1 text-white/60">
-                            {t('recap.total_label', { defaultValue: 'TOTAL GÉNÉRAL' })}
+                            {t('recap:total_label', { defaultValue: 'TOTAL GÉNÉRAL' })}
                           </span>
                           <div className="text-right font-black font-mono tracking-tighter pr-2 text-xl">
                             {formatCurrency(Math.round(data.recap.total_ttc), docLocale)}

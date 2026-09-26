@@ -49,5 +49,19 @@
         "total_remise": "Discount",
         "total_ttc": "TOTAL",
         "footer": "This document is a non-accounting summary generated at the customer's request."
-    }
+    },
+    "document_title": "SUMMARY",
+    "tickets_label": "ticket(s)",
+    "details_title": "Details",
+    "generated_on": "Generated on",
+    "period": "Period",
+    "nb_tickets": "No. of tickets",
+    "col_ticket": "Ticket",
+    "col_pu": "Unit Price (incl. VAT)",
+    "col_total": "Total",
+    "cancelled_label": "CANCELLED",
+    "non_accounting": "Non-accounting document",
+    "note_title": "Note",
+    "note_body": "This document is a purchase summary issued at the customer's request. It is not an accounting invoice.",
+    "total_label": "GRAND TOTAL"
 }

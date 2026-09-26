@@ -37,6 +37,23 @@ class ProduitBulkMixin:
             
         return Response(data)
 
+    @action(detail=False, methods=['post'], url_path='bulk-detail')
+    def bulk_detail(self, request):
+        """Retourne le serializer détail complet pour une liste d'IDs (évite N requêtes GET produits/{id}/)."""
+        product_ids = request.data.get('ids', [])
+        if not product_ids:
+            return Response({'detail': 'Liste d\'IDs requise'}, status=status.HTTP_400_BAD_REQUEST)
+        if len(product_ids) > 200:
+            return Response({'detail': 'Trop d\'IDs (max 200).'}, status=status.HTTP_400_BAD_REQUEST)
+
+        produits = (
+            self.get_queryset()
+            .filter(id__in=product_ids)
+            .prefetch_related('stock_lots', 'promotions')
+        )
+        serializer = self.detail_serializer_class(produits, many=True, context={'request': request})
+        return Response(serializer.data)
+
     @action(detail=False, methods=['post'], url_path='bulk-by-ids')
     def bulk_by_ids(self, request):
         product_ids = request.data.get('ids', [])

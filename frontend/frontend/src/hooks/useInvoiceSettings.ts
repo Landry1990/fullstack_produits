@@ -28,11 +28,11 @@ export function useInvoiceSettings() {
         } catch (err) {
             if (err instanceof Error && err.name === 'CanceledError') return;
             logger.error('Error fetching invoice settings:', err);
-            setError('Erreur lors du chargement des paramètres de facturation');
+            setError(t('facturation:messages.invoice_settings_load_error'));
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [t]);
 
     const updateSettings = useCallback(async (updates: Partial<InvoiceSettings>) => {
         try {

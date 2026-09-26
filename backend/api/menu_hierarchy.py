@@ -115,10 +115,6 @@ MENU_HIERARCHY = [
     {
         'key': 'divers',
         'labelKey': 'sidebar:divers.title',
-        'submenus': [
-            {'key': 'divers_ca', 'labelKey': 'sidebar:divers.ca'},
-            {'key': 'divers_commandes', 'labelKey': 'sidebar:divers.commandes'},
-        ],
     },
     {'key': 'aide_formation', 'labelKey': 'sidebar:aide_formation'},
     {'key': 'perimes', 'labelKey': 'sidebar:stock.perimes.title'},

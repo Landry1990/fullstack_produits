@@ -1,9 +1,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../../services/api';
 import { gooeyToast } from 'goey-toast';
 import { useLicence } from '../../context/LicenceContext';
+import { useDocumentLocale } from '../../context/PharmacySettingsContext';
 import InvoiceTemplate, { type InvoiceData, type PharmacySettings } from './InvoiceTemplate';
 import InventairePrintTemplate, { type InventairePrintData } from './InventairePrintTemplate';
 import StockValuationTemplate, { type StockValuationData } from './StockValuationTemplate';
@@ -14,6 +16,8 @@ import { logger } from '../../utils/logger'
 const PrintPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const { licence } = useLicence();
+    const { lang: docLang } = useDocumentLocale();
+    const { t } = useTranslation(['printing', 'common'], { lng: docLang });
     const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null);
     const [settings, setSettings] = useState<PharmacySettings | null>(null);
     const [loading, setLoading] = useState(true);
@@ -37,7 +41,7 @@ const PrintPage: React.FC = () => {
             const safetyTimeout = setTimeout(() => {
                 if (loading) {
                     logger.error("PrintPage: Fetch timed out");
-                    setError("Délai d'attente dépassé pour le chargement du document. Le catalogue est peut-être trop volumineux, veuillez utiliser un filtre (rayon/forme/groupe).");
+                    setError(t('printing:print_page.timeout_error'));
                     setLoading(false);
                 }
             }, timeoutMs);
@@ -92,7 +96,7 @@ const PrintPage: React.FC = () => {
                       setRecapData(JSON.parse(stored));
                       sessionStorage.removeItem('recap_print_data');
                     } else {
-                      throw new Error('Données du récapitulatif introuvables.');
+                      throw new Error(t('printing:print_page.data_not_found'));
                     }
                 } else {
                     // Default to Invoice
@@ -112,7 +116,7 @@ const PrintPage: React.FC = () => {
             } catch (err) {
                 clearTimeout(safetyTimeout);
                 logger.error("PrintPage: Error fetching print data:", err);
-                setError("Erreur lors du chargement des données. " + (err instanceof Error ? err.message : String(err)));
+                setError(t('printing:print_page.load_error', { detail: err instanceof Error ? err.message : String(err) }));
                 setLoading(false);
             }
         };
@@ -134,7 +138,7 @@ const PrintPage: React.FC = () => {
                 window.print();
             } catch (err) {
                 logger.error("Print execution failed:", err);
-                gooeyToast.error("Impossible de lancer l'impression. Veuillez utiliser le raccourci Ctrl+P.");
+                gooeyToast.error(t('printing:print_page.print_failed'));
             } finally {
                 setIsPrinting(false);
             }
@@ -148,9 +152,9 @@ const PrintPage: React.FC = () => {
     }, []); 
     */
 
-    if (loading) return <div className="flex items-center justify-center h-screen">Chargement du document...</div>;
+    if (loading) return <div className="flex items-center justify-center h-screen">{t('printing:print_page.loading')}</div>;
     if (error) return <div className="flex items-center justify-center h-screen text-error font-bold">{error}</div>;
-    if (!settings || (!invoiceData && !inventoryData && !stockValuationData && !avoirData && !recapData)) return <div>Données incomplètes</div>;
+    if (!settings || (!invoiceData && !inventoryData && !stockValuationData && !avoirData && !recapData)) return <div>{t('printing:print_page.incomplete_data')}</div>;
 
     return (
         <div className="print-page bg-base-200 min-h-screen p-8">
@@ -188,13 +192,13 @@ const PrintPage: React.FC = () => {
                         : 'bg-info hover:bg-info-focus text-white'
                     }`}
                 >
-                    {isPrinting ? 'Impression...' : 'Imprimer'}
+                    {isPrinting ? t('printing:print_page.printing') : t('common:print')}
                 </button>
                 <button 
                     onClick={() => window.close()}
                     className="bg-gray-600 text-white px-6 py-2 rounded-lg shadow-lg hover:bg-gray-700"
                 >
-                    Fermer
+                    {t('common:close')}
                 </button>
             </div>
 

@@ -36,6 +36,7 @@ vi.mock('goey-toast', () => {
 
 // Mock de react-i18next
 vi.mock('react-i18next', () => ({
+  initReactI18next: { type: '3rdParty', init: () => {} },
   useTranslation: () => ({
     t: vi.fn((key: string, options?: unknown) => {
       if (options && typeof options === 'object' && 'defaultValue' in options) {

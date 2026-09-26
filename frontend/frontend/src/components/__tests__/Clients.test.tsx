@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import Clients from '../Clients';
 import clientService from '../../services/clientService';
+import { ConfirmProvider } from '../../hooks/useConfirm';
 
 // Mock libs
 vi.mock('../../services/clientService');
@@ -32,7 +33,7 @@ describe('Clients Component', () => {
   it('renders correctly and displays client list', async () => {
     render(
       <MemoryRouter>
-        <Clients />
+        <ConfirmProvider><Clients /></ConfirmProvider>
       </MemoryRouter>
     );
 
@@ -56,7 +57,7 @@ describe('Clients Component', () => {
 
     render(
       <MemoryRouter>
-        <Clients />
+        <ConfirmProvider><Clients /></ConfirmProvider>
       </MemoryRouter>
     );
 
@@ -73,7 +74,7 @@ describe('Clients Component', () => {
   it('selects a client and displays details', async () => {
     render(
       <MemoryRouter>
-        <Clients />
+        <ConfirmProvider><Clients /></ConfirmProvider>
       </MemoryRouter>
     );
 
@@ -92,7 +93,7 @@ describe('Clients Component', () => {
   it('opens create modal on button click', async () => {
     render(
       <MemoryRouter>
-        <Clients />
+        <ConfirmProvider><Clients /></ConfirmProvider>
       </MemoryRouter>
     );
 

@@ -181,5 +181,8 @@
         "desc": "This action will download the latest version, rebuild the Docker images and restart the containers. The application will be briefly unavailable.",
         "confirm_password": "Confirm your admin password",
         "confirm_btn": "Confirm update"
-    }
+    },
+    "section_import": "IMPORT",
+    "section_export": "EXPORT",
+    "section_purge": "PURGE"
 }

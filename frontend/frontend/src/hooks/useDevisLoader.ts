@@ -54,18 +54,26 @@ export function useDevisLoader({ clientsHook, cart, ui }: UseDevisLoaderOptions)
                 }
 
                 if (devis.produits && devis.produits.length > 0) {
-                    const lignes: LigneFacture[] = await Promise.all((devis.produits as DevisProduit[]).map(async (p) => {
+                    const devisProduits = devis.produits as DevisProduit[]
+                    const missingIds = devisProduits
+                        .filter((p) => !(typeof p.produit === 'object' && p.produit.stock !== undefined))
+                        .map((p) => typeof p.produit === 'object' ? p.produit.id : p.produit)
+
+                    const productMap = new Map<number, ProduitModel>()
+                    if (missingIds.length > 0) {
+                        try {
+                            const { data: fullProducts } = await api.post<ProduitModel[]>('produits/bulk-detail/', { ids: missingIds })
+                            fullProducts.forEach((prod) => productMap.set(prod.id, prod))
+                        } catch { /* fallback individuel géré ci-dessous */ }
+                    }
+
+                    const lignes: LigneFacture[] = devisProduits.map((p) => {
                         let produitData: ProduitModel
                         if (typeof p.produit === 'object' && p.produit.stock !== undefined) {
                             produitData = p.produit
                         } else {
                             const produitId = typeof p.produit === 'object' ? p.produit.id : p.produit
-                            try {
-                                const { data: fullProduct } = await api.get<ProduitModel>(`produits/${produitId}/`)
-                                produitData = fullProduct
-                            } catch {
-                                produitData = { id: produitId, name: p.produit_nom || `Produit #${produitId}`, stock: 0, is_deleted: true } as ProduitModel
-                            }
+                            produitData = productMap.get(produitId) || { id: produitId, name: p.produit_nom || t('messages.product_fallback_name', { id: produitId }), stock: 0, is_deleted: true } as ProduitModel
                         }
                         const lotId = p.stock_lot ? String(p.stock_lot) : (p.lot || null)
                         return {
@@ -81,7 +89,7 @@ export function useDevisLoader({ clientsHook, cart, ui }: UseDevisLoaderOptions)
                             lotSellingPrice: p.selling_price || null,
                             treatment_duration_days: p.treatment_duration_days
                         }
-                    }))
+                    })
                     cart.setLignesFacture(lignes)
                 }
 

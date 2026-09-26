@@ -11,6 +11,9 @@ from datetime import datetime
 
 from django.conf import settings
 from rest_framework import status
+
+from ..audit_helpers import log_audit
+from ..models import AuditLog
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -194,7 +197,19 @@ class CreateBackupView(APIView):
                     continue
             
             logger.info(f"Backup manuel créé: {tables_backed_up} tables")
-            
+
+            try:
+                log_audit(
+                    user=request.user,
+                    action=AuditLog.Action.EXPORT,
+                    model_name='Backup',
+                    object_id=timestamp,
+                    description=f"Sauvegarde manuelle : {tables_backed_up} tables sauvegardées",
+                    request=request,
+                )
+            except Exception:
+                pass
+
             return Response({
                 'success': True,
                 'tables_backed_up': tables_backed_up,
@@ -320,7 +335,19 @@ class RestoreBackupView(APIView):
                 pass
             
             logger.info(f"Restauration réussie: {filename}")
-            
+
+            try:
+                log_audit(
+                    user=request.user,
+                    action=AuditLog.Action.OTHER,
+                    model_name='Backup',
+                    object_id=filename,
+                    description=f"Restauration de la base de données depuis le backup {filename} (type: {backup_type})",
+                    request=request,
+                )
+            except Exception:
+                pass
+
             return Response({
                 'success': True,
                 'message': 'Restauration terminée',
@@ -369,6 +396,18 @@ class DeleteBackupView(APIView):
                         logger.info(f"Backup supprimé: {path}")
                         break
             
+            try:
+                log_audit(
+                    user=request.user,
+                    action=AuditLog.Action.DELETE,
+                    model_name='Backup',
+                    object_id=filename,
+                    description=f"Backup supprimé : {filename}",
+                    request=request,
+                )
+            except Exception:
+                pass
+
             return Response({'success': True, 'message': 'Backup supprimé'})
             
         except Exception as e:

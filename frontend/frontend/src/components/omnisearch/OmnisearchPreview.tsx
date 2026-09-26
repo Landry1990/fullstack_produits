@@ -222,7 +222,7 @@ function FacturePreview({ data, t }: { data?: Facture; t: TFunction }) {
         </div>
         <div>
           <h3 className="text-2xl font-black tracking-tighter text-slate-800 leading-tight">{data.numero_facture}</h3>
-          <p className="text-lg font-bold text-slate-500">{data.client_name || 'Client de passage'}</p>
+          <p className="text-lg font-bold text-slate-500">{data.client_name || t('passerby_client')}</p>
         </div>
       </div>
 
@@ -254,14 +254,14 @@ function FacturePreview({ data, t }: { data?: Facture; t: TFunction }) {
         {produitsDetails && produitsDetails.length > 0 && (
           <div className="space-y-3">
             <h4 className="text-caption font-black uppercase tracking-[0.2em] text-slate-500 px-1">
-              Produits ({produitsDetails.length})
+              {t('omnisearch.groups.products')} ({produitsDetails.length})
             </h4>
             <div className="bg-slate-100/50 rounded-2xl overflow-hidden border border-slate-200">
               {produitsDetails.slice(0, 5).map((p: ProduitDetail) => (
                 <div key={p.nom} className="px-4 py-3 flex items-center justify-between border-b border-slate-200/50 last:border-0 hover:bg-slate-100/80 transition-colors">
                   <div className="flex flex-col gap-0.5">
                     <span className="text-xs font-bold text-slate-800 line-clamp-1">{p.nom}</span>
-                    <span className="text-caption font-bold text-slate-500 uppercase tracking-tight">{Number(p.prix).toLocaleString()} F / unité</span>
+                    <span className="text-caption font-bold text-slate-500 uppercase tracking-tight">{Number(p.prix).toLocaleString()} F / {t('omnisearch.preview.unit', 'unité')}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded flex items-center gap-1">
@@ -273,7 +273,7 @@ function FacturePreview({ data, t }: { data?: Facture; t: TFunction }) {
               ))}
               {produitsDetails.length > 5 && (
                 <div className="px-4 py-2 text-center text-caption text-slate-500 font-bold italic">
-                  ...et {produitsDetails.length - 5} article(s) supplémentaire(s)
+                  {t('omnisearch.preview.more_items', { count: produitsDetails.length - 5, defaultValue: '...et {{count}} article(s) supplémentaire(s)' })}
                 </div>
               )}
             </div>
@@ -296,7 +296,7 @@ function CommandePreview({ data, t }: { data?: Commande; t: TFunction }) {
           <ShoppingCart className="size-10 text-amber-500" />
         </div>
         <div>
-          <h3 className="text-2xl font-black tracking-tighter text-slate-800 leading-tight">{data.fournisseur_nom || 'Grossiste'}</h3>
+          <h3 className="text-2xl font-black tracking-tighter text-slate-800 leading-tight">{data.fournisseur_nom || t('omnisearch.wholesaler', 'Grossiste')}</h3>
           <p className="text-sm font-bold opacity-60 italic">{t('omnisearch.groups.procurements')}</p>
         </div>
       </div>
@@ -325,8 +325,8 @@ function CommandePreview({ data, t }: { data?: Commande; t: TFunction }) {
 
         {produitsDetails && produitsDetails.length > 0 && (
           <div className="p-4 bg-amber-50/50 rounded-2xl border border-amber-200 text-center space-y-1">
-            <p className="text-sm font-bold text-amber-600">{produitsDetails.length} article(s)</p>
-            <p className="text-caption text-slate-500 font-medium italic">Cliquez ou appuyez sur Entrée pour ouvrir le détail</p>
+            <p className="text-sm font-bold text-amber-600">{produitsDetails.length} {t('omnisearch.preview.items')}</p>
+            <p className="text-caption text-slate-500 font-medium italic">{t('omnisearch.preview.open_detail_hint', 'Cliquez ou appuyez sur Entrée pour ouvrir le détail')}</p>
           </div>
         )}
       </div>

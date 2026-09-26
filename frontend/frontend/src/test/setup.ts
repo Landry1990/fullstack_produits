@@ -321,6 +321,7 @@ vi.mock('../context/PharmacySettingsContext', () => {
     PharmacySettingsContext: MockPharmacySettingsContext,
     PharmacySettingsProvider: ({ children }: { children?: React.ReactNode }) => React.createElement(MockPharmacySettingsContext.Provider, { value: mockPharmacySettingsValue }, children),
     usePharmacySettings: () => mockPharmacySettingsValue,
+    useDocumentLocale: () => ({ lang: 'fr', locale: 'fr-FR' }),
   };
 });
 

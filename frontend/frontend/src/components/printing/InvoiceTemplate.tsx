@@ -112,7 +112,7 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
         {/* Left: Pharmacy Info */}
         <div className="flex-1 flex items-start gap-4">
             {settings.logo && (
-              <img src={settings.logo} alt="Logo" className="w-20 h-20 object-contain shrink-0" />
+              <img src={settings.logo} alt={t('common:aria.logo', { defaultValue: 'Logo' })} className="w-20 h-20 object-contain shrink-0" />
             )}
             <div>
             <h1 className="text-2xl font-black uppercase tracking-tight text-base-content mb-1 leading-none">

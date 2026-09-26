@@ -358,6 +358,31 @@ class LigneAvoirViewSet(viewsets.ModelViewSet):
     filterset_fields = ['avoir']
     pagination_class = StandardResultsSetPagination
 
+    @action(detail=False, methods=['post'])
+    @transaction.atomic
+    def bulk_create(self, request):
+        """Crée plusieurs lignes d'avoir en une seule requête."""
+        items = request.data if isinstance(request.data, list) else request.data.get('items')
+        if not isinstance(items, list) or not items:
+            return Response({'detail': "Une liste d'items est requise."}, status=status.HTTP_400_BAD_REQUEST)
+        if len(items) > 500:
+            return Response({'detail': 'Trop de lignes (max 500).'}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = self.get_serializer(data=items, many=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=['post'])
+    @transaction.atomic
+    def bulk_delete(self, request):
+        """Supprime plusieurs lignes d'avoir en une seule requête."""
+        ids = request.data.get('ids', [])
+        if not ids or not isinstance(ids, list):
+            return Response({'detail': "Une liste d'IDs est requise."}, status=status.HTTP_400_BAD_REQUEST)
+        deleted, _ = LigneAvoir.objects.filter(id__in=ids).delete()
+        return Response({'deleted': deleted})
+
     def perform_update(self, serializer):
         with transaction.atomic():
             ligne = serializer.save()

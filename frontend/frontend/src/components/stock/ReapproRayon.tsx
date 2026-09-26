@@ -80,7 +80,7 @@ export default function ReapproRayon() {
         setSelectedIds(new Set());
     } catch (error) {
       logger.error('Error fetching refill needs:', error);
-      gooeyToast.error(t('reappro.messages.error_loading_products'));
+      gooeyToast.error(t('stock:reappro.messages.error_loading_products'));
     } finally {
       setLoading(false);
     }
@@ -141,7 +141,7 @@ export default function ReapproRayon() {
     const suggest = Math.min(needed, produit.stock_reserve ?? 0);
     
     if (suggest <= 0) {
-      gooeyToast.error(t('reappro.messages.no_refill_needed'));
+      gooeyToast.error(t('stock:reappro.messages.no_refill_needed'));
       return;
     }
 
@@ -180,7 +180,7 @@ export default function ReapproRayon() {
     setLoading(true);
     try {
         const res = await produitService.bulkTransferToShelf(ids, sudoCreds);
-        gooeyToast.success(res.detail || t('reappro.messages.bulk_success', { success: ids.length, total: ids.length }));
+        gooeyToast.success(res.detail || t('stock:reappro.messages.bulk_success', { success: ids.length, total: ids.length }));
         
         if (res.session_id) {
             lastSessionIdRef.current = res.session_id;
@@ -221,8 +221,8 @@ export default function ReapproRayon() {
               <Package className="size-6" />
             </div>
             <div>
-                <h1 className="text-2xl font-black text-slate-800 tracking-tight">{t('reappro.title', { defaultValue: 'Réapprovisionnement Rayon' })}</h1>
-                <p className="text-caption font-black text-slate-400 uppercase tracking-widest mt-0.5">{t('reappro.subtitle', { defaultValue: 'Gérer les transferts Réserve → Rayon' })}</p>
+                <h1 className="text-2xl font-black text-slate-800 tracking-tight">{t('stock:reappro.title')}</h1>
+                <p className="text-caption font-black text-slate-400 uppercase tracking-widest mt-0.5">{t('stock:reappro.subtitle')}</p>
             </div>
           </div>
         </div>
@@ -282,7 +282,7 @@ export default function ReapproRayon() {
           </div>
           <div>
             <p className="text-caption font-bold text-slate-400 uppercase tracking-widest">{t('stock:reappro.suggested_volume')}</p>
-            <p className="text-2xl font-black text-slate-800">{stats.totalToTransfer} <small className="text-xs text-slate-400">unités</small></p>
+            <p className="text-2xl font-black text-slate-800">{stats.totalToTransfer} <small className="text-xs text-slate-400">{t('stock:reappro.stats.units')}</small></p>
           </div>
         </div>
         <div className="bg-white shadow-sm border border-slate-200 rounded-2xl p-6 flex flex-row items-center gap-4">
@@ -356,7 +356,7 @@ export default function ReapproRayon() {
                         className="inline-flex items-center h-7 px-3 rounded-lg text-caption font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 transition-colors"
                         onClick={() => setSelectedIds(new Set())}
                     >
-                        Annuler
+                        {t('common:cancel')}
                     </button>
                     <button
                         className="inline-flex items-center h-7 px-4 rounded-lg text-caption font-black uppercase tracking-widest bg-emerald-600 text-white hover:bg-emerald-700 shadow-md transition-colors"
@@ -429,7 +429,7 @@ export default function ReapproRayon() {
                             checked={isSelected}
                             onChange={() => toggleSelect(p.id)}
                             size="sm"
-                            aria-label={`Sélectionner ${p.name ?? p.id}`}
+                            aria-label={t('stock:reappro.select_product_aria', { name: p.name ?? p.id })}
                         />
                       </td>
                       <td className="py-3">
@@ -467,7 +467,7 @@ export default function ReapproRayon() {
                       <td className="text-center py-3">
                         <div className="inline-flex flex-col items-center bg-slate-100 px-3 py-1 rounded-lg border border-slate-200">
                             <span className="text-xs font-black text-slate-700">{p.stock_reserve || 0}</span>
-                            <span className="text-[8px] font-bold uppercase tracking-widest opacity-40">Réserve</span>
+                            <span className="text-[8px] font-bold uppercase tracking-widest opacity-40">{t('stock:reappro.reserve')}</span>
                         </div>
                       </td>
                       <td className="text-center py-3">
@@ -507,7 +507,7 @@ export default function ReapproRayon() {
         {products.length > itemsPerPage && (
             <div className="p-6 border-t border-slate-100 flex items-center justify-between bg-slate-50/10 no-print">
                 <span className="text-caption font-black uppercase tracking-widest text-slate-300">
-                    Page {page} sur {totalPages} ({products.length} produits)
+                    {t('common:pagination.page_info', { page, total: totalPages })} ({products.length} {t('common:products')})
                 </span>
                 <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
                     <button
@@ -555,7 +555,7 @@ export default function ReapproRayon() {
                   <Package className="size-4 text-emerald-600" />
                 </div>
                 <span className="text-sm font-black text-emerald-700">
-                  {pendingIds.length} produit{pendingIds.length > 1 ? 's' : ''} à transférer
+                  {t('stock:reappro.products_to_transfer', { count: pendingIds.length })}
                 </span>
                 <ArrowRight className="size-4 text-emerald-400 ml-auto" />
               </div>
@@ -654,8 +654,8 @@ export default function ReapproRayon() {
         }}
         onValidate={handleSudoValidate}
         saving={sudoSaving}
-        title={t('sudo.title', 'Validation Requise')}
-        message={t('sudo.message', 'Veuillez confirmer votre identité pour effectuer ce transfert de stock groupé.')}
+        title={t('stock:reappro.modal_sudo.title')}
+        message={t('stock:reappro.modal_sudo.message')}
       />
       
       {/* Print Styles */}

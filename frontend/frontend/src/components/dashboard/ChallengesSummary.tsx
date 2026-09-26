@@ -79,12 +79,12 @@ function ChallengeCard({ item, currencySymbol }: { item: ChallengeSummaryItem; c
         <div className="shrink-0 text-right">
           {isEnded ? (
             <Badge variant="outline" className="text-caption text-slate-500">
-              {t('dashboard.manager_dashboard.challenges_ended', 'Terminé')}
+              {t('dashboard:manager_dashboard.challenges_ended', 'Terminé')}
             </Badge>
           ) : (
             <div className="flex items-center gap-1 text-xs font-semibold text-slate-500">
               <CalendarClock className="size-3.5" />
-              {t('dashboard.manager_dashboard.challenges_days_left', '{{count}} jour(s) restant(s)', { count: item.jours_restants })}
+              {t('dashboard:manager_dashboard.challenges_days_left', '{{count}} jour(s) restant(s)', { count: item.jours_restants })}
             </div>
           )}
         </div>
@@ -93,11 +93,11 @@ function ChallengeCard({ item, currencySymbol }: { item: ChallengeSummaryItem; c
       {/* Progress */}
       <div className="mt-4 space-y-1.5">
         <div className="flex justify-between text-xs font-semibold text-slate-400">
-          <span>{t('dashboard.manager_dashboard.challenges_progress', 'Progression globale')}</span>
+          <span>{t('dashboard:manager_dashboard.challenges_progress', 'Progression globale')}</span>
           <span className={hasObjective ? 'text-slate-600' : 'text-slate-400'}>
             {hasObjective
               ? `${item.progression_globale}%`
-              : t('dashboard.manager_dashboard.challenges_no_objective', 'Sans objectif')}
+              : t('dashboard:manager_dashboard.challenges_no_objective', 'Sans objectif')}
           </span>
         </div>
         {hasObjective && (
@@ -111,20 +111,20 @@ function ChallengeCard({ item, currencySymbol }: { item: ChallengeSummaryItem; c
       {/* Top 3 */}
       <div className="mt-4">
         <p className="text-caption font-bold uppercase tracking-widest text-slate-400 mb-2">
-          {t('dashboard.manager_dashboard.challenges_top3', 'Top 3')}
+          {t('dashboard:manager_dashboard.challenges_top3', 'Top 3')}
         </p>
         {item.top3.length > 0 ? (
           <Table>
             <TableHeader>
               <TableRow className="border-slate-100 hover:bg-transparent">
                 <TableHead className="h-7 py-1 px-2 text-caption font-bold uppercase tracking-wider text-slate-400 w-8">
-                  {t('dashboard.manager_dashboard.challenges_rank', 'Rang')}
+                  {t('dashboard:manager_dashboard.challenges_rank', 'Rang')}
                 </TableHead>
                 <TableHead className="h-7 py-1 px-2 text-caption font-bold uppercase tracking-wider text-slate-400">
-                  {t('dashboard.manager_dashboard.challenges_participant', 'Participant')}
+                  {t('dashboard:manager_dashboard.challenges_participant', 'Participant')}
                 </TableHead>
                 <TableHead className="h-7 py-1 px-2 text-caption font-bold uppercase tracking-wider text-slate-400 text-right">
-                  {t('dashboard.manager_dashboard.challenges_value', 'Valeur')}
+                  {t('dashboard:manager_dashboard.challenges_value', 'Valeur')}
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -154,7 +154,7 @@ function ChallengeCard({ item, currencySymbol }: { item: ChallengeSummaryItem; c
           <EmptyState
             compact
             icon={<Trophy className="size-6" />}
-            title={<span className="text-xs italic font-normal">{t('dashboard.manager_dashboard.challenges_no_ranking', 'Aucun classement disponible')}</span>}
+            title={<span className="text-xs italic font-normal">{t('dashboard:manager_dashboard.challenges_no_ranking', 'Aucun classement disponible')}</span>}
             className="py-2"
           />
         )}
@@ -180,10 +180,10 @@ export function ChallengesSummary() {
             </div>
             <div>
               <CardTitle className="text-base font-bold">
-                {t('dashboard.manager_dashboard.challenges_title', 'Challenges en cours')}
+                {t('dashboard:manager_dashboard.challenges_title', 'Challenges en cours')}
               </CardTitle>
               <CardDescription>
-                {t('dashboard.manager_dashboard.challenges_subtitle', 'Suivi des défis commerciaux actifs')}
+                {t('dashboard:manager_dashboard.challenges_subtitle', 'Suivi des défis commerciaux actifs')}
               </CardDescription>
             </div>
           </div>
@@ -194,7 +194,7 @@ export function ChallengesSummary() {
               className="gap-1 rounded-lg text-xs"
               onClick={() => navigate('/app/challenges')}
             >
-              {t('dashboard.manager_dashboard.challenges_view_all', 'Voir tous les challenges')}
+              {t('dashboard:manager_dashboard.challenges_view_all', 'Voir tous les challenges')}
               <ChevronRight className="size-3.5" />
             </Button>
           )}
@@ -215,8 +215,8 @@ export function ChallengesSummary() {
         ) : (
           <EmptyState
             icon={<Trophy className="size-8" />}
-            title={t('dashboard.manager_dashboard.challenges_empty', 'Aucun challenge en cours')}
-            description={t('dashboard.manager_dashboard.challenges_empty_desc', 'Créez un challenge pour suivre les performances de vos équipes')}
+            title={t('dashboard:manager_dashboard.challenges_empty', 'Aucun challenge en cours')}
+            description={t('dashboard:manager_dashboard.challenges_empty_desc', 'Créez un challenge pour suivre les performances de vos équipes')}
             className="py-10"
             action={
               <Button
@@ -226,7 +226,7 @@ export function ChallengesSummary() {
                 onClick={() => navigate('/app/challenges')}
               >
                 <Trophy className="size-4" />
-                {t('dashboard.manager_dashboard.challenges_view_all', 'Voir tous les challenges')}
+                {t('dashboard:manager_dashboard.challenges_view_all', 'Voir tous les challenges')}
               </Button>
             }
           />

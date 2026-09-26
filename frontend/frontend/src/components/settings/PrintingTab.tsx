@@ -25,7 +25,7 @@ export function PrintingTab({ formData, handleChange, t, invSettings, updateInvS
               <textarea
                 value={formData.receipt_header || ''}
                 onChange={(e) => handleChange('receipt_header', e.target.value)}
-                className="w-full rounded-xl p-4 transition-all leading-relaxed"
+                className="w-full rounded-xl p-4 transition-all leading-relaxed normal-case"
                 rows={4}
                 placeholder={t('placeholders.receipt_header')}
               />
@@ -43,7 +43,7 @@ export function PrintingTab({ formData, handleChange, t, invSettings, updateInvS
               <textarea
                 value={formData.ticket_footer_message || ''}
                 onChange={(e) => handleChange('ticket_footer_message', e.target.value)}
-                className="w-full rounded-xl p-4 transition-all"
+                className="w-full rounded-xl p-4 transition-all normal-case"
                 rows={3}
                 placeholder={t('placeholders.ticket_footer')}
               />

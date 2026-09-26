@@ -209,7 +209,7 @@ export function useCart({ onRequirePrescription, onAlert, onSubstitution, onForc
                     if (conflict) {
                         setTimeout(() => {
                             gooeyToast.error(
-                                `⚠️ Interaction / Redondance\n${fullProduit.name} est de la même famille (${fullProduit.famille_risque_nom}) que ${conflict.produit.name} déjà présent.`,
+                                t('facturation:messages.interaction_warning', { name: fullProduit.name, family: fullProduit.famille_risque_nom, conflict: conflict.produit.name }),
                                 { duration: 6000, position: 'top-center', style: { border: '2px solid #fbbd23', background: '#fff', color: '#333', maxWidth: '400px' }, icon: '⚠️' }
                             )
                         }, 100)
@@ -308,7 +308,7 @@ export function useCart({ onRequirePrescription, onAlert, onSubstitution, onForc
 
         // Vérifier les permissions pour les retours (quantité négative)
         if (finalQuantite < 0 && !user?.can_do_returns) {
-            const msg = "Vous n'avez pas la permission d'effectuer des retours (quantités négatives)."
+            const msg = t('facturation:messages.no_returns_permission')
             gooeyToast.error(msg)
             if (callback) callback(msg)
             return

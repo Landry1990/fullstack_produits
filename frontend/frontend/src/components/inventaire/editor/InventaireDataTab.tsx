@@ -225,7 +225,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                                                 className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
                                                 checked={selectedLines.has(l.id)}
                                                 onChange={() => toggleSelectLine(l.id)}
-                                                aria-label={`Sélectionner ${l.produit_nom || getProduitName(l.produit)}`}
+                                                aria-label={t('stock:reappro.select_product_aria', { name: l.produit_nom || getProduitName(l.produit) })}
                                             />
                                         </div>
                                     )}

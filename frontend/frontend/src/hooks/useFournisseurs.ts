@@ -182,9 +182,9 @@ export function useFournisseurs() {
       const axiosErr = err as { code?: string; response?: { data?: { message?: string } }; message?: string };
       if (axiosErr?.code === 'ERR_CANCELED') return;
       if (axiosErr?.response) {
-        setError(axiosErr.response?.data?.message ?? axiosErr.message ?? 'Erreur réseau');
+        setError(axiosErr.response?.data?.message ?? axiosErr.message ?? t('common:errors.connection'));
       } else {
-        setError(t('providers:messages.load_error') || 'Erreur inconnue lors du chargement des fournisseurs');
+        setError(t('providers:messages.load_error'));
       }
     }
   }, [showInactive, currentPage, debouncedSearch, t]);
@@ -272,7 +272,7 @@ export function useFournisseurs() {
   }
 
   function formatBackendErrors(data: unknown): string {
-    if (data == null) return t('common:unknown_error') || 'Erreur inconnue du serveur';
+    if (data == null) return t('common:errors.unknown');
     if (typeof data === 'string') return data;
     if (typeof data === 'object') {
       try {
@@ -355,7 +355,7 @@ export function useFournisseurs() {
         if (axiosErr.response?.status === 500 || (axiosErr.response?.data?.detail && String(axiosErr.response.data.detail).includes('protected'))) {
              gooeyToast.error(t('providers:messages.delete_protected'));
         } else {
-             const msg = axiosErr.response?.data?.message ?? axiosErr.message ?? t('common:network_error');
+             const msg = axiosErr.response?.data?.message ?? axiosErr.message ?? t('common:errors.connection');
              gooeyToast.error(t('common:messages.error_with_message', { message: msg }));
         }
       } else {

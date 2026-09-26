@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { Button } from './shadcn/button';
 import { EmptyState } from './ui/EmptyState';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 
 interface Video {
@@ -205,7 +205,7 @@ const HelpTraining = () => {
               <div className="mt-4 pt-4 border-t border-base-200">
                 <div className="flex items-center gap-2 px-2 mb-3">
                   <Lightbulb className="size-4 text-amber-400" />
-                  <span className="text-caption font-black uppercase tracking-widest text-base-content/30">Astuces</span>
+                  <span className="text-caption font-black uppercase tracking-widest text-base-content/30">{t('help:tips.title')}</span>
                 </div>
                 <div className="space-y-2">
 
@@ -215,37 +215,37 @@ const HelpTraining = () => {
                       <Activity className="size-3.5 text-emerald-500 mt-0.5 shrink-0" />
                       <div>
                         <p className="text-label font-bold text-emerald-700 leading-tight mb-1">
-                          Score de Santé du Stock (Pilotage Expert)
+                          {t('help:tips.score_title')}
                         </p>
                         <p className="text-caption text-emerald-700/70 leading-snug mb-1.5">
-                          Le score est calculé automatiquement sur <strong>5 critères</strong>, chacun avec un poids différent :
+                          <Trans i18nKey="tips.score_intro" ns="help" components={[<strong key="s" />]} />
                         </p>
                         <div className="space-y-1">
                           <div className="flex items-center gap-1.5">
                             <span className="font-mono text-caption font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded w-8 text-center">30</span>
-                            <span className="text-caption text-emerald-700/80"><strong>Disponibilité</strong> — peu de ruptures de stock</span>
+                            <span className="text-caption text-emerald-700/80"><Trans i18nKey="tips.crit_availability" ns="help" components={[<strong key="s" />]} /></span>
                           </div>
                           <div className="flex items-center gap-1.5">
                             <span className="font-mono text-caption font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded w-8 text-center">25</span>
-                            <span className="text-caption text-emerald-700/80"><strong>Fluidité</strong> — pas de stock dormant sur produits actifs</span>
+                            <span className="text-caption text-emerald-700/80"><Trans i18nKey="tips.crit_fluidity" ns="help" components={[<strong key="s" />]} /></span>
                           </div>
                           <div className="flex items-center gap-1.5">
                             <span className="font-mono text-caption font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded w-8 text-center">20</span>
-                            <span className="text-caption text-emerald-700/80"><strong>Couverture</strong> — stock entre 15 et 90 jours de ventes</span>
+                            <span className="text-caption text-emerald-700/80"><Trans i18nKey="tips.crit_coverage" ns="help" components={[<strong key="s" />]} /></span>
                           </div>
                           <div className="flex items-center gap-1.5">
                             <span className="font-mono text-caption font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded w-8 text-center">15</span>
-                            <span className="text-caption text-emerald-700/80"><strong>Activité</strong> — produits vendus dans les 30 derniers jours</span>
+                            <span className="text-caption text-emerald-700/80"><Trans i18nKey="tips.crit_activity" ns="help" components={[<strong key="s" />]} /></span>
                           </div>
                           <div className="flex items-center gap-1.5">
                             <span className="font-mono text-caption font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded w-8 text-center">10</span>
-                            <span className="text-caption text-emerald-700/80"><strong>Immobilisation</strong> — peu de capital bloqué en stock mort</span>
+                            <span className="text-caption text-emerald-700/80"><Trans i18nKey="tips.crit_immobilization" ns="help" components={[<strong key="s" />]} /></span>
                           </div>
                         </div>
                         <div className="mt-2 pt-1.5 border-t border-emerald-200 flex gap-2 flex-wrap">
-                          <span className="text-caption bg-emerald-500 text-white px-1.5 py-0.5 rounded font-bold">&ge; 80% Bon</span>
-                          <span className="text-caption bg-amber-400 text-white px-1.5 py-0.5 rounded font-bold">50–79% Moyen</span>
-                          <span className="text-caption bg-red-400 text-white px-1.5 py-0.5 rounded font-bold">&lt; 50% Critique</span>
+                          <span className="text-caption bg-emerald-500 text-white px-1.5 py-0.5 rounded font-bold">{t('help:tips.score_good')}</span>
+                          <span className="text-caption bg-amber-400 text-white px-1.5 py-0.5 rounded font-bold">{t('help:tips.score_medium')}</span>
+                          <span className="text-caption bg-red-400 text-white px-1.5 py-0.5 rounded font-bold">{t('help:tips.score_critical')}</span>
                         </div>
                       </div>
                     </div>
@@ -257,14 +257,13 @@ const HelpTraining = () => {
                       <Printer className="size-3.5 text-amber-500 mt-0.5 shrink-0" />
                       <div>
                         <p className="text-label font-bold text-amber-700 leading-tight mb-1">
-                          Impression Rapport Mensuel
+                          {t('help:tips.print_title')}
                         </p>
                         <p className="text-caption text-amber-600/80 leading-snug">
-                          Pour économiser l'encre, utiliser le bouton <strong>«&nbsp;PDF&nbsp;»</strong> plutôt que Ctrl+P.
-                          Le PDF est généré en noir et blanc sans fonds colorés.
+                          <Trans i18nKey="tips.print_ink_tip" ns="help" components={[<strong key="s" />]} />
                         </p>
                         <p className="text-caption text-amber-600/80 leading-snug mt-1">
-                          Si vous imprimez depuis le navigateur&nbsp;: décocher <strong>«&nbsp;Graphiques en arrière-plan&nbsp;»</strong> dans les options d'impression.
+                          <Trans i18nKey="tips.print_browser_tip" ns="help" components={[<strong key="s" />]} />
                         </p>
                       </div>
                     </div>

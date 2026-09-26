@@ -359,7 +359,7 @@ export function CommandeProductRow({
                         onKeyDown={(e) => handleTableFieldKeyDown(e, index, (commandeType === 'DIR' ? 8 : 7))}
                         onFocus={handleSelectAll}
                         className={`h-8 px-2 text-xs font-medium w-full focus:bg-white ${!fieldsConfig[7].editable ? 'bg-slate-100 cursor-not-allowed' : ''} ${p.date_expiration && !/^(0[1-9]|1[0-2])\/\d{2}$/.test(p.date_expiration) ? 'border-red-500 text-red-600' : ''}`}
-                        placeholder="MM/YY"
+                        placeholder={t('orders:product_table.expiry_placeholder')}
                         maxLength={5}
                         autoFocus={focusedField?.row === index && focusedField?.field === 7}
                         readOnly={!fieldsConfig[7].editable}

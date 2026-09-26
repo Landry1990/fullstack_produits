@@ -109,7 +109,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                                     className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
                                     checked={selectedIds.has(inv.id)}
                                     onChange={() => onSelect(inv.id)}
-                                    aria-label={`Sélectionner inventaire #${inv.id}`}
+                                    aria-label={t('stock:inventaire.list.select_item', { id: inv.id })}
                                 />
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">

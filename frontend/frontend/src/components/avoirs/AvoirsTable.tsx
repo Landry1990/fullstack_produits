@@ -122,7 +122,7 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                     <TableHeader className="sticky top-0 z-10">
                         <TableRow className="bg-slate-50 border-b border-slate-100 hover:bg-slate-50">
                             <TableHead className="w-12 px-3 py-2 text-center text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                <span className="sr-only">Sélection</span>
+                                <span className="sr-only">{t('common:single_selection')}</span>
                             </TableHead>
                             <TableHead className="w-28 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-left">{t('stock:avoirs.table.date')}</TableHead>
                             <TableHead className="w-36 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-left">{t('stock:avoirs.table.numero')}</TableHead>

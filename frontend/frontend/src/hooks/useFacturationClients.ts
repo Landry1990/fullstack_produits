@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDebounce } from 'use-debounce'
 import { isCancel } from 'axios'
@@ -8,9 +8,15 @@ import type { Client, AyantDroit } from '../types'
 import { facturationClientCreateSchema } from '../schemas/clientSchema'
 import { logger } from '../utils/logger'
 
-export function useFacturationClients() {
+interface UseFacturationClientsOptions {
+    onClientCreated?: () => void
+}
+
+export function useFacturationClients({ onClientCreated }: UseFacturationClientsOptions = {}) {
     const { t } = useTranslation(['facturation', 'common'])
     const [clients, setClients] = useState<Client[]>([])
+    const pinnedClientRef = useRef<Client | null>(null)
+    const clientRequestIdRef = useRef(0)
     const [loading, setLoading] = useState(false)
     const [selectedClient, setSelectedClient] = useState<number | null>(null)
     const [manualClientName, setManualClientName] = useState('')
@@ -49,23 +55,29 @@ export function useFacturationClients() {
 
     // Load clients
     const fetchClients = useCallback(async (signal?: AbortSignal) => {
+        const requestId = ++clientRequestIdRef.current
         const query = debouncedSearch.trim()
         if (query.length > 0 && query.length < 2) {
+            setLoading(false)
             return
         }
         setLoading(true)
         try {
             const filters = query ? { search: query, page_size: 50 } : { page_size: 50 }
-            const data = await clientService.getAll(filters, false, signal) as unknown as Client[] | { results?: Client[] }
+            const data = await clientService.getAll(filters, query.length > 0, signal) as unknown as Client[] | { results?: Client[] }
+            if (requestId !== clientRequestIdRef.current) return
             const clientsData = Array.isArray(data) ? data : (data.results || [])
             const loadedClients = clientsData || []
-            setClients(loadedClients)
+            const pinnedClient = pinnedClientRef.current
+            setClients(pinnedClient && !loadedClients.some(client => client.id === pinnedClient.id)
+                ? [...loadedClients, pinnedClient].sort((a, b) => a.name.localeCompare(b.name))
+                : loadedClients)
         } catch (error) {
-            if (isCancel(error)) return
+            if (isCancel(error) || requestId !== clientRequestIdRef.current) return
             logger.error('Erreur chargement clients:', error)
             gooeyToast.error(t('messages.client_load_error'))
         } finally {
-            setLoading(false)
+            if (requestId === clientRequestIdRef.current) setLoading(false)
         }
     }, [debouncedSearch, t])
 
@@ -249,13 +261,17 @@ export function useFacturationClients() {
             };
             const createdClient = await clientService.create(payload)
 
-            const updatedClients = [...clients, createdClient].slice().sort((a, b) => a.name.localeCompare(b.name))
-            setClients(updatedClients)
+            pinnedClientRef.current = createdClient
+            setClients(prev => prev.some(client => client.id === createdClient.id)
+                ? prev
+                : [...prev, createdClient].sort((a, b) => a.name.localeCompare(b.name)))
             setSelectedClient(createdClient.id)
             setUseManualClient(false)
             setManualClientName('')
-            setShowClientCreateModal(false)
+            setShowClientDropdown(false)
             setClientSearch('')
+            setShowClientCreateModal(false)
+            onClientCreated?.()
 
             setNewClientForm({
                 name: '',

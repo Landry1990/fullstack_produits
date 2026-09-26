@@ -172,6 +172,7 @@ const ReconditionnementModal: React.FC<ReconditionnementModalProps> = ({
           </DialogTitle>
           <DialogDescription>
             {t('orders:reconditionnement.subtitle', {
+              numero: commandeNumero,
               defaultValue: `Commande #${commandeNumero} — produits reçus pouvant être reconditionnés`,
             })}
           </DialogDescription>

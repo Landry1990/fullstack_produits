@@ -49,5 +49,19 @@
         "total_remise": "Remise",
         "total_ttc": "TOTAL TTC",
         "footer": "Ce document est un récapitulatif non comptable généré à la demande du client."
-    }
+    },
+    "document_title": "RÉCAPITULATIF",
+    "tickets_label": "ticket(s)",
+    "details_title": "Détails",
+    "generated_on": "Généré le",
+    "period": "Période",
+    "nb_tickets": "Nb. tickets",
+    "col_ticket": "Ticket",
+    "col_pu": "P.U. TTC",
+    "col_total": "Total",
+    "cancelled_label": "ANNULÉ",
+    "non_accounting": "Document non comptable",
+    "note_title": "Note",
+    "note_body": "Ce document est un récapitulatif des achats établi à la demande du client. Il ne constitue pas une facture au sens comptable.",
+    "total_label": "TOTAL GÉNÉRAL"
 }

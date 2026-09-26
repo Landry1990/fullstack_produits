@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Package, RotateCcw } from 'lucide-react'
 import { useStockLots } from '../hooks/useStockLots'
 import { formatPrice } from '../utils/formatters'
@@ -25,6 +26,7 @@ export default function LotSelectionModal({
   currentAllocations,
   onSelectAllocations,
 }: LotSelectionModalProps) {
+  const { t } = useTranslation(['stock', 'common'])
   const { lots, loading, error } = useStockLots(produit?.id || null)
   const [isAuto, setIsAuto] = useState(!currentAllocations)
   const [allocations, setAllocations] = useState<LotAllocation[]>(currentAllocations || [])
@@ -97,8 +99,8 @@ export default function LotSelectionModal({
     <PremiumModal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Répartition des lots`}
-      subtitle={`${produit.name} — Qté: ${quantity}`}
+      title={t('stock:lot_selection.title')}
+      subtitle={t('stock:lot_selection.subtitle', { name: produit.name, qty: quantity })}
       icon={<Package className="size-5 text-blue-500" />}
       gradientFrom="blue-50"
       gradientTo="indigo-50"
@@ -133,8 +135,8 @@ export default function LotSelectionModal({
                 {isAuto && <div className="size-2 bg-blue-600 rounded-full"></div>}
               </div>
               <div className="flex-1">
-                <div className="font-bold text-sm text-blue-700">🚀 AUTOMATIQUE (FEFO)</div>
-                <div className="text-xs text-slate-500">Le système choisira automatiquement les lots expirant le plus tôt.</div>
+                <div className="font-bold text-sm text-blue-700">🚀 {t('stock:lot_selection.auto_fefo')}</div>
+                <div className="text-xs text-slate-500">{t('stock:lot_selection.auto_fefo_desc')}</div>
               </div>
             </div>
 
@@ -142,11 +144,11 @@ export default function LotSelectionModal({
               <table className="w-full text-sm">
                 <thead className="bg-slate-100/50">
                   <tr className="text-left text-xs font-bold uppercase tracking-wider text-slate-500">
-                    <th className="px-4 py-3">Lot</th>
-                    <th className="px-4 py-3">Expiration</th>
-                    <th className="px-4 py-3 text-right">Stock</th>
-                    <th className="px-4 py-3 text-right">Prix</th>
-                    <th className="px-4 py-3 text-center w-32">Qté</th>
+                    <th className="px-4 py-3">{t('stock:lot_selection.col_lot')}</th>
+                    <th className="px-4 py-3">{t('stock:lot_selection.col_expiry')}</th>
+                    <th className="px-4 py-3 text-right">{t('stock:lot_selection.col_stock')}</th>
+                    <th className="px-4 py-3 text-right">{t('stock:lot_selection.col_price')}</th>
+                    <th className="px-4 py-3 text-center w-32">{t('stock:lot_selection.col_qty')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -166,7 +168,7 @@ export default function LotSelectionModal({
                       <tr key={lot.id} className={`${isAuto ? 'opacity-60' : 'hover:bg-slate-50'}`}>
                         <td className="px-4 py-3">
                           <div className="font-medium text-slate-800">{lot.lot}</div>
-                          <div className="text-xs text-slate-400">Reçu le {formatDate(lot.date_reception)}</div>
+                          <div className="text-xs text-slate-400">{t('stock:lot_selection.received_on', { date: formatDate(lot.date_reception) })}</div>
                         </td>
                         <td className={`px-4 py-3 font-medium ${expiryColor}`}>
                           {lot.date_expiration ? (() => { const d = new Date(lot.date_expiration); return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`; })() : 'N/A'}
@@ -178,7 +180,7 @@ export default function LotSelectionModal({
                             type="number"
                             min={0}
                             max={lot.quantity_remaining}
-                            aria-label={`Quantité lot ${lot.lot}`}
+                            aria-label={t('stock:lot_selection.qty_lot_aria', { lot: lot.lot })}
                             value={allocatedQty || ''}
                             onChange={(e) => handleQuantityChange(lot.id, e.target.value)}
                             className="w-20 px-2 py-1 text-sm text-center border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -192,7 +194,7 @@ export default function LotSelectionModal({
 
               {lots.length === 0 && (
                 <div className="text-center py-4 text-slate-400 italic text-sm">
-                  Aucun lot spécifique disponible. Le stock global sera utilisé.
+                  {t('stock:lot_selection.no_specific_lot')}
                 </div>
               )}
             </div>
@@ -200,13 +202,13 @@ export default function LotSelectionModal({
             {/* Résumé */}
             <div className="mt-3 flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
               <div className="text-sm">
-                <span className="font-medium text-slate-600">Alloué: </span>
+                <span className="font-medium text-slate-600">{t('stock:lot_selection.allocated')} </span>
                 <span className={`font-bold ${isValid ? 'text-emerald-600' : 'text-amber-600'}`}>{totalAllocated}</span>
                 <span className="text-slate-500"> / {quantity}</span>
               </div>
               {!isValid && !isAuto && (
                 <div className="text-xs font-medium text-amber-600">
-                  {remaining > 0 ? `Il manque ${remaining} unité(s)` : `Excès de ${-remaining} unité(s)`}
+                  {remaining > 0 ? t('stock:lot_selection.missing_units', { count: remaining }) : t('stock:lot_selection.excess_units', { count: -remaining })}
                 </div>
               )}
             </div>
@@ -221,14 +223,14 @@ export default function LotSelectionModal({
             type="button"
           >
             <RotateCcw className="size-4" />
-            FEFO
+            {t('stock:lot_selection.fefo')}
           </button>
           <button
             className="px-6 py-2.5 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
             onClick={onClose}
             type="button"
           >
-            Fermer
+            {t('common:close')}
           </button>
           <button
             className="px-6 py-2.5 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -236,7 +238,7 @@ export default function LotSelectionModal({
             disabled={!isAuto && !isValid}
             type="button"
           >
-            Valider
+            {t('common:validate')}
           </button>
         </div>
       </div>

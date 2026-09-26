@@ -1,14 +1,15 @@
 import { z } from 'zod';
+import i18n from '../i18n';
 
 export const productSchema = z.object({
-  name: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
+  name: z.string().min(2, { error: () => i18n.t('products:form.validation.name_min') }),
   cip1: z.string().optional().nullable(),
   cip2: z.string().optional().nullable(),
   cip3: z.string().optional().nullable(),
   cip4: z.string().optional().nullable(),
   
-  selling_price: z.coerce.number().positive("Le prix de vente doit être positif"),
-  cost_price: z.coerce.number().min(0, "Le prix d'achat ne peut pas être négatif"),
+  selling_price: z.coerce.number().positive({ error: () => i18n.t('products:form.validation.selling_price_positive') }),
+  cost_price: z.coerce.number().min(0, { error: () => i18n.t('products:form.validation.cost_price_negative') }),
   
   tva: z.coerce.number().min(0).max(100).default(0),
   
@@ -42,7 +43,7 @@ export const productSchema = z.object({
   code_atc: z.string().optional().nullable(),
   substance_active: z.string().optional().nullable(),
 }).refine((data) => data.selling_price >= data.cost_price, {
-  message: "Le prix de vente doit être supérieur ou égal au prix d'achat",
+  error: () => i18n.t('products:form.validation.selling_below_cost'),
   path: ["selling_price"],
 });
 

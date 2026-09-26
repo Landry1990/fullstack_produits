@@ -2,9 +2,15 @@
     "divers": {
         "title": "Miscellaneous Management",
         "revenue_tab": "Revenue",
+        "revenue_description": "Track miscellaneous product sales and performance",
+        "revenue_tab_hint": "Sales and performance",
         "imported_products_management": "Miscellaneous products management",
         "orders_tab": "Orders",
+        "orders_description": "Manage miscellaneous product replenishment orders",
+        "orders_tab_hint": "Replenishment",
         "stock_tab": "Stock",
+        "stock_description": "Analyze and value miscellaneous product stock",
+        "stock_tab_hint": "Value and breakdown",
         "revenue": "Total Revenue",
         "period_from": "Period from",
         "to": "to",
@@ -35,10 +41,16 @@
             "base_ht": "Base HT",
             "vat_amount": "VAT Amount",
             "total_ttc": "Total TTC",
-            "section": "Section"
+            "section": "Section",
+            "remaining_qty": "Remaining qty",
+            "expiry": "Expiry"
         },
         "vat_breakdown": "Breakdown by VAT rate",
         "section_breakdown": "Breakdown by section",
+        "lot_details": "Remaining divers lot details",
+        "export_excel": "Export Excel",
+        "unclassified": "Unclassified",
+        "no_expiry": "—",
         "to_date": "to",
         "daily_sales_title": "Sales by day",
         "detail_of": "Detail of",
@@ -57,7 +69,11 @@
         "daily_products": "Products",
         "daily_qty": "Qty",
         "daily_invoices": "Invoices",
-        "daily_total_ca": "Total Revenue"
+        "daily_total_ca": "Total Revenue",
+        "sheet_ca": "Misc revenue",
+        "sheet_sales": "Misc sales",
+        "sheet_lots": "Misc lots",
+        "not_available": "N/A"
     },
     "title_local": "Local Orders Management",
     "title_direct": "Direct Orders Management (Import)",
@@ -214,7 +230,9 @@
         "pagination": {
             "showing": "Showing {{count}} of {{total}} orders"
         },
-        "clear_search": "Clear search"
+        "clear_search": "Clear search",
+        "search_placeholder": "Search (invoice no., ID)…",
+        "select_order": "Select order #{{id}}"
     },
     "details": {
         "title": "Order #{{id}}",
@@ -260,7 +278,8 @@
         "shortcuts": {
             "search": "Search",
             "provider": "Supplier",
-            "select_all": "Select all"
+            "select_all": "Select all",
+            "shift_enter": "Shift+Enter"
         },
         "provider_label": "Supplier",
         "provider_placeholder": "Select a supplier",
@@ -309,6 +328,7 @@
         "min": "Min",
         "max": "Max",
         "search_placeholder": "Search for a product...",
+        "expiry_placeholder": "MM/YY",
         "sort_options": {
             "chrono": "Chronological",
             "stock": "Stock Quantity",
@@ -630,8 +650,8 @@
     "price_selling_ttc": "SELLING PRICE TTC",
     "margin": "MARGIN",
     "reconditionnement": {
-        "title": "Repackaging",
-        "subtitle": "Select transformations to apply",
+        "title": "Automatic Repackaging",
+        "subtitle": "Order #{{numero}} — received products that can be repackaged",
         "results": "Results",
         "errors": "Errors",
         "no_transformations": "No transformations available",
@@ -640,6 +660,6 @@
         "selected_count": "{{count}} selected",
         "units": "units",
         "skip": "Skip",
-        "confirm": "Confirm"
+        "confirm": "Repackage"
     }
 }

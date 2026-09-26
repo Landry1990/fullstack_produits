@@ -140,6 +140,18 @@
         "livre_caisse": {
             "name": "Livre de Caisse",
             "description": "Récapitulatif journalier des mouvements de caisse par rubrique (Excel)"
+        },
+        "recap_valeur_stock": {
+            "name": "Récapitulatif Valeur Stock",
+            "description": "Valeur totale HT, TVA, TTC et répartition détaillée par taux"
+        },
+        "ventes_operateur_lots": {
+            "name": "Ventes par Opérateur (Lots)",
+            "description": "Produits vendus par opérateur avec lot, date de péremption, quantité, facture, remise"
+        },
+        "rapport_fiscal_mensuel": {
+            "name": "Rapport Fiscal Mensuel",
+            "description": "Accompte sur CA + Précompte sur achats (Réel/Simplifié, Marge administrée)"
         }
     },
     "stock_valuation": {
@@ -177,7 +189,16 @@
         "pdf_total_ttc": "Total TTC",
         "pdf_total": "TOTAL",
         "pdf_group_breakdown_title": "RÉPARTITION PAR {{group}}",
-        "pdf_footer": "Récapitulatif Valeur Stock"
+        "pdf_footer": "Récapitulatif Valeur Stock",
+        "unavailable_data": "Données indisponibles",
+        "generating": "Génération...",
+        "download_pdf": "Télécharger PDF",
+        "method_label": "Méthode",
+        "tva_section_title": "Répartition par taux de TVA",
+        "tva_table_amount": "Montant TVA",
+        "group_section_title": "Répartition par {{group}}",
+        "note_screen_pmp": "Note : Cette valorisation est fondée sur le PMP stocké en base.",
+        "note_screen_vente": "Note : Cette valorisation est fondée sur les prix de vente publics actuels."
     },
     "monthly_pdf": {
         "title": "RAPPORT D'ACTIVITÉ",
@@ -226,7 +247,8 @@
         "fields": "Colonnes à inclure",
         "group_by": "Grouper par",
         "sort_by": "Trier par",
-        "sort_order": "Ordre de tri"
+        "sort_order": "Ordre de tri",
+        "poste_caisse_id": "Poste de caisse"
     },
     "results": {
         "title": "Résultats",
@@ -430,12 +452,29 @@
             "group_by": {
                 "": "— Aucun groupement —",
                 "Produit": "Produit",
-                "Famille": "Famille"
+                "Famille": "Famille",
+                "Rayon": "Rayon",
+                "Forme": "Forme",
+                "Fournisseur": "Fournisseur",
+                "Client": "Client",
+                "Vendeur": "Vendeur",
+                "TVA (%)": "Taux TVA",
+                "Code CIP": "Code CIP"
             },
             "sort_by": {
                 "": "— Défaut —",
                 "Total HT": "Total HT",
-                "Marge Brute": "Marge Brute"
+                "Marge Brute": "Marge Brute",
+                "Marge (%)": "Marge (%)",
+                "Quantité": "Quantité",
+                "Prix Vente": "Prix Vente",
+                "Coût Achat": "Coût Achat",
+                "P": {
+                    "U Achat": "P.U Achat"
+                },
+                "Produit": "Produit (A→Z)",
+                "Date": "Date",
+                "Réception": "Date Réception"
             },
             "sort_order": {
                 "desc": "Décroissant (↓)",
@@ -457,7 +496,22 @@
                 "marge": "Marge Brute",
                 "pourcentage_marge": "Marge (%)",
                 "tva": "TVA (%)",
-                "stock_minimum": "Stock Min"
+                "stock_minimum": "Stock Min",
+                "famille": "Famille",
+                "rayon": "Rayon",
+                "forme": "Forme"
+            }
+        },
+        "recap_valeur_stock": {
+            "valorisation": {
+                "ACHAT": "Prix d'Achat (PMP)",
+                "VENTE": "Prix de Vente"
+            },
+            "group_by": {
+                "": "Aucun (Global)",
+                "rayon": "Rayon",
+                "forme": "Forme",
+                "groupe": "Groupe"
             }
         }
     }

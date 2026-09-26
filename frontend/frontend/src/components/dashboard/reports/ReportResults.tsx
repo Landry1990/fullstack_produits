@@ -189,7 +189,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                             {isMargesReport && (
                                 <div className="flex flex-wrap items-center gap-2">
                                     <AlertTriangle className="size-3.5 text-amber-600 shrink-0" />
-                                    <span className="text-caption font-black uppercase tracking-widest text-slate-400 mr-2">{t('reports.results.filter_margin', { defaultValue: 'Filtre marge :' })}</span>
+                                    <span className="text-caption font-black uppercase tracking-widest text-slate-400 mr-2">{t('reports:results.filter_margin', { defaultValue: 'Filtre marge :' })}</span>
                                     {(['all', 'negative', 'low'] as const).map(f => (
                                         <Button
                                             key={f}
@@ -203,7 +203,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                                                     : 'text-slate-500'
                                             }`}
                                         >
-                                            {f === 'all' ? t('reports.results.filter_all', { defaultValue: 'Toutes' }) : f === 'negative' ? t('reports.results.filter_negative', { defaultValue: 'Négatives' }) : t('reports.results.filter_low', { defaultValue: '< 25%' })}
+                                            {f === 'all' ? t('reports:results.filter_all', { defaultValue: 'Toutes' }) : f === 'negative' ? t('reports:results.filter_negative', { defaultValue: 'Négatives' }) : t('reports:results.filter_low', { defaultValue: '< 25%' })}
                                         </Button>
                                     ))}
                                 </div>
@@ -211,7 +211,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                         </div>
                         <div className="mt-2 flex items-center justify-end">
                             <span className="text-caption text-slate-400 font-bold">
-                                {t('reports.results.lines_count', { filtered: filteredResults.length, total: results.length, defaultValue: `${filteredResults.length} / ${results.length} lignes` })}
+                                {t('reports:results.lines_count', { filtered: filteredResults.length, total: results.length, defaultValue: `${filteredResults.length} / ${results.length} lignes` })}
                             </span>
                         </div>
                     </CardHeader>
@@ -286,7 +286,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                                                     <TableCell key={col} className={`text-right text-sm ${isNumericColumn(col) ? 'text-right' : ''}`}>
                                                         <div className="flex flex-col items-end">
                                                             <span>{formatValue(col, avg, t)}</span>
-                                                            <span className="text-micro opacity-50 uppercase tracking-wider">{t('reports.results.footer_avg_label', { defaultValue: 'moyenne' })}</span>
+                                                            <span className="text-micro opacity-50 uppercase tracking-wider">{t('reports:results.footer_avg_label', { defaultValue: 'moyenne' })}</span>
                                                         </div>
                                                     </TableCell>
                                                 );
@@ -306,7 +306,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                                                         <TableCell key={col} className="text-right text-sm">
                                                             <div className="flex flex-col items-end">
                                                                 <span>{tauxGlobal.toFixed(1)} %</span>
-                                                                <span className="text-micro opacity-50 uppercase tracking-wider">{t('reports.results.footer_global_label', { defaultValue: 'global' })}</span>
+                                                                <span className="text-micro opacity-50 uppercase tracking-wider">{t('reports:results.footer_global_label', { defaultValue: 'global' })}</span>
                                                             </div>
                                                         </TableCell>
                                                     );

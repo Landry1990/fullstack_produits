@@ -211,7 +211,7 @@ export function CaisseTicketPreviewModal({
             onClick={handlePrintInvoice}
           >
             <FileText className="h-4 w-4" aria-hidden="true" />
-            Facture A4
+            {t('ticket.invoice_a4', { defaultValue: 'Facture A4' })}
           </button>
           <button
             ref={printButtonRef}

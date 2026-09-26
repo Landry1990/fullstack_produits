@@ -181,5 +181,8 @@
         "desc": "Cette action va télécharger la dernière version, reconstruire les images Docker et redémarrer les conteneurs. L'application sera brièvement indisponible.",
         "confirm_password": "Confirmez votre mot de passe admin",
         "confirm_btn": "Confirmer la mise à jour"
-    }
+    },
+    "section_import": "IMPORT",
+    "section_export": "EXPORT",
+    "section_purge": "PURGE"
 }

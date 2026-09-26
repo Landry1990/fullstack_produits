@@ -181,5 +181,40 @@
             "obesity_2": "Votre IMC indique une obésité sévère. Un suivi médical est fortement recommandé.",
             "obesity_3": "Votre IMC indique une obésité morbide ou massive. Une prise en charge médicale urgente est nécessaire."
         }
+    },
+    "validation": {
+        "name_min": "Le nom doit contenir au moins 2 caractères",
+        "phone_invalid": "Numéro de téléphone invalide (min. 8 chiffres)",
+        "email_invalid": "Format d'email invalide",
+        "remise_max": "La remise ne peut pas dépasser 100%",
+        "plafond_min": "Le plafond ne peut pas être inférieur à -1",
+        "taux_couverture_range": "Le taux de couverture doit être entre 0 et 100",
+        "remise_auto_range": "La remise automatique doit être entre 0 et 100",
+        "majoration_range": "La majoration doit être entre 0 et 100"
+    },
+    "delete_warning": {
+        "title": "Suppression impossible",
+        "subtitle": "Certains clients ont des factures non réglées",
+        "title_single": "Impossible de supprimer",
+        "subtitle_single": "Ce client a des factures non réglées",
+        "blocked_title": "Clients bloqués",
+        "selected_count_one": "sur {{count}} sélectionné",
+        "selected_count_other": "sur {{count}} sélectionnés",
+        "total_due": "Montant total dû",
+        "affected_clients": "Clients concernés",
+        "unpaid_invoices_one": "{{count}} facture impayée",
+        "unpaid_invoices_other": "{{count}} factures impayées",
+        "note_label": "Note :",
+        "deletable_info_one": "{{count}} client peut être supprimé (pas de factures impayées). Veuillez les sélectionner individuellement.",
+        "deletable_info_other": "{{count}} clients peuvent être supprimés (pas de factures impayées). Veuillez les sélectionner individuellement.",
+        "action_required": "Action requise :",
+        "blocked_info": "Veuillez régler toutes les factures des clients bloqués avant de pouvoir les supprimer.",
+        "client_label": "Client",
+        "unpaid_invoices_label": "Factures impayées",
+        "invoice_details": "Détails des factures",
+        "invoice_no": "Facture #{{num}}",
+        "of_amount": "sur {{amount}}",
+        "blocked_info_single": "Veuillez régler toutes les factures avant de pouvoir supprimer ce client.",
+        "understood": "J'ai compris"
     }
 }

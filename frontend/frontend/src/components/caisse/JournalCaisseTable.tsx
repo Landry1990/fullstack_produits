@@ -76,7 +76,7 @@ export default function JournalCaisseTable({ state }: Props) {
           <EmptyState
             icon={<FolderOpen className="size-8" />}
             title={t('table.no_transaction')}
-            description={t('table.no_transaction_desc') || "Aucune opération ne correspond à vos filtres actuels."}
+            description={t('caisse:journal.table.no_transaction_desc', { defaultValue: 'Aucune opération ne correspond à vos filtres actuels.' })}
             className="p-12"
           />
         ) : (
@@ -219,7 +219,7 @@ export default function JournalCaisseTable({ state }: Props) {
                             </div>
                             <div className="flex flex-col">
                               <span className="font-semibold text-sm">
-                                {transaction.user_details?.full_name || t('common:unknown') || 'Inconnu'}
+                                {transaction.user_details?.full_name || t('caisse:common.unknown', { defaultValue: 'Inconnu' })}
                               </span>
                               <span className="text-caption text-slate-400 font-mono tracking-tight">
                                 @{transaction.user_details?.username || 'user'}
@@ -233,7 +233,7 @@ export default function JournalCaisseTable({ state }: Props) {
                               <div className="size-6 rounded-full bg-slate-100 flex items-center justify-center text-caption font-bold text-slate-500">
                                 {transaction.facture_created_by_name[0]}
                               </div>
-                              <span className="text-sm border-b border-dashed border-slate-200" title={t('user_who_billed')}>
+                              <span className="text-sm border-b border-dashed border-slate-200" title={t('table.user_who_billed')}>
                                 {transaction.facture_created_by_name}
                               </span>
                             </div>
@@ -245,16 +245,16 @@ export default function JournalCaisseTable({ state }: Props) {
                           <div className="flex items-center gap-2">
                             <span className="font-bold text-sm text-slate-700">{transaction.client_name}</span>
                             {transaction.is_creance_settlement && (
-                              <span className="inline-flex items-center rounded-md bg-sky-500 text-white font-bold text-micro px-1.5 py-0.5">{t('common:creance') || 'CRÉANCE'}</span>
+                              <span className="inline-flex items-center rounded-md bg-sky-500 text-white font-bold text-micro px-1.5 py-0.5">{t('caisse:common.creance', { defaultValue: 'CRÉANCE' })}</span>
                             )}
                           </div>
                           {transaction.isReleveGroup && (
-                            <div className="text-caption text-emerald-600 font-bold mt-1">Réf: {transaction.releve_reference}</div>
+                            <div className="text-caption text-emerald-600 font-bold mt-1">{t('caisse:journal.table.ref_label', { defaultValue: 'Réf:' })} {transaction.releve_reference}</div>
                           )}
                         </td>
                         <td className="font-mono text-xs px-3 py-2">
                           {transaction.isReleveGroup ? (
-                            <span className="text-emerald-600/70 font-bold italic">{transaction.items?.length} {t('common:pieces') || 'pièces'}</span>
+                            <span className="text-emerald-600/70 font-bold italic">{transaction.items?.length} {t('caisse:common.pieces', { defaultValue: 'pièces' })}</span>
                           ) : (
                             <span className="bg-slate-100 px-2 py-1 rounded font-bold text-slate-600 whitespace-nowrap">{transaction.facture_numero || '-'}</span>
                           )}
@@ -275,7 +275,7 @@ export default function JournalCaisseTable({ state }: Props) {
                                 </span>
                                 {transaction.reference && (
                                   <span className="text-caption text-slate-500 mt-1 max-w-[120px] truncate" title={transaction.reference}>
-                                    Réf: {transaction.reference}
+                                    {t('caisse:journal.table.ref_label', { defaultValue: 'Réf:' })} {transaction.reference}
                                   </span>
                                 )}
                               </div>
@@ -310,7 +310,7 @@ export default function JournalCaisseTable({ state }: Props) {
                           <td className="py-2 pr-4">
                             <span className="text-caption opacity-60 italic">{subItem.reference || '-'}</span>
                           </td>
-                          <td className="py-2 text-caption font-black text-emerald-600/40 pr-6 text-right">PIÈCE</td>
+                          <td className="py-2 text-caption font-black text-emerald-600/40 pr-6 text-right">{t('caisse:common.piece', { defaultValue: 'PIÈCE' })}</td>
                         </tr>
                       ))}
                     </React.Fragment>
@@ -329,7 +329,7 @@ export default function JournalCaisseTable({ state }: Props) {
 
         {!loading && totalCount > 0 && (
           <div className="flex items-center gap-3">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Page {page} / {totalPages}</span>
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t('caisse:closing_history.pagination.page', { current: page, total: totalPages, defaultValue: 'Page {{current}} / {{total}}' })}</span>
             <div className="flex gap-1.5">
               <Button
                 variant="outline"

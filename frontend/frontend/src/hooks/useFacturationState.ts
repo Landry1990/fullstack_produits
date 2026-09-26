@@ -104,7 +104,13 @@ export function useFacturationState() {
   const { alerts: clinicalAlerts } = useClinicalCheck(cart.lignesFacture)
 
   // --- Clients ---
-  const clientsHook = useFacturationClients()
+  const handleClientCreated = useCallback(() => {
+    window.setTimeout(() => {
+      searchInputRef.current?.focus()
+      searchInputRef.current?.select()
+    }, 150)
+  }, [])
+  const clientsHook = useFacturationClients({ onClientCreated: handleClientCreated })
   const pendingSales = usePendingSales()
 
   const currentMarkup = useMemo(() => {
@@ -175,30 +181,37 @@ export function useFacturationState() {
           motif: `Rappel pour modification (depuis Facturation)`
         })
       } catch {
-        gooeyToast.error(t('facturation:messages.recall_cancel_error') || 'Impossible d\'annuler la facture originale')
+        gooeyToast.error(t('facturation:messages.recall_cancel_error', { defaultValue: 'Impossible d\'annuler la facture originale' }))
         return
       }
     }
 
-    // 2. Charger les produits avec le stock réintégré
+    // 2. Charger les produits avec le stock réintégré (1 seule requête bulk)
     if (invoice.produits && invoice.produits.length > 0) {
-      const lignes: LigneFacture[] = await Promise.all(invoice.produits.map(async (p) => {
+      const missingIds = invoice.produits
+        .filter((p) => !(typeof p.produit === 'object' && p.produit !== null && 'stock' in p.produit))
+        .map((p) => typeof p.produit === 'object' && p.produit !== null ? p.produit.id : (p.produit as number))
+
+      const productMap = new Map<number, ProduitModel>()
+      if (missingIds.length > 0) {
+        try {
+          const { data: fullProducts } = await api.post<ProduitModel[]>('produits/bulk-detail/', { ids: missingIds })
+          fullProducts.forEach((prod) => productMap.set(prod.id, prod))
+        } catch { /* fallback individuel géré ci-dessous */ }
+      }
+
+      const lignes: LigneFacture[] = invoice.produits.map((p) => {
         let produitData: ProduitModel
         if (typeof p.produit === 'object' && p.produit !== null && 'stock' in p.produit) {
           produitData = p.produit as ProduitModel
         } else {
           const produitId = typeof p.produit === 'object' && p.produit !== null ? p.produit.id : (p.produit as number)
-          try {
-            const { data: fullProduct } = await api.get<ProduitModel>(`produits/${produitId}/`)
-            produitData = fullProduct
-          } catch {
-            produitData = {
-              id: produitId,
-              name: p.produit_nom || `Produit #${produitId}`,
-              stock: 0,
-              is_deleted: true
-            } as unknown as ProduitModel
-          }
+          produitData = productMap.get(produitId) || {
+            id: produitId,
+            name: p.produit_nom || t('facturation:messages.product_fallback_name', { id: produitId }),
+            stock: 0,
+            is_deleted: true
+          } as unknown as ProduitModel
         }
 
         const raw = p as unknown as { stock_lot?: number | string | null }
@@ -219,7 +232,7 @@ export function useFacturationState() {
           lotSellingPrice: p.selling_price || null,
           treatment_duration_days: p.treatment_duration_days
         }
-      }))
+      })
       cart.setLignesFacture(lignes)
     } else {
       cart.setLignesFacture([])
@@ -399,9 +412,9 @@ export function useFacturationState() {
       requireSudo(async (validatorId, password) => {
         await handleCompleteSale({ validatorId, password })
       }, {
-        title: isPosteCaisseActive ? 'Validation vendeur' : t('facturation:payment.sudo_confirm_identity'),
+        title: isPosteCaisseActive ? t('facturation:payment.sudo_seller_title') : t('facturation:payment.sudo_confirm_identity'),
         message: isPosteCaisseActive
-          ? 'Ce poste est partagé. Veuillez saisir vos identifiants de vendeur pour cette vente.'
+          ? t('facturation:payment.sudo_seller_message')
           : t('facturation:payment.sudo_send_to_caisse'),
         permission: 'can_validate_sales',
         forceCurrentUser: false,
@@ -515,7 +528,7 @@ export function useFacturationState() {
         return ligne
       })
     } catch {
-      gooeyToast.error(t('facturation.messages.refresh_failed') || "Erreur de rafraîchissement des stocks")
+      gooeyToast.error(t('facturation:messages.refresh_failed', { defaultValue: 'Erreur de rafraîchissement des stocks' }))
     }
 
     cart.setLignesFacture(freshLignes)
@@ -561,7 +574,7 @@ export function useFacturationState() {
             await handleCompleteSale({ validatorId, password })
           }, {
             title: t('facturation:payment.sudo_mode.validate_by'),
-            message: `Cette vente avec un total de ${totalTtc} F nécessite l'autorisation d'un superviseur.`,
+            message: t('facturation:payment.sudo_zero_amount_message', { total: totalTtc }),
             permission: 'can_validate_zero_amount'
           })
         }
@@ -659,7 +672,7 @@ export function useFacturationState() {
     if (cart.lignesFacture.length > 0) {
       handlePaymentClick()
     } else {
-      gooeyToast.error(t('facturation.messages.cart_empty'))
+      gooeyToast.error(t('facturation:messages.cart_empty'))
     }
   }, [cart.lignesFacture.length, handlePaymentClick, t])
 

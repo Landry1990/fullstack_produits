@@ -50,7 +50,8 @@
         "peremption": "Expiry:",
         "prix_lot": "Batch price:",
         "stock_label": "Stock:",
-        "rem_placeholder": "Disc."
+        "rem_placeholder": "Disc.",
+        "lots_count": "{{count}} batches"
     },
     "actions": {
         "cancel": "Cancel Sale",
@@ -153,6 +154,9 @@
         "sudo_title": "Validation Required",
         "sudo_confirm_identity": "Confirm your identity",
         "sudo_send_to_caisse": "Please enter your password to send the invoice to the main cash register. This action is tied to your session.",
+        "sudo_seller_title": "Seller validation",
+        "sudo_seller_message": "This point of sale is shared. Please enter your seller credentials for this sale.",
+        "sudo_zero_amount_message": "This sale with a total of {{total}} F requires supervisor authorization.",
         "sudo_mode": {
             "validate_by": "Validated by",
             "password": "Password (Sudo)",
@@ -256,7 +260,19 @@
         "client_create_field_error": "Error: {{message}}",
         "product_detail_load_error": "Could not load full product details",
         "invoice_settings_updated": "Invoice settings updated",
-        "invoice_settings_update_error": "Error updating invoice settings"
+        "invoice_settings_update_error": "Error updating invoice settings",
+        "enter_whatsapp_number": "Enter the WhatsApp number",
+        "cancel_sale_confirm": "Are you sure you want to cancel the current sale? The entire cart will be lost.",
+        "refresh_failed": "Error refreshing stock",
+        "pack_added": "Pack \"{{name}}\" added to cart",
+        "pack_error": "Error adding pack",
+        "cannot_suspend_empty": "Cannot put an empty sale on hold",
+        "max_pending_sales": "Maximum of {{max}} pending sales reached",
+        "pending_sale_delete_confirm": "Do you really want to delete this pending sale?",
+        "product_fallback_name": "Product #{{id}}",
+        "interaction_warning": "⚠️ Interaction / Redundancy\n{{name}} belongs to the same family ({{family}}) as {{conflict}} already in the cart.",
+        "no_returns_permission": "You are not allowed to perform returns (negative quantities).",
+        "invoice_settings_load_error": "Error loading invoice settings"
     },
     "pending": {
         "replace_title": "Replace cart?",
@@ -360,7 +376,8 @@
         "error_no_products": "No products recognized on prescription",
         "error_ocr": "Error during OCR processing: {{error}}",
         "error_console": "Details in console (possible antivirus blocking)",
-        "products_added": "{{count}} products added"
+        "products_added": "{{count}} products added",
+        "scan_preview_alt": "Scan preview"
     },
     "recall_invoice": {
         "title": "Recall a sale",
@@ -381,5 +398,25 @@
         "stock_unloaded": "Stock Unloaded",
         "cancel_unload_title": "Cancel unloading and restore stock",
         "cancel_unload": "Cancel Unloading"
+    },
+    "validation": {
+        "sudo_password_required": "Password required for third-party validation",
+        "invalid_amount": "Please enter a valid amount",
+        "insufficient_amount": "Total amount ({{total}} F) is insufficient to pay the invoice ({{expected}} F)",
+        "pro_client_beneficiary_info": "For a professional client, please provide the beneficiary's name and ID",
+        "pro_client_beneficiary_select": "For a professional client, please select a beneficiary or create a new one",
+        "credit_limit_exceeded_title": "⚠️ CREDIT LIMIT EXCEEDED!",
+        "current_debt": "Current debt: {{amount}} F",
+        "new_debt_estimate": "New debt (estimate): {{amount}} F",
+        "theoretical_total": "Theoretical total: {{amount}} F",
+        "authorized_limit": "Authorized limit (ceiling): {{amount}} F",
+        "credit_limit_exceeded_body": "The sale cannot be finalized because this client has reached their credit limit."
+    },
+    "sudo": {
+        "confirm_quantity": "Confirm quantity {{qty}} for product {{product}}?",
+        "confirm_price_change": "Confirm price change from {{oldPrice}} to {{newPrice}} for {{product}}?",
+        "confirm_discount": "Confirm a {{discount}}% discount on product {{product}}?",
+        "confirm_global_discount_capped": "Allow a global discount of {{value}} (maximum cap)?",
+        "confirm_global_discount": "Allow a global discount of {{value}}?"
     }
 }

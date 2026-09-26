@@ -396,7 +396,20 @@
         "teams_report_details": "Detail by seller",
         "teams_report_seller": "Seller",
         "teams_report_ca": "Revenue",
-        "teams_report_empty": "No data for this period"
+        "teams_report_empty": "No data for this period",
+        "dead_stock_report": {
+            "col_name": "Name",
+            "col_cip": "CIP",
+            "col_stock": "Stock",
+            "col_value": "Value",
+            "col_pmp": "WAC",
+            "col_last_sale": "Last Sale",
+            "col_department": "Department",
+            "col_supplier": "Supplier",
+            "never_sold": "Never sold",
+            "sheet_name": "Dead Stock",
+            "title": "Dead Stock Report"
+        }
     },
     "transformation_alert_title": "⚡ Reconditioning needed",
     "transformation_alert_message_plural": "{{count}} products to recondition from their source packaging",

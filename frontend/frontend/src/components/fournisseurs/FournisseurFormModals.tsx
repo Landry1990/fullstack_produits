@@ -146,8 +146,8 @@ export default function FournisseurFormModals({ hook }: Props) {
                   disabled={isSubmitting}
                 />
                 <div className="flex flex-col">
-                  <span className="text-sm font-medium text-base-content">Fournisseur Divers</span>
-                  <span className="text-label text-base-content/60">Utilisé pour la gestion des achats divers.</span>
+                  <span className="text-sm font-medium text-base-content">{t('suppliers:form.misc_name')}</span>
+                  <span className="text-label text-base-content/60">{t('suppliers:form.misc_desc')}</span>
                 </div>
               </label>
             </Section>
@@ -180,20 +180,20 @@ export default function FournisseurFormModals({ hook }: Props) {
               {data.type_reglement === 'RELEVE' && (
                 <div className="p-4 bg-warning/10 border border-orange-100 rounded-lg">
                   <label className="block text-xs font-semibold uppercase tracking-wider text-warning mb-2">
-                    Durée de la tranche de relevé (jours)
+                    {t('suppliers:form.releve_duration_label')}
                   </label>
                   <input
                     type="number"
                     min="1"
                     max="31"
-                    aria-label="Durée de la tranche de relevé (jours)"
-                    placeholder="Ex: 10"
+                    aria-label={t('suppliers:form.releve_duration_label')}
+                    placeholder={t('suppliers:form.releve_duration_placeholder')}
                     value={data.periode_releve_jours ?? 10}
                     onChange={e => setData((f) => ({...f, periode_releve_jours: parseInt(e.target.value) || 10}))}
                     className="w-full h-10 rounded-lg border border-base-300 bg-base-100 px-3 text-sm outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-200 transition-all"
                     disabled={isSubmitting}
                   />
-                  <p className="text-label text-orange-500 mt-1">Le relevé commence le 1er du mois.</p>
+                  <p className="text-label text-orange-500 mt-1">{t('suppliers:form.releve_month_start')}</p>
                 </div>
               )}
             </Section>
@@ -213,7 +213,7 @@ export default function FournisseurFormModals({ hook }: Props) {
                   />
                 </Field>
               </div>
-              <p className="text-label text-base-content/50 mt-1">Délai moyen de livraison (2 jours pour les fournisseurs locaux)</p>
+              <p className="text-label text-base-content/50 mt-1">{t('suppliers:form.delivery_delay_hint')}</p>
             </Section>
 
             <Section title={t('providers:form.address_section')}>

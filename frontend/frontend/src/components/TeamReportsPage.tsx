@@ -53,23 +53,23 @@ function TeamDetailRow({ equipe, currencySymbol }: { equipe: TeamReportEquipe; c
           <TableCell colSpan={5} className="py-3 px-4">
             <div className="ml-6">
               <p className="text-caption font-bold uppercase tracking-widest text-slate-400 mb-2">
-                {t('dashboard.manager_dashboard.teams_report_details', 'Détail par vendeur')}
+                {t('dashboard:manager_dashboard.teams_report_details', 'Détail par vendeur')}
               </p>
               {equipe.membres.length > 0 ? (
                 <Table>
                   <TableHeader>
                     <TableRow className="border-slate-100">
                       <TableHead className="h-7 py-1 px-2 text-caption font-bold uppercase tracking-wider text-slate-400">
-                        {t('dashboard.manager_dashboard.teams_report_seller', 'Vendeur')}
+                        {t('dashboard:manager_dashboard.teams_report_seller', 'Vendeur')}
                       </TableHead>
                       <TableHead className="h-7 py-1 px-2 text-caption font-bold uppercase tracking-wider text-slate-400 text-right">
-                        {t('dashboard.manager_dashboard.teams_report_ca', 'CA')}
+                        {t('dashboard:manager_dashboard.teams_report_ca', 'CA')}
                       </TableHead>
                       <TableHead className="h-7 py-1 px-2 text-caption font-bold uppercase tracking-wider text-slate-400 text-right">
-                        {t('dashboard.manager_dashboard.teams_report_nb_ventes', 'Nb Ventes')}
+                        {t('dashboard:manager_dashboard.teams_report_nb_ventes', 'Nb Ventes')}
                       </TableHead>
                       <TableHead className="h-7 py-1 px-2 text-caption font-bold uppercase tracking-wider text-slate-400 text-right">
-                        {t('dashboard.manager_dashboard.teams_report_nb_boites', 'Nb Boîtes')}
+                        {t('dashboard:manager_dashboard.teams_report_nb_boites', 'Nb Boîtes')}
                       </TableHead>
                     </TableRow>
                   </TableHeader>
@@ -94,7 +94,7 @@ function TeamDetailRow({ equipe, currencySymbol }: { equipe: TeamReportEquipe; c
                 </Table>
               ) : (
                 <p className="text-xs text-slate-400 italic">
-                  {t('dashboard.manager_dashboard.teams_report_empty', 'Aucune donnée sur cette période')}
+                  {t('dashboard:manager_dashboard.teams_report_empty', 'Aucune donnée sur cette période')}
                 </p>
               )}
             </div>
@@ -131,11 +131,11 @@ export default function TeamReportsPage() {
           <div>
             <div className="flex items-center gap-3 mb-1">
               <h1 className="text-xl lg:text-2xl font-bold text-slate-900 tracking-tight">
-                {t('dashboard.manager_dashboard.teams_report_title', 'Rapport d\'Équipes')}
+                {t('dashboard:manager_dashboard.teams_report_title', 'Rapport d\'Équipes')}
               </h1>
             </div>
             <p className="text-slate-500 text-sm">
-              {t('dashboard.manager_dashboard.teams_report_subtitle', 'Performance des équipes commerciales')}
+              {t('dashboard:manager_dashboard.teams_report_subtitle', 'Performance des équipes commerciales')}
             </p>
           </div>
         </div>
@@ -146,11 +146,11 @@ export default function TeamReportsPage() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-600">
                 <Calendar className="size-4" />
-                {t('dashboard.manager_dashboard.teams_report_period', 'Période')}
+                {t('dashboard:manager_dashboard.teams_report_period', 'Période')}
               </div>
               <div className="flex items-center gap-2">
                 <label className="text-xs text-slate-500">
-                  {t('dashboard.manager_dashboard.teams_report_from', 'Du')}
+                  {t('dashboard:manager_dashboard.teams_report_from', 'Du')}
                 </label>
                 <input
                   key={`from-${i18n.language}`}
@@ -161,7 +161,7 @@ export default function TeamReportsPage() {
                   className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                 />
                 <label className="text-xs text-slate-500">
-                  {t('dashboard.manager_dashboard.teams_report_to', 'Au')}
+                  {t('dashboard:manager_dashboard.teams_report_to', 'Au')}
                 </label>
                 <input
                   key={`to-${i18n.language}`}
@@ -188,10 +188,10 @@ export default function TeamReportsPage() {
                   <Users className="size-8 text-slate-300" />
                 </div>
                 <p className="text-sm font-semibold text-slate-600">
-                  {t('dashboard.manager_dashboard.teams_report_no_teams', 'Aucune équipe configurée')}
+                  {t('dashboard:manager_dashboard.teams_report_no_teams', 'Aucune équipe configurée')}
                 </p>
                 <p className="text-xs text-slate-400 mt-1 text-center max-w-md">
-                  {t('dashboard.manager_dashboard.teams_report_no_teams_desc', 'Créez des équipes dans le planning opérateurs pour voir les rapports')}
+                  {t('dashboard:manager_dashboard.teams_report_no_teams_desc', 'Créez des équipes dans le planning opérateurs pour voir les rapports')}
                 </p>
               </div>
             </CardContent>
@@ -217,7 +217,7 @@ export default function TeamReportsPage() {
                           </div>
                           <div>
                             <p className="text-caption font-bold uppercase tracking-widest text-slate-400">
-                              {t('dashboard.manager_dashboard.teams_report_rank', 'Rang')} {item.rang}
+                              {t('dashboard:manager_dashboard.teams_report_rank', 'Rang')} {item.rang}
                             </p>
                             <p className="text-sm font-bold text-slate-900">{item.nom}</p>
                           </div>
@@ -225,15 +225,15 @@ export default function TeamReportsPage() {
                       </div>
                       <div className="mt-3 space-y-1">
                         <div className="flex justify-between text-xs">
-                          <span className="text-slate-500 font-medium">{t('dashboard.manager_dashboard.teams_report_ca_total', 'CA Total')}</span>
+                          <span className="text-slate-500 font-medium">{t('dashboard:manager_dashboard.teams_report_ca_total', 'CA Total')}</span>
                           <span className="font-bold text-slate-900 tabular-nums">{fmt(item.ca_total)}</span>
                         </div>
                         <div className="flex justify-between text-xs">
-                          <span className="text-slate-500 font-medium">{t('dashboard.manager_dashboard.teams_report_nb_ventes', 'Nb Ventes')}</span>
+                          <span className="text-slate-500 font-medium">{t('dashboard:manager_dashboard.teams_report_nb_ventes', 'Nb Ventes')}</span>
                           <span className="font-semibold text-slate-700 tabular-nums">{item.nb_ventes}</span>
                         </div>
                         <div className="flex justify-between text-xs">
-                          <span className="text-slate-500 font-medium">{t('dashboard.manager_dashboard.teams_report_nb_boites', 'Nb Boîtes')}</span>
+                          <span className="text-slate-500 font-medium">{t('dashboard:manager_dashboard.teams_report_nb_boites', 'Nb Boîtes')}</span>
                           <span className="font-semibold text-slate-700 tabular-nums">{item.nb_boites}</span>
                         </div>
                       </div>
@@ -252,7 +252,7 @@ export default function TeamReportsPage() {
                   </div>
                   <div>
                     <CardTitle className="text-base font-bold">
-                      {t('dashboard.manager_dashboard.teams_report_title', 'Rapport d\'Équipes')}
+                      {t('dashboard:manager_dashboard.teams_report_title', 'Rapport d\'Équipes')}
                     </CardTitle>
                     <CardDescription>
                       {formatDate(dateDebut)} — {formatDate(dateFin)}
@@ -265,19 +265,19 @@ export default function TeamReportsPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                        {t('dashboard.manager_dashboard.teams_report_team', 'Équipe')}
+                        {t('dashboard:manager_dashboard.teams_report_team', 'Équipe')}
                       </TableHead>
                       <TableHead className="text-xs font-bold uppercase tracking-wider text-slate-400 text-center">
-                        {t('dashboard.manager_dashboard.teams_report_members', 'Membres')}
+                        {t('dashboard:manager_dashboard.teams_report_members', 'Membres')}
                       </TableHead>
                       <TableHead className="text-xs font-bold uppercase tracking-wider text-slate-400 text-right">
-                        {t('dashboard.manager_dashboard.teams_report_ca_total', 'CA Total')}
+                        {t('dashboard:manager_dashboard.teams_report_ca_total', 'CA Total')}
                       </TableHead>
                       <TableHead className="text-xs font-bold uppercase tracking-wider text-slate-400 text-right">
-                        {t('dashboard.manager_dashboard.teams_report_nb_ventes', 'Nb Ventes')}
+                        {t('dashboard:manager_dashboard.teams_report_nb_ventes', 'Nb Ventes')}
                       </TableHead>
                       <TableHead className="text-xs font-bold uppercase tracking-wider text-slate-400 text-right">
-                        {t('dashboard.manager_dashboard.teams_report_nb_boites', 'Nb Boîtes')}
+                        {t('dashboard:manager_dashboard.teams_report_nb_boites', 'Nb Boîtes')}
                       </TableHead>
                     </TableRow>
                   </TableHeader>

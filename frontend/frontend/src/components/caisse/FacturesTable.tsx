@@ -413,17 +413,17 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
               <option value={100}>100</option>
             </select>
             <span className="text-slate-500">
-              {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, sortedFactures.length)} {t('common.pagination.of', 'sur')} {sortedFactures.length}
+              {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, sortedFactures.length)} {t('common:pagination.of', 'sur')} {sortedFactures.length}
             </span>
           </div>
           <div className="flex items-center gap-1">
             <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
               <ChevronLeft className="size-4" />
-              {t('common.pagination.prev', 'Précédent')}
+              {t('common:pagination.prev', 'Précédent')}
             </Button>
             <span className="px-3 py-1.5 text-sm font-medium text-slate-600 bg-slate-100 rounded-md">{page}/{totalPages}</span>
             <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
-              {t('common.pagination.next', 'Suivant')}
+              {t('common:pagination.next', 'Suivant')}
               <ChevronRight className="size-4" />
             </Button>
           </div>

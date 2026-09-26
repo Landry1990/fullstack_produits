@@ -11,6 +11,7 @@
     "validated_by": "Validé par",
     "payment_method": "Règlement",
     "cash": "COMPTANT",
+    "email": "Email",
     "designation": "Désignation",
     "qty": "Qté",
     "unit_price_ht": "P.U HT",
@@ -81,6 +82,10 @@
     "cashier": "Caissier",
     "subtotal_label": "SOUS-TOTAL",
     "discount_minus": "REMISE (-)",
+    "line_discount": "Remise ligne",
+    "gross_subtotal": "TOTAL BRUT",
+    "line_discounts_minus": "REMISES LIGNES (-)",
+    "global_discount_minus": "REMISE GLOBALE (-)",
     "net_a_payer_cfa": "NET À PAYER (CFA)",
     "cash_received": "Espèces reçues",
     "change_returned": "MONNAIE RENDUE",
@@ -191,7 +196,20 @@
     "expected_date": "Date prévue",
     "notes": "Notes / Instructions",
     "present_coupon": "Présentez ce bon pour récupérer votre commande.",
-    "generated_on": "Document généré le {{date}}"
+    "generated_on": "Document généré le {{date}}",
+    "ticket_title": "TICKET PROMIS",
+    "store_copy": "EXEMPLAIRE PHARMACIE",
+    "customer_copy": "EXEMPLAIRE CLIENT",
+    "client_label": "CLIENT :",
+    "ref_transaction": "Ref Transaction : #{{id}}",
+    "col_product": "Produit",
+    "col_qty": "Qté",
+    "code": "Code : {{code}}",
+    "status_paid": "STATUT : PAYÉ",
+    "status_to_pay": "STATUT : À RÉGLER",
+    "keep_for_pickup": "À conserver pour le retrait",
+    "promis_no": "N° Promis : {{ids}}",
+    "cut_here": "- - - Découper ici - - -"
   },
   "stock_rayon": {
     "title": "État de Stock",
@@ -303,5 +321,19 @@
     "client_signature": "SIGNATURE CLIENT",
     "management": "LA DIRECTION",
     "generated_on": "Document généré le {{date}}"
+  },
+  "export": {
+    "tel": "Tél : {{phone}}",
+    "edited_on": "Édité le : {{date}} à {{time}}"
+  },
+  "print_page": {
+    "default_title": "Impression",
+    "loading": "Chargement du document...",
+    "incomplete_data": "Données incomplètes",
+    "timeout_error": "Délai d'attente dépassé pour le chargement du document. Le catalogue est peut-être trop volumineux, veuillez utiliser un filtre (rayon/forme/groupe).",
+    "data_not_found": "Données du récapitulatif introuvables.",
+    "load_error": "Erreur lors du chargement des données. {{detail}}",
+    "print_failed": "Impossible de lancer l'impression. Veuillez utiliser le raccourci Ctrl+P.",
+    "printing": "Impression..."
   }
 }

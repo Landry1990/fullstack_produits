@@ -4,6 +4,10 @@
     "format_label": "Format des étiquettes",
     "format_standard": "Format standard (40x20mm)",
     "format_compact": "Format compact (30x15mm)",
+    "barcode_type": "Type de code-barres",
+    "barcode": "Code-barres",
+    "code128_linear": "CODE128 linéaire",
+    "gs1_desc": "GS1 (CIP + lot + exp.)",
     "info_title": "Configuration de l'étiquette",
     "drag_info": "Faites glisser pour réorganiser l'ordre d'affichage",
     "fields": {

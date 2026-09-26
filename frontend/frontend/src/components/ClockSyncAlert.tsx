@@ -9,23 +9,24 @@
  */
 import { useState, useMemo, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { useClockSync } from '../hooks/useClockSync'
 import { useAuth } from '../context/AuthContext'
 import { Clock, AlertTriangle, X, Copy, Check } from 'lucide-react'
 
-function formatDrift(ms: number): string {
+function formatDrift(ms: number, t: TFunction): string {
   const abs = Math.abs(ms)
-  if (abs < 60_000) return `${Math.round(abs / 1000)} secondes`
-  if (abs < 3_600_000) return `${Math.round(abs / 60_000)} minutes`
-  return `${Math.round(abs / 3_600_000)} heures`
+  if (abs < 60_000) return t('clock_sync.seconds', { count: Math.round(abs / 1000), defaultValue: '{{count}} secondes' })
+  if (abs < 3_600_000) return t('clock_sync.minutes', { count: Math.round(abs / 60_000), defaultValue: '{{count}} minutes' })
+  return t('clock_sync.hours', { count: Math.round(abs / 3_600_000), defaultValue: '{{count}} heures' })
 }
 
-function formatTime(date: Date): string {
-  return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+function formatTime(date: Date, locale: string): string {
+  return date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 }
 
 export function ClockSyncAlert() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation('common')
   const { isAuthenticated, loading } = useAuth()
   const { driftMs, isSynced } = useClockSync()
   const [dismissed, setDismissed] = useState(false)
@@ -104,7 +105,7 @@ Write-Host "Horloge synchronisee." -ForegroundColor Green
               {t('clock_sync.drift', { defaultValue: 'Décalage' })}
             </span>
             <span className={`text-sm font-black ${isAhead ? 'text-red-600' : 'text-orange-600'}`}>
-              {isAhead ? '+' : '−'}{formatDrift(driftMs)}
+              {isAhead ? '+' : '−'}{formatDrift(driftMs, t)}
             </span>
           </div>
 
@@ -115,14 +116,14 @@ Write-Host "Horloge synchronisee." -ForegroundColor Green
                 <Clock className="size-3" />
                 {t('clock_sync.server', { defaultValue: 'Serveur' })}
               </div>
-              <p className="text-sm font-bold text-slate-700 tabular-nums">{formatTime(serverTime)}</p>
+              <p className="text-sm font-bold text-slate-700 tabular-nums">{formatTime(serverTime, i18n.language)}</p>
             </div>
             <div className="rounded-xl bg-slate-50 px-3 py-2">
               <div className="flex items-center gap-1.5 text-caption font-bold uppercase tracking-wider text-slate-400">
                 <Clock className="size-3" />
                 {t('clock_sync.local', { defaultValue: 'Ce poste' })}
               </div>
-              <p className="text-sm font-bold text-slate-700 tabular-nums">{formatTime(localTime)}</p>
+              <p className="text-sm font-bold text-slate-700 tabular-nums">{formatTime(localTime, i18n.language)}</p>
             </div>
           </div>
 

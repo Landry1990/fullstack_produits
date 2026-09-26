@@ -112,6 +112,14 @@
         "cancel": "Cancel",
         "confirm_payment": "Confirm Settlement"
     },
+    "bulk_payment": {
+        "partial_title": "Partial settlement: {{x}} / {{y}}",
+        "full_title": "Full settlement of selected invoices",
+        "amount_label": "Amount to settle (optional)",
+        "amount_placeholder": "Max: {{x}} - Leave empty to settle everything",
+        "remaining": "Remaining to pay: {{x}}",
+        "empty_hint": "Leave empty to settle the full invoice total"
+    },
     "toasts": {
         "error_print_receipt": "Error printing receipt",
         "error_print_statement": "Error generating statement",

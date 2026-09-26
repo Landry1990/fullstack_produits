@@ -16,7 +16,29 @@
         "name": "Supplier Name *",
         "phone": "Phone",
         "email": "Email",
-        "address": "Address"
+        "address": "Address",
+        "misc_name": "Miscellaneous Supplier",
+        "misc_desc": "Used for miscellaneous purchases management.",
+        "releve_duration_label": "Statement period duration (days)",
+        "releve_duration_placeholder": "Eg: 10",
+        "releve_month_start": "The statement starts on the 1st of the month.",
+        "delivery_delay_hint": "Average delivery time (2 days for local suppliers)"
+    },
+    "finance": {
+        "paid_of_due": "{{paid}} paid of {{due}} due",
+        "allocation_preview": "Allocation preview",
+        "no_pending": "No pending instalments",
+        "col_invoice": "Invoice",
+        "col_total": "Total",
+        "col_paid": "Paid",
+        "col_remaining": "Remaining",
+        "col_allocated": "Allocated",
+        "remaining_suffix": "remaining",
+        "echeancier_title_one": "Schedule — {{count}} installment",
+        "echeancier_title_other": "Schedule — {{count}} installments"
+    },
+    "errors": {
+        "load": "Loading error"
     },
     "logistics_params": "Logistics Parameters",
     "delivery_delay_days": "Delivery Delay (days)",

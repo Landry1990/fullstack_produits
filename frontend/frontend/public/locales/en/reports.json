@@ -140,6 +140,18 @@
         "recap_valeur_stock_pdf": {
             "name": "Stock Value Summary (PDF)",
             "description": "Total Excl. Tax, VAT, Total Incl. Tax and breakdown by rate (PDF Format)"
+        },
+        "recap_valeur_stock": {
+            "name": "Stock Value Summary",
+            "description": "Total HT, VAT, TTC values and detailed breakdown by rate"
+        },
+        "ventes_operateur_lots": {
+            "name": "Sales by Operator (Lots)",
+            "description": "Products sold by operator with lot, expiry date, quantity, invoice, discount"
+        },
+        "rapport_fiscal_mensuel": {
+            "name": "Monthly Tax Report",
+            "description": "Installment on revenue + withholding on purchases (Standard/Simplified, administered margin)"
         }
     },
     "stock_valuation": {
@@ -177,7 +189,16 @@
         "pdf_total_ttc": "Total (incl. VAT)",
         "pdf_total": "TOTAL",
         "pdf_group_breakdown_title": "BREAKDOWN BY {{group}}",
-        "pdf_footer": "Stock Valuation Summary"
+        "pdf_footer": "Stock Valuation Summary",
+        "unavailable_data": "Unavailable data",
+        "generating": "Generating...",
+        "download_pdf": "Download PDF",
+        "method_label": "Method",
+        "tva_section_title": "Breakdown by VAT rate",
+        "tva_table_amount": "VAT Amount",
+        "group_section_title": "Breakdown by {{group}}",
+        "note_screen_pmp": "Note: This valuation is based on the PMP stored in the database.",
+        "note_screen_vente": "Note: This valuation is based on current public selling prices."
     },
     "monthly_pdf": {
         "title": "ACTIVITY REPORT",
@@ -224,7 +245,10 @@
         "fields": "Columns to include",
         "group_by": "Group by",
         "sort_by": "Sort by",
-        "sort_order": "Sort order"
+        "sort_order": "Sort order",
+        "poste_caisse_id": "Checkout point",
+        "fournisseur_id": "Supplier",
+        "valorisation": "Valuation method"
     },
     "results": {
         "title": "Results",
@@ -281,7 +305,7 @@
         "ca_impact": "Impact on Revenue",
         "no_payments": "No payments"
     },
-    "ca_tva": "TVA Revenue",
+    "ca_tva": "VAT Revenue",
     "ca_exo": "Exempt Revenue",
     "dynamic_constructor": {
         "conditions_title": "Smart Filters",
@@ -428,12 +452,29 @@
             "group_by": {
                 "": "— No grouping —",
                 "Produit": "Product",
-                "Famille": "Family"
+                "Famille": "Family",
+                "Rayon": "Department",
+                "Forme": "Form",
+                "Fournisseur": "Supplier",
+                "Client": "Customer",
+                "Vendeur": "Seller",
+                "TVA (%)": "VAT rate",
+                "Code CIP": "CIP Code"
             },
             "sort_by": {
                 "": "— Default —",
                 "Total HT": "Total (Excl. Tax)",
-                "Marge Brute": "Gross Margin"
+                "Marge Brute": "Gross Margin",
+                "Marge (%)": "Margin (%)",
+                "Quantité": "Quantity",
+                "Prix Vente": "Sale Price",
+                "Coût Achat": "Purchase Cost",
+                "P": {
+                    "U Achat": "Unit Purchase Price"
+                },
+                "Produit": "Product (A→Z)",
+                "Date": "Date",
+                "Réception": "Receipt Date"
             },
             "sort_order": {
                 "desc": "Descending (↓)",
@@ -455,7 +496,22 @@
                 "marge": "Gross Margin",
                 "pourcentage_marge": "Margin (%)",
                 "tva": "VAT (%)",
-                "stock_minimum": "Min Stock"
+                "stock_minimum": "Min Stock",
+                "famille": "Family",
+                "rayon": "Department",
+                "forme": "Form"
+            }
+        },
+        "recap_valeur_stock": {
+            "valorisation": {
+                "ACHAT": "Purchase Price (WAC)",
+                "VENTE": "Sale Price"
+            },
+            "group_by": {
+                "": "None (Global)",
+                "rayon": "Department",
+                "forme": "Form",
+                "groupe": "Group"
             }
         }
     }
