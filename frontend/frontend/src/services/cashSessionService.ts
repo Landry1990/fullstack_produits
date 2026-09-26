@@ -54,6 +54,10 @@ export const cashSessionService = {
     return data
   },
 
+  async deleteCaisse(caisseId: number): Promise<void> {
+    await api.delete(`postes-caisses/${caisseId}/`)
+  },
+
   // --- Postes de vente ---
   async getActivePostesVente(): Promise<PosteVente[]> {
     const { data } = await api.get('postes-ventes/actives/')

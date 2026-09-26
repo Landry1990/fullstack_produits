@@ -30,6 +30,35 @@ class PosteCaisseViewSet(viewsets.ModelViewSet):
         permission_classes = [IsAdminUser] if self.action in {'create', 'update', 'partial_update', 'destroy'} else [IsAuthenticated]
         return [permission() for permission in permission_classes]
 
+    def destroy(self, request, *args, **kwargs):
+        """Bloque la suppression si la caisse est en cours d'utilisation ou si
+        des sessions historiques lui sont liées (FK CASCADE sur SessionCaisse
+        effacerait l'historique). Les autres FK (PosteVente, Facture, audit)
+        sont en SET_NULL : les enregistrements sont conservés, seul le lien
+        vers la caisse est retiré."""
+        caisse = self.get_object()
+
+        if caisse.postes_vente.filter(est_actif=True).exists():
+            return Response(
+                {"detail": f"La caisse {caisse.nom} est utilisée par un point de vente actif. Fermez-le d'abord."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # SessionCaisse est un modèle legacy (managed=False) avec FK CASCADE :
+        # si la table existe encore et contient des lignes, on refuse plutôt
+        # que de perdre l'historique.
+        try:
+            has_legacy_sessions = caisse.sessions.exists()
+        except Exception:
+            has_legacy_sessions = False
+        if has_legacy_sessions:
+            return Response(
+                {"detail": f"La caisse {caisse.nom} possède un historique de sessions : suppression impossible."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return super().destroy(request, *args, **kwargs)
+
 
 class PosteVenteViewSet(viewsets.ModelViewSet):
     """
