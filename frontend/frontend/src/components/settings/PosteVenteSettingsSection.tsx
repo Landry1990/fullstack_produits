@@ -89,6 +89,23 @@ export default function PosteVenteSettingsSection() {
     }
   }
 
+  const handleDeleteCaisse = async (caisse: PosteCaisse) => {
+    const confirmedDelete = await confirm({
+      title: t('common:confirmation'),
+      message: t('messages.caisse_confirm_delete', { nom: caisse.nom, defaultValue: `Supprimer la caisse ${caisse.nom} ?` }),
+      confirmText: t('common:confirm'),
+      variant: 'danger'
+    })
+    if (!confirmedDelete) return
+    try {
+      await cashSessionService.deleteCaisse(caisse.id)
+      gooeyToast.success(t('messages.caisse_deleted', { defaultValue: 'Caisse supprimée.' }))
+      await loadData()
+    } catch (err) {
+      gooeyToast.error(getApiErrorDetail(err, t('messages.caisse_delete_error', { defaultValue: 'Erreur suppression caisse' })))
+    }
+  }
+
   const handleClose = async (id: number) => {
     const confirmedClose = await confirm({
       title: t('common:confirmation'),
@@ -286,7 +303,18 @@ export default function PosteVenteSettingsSection() {
                       {caissesDisponibles.map((caisse: PosteCaisse) => (
                         <tr key={caisse.id} className="hover:bg-slate-50">
                           <td className="px-4 py-3 font-medium text-slate-800">{caisse.nom}</td>
-                          <td className="px-4 py-3 text-right">—</td>
+                          <td className="px-4 py-3 text-right">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteCaisse(caisse)}
+                              className="text-red-600 hover:bg-red-50 hover:text-red-600"
+                              title={t('postes_vente.delete', { defaultValue: 'Supprimer' })}
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>

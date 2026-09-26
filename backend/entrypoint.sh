@@ -272,6 +272,59 @@ if ventes_created:
     print('✓ Postes de vente créés: ' + ', '.join(ventes_created))
 else:
     print('✓ Postes de vente par défaut déjà présents')
+
+# Taux de TVA par défaut (taux unique → get_or_create idempotent)
+from decimal import Decimal
+from api.models import TVA
+
+tva_defaults = [
+    (Decimal('19.25'), 'TVA Normale'),
+    (Decimal('0'), 'Exonéré'),
+]
+tva_created = []
+for taux, libelle in tva_defaults:
+    obj, was_created = TVA.objects.get_or_create(
+        taux=taux,
+        defaults={'libelle': libelle, 'is_active': True}
+    )
+    if was_created:
+        tva_created.append(f'{taux}%')
+
+if tva_created:
+    print('✓ Taux de TVA créés: ' + ', '.join(tva_created))
+else:
+    print('✓ Taux de TVA par défaut déjà présents')
+
+# Fournisseurs par défaut (name non unique → vérification manuelle iexact,
+# en ignorant les fiches soft-deletées pour ne pas les réactiver par accident)
+from api.models import Fournisseur
+
+# (nom, is_divers, type_reglement) — Ubipharm/Laborex sont payés sur relevé,
+# les autres à la facture (cf. commentaire du modèle Fournisseur)
+fournisseurs_defaults = [
+    ('LABOREX CMR', False, 'RELEVE'),
+    ('SIAP PHARMA', False, 'FACTURE'),
+    ('UBIPHARM CMR', False, 'RELEVE'),
+    ('DIVERS', True, 'FACTURE'),
+    ('SLOY PHARMA', False, 'FACTURE'),
+    ('PHARMA EXPRESS', False, 'FACTURE'),
+]
+fournisseurs_created = []
+for nom, is_divers, reglement in fournisseurs_defaults:
+    deja_present = Fournisseur.objects.filter(
+        name__iexact=nom, deleted_at__isnull=True
+    ).exists()
+    if not deja_present:
+        Fournisseur.objects.create(
+            name=nom, is_divers=is_divers, type_reglement=reglement,
+            is_active=True
+        )
+        fournisseurs_created.append(nom)
+
+if fournisseurs_created:
+    print('✓ Fournisseurs créés: ' + ', '.join(fournisseurs_created))
+else:
+    print('✓ Fournisseurs par défaut déjà présents')
 "
 
 # ── 7. Import des données fournisseur si spécifié et base vide ──
