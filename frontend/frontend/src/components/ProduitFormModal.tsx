@@ -361,7 +361,7 @@ export default function ProduitFormModal({
           {/* Section: Identification */}
           <div className="bg-slate-50 rounded-lg border border-slate-200 p-3">
             <h4 className="text-caption font-black uppercase tracking-widest text-slate-500 mb-2 flex items-center gap-1.5">
-              <Hash size={12} /> Identification
+              <Hash size={12} /> {t('products:form.sections.identification')}
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
               <div className="md:col-span-2">
@@ -398,7 +398,7 @@ export default function ProduitFormModal({
           {/* Section: Stock & Localisation */}
           <div className="bg-slate-50 rounded-lg border border-slate-200 p-3">
             <h4 className="text-caption font-black uppercase tracking-widest text-slate-500 mb-2 flex items-center gap-1.5">
-              <Layers size={12} /> Stock & Localisation
+              <Layers size={12} /> {t('products:form.sections.stock_location')}
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
               {!isEditMode && (
@@ -445,7 +445,7 @@ export default function ProduitFormModal({
           {/* Section: Classification */}
           <div className="bg-slate-50 rounded-lg border border-slate-200 p-3">
             <h4 className="text-caption font-black uppercase tracking-widest text-slate-500 mb-2 flex items-center gap-1.5">
-              <Layers size={12} /> Classification
+              <Layers size={12} /> {t('products:form.sections.classification')}
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
@@ -468,7 +468,7 @@ export default function ProduitFormModal({
           {/* Section: Tarification */}
           <div className="bg-slate-50 rounded-lg border border-slate-200 p-3">
             <h4 className="text-caption font-black uppercase tracking-widest text-slate-500 mb-2 flex items-center gap-1.5">
-              <DollarSign size={12} /> Tarification
+              <DollarSign size={12} /> {t('products:form.sections.pricing')}
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
               <div>

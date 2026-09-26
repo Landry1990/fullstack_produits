@@ -38,7 +38,8 @@
         "margin_rate": "Taux de Marge",
         "dsi": "Jours Stock (DSI)",
         "growth": "Croissance Mensuelle",
-        "annual": "ANNUEL"
+        "annual": "ANNUEL",
+        "ca_label": "CA"
     },
     "charts": {
         "ca_evolution": "Évolution CA",
@@ -64,6 +65,7 @@
     "product": "Produit",
     "margin": "Marge",
     "summary": "Résumé Annuel",
+    "days_suffix": "j",
     "trend": {
         "up": "En hausse",
         "down": "En baisse",
@@ -120,7 +122,9 @@
         "quality": "Qualité (30%)",
         "regularity": "Régularité (40%)",
         "no_data": "Aucune donnée disponible",
-        "no_data_12m": "Aucune donnée fournisseur disponible sur 12 mois"
+        "no_data_12m": "Aucune donnée fournisseur disponible sur 12 mois",
+        "incidents_count": "{{count}} incidents",
+        "deliveries_count": "{{count}} livraisons"
     },
     "summary_stats": {
         "total_ca_12m": "CA Total (12 mois)",
@@ -133,6 +137,7 @@
     "guide": {
         "title": "Guide de l'Analyse Financière",
         "subtitle": "Comprenez les indicateurs, les calculs et la méthodologie de vos outils financiers.",
+        "documentation": "Documentation",
         "summary": "Sommaire",
         "sections": {
             "seller_ranking": {

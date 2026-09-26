@@ -13,6 +13,7 @@
         "publish": "Publish Online",
         "unpublish": "Remove from Storefront",
         "cancel": "Cancel",
+        "select_product": "Select {{name}}",
         "table": {
             "product": "Product",
             "rayon": "Shelf",

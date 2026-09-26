@@ -130,7 +130,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
             if (!conds) return [];
             return typeof conds === 'string' ? JSON.parse(conds) : conds as Condition[];
         } catch (e) {
-            logger.error(t('reports.err_parse_conditions', { defaultValue: 'Erreur de parsing des conditions:' }), e);
+            logger.error(t('reports:err_parse_conditions', { defaultValue: 'Erreur de parsing des conditions:' }), e);
             return [];
         }
     };
@@ -153,7 +153,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
             <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 pb-4">
                 <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-300">
                     <History className="size-3" />
-                    {t('reports.my_configs', { defaultValue: 'Mes Configurations :' })}
+                    {t('reports:my_configs', { defaultValue: 'Mes Configurations :' })}
                 </div>
                 {presetList.flatMap(p => {
                     const preset = p as unknown as Preset;
@@ -179,13 +179,13 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                 <Button 
                     variant="outline" size="sm"
                     onClick={() => {
-                        const name = prompt(t('reports.preset_prompt_name', { defaultValue: 'Nom de cette configuration ?' }));
+                        const name = prompt(t('reports:preset_prompt_name', { defaultValue: 'Nom de cette configuration ?' }));
                         if (name) presets.save(name);
                     }}
                     className="rounded-full gap-2"
                 >
                     <Save className="size-3" />
-                    {t('reports.preset_save_btn', { defaultValue: 'Sauvegarder' })}
+                    {t('reports:preset_save_btn', { defaultValue: 'Sauvegarder' })}
                 </Button>
             </div>
 
@@ -489,7 +489,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                             >
                                 {param.options.map(opt => (
                                     <option key={opt.value} value={opt.value}>
-                                        {t(`reports.query_options.${selectedQuery.id}.${param.key}.${opt.value}`, { defaultValue: opt.label })}
+                                        {t(`reports:query_options.${selectedQuery.id}.${param.key}.${opt.value}`, { defaultValue: opt.label })}
                                     </option>
                                 ))}
                             </Select>
@@ -702,7 +702,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                                             }}
                                                         />
                                                         <span className={`text-label font-bold uppercase tracking-tight ${isChecked ? 'text-indigo-600' : 'text-slate-500'}`}>
-                                                            {t(`reports.query_options.${selectedQuery.id}.${param.key}.${opt.value}`, { defaultValue: opt.label })}
+                                                            {t(`reports:query_options.${selectedQuery.id}.${param.key}.${opt.value}`, { defaultValue: opt.label })}
                                                         </span>
                                                     </label>
                                                 );
@@ -711,7 +711,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                         </div>
                                         <div className="mt-4 pt-4 border-t border-slate-200 flex justify-between items-center">
                                             <div className="text-micro font-bold uppercase text-slate-300 italic">
-                                                * {t('reports.select_columns_hint', { defaultValue: 'Sélectionnez les colonnes à afficher' })}
+                                                * {t('reports:select_columns_hint', { defaultValue: 'Sélectionnez les colonnes à afficher' })}
                                             </div>
                                             <button 
                                                 className="text-xs font-medium text-indigo-600 hover:bg-indigo-50 px-2 py-1 rounded-lg transition-colors"

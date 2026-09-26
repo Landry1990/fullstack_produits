@@ -331,7 +331,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     handleAddPayment(m.value)
                   }}
                   onKeyDown={(e) => handleModeKeyDown(e, idx)}
-                  title={`${m.label} — ←→ pour naviguer, Entrée pour valider, Échap pour retour`}
+                  title={`${m.label} — ${t('payment.mode_button_hint')}`}
                   aria-pressed={modePaiement === m.value}
                   aria-label={m.label}
                 >

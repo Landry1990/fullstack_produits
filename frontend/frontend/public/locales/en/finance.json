@@ -38,7 +38,8 @@
         "margin_rate": "Margin Rate",
         "dsi": "Stock Days (DSI)",
         "growth": "Monthly Growth",
-        "annual": "ANNUAL"
+        "annual": "ANNUAL",
+        "ca_label": "Revenue"
     },
     "charts": {
         "ca_evolution": "Revenue Evolution",
@@ -64,6 +65,7 @@
     "product": "Product",
     "margin": "Margin",
     "summary": "Annual Summary",
+    "days_suffix": "d",
     "trend": {
         "up": "Rising",
         "down": "Falling",
@@ -120,7 +122,9 @@
         "quality": "Quality (30%)",
         "regularity": "Regularity (40%)",
         "no_data": "No data available",
-        "no_data_12m": "No supplier data available over 12 months"
+        "no_data_12m": "No supplier data available over 12 months",
+        "incidents_count": "{{count}} incidents",
+        "deliveries_count": "{{count}} deliveries"
     },
     "summary_stats": {
         "total_ca_12m": "Total CA (12 months)",
@@ -133,6 +137,7 @@
     "guide": {
         "title": "Financial Analysis Guide",
         "subtitle": "Understand indicators, calculations, and the methodology of your financial tools.",
+        "documentation": "Documentation",
         "summary": "Summary",
         "sections": {
             "seller_ranking": {

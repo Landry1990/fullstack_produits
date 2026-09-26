@@ -884,7 +884,7 @@ export default function Maintenance() {
                 </div>
               </div>
 
-              <div className="border-t border-slate-200 my-0 text-xs text-center text-slate-400 py-1">IMPORT</div>
+              <div className="border-t border-slate-200 my-0 text-xs text-center text-slate-400 py-1">{t('maintenance:section_import')}</div>
 
               {/* Import Excel */}
               <div className="space-y-2">
@@ -959,7 +959,7 @@ export default function Maintenance() {
                 )}
               </div>
 
-              <div className="border-t border-slate-200 my-0 text-xs text-center text-slate-400 py-1">EXPORT</div>
+              <div className="border-t border-slate-200 my-0 text-xs text-center text-slate-400 py-1">{t('maintenance:section_export')}</div>
 
               {/* Export Excel */}
               <div className="space-y-2">
@@ -976,7 +976,7 @@ export default function Maintenance() {
                 </Button>
               </div>
 
-              <div className="border-t border-slate-200 my-0 text-xs text-center text-slate-400 py-1">PURGE</div>
+              <div className="border-t border-slate-200 my-0 text-xs text-center text-slate-400 py-1">{t('maintenance:section_purge')}</div>
 
               {/* Purge */}
               {purgeResult && (

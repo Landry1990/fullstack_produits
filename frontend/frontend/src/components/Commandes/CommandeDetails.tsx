@@ -418,7 +418,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
             <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg shrink-0">
               <div className="flex items-center gap-3">
                 <div className="size-10 rounded-full bg-emerald-100 flex items-center justify-center">
-                  <span className="text-emerald-700 font-bold text-sm">UG</span>
+                  <span className="text-emerald-700 font-bold text-sm">{t('orders:product_table.headers.ug')}</span>
                 </div>
                 <div className="flex-1">
                   <h4 className="font-semibold text-emerald-700 text-sm">{t('orders:details.ug_title')}</h4>

@@ -317,7 +317,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
 
               {preview && (
                 <div className="relative flex-1 rounded-2xl overflow-hidden group shadow-lg bg-slate-200">
-                  <img src={preview} alt="Scan preview" className="size-full object-contain" />
+                  <img src={preview} alt={t('facturation:prescription_scanner.scan_preview_alt')} className="size-full object-contain" />
                   <div className="absolute top-4 right-4 flex gap-2">
                     <button aria-label={t('common:delete')} className="inline-flex items-center justify-center size-9 rounded-full bg-red-600 text-white shadow-lg hover:bg-red-700 transition-colors" onClick={reset}>
                       <Trash2 className="size-4" />

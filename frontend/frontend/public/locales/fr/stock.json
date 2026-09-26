@@ -114,6 +114,7 @@
         "top_perimes": "Produits Périmés en Stock",
         "risk_lots": "Lots à Risque",
         "no_result": "Aucun lot à risque trouvé",
+        "view_all_lots": "Voir tous les {{count}} lots →",
         "history": {
             "print": "Imprimer",
             "excel": "Excel",
@@ -201,7 +202,15 @@
             "delete_success": "Relation supprimée",
             "delete_error": "Erreur lors de la suppression",
             "transform_success": "Transformation effectuée avec succès",
-            "transform_error": "Erreur lors de la transformation"
+            "transform_error": "Erreur lors de la transformation",
+            "transform_confirm_title": "Confirmer la transformation",
+            "transform_confirm_message": "Transformer {{qty}} {{source}} en {{destQty}} {{dest}} ?",
+            "transform_confirm_btn": "Oui, transformer",
+            "reverse_confirm_title": "Annuler cette transformation",
+            "reverse_confirm_message": "Annuler la transformation de {{qty}} {{source}} en {{destQty}} {{dest}} ? Le stock sera restitué automatiquement.",
+            "reverse_confirm_btn": "Oui, annuler",
+            "reverse_success": "Transformation annulée avec succès",
+            "reverse_error": "Erreur lors de l'annulation"
         },
         "modal_relation": {
             "title": "Nouvelle Relation de Transformation",
@@ -232,6 +241,8 @@
             "lots_consumed": "Lots qui seront consommés (FEFO)",
             "selected": "sélectionnés",
             "available": "disponible",
+            "available_one": "disponible",
+            "available_other": "disponibles",
             "remaining": "rest.",
             "lot_qty_mismatch": "La somme des lots sélectionnés ({{selected}}) doit être égale à la quantité à transformer ({{total}})."
         },
@@ -249,7 +260,10 @@
             "units": "UNITES",
             "transformer": "Transformer",
             "no_relations": "Aucune relation configurée",
-            "no_stock_tooltip": "Stock source insuffisant pour transformer"
+            "no_stock_tooltip": "Stock source insuffisant pour transformer",
+            "reversed": "Annulée",
+            "reversal": "Annulation",
+            "reverse_btn": "Annuler"
         }
     },
     "organisation": {
@@ -267,6 +281,7 @@
             "success_save": "{{type}} enregistré avec succès",
             "success_delete": "{{type}} supprimé avec succès",
             "trash_success": "« {{name}} » déplacé en corbeille.",
+            "trash_confirm_msg": "« {{name}} » sera déplacé en corbeille. Vous pourrez le restaurer depuis la page Corbeille.",
             "delete_confirm_title": "Supprimer cet élément ?",
             "delete_confirm_msg": "Cette action est irréversible et affectera les produits associés.",
             "search": "Rechercher un {{type}}...",
@@ -543,7 +558,8 @@
             "created_by_prefix": "Par",
             "actions": "Actions",
             "no_description": "-",
-            "empty": "Aucun inventaire"
+            "empty": "Aucun inventaire",
+            "select_item": "Sélectionner inventaire #{{id}}"
         },
         "detail": {
             "back": "← Retour",
@@ -1037,6 +1053,8 @@
             "warnings": "avertissements",
             "selected": "{{count}} sélectionné(s)",
             "generate_order": "Générer commande",
+            "rupture_count": "En rupture",
+            "critical_count": "Alertes critiques",
             "urgency": {
                 "critical": "Rupture Imminente",
                 "warning": "Stock faible",
@@ -1060,7 +1078,10 @@
         "value_total": "Valeur totale",
         "ready_to_order": "Prêts à être ajoutés à une commande",
         "selection": "Sélection",
-        "select_all": "Sélectionner tout"
+        "select_all": "Sélectionner tout",
+        "articles_count": "{{count}} articles",
+        "export_excel": "Exporter Excel",
+        "export_excel_short": "Excel"
     },
     "avoirs": {
         "title": "Gestion des Avoirs",
@@ -1156,7 +1177,11 @@
             "sudo_validate_title": "Validation d'Avoir - {{numero}}",
             "sudo_validate_message": "Confirmer la validation de l'avoir fournisseur <strong>{{numero}}</strong> ?<br/>Cela réintégrera les produits en stock (ou ajustera selon le type).",
             "sudo_bulk_validate_title": "Validation groupée - {{count}} avoirs",
-            "sudo_bulk_validate_message": "Confirmer la validation de <strong>{{count}} avoirs</strong> fournisseurs ?<br/>Le stock sera réintégré pour tous."
+            "sudo_bulk_validate_message": "Confirmer la validation de <strong>{{count}} avoirs</strong> fournisseurs ?<br/>Le stock sera réintégré pour tous.",
+            "sudo_decharge_title": "Décharger stock — {{numero}}",
+            "sudo_decharge_message": "Cette action va retirer physiquement {{count}} produit(s) du stock et enregistrer les mouvements. Action irréversible.",
+            "sudo_annule_title": "Annuler déchargement — {{numero}}",
+            "sudo_annule_message": "Cette action va réintégrer {{count}} produit(s) dans le stock et annuler les mouvements de déchargement."
         },
         "toasts": {
             "select_supplier": "Veuillez sélectionner un fournisseur",
@@ -1182,14 +1207,28 @@
             "bulk_validate_error": "Erreur lors de la validation groupée",
             "ligne_deleted": "Ligne supprimée",
             "ligne_delete_error": "Erreur lors de la suppression",
-            "dechargement_cancelled": "Déchargement annulé. Stock réintégré."
+            "dechargement_cancelled": "Déchargement annulé. Stock réintégré.",
+            "auto_validated": "Avoir validé automatiquement (toutes lignes clôturées)"
         },
         "confirms": {
             "back_to_list": "Voulez-vous vraiment quitter ? Les modifications non enregistrées seront perdues.",
             "back_unloaded": "Le stock n'a pas été déchargé. Voulez-vous vraiment retourner à la liste sans décharger ?",
             "delete_avoir": "Voulez-vous vraiment supprimer l'avoir brouillon {{numero}} ?",
             "bulk_delete": "Supprimer ces {{count}} avoirs brouillons ?",
-            "delete_ligne": "Supprimer cette ligne de l'avoir ?"
+            "delete_ligne": "Supprimer cette ligne de l'avoir ?",
+            "validate_avoir": "Valider l'avoir {{numero}} ? Le statut passera à \"Validé\".",
+            "bulk_validate": "Valider {{count}} avoir(s) sélectionné(s) ?"
+        },
+        "avoirs_lot_modal": {
+            "select_lot": "Sélectionner un lot",
+            "available_lots": "Lots disponibles en stock",
+            "no_lots": "Aucun lot disponible en stock pour ce produit.",
+            "col_lot": "Lot",
+            "col_expiry": "Expiration",
+            "col_stock": "Stock",
+            "col_price": "Prix achat",
+            "days_left": "({{days}}j)",
+            "choose": "Choisir"
         }
     },
     "ruptures": {
@@ -1360,6 +1399,8 @@
         "cap": "CAP",
         "reserve": "Réserve",
         "suggested": "Suggéré",
+        "select_product_aria": "Sélectionner {{name}}",
+        "products_to_transfer": "{{count}} produit(s) à transférer",
         "status": {
             "critical": "Alerte Critique",
             "ok": "Niveau Correct"
@@ -1413,6 +1454,7 @@
         "empty": "Aucun produit à afficher dans le cadencier",
         "error_loading": "Erreur de chargement du cadencier",
         "no_selection": "Veuillez sélectionner au moins un produit",
+        "days_option": "{{days}} jours",
         "urgence": {
             "rupture": "Rupture",
             "alerte": "Alerte",
@@ -1499,5 +1541,90 @@
         "generating": "Génération…",
         "export_excel": "Exporter en Excel",
         "print": "Imprimer"
+    },
+    "validation": {
+        "weights_sum_100": "La somme des pondérations doit être égale à 100"
+    },
+    "lot_selection": {
+        "title": "Répartition des lots",
+        "subtitle": "{{name}} — Qté: {{qty}}",
+        "auto_fefo": "AUTOMATIQUE (FEFO)",
+        "auto_fefo_desc": "Le système choisira automatiquement les lots expirant le plus tôt.",
+        "col_lot": "Lot",
+        "col_expiry": "Expiration",
+        "col_stock": "Stock",
+        "col_price": "Prix",
+        "col_qty": "Qté",
+        "received_on": "Reçu le {{date}}",
+        "qty_lot_aria": "Quantité lot {{lot}}",
+        "select_lot_aria": "Sélectionner lot {{lot}}",
+        "no_specific_lot": "Aucun lot spécifique disponible. Le stock global sera utilisé.",
+        "allocated": "Alloué:",
+        "missing_units": "Il manque {{count}} unité(s)",
+        "excess_units": "Excès de {{count}} unité(s)",
+        "fefo": "FEFO"
+    },
+    "lots": {
+        "load_error": "Impossible de charger les lots du produit",
+        "no_date": "sans date",
+        "fallback": "Lot {{id}}"
+    },
+    "health_dashboard": {
+        "interpretation": {
+            "title": "Interprétation du Score",
+            "healthy_label": "Sain",
+            "healthy": "Stock optimal, peu de ruptures, rotation fluide.",
+            "medium_label": "Moyen",
+            "medium": "Attention à l'accumulation de stock dormant ou aux ruptures à venir.",
+            "critical_label": "Critique",
+            "critical": "Fort dysfonctionnement. Trop de liquidités immobilisées ou trop de ventes manquées."
+        },
+        "missed_sales": {
+            "title": "Ventes Manquées",
+            "desc": "Estimation de la perte de chiffre d'affaires sur les 30 derniers jours à cause des ruptures de stock sur des produits habituellement très demandés."
+        },
+        "dormant_stock": {
+            "title": "Stock Dormant",
+            "desc": "Valeur d'achat totale des produits qui n'ont fait l'objet d'aucune vente depuis plus de {{days}} jours. C'est de l'argent immobilisé qui bloque votre trésorerie."
+        },
+        "availability": {
+            "title": "Disponibilité",
+            "desc": "Pourcentage de vos produits en catalogue qui sont actuellement en stock (quantité > 0)."
+        },
+        "rupture_rate": {
+            "title": "Taux de rupture",
+            "desc": "Part des produits pertinents (en stock ou avec activité récente) qui sont actuellement en rupture."
+        },
+        "rotation": {
+            "title": "Rotation",
+            "desc": "Part de vos produits qui ont généré au moins une vente récemment, indiquant la fluidité de votre stock."
+        },
+        "imminent_ruptures": {
+            "title": "Ruptures Imminentes",
+            "desc": "Nombre de produits dont le niveau de stock a atteint ou est en dessous du seuil minimum défini."
+        },
+        "total_value": {
+            "title": "Valeur Totale",
+            "desc": "Valeur totale d'achat de l'ensemble de votre stock physique disponible."
+        }
+    },
+    "reappro_history": {
+        "title": "Historique Réappro",
+        "subtitle": "Suivi des transferts Réserve → Rayon",
+        "col_session": "Session",
+        "col_date": "Date & Heure",
+        "col_user": "Utilisateur",
+        "col_units": "Unités",
+        "col_lot_exp": "Lot / Exp",
+        "col_qty": "Qté",
+        "no_history": "Aucun historique trouvé",
+        "unknown_user": "Inconnu",
+        "details_title": "Détails du réappro #{{id}}",
+        "details_desc": "Transfert Réserve → Rayon",
+        "summary": "Résumé",
+        "products_transferred": "{{count}} produits transférés",
+        "units_total": "{{count}} unités au total",
+        "performed_on": "Effectué le",
+        "download_confirmation": "Télécharger la confirmation"
     }
 }

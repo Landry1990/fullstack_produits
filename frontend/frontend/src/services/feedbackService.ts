@@ -36,7 +36,6 @@ export interface FeedbackResponse {
   responded_by?: number;
   created_at: string;
   updated_at: string;
-  email_sent?: boolean;
 }
 
 const feedbackService = {

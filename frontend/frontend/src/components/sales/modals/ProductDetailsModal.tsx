@@ -32,11 +32,11 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
         setSendingReminder(lineId);
         try {
             const response = await api.post(`facture-produits/${lineId}/envoi_rappel_renouvellement/`, {});
-            gooeyToast.success(response.data.detail || `Rappel envoyé pour ${productName}`);
+            gooeyToast.success(response.data.detail || t('details.reminder_sent', { name: productName }));
         } catch (error: unknown) {
             logger.error('Error sending renewal reminder:', error);
             const axiosErr = error as { response?: { data?: { detail?: string } } };
-            const msg = axiosErr.response?.data?.detail || "Erreur lors de l'envoi du rappel";
+            const msg = axiosErr.response?.data?.detail || t('details.reminder_error');
             gooeyToast.error(msg);
         } finally {
             setSendingReminder(null);
@@ -211,7 +211,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                                     {prod.is_chronic && (
                                                         <span className="flex items-center gap-1 text-caption bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded-full border border-emerald-100 font-bold animate-pulse">
                                                             <CheckCircle2 className="size-2.5" />
-                                                            CHRONIQUE
+                                                            {t('details.chronic_badge')}
                                                         </span>
                                                     )}
                                                 </div>
@@ -219,32 +219,32 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                                     {prod.allocations && prod.allocations.length > 1 ? (
                                                         <div className="flex flex-col gap-1">
                                                             <span className="text-caption font-medium text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
-                                                                {prod.allocations.length} lots répartis manuellement
+                                                                {t('details.manual_lots_split', { count: prod.allocations.length })}
                                                             </span>
                                                             {prod.allocations.map((alloc, idx) => (
                                                                 <span key={alloc.id || idx} className="text-caption text-blue-600 font-mono bg-blue-50/50 px-1.5 py-0.5 rounded border border-blue-100">
-                                                                    Lot: {alloc.lot || 'N/A'} × {alloc.quantity}
-                                                                    {alloc.date_expiration && ` (Exp: ${alloc.date_expiration})`}
+                                                                    {t('details.lot')}: {alloc.lot || 'N/A'} × {alloc.quantity}
+                                                                    {alloc.date_expiration && ` (${t('details.exp')}: ${alloc.date_expiration})`}
                                                                 </span>
                                                             ))}
                                                         </div>
                                                     ) : prod.lot ? (
                                                         <span className="text-caption text-blue-600 font-mono bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
-                                                            Lot: {prod.lot} {prod.date_expiration && `(Exp: ${prod.date_expiration})`}
+                                                            {t('details.lot')}: {prod.lot} {prod.date_expiration && `(${t('details.exp')}: ${prod.date_expiration})`}
                                                         </span>
                                                     ) : prod.allocations && prod.allocations.length === 1 ? (
                                                         <span className="text-caption text-blue-600 font-mono bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
-                                                            Lot: {prod.allocations[0].lot || 'N/A'} {prod.allocations[0].date_expiration && `(Exp: ${prod.allocations[0].date_expiration})`}
+                                                            {t('details.lot')}: {prod.allocations[0].lot || 'N/A'} {prod.allocations[0].date_expiration && `(${t('details.exp')}: ${prod.allocations[0].date_expiration})`}
                                                         </span>
                                                     ) : null}
                                                     {remiseUnitaire > 0 && (
                                                         <span className="text-caption text-amber-600 font-medium bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100">
-                                                            Remise: -{formatCurrency(remiseUnitaire)} /unité
+                                                            {t('details.discount_per_unit', { amount: formatCurrency(remiseUnitaire) })}
                                                         </span>
                                                     )}
                                                     {prod.treatment_duration_days && (
                                                         <span className="text-caption text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
-                                                            Durée: {prod.treatment_duration_days} jours
+                                                            {t('details.duration_days', { days: prod.treatment_duration_days })}
                                                         </span>
                                                     )}
                                                 </div>
@@ -263,7 +263,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                             <td className="px-6 py-3 text-center">
                                                 {prod.is_chronic && (
                                                     <button
-                                                        onClick={() => handleSendRenewalReminder(prod.id, prod.produit_nom || 'produit')}
+                                                        onClick={() => handleSendRenewalReminder(prod.id, prod.produit_nom || t('fields.product'))}
                                                         disabled={sendingReminder === prod.id}
                                                         className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
                                                             sendingReminder === prod.id
@@ -273,7 +273,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                                         title={t('sales:details.whatsapp_renewal_reminder')}
                                                     >
                                                         {sendingReminder !== prod.id && <Smartphone className="size-3" />}
-                                                        Rappel
+                                                        {t('details.reminder')}
                                                     </button>
                                                 )}
                                             </td>
@@ -315,7 +315,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                     <div className="flex justify-end mt-4">
                         {Math.abs(totals.partClient - totals.totalTtc) > 1 && (
                             <div className="flex items-center gap-4 text-white bg-blue-500 py-2.5 px-5 rounded-xl shadow-lg">
-                                <span className="uppercase text-caption font-black tracking-widest opacity-80 border-r border-white/20 pr-4">À payer client</span>
+                                <span className="uppercase text-caption font-black tracking-widest opacity-80 border-r border-white/20 pr-4">{t('details.to_pay_client')}</span>
                                 <span className="font-mono text-2xl font-black tracking-tight">
                                     {formatCurrency(totals.partClient)}
                                 </span>

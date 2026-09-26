@@ -2,9 +2,15 @@
     "divers": {
         "title": "Gestion Divers",
         "revenue_tab": "Chiffre d'affaires",
+        "revenue_description": "Suivez les ventes et les performances des produits divers",
+        "revenue_tab_hint": "Ventes et performances",
         "imported_products_management": "Gestion des produits divers",
         "orders_tab": "Commandes",
+        "orders_description": "Gérez les commandes d'approvisionnement des produits divers",
+        "orders_tab_hint": "Approvisionnement",
         "stock_tab": "Stock",
+        "stock_description": "Analysez et valorisez le stock des produits divers",
+        "stock_tab_hint": "Valeur et répartition",
         "revenue": "Chiffre d'Affaires Total",
         "period_from": "Période du",
         "to": "au",
@@ -35,10 +41,16 @@
             "base_ht": "Base HT",
             "vat_amount": "Montant TVA",
             "total_ttc": "Total TTC",
-            "section": "Rayon"
+            "section": "Rayon",
+            "remaining_qty": "Qté restante",
+            "expiry": "Péremption"
         },
         "vat_breakdown": "Répartition par taux de TVA",
         "section_breakdown": "Répartition par rayon",
+        "lot_details": "Détail des lots divers restants",
+        "export_excel": "Exporter Excel",
+        "unclassified": "Non classé",
+        "no_expiry": "—",
         "to_date": "à",
         "daily_sales_title": "Ventes par jour",
         "detail_of": "Détail du",
@@ -57,7 +69,11 @@
         "daily_products": "Produits",
         "daily_qty": "Qté",
         "daily_invoices": "Factures",
-        "daily_total_ca": "Total CA"
+        "daily_total_ca": "Total CA",
+        "sheet_ca": "CA divers",
+        "sheet_sales": "Ventes divers",
+        "sheet_lots": "Lots divers",
+        "not_available": "N/A"
     },
     "title_local": "Gestion des Commandes Locales",
     "title_direct": "Gestion des Commandes Directes (Import)",
@@ -214,7 +230,9 @@
         "pagination": {
             "showing": "Affichage de {{count}} sur {{total}} commandes"
         },
-        "clear_search": "Effacer la recherche"
+        "clear_search": "Effacer la recherche",
+        "search_placeholder": "Rechercher (N° facture, ID)…",
+        "select_order": "Sélectionner commande #{{id}}"
     },
     "details": {
         "title": "Commande #{{id}}",
@@ -260,7 +278,8 @@
         "shortcuts": {
             "search": "Rechercher",
             "provider": "Fournisseur",
-            "select_all": "Tout sél."
+            "select_all": "Tout sél.",
+            "shift_enter": "Shift+Entrée"
         },
         "provider_label": "Fournisseur",
         "provider_placeholder": "Sélectionner un fournisseur",
@@ -309,6 +328,7 @@
         "min": "Min",
         "max": "Max",
         "search_placeholder": "Rechercher un produit...",
+        "expiry_placeholder": "MM/YY",
         "sort_options": {
             "chrono": "Chronologie",
             "stock": "Qté en stock",
@@ -630,8 +650,8 @@
     "price_selling_ttc": "PRIX V TTC",
     "margin": "MARGE",
     "reconditionnement": {
-        "title": "Reconditionnement",
-        "subtitle": "Sélectionnez les transformations à appliquer",
+        "title": "Reconditionnement automatique",
+        "subtitle": "Commande #{{numero}} — produits reçus pouvant être reconditionnés",
         "results": "Résultats",
         "errors": "Erreurs",
         "no_transformations": "Aucune transformation disponible",
@@ -640,6 +660,6 @@
         "selected_count": "{{count}} sélectionnés",
         "units": "unités",
         "skip": "Passer",
-        "confirm": "Confirmer"
+        "confirm": "Reconditionner"
     }
 }

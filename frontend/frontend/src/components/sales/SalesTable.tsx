@@ -53,7 +53,7 @@ const BulkActionsMenu: React.FC<BulkActionsMenuProps> = React.memo(({
                     <li><a role="menuitem" tabIndex={0} onKeyDown={handleMenuKeyDown} onClick={() => onRefund(selectedFacture)} className="gap-3 py-3"><FileEdit className="size-4 text-emerald-600" />{t('sales:load_to_facturation', { defaultValue: 'Charger en facturation' })}</a></li>
                 )}
                 {(selectedFacture.status === 'VALIDEE' || selectedFacture.status === 'PAY' || selectedFacture.status === 'VAL' || selectedFacture.status === 'PAYEE') && (
-                    <li><a role="menuitem" tabIndex={0} onKeyDown={handleMenuKeyDown} onClick={() => onGenerateAvoir(selectedFacture)} className="gap-3 py-3"><FileDigit className="size-4 text-emerald-600" />Générer un avoir</a></li>
+                    <li><a role="menuitem" tabIndex={0} onKeyDown={handleMenuKeyDown} onClick={() => onGenerateAvoir(selectedFacture)} className="gap-3 py-3"><FileDigit className="size-4 text-emerald-600" />{t('actions.generate_avoir')}</a></li>
                 )}
                 {selectedFacture.status !== 'ANN' && selectedFacture.status !== 'BROU' && selectedFacture.status !== 'PROF' && selectedFacture.status !== 'PROFORMA' && (
                     <li><a role="menuitem" tabIndex={0} onKeyDown={handleMenuKeyDown} onClick={() => onRefund(selectedFacture)} className="gap-3 py-3"><RotateCcw className="size-4 text-amber-500" />{t('common:refund', { defaultValue: "Modifier/Retour" })}</a></li>

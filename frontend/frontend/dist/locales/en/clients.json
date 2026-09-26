@@ -176,5 +176,40 @@
             "obesity_2": "Your BMI indicates severe obesity. Medical follow-up is strongly recommended.",
             "obesity_3": "Your BMI indicates morbid or massive obesity. Urgent medical management is necessary."
         }
+    },
+    "validation": {
+        "name_min": "Name must contain at least 2 characters",
+        "phone_invalid": "Invalid phone number (min. 8 digits)",
+        "email_invalid": "Invalid email format",
+        "remise_max": "Discount cannot exceed 100%",
+        "plafond_min": "Ceiling cannot be lower than -1",
+        "taux_couverture_range": "Coverage rate must be between 0 and 100",
+        "remise_auto_range": "Automatic discount must be between 0 and 100",
+        "majoration_range": "Markup must be between 0 and 100"
+    },
+    "delete_warning": {
+        "title": "Deletion not possible",
+        "subtitle": "Some clients have unpaid invoices",
+        "title_single": "Cannot delete",
+        "subtitle_single": "This client has unpaid invoices",
+        "blocked_title": "Blocked clients",
+        "selected_count_one": "of {{count}} selected",
+        "selected_count_other": "of {{count}} selected",
+        "total_due": "Total amount due",
+        "affected_clients": "Affected clients",
+        "unpaid_invoices_one": "{{count}} unpaid invoice",
+        "unpaid_invoices_other": "{{count}} unpaid invoices",
+        "note_label": "Note:",
+        "deletable_info_one": "{{count}} client can be deleted (no unpaid invoices). Please select them individually.",
+        "deletable_info_other": "{{count}} clients can be deleted (no unpaid invoices). Please select them individually.",
+        "action_required": "Action required:",
+        "blocked_info": "Please settle all invoices for blocked clients before deleting them.",
+        "client_label": "Client",
+        "unpaid_invoices_label": "Unpaid invoices",
+        "invoice_details": "Invoice details",
+        "invoice_no": "Invoice #{{num}}",
+        "of_amount": "of {{amount}}",
+        "blocked_info_single": "Please settle all invoices before deleting this client.",
+        "understood": "Got it"
     }
 }

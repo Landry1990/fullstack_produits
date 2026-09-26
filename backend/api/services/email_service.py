@@ -11,7 +11,23 @@ logger = logging.getLogger(__name__)
 
 class EmailService:
     """Service for sending emails."""
-    
+
+    @staticmethod
+    def _get_pharmacy_name():
+        """Nom de la pharmacie : licence signée en priorité, sinon paramètres."""
+        try:
+            from api.utils_licence import valider_licence_systeme
+            _valid, _msg, payload = valider_licence_systeme()
+            if payload and payload.get('pharmacie_nom'):
+                return payload['pharmacie_nom']
+        except Exception:
+            pass
+        try:
+            from api.utils.currency import get_pharmacy_name
+            return get_pharmacy_name()
+        except Exception:
+            return ''
+
     @staticmethod
     def send_feedback_notification(feedback):
         """
@@ -21,10 +37,13 @@ class EmailService:
             feedback: Feedback model instance
         """
         try:
-            subject = f"[Feedback] {feedback.get_category_display()} - {feedback.subject}"
-            
+            pharmacie = EmailService._get_pharmacy_name()
+            pharmacie_tag = f"{pharmacie} — " if pharmacie else ""
+            subject = f"[Feedback] {pharmacie_tag}{feedback.get_category_display()} - {feedback.subject}"
+
             # Build email body
             message = f"""
+Pharmacie: {pharmacie or 'N/A'}
 Nouveau feedback reçu de {feedback.user.username if feedback.user else 'Utilisateur anonyme'}
 
 Catégorie: {feedback.get_category_display()}
@@ -38,7 +57,7 @@ Page URL: {feedback.page_url or 'N/A'}
 Navigateur: {feedback.browser_info or 'N/A'}
 
 ---
-Envoyé depuis l'application Pharma
+Envoyé depuis l'application Zenith Pharma
             """
             
             # Send email

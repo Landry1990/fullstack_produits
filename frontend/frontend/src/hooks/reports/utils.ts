@@ -76,14 +76,14 @@ export const COLUMN_LABELS: Record<string, string> = {
 };
 
 export const formatColumnHeader = (col: string, t?: unknown): string => {
-    // First check COLUMN_LABELS directly
-    if (COLUMN_LABELS[col]) return COLUMN_LABELS[col];
-    
-    // Then try i18n translation with fallback to COLUMN_LABELS
+    // Try i18n translation first (namespace:key syntax), fallback to COLUMN_LABELS
     if (t) {
-        const translated = t(`reports.column_labels.${col}`, { defaultValue: COLUMN_LABELS[col] || col.replace(/_/g, ' ') });
-        if (translated && translated !== `reports.column_labels.${col}`) return translated;
+        const translated = t(`reports:column_labels.${col}`, { defaultValue: COLUMN_LABELS[col] || col.replace(/_/g, ' ') });
+        if (translated && translated !== `reports:column_labels.${col}`) return translated;
     }
+
+    // Then check COLUMN_LABELS directly
+    if (COLUMN_LABELS[col]) return COLUMN_LABELS[col];
 
     const match = col.match(/^(\d{4})_(.*)$/);
     if (match && t) {
@@ -156,11 +156,11 @@ export const formatValue = (key: string, value: unknown, t?: unknown): string =>
     }
 
     if (key === 'source' && t) {
-        return t(`reports.results.sources.${value}`, { defaultValue: String(value) });
+        return t(`reports:results.sources.${value}`, { defaultValue: String(value) });
     }
 
     if (key === 'status' && t) {
-        return t(`common.status.${String(value).toLowerCase()}`, { defaultValue: String(value) });
+        return t(`common:status.${String(value).toLowerCase()}`, { defaultValue: String(value) });
     }
 
     if (typeof value === 'number') {

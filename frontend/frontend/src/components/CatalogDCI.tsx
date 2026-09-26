@@ -66,7 +66,7 @@ export default function CatalogDCI() {
         <div className="p-6 bg-primary/5 border-b border-base-200">
           <h2 className="text-xl font-bold flex items-center gap-3 text-primary mb-4">
             <Icons.Pill />
-            Catalogue DCI
+            {t('products:dci.catalog_title')}
           </h2>
           <div className="relative">
             <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-base-content/50">
@@ -106,7 +106,7 @@ export default function CatalogDCI() {
               <div className="flex flex-col">
                 <span className="font-semibold text-sm leading-tight">{sub.nom}</span>
                 <span className={`text-xs tracking-wide font-medium text-base-content/60 ${selectedSubstance?.id === sub.id ? 'text-primary-content/90' : 'text-primary'}`}>
-                  {sub.produits_count} produits liés
+                  {t('products:dci.linked_products', { count: sub.produits_count })}
                 </span>
               </div>
               <div className={`opacity-0 group-hover:opacity-100 transition-opacity ${selectedSubstance?.id === sub.id ? 'opacity-100' : ''}`}>
@@ -129,7 +129,7 @@ export default function CatalogDCI() {
               disabled={!substancesData.previous}
               onClick={() => setPage(p => p - 1)}
             >{t('products:dci.previous')}</Button>
-            <span className="text-xs font-medium text-base-content/50">Page {page}</span>
+            <span className="text-xs font-medium text-base-content/50">{t('products:dci.page', { page })}</span>
             <Button 
               variant="ghost" size="sm" 
               disabled={!substancesData.next}
@@ -169,7 +169,7 @@ export default function CatalogDCI() {
                 <div className="p-6 border-b border-base-200 flex items-center justify-between">
                   <h3 className="font-semibold flex items-center gap-2">
                     <Icons.Box />
-                    Produits en pharmacie
+                    {t('products:dci.pharmacy_products')}
                   </h3>
                   <Badge variant="primary" className="font-medium">{(produitsData as { count?: number })?.count || 0}</Badge>
                 </div>
@@ -185,7 +185,7 @@ export default function CatalogDCI() {
                         <div className="flex items-center gap-2">
                           {p.stock > 0 && (
                             <Badge variant="success" size="sm" className="font-medium">
-                              {p.stock} en stock
+                              {t('products:dci.in_stock', { count: p.stock })}
                             </Badge>
                           )}
                           <Button
@@ -207,7 +207,7 @@ export default function CatalogDCI() {
                         </div>
                       </div>
                       <div className="flex items-center justify-between text-sm text-base-content/60">
-                        <span>{p.forme_name || 'Forme inconnue'}</span>
+                        <span>{p.forme_name || t('products:dci.unknown_form')}</span>
                         <span className="font-semibold text-primary">{p.selling_price} F</span>
                       </div>
                     </div>
@@ -227,7 +227,7 @@ export default function CatalogDCI() {
                   <div className="p-6 border-b border-base-200 flex items-center justify-between bg-secondary/5">
                     <h3 className="font-semibold flex items-center gap-2 text-secondary">
                       <Icons.Search />
-                      Références Base ANSM
+                      {t('products:dci.ansm_refs')}
                     </h3>
                     <Badge variant="secondary" className="font-medium">{refMedsData?.count || 0}</Badge>
                   </div>

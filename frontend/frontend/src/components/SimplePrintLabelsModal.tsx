@@ -37,7 +37,6 @@ interface LabelData {
 }
 
 interface SimplePrintLabelsModalProps {
-  commandeId: number
   commandeNumero: string
   commande?: Commande
   produitsList?: ProduitModel[]
@@ -224,10 +223,10 @@ function LabelPreview({
         {isEnabled('pharmacyName') && label.pharmacyName && (
           <div style={{
             fontSize: isCompact ? '4.5pt' : '5pt',
-            fontWeight: 800,
+            fontWeight: 600,
             textTransform: 'uppercase',
             letterSpacing: '0.02em',
-            color: '#333',
+            color: '#000',
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
@@ -239,7 +238,7 @@ function LabelPreview({
         {isEnabled('productName') && (
           <div style={{
             fontSize: isCompact ? '5pt' : '6pt',
-            fontWeight: 900,
+            fontWeight: 800,
             lineHeight: 1.1,
             marginTop: '0.3mm',
             display: '-webkit-box',
@@ -293,7 +292,7 @@ function LabelPreview({
         <div style={{ flex: 1, minWidth: 0 }}>
           {/* Row 1: Rayon & Lot */}
           {(isEnabled('rayon') || isEnabled('lot')) && (
-            <div style={{ fontSize: isCompact ? '3.5pt' : '4pt', color: '#444', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ fontSize: isCompact ? '3.5pt' : '4pt', fontWeight: 600, color: '#000', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {isEnabled('rayon') && label.rayon ? `${t('prefixes.rayon')}:${label.rayon} ` : ''}
               {isEnabled('lot') && label.lot ? `${t('prefixes.lot')}:${label.lot}` : ''}
             </div>
@@ -301,28 +300,28 @@ function LabelPreview({
           
           {/* Row 2: Entry Date */}
           {isEnabled('dateEntree') && label.dateEntree && (
-            <div style={{ fontSize: isCompact ? '3.5pt' : '4pt', fontWeight: 600, color: '#444' }}>
+            <div style={{ fontSize: isCompact ? '3.5pt' : '4pt', fontWeight: 600, color: '#000', letterSpacing: '0.02em' }}>
               {label.dateEntree}
             </div>
           )}
           
           {/* Row 3: Expiration Date */}
           {isEnabled('dateExpiration') && label.dateExpiration && (
-            <div style={{ fontSize: isCompact ? '3.5pt' : '4.5pt', fontWeight: 700, color: '#c00' }}>
+            <div style={{ fontSize: isCompact ? '3.5pt' : '4.5pt', fontWeight: 600, color: '#b00', letterSpacing: '0.02em' }}>
               {t('prefixes.expiration')}:{label.dateExpiration}
             </div>
           )}
           
           {/* Row 4: Fournisseur */}
           {isEnabled('fournisseur') && label.fournisseur && (
-            <div style={{ fontSize: isCompact ? '3.5pt' : '4pt', color: '#666', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ fontSize: isCompact ? '3.5pt' : '4pt', fontWeight: 400, color: '#333', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {label.fournisseur}
             </div>
           )}
 
           {/* Row 5: CMD & Invoice */}
           {(isEnabled('orderNumber') || isEnabled('invoiceNumber')) && (
-            <div style={{ fontSize: isCompact ? '3.5pt' : '4pt', color: '#777', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ fontSize: isCompact ? '3.5pt' : '4pt', fontWeight: 400, color: '#444', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {isEnabled('orderNumber') && label.orderNumber ? `${t('prefixes.order')}:${label.orderNumber} ` : ''}
               {isEnabled('invoiceNumber') && label.invoiceNumber ? `${t('prefixes.invoice')}:${label.invoiceNumber}` : ''}
             </div>
@@ -402,7 +401,6 @@ function PreviewLabelWrapper({
    MAIN MODAL COMPONENT
    ═══════════════════════════════════════════ */
 export default function SimplePrintLabelsModal({
-  commandeId,
   commandeNumero,
   commande,
   produitsList = EMPTY_PRODUCTS_LIST,
@@ -604,7 +602,7 @@ export default function SimplePrintLabelsModal({
   })()
 
   /* ─── Print handler ─── */
-  const handlePrint = useCallback(() => {
+  const handlePrint = useCallback(async () => {
     setPrinting(true)
     const isCompact = labelFormat === '30x15'
     const w = isCompact ? '30mm' : '40mm'
@@ -617,6 +615,15 @@ export default function SimplePrintLabelsModal({
       return
     }
 
+    // bwip-js chargé dynamiquement (comme dans DatamatrixCanvas)
+    let bwipToSVG: typeof import('bwip-js').toSVG | null = null
+    if (barcodeType === 'DATAMATRIX') {
+      try {
+        const mod = await import('bwip-js')
+        bwipToSVG = ((mod as { default?: typeof import('bwip-js') }).default || mod).toSVG
+      } catch { /* ignore */ }
+    }
+
     const labelsHTML = labelsData.map(label => {
       const isEnabled = (key: string) => fields.find(f => f.key === key)?.enabled ?? false
       const truncate = (s: string, max: number) => s.length > max ? s.slice(0, max - 2) + '..' : s
@@ -624,7 +631,7 @@ export default function SimplePrintLabelsModal({
       // Build barcode / datamatrix SVG string
       let barcodeSvg = ''
       if (isEnabled('barcode') && label.barcode) {
-        if (barcodeType === 'DATAMATRIX') {
+        if (barcodeType === 'DATAMATRIX' && bwipToSVG) {
           try {
             const gtin = label.cip.length === 13 ? '0' + label.cip : label.cip.padStart(14, '0')
             let gs1 = `(01)${gtin}`
@@ -639,11 +646,11 @@ export default function SimplePrintLabelsModal({
               }
             }
             const size = isCompact ? 7 : 9
-            const svgRaw = bwipjs.toSVG({ bcid: 'datamatrix', text: gs1, scale: 1, height: size, width: size, parsefnc: true })
+            const svgRaw = bwipToSVG({ bcid: 'datamatrix', text: gs1, scale: 1, height: size, width: size, parsefnc: true })
             const svgMm = isCompact ? '7mm' : '9mm'
             barcodeSvg = svgRaw.replace('<svg ', `<svg style="width:${svgMm};height:${svgMm};display:block;" `)
           } catch { /* ignore */ }
-        } else {
+        } else if (barcodeType !== 'DATAMATRIX') {
           try {
             const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
             JsBarcode(svg, label.barcode, {
@@ -665,12 +672,12 @@ export default function SimplePrintLabelsModal({
 
       // Pharmacy name
       if (isEnabled('pharmacyName') && label.pharmacyName) {
-        lines.push(`<div style="font-size:${isCompact ? '4.5pt' : '5pt'};font-weight:800;text-transform:uppercase;letter-spacing:0.02em;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;">${label.pharmacyName}</div>`)
+        lines.push(`<div style="font-size:${isCompact ? '4.5pt' : '5pt'};font-weight:600;text-transform:uppercase;letter-spacing:0.02em;color:#000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;">${label.pharmacyName}</div>`)
       }
 
       // Product name
       if (isEnabled('productName')) {
-        lines.push(`<div style="font-size:${isCompact ? '5pt' : '6pt'};font-weight:900;line-height:1.1;margin-top:0.3mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${label.productName}</div>`)
+        lines.push(`<div style="font-size:${isCompact ? '5pt' : '6pt'};font-weight:800;line-height:1.1;margin-top:0.3mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${label.productName}</div>`)
       }
 
       // Barcode
@@ -687,17 +694,17 @@ export default function SimplePrintLabelsModal({
         let txt = ""
         if (isEnabled('rayon') && label.rayon) txt += `${t('prefixes.rayon')}:${truncate(label.rayon, 12)} `
         if (isEnabled('lot') && label.lot) txt += `${t('prefixes.lot')}:${truncate(label.lot, 10)}`
-        leftRows.push(`<div style="font-size:${isCompact ? '4.5pt' : '5.5pt'};font-weight:700;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${txt}</div>`)
+        leftRows.push(`<div style="font-size:${isCompact ? '4.5pt' : '5.5pt'};font-weight:600;color:#000;letter-spacing:0.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${txt}</div>`)
       }
 
       if (isEnabled('dateEntree') && label.dateEntree) {
-        leftRows.push(`<div style="font-size:${isCompact ? '4.5pt' : '5.5pt'};font-weight:700;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${label.dateEntree}</div>`)
+        leftRows.push(`<div style="font-size:${isCompact ? '4.5pt' : '5.5pt'};font-weight:600;color:#000;letter-spacing:0.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${label.dateEntree}</div>`)
       }
       if (isEnabled('dateExpiration') && label.dateExpiration) {
-        leftRows.push(`<div style="font-size:${isCompact ? '3.5pt' : '4.5pt'};font-weight:700;color:#c00;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t('prefixes.expiration')}:${label.dateExpiration}</div>`)
+        leftRows.push(`<div style="font-size:${isCompact ? '3.5pt' : '4.5pt'};font-weight:600;color:#b00;letter-spacing:0.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t('prefixes.expiration')}:${label.dateExpiration}</div>`)
       }
       if (isEnabled('fournisseur') && label.fournisseur) {
-        leftRows.push(`<div style="font-size:${isCompact ? '4pt' : '5pt'};font-weight:600;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${truncate(label.fournisseur, 15)}</div>`)
+        leftRows.push(`<div style="font-size:${isCompact ? '4pt' : '5pt'};font-weight:400;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${truncate(label.fournisseur, 15)}</div>`)
       }
 
       // Group: Order + Invoice
@@ -705,7 +712,7 @@ export default function SimplePrintLabelsModal({
         let txt = ""
         if (isEnabled('orderNumber') && label.orderNumber) txt += `${t('prefixes.order')}:${label.orderNumber} `
         if (isEnabled('invoiceNumber') && label.invoiceNumber) txt += `${t('prefixes.invoice')}:${truncate(label.invoiceNumber, 10)}`
-        leftRows.push(`<div style="font-size:${isCompact ? '3.5pt' : '4pt'};color:#777;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${txt}</div>`)
+        leftRows.push(`<div style="font-size:${isCompact ? '3.5pt' : '4pt'};font-weight:400;color:#444;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${txt}</div>`)
       }
 
       const priceVal = label.sellingPrice.toLocaleString(i18n.language.startsWith('en') ? 'en-GB' : 'fr-FR', { maximumFractionDigits: 0 })
@@ -783,7 +790,11 @@ export default function SimplePrintLabelsModal({
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
       text-rendering: optimizeLegibility;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
+    /* Barres nettes sur imprimantes thermiques basse résolution */
+    .label svg * { shape-rendering: crispEdges; }
     body {
       font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
       background: #fff;
@@ -831,14 +842,7 @@ ${labelsHTML}
       setTimeout(triggerPrint, 1000)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [labelsData, fields, labelFormat, commandeNumero, onClose])
-
-  /* ─── PDF backend print handler ─── */
-  const handlePrintPDF = useCallback(() => {
-    const format = labelFormat === '30x15' ? '30x15' : '40x20'
-    const url = `${window.location.origin}/api/commandes/${commandeId}/imprimer_etiquettes/?format=${format}`
-    window.open(url, '_blank')
-  }, [commandeId, labelFormat])
+  }, [labelsData, fields, labelFormat, barcodeType, commandeNumero, onClose])
 
   const enabledFieldsCount = fields.filter(f => f.enabled).length
 
@@ -895,7 +899,7 @@ ${labelsHTML}
         {/* ── Barcode Type Selection ── */}
         <div>
           <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2.5">
-            Type de code-barres
+            {t('labels:barcode_type')}
           </label>
           <div className="flex gap-3">
             <label className={`flex items-center cursor-pointer gap-2 border rounded-xl p-3 flex-1 transition-all ${barcodeType === 'CODE128' ? 'border-primary bg-primary/5 shadow-sm' : 'hover:bg-base-200'}`}>
@@ -907,8 +911,8 @@ ${labelsHTML}
                 onChange={() => setBarcodeType('CODE128')}
               />
               <div className="flex-1">
-                <span className="text-sm font-semibold">Code-barres</span>
-                <p className="text-xs text-base-content/50">CODE128 linéaire</p>
+                <span className="text-sm font-semibold">{t('labels:barcode')}</span>
+                <p className="text-xs text-base-content/50">{t('labels:code128_linear')}</p>
               </div>
             </label>
             <label className={`flex items-center cursor-pointer gap-2 border rounded-xl p-3 flex-1 transition-all ${barcodeType === 'DATAMATRIX' ? 'border-emerald-500 bg-emerald-50 shadow-sm' : 'hover:bg-base-200'}`}>
@@ -922,7 +926,7 @@ ${labelsHTML}
               />
               <div className="flex-1">
                 <span className="text-sm font-semibold">Datamatrix</span>
-                <p className="text-xs text-base-content/50">GS1 (CIP + lot + exp.)</p>
+                <p className="text-xs text-base-content/50">{t('labels:gs1_desc')}</p>
               </div>
             </label>
           </div>
@@ -1147,16 +1151,6 @@ ${labelsHTML}
         <div className="flex justify-end gap-3 pt-1">
           <Button onClick={onClose} variant="ghost" className="px-6 rounded-xl">
             {t('cancel')}
-          </Button>
-          <Button
-            onClick={handlePrintPDF}
-            variant="secondary" className="px-6 rounded-xl gap-2"
-            disabled={labelsData.length === 0}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            PDF
           </Button>
           <Button
             onClick={handlePrint}

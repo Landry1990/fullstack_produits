@@ -4,6 +4,10 @@
     "format_label": "Label Format",
     "format_standard": "Standard Format (40x20mm)",
     "format_compact": "Compact Format (30x15mm)",
+    "barcode_type": "Barcode type",
+    "barcode": "Barcode",
+    "code128_linear": "Linear CODE128",
+    "gs1_desc": "GS1 (CIP + lot + exp.)",
     "info_title": "Label Configuration",
     "drag_info": "Drag and drop to reorder fields",
     "fields": {

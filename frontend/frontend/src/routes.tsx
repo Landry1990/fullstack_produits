@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { ProtectedRoute, AdminRoute, HomeRedirector } from './components/auth/RouteGuards';
 import { PermissionRoute } from './components/auth/PermissionRoute';
 import { setRouter } from './services/navigationService';
+import i18n from './i18n';
 
 // ── Lazy loading robuste avec timeout et retry ──
 const MAX_RETRIES = 3;
@@ -15,7 +16,7 @@ function lazyWithRetry<T extends ComponentType>(
   return lazy(() => 
     new Promise<{ default: T }>((resolve, reject) => {
       const timeoutId = setTimeout(() => {
-        reject(new Error('Timeout: Le chargement du module a pris trop de temps'));
+        reject(new Error(i18n.t('common:errors.module_timeout')));
       }, LOAD_TIMEOUT);
 
       const attempt = (attemptsLeft: number) => {
@@ -222,8 +223,8 @@ export const router = createBrowserRouter([
           { path: 'compta/plan-comptable', ...perm(['compta', 'compta_plan'], Comptabilite, { defaultTab: 'plan' }) },
 
           // ── Gestion Divers ──
-          { path: 'divers/ca', ...perm(['divers', 'divers_ca'], GestionDivers, { defaultTab: 'ca' }) },
-          { path: 'divers/commandes', ...perm(['divers', 'divers_commandes'], GestionDivers, { defaultTab: 'commandes' }) },
+          { path: 'divers/ca', ...perm(['divers', 'divers_ca', 'divers_commandes'], GestionDivers, { defaultTab: 'ca' }) },
+          { path: 'divers/stock', ...perm(['divers', 'divers_ca', 'divers_commandes'], GestionDivers, { defaultTab: 'stock' }) },
 
           // ── Communication ──
           { path: 'telegram-history', ...perm(['settings', 'settings_telegram'], TelegramHistory) },

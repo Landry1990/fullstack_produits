@@ -37,16 +37,16 @@ const fmt = (v: number | string | undefined | null) => {
 };
 
 const StockValuationReport: React.FC<Props> = ({ data }) => {
-    const { t: _t } = useTranslation(['reports', 'common']);
+    const { t } = useTranslation(['reports', 'common']);
     const d = data as StockValuationData;
     const [downloading, setDownloading] = useState(false);
     const { settings } = usePharmacySettings();
 
     if (!d || !d.tva_breakdown) {
-        return <div className="p-8 text-center text-slate-400">Données indisponibles</div>;
+        return <div className="p-8 text-center text-slate-400">{t('stock_valuation.unavailable_data')}</div>;
     }
 
-    const typeLabel = d.is_pmp ? "Coût d'Achat (PMP)" : 'Prix de Vente (TTC)';
+    const typeLabel = d.is_pmp ? t('stock_valuation.valuation_pmp') : t('stock_valuation.valuation_vente');
 
     const handleDownloadPDF = () => {
         setDownloading(true);
@@ -63,10 +63,10 @@ const StockValuationReport: React.FC<Props> = ({ data }) => {
             <div className="border-b border-slate-200 pb-4 flex items-start justify-between gap-4">
                 <div>
                     <h2 className="text-xl font-bold text-slate-800">
-                        Récapitulatif Valeur Stock
+                        {t('queries.recap_valeur_stock.name')}
                     </h2>
                     <p className="text-sm text-slate-500 mt-1">
-                        Méthode : {typeLabel}
+                        {t('stock_valuation.method_label')} : {typeLabel}
                     </p>
                 </div>
                 <div className="flex items-center gap-2 print:hidden">
@@ -75,7 +75,7 @@ const StockValuationReport: React.FC<Props> = ({ data }) => {
                         className="inline-flex items-center gap-2 h-9 px-4 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-bold transition-colors"
                     >
                         <Printer className="size-4" />
-                        Imprimer
+                        {t('common:print')}
                     </button>
                     <button
                         onClick={handleDownloadPDF}
@@ -83,7 +83,7 @@ const StockValuationReport: React.FC<Props> = ({ data }) => {
                         className="inline-flex items-center gap-2 h-9 px-4 rounded-lg bg-slate-800 text-white hover:bg-slate-700 text-xs font-bold transition-colors disabled:opacity-50"
                     >
                         <FileDown className="size-4" />
-                        {downloading ? 'Génération...' : 'Télécharger PDF'}
+                        {downloading ? t('stock_valuation.generating') : t('stock_valuation.download_pdf')}
                     </button>
                 </div>
             </div>
@@ -91,16 +91,16 @@ const StockValuationReport: React.FC<Props> = ({ data }) => {
             {/* Summary Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="border border-slate-200 rounded-xl p-5">
-                    <p className="text-xs text-slate-500 mb-1">Valeur Totale HT</p>
+                    <p className="text-xs text-slate-500 mb-1">{t('stock_valuation.pdf_total_ht')}</p>
                     <p className="text-xl font-bold text-slate-800">{fmt(d.total_ht)}</p>
                 </div>
                 <div className="border border-slate-200 rounded-xl p-5">
-                    <p className="text-xs text-slate-500 mb-1">Montant Total TVA</p>
+                    <p className="text-xs text-slate-500 mb-1">{t('stock_valuation.tva_total')}</p>
                     <p className="text-xl font-bold text-slate-800">{fmt(d.total_tva)}</p>
                 </div>
                 <div className="border border-slate-200 rounded-xl p-5">
                     <p className="text-xs text-slate-500 mb-1">
-                        Valeur Totale {d.is_pmp ? 'PMP' : 'TTC'}
+                        {t('stock_valuation.pdf_total_value', { type: d.is_pmp ? 'PMP' : 'TTC' })}
                     </p>
                     <p className="text-xl font-bold text-slate-800">{fmt(d.total_ttc)}</p>
                 </div>
@@ -109,16 +109,16 @@ const StockValuationReport: React.FC<Props> = ({ data }) => {
             {/* TVA Breakdown Table */}
             <div>
                 <h3 className="text-sm font-bold text-slate-700 mb-3">
-                    Répartition par taux de TVA
+                    {t('stock_valuation.tva_section_title')}
                 </h3>
                 <div className="overflow-x-auto">
                     <table className="w-full border-collapse text-sm">
                         <thead>
                             <tr className="border-b border-slate-200">
-                                <th className="text-left py-2 px-3 text-xs text-slate-500">Taux TVA</th>
-                                <th className="text-right py-2 px-3 text-xs text-slate-500">Base HT</th>
-                                <th className="text-right py-2 px-3 text-xs text-slate-500">Montant TVA</th>
-                                <th className="text-right py-2 px-3 text-xs text-slate-500">Total Reconstitué</th>
+                                <th className="text-left py-2 px-3 text-xs text-slate-500">{t('stock_valuation.pdf_tva_rate')}</th>
+                                <th className="text-right py-2 px-3 text-xs text-slate-500">{t('stock_valuation.tva_table_base')}</th>
+                                <th className="text-right py-2 px-3 text-xs text-slate-500">{t('stock_valuation.tva_table_amount')}</th>
+                                <th className="text-right py-2 px-3 text-xs text-slate-500">{t('stock_valuation.total_reconstitue')}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -139,16 +139,16 @@ const StockValuationReport: React.FC<Props> = ({ data }) => {
             {d.group_breakdown && d.group_breakdown.length > 0 && (
                 <div>
                     <h3 className="text-sm font-bold text-slate-700 mb-3">
-                        Répartition par {d.group_by}
+                        {t('stock_valuation.group_section_title', { group: d.group_by })}
                     </h3>
                     <div className="overflow-x-auto">
                         <table className="w-full border-collapse text-sm">
                             <thead>
                                 <tr className="border-b border-slate-200">
-                                    <th className="text-left py-2 px-3 text-xs text-slate-500">Catégorie</th>
-                                    <th className="text-right py-2 px-3 text-xs text-slate-500">Base HT</th>
-                                    <th className="text-right py-2 px-3 text-xs text-slate-500">Montant TVA</th>
-                                    <th className="text-right py-2 px-3 text-xs text-slate-500">Total TTC</th>
+                                    <th className="text-left py-2 px-3 text-xs text-slate-500">{t('stock_valuation.category_header')}</th>
+                                    <th className="text-right py-2 px-3 text-xs text-slate-500">{t('stock_valuation.tva_table_base')}</th>
+                                    <th className="text-right py-2 px-3 text-xs text-slate-500">{t('stock_valuation.tva_table_amount')}</th>
+                                    <th className="text-right py-2 px-3 text-xs text-slate-500">{t('stock_valuation.pdf_total_ttc')}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -161,7 +161,7 @@ const StockValuationReport: React.FC<Props> = ({ data }) => {
                                     </tr>
                                 ))}
                                 <tr className="border-t-2 border-slate-200">
-                                    <td className="py-2 px-3 font-bold text-slate-800">Total</td>
+                                    <td className="py-2 px-3 font-bold text-slate-800">{t('common:total')}</td>
                                     <td className="py-2 px-3 text-right font-bold text-slate-800">{fmt(d.total_ht)}</td>
                                     <td className="py-2 px-3 text-right font-bold text-slate-800">{fmt(d.total_tva)}</td>
                                     <td className="py-2 px-3 text-right font-bold text-slate-800">{fmt(d.total_ttc)}</td>
@@ -174,9 +174,7 @@ const StockValuationReport: React.FC<Props> = ({ data }) => {
 
             {/* Note */}
             <div className="text-xs text-slate-400 italic pt-4 border-t border-slate-100">
-                Note : Cette valorisation est {d.is_pmp
-                    ? 'fondée sur le PMP stocké en base.'
-                    : 'fondée sur les prix de vente publics actuels.'}
+                {t(d.is_pmp ? 'stock_valuation.note_screen_pmp' : 'stock_valuation.note_screen_vente')}
             </div>
         </div>
     );

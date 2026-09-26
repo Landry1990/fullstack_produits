@@ -217,7 +217,6 @@ export default function Commandes({ forcedType }: CommandesProps) {
       {state.showPrintLabelsModal && state.selectedCommande && (
         <Suspense fallback={<LoadingScreen size="sm" overlay={false} />}>
           <SimplePrintLabelsModal
-            commandeId={state.selectedCommande.id}
             commandeNumero={state.selectedCommande.numero_facture || `#${state.selectedCommande.id}`}
             commande={state.selectedCommande}
             produitsList={modals.produitsList}

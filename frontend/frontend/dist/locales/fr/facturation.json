@@ -50,7 +50,8 @@
         "peremption": "Péremption:",
         "prix_lot": "Prix lot:",
         "stock_label": "Stock:",
-        "rem_placeholder": "Rem."
+        "rem_placeholder": "Rem.",
+        "lots_count": "{{count}} lots"
     },
     "actions": {
         "cancel": "Annuler la Vente",
@@ -154,6 +155,9 @@
         "sudo_title": "Validation Requise",
         "sudo_confirm_identity": "Confirmer votre identité",
         "sudo_send_to_caisse": "Veuillez saisir votre mot de passe pour envoyer la facture à la caisse centrale. Cette action est liée à votre session.",
+        "sudo_seller_title": "Validation vendeur",
+        "sudo_seller_message": "Ce poste est partagé. Veuillez saisir vos identifiants de vendeur pour cette vente.",
+        "sudo_zero_amount_message": "Cette vente avec un total de {{total}} F nécessite l'autorisation d'un superviseur.",
         "sudo_mode": {
             "validate_by": "Validé par",
             "password": "Mot de passe (Sudo)",
@@ -257,7 +261,19 @@
         "client_create_field_error": "Erreur : {{message}}",
         "product_detail_load_error": "Impossible de charger les détails complets du produit",
         "invoice_settings_updated": "Paramètres de facturation mis à jour",
-        "invoice_settings_update_error": "Erreur lors de la mise à jour des paramètres"
+        "invoice_settings_update_error": "Erreur lors de la mise à jour des paramètres",
+        "enter_whatsapp_number": "Entrez le numéro WhatsApp",
+        "cancel_sale_confirm": "Êtes-vous sûr de vouloir annuler cette vente en cours ? Tout le panier sera perdu.",
+        "refresh_failed": "Erreur de rafraîchissement des stocks",
+        "pack_added": "Pack \"{{name}}\" ajouté au panier",
+        "pack_error": "Erreur lors de l'ajout du pack",
+        "cannot_suspend_empty": "Impossible de mettre en attente une vente vide",
+        "max_pending_sales": "Maximum {{max}} ventes en attente atteint",
+        "pending_sale_delete_confirm": "Voulez-vous vraiment supprimer cette vente en attente ?",
+        "product_fallback_name": "Produit #{{id}}",
+        "interaction_warning": "⚠️ Interaction / Redondance\n{{name}} est de la même famille ({{family}}) que {{conflict}} déjà présent.",
+        "no_returns_permission": "Vous n'avez pas la permission d'effectuer des retours (quantités négatives).",
+        "invoice_settings_load_error": "Erreur lors du chargement des paramètres de facturation"
     },
     "pending": {
         "replace_title": "Remplacer le panier ?",
@@ -361,7 +377,8 @@
         "error_no_products": "Aucun produit reconnu sur l'ordonnance",
         "error_ocr": "Erreur lors du traitement OCR: {{error}}",
         "error_console": "Détails dans la console (possible blocage antivirus)",
-        "products_added": "{{count}} produits ajoutés"
+        "products_added": "{{count}} produits ajoutés",
+        "scan_preview_alt": "Aperçu du scan"
     },
     "recall_invoice": {
         "title": "Rappeler une vente",
@@ -382,5 +399,25 @@
         "stock_unloaded": "Stock déchargé",
         "cancel_unload_title": "Annuler le déchargement et réintégrer le stock",
         "cancel_unload": "Annuler déchargement"
+    },
+    "validation": {
+        "sudo_password_required": "Mot de passe requis pour la validation par un tiers",
+        "invalid_amount": "Veuillez entrer un montant valide",
+        "insufficient_amount": "Le montant total ({{total}} F) est insuffisant pour régler la facture ({{expected}} F)",
+        "pro_client_beneficiary_info": "Pour un client professionnel, veuillez renseigner le nom et le matricule de l'ayant droit",
+        "pro_client_beneficiary_select": "Pour un client professionnel, veuillez sélectionner un ayant droit ou en créer un nouveau",
+        "credit_limit_exceeded_title": "⚠️ PLAFOND DE CRÉDIT DÉPASSÉ !",
+        "current_debt": "Dette actuelle : {{amount}} F",
+        "new_debt_estimate": "Nouvelle dette (Estimation) : {{amount}} F",
+        "theoretical_total": "Total théorique : {{amount}} F",
+        "authorized_limit": "Limite autorisée (Plafond) : {{amount}} F",
+        "credit_limit_exceeded_body": "La vente ne peut pas être finalisée car ce client a atteint sa limite de crédit."
+    },
+    "sudo": {
+        "confirm_quantity": "Confirmer la quantité {{qty}} pour le produit {{product}} ?",
+        "confirm_price_change": "Confirmer le changement de prix de {{oldPrice}} à {{newPrice}} pour {{product}} ?",
+        "confirm_discount": "Confirmer une remise de {{discount}}% sur le produit {{product}} ?",
+        "confirm_global_discount_capped": "Autoriser une remise globale de {{value}} (plafond maximum) ?",
+        "confirm_global_discount": "Autoriser une remise globale de {{value}} ?"
     }
 }

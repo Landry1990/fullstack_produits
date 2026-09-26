@@ -228,7 +228,7 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                     <TableHeader className="sticky top-0 z-10">
                         <TableRow className="bg-slate-50 border-b border-slate-100 hover:bg-slate-50">
                             <TableHead className="w-12 px-3 py-2 text-center">
-                                <span className="sr-only">Sélection</span>
+                                <span className="sr-only">{t('common:single_selection')}</span>
                             </TableHead>
                             {headers.map((h, i) => (
                                 <TableHead
@@ -309,6 +309,7 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                                     checked={allSelected}
                                     onCheckedChange={() => onToggleSelectAll()}
                                     disabled={attPromisCount === 0}
+                                    aria-label={t('common:select_all')}
                                     className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
                                 />
                             </TableHead>
@@ -350,6 +351,7 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                                             <Checkbox
                                                 checked={isSelected}
                                                 onCheckedChange={() => onToggleSelection(p.id)}
+                                                aria-label={t('stock:reappro.select_product_aria', { name: p.produit_name })}
                                                 className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
                                             />
                                         </div>

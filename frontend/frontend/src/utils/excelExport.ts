@@ -1,6 +1,8 @@
 import * as XLSX from 'xlsx';
+import i18next from 'i18next';
 import type { PharmacySettings } from '../context/PharmacySettingsContext';
 import { formatDate, formatTime } from './dateUtils';
+import { getDocumentLanguage } from './documentLang';
 
 interface ExcelExportOptions {
     sheetName?: string;
@@ -42,6 +44,7 @@ export function exportToExcel(
     options: ExcelExportOptions
 ): void {
     const { sheetName = 'Export', filename, title } = options;
+    const docT = i18next.getFixedT(getDocumentLanguage(), 'printing');
     const now = new Date();
     const dateStr = formatDate(now.toISOString());
     const timeStr = formatTime(now.toISOString());
@@ -52,8 +55,8 @@ export function exportToExcel(
     const headerRows: (string | number)[][] = [
         [settings.pharmacy_name ?? 'ZENITH'],
         [settings.address ?? '', settings.city ?? ''],
-        [settings.phone ? `Tél : ${settings.phone}` : ''],
-        [`Édité le : ${dateStr} à ${timeStr}`],
+        [settings.phone ? docT('export.tel', { phone: settings.phone }) : ''],
+        [docT('export.edited_on', { date: dateStr, time: timeStr })],
         [],
     ];
     if (title) {

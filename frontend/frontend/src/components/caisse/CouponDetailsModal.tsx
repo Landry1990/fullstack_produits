@@ -151,7 +151,7 @@ export function CouponDetailsModal({
     <div class="pharmacy-name">${escHtml(settings.pharmacy_name || docT('coupon.pharmacy_fallback'))}</div>
     <div class="pharmacy-info">
       ${settings.city ? `${escHtml(settings.city)}` : ''}${settings.country ? `, ${escHtml(settings.country)}` : ''}<br>
-      ${settings.phone ? `Tel: ${escHtml(settings.phone)}` : ''}<br>
+      ${settings.phone ? `${docT('invoice.tel')}: ${escHtml(settings.phone)}` : ''}<br>
       ${settings.niu ? `NIU: ${escHtml(settings.niu)}` : ''}<br>
       ${settings.registre_commerce ? `RC: ${escHtml(settings.registre_commerce)}` : ''}
     </div>
@@ -271,7 +271,7 @@ export function CouponDetailsModal({
                   <span className="font-medium">{coupon.cree_par_nom || t('coupons.system')}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>{t('table.date_time')}</span>
+                  <span>{t('table.date')}</span>
                   <span className="font-medium">{new Date(coupon.date_creation).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
                 </div>
               </div>
@@ -285,7 +285,7 @@ export function CouponDetailsModal({
                   </div>
                   {coupon.date_utilisation && (
                     <div className="flex justify-between">
-                      <span>{t('table.date_time')}</span>
+                      <span>{t('table.date')}</span>
                       <span>{new Date(coupon.date_utilisation).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
                     </div>
                   )}

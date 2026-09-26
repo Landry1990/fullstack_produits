@@ -18,6 +18,8 @@
     "no_sales_found": "No sales found",
     "try_different_filters": "Try changing filters",
     "avoir_client_indicator": "This sale has {{count}} customer credit(s): {{avoirs}}",
+    "select_all": "Select all",
+    "select_invoice": "Select invoice {{number}}",
     "modals": {
         "print_invoice": "Print Invoice"
     },
@@ -40,7 +42,8 @@
         "cancel": "Cancel",
         "close": "Close",
         "hide_report": "Hide Report",
-        "delete_drafts": "Empty Drafts"
+        "delete_drafts": "Empty Drafts",
+        "generate_avoir": "Generate credit note"
     },
     "filters": {
         "search_placeholder": "Client, invoice, product, or amount...",
@@ -154,7 +157,10 @@
         "loading_details": "Loading details...",
         "success_with_id": "Sale recorded (Invoice #{{id}})",
         "promis_recorded": "Promised ticket recorded",
-        "prescription_recorded": "Prescription recorded"
+        "prescription_recorded": "Prescription recorded",
+        "duplicated_to_cart": "Invoice copied to billing",
+        "avoir_to_cart": "Negative items added to billing",
+        "stock_insufficient_realtime": "⚠️ INSUFFICIENT STOCK IN REAL TIME!\nThe product \"{{name}}\" was sold on another workstation.\nCurrent available stock: {{stock}}\nRequested quantity: {{qty}}"
     },
     "confirm_delete": "Delete this invoice?",
     "confirm_bulk_delete": "Confirm deletion of {{count}} invoices? (Only drafts/cancelled will be deleted)",
@@ -172,7 +178,17 @@
         "cashier": "Cashier",
         "cancelled_by": "Cancelled by",
         "payments": "Payments:",
-        "whatsapp_renewal_reminder": "Send a WhatsApp renewal reminder"
+        "whatsapp_renewal_reminder": "Send a WhatsApp renewal reminder",
+        "reminder_sent": "Reminder sent for {{name}}",
+        "reminder_error": "Error sending reminder",
+        "chronic_badge": "CHRONIC",
+        "manual_lots_split": "{{count}} batches manually allocated",
+        "lot": "Batch",
+        "exp": "Exp",
+        "discount_per_unit": "Discount: -{{amount}} /unit",
+        "duration_days": "Duration: {{days}} days",
+        "reminder": "Reminder",
+        "to_pay_client": "Customer to pay"
     },
     "pos": {
         "ready_for_sale": "Ready for sale",

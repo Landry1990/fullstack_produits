@@ -48,7 +48,7 @@ export function useSecureCartOperations({
                 cart.updateQuantite(lineId, newQty)
             }, {
                 title: t('facturation:payment.sudo_mode.validate_by'),
-                message: `Confirmer la quantité ${newQty} pour le produit ${currentLine?.produit.name ?? ''} ?`,
+                message: t('facturation:sudo.confirm_quantity', { qty: newQty, product: currentLine?.produit.name ?? '' }),
                 permission: 'can_do_returns',
                 onCancel: triggerUiRefresh
             })
@@ -71,7 +71,7 @@ export function useSecureCartOperations({
                 cart.updatePrix(lineId, newPrice)
             }, {
                 title: t('facturation:payment.sudo_mode.validate_by'),
-                message: `Confirmer le changement de prix de ${currentLine.prix_unitaire} à ${newPrice} pour ${currentLine.produit.name} ?`,
+                message: t('facturation:sudo.confirm_price_change', { oldPrice: currentLine.prix_unitaire, newPrice, product: currentLine.produit.name }),
                 permission: 'can_modify_price',
                 onCancel: triggerUiRefresh
             })
@@ -94,7 +94,7 @@ export function useSecureCartOperations({
                 cart.updateRemiseProduit(lineId, newRemise)
             }, {
                 title: t('facturation:payment.sudo_mode.validate_by'),
-                message: `Confirmer une remise de ${newRemise}% sur le produit ${currentLine.produit.name} ?`,
+                message: t('facturation:sudo.confirm_discount', { discount: newRemise, product: currentLine.produit.name }),
                 permission: 'can_do_remise',
                 onCancel: triggerUiRefresh
             })
@@ -146,7 +146,7 @@ export function useSecureCartOperations({
                 setRemiseGlobale(cappedValue)
             }, {
                 title: t('facturation:payment.sudo_mode.validate_by'),
-                message: `Autoriser une remise globale de ${cappedValue}${mode === 'taux' ? '%' : ' F'} (plafond maximum) ?`,
+                message: t('facturation:sudo.confirm_global_discount_capped', { value: `${cappedValue}${mode === 'taux' ? '%' : ' F'}` }),
                 permission: 'can_do_remise',
                 onCancel: () => { setRemiseGlobale('0'); triggerUiRefresh() }
             })
@@ -157,7 +157,7 @@ export function useSecureCartOperations({
             setRemiseGlobale(newValue)
         }, {
             title: t('facturation:payment.sudo_mode.validate_by'),
-            message: `Autoriser une remise globale de ${newValue}${mode === 'taux' ? '%' : ' F'} ?`,
+            message: t('facturation:sudo.confirm_global_discount', { value: `${newValue}${mode === 'taux' ? '%' : ' F'}` }),
             permission: 'can_do_remise',
             onCancel: () => { setRemiseGlobale('0'); triggerUiRefresh() }
         })

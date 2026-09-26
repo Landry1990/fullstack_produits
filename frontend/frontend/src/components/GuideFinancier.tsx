@@ -24,7 +24,7 @@ const GuideFinancier: React.FC = () => {
             <div className="bg-white/20 p-2 rounded-xl backdrop-blur-md">
               <BookOpen className="size-6" />
             </div>
-            <span className="text-sm font-bold uppercase tracking-widest opacity-80">Documentation</span>
+            <span className="text-sm font-bold uppercase tracking-widest opacity-80">{t('guide.documentation')}</span>
           </div>
           <h1 className="text-4xl font-black mb-2">{t('guide.title')}</h1>
           <p className="text-lg opacity-90 max-w-2xl">

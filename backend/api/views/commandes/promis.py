@@ -102,6 +102,28 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
+    @action(detail=False, methods=['post'])
+    @transaction.atomic
+    def bulk_create(self, request):
+        """Crée plusieurs promis en une seule requête (réservation de stock par item)."""
+        items = request.data if isinstance(request.data, list) else request.data.get('items')
+        if not isinstance(items, list) or not items:
+            return Response({'detail': "Une liste d'items est requise."}, status=status.HTTP_400_BAD_REQUEST)
+        if len(items) > 200:
+            return Response({'detail': 'Trop de promis (max 200).'}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = self.get_serializer(data=items, many=True)
+        serializer.is_valid(raise_exception=True)
+        created = []
+        try:
+            for validated in serializer.validated_data:
+                promis = Promis.objects.create(created_by=request.user, **validated)
+                self._reserve_stock_for_promis(promis)
+                created.append(promis)
+        except ValueError as e:
+            return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(self.get_serializer(created, many=True).data, status=status.HTTP_201_CREATED)
+
     @transaction.atomic
     def perform_destroy(self, instance):
         from django.utils import timezone

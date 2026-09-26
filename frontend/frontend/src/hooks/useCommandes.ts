@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Commande, Fournisseur, Rayon, CommandeProduit, PaginatedResponse } from '../types';
 import commandeService from '../services/commandeService';
 import api from '../services/api';
+import i18n from '../i18n';
 
 // Types
 interface CommandesFilters {
@@ -85,7 +86,7 @@ export const useSaveCommande = () => {
                 await commandeService.update(commandeId, commandeData);
             }
 
-            if (!commandeId) throw new Error("ID de commande manquant");
+            if (!commandeId) throw new Error(i18n.t('orders:messages.missing_id', { defaultValue: 'ID de commande manquant' }));
 
             const productsPayload = commandeProduits.map(p => ({
                 id: p.id && !String(p.id).startsWith('temp-') && typeof p.id === 'number' && p.id < 1000000000 ? p.id : null,

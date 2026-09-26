@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Package } from 'lucide-react';
 import type { StockLot } from '../../../types';
 import { formatCurrency } from '../../../utils/formatters';
@@ -36,6 +37,7 @@ export const AvoirsLotModal: React.FC<LotModalProps> = ({
     loadingLots,
     onSelectLot
 }) => {
+    const { t } = useTranslation(['stock', 'common']);
     return (
         <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
             <DialogContent className="max-w-lg p-0 overflow-hidden" aria-describedby="lot-modal-desc">
@@ -46,10 +48,10 @@ export const AvoirsLotModal: React.FC<LotModalProps> = ({
                         </div>
                         <div>
                             <DialogTitle className="text-sm font-bold text-slate-900">
-                                Sélectionner un lot
+                                {t('stock:avoirs.avoirs_lot_modal.select_lot')}
                             </DialogTitle>
                             <DialogDescription id="lot-modal-desc" className="text-xs">
-                                Lots disponibles en stock
+                                {t('stock:avoirs.avoirs_lot_modal.available_lots')}
                             </DialogDescription>
                         </div>
                     </div>
@@ -61,17 +63,17 @@ export const AvoirsLotModal: React.FC<LotModalProps> = ({
                     ) : availableLots.length === 0 ? (
                         <EmptyState
                             compact
-                            title="Aucun lot disponible en stock pour ce produit."
+                            title={t('stock:avoirs.avoirs_lot_modal.no_lots')}
                         />
                     ) : (
                         <div className="overflow-x-auto rounded-xl border border-slate-100">
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead className="text-xs">Lot</TableHead>
-                                        <TableHead className="text-center text-xs">Expiration</TableHead>
-                                        <TableHead className="text-center text-xs">Stock</TableHead>
-                                        <TableHead className="text-right text-xs">Prix achat</TableHead>
+                                        <TableHead className="text-xs">{t('stock:avoirs.avoirs_lot_modal.col_lot')}</TableHead>
+                                        <TableHead className="text-center text-xs">{t('stock:avoirs.avoirs_lot_modal.col_expiry')}</TableHead>
+                                        <TableHead className="text-center text-xs">{t('stock:avoirs.avoirs_lot_modal.col_stock')}</TableHead>
+                                        <TableHead className="text-right text-xs">{t('stock:avoirs.avoirs_lot_modal.col_price')}</TableHead>
                                         <TableHead></TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -93,7 +95,7 @@ export const AvoirsLotModal: React.FC<LotModalProps> = ({
                                                 <TableCell className={`text-center text-xs ${expiryClass}`}>
                                                     {formatExpiry(lot.date_expiration)}
                                                     {daysLeft !== null && daysLeft >= 0 && daysLeft < 30 && (
-                                                        <div className="text-caption text-amber-400">({daysLeft}j)</div>
+                                                        <div className="text-caption text-amber-400">{t('stock:avoirs.avoirs_lot_modal.days_left', { days: daysLeft })}</div>
                                                     )}
                                                 </TableCell>
                                                 <TableCell className="text-center">
@@ -111,7 +113,7 @@ export const AvoirsLotModal: React.FC<LotModalProps> = ({
                                                         className="h-7 text-xs"
                                                         onClick={() => onSelectLot(lot)}
                                                     >
-                                                        Choisir
+                                                        {t('stock:avoirs.avoirs_lot_modal.choose')}
                                                     </Button>
                                                 </TableCell>
                                             </TableRow>
@@ -125,7 +127,7 @@ export const AvoirsLotModal: React.FC<LotModalProps> = ({
 
                 <DialogFooter className="px-5 py-3 border-t border-slate-100">
                     <Button type="button" variant="ghost" size="sm" onClick={onClose}>
-                        Annuler
+                        {t('common:cancel')}
                     </Button>
                 </DialogFooter>
             </DialogContent>

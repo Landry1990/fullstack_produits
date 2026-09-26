@@ -1,9 +1,10 @@
 ﻿import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { withTranslation, type WithTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
 import { Button } from './shadcn/button';
 import { logger } from '../utils/logger'
 
-interface Props {
+interface Props extends WithTranslation {
   children: ReactNode;
 }
 
@@ -38,6 +39,7 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   public render() {
+    const { t } = this.props;
     if (this.state.hasError) {
       const isChunkError = this.state.error?.message?.includes('dynamically imported module')
         || this.state.error?.message?.includes('Failed to fetch dynamically imported module')
@@ -48,8 +50,8 @@ class ErrorBoundary extends Component<Props, State> {
           <div className="min-h-screen flex items-center justify-center bg-base-200 p-4">
             <div className="w-96 bg-base-100 shadow-xl rounded-2xl border border-base-200 p-6 items-center text-center">
                 <Loader2 className="size-8 animate-spin text-primary" />
-                <h2 className="text-lg font-bold mt-4">Mise à jour détectée</h2>
-                <p className="py-2 text-sm text-base-content/60">Rechargement en cours...</p>
+                <h2 className="text-lg font-bold mt-4">{t('error_boundary.update_detected')}</h2>
+                <p className="py-2 text-sm text-base-content/60">{t('error_boundary.reloading')}</p>
             </div>
           </div>
         );
@@ -58,9 +60,9 @@ class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="min-h-screen flex items-center justify-center bg-base-200 p-4">
           <div className="w-96 bg-base-100 shadow-xl rounded-2xl border border-base-200 p-6 items-center text-center">
-              <h2 className="text-lg font-bold text-red-500">Oups ! Une erreur est survenue.</h2>
+              <h2 className="text-lg font-bold text-red-500">{t('error_boundary.oops')}</h2>
               <p className="py-4 text-sm text-base-content/60">
-                L'application a rencontré un problème inattendu.
+                {t('error_boundary.unexpected')}
               </p>
               {this.state.error && (
                 <div className="bg-red-50 border border-red-200 text-red-800 text-xs text-left overflow-auto max-h-32 mb-4 p-3 rounded-lg">
@@ -72,13 +74,13 @@ class ErrorBoundary extends Component<Props, State> {
                   variant="default"
                   onClick={() => window.location.reload()}
                 >
-                  Rafraîchir la page
+                  {t('error_boundary.refresh_page')}
                 </Button>
                 <Button 
                   variant="ghost"
                   onClick={() => window.location.href = '/'}
                 >
-                  Retour à l'accueil
+                  {t('error_boundary.back_home')}
                 </Button>
               </div>
           </div>
@@ -90,4 +92,4 @@ class ErrorBoundary extends Component<Props, State> {
   }
 }
 
-export default ErrorBoundary;
+export default withTranslation('common')(ErrorBoundary);

@@ -15,17 +15,17 @@ import {
 import { getApiErrorDetail } from '../../utils/errorHandling'
 import { useConfirm } from '../../hooks/useConfirm'
 
-function formatDate(value: string | null): string {
+function formatDate(value: string | null, locale: string): string {
   if (!value) return '-'
   try {
-    return new Date(value).toLocaleString('fr-FR')
+    return new Date(value).toLocaleString(locale)
   } catch {
     return value
   }
 }
 
 export default function PosteVenteSettingsSection() {
-  const { t } = useTranslation('pharmacy_settings')
+  const { t, i18n } = useTranslation('pharmacy_settings')
   const confirm = useConfirm()
   const [postes, setPostes] = useState<PosteVente[]>([])
   const [caissesDisponibles, setCaissesDisponibles] = useState<PosteCaisse[]>([])
@@ -75,7 +75,7 @@ export default function PosteVenteSettingsSection() {
   const handleDelete = async (id: number) => {
     const confirmedDelete = await confirm({
       title: t('common:confirmation'),
-      message: 'Supprimer ce point de vente ?',
+      message: t('messages.pos_confirm_delete', { defaultValue: 'Supprimer ce point de vente ?' }),
       confirmText: t('common:confirm'),
       variant: 'danger'
     })
@@ -92,7 +92,7 @@ export default function PosteVenteSettingsSection() {
   const handleClose = async (id: number) => {
     const confirmedClose = await confirm({
       title: t('common:confirmation'),
-      message: 'Fermer ce point de vente ?',
+      message: t('messages.pos_confirm_close', { defaultValue: 'Fermer ce point de vente ?' }),
       confirmText: t('common:confirm'),
       variant: 'danger'
     })
@@ -246,7 +246,7 @@ export default function PosteVenteSettingsSection() {
                         <tr key={p.id} className="hover:bg-slate-50">
                           <td className="px-4 py-3 font-medium text-slate-800">{p.nom}</td>
                           <td className="px-4 py-3 text-slate-600">{p.vendeur_name || '-'}</td>
-                          <td className="px-4 py-3 text-slate-500">{formatDate(p.date_ouverture)}</td>
+                          <td className="px-4 py-3 text-slate-500">{formatDate(p.date_ouverture, i18n.language)}</td>
                           <td className="px-4 py-3 text-right">
                             <Button
                               type="button"
@@ -317,7 +317,7 @@ export default function PosteVenteSettingsSection() {
                         <tr key={p.id} className="hover:bg-slate-50">
                           <td className="px-4 py-3 font-medium text-slate-800">{p.nom}</td>
                           <td className="px-4 py-3 text-slate-600">{p.vendeur_name || '-'}</td>
-                          <td className="px-4 py-3 text-slate-500">{formatDate(p.date_ouverture)}</td>
+                          <td className="px-4 py-3 text-slate-500">{formatDate(p.date_ouverture, i18n.language)}</td>
                           <td className="px-4 py-3 text-right">
                             <Button
                               type="button"

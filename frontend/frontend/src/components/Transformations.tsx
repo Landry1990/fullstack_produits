@@ -347,7 +347,13 @@ const Transformations: React.FC = () => {
 
     const confirmed = await confirm({
       title: t('transformations.messages.transform_confirm_title', { defaultValue: 'Confirmer la transformation' }),
-      message: t('transformations.messages.transform_confirm_message', { defaultValue: `Transformer ${transformationData.quantite} ${transformationData.relation.produit_source_nom} en ${quantiteDestinationCalculee} ${transformationData.relation.produit_destination_nom} ?` }),
+      message: t('transformations.messages.transform_confirm_message', {
+        qty: transformationData.quantite,
+        source: transformationData.relation.produit_source_nom,
+        destQty: quantiteDestinationCalculee,
+        dest: transformationData.relation.produit_destination_nom,
+        defaultValue: `Transformer ${transformationData.quantite} ${transformationData.relation.produit_source_nom} en ${quantiteDestinationCalculee} ${transformationData.relation.produit_destination_nom} ?`
+      }),
       variant: 'warning',
       confirmText: t('transformations.messages.transform_confirm_btn', { defaultValue: 'Oui, transformer' })
     });
@@ -376,7 +382,13 @@ const Transformations: React.FC = () => {
   const handleReverser = async (histId: number, hist: HistoriqueTransformation) => {
     const confirmed = await confirm({
       title: t('transformations.messages.reverse_confirm_title', { defaultValue: 'Annuler cette transformation' }),
-      message: t('transformations.messages.reverse_confirm_message', { defaultValue: `Annuler la transformation de ${hist.quantite_source} ${hist.produit_source_nom} en ${hist.quantite_destination} ${hist.produit_destination_nom} ? Le stock sera restitué automatiquement.` }),
+      message: t('transformations.messages.reverse_confirm_message', {
+        qty: hist.quantite_source,
+        source: hist.produit_source_nom,
+        destQty: hist.quantite_destination,
+        dest: hist.produit_destination_nom,
+        defaultValue: `Annuler la transformation de ${hist.quantite_source} ${hist.produit_source_nom} en ${hist.quantite_destination} ${hist.produit_destination_nom} ? Le stock sera restitué automatiquement.`
+      }),
       variant: 'danger',
       confirmText: t('transformations.messages.reverse_confirm_btn', { defaultValue: 'Oui, annuler' })
     });
@@ -661,7 +673,7 @@ const Transformations: React.FC = () => {
                                  className="h-8 px-3 rounded-lg text-xs font-bold text-amber-600 hover:bg-amber-50 transition-colors inline-flex items-center gap-1.5 disabled:opacity-50"
                                  onClick={() => handleReverser(hist.id, hist)}
                                  disabled={reversingId === hist.id}
-                                 title={t('stock:transformations.labels.reverse_btn', { defaultValue: 'Annuler cette transformation' })}
+                                 title={t('stock:transformations.messages.reverse_confirm_title', { defaultValue: 'Annuler cette transformation' })}
                                >
                                  {reversingId === hist.id ? (
                                    <span className="size-3.5 border-2 border-amber-300 border-t-amber-600 rounded-full animate-spin"></span>
@@ -917,7 +929,7 @@ const Transformations: React.FC = () => {
                             <Checkbox
                               checked={currentQty > 0}
                               onChange={() => toggleManualLot(lot.lot_id, lot.quantity_remaining, currentQty)}
-                              aria-label={`Sélectionner lot ${lot.lot}`}
+                              aria-label={t('stock:lot_selection.select_lot_aria', { lot: lot.lot, defaultValue: `Sélectionner lot ${lot.lot}` })}
                             />
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
@@ -927,14 +939,14 @@ const Transformations: React.FC = () => {
                                 )}
                               </div>
                               <div className="text-caption text-slate-400">
-                                {formatNumber(lot.quantity_remaining)} {t('stock:transformations.preview.available')}{lot.quantity_remaining > 1 ? 's' : ''}
+                                {formatNumber(lot.quantity_remaining)} {t('stock:transformations.preview.available', { count: lot.quantity_remaining })}
                               </div>
                             </div>
                             <input
                               type="number"
                               min={0}
                               max={lot.quantity_remaining}
-                              aria-label={`Quantité lot ${lot.lot}`}
+                              aria-label={t('stock:lot_selection.qty_lot_aria', { lot: lot.lot })}
                               value={currentQty}
                               disabled={currentQty <= 0}
                               onChange={(e) => {

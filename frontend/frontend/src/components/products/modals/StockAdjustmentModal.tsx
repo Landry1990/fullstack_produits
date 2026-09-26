@@ -112,13 +112,13 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="bg-slate-50 rounded-xl border border-slate-200 p-3 text-center">
               <span className="text-caption font-semibold text-slate-500 uppercase tracking-wider">
-                {selectedProduit?.has_reserve_storage ? 'Rayon' : 'Stock actuel'}
+                {selectedProduit?.has_reserve_storage ? t('products:adjustment.shelf') : t('products:adjustment.current_stock')}
               </span>
               <div className="text-2xl font-bold text-slate-800">{selectedProduit?.stock ?? 0}</div>
             </div>
             {selectedProduit?.has_reserve_storage && (
               <div className="bg-indigo-50 rounded-xl border border-indigo-100 p-3 text-center">
-                <span className="text-caption font-semibold text-indigo-500 uppercase tracking-wider">Réserve</span>
+                <span className="text-caption font-semibold text-indigo-500 uppercase tracking-wider">{t('products:adjustment.reserve')}</span>
                 <div className="text-2xl font-bold text-indigo-700">{selectedProduit?.stock_reserve ?? 0}</div>
               </div>
             )}
@@ -136,7 +136,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
                     !form.new_lot_number ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
                   }`}
                 >
-                  Lot existant
+                  {t('products:adjustment.existing_lot')}
                 </button>
                 <button
                   type="button"
@@ -145,7 +145,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
                     form.new_lot_number ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
                   }`}
                 >
-                  + Créer un nouveau lot
+                  {t('products:adjustment.create_new_lot')}
                 </button>
               </div>
 
@@ -157,11 +157,11 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
                   value={form.stock_lot_id || ''}
                   onChange={(e) => setForm((prev) => ({ ...prev, stock_lot_id: e.target.value }))}
                 >
-                  <option value="">Tous les lots (global)</option>
+                  <option value="">{t('products:adjustment.all_lots')}</option>
                   {lots.map(lot => (
                     <option key={lot.id} value={lot.id}>
-                      {lot.lot || `Lot #${lot.id}`} — R: {lot.quantity_remaining} / Rés: {lot.quantity_reserved ?? 0}
-                      {lot.date_expiration ? ` · Exp: ${lot.date_expiration}` : ''}
+                      {lot.lot || t('products:adjustment.lot_fallback', { id: lot.id })} — {t('products:adjustment.lot_quantities_short', { shelf: lot.quantity_remaining, reserve: lot.quantity_reserved ?? 0 })}
+                      {lot.date_expiration ? ` · ${t('common:exp')}: ${lot.date_expiration}` : ''}
                     </option>
                   ))}
                 </Select>
@@ -195,8 +195,8 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
             <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-700">
               <Package className="size-4 shrink-0" />
               <span>
-                Lot <strong>{selectedLot.lot || `#${selectedLot.id}`}</strong> —
-                Rayon: {lotRayonQty} / Réserve: {lotReserveQty}
+                Lot <strong>{selectedLot.lot || `#${selectedLot.id}`}</strong> —{' '}
+                {t('products:adjustment.lot_quantities', { shelf: lotRayonQty, reserve: lotReserveQty })}
               </span>
             </div>
           )}

@@ -160,7 +160,11 @@
         "add_title": "Ajouter une nouvelle taxe",
         "add_btn": "Ajouter la TVA",
         "success_add": "TVA ajoutée avec succès",
-        "error_add": "Erreur lors de l'ajout de la TVA"
+        "error_add": "Erreur lors de l'ajout de la TVA",
+        "error_load": "Erreur lors du chargement des taux de TVA",
+        "error_duplicate": "Ce taux de TVA existe déjà ({{rate}}%)",
+        "error_update": "Erreur lors de la modification de la TVA",
+        "error_delete": "Erreur lors de la suppression de la TVA"
     },
     "header": "Configuration de la Pharmacie",
     "fields": {
@@ -191,7 +195,9 @@
         "pos_deleted": "Point de vente supprimé.",
         "pos_delete_error": "Erreur suppression",
         "pos_closed": "Point de vente fermé.",
-        "pos_close_error": "Erreur fermeture"
+        "pos_close_error": "Erreur fermeture",
+        "pos_confirm_delete": "Supprimer ce point de vente ?",
+        "pos_confirm_close": "Fermer ce point de vente ?"
     },
     "buttons": {
         "logo_importing": "Import...",

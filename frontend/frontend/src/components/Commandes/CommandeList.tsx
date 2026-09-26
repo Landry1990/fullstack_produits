@@ -513,7 +513,7 @@ export default function CommandeList({
                     </TableHead>
                     <TableHead className="text-caption uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 cursor-pointer hover:text-emerald-600 transition-colors sticky top-0 z-30 bg-slate-50" onClick={() => onSortChange('status')} tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSortChange('status'); } }}>
                       <div className="flex items-center gap-2 justify-center">
-                        {t('common:us_title')} {sortKey === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}
+                        {t('orders:list.table.status')} {sortKey === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </div>
                     </TableHead>
 
@@ -548,7 +548,7 @@ export default function CommandeList({
                   <Checkbox
                     checked={selectedOrderIds.has(commande.id)}
                     onCheckedChange={() => onToggleOrderSelection(commande.id)}
-                    aria-label={`Sélectionner commande #${commande.id}`}
+                    aria-label={t('orders:list.select_order', { id: commande.id })}
                   />
                 </TableCell>
                 <TableCell className="text-left py-3 px-4">

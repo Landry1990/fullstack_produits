@@ -52,13 +52,19 @@
         "provider_placeholder_short": "the supplier",
         "search_med_ref": "Search a pharmacy product...",
         "price_margin": "Price and Margin (HT)",
+        "sections": {
+            "identification": "Identification",
+            "stock_location": "Stock & Location",
+            "classification": "Classification",
+            "pricing": "Pricing"
+        },
         "validation": {
             "required_fields": "Please fill in all required fields (*)",
             "unknown_error": "An unknown error occurred",
-            "name_min": "Name must be at least 2 characters",
-            "cost_price_negative": "Cost price cannot be negative",
-            "selling_price_positive": "Selling price must be positive",
-            "selling_below_cost": "Selling price must be greater than or equal to cost price"
+            "name_min": "Name must contain at least 2 characters",
+            "cost_price_negative": "Purchase price cannot be negative",
+            "selling_price_positive": "Sale price must be positive",
+            "selling_below_cost": "Sale price must be greater than or equal to purchase price"
         }
     },
     "actions": {
@@ -145,6 +151,14 @@
         "lot_number": "Lot number",
         "lot_placeholder": "Ex: LOT-2026-001",
         "expiry_date": "Expiry date",
+        "reserve": "Reserve",
+        "all_lots": "All lots (global)",
+        "shelf": "Shelf",
+        "existing_lot": "Existing lot",
+        "create_new_lot": "+ Create a new lot",
+        "lot_fallback": "Lot #{{id}}",
+        "lot_quantities": "Shelf: {{shelf}} / Reserve: {{reserve}}",
+        "lot_quantities_short": "Sh: {{shelf}} / Res: {{reserve}}",
         "reasons": {
             "INVENTAIRE": "Inventory adjustment",
             "CASSE": "Broken",
@@ -387,7 +401,33 @@
         "search_add": "Search and add",
         "no_associated_products": "No products associated with this DCI in your stock",
         "no_national_reference": "No reference found in the national database",
-        "select_dci": "Select a DCI to manage its products"
+        "select_dci": "Select a DCI to manage its products",
+        "catalog_title": "DCI Catalogue",
+        "linked_products": "{{count}} linked products",
+        "page": "Page {{page}}",
+        "pharmacy_products": "Products in pharmacy",
+        "in_stock": "{{count}} in stock",
+        "unknown_form": "Unknown form",
+        "ansm_refs": "ANSM Base References",
+        "selected_count": "{{count}} selected",
+        "no_selection": "No selection",
+        "results_count": "{{count}} result(s)",
+        "no_results": "No results",
+        "no_results_for_search": "No results for this search",
+        "start_typing": "Start typing to search",
+        "already_linked": "Already linked",
+        "link": "Link",
+        "error_upload": "Upload error",
+        "error_matching": "Matching error",
+        "error_linking": "Linking error",
+        "tab_substances": "DCI & Substances",
+        "tab_interactions": "Drug interactions",
+        "import_result": "{{count}} substances created, {{skipped}} existing skipped.",
+        "link_result": "{{count}} new links created. Total linked: {{total}} / {{total_products}} ({{rate}}%)",
+        "col_stock": "Stock",
+        "col_price": "Price",
+        "page_x_of_y": "Page {{page}} / {{total}}",
+        "type_to_search": "Type to search..."
     },
     "interactions": {
         "search_placeholder": "Search a substance...",
@@ -412,6 +452,17 @@
         "delete": "Delete",
         "previous": "Previous",
         "next": "Next",
-        "risk_placeholder": "Describe the risk and course of action..."
+        "risk_placeholder": "Describe the risk and course of action...",
+        "total": "Total",
+        "edit_title": "Edit interaction",
+        "new_title": "New interaction",
+        "substance_a": "Substance A",
+        "substance_b": "Substance B",
+        "choose": "Choose...",
+        "gravity": "Severity",
+        "description_label": "Description / Action to take",
+        "different_substances_error": "The two substances must be different.",
+        "update": "Update",
+        "create": "Create"
     }
 }

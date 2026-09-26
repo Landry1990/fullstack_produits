@@ -478,6 +478,7 @@ class RapportInventoryMixin:
 
         tva_map = {}
         rayon_map = {}
+        details = []
         total_ttc_global = Decimal(0)
         total_ht_global = Decimal(0)
         total_tva_global = Decimal(0)
@@ -488,7 +489,7 @@ class RapportInventoryMixin:
             qty = Decimal(str(lot.quantity_remaining))
             price_ttc = (lot.price_cost if is_pmp else lot.produit.selling_price) or Decimal(0)
             tva_rate = lot.produit.tva or Decimal(0)
-            
+
             ttc_line = qty * price_ttc
             if tva_rate > 0:
                 ht_line = (ttc_line / (1 + tva_rate / Decimal(100))).quantize(Decimal('0.01'))
@@ -496,10 +497,25 @@ class RapportInventoryMixin:
             else:
                 ht_line = ttc_line
                 tva_line = Decimal(0)
-                
+
             total_ttc_global += ttc_line
             total_ht_global += ht_line
             total_tva_global += tva_line
+
+            details.append({
+                'lot_id': lot.id,
+                'lot': lot.lot or '',
+                'produit_id': lot.produit_id,
+                'produit': lot.produit.name or lot.produit_nom or '',
+                'rayon': lot.produit.rayon.name if lot.produit.rayon else None,
+                'quantity': lot.quantity_remaining,
+                'unit_price': float(price_ttc),
+                'tva_rate': float(tva_rate),
+                'ht': float(ht_line),
+                'tva': float(tva_line),
+                'ttc': float(ttc_line),
+                'date_expiration': lot.date_expiration.isoformat() if lot.date_expiration else None,
+            })
             
             # Groupement par TVA
             rate_key = str(float(tva_rate))
@@ -525,6 +541,7 @@ class RapportInventoryMixin:
             'total_ttc': total_ttc_global,
             'tva_breakdown': sorted(tva_map.values(), key=lambda x: x['rate']),
             'rayon_breakdown': sorted(rayon_map.values(), key=lambda x: x['ttc'], reverse=True),
+            'details': sorted(details, key=lambda x: x['ttc'], reverse=True),
             'date': timezone.now()
         }
 

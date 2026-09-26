@@ -2,6 +2,599 @@
 
 ---
 
+## 2026-09-26 — 🔤 Majuscules forcées désactivées sur feedback + config ticket
+
+`index.css` applique `text-transform: uppercase` globalement à tous les
+`input[type=text]`/`textarea` (affichage seulement, la valeur stockée garde la
+casse). Exception ajoutée via la classe `normal-case` sur les champs où la
+majuscule automatique n'a pas de sens :
+
+- `FeedbackModal.tsx` — sujet + description
+- `PrintingTab.tsx` — en-tête du ticket (`receipt_header`) + message de pied
+  de page (`ticket_footer_message`)
+
+La règle globale est conservée ailleurs (noms produits, clients, etc.).
+
+---
+
+## 2026-09-26 — 🧾 Qualité d'impression thermique du ticket de caisse
+
+Même traitement que les étiquettes de livraison, appliqué au ticket de caisse
+(`TicketTemplate.tsx` — template unique partagé entre la preview et
+l'impression iframe via `buildTicketPrintHtml`) :
+
+- **Séparateurs renforcés** : `border-black/15|20|25|30` → `/35` ou `/40`.
+  Les filets à 15–30 % d'opacité étaient rendus en tramage gris (flou/bruité)
+  sur imprimante thermique 203 dpi ; à 35–40 % la ligne reste fine mais
+  imprime nette.
+- **Italique supprimé sur les micro-textes** (≤8px) : ligne « qté × prix » et
+  ligne TVA/base HT — l'italique à 8px crante sur thermique ; compensé par
+  `font-medium` pour garder du contraste.
+- **Footer « ZENITH POS SYSTEM »** : 7px → 8px, `font-medium` → `font-semibold`
+  (taille minimale lisible à 203 dpi).
+- **`buildTicketPrintHtml` (printHelpers.ts)** — CSS du document d'impression :
+  `-webkit-font-smoothing` / `text-rendering: optimizeLegibility` /
+  `print-color-adjust: exact` sur `*`, et `shape-rendering: crispEdges` sur
+  `svg *` → barres du code-barres CODE128 alignées sur la grille de pixels
+  de l'imprimante (scan plus fiable, moins d'anti-aliasing).
+- **`usePrint.ts` `getBaseStyles()`** — mêmes ajouts (font-smoothing +
+  crispEdges) pour les autres documents imprimés via `printElement` /
+  `printWithTemplate`.
+- Nettoyage : variable `borderColor` inutilisée supprimée dans
+  `buildReceptionPrintHtml`.
+
+Vérifié : `tsc --noEmit` OK, `eslint` OK sur les 3 fichiers touchés.
+
+---
+
+## 2026-09-26 — 🏷️ Suppression de la génération PDF d'étiquettes côté backend
+
+La modale d'étiquettes de commande (`SimplePrintLabelsModal`) génère déjà tout
+côté frontend (HTML + JsBarcode/bwip-js + `window.print()`). Le chemin backend
+reportlab était un doublon — et buggé (le frontend envoyait `?format=` alors que
+l'endpoint lisait `label_format` → toujours 40×20).
+
+- Supprimé `backend/api/views/commandes/pdf_generation.py` (`generate_labels_pdf`,
+  dernier occupant du fichier).
+- `backend/api/views/commandes/commandes.py` — action `imprimer_etiquettes`
+  et import `generate_labels_pdf` retirés ; l'endpoint
+  `GET /api/commandes/{id}/imprimer_etiquettes/` n'existe plus.
+- `backend/api/utils_doclang.py` — clé `lbl_fact_prefix` (fr/en) supprimée,
+  elle n'était utilisée que par ce générateur.
+- `frontend/.../SimplePrintLabelsModal.tsx` — bouton « PDF » et `handlePrintPDF`
+  retirés ; prop `commandeId` supprimée (appelant `Commandes.tsx` mis à jour).
+- **Bug corrigé au passage** : `handlePrint` appelait `bwipjs.toSVG()` sur une
+  variable inexistante (`bwip-js` n'était importé que dynamiquement dans la
+  preview) → en mode Datamatrix, l'impression sortait sans code-barres.
+  `handlePrint` est maintenant `async` et charge `bwip-js` dynamiquement ;
+  fallback « pas de code-barres » si le chargement échoue (au lieu d'un CODE128
+  non demandé).
+
+Vérifié : `tsc --noEmit` OK, `eslint` OK sur les fichiers touchés, `py_compile`
+OK sur `commandes.py` et `utils_doclang.py`.
+
+---
+
+## 2026-09-26 — 🖨️ Qualité d'impression des étiquettes : hiérarchie au lieu de gras
+
+`SimplePrintLabelsModal.tsx` — rebalancage preview React + HTML d'impression
+(identiques désormais) :
+
+- Graisses hiérarchisées : 800 pour le nom produit (était 900), 600 pour
+  pharmacie/lot/dates (était 700–800), 400 pour fournisseur/commande (était
+  600/400 incohérent). Seul le prix reste en 900.
+- Compensation par l'encre : textes secondaires passés de gris (#444/#666/#777,
+  tramés → flous sur thermique 203 dpi) à #000/#333/#444.
+- Graisses alignées sur les fonts réellement chargées (400/600/800/900 — le
+  700 utilisé n'était pas chargé, rendu synthétique imprévisible).
+- `print-color-adjust: exact` + `shape-rendering: crispEdges` sur les SVG de
+  codes-barres (barres alignées sur la grille pixels de l'imprimante).
+- `letter-spacing` 0.02–0.03em sur les lignes ≤4pt (lisibilité thermique).
+
+Vérifié : `tsc --noEmit` OK.
+
+---
+
+## 2026-09-26 — 💬 Système de feedback : réparations + admin Django
+
+Le système existait (modèle `Feedback`, modale, endpoints, email) mais était
+à moitié mort : aucun moyen de consulter/répondre aux feedbacks, i18n EN
+cassée, email bloquant.
+
+- `admin.py` — `FeedbackAdmin` ajouté : liste avec filtres (statut/catégorie/
+  priorité/date), recherche, champs contexte en lecture seule, et `save_model`
+  qui horodate `responded_at`/`responded_by` + appelle `send_feedback_response()`
+  quand `admin_response` est renseignée (le code existait, jamais appelé).
+- `views/feedback.py` — `send_mail` déplacé dans un `threading.Thread(daemon=True)` :
+  le POST ne bloque plus sur un SMTP lent/inexistant (cas courant en prod client).
+  `email_sent` retiré de la réponse.
+- `common.json` fr+en — clé plate `"feedback"` → objet `feedback.*` (~20 clés) :
+  la modale n'avait que des fallbacks FR, affichés même en anglais.
+  `UserHeader` pointe désormais `common:feedback.label`.
+- `FeedbackModal.tsx` — `page_url`/`browser_info` lus au submit (avant : figés au
+  mount du header → URL du login au lieu de la page du bug) ; double toast
+  success+error supprimé (un seul success — l'échec SMTP est un problème admin,
+  pas utilisateur) ; `maxLength={200}` sur le sujet (limite modèle).
+- `feedbackService.ts` — champ `email_sent` retiré du type `FeedbackResponse`.
+- `email_service.py` — `EmailService._get_pharmacy_name()` : sujet et corps du
+  mail incluent le nom de la pharmacie, lu depuis la **licence signée**
+  (`valider_licence_systeme` → `pharmacie_nom`, infalsifiable côté client)
+  avec fallback `PharmacySettings.pharmacy_name`. Format :
+  `[Feedback] PHARMACIE — Bug / Erreur - <sujet>`.
+- **Accès restreint aux admins** : `FeedbackListView`/`FeedbackDetailView` passent
+  en `IsAdminUser` (`is_staff`) ; côté frontend, bouton et modale feedback dans
+  `UserHeader` conditionnés à `user.is_superuser`.
+
+Connu restant (hors périmètre) : upload screenshot impossible (champ BDD ok
+mais pas d'UI ni multipart), pas de vue « mes feedbacks » côté utilisateur,
+pas de throttle dédié, notification Telegram possible en alternative SMTP.
+
+Vérifié : `tsc --noEmit` OK, JSON fr/en parsés, `manage.py check` 0 issue.
+
+---
+
+## 2026-09-25 — ✅ Réparation des 13 tests obsolètes (suite vitest 100 % verte)
+
+- `src/test/setup.ts` — ajout `useDocumentLocale` au mock global
+  `PharmacySettingsContext` → répare `JournalCaisse.test.tsx` (5 tests).
+- `Clients.test.tsx` — wraps `<Clients />` dans `<ConfirmProvider>`
+  (`useConfirm` requis depuis la migration ConfirmDialog) — 4 tests.
+- `Dashboard.test.tsx` — assertion loading `.animate-spin` → `.animate-pulse`
+  (le chargement initial rend des `Skeleton` depuis la migration shadcn).
+- `ReconditionnementModal` — restauration des valeurs JSON raccourcies
+  pendant la migration i18n : `orders:reconditionnement.title`
+  (« Reconditionnement automatique »/« Automatic Repackaging »),
+  `subtitle` avec `{{numero}}` (`Commande #{{numero}} — …`, le n° de commande
+  n'était plus affiché), `confirm` (« Reconditionner »/« Repackage ») ;
+  composant passe désormais `numero` en paramètre d'interpolation.
+
+Vérifié : `vitest run` **383/390 verts** (7 skipped volontaires, 0 échec),
+`tsc --noEmit` OK, JSON fr/en parsés.
+
+---
+
+## 2026-09-25 — 🌐 i18n lot 5 : hooks, aria-labels, textes dispersés (fin du périmètre audit)
+
+- Hooks facturation : `useFacturationState`, `useFacturationActions`,
+  `useCart`, `useDevisLoader`, `useInvoiceSettings` → `facturation:payment.sudo_*`,
+  `messages.*`, `cart_extra.*`, `prescription_scanner.scan_preview_alt` (12 clés).
+  Fallbacks `Produit #{{id}}` interpolés.
+- Hooks ventes/caisse : `useCaissePayment`, `useCreanceActions`,
+  `useInvoiceActions`, `useSaleCompletion` → `caisse:`, `sales:`, `creances:` ;
+  fallbacks `'Client de passage'` → `common:passerby_client` /
+  `caisse:table.passerby_client` selon binding ; `Tel:` coupon via `docT`
+  (langue document).
+- Composants caisse sweep : `JournalCaisseTable` (`Réf:`, `PIÈCE`, `Inconnu`),
+  `PaymentModal`, `CouponDetailsModal`, `CaisseTicketPreviewModal`,
+  `CouponGenerateModal`, `CouponPanel`, `CaisseHeader`, `OpenCashSessionModal`,
+  `SalesTable` (`Générer un avoir`), `ProductDetailsModal` (10 libellés détails).
+- Stock/produits : `useAvoirsData` (confirms + sudo déchargement),
+  `useStockLots`, `useLotDisplay`, `useProduitSubstituts`, `CategoryManager`,
+  `Cadencier`, `Perimes`, `Transformations`, `StockAnalysis`,
+  `StockAdjustmentModal` (badges Lot/Rayon/Réserve restants) ;
+  aria `PromisTable`, `AvoirsTable`, `inventaire/*`.
+- Commandes/fournisseurs/divers : `useCommandes`, `useCommandeActions`
+  (`status_display` optimiste → `orders:status.clot`), `useFournisseurs`,
+  `CommandeForm`/`Row`/`Details`/`List`/`DeleteModals`/`TransferModal`,
+  `GestionDivers` (noms d'onglets Excel), `Vitrine`, `ClassementVendeurs`,
+  `GuideFinancier`, `ModuleFinancier` (`>CA<`, tooltips), `EcheancierFournisseurs`
+  (suffixes délais + dates localisées).
+- Common/misc : `ClockSyncAlert` (pluriels `seconds/minutes/hours`),
+  `PosteVenteSettingsSection` (confirms), `Omnisearch*` (recherche, `Grossiste`,
+  hint Entrée), `ui/Dialog` + `shadcn/dialog` (`Close` EN → `common:close`),
+  `printing/*` + `ZenithLogo` (alts → `common:aria.*`), `LicenceScreen`
+  (`toLocaleDateString(i18n.language)`).
+
+### Clés cassées réparées au passage (affichaient la clé brute)
+
+- `common:us_title` → `orders:list.table.status` ; `common:unknown` →
+  `orders:transfer_modal.unknown_supplier` ; `common:confirm_deletion` →
+  `orders:messages.confirm_delete_title` ; `common:network_error` +
+  `common:unknown_error` → `common:errors.*` ; `orders:list.search_placeholder`,
+  `common:info`, `t('user_who_billed')` → `table.user_who_billed`,
+  `common.pagination.*` → `common:pagination.*` (FacturesTable).
+
+### Restes volontairement en français (données persistées en base)
+
+`notes` facture (`Généré via Bon de Livraison`), `motif` avoir
+(`Rappel pour modification`), `Retour suite à commande #…`, note
+`Reconditionnement auto après clôture` — données métier/légales : les
+traduire n'aurait aucun effet rétroactif et créerait des enregistrements
+incohérents. `'N/A'` universel conservé.
+
+### Corrections du contrôle final
+
+- `errorHandling.ts` : `defaultValue` ajoutés (vitest retournait les clés) —
+  régression lot 3 corrigée, 7 tests repassés.
+- `useCaisseCoupons.test.ts` : mock `react-i18next` complété
+  (`initReactI18next`) — l'import i18n d'`errorHandling` le cassait.
+- `useRecallInvoice`, `useJournalCaisse`, `useFournisseurs` : fallbacks
+  `t(...) || '…'` dead-code nettoyés (clés existantes).
+- `ClockSyncAlert.formatTime`, `PosteVenteSettingsSection.formatDate` :
+  `'fr-FR'` en dur → `i18n.language`.
+
+Vérifié : `tsc --noEmit` OK, `npm run build` OK (24 s), tous les JSON fr/en
+parsés, `vitest run` : 370/390 passent — les 13 échecs restants sont
+**pré-existants** (mocks obsolètes : `ConfirmProvider` dans Clients.test,
+`useDocumentLocale` dans JournalCaisse.test, titre modal ReconditionnementModal,
+spinner Dashboard — fichiers non modifiés par les lots i18n).
+
+L'audit i18n est complet : ~470 occurrences initiales traitées sur 5 lots.
+Reste connu hors scope : tests obsolètes à réparer, `defaultValue` français
+résiduels (fallbacks légitimes), chaînes persistées en base (choix assumé).
+
+---
+
+## 2026-09-25 — 🌐 i18n lot 4 : clusters stock, DCI/produits, modals, help/fournisseurs, shell
+
+- `stock/StockHealthDashboard.tsx` — 16 tooltips → `stock:health_dashboard.*`
+  (8 groupes imbriqués, labels `<strong>` préservés).
+- `stock/ReapproHistory.tsx` — 18 chaînes → `stock:reappro_history.*` ;
+  `ReapproRayon.tsx` — 11 corrections, normalisation `t('reappro.*')` →
+  `t('stock:reappro.*')`, modale sudo pointée vers `stock:reappro.modal_sudo.*`
+  (ns `sudo` inexistant → FR en EN).
+- `InteractionsManager.tsx` — modal complet → `products:interactions.*` ;
+  `GRAVITY_LABELS` supprimé → clés `gravity_*` existantes réutilisées.
+- `CatalogDCI.tsx`, `CatalogDCIAddModal.tsx`, `ImportDCIPage.tsx` —
+  ~31 chaînes → `products:dci.*` ; `useTranslation` ajouté dans
+  `DCISearchCombobox`.
+- `ImportDCIPage.tsx` — bug pré-existant corrigé : `t('products:dci_admin.*')`
+  → `products:actions.dci_admin.*` (les clés étaient sous `actions`, le
+  fallback FR s'affichait en EN) ; `t('products:produit')` → `common:product`.
+- `ProduitFormModal.tsx` — 4 titres de sections → `products:form.sections.*` ;
+  `StockAdjustmentModal.tsx` — 2 chaînes → `products:adjustment.*`.
+- `dashboard/reports/StockValuationReport.tsx` — `t` déclaré jamais utilisé :
+  15 emplacements → `reports:stock_valuation.*` (9 nouvelles clés + clés
+  existantes réutilisées — rendu FR identique, clés `pdf_*` vs sentence-case).
+- `clients/BulkDeleteWarningModal.tsx` + `ClientDeleteWarningModal.tsx` —
+  `clients:delete_warning.*` (23 clés, pluriels `_one/_other`) ; bug latent
+  corrigé : `common:warning` inexistant → `delete_warning.title`.
+- `creances/modals/BulkPaiementModal.tsx` — `creances:bulk_payment.*` (6 clés).
+- `avoirs/modals/AvoirsLotModal.tsx` — `useTranslation(['stock','common'])`
+  (ns des voisins, avoirs fournisseurs) → `stock:avoirs.avoirs_lot_modal.*`.
+- `HelpTraining.tsx` — bloc Astuces → `help:tips.*` via `<Trans>` (14 clés).
+- `fournisseurs/FournisseurFormModals.tsx` → `suppliers:form.*` ;
+  `FinanceFournisseurModal.tsx` → `suppliers:finance.*` (10 clés, incl.
+  `(restant)` et titre échéancier pluriel) ; `EcheancierFournisseursModal.tsx`
+  → `suppliers:errors.load`.
+- `compta/Comptabilite.tsx` — aucun changement : catégories OHADA déjà via
+  `t('ohada_categories.*', { defaultValue: cat.label })` — le `label` FR
+  reste persisté côté API (référentiel comptable), seul l'affichage traduit.
+- `LoginShadcn.tsx` (salutations + `too_many_attempts` + confirm licence),
+  `Layout.tsx` (`common:pos_mode.*`), `ConfirmDialog.tsx` (`useTranslation`,
+  labels par défaut via `common:confirm`/`cancel`), `Sidebar.tsx`
+  (`sidebar:parametres.admin_system`, `expand`/`collapse`), `Maintenance.tsx`
+  (`maintenance:section_*`), `SimplePrintLabelsModal.tsx` (`labels:barcode_*`,
+  `gs1_desc` — `Datamatrix` conservé), `PointageReleveModal.tsx`
+  (`providers:pointage_modal.*`).
+- `LicenceScreen.tsx` — bonus : `useState(t('loading'))` figé au mount →
+  `t('common:loading')` évalué au rendu.
+- `common.json` — clé manquante `no_section` ajoutée (utilisée dans
+  `ReapproRayon`, affichait la clé brute).
+
+Vérifié : `tsc --noEmit` OK, `vitest validation.test.ts` 6/6, `npm run build`
+OK (31 s), tous les JSON fr/en parseés, scan résiduel : aucun littéral
+français restant dans le scope lot 4.
+
+Reste : lot 5 — aria-labels/toasts dispersés, restes `StockAdjustmentModal`
+(Lot/Rayon/Réserve badges), textes persistés en base (notes facture, motifs
+avoir — traduction sans effet rétroactif).
+
+---
+
+## 2026-09-25 — 🌐 i18n lot 3 : validation, schémas Zod, erreurs, exports
+
+- `utils/validation.ts` — 10 messages → `facturation:validation.*` via `i18n.t`
+  + `defaultValue` (vitest charge i18n sans ressources). `select_client`/
+  `add_product` pointent vers les clés `messages.*` existantes (dédoublonné).
+- `useSecureCartOperations.ts` — 5 confirmations modale sudo → `facturation:sudo.*`
+  (`t` déjà en prop, signature inchangée).
+- `schemas/*.ts` — zod 4 : `{ error: () => i18n.t('ns:key') }` évalué à chaque
+  `safeParse` (langue toujours à jour, pas figée au chargement).
+  `clientSchema` → `clients:validation.*` ; `productSchema` → clés
+  `products:form.validation.*` existantes (EN complétées) ; `stockSchema` →
+  `stock:validation.weights_sum_100` (+ typo « égale à » corrigée).
+- `utils/errorHandling.ts`, `routes.tsx`, `PharmacySettingsContext.tsx` —
+  8 clés `common:errors.*` (inconnu, serveur {{status}}, connexion, timeout
+  module, chargement paramètres).
+- `useTVA.ts` → `pharmacy_settings:tva.error_*` (ns de l'écran consommateur).
+- `utils/whatsapp.ts` → `messaging:whatsapp_report.*` (14 clés, langue UI —
+  rapport envoyé au pharmacien).
+- `utils/excelExport.ts`, `usePrint.ts`, `useManagerDashboard.ts` —
+  pattern `getFixedT(getDocumentLanguage())`/`docT` : `printing:export.*`,
+  `print_page.default_title`, `dashboard:manager_dashboard.dead_stock_report.*`.
+
+Vérifié : `tsc --noEmit` OK, `vitest run validation.test.ts` 6/6, 12 JSON parseés.
+
+Reste : lot 4 (~15 fichiers à clusters — StockHealthDashboard,
+InteractionsManager, HelpTraining, DCI, avoirs, créances…) ; lot 5 (aria-labels,
+toasts dispersés, textes enregistrés en base).
+
+---
+
+## 2026-09-25 — 🌐 i18n lot 2 : écrans critiques (démarrage, erreurs, lots, impression)
+
+- `App.tsx` — écran de démarrage/erreur backend traduit (`common:startup.*`,
+  interpolations `{{max}}`/`{{attempts}}`).
+- `ErrorBoundary.tsx` — class component → HOC `withTranslation('common')`
+  (réactif au changement de langue). `RouteErrorBoundary.tsx` → `useTranslation`.
+  Clés mutualisées `common:error_boundary.*` (fr+en).
+- `LotSelectionModal.tsx` — tout le modal (titre, FEFO, en-têtes, aria,
+  « Il manque X unité(s) »…) via `stock:lot_selection.*` (16 clés fr+en) ;
+  réutilise `common:close`/`common:validate`.
+- `printing/PrintPage.tsx` — `useTranslation(['printing','common'], { lng: docLang })`
+  (pattern des templates voisins) ; nouveau groupe `printing:print_page.*`.
+- `utils/print/promisPdfDraft.ts` — ticket promis client 100 % en dur →
+  `i18next.getFixedT(getDocumentLanguage(), 'printing')` (même pattern que
+  `relevePdfDraft`/`reportPdfDraft` — langue document découplée de l'UI).
+  Signature inchangée, aucun appelant modifié. 13 clés `promis.*` fr+en.
+- `printing.json` fr+en — `invoice.email` ajouté (lot 1), `print_page.*` et
+  `promis.*` ajoutés (lot 2).
+
+Vérifié : `tsc --noEmit` OK, JSON fr/en parseés, clés réutilisées confirmées
+(`common:close`, `common:validate`, `common:print`, `reglement.phone_short`).
+
+Reste (lots suivants) : lot 3 validation.ts + schemas Zod + errorHandling ;
+lot 4 ~15 fichiers à clusters (StockHealthDashboard, InteractionsManager,
+HelpTraining, DCI, avoirs, créances…) ; lot 5 aria-labels + toasts dispersés.
+
+---
+
+## 2026-09-25 — 🌐 i18n lot 1 : préfixes `ns:` cassés + clés rapports manquantes
+
+Audit i18n complet par sous-agents (~470 trouvailles, rapport dans
+`frontend/frontend/i18n_audit_report.md`). Ce lot corrige le versant systémique :
+
+- **Bug majeur `ns.` → `ns:`** : ~93 appels `t('reports.X')`/`t('facturation.X')`/
+  `t('dashboard.X')` etc. avec un POINT ne résolvaient jamais (cherchent une clé
+  `reports` imbriquée dans `reports.json`) → `defaultValue` français affiché en
+  permanence, y compris en EN. Corrigé dans 14 fichiers : `ReportFilters`,
+  `ReportResults`, `useCentreRapports`, `utils.ts`, `useFacturationActions/State/
+  Import`, `FacturationModals`, `useInvoiceActions`, `ChallengesSummary`,
+  `TeamReportsPage`, `FeedbackModal`, `FacturesTable`, `RecapTemplate`.
+- `hooks/reports/utils.ts` — `formatColumnHeader` : `COLUMN_LABELS` (FR) était
+  retourné avant tout appel `t()` → en-têtes de rapports toujours français.
+  La traduction `reports:column_labels.*` est désormais tentée en premier ;
+  `COLUMN_LABELS` sert de `defaultValue`. Idem `common:status.*` (dot-path).
+- `reports.json` fr+en — ajout : `queries.recap_valeur_stock`,
+  `queries.ventes_operateur_lots`, `queries.rapport_fiscal_mensuel`,
+  `params.poste_caisse_id`, EN `params.fournisseur_id`/`valorisation`,
+  `query_options.recap_valeur_stock` (valorisation + group_by), et complétion de
+  `query_options.rapport_dynamique` (group_by ×7, sort_by ×8, fields ×3).
+  `P.U Achat` écrit imbriqué (`"P": {"U Achat": …}`) car i18next découpe sur `.`.
+- `recap.json` fr+en — 14 clés racine (`document_title`, `col_*`, `note_body`…)
+  utilisées par `RecapTemplate.tsx` via `t('recap:*')`.
+- `facturation.json` fr+en — `messages.{enter_whatsapp_number, cancel_sale_confirm,
+  refresh_failed, pack_added, pack_error}`.
+- `printing.json` fr+en — `invoice.email`.
+- `common.json` fr+en — `sending` + statuts courants (`payée/validee/annulée…`,
+  variantes accentuées et non accentuées) pour `formatValue`.
+
+Vérifié : `tsc --noEmit` OK, tous les JSON parseés OK.
+
+Reste (lots suivants) : écrans critiques (App, boundaries, LotSelectionModal,
+PrintPage, promisPdfDraft), validation.ts + schemas Zod + errorHandling,
+~15 fichiers à clusters (StockHealthDashboard, InteractionsManager, HelpTraining,
+DCI…), aria-labels et toasts dispersés.
+
+---
+
+## 2026-09-25 — 📦 Gestion divers : détail des lots + export Excel
+
+- `rapports/inventory.py` — `_get_valeur_stock_divers_data` retourne désormais
+  un tableau `details` : produit, lot, rayon, quantité restante, prix
+  unitaire, taux TVA, HT/TVA/TTC et date de péremption pour chaque lot divers
+  restant (trié par valeur décroissante).
+- `GestionDivers.tsx` — onglet Stock : nouvelle carte « Détail des lots divers
+  restants » sous les répartitions TVA/rayon, avec bouton **Exporter Excel**
+  (`exportToExcel`, en-tête pharmacie, mise en page A4).
+- Onglet Stock compacté comme le CA (panneau de valorisation et cartes KPI
+  réduits) ; accents repassés en vert émeraude pour cohérence avec le module.
+- Taux TVA affiché avec 2 décimales (19,25 % au lieu de 19 %) dans le tableau
+  de répartition et le détail des lots.
+- Pagination client (20 lignes/page) sur le tableau de détail des lots.
+- Tableaux resserrés (cellules `py-2`, en-têtes `h-9`) et scroll vertical
+  interne avec en-tête figé (sticky) : CA journalier/détail dans la carte
+  flexible, répartitions TVA/rayon et détail des lots limités à 55vh —
+  adapté aux pharmacies avec beaucoup de données.
+- Export Excel ajouté sur l'onglet Chiffre d'affaires : la vue « Ventes par
+  jour » exporte les totaux journaliers, la vue « Détail du jour » exporte
+  les lignes de vente de la journée (en-tête pharmacie, A4 portrait).
+- Fix : le « Détail du jour » affichait toutes les ventes confondues —
+  `handleViewDetail` appelait `fetchVentesDiverses` avec une closure capturant
+  l'ancien `selectedDate` (null). Le fetch est désormais piloté par l'effet qui
+  réagit au changement de date, sans requête parasite.
+- Traductions `orders.json` fr/en : `lot_details`, `export_excel`,
+  `table.remaining_qty`, `table.expiry`, `unclassified`, `no_expiry`.
+
+Vérifié : `tsc --noEmit` OK, `manage.py check` OK, endpoint testé en conteneur
+(16 lots retournés), build + déploiement all OK.
+
+---
+
+## 2026-09-25 — 📐 Gestion divers : barre CA compactée
+
+- `GestionDivers.tsx` — réduction des espacements, paddings et hauteurs de la
+  zone période/CA ; champs de dates limités à une largeur utile au lieu de
+  s'étirer sur tout l'écran.
+- Carte Chiffre d'affaires ramenée à un format horizontal compact, bouton de
+  filtre réduit et espacement avant le tableau diminué.
+- Responsive conservé : champs pleine largeur sur mobile, barre horizontale
+  à partir de 640 px.
+- Tous les montants CA et Stock utilisent désormais `formatNumber` avec la
+  locale active (`fr-FR` ou `en-US`) : plus de séparateurs point/virgule
+  incohérents provenant de `toLocaleString()` sans locale explicite.
+
+Vérifié : `tsc --noEmit` OK.
+
+---
+
+## 2026-09-24 — 🎨 Gestion divers : navigation unique et identité visuelle cohérente
+
+Le module présentait Chiffre d'affaires et Stock comme deux écrans visuellement
+déconnectés, tandis que la Sidebar exposait séparément « CA Divers » et
+« Commandes Divers ».
+
+- `GestionDivers.tsx` — migration des éléments structurants vers shadcn
+  (`Tabs`, `Card`, `Button`) ; en-tête dynamique selon l'onglet actif.
+- Navigation interne responsive sous forme de trois cartes clairement
+  identifiées : Chiffre d'affaires (émeraude), Commandes (ambre) et Stock
+  (bleu), avec titre et description propres à chaque expérience.
+- Le filtre de période recharge désormais correctement la vue journalière au
+  lieu d'appeler le détail des ventes.
+- `routes.tsx` — suppression de `/app/divers/commandes`, ajout de
+  `/app/divers/stock`. L'onglet Commandes utilise désormais
+  `/app/divers/ca?tab=commandes` sans route Sidebar dédiée.
+- `Sidebar.tsx` — une seule entrée directe « Gestion Divers » ; compatibilité
+  conservée pour les utilisateurs possédant les anciennes permissions
+  `divers_ca` ou `divers_commandes`.
+- `Cadencier.tsx` — redirection des commandes DIV adaptée à la nouvelle
+  navigation interne.
+- `menu_hierarchy.py` — permission Gestion divers présentée comme un module
+  unique dans la configuration des utilisateurs.
+- `orders.json` fr/en — descriptions et libellés courts des trois onglets.
+
+Vérifié : JSON fr/en valides, `manage.py check`, `tsc --noEmit` et 18 tests
+RouteGuards OK.
+
+---
+
+## 2026-09-24 — 🧾 Ticket de caisse : détail des remises
+
+Le ticket affichait le prix brut comme total de ligne et ne distinguait pas
+les remises unitaires de la remise globale, ce qui empêchait le client de
+vérifier le calcul du net à payer.
+
+- `TicketTemplate.tsx` — total de ligne corrigé :
+  `quantité × (prix brut - remise unitaire)`.
+- Chaque article remisé affiche maintenant le montant total de sa remise de
+  ligne sous le prix unitaire.
+- Le récapitulatif distingue désormais : `TOTAL BRUT`, `REMISES LIGNES (-)`,
+  `REMISE GLOBALE (-)` et `NET À PAYER`.
+- Les deux aperçus utilisant le template commun sont couverts : Facturation
+  et Caisse centralisée, ainsi que leur impression thermique.
+- `printing.json` fr/en — ajout des libellés correspondants.
+
+Vérifié : JSON fr/en valides et `tsc --noEmit` OK.
+
+---
+
+## 2026-09-24 — ✏️ Mode sudo : libellés basés sur les permissions
+
+Le modal sudo parlait systématiquement de « titulaire », « pharmacien » ou
+« superuser », alors que le backend autorise également tout utilisateur actif
+possédant la permission demandée.
+
+- `SudoValidationModal.tsx` — texte de secours aligné sur la règle réelle :
+  utilisateur disposant des droits requis.
+- `common.json` fr/en — sous-titre, label, aide et sélection reformulés avec
+  « utilisateur autorisé » / « authorized user ». Label du champ simplifié en
+  « Mot de passe » et marqueur en « Requis ».
+- Aucun changement de sécurité : la vérification backend des permissions reste
+  inchangée.
+
+Vérifié : JSON fr/en valides et `tsc --noEmit` OK.
+
+---
+
+## 2026-09-24 — 🐛 Facturation : création client et recherche produit stabilisées
+
+La création fréquente d'un client depuis la facturation pouvait faire
+immédiatement disparaître le nouveau client et laisser la recherche produit
+sans focus jusqu'à un rechargement forcé.
+
+- `useFacturationClients.ts` — correction de la course réseau : les réponses
+  obsolètes ne peuvent plus écraser la liste courante ; le client créé est
+  épinglé dans l'état local et conservé lorsque la remise à zéro de la
+  recherche recharge les 50 premiers clients. Les recherches client actives
+  contournent également le cache HTTP pour trouver immédiatement une création.
+- Après création : fermeture explicite du dropdown client, sélection immédiate
+  et stable du nouveau client, puis fermeture du Dialog.
+- `useFacturationState.ts` — restitution explicite du focus et de la sélection
+  au champ de recherche produit après la fermeture du modal client.
+- La modification utilisateur du type `setLignesFacture` dans
+  `useFacturationActions.ts` est conservée.
+
+Vérifié : `tsc --noEmit` OK ; 10 tests Facturation/recherche produit réussis
+(1 test existant ignoré).
+
+---
+
+## 2026-09-24 — ⚡ Optimisation API (suite) : bulk paiements, promis, avoirs, produits
+
+Élimination des derniers patterns « 1 requête HTTP par élément » dans les
+flux de vente et d'avoirs.
+
+**Nouveaux endpoints backend :**
+- `POST produits/bulk-detail/` — serializer détail complet pour une liste
+  d'IDs (`bulk_ops.py`). Remplace les N×`GET produits/{id}/`.
+- `POST caisse/bulk_create/` — plusieurs paiements en une transaction
+  (`caisse.py`). Logique de plafonnement extraite en `_cap_montant`,
+  check point de vente en `_check_poste_vente`. Accepte l'alias
+  `facture_id` → `facture` (aussi corrigé dans `create` simple : le
+  frontend envoyait `facture_id` qui était rejeté en 400).
+- `POST promis/bulk_create/` — création groupée avec réservation de stock
+  par item, atomique (`promis.py`).
+- `POST ligne-avoirs/bulk_create/` + `POST ligne-avoirs/bulk_delete/`
+  (`avoirs.py`).
+
+**Frontend :**
+- `useSaleCompletion.ts` — paiement d'une facture existante : N×POST caisse
+  → 1 bulk (montants plafonnés calculés avant envoi) ; promis : N×POST →
+  1 bulk.
+- `useAvoirsData.ts` — édition d'avoir : N×DELETE + N×POST lignes →
+  `bulk_delete` + `bulk_create`.
+- `useFacturationState.ts` (rappel facture), `useDevisLoader.ts`,
+  `useFacturationImport.ts` (packs), `useInvoiceModification.ts` —
+  refetch produit par ligne → `produits/bulk-detail/` + Map par ID avec
+  fallback individuel conservé.
+
+Testés en conteneur : 201/200 sur les 5 endpoints, alias `facture_id`
+vérifié. `manage.py check` et `tsc --noEmit` OK.
+
+---
+
+## 2026-09-24 — ⚡ Optimisation API : création en masse des lignes de facture
+
+La création de proformas et de bons de livraison envoyait **1 requête HTTP
+par ligne produit** (`Promise.all` de `POST facture-produits/`) — une
+facture de 30 lignes générait 30 requêtes.
+
+- `api/views/ventes/facture_produits.py` — nouvel endpoint
+  `POST facture-produits/bulk_create/` : accepte `{items: [...]}` ou une
+  liste brute, valide tous les items via `FactureProduitSerializer`
+  (`many=True`) et les crée en une seule transaction (`@transaction.atomic`
+  → rollback total si une ligne est invalide). Max 500 lignes par appel.
+- `useFacturationActions.ts` — proforma et bon de livraison envoient
+  désormais toutes les lignes en **une seule requête**.
+
+Vérifié en conteneur : 201 (items/liste), 400 (vide/invalide avec rollback).
+`manage.py check`, `tsc --noEmit` et build Vite OK.
+
+---
+
+## 2026-09-24 — 🔍 Journal d'audit : traçage des sauvegardes manuelles
+
+Les opérations de sauvegarde/restauration de la base n'écrivaient aucune
+entrée dans `AuditLog` — actions invisibles dans le Journal d'audit.
+
+- `api/views/purge.py` — `maintenance/backup/` (bouton Sauvegarde de la page
+  Maintenance) : `EXPORT` « Sauvegarde manuelle de la base de données » ;
+  `maintenance/restore/` : `OTHER` « Restauration de la base de données
+  depuis {fichier} ». Imports locaux `AuditLog` (le module utilise des
+  imports paresseux anti-circulaires).
+- `api/views/backup_views.py` — `backups/create/` : `EXPORT` « {n} tables
+  sauvegardées » ; `backups/restore/` : `OTHER` avec nom de fichier + type
+  (full/incremental) ; `backups/{filename}/` DELETE : `DELETE` « Backup
+  supprimé ».
+- Tous les `log_audit` sont en `try/except` : un échec d'audit ne doit
+  jamais casser une sauvegarde ou restauration en cours.
+
+Vérifié : `POST maintenance/backup/` exécuté en conteneur → entrée
+`EXPORT Backup | Sauvegarde manuelle de la base de données` créée.
+
+---
+
 ## 2026-09-24 — 🏠 Page d'accueil : facturation pour tous les non-admins
 
 `HomeRedirector` (`components/auth/RouteGuards.tsx`) redirigeait les

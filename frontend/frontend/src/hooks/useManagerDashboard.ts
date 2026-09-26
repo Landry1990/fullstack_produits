@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { gooeyToast } from 'goey-toast';
 import api from '../services/api';
 import { useManagerStats, useCurrentObjectifs } from './useDashboard';
-import { usePharmacySettings } from './usePharmacySettings';
+import { usePharmacySettings, useDocumentLocale } from './usePharmacySettings';
 import { getLocalDateString } from '../utils/dateUtils';
 import { logger } from '../utils/logger'
 
@@ -17,6 +17,8 @@ export interface EditingObjectif {
 
 export const useManagerDashboard = () => {
     const { t } = useTranslation(['dashboard', 'common']);
+    const { lang: docLang } = useDocumentLocale();
+    const { t: docT } = useTranslation('dashboard', { lng: docLang });
     const queryClient = useQueryClient();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
@@ -71,22 +73,22 @@ export const useManagerDashboard = () => {
 
                 if (Array.isArray(data) && data.length > 0) {
                     const excelData = data.map(item => ({
-                        'Nom': item.name,
-                        'CIP': item.cip || '-',
-                        'Stock': item.stock,
-                        'Valeur': item.valeur,
-                        'PMP': item.pmp,
-                        'Dernière Vente': item.dernier_vente || 'Jamais vendu',
-                        'Rayon': item.rayon || '-',
-                        'Fournisseur': item.fournisseur || '-'
+                        [docT('manager_dashboard.dead_stock_report.col_name')]: item.name,
+                        [docT('manager_dashboard.dead_stock_report.col_cip')]: item.cip || '-',
+                        [docT('manager_dashboard.dead_stock_report.col_stock')]: item.stock,
+                        [docT('manager_dashboard.dead_stock_report.col_value')]: item.valeur,
+                        [docT('manager_dashboard.dead_stock_report.col_pmp')]: item.pmp,
+                        [docT('manager_dashboard.dead_stock_report.col_last_sale')]: item.dernier_vente || docT('manager_dashboard.dead_stock_report.never_sold'),
+                        [docT('manager_dashboard.dead_stock_report.col_department')]: item.rayon || '-',
+                        [docT('manager_dashboard.dead_stock_report.col_supplier')]: item.fournisseur || '-'
                     }));
 
                     const filename = `stocks_morts_${now.toISOString().split('T')[0]}.xlsx`;
                     const { exportToExcel } = await import('../utils/excelExport');
                     exportToExcel(excelData, pharmacySettings, {
-                        sheetName: 'Stocks Morts',
+                        sheetName: docT('manager_dashboard.dead_stock_report.sheet_name'),
                         filename,
-                        title: 'Rapport Stocks Morts',
+                        title: docT('manager_dashboard.dead_stock_report.title'),
                     });
                     gooeyToast.success(t('common:export_success', 'Export réussi'));
                 } else {
@@ -116,7 +118,7 @@ export const useManagerDashboard = () => {
         } finally {
             setExporting(false);
         }
-    }, [t, pharmacySettings]);
+    }, [t, docT, pharmacySettings]);
 
     const handleSaveObjectif = async () => {
         try {

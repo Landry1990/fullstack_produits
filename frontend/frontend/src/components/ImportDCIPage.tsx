@@ -96,7 +96,7 @@ export default function ImportDCIPage() {
         setUploadResult(r.data);
         fetchStats();
       })
-      .catch(err => gooeyToast.error(err.response?.data?.error || 'Erreur upload'))
+      .catch(err => gooeyToast.error(err.response?.data?.error || t('products:dci.error_upload')))
       .finally(() => setUploading(false));
   };
 
@@ -108,7 +108,7 @@ export default function ImportDCIPage() {
         fetchStats();
         fetchUnlinked();
       })
-      .catch(err => gooeyToast.error(err.response?.data?.error || 'Erreur matching'))
+      .catch(err => gooeyToast.error(err.response?.data?.error || t('products:dci.error_matching')))
       .finally(() => setMatching(false));
   };
 
@@ -124,7 +124,7 @@ export default function ImportDCIPage() {
         fetchUnlinked();
         fetchStats();
       })
-      .catch(err => gooeyToast.error(err.response?.data?.error || 'Erreur liaison'))
+      .catch(err => gooeyToast.error(err.response?.data?.error || t('products:dci.error_linking')))
       .finally(() => setLinkingId(null));
   };
 
@@ -133,8 +133,8 @@ export default function ImportDCIPage() {
       {/* Header — épuré comme CatalogueDCI */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-black tracking-tight">{t('products:dci_admin.title', 'Gestion DCI & Matching')}</h1>
-          <p className="text-sm text-base-content/50 mt-1 font-medium">{t('products:dci_admin.subtitle', 'Import de substances et liaison automatique avec la base ANSM')}</p>
+          <h1 className="text-3xl font-black tracking-tight">{t('products:actions.dci_admin.title', 'Gestion DCI & Matching')}</h1>
+          <p className="text-sm text-base-content/50 mt-1 font-medium">{t('products:actions.dci_admin.subtitle', 'Import de substances et liaison automatique avec la base ANSM')}</p>
         </div>
         <Button onClick={fetchStats} variant="ghost" size="sm" className="opacity-60 hover:opacity-100">
           {t('common:refresh', 'Actualiser')}
@@ -144,10 +144,10 @@ export default function ImportDCIPage() {
       {/* Tabs */}
       <div role="tablist" className="inline-flex border-b border-base-200 gap-0">
         <a role="tab" aria-selected={activeTab === 'dci'} tabIndex={0} className={`px-4 py-2 text-sm font-medium cursor-pointer border-b-2 transition-colors ${activeTab === 'dci' ? 'border-primary text-primary' : 'border-transparent text-base-content/60 hover:text-base-content'}`} onClick={() => setActiveTab('dci')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveTab('dci'); } }}>
-          DCI & Substances
+          {t('products:dci.tab_substances')}
         </a>
         <a role="tab" aria-selected={activeTab === 'interactions'} tabIndex={0} className={`px-4 py-2 text-sm font-medium cursor-pointer border-b-2 transition-colors ${activeTab === 'interactions' ? 'border-primary text-primary' : 'border-transparent text-base-content/60 hover:text-base-content'}`} onClick={() => setActiveTab('interactions')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveTab('interactions'); } }}>
-          Interactions médicamenteuses
+          {t('products:dci.tab_interactions')}
         </a>
       </div>
 
@@ -159,26 +159,26 @@ export default function ImportDCIPage() {
       {/* Stats — blocs légers sans ombre, bordure subtile */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <StatCard
-          label={t('products:dci_admin.substances', 'Substances')}
+          label={t('products:actions.dci_admin.substances', 'Substances')}
           value={stats?.substances ?? '-'}
           loading={loadingStats}
           icon={<FlaskIcon />}
         />
         <StatCard
-          label={t('products:dci_admin.medicament_refs', 'Références ANSM')}
+          label={t('products:actions.dci_admin.medicament_refs', 'Références ANSM')}
           value={stats?.medicament_references ?? '-'}
           loading={loadingStats}
           icon={<BookIcon />}
         />
         <StatCard
-          label={t('products:dci_admin.linked', 'Produits liés')}
+          label={t('products:actions.dci_admin.linked', 'Produits liés')}
           value={stats ? `${stats.linked_produits} / ${stats.total_produits}` : '-'}
           loading={loadingStats}
           icon={<LinkIcon />}
           sub={`${stats?.link_rate ?? 0}%`}
         />
         <StatCard
-          label={t('products:dci_admin.unlinked', 'Non liés')}
+          label={t('products:actions.dci_admin.unlinked', 'Non liés')}
           value={stats?.unlinked_produits ?? '-'}
           loading={loadingStats}
           icon={<UnlinkIcon />}
@@ -192,14 +192,14 @@ export default function ImportDCIPage() {
         <div className="bg-base-100 rounded-3xl border border-base-200 p-6">
           <h2 className="font-bold text-lg flex items-center gap-2 mb-1">
             <UploadIcon />
-            {t('products:dci_admin.import_compo', 'Importer COMPO.txt')}
+            {t('products:actions.dci_admin.import_compo', 'Importer COMPO.txt')}
           </h2>
-          <p className="text-sm text-base-content/50 mb-4">{t('products:dci_admin.import_desc', 'Fichier ANSM contenant la liste des substances actives')}</p>
+          <p className="text-sm text-base-content/50 mb-4">{t('products:actions.dci_admin.import_desc', 'Fichier ANSM contenant la liste des substances actives')}</p>
           <div className="flex items-center gap-3">
             <input
               type="file"
               accept=".txt"
-              aria-label={t('products:dci_admin.import_compo', 'Importer COMPO.txt')}
+              aria-label={t('products:actions.dci_admin.import_compo', 'Importer COMPO.txt')}
               onChange={e => { setFile(e.target.files?.[0] || null); setUploadResult(null); }}
               className="file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-base-300 file:text-base-content hover:file:bg-base-200 text-sm w-full rounded-xl border border-base-300 bg-base-200/50 px-3 py-2"
             />
@@ -213,7 +213,7 @@ export default function ImportDCIPage() {
           </div>
           {uploadResult && (
             <div className="mt-3 text-sm font-medium text-success">
-              {uploadResult.created} substances créées, {uploadResult.skipped} existantes ignorées.
+              {t('products:dci.import_result', { count: uploadResult.created, skipped: uploadResult.skipped })}
             </div>
           )}
         </div>
@@ -222,23 +222,23 @@ export default function ImportDCIPage() {
         <div className="bg-base-100 rounded-3xl border border-base-200 p-6">
           <h2 className="font-bold text-lg flex items-center gap-2 mb-1">
             <MagicIcon />
-            {t('products:dci_admin.auto_match', 'Matcher automatique')}
+            {t('products:actions.dci_admin.auto_match', 'Matcher automatique')}
           </h2>
-          <p className="text-sm text-base-content/50 mb-4">{t('products:dci_admin.match_desc', 'Analyse tous les produits et tente de les lier aux substances par nom')}</p>
+          <p className="text-sm text-base-content/50 mb-4">{t('products:actions.dci_admin.match_desc', 'Analyse tous les produits et tente de les lier aux substances par nom')}</p>
           <Button
             variant="secondary" className="rounded-2xl w-full"
             disabled={matching}
             onClick={handleAutoMatch}
             >
             {matching ? (
-              <><Loader2 className="size-4 animate-spin" /> {t('products:dci_admin.matching', 'Analyse en cours...')}</>
+              <><Loader2 className="size-4 animate-spin" /> {t('products:actions.dci_admin.matching', 'Analyse en cours...')}</>
             ) : (
-              <>{t('products:dci_admin.run_match', 'Lancer le matching')}</>
+              <>{t('products:actions.dci_admin.run_match', 'Lancer le matching')}</>
             )}
           </Button>
           {matchResult && (
             <div className={`mt-3 text-sm font-medium ${matchResult.newly_linked > 0 ? 'text-success' : 'text-warning'}`}>
-              {matchResult.newly_linked} nouveaux liens créés. Total liés : {matchResult.total_linked} / {matchResult.total_produits} ({matchResult.link_rate}%)
+              {t('products:dci.link_result', { count: matchResult.newly_linked, total: matchResult.total_linked, total_products: matchResult.total_produits, rate: matchResult.link_rate })}
             </div>
           )}
         </div>
@@ -249,14 +249,14 @@ export default function ImportDCIPage() {
         <div className="p-6 border-b border-base-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <h2 className="font-bold text-lg flex items-center gap-2">
             <BoxIcon />
-            {t('products:dci_admin.unlinked_products', 'Produits non liés')}
+            {t('products:actions.dci_admin.unlinked_products', 'Produits non liés')}
             <Badge variant="secondary" size="sm" className="font-bold">{unlinkedData?.count ?? 0}</Badge>
           </h2>
           <div className="relative">
             <input
               type="text"
-              placeholder={t('products:dci_admin.search_product', 'Rechercher un produit...')}
-              aria-label={t('products:dci_admin.search_product', 'Rechercher un produit...')}
+              placeholder={t('products:actions.dci_admin.search_product', 'Rechercher un produit...')}
+              aria-label={t('products:actions.dci_admin.search_product', 'Rechercher un produit...')}
               className="w-full md:w-64 rounded-xl bg-base-200/50 border-none h-9 text-xs px-3 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
               value={unlinkedSearch}
               onChange={e => { setUnlinkedSearch(e.target.value); setUnlinkedPage(1); }}
@@ -268,12 +268,12 @@ export default function ImportDCIPage() {
           <table className="w-full border-collapse">
             <thead>
               <tr className="border-b border-base-200 bg-base-200/30">
-                <th className="text-xs uppercase tracking-wider text-base-content/50 font-bold">{t('products:produit', 'Produit')}</th>
+                <th className="text-xs uppercase tracking-wider text-base-content/50 font-bold">{t('common:product')}</th>
                 <th className="text-xs uppercase tracking-wider text-base-content/50 font-bold">CIP</th>
-                <th className="text-xs uppercase tracking-wider text-base-content/50 font-bold">Stock</th>
-                <th className="text-xs uppercase tracking-wider text-base-content/50 font-bold">Prix</th>
-                <th className="text-xs uppercase tracking-wider text-base-content/50 font-bold">{t('products:dci_admin.suggestion', 'Suggestion')}</th>
-                <th className="text-xs uppercase tracking-wider text-base-content/50 font-bold">{t('products:dci_admin.manual_link', 'Liaison manuelle')}</th>
+                <th className="text-xs uppercase tracking-wider text-base-content/50 font-bold">{t('products:dci.col_stock')}</th>
+                <th className="text-xs uppercase tracking-wider text-base-content/50 font-bold">{t('products:dci.col_price')}</th>
+                <th className="text-xs uppercase tracking-wider text-base-content/50 font-bold">{t('products:actions.dci_admin.suggestion', 'Suggestion')}</th>
+                <th className="text-xs uppercase tracking-wider text-base-content/50 font-bold">{t('products:actions.dci_admin.manual_link', 'Liaison manuelle')}</th>
                 <th></th>
               </tr>
             </thead>
@@ -296,7 +296,7 @@ export default function ImportDCIPage() {
                     <EmptyState
                       compact
                       variant="base"
-                      title={t('products:dci_admin.all_linked', 'Tous les produits sont liés !')}
+                      title={t('products:actions.dci_admin.all_linked', 'Tous les produits sont liés !')}
                     />
                   </td>
                 </tr>
@@ -319,7 +319,7 @@ export default function ImportDCIPage() {
                     </td>
                     <td>
                       <DCISearchCombobox
-                        placeholder={t('products:dci_admin.choose_dci', 'Choisir DCI...')}
+                        placeholder={t('products:actions.dci_admin.choose_dci', 'Choisir DCI...')}
                         onSelect={(substanceId) => handleManualLink(p.id, substanceId)}
                         disabled={linkingId === p.id}
                       />
@@ -341,13 +341,13 @@ export default function ImportDCIPage() {
               variant="ghost" size="sm" className="h-6 px-2 text-xs"
               disabled={unlinkedPage <= 1}
               onClick={() => setUnlinkedPage(p => p - 1)}
-            >Précédent</Button>
-            <span className="text-sm py-1 opacity-60 font-medium">Page {unlinkedPage} / {Math.ceil(unlinkedData.count / unlinkedData.page_size)}</span>
+            >{t('common:pagination.prev')}</Button>
+            <span className="text-sm py-1 opacity-60 font-medium">{t('products:dci.page_x_of_y', { page: unlinkedPage, total: Math.ceil(unlinkedData.count / unlinkedData.page_size) })}</span>
             <Button
               variant="ghost" size="sm" className="h-6 px-2 text-xs"
               disabled={unlinkedPage >= Math.ceil(unlinkedData.count / unlinkedData.page_size)}
               onClick={() => setUnlinkedPage(p => p + 1)}
-            >Suivant</Button>
+            >{t('common:pagination.next')}</Button>
           </div>
         )}
       </div>
@@ -365,6 +365,7 @@ interface DCISearchComboboxProps {
 }
 
 function DCISearchCombobox({ placeholder, onSelect, disabled }: DCISearchComboboxProps) {
+  const { t } = useTranslation(['products', 'common']);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Substance[]>([]);
   const [open, setOpen] = useState(false);
@@ -464,7 +465,7 @@ function DCISearchCombobox({ placeholder, onSelect, disabled }: DCISearchCombobo
             </li>
           ) : results.length === 0 ? (
             <li className="px-3 py-2 text-xs text-base-content/40">
-              {query.trim() ? 'Aucun résultat' : 'Tapez pour rechercher...'}
+              {query.trim() ? t('products:dci.no_results') : t('products:dci.type_to_search')}
             </li>
           ) : (
             results.map((sub, i) => (

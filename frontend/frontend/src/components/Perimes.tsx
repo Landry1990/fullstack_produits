@@ -549,7 +549,7 @@ export default function Perimes() {
                       {stats.perimes.details.length > 10 && (
                         <div className="mt-3 text-center">
                           <Button variant="link" size="sm" onClick={() => setActiveTab('list')}>
-                            Voir tous les {stats.perimes.count_lots} lots →
+                            {t('perimes.view_all_lots', { count: stats.perimes.count_lots })}
                           </Button>
                         </div>
                       )}
@@ -674,7 +674,7 @@ export default function Perimes() {
                             onCheckedChange={() => toggleLotSelection(lot.id)}
                             disabled={lot.quantity_remaining <= 0}
                             className="data-[state=checked]:bg-red-500 data-[state=checked]:border-red-500"
-                            aria-label={`Sélectionner ${lot.produit_nom}`}
+                            aria-label={t('stock:reappro.select_product_aria', { name: lot.produit_nom })}
                           />
                         </TableCell>
                         <TableCell className="py-2.5 px-4">
