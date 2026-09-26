@@ -197,7 +197,10 @@
         "pos_closed": "Sales point closed.",
         "pos_close_error": "Error closing sales point",
         "pos_confirm_delete": "Delete this sales point?",
-        "pos_confirm_close": "Close this sales point?"
+        "pos_confirm_close": "Close this sales point?",
+        "caisse_confirm_delete": "Delete cash register {{nom}}?",
+        "caisse_deleted": "Cash register deleted.",
+        "caisse_delete_error": "Error deleting cash register"
     },
     "buttons": {
         "logo_importing": "Import...",

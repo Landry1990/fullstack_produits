@@ -69,14 +69,6 @@ const creanceService = {
         return response.data;
     },
 
-    imprimerRelevePaiement: async (releveId: number): Promise<Blob> => {
-        const response = await api.get('creances/imprimer_releve_paiement/', {
-            params: { releve_id: releveId },
-            responseType: 'blob'
-        });
-        return response.data;
-    },
-
     getSynthese: async (params: { date_debut?: string; date_fin?: string } = {}): Promise<unknown[]> => {
         const response = await api.get('creances/synthese_clients/', { params });
         return Array.isArray(response.data) ? response.data : [];
