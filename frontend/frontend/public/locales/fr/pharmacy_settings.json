@@ -197,7 +197,10 @@
         "pos_closed": "Point de vente fermé.",
         "pos_close_error": "Erreur fermeture",
         "pos_confirm_delete": "Supprimer ce point de vente ?",
-        "pos_confirm_close": "Fermer ce point de vente ?"
+        "pos_confirm_close": "Fermer ce point de vente ?",
+        "caisse_confirm_delete": "Supprimer la caisse {{nom}} ?",
+        "caisse_deleted": "Caisse supprimée.",
+        "caisse_delete_error": "Erreur suppression caisse"
     },
     "buttons": {
         "logo_importing": "Import...",

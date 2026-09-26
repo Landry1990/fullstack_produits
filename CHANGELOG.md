@@ -2,6 +2,43 @@
 
 ---
 
+## 2026-09-26 — 📊 Taux de TVA par défaut créés à l'installation
+
+`entrypoint.sh` (section 6c, même pattern `get_or_create` que les caisses et
+postes de vente) — seeding automatique des deux taux au démarrage du backend :
+
+- `19.25` — « TVA Normale »
+- `0` — « Exonéré »
+
+Idempotent : `taux` est `unique`, les entrées existantes (et leurs libellés
+personnalisés) ne sont ni dupliquées ni écrasées. Testé dans le conteneur
+dev : `exists` sur les deux taux.
+
+---
+
+## 2026-09-26 — 🗑️ Suppression des caisses physiques depuis les paramètres
+
+Le tableau « Points de caisse disponibles » (Paramètres → Impression →
+Points de vente) affichait `—` dans la colonne Actions — impossible de
+retirer une caisse de test ou décommissionnée.
+
+- `PosteCaisseViewSet.destroy()` — garde ajoutée : refus 400 si un point de
+  vente **actif** utilise la caisse, ou si des sessions legacy
+  (`SessionCaisse`, FK **CASCADE**, table `managed=False`) y sont liées —
+  sinon la suppression aurait effacé l'historique. Les autres FK
+  (`PosteVente.caisse`, `Facture.poste_caisse`, audit) sont en `SET_NULL` :
+  les enregistrements sont conservés, seul le lien caisse disparaît.
+- `cashSessionService.deleteCaisse()` → `DELETE /api/postes-caisses/{id}/`
+  (endpoint `ModelViewSet` déjà exposé, déjà réservé `IsAdminUser`).
+- `PosteVenteSettingsSection.tsx` — `handleDeleteCaisse` avec modale de
+  confirmation `useConfirm` (variant danger) + bouton poubelle par ligne.
+- Clés i18n fr/en : `messages.caisse_confirm_delete` (avec `{{nom}}`),
+  `caisse_deleted`, `caisse_delete_error`.
+
+Vérifié : `tsc --noEmit` OK, `eslint` OK, `py_compile` OK, JSON valides.
+
+---
+
 ## 2026-09-26 — 🔤 Majuscules forcées désactivées sur feedback + config ticket
 
 `index.css` applique `text-transform: uppercase` globalement à tous les
