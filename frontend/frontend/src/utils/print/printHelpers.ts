@@ -202,6 +202,42 @@ export function printTicketInIframe(ticketWidth: number, content: string, styleT
 }
 
 /**
+ * Imprime un document HTML complet (déjà construit, avec son propre @page)
+ * dans une iframe invisible. Évite le blocage des popups (window.open).
+ */
+export function printHtmlInIframe(html: string, onError?: () => void): void {
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    iframe.style.visibility = 'hidden';
+    iframe.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(iframe);
+
+    try {
+        const doc = iframe.contentDocument || iframe.contentWindow?.document;
+        if (!doc) {
+            throw new Error('Impossible d\'accéder au document de l\'iframe');
+        }
+
+        doc.open();
+        doc.write(html);
+        doc.close();
+
+        // Le document gère lui-même l'appel à window.print() via son script inline.
+        // Nettoyer l'iframe après un délai
+        setTimeout(() => {
+            iframe.parentNode?.removeChild(iframe);
+        }, 30000);
+    } catch (err) {
+        logger.error('Erreur impression iframe:', err);
+        iframe.parentNode?.removeChild(iframe);
+        onError?.();
+    }
+}
+
+/**
  * Génère le document HTML complet pour l'impression d'un ticket de caisse.
  */
 export function buildTicketPrintHtml(ticketWidth: number, content: string, styleTags: string): string {

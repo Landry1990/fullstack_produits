@@ -668,7 +668,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
 
         factures = Facture.objects.filter(id__in=facture_ids).annotate(
             montant_paye_annotated=Coalesce(Subquery(paid_subquery), Value(0, output_field=DecimalField()))
-        ).order_by('created_at')  # Ordre chronologique pour répartition
+        ).order_by('date')  # Ordre chronologique pour répartition
         
         if not factures.exists():
              return Response({'detail': 'No invoices found.'}, status=status.HTTP_404_NOT_FOUND)
@@ -766,129 +766,6 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             'reste_a_payer': str(reste_a_payer_global),
             'paiements': paiements_details
         })
-
-    @action(detail=False, methods=['get'])
-    def imprimer_releve_paiement(self, request):
-        releve_id = request.query_params.get('releve_id')
-        if not releve_id:
-            return Response({'detail': 'releve_id est requis.'}, status=400)
-            
-        try:
-            releve = RelevePaiement.objects.select_related('client').get(id=releve_id)
-        except RelevePaiement.DoesNotExist:
-            return Response({'detail': 'Relevé non trouvé.'}, status=404)
-        except Exception as e:
-            return Response({'detail': f'Erreur: {e!s}'}, status=500)
-        
-        try:
-            settings, _ = InvoiceSettings.objects.get_or_create(pk=1)
-
-            from ...utils_doclang import T, format_doc_date, get_document_language
-            lang = get_document_language()
-
-            response = HttpResponse(content_type='application/pdf')
-            filename = f"recapitulatif_reglement_{releve.reference}.pdf"
-            response['Content-Disposition'] = build_safe_content_disposition(filename, disposition='inline')
-
-            buffer = io.BytesIO()
-            doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=2*cm, leftMargin=2*cm, topMargin=2*cm, bottomMargin=2*cm)
-            story = []
-            styles = getSampleStyleSheet()
-            
-            try:
-                primary_color = HexColor(settings.primary_color) if settings.primary_color else colors.HexColor('#000000')
-            except Exception:
-                primary_color = colors.HexColor('#000000')
-            
-            style_company = ParagraphStyle('Company', parent=styles['Heading2'], fontSize=14, spaceAfter=4, textColor=primary_color)
-            style_normal = styles['Normal']
-            style_title = ParagraphStyle('Title', parent=styles['Heading1'], fontSize=18, alignment=1, spaceAfter=20, textColor=primary_color)
-            style_label = ParagraphStyle('Label', parent=styles['Normal'], fontName='Helvetica-Bold')
-            
-            story.append(Paragraph(f"<b>{settings.company_name or T(lang, 'company_fallback')}</b>", style_company))
-            address = settings.company_address or ""
-            if address:
-                story.append(Paragraph(address.replace('\n', '<br/>'), style_normal))
-            story.append(Spacer(1, 1*cm))
-            story.append(Paragraph(T(lang, 'releve_title'), style_title))
-
-            _rel_dt = releve.created_at if releve.created_at else datetime.now()
-            date_releve = format_doc_date(_rel_dt, lang, with_time=True)
-            client_name = releve.client.name if releve.client else T(lang, 'client_inconnu')
-
-            info_data = [
-                [Paragraph(f"<b>{T(lang, 'col_client')} :</b>", style_normal), Paragraph(client_name, style_normal)],
-            ]
-            if releve.client:
-                if getattr(releve.client, 'niu', None):
-                    info_data.append([Paragraph("<b>NIU :</b>", style_normal), Paragraph(releve.client.niu, style_normal)])
-                if getattr(releve.client, 'registre_commerce', None):
-                    info_data.append([Paragraph("<b>RC :</b>", style_normal), Paragraph(releve.client.registre_commerce, style_normal)])
-            
-            info_data.extend([
-                [Paragraph(f"<b>{T(lang, 'releve_lbl_reference')}</b>", style_normal), Paragraph(releve.reference or f"REL-{releve.id}", style_normal)],
-                [Paragraph(f"<b>{T(lang, 'col_date')} :</b>", style_normal), Paragraph(date_releve, style_normal)],
-            ])
-            info_table = Table(info_data, colWidths=[5*cm, 9*cm])
-            info_table.setStyle(TableStyle([('VALIGN', (0,0), (-1,-1), 'TOP'), ('BOTTOMPADDING', (0,0), (-1,-1), 4)]))
-            story.append(info_table)
-            story.append(Spacer(1, 0.5*cm))
-            
-            # Paiements du relevé
-            paiements = releve.paiements_caisse.filter(statut='completee').order_by('date_paiement')
-            
-            if paiements.exists():
-                headers = [T(lang, 'col_date'), T(lang, 'col_montant'), T(lang, 'col_mode'), T(lang, 'col_reference')]
-                table_data = [headers]
-                
-                for p in paiements:
-                    try:
-                        date_str = format_doc_date(p.date_paiement, lang) if p.date_paiement else '-'
-                        montant = f"{float(p.montant):,.0f} F"
-                        mode = p.get_mode_paiement_display() or '-'
-                        ref = p.reference_paiement or '-'
-                        
-                        table_data.append([
-                            date_str,
-                            montant,
-                            mode,
-                            ref
-                        ])
-                    except Exception as e:
-                        logger.error(f"Erreur traitement paiement {p.id}: {e!s}")
-                        continue
-                
-                if len(table_data) > 1:
-                    story.append(Spacer(1, 0.5*cm))
-                    t = Table(table_data, colWidths=[3.5*cm, 2.5*cm, 4*cm, 4*cm])
-                    t.setStyle(TableStyle([
-                        ('BACKGROUND', (0, 0), (-1, 0), colors.whitesmoke),
-                        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                        ('FONTSIZE', (0, 0), (-1, -1), 9),
-                        ('ALIGN', (2, 1), (3, -1), 'RIGHT'),
-                        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-                        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-                    ]))
-                    story.append(t)
-            
-            story.append(Spacer(1, 1*cm))
-            total_amount = float(releve.total_amount) if releve.total_amount else 0.0
-            total_data = [["", "", Paragraph(f"<b>{T(lang, 'releve_total')}</b>", style_label), Paragraph(f"<b>{total_amount:,.0f} F</b>", style_label)]]
-            total_table = Table(total_data, colWidths=[3.5*cm, 2.5*cm, 4*cm, 4*cm])
-            total_table.setStyle(TableStyle([('ALIGN', (3, 0), (3, 0), 'RIGHT')]))
-            story.append(total_table)
-            
-            story.append(Spacer(1, 2*cm))
-            story.append(Paragraph(T(lang, 'recu_thanks'), ParagraphStyle('Thanks', parent=style_normal, alignment=1, italic=True)))
-
-            doc.build(story)
-            buffer.seek(0)
-            response.write(buffer.getvalue())
-            return response
-            
-        except Exception as e:
-            logger.error(f"Erreur PDF relevé {releve_id}: {e!s}", exc_info=True)
-            return Response({'detail': f'Erreur PDF: {e!s}'}, status=500)
 
     @action(detail=False, methods=['delete'], permission_classes=[IsAdminUser])
     @transaction.atomic

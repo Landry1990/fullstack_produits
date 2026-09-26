@@ -6,7 +6,8 @@ import { useSudo } from './useSudo';
 import creanceService, { type BulkPaiementPayload } from '../services/creanceService';
 import { usePharmacySettings } from './usePharmacySettings';
 import { generateRelevePdfDraft } from '../utils/print/relevePdfDraft';
-import { generateTicketReglementPdfDraft } from '../utils/print/ticketReglementPdfDraft';
+import { buildRelevePaiementPrintHtml } from '../utils/print/relevePaiementPrintHtml';
+import { printHtmlInIframe } from '../utils/print/printHelpers';
 import { logger } from '../utils/logger'
 import { useConfirm } from './useConfirm';
 
@@ -113,38 +114,41 @@ export const useCreanceActions = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const handlePrintBulkReceipt = useCallback(async (releveId: number) => {
-        if (!releveId) return;
-
-        // Ouvrir la fenêtre AVANT l'appel async pour éviter le blocage popup
-        const printWindow = window.open('about:blank', '_blank');
-        let url: string | undefined;
+    const handlePrintBulkReceipt = useCallback((data: {
+        releve_reference?: string;
+        releve_id?: number;
+        total_amount: string;
+        total_dettes?: string;
+        reste_a_payer: string;
+        paiements: Array<{
+            facture_id: number;
+            numero_facture: string;
+            montant_total_facture: string;
+            montant_paye: string;
+            reste_avant: string;
+            reste_apres: string;
+            est_soldee: boolean;
+        }>;
+    }, clientName: string, mode: string) => {
         try {
-            const blob = await creanceService.imprimerRelevePaiement(releveId);
-            url = window.URL.createObjectURL(blob);
-
-            if (printWindow) {
-                printWindow.location.href = url;
-            } else {
-                const link = document.createElement('a');
-                link.href = url;
-                link.setAttribute('download', `recapitulatif_reglement_${releveId}.pdf`);
-                document.body.appendChild(link);
-                link.click();
-                link.parentNode?.removeChild(link);
-            }
-
-            await new Promise(resolve => setTimeout(resolve, 5000));
+            const html = buildRelevePaiementPrintHtml({
+                reference: data.releve_reference || `REL-${data.releve_id ?? ''}`,
+                date: new Date().toISOString(),
+                client_name: clientName,
+                mode_paiement: mode,
+                total_dettes: data.total_dettes || data.total_amount,
+                montant_regle: data.total_amount,
+                reste_a_payer: data.reste_a_payer || '0.00',
+                paiements: data.paiements || [],
+            }, pharmacySettings);
+            printHtmlInIframe(html, () => {
+                gooeyToast.error(t('creances:toasts.error_print_statement'));
+            });
         } catch (err: unknown) {
             logger.error('Erreur lors de l\'impression du relevé:', err);
-            const error = err as { response?: { data?: { detail?: string } } };
-            gooeyToast.error(error.response?.data?.detail || t('creances:toasts.error_print_statement'));
-            if (printWindow) printWindow.close();
-        } finally {
-            if (url) window.URL.revokeObjectURL(url);
+            gooeyToast.error(t('creances:toasts.error_print_statement'));
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [pharmacySettings, t]);
 
     const performAjouterPaiement = useCallback(async (validatorId: number, password: string) => {
         if (!selectedCreance || !montantPaiement) return;
@@ -211,52 +215,11 @@ export const useCreanceActions = ({
             refresh();
             gooeyToast.success(t('creances:toasts.bulk_success'));
 
-            // Générer le ticket de confirmation avec les détails
-            if (data.paiements && data.paiements.length > 0) {
-                try {
-                    // Récupérer le nom du client depuis les créances
-                    const firstCreance = filteredCreances.find(c => c.id === selectedIds[0]);
-                    const clientName = firstCreance?.client_name || t('common:passerby_client');
-                    
-                    console.log('=== BULK PAYMENT RESPONSE ===');
-                    console.log('Total dettes:', data.total_dettes);
-                    console.log('Montant réglé:', data.total_amount);
-                    console.log('Reste à payer global:', data.reste_a_payer);
-                    console.log('=== PAIEMENTS DÉTAIL ===');
-                    data.paiements?.forEach((p, i: number) => {
-                        console.log(`  ${i+1}. Facture ${p.numero_facture}:`, {
-                            montant_paye: p.montant_paye,
-                            reste_avant: p.reste_avant,
-                            reste_apres: p.reste_apres,
-                            est_soldee: p.est_soldee,
-                            type_est_soldee: typeof p.est_soldee
-                        });
-                    });
-                    
-                    const ticketDoc = generateTicketReglementPdfDraft({
-                        reference: data.releve_reference || `REL-${releveId}`,
-                        date: new Date().toISOString(),
-                        client_name: clientName,
-                        mode_paiement: modePaiement,
-                        total_dettes: data.total_dettes || data.total_amount,
-                        montant_regle: data.total_amount,
-                        reste_a_payer: data.reste_a_payer || '0.00',
-                        paiements: data.paiements,
-                        settings: pharmacySettings
-                    });
-                    
-                    ticketDoc.save(`ticket_reglement_${data.releve_reference || releveId}.pdf`);
-                } catch (ticketErr) {
-                    logger.error('Erreur génération ticket:', ticketErr);
-                    const errMsg = ticketErr instanceof Error
-                        ? `${ticketErr.name}: ${ticketErr.message}`
-                        : String(ticketErr);
-                    gooeyToast.error(t('creances:toasts.ticket_generation_error', { error: errMsg }));
-                }
-            }
-
+            // Ticket de règlement généré côté frontend (impression iframe)
             if (releveId && (await confirm({ title: t('common:confirmation'), message: t('creances:toasts.confirm_print_bulk_receipt'), confirmText: t('common:confirm'), variant: 'warning' }))) {
-                await handlePrintBulkReceipt(releveId);
+                const firstCreance = filteredCreances.find(c => c.id === selectedIds[0]);
+                const clientName = firstCreance?.client_name || t('common:passerby_client');
+                handlePrintBulkReceipt(data, clientName, modePaiement);
             }
         } catch (err: unknown) {
             const error = err as { response?: { data?: { detail?: string } } };
