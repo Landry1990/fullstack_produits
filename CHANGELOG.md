@@ -2,6 +2,80 @@
 
 ---
 
+## 2026-09-26 — 🧾 Ticket de règlement regénéré côté frontend
+
+Le récapitulatif de règlement groupé de créances était un PDF ReportLab généré
+backend (`GET /api/creances/imprimer_releve_paiement/`), peu lisible et doublé
+par un draft jsPDF A4 téléchargé automatiquement. Remplacé par une impression
+HTML frontend via iframe (pas de popup, pas de téléchargement parasite).
+
+**Nouveau flux** : après `bulk_paiement`, la confirmation « imprimer ? » ouvre
+directement le dialogue d'impression sur un document A4 propre :
+- En-tête pharmacie (logo N&B, nom, adresse, tel, NIU/RC) + titre encadré
+  « TICKET DE RÈGLEMENT » + référence.
+- Bloc client (nom, NIU/RC) + mode de paiement + date.
+- Tableau factures : N° / Facture / Total / Réglé / Statut avec badges
+  « SOLDÉE » (vert) ou « X reste » (ambre).
+- Encadré récapitulatif : total dettes, montant réglé, reste à payer
+  (vert si 0, orange sinon) + message soldé/restant.
+- i18n `reglement.*` (fr/en déjà existants) + langue document
+  (`getDocumentLanguage`) + formatage `formatMoney` par locale.
+
+Fichiers :
+- `frontend/.../utils/print/relevePaiementPrintHtml.ts` — nouveau template HTML
+  (même pattern que `buildReceptionPrintHtml`).
+- `frontend/.../utils/print/printHelpers.ts` — `printHtmlInIframe(html, onError)`
+  générique (le document gère son `window.print()` via script inline après
+  `document.fonts.ready`).
+- `frontend/.../hooks/useCreanceActions.ts` — `handlePrintBulkReceipt` prend les
+  données de la réponse `bulk_paiement` (tout y est déjà : paiements, totaux,
+  référence) → build + iframe ; suppression du `ticketDoc.save()` jsPDF, des
+  `console.log` de debug et de l'ouverture `window.open` du blob backend.
+- `frontend/.../services/creanceService.ts` — `imprimerRelevePaiement` supprimé.
+- `frontend/.../utils/print/ticketReglementPdfDraft.ts` — supprimé (plus utilisé).
+- `backend/api/views/ventes/creances.py` — action `imprimer_releve_paiement`
+  supprimée (ReportLab). `imprimer_recu` (reçu par créance) reste backend pour
+  l'instant.
+
+Vérifié : `tsc --noEmit` ✅, `eslint` ✅, `npm run build` ✅, `py_compile` +
+`manage.py check` dans le conteneur ✅.
+
+---
+
+## 2026-09-26 — 🐛 Fix 500 sur le règlement groupé des créances
+
+`POST /api/creances/bulk_paiement/` plantait en 500 :
+`FieldError: Cannot resolve keyword 'created_at'` — `Facture` n'a pas de champ
+`created_at` (c'est `date`). Le tri chronologique utilisé pour répartir le
+paiement sur les factures les plus anciennes utilisait le mauvais champ.
+
+- `backend/api/views/ventes/creances.py` — `order_by('created_at')` →
+  `order_by('date')` dans `bulk_paiement`.
+
+Vérifié : `py_compile` OK, `manage.py check` OK, backend redémarré.
+
+---
+
+## 2026-09-26 — 🔍 Nettoyage données test : FAC-000002 sortie des créances
+
+La facture FAC-000002 (24/05, payée 4 125 F espèces) apparaissait soudainement
+en créances : 3 lignes `5 FLUCEL 500MG INJ B/5` (2×100 + 5×200 + 1×50 =
+1 250 F) avaient été insérées directement en base le 24/09 à 20:44 — sans
+mouvement de stock, sans allocation de lot, sans audit → insertion manuelle
+(`manage.py shell` / script de test), impossible via l'app (`modify_sale`
+refuse les factures payées d'un jour antérieur).
+
+- Suppression des lignes `FactureProduit` 66654/66655/66656 et restauration
+  `total_ttc`/`total_ht` = 4 125 → reste à payer 0, sortie des créances.
+- Vérification globale : aucune autre facture active avec écart
+  `total_ttc ≠ Σ lignes` (> 1 F).
+
+⚠️ À retenir : ne jamais insérer de lignes de facture via le shell sur des
+données réelles — passer par les endpoints (qui créent allocations, mouvements
+de stock et audit).
+
+---
+
 ## 2026-09-26 — 📊 Taux de TVA par défaut créés à l'installation
 
 `entrypoint.sh` (section 6c, même pattern `get_or_create` que les caisses et
