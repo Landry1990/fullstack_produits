@@ -448,6 +448,7 @@ docker exec fullstack_produits-db-1 psql -U fullstack_user -d fullstack_db -c "S
 | Import bloqué à 50% | CIP `NaN` / `.0` / `cip3` mal géré | Vérifier `clean_cip()` et `get_value()` dans `import_excel_csv.py` |
 | `duplicate key value violates unique constraint "api_produit_cip1_key"` | CIP vide devenu `"nan"` ou `''` | S'assurer que `clean_cip()` renvoie `None` pour les CIP vides |
 | Build frontend échoue sur `The symbol "..." has already been declared` | Doublon de `useState` après copier-coller | Renommer l'un des deux états |
+| `git add` échoue : `error: unable to index file '.../nul'` / `fatal: adding files failed` | Fichier `nul` créé par une redirection `> nul 2>&1` sous Git Bash (nom réservé Windows) | Supprimer via `Remove-Item -LiteralPath '\\?\C:\...\nul'` (PowerShell) ; utiliser `2>/dev/null` sous bash, jamais `> nul` |
 
 ---
 
