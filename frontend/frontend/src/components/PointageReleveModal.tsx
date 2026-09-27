@@ -194,7 +194,7 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
                   <label className="block text-caption font-bold uppercase text-base-content/40 mb-1">{t('providers:pointage_modal.month_label')}</label>
                   <select className="w-full md:w-32 h-10 rounded-xl border border-base-300 bg-base-100 px-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20" value={month} onChange={e => setMonth(Number(e.target.value))} disabled={periodeType === 'CUSTOM'}>
                     {Array.from({length: 12}, (_, i) => i + 1).map(m => (
-                      <option key={m} value={m}>{new Date(0, m - 1).toLocaleString(getLocale(), { month: 'long' })}</option>
+                      <option key={m} value={m}>{new Date(0, m - 1).toLocaleString(getLocale(), { month: 'short' })}</option>
                     ))}
                   </select>
                 </div>
