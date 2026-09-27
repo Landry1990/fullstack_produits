@@ -26,7 +26,7 @@ interface DashboardStats {
 
 export const generateInventorySummaryText = (inventory: Inventory, pharmacyName: string): string => {
   const t = i18n.t;
-  const date = new Date().toLocaleDateString(getLocale(), { day: 'numeric', month: 'long', year: 'numeric' });
+  const date = new Date().toLocaleDateString(getLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' });
 
   let text = `📦 *${t('messaging:whatsapp_report.inventory_title', { name: pharmacyName.toUpperCase() })}*\n`;
   text += `📅 ${date}\n`;
@@ -53,7 +53,7 @@ export const generateInventorySummaryText = (inventory: Inventory, pharmacyName:
 
 const _generateDashboardFlashText = (stats: DashboardStats, pharmacyName: string): string => {
   const t = i18n.t;
-  const date = new Date().toLocaleDateString(getLocale(), { day: 'numeric', month: 'long', year: 'numeric' });
+  const date = new Date().toLocaleDateString(getLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' });
 
   let text = `📊 *${t('messaging:whatsapp_report.flash_title', { name: pharmacyName.toUpperCase() })}*\n`;
   text += `📅 ${date}\n\n`;

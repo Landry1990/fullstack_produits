@@ -30,7 +30,9 @@ import {
   PlayCircle,
   StopCircle,
   List,
-  CalendarDays
+  CalendarDays,
+  ChevronDown,
+  Download
 } from 'lucide-react'
 
 interface DetailsPaiement {
@@ -155,6 +157,12 @@ export default function HistoriqueClotures() {
   const [metricMonth, setMetricMonth] = useState<string>(() => { const now = new Date(); return String(now.getMonth() + 1).padStart(2, '0') })
   const [metricYear, setMetricYear] = useState<string>(() => { const now = new Date(); return String(now.getFullYear()) })
   const [showMetric, setShowMetric] = useState(false)
+
+  // Sections repliables (persistées pour les écrans 14")
+  const [showPerfSection, setShowPerfSection] = useState(() => localStorage.getItem('hist_clotures_show_perf') !== '0')
+  const [showTotalsSection, setShowTotalsSection] = useState(() => localStorage.getItem('hist_clotures_show_totals') !== '0')
+  const togglePerfSection = () => setShowPerfSection(v => { localStorage.setItem('hist_clotures_show_perf', v ? '0' : '1'); return !v })
+  const toggleTotalsSection = () => setShowTotalsSection(v => { localStorage.setItem('hist_clotures_show_totals', v ? '0' : '1'); return !v })
 
 
   // Récupérer les données initiales (utilisateurs, réglages, postes, permissions)
@@ -325,12 +333,54 @@ export default function HistoriqueClotures() {
   }, [clotures])
 
   const formatDay = (dateString: string) => {
-    return new Date(dateString + 'T00:00:00').toLocaleDateString(currentLocale, {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
+    return new Date(dateString + 'T00:00:00').toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
       year: 'numeric'
     })
+  }
+
+  const exportExcel = async () => {
+    if (clotures.length === 0) return
+    try {
+      const XLSX = await import('xlsx')
+      const wb = XLSX.utils.book_new()
+      let filename: string
+      let ws
+
+      if (viewMode === 'daily') {
+        const rows = dailyData.map(d => ({
+          [t('daily.header_date')]: d.date,
+          [t('daily.header_count')]: d.count,
+          [t('daily.header_theoretical')]: d.montant_theorique,
+          [t('daily.header_real')]: d.montant_reel,
+          [t('daily.header_gap')]: d.ecart_caisse,
+          [t('daily.header_sales')]: d.total_ventes,
+          [t('daily.header_entries')]: d.total_entrees,
+          [t('daily.header_exits')]: d.total_sorties,
+        }))
+        ws = XLSX.utils.json_to_sheet(rows)
+        filename = `clotures_journalier_${new Date().toISOString().split('T')[0]}.xlsx`
+      } else {
+        const rows = clotures.map(c => ({
+          [t('table.header_date')]: (c.date || '').split('T')[0],
+          [t('table.header_post')]: c.poste_caisse_nom || '',
+          [t('table.header_cashier')]: c.user_name || '',
+          [t('table.header_done_by')]: c.cloture_par_name || '',
+          [t('table.header_theoretical')]: normalizeNumberInput(c.montant_theorique),
+          [t('table.header_real')]: normalizeNumberInput(c.montant_reel),
+          [t('table.header_gap')]: normalizeNumberInput(c.ecart_caisse),
+        }))
+        ws = XLSX.utils.json_to_sheet(rows)
+        filename = `clotures_${new Date().toISOString().split('T')[0]}.xlsx`
+      }
+
+      XLSX.utils.book_append_sheet(wb, ws, 'Clotures')
+      XLSX.writeFile(wb, filename)
+    } catch (err) {
+      logger.error('Erreur export Excel:', err)
+      gooeyToast.error(t('table.export_error', { defaultValue: 'Erreur lors de l\'export Excel' }))
+    }
   }
 
   const handlePrint = (cloture: ClotureCaisse) => {
@@ -532,15 +582,14 @@ export default function HistoriqueClotures() {
                   ✕ {t('filters.reset_btn')}
                 </Button>
               )}
-{/* 
-              <Button 
+<Button
                 onClick={exportExcel}
                 variant="outline" size="sm" className="gap-2 text-emerald-600"
                 disabled={loading || clotures.length === 0}
               >
                 <Download className="size-4" />
                 Excel
-              </Button> */}
+              </Button>
             </div>
           </div>
         </div>
@@ -700,14 +749,60 @@ export default function HistoriqueClotures() {
         /* ========== ONGLET CLÔTURES (existant) ========== */
         <>
 
-      {/* Best Cashier Ranking Section */}
+      {/* Barre compacte commune pour les sections repliées */}
+      {(!showPerfSection || (globalTotals && !showTotalsSection)) && (
+        <div className="px-3 sm:px-6 pt-4 shrink-0">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-wrap items-stretch divide-x divide-slate-200">
+            {!showPerfSection && (
+              <button
+                type="button"
+                onClick={togglePerfSection}
+                className="px-4 py-2.5 flex items-center gap-2 font-black text-xs uppercase tracking-widest text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+                {t('performance.title')}
+                <ChevronDown className="size-4" />
+              </button>
+            )}
+            {globalTotals && !showTotalsSection && (
+              <button
+                type="button"
+                onClick={toggleTotalsSection}
+                className="flex-1 min-w-0 px-4 py-2.5 flex items-center gap-x-4 gap-y-1 flex-wrap text-xs text-slate-500 hover:bg-slate-50 transition-colors"
+              >
+                <span className="font-black uppercase tracking-widest flex items-center gap-1.5 shrink-0">
+                  <Banknote className="size-4 text-emerald-600" />
+                  {t('stats.section_title')}
+                  <ChevronDown className="size-4" />
+                </span>
+                <span className="truncate">
+                  {t('stats.theoretical_total')} <b className="text-slate-700">{formatMoney(globalTotals.montant_theorique)}</b>
+                  {' · '}{t('stats.real_total')} <b className="text-emerald-600">{formatMoney(globalTotals.montant_reel)}</b>
+                  {' · '}{t('stats.global_gap')} <b className={cn(normalizeNumberInput(globalTotals.ecart_caisse) < 0 ? 'text-red-600' : normalizeNumberInput(globalTotals.ecart_caisse) > 0 ? 'text-emerald-600' : 'text-slate-400')}>
+                    {normalizeNumberInput(globalTotals.ecart_caisse) > 0 ? '+' : ''}{formatMoney(globalTotals.ecart_caisse)}
+                  </b>
+                </span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Best Cashier Ranking Section — visible uniquement dépliée */}
+      {showPerfSection && (
       <div className="px-3 sm:px-6 pt-4 sm:pt-6">
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="p-4 border-b border-slate-200 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center bg-white">
-            <h2 className="font-black text-sm uppercase tracking-widest text-slate-500 flex items-center gap-2">
+          <div className={cn("p-4 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center bg-white", showPerfSection && "border-b border-slate-200")}>
+            <button
+              type="button"
+              onClick={togglePerfSection}
+              className="font-black text-sm uppercase tracking-widest text-slate-500 flex items-center gap-2 hover:text-slate-700 transition-colors"
+            >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
               {t('performance.title')}
-            </h2>
+              <ChevronDown className={cn("size-4 transition-transform", showPerfSection && "rotate-180")} />
+            </button>
+            {showPerfSection && (
             <div className="flex flex-wrap gap-2 items-center justify-end w-full sm:w-auto">
               <select
                 aria-label={t('performance.month_label', { defaultValue: 'Mois' })}
@@ -760,18 +855,33 @@ export default function HistoriqueClotures() {
                 {showMetric ? t('performance.hide') : t('performance.show')}
               </Button>
             </div>
+            )}
           </div>
-          {showMetric && (
+          {showPerfSection && showMetric && (
             <div className="p-3 bg-slate-50/50">
               <BestCashierMetric month={metricMonth} year={metricYear} userId={selectedUser || undefined} />
             </div>
           )}
         </div>
       </div>
+      )}
 
-      {/* Global Stats Cards */}
-      {globalTotals && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6 shrink-0">
+      {/* Global Stats Cards — visible uniquement dépliée */}
+      {globalTotals && showTotalsSection && (
+        <div className="px-3 sm:px-6 pt-4 shrink-0">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <button
+              type="button"
+              onClick={toggleTotalsSection}
+              className="w-full px-4 py-3 flex items-center justify-between gap-4 bg-white hover:bg-slate-50 transition-colors"
+            >
+              <h2 className="font-black text-sm uppercase tracking-widest text-slate-500 flex items-center gap-2 shrink-0">
+                <Banknote className="size-4 text-emerald-600" />
+                {t('stats.section_title')}
+                <ChevronDown className="size-4 rotate-180 transition-transform" />
+              </h2>
+            </button>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border-t border-slate-100">
           <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex flex-col justify-center">
              <div className="flex justify-between items-start">
                <div>
@@ -808,6 +918,8 @@ export default function HistoriqueClotures() {
                  <XCircle className="size-6" />
                </div>
              </div>
+          </div>
+            </div>
           </div>
         </div>
       )}

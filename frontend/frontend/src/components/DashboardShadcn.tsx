@@ -237,7 +237,7 @@ export default function DashboardShadcn() {
               <div className="flex items-center gap-2 mt-0.5 text-sm text-slate-500">
                 <Calendar className="size-3.5" />
                 <span className="hidden sm:inline">
-                  {licence?.pharmacien_nom || getServerDate().toLocaleDateString(currentLocale, { weekday: 'long', day: 'numeric', month: 'long' })}
+                  {licence?.pharmacien_nom || getServerDate().toLocaleDateString(currentLocale, { day: '2-digit', month: '2-digit', year: 'numeric' })}
                 </span>
               </div>
             </div>

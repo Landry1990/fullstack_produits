@@ -2,6 +2,64 @@
 
 ---
 
+## 2026-09-27 — 📅 Normalisation des dates longues → courtes
+
+Les formats longs (`samedi 26 septembre 2026`, `mois long`) ont été remplacés
+par des formats courts `dd/MM/yyyy` (ou `mm/yyyy`) dans les endroits où ils
+prennent de la place en UI :
+
+- `utils/dateUtils.ts` — `formatDateLong` devient numérique court
+  (`dd/MM/yyyy`). Impacte `GestionDivers` et `PointageReleveModal`.
+- `DashboardShadcn.tsx` — date du header en haut à droite.
+- `CouponDetailsModal.tsx` — dates de création/utilisation du coupon.
+- `PointageReleveModal.tsx` — noms des mois dans le sélecteur.
+- `CommandeProductExpandedRow.tsx` — dates d'achats dans l'expansion.
+- `lib/planningHelpers.ts` — libellés de mois en planning (`mm/yyyy`).
+- `utils/whatsapp.ts` — dates dans les messages WhatsApp.
+
+Vérifié : `tsc --noEmit` ✅, `eslint` ✅.
+
+---
+
+## 2026-09-27 — 📐 Historique clôtures : sections repliables (écrans 14")
+
+Sur écran 14", l'en-tête + la carte « Performance caissier » + les 3 cartes de
+totaux laissaient très peu de hauteur au tableau des clôtures. Les deux
+sections sont désormais repliables via un chevron, et **fusionnent en une
+seule barre compacte d'une ligne** quand repliées :
+
+- **« Performance caissier »** : repliée, un simple bouton-titre — sélecteurs
+  mois/année et métrique masqués.
+- **« Totaux de la période »** : repliée, la même barre affiche les 3 valeurs
+  en ligne (théorique / réel / écart avec couleurs) — l'info reste visible
+  sans consommer la hauteur de 3 cartes.
+
+États persistés dans `localStorage` (`hist_clotures_show_perf`,
+`hist_clotures_show_totals`) — le choix survit au rechargement, pratique pour
+les machines 14" qui garderont les sections repliées.
+
+Autres ajustements sur `HistoriqueClotures.tsx` :
+- Format des dates dans le tableau **Par jour** passé de `samedi 26 septembre
+  2026` à `26/09/2026` (plus compact/pro).
+- Bouton **Export Excel** réactivé : exporte soit le détail des clôtures en
+  cours, soit le récapitulatif journalier selon l'onglet actif, via `xlsx`
+  (import dynamique).
+- `BestCashierMetric` refondu en **bandeau horizontal unique** : chaque
+  caissier tient sur une seule ligne de gauche à droite (badge rang,
+  initiale, nom, nombre de clôtures, écart moyen, tendance). Le bandeau
+  défile horizontalement s'il y a trop de caissiers — plus de double
+  section verticale. Le 1er reste mis en valeur sur fond vert.
+
+Fichiers :
+- `frontend/.../components/HistoriqueClotures.tsx` — états + toggles +
+  restructuration des deux sections (icône `ChevronDown` rotative).
+- `public/locales/{fr,en}/cash_closings.json` — nouvelle clé
+  `stats.section_title`.
+
+Vérifié : `tsc --noEmit` ✅, `eslint` ✅.
+
+---
+
 ## 2026-09-26 — 🧾 Ticket de règlement regénéré côté frontend
 
 Le récapitulatif de règlement groupé de créances était un PDF ReportLab généré

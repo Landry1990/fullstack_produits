@@ -160,7 +160,8 @@ export function formatDateTime(date: string | Date | null | undefined, locale?: 
 }
 
 /**
- * Formate une date en format long locale
+ * Formate une date en format court (numérique)
+ * NOTE : anciennement format long, normalisé en court pour gagner de la place en UI.
  */
 export function formatDateLong(date: string | Date | null | undefined): string {
     if (!date) return '-';
@@ -168,9 +169,8 @@ export function formatDateLong(date: string | Date | null | undefined): string {
         const d = typeof date === 'string' ? new Date(date) : date;
         if (isNaN(d.getTime())) return '-';
         return d.toLocaleDateString(getLocale(), {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
+            day: '2-digit',
+            month: '2-digit',
             year: 'numeric'
         });
     } catch {
