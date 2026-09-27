@@ -2,6 +2,93 @@
 
 ---
 
+## 2026-09-27 — 🗑️ Journal d’audit : purge depuis l’écran (superuser)
+
+Ajout d’un bouton « Purger » dans le Journal d’audit (visible uniquement pour les
+superusers) avec une modale de confirmation.
+
+- `components/JournalAudit.tsx` :
+  - bouton « Purger » visible si `user?.is_superuser`
+  - modale shadcn avec sélection de la période (`Du` / `Au`), aperçu du nombre
+    d’entrées concernées, et confirmation par mot de passe superuser
+  - appel à `POST /api/maintenance/purge/` avec `tables: ['audit_logs']`
+- Traductions `purge.*` ajoutées en `fr` et `en`.
+
+Vérifié : `tsc --noEmit` ✅, `eslint` ✅.
+
+---
+
+## 2026-09-27 — 📋 Journal d’audit : détails techniques en ligne / paragraphe
+
+Les détails techniques d’un log d’audit étaient affichés en bloc `<pre>` avec
+`JSON.stringify` indenté, ce qui créait des blocs très hauts (listes verticales
+de IDs).
+
+- `components/JournalAudit.tsx` : remplacement du `<pre>` par un composant
+  `CompactDetails` qui rend les clés/valeurs sur une seule ligne de badges
+  horizontaux/ré-enroulés.
+- Les tableaux (ex : `produit_ids`) apparaissent maintenant sous la forme :
+  `produit_ids: 43 (15926, 18927, … +38)` avec défilement horizontal si
+  nécessaire.
+- Les objets imbriqués restent en JSON compact, les valeurs simples en badge.
+
+Vérifié : `tsc --noEmit` ✅, `eslint` ✅.
+
+---
+
+## 2026-09-27 — 🔒 Audit : logs métier sur les actions protégées par Sudo
+
+Certains endpoints protégés par Sudo n’enregistraient pas l’action métier réelle
+après validation. Ajout de logs d’audit sur les endpoints précédemment silencieux,
+et propagation du `validation_user` via `request._validation_user` pour que les
+vues puissent tracer l’action avec le bon utilisateur.
+
+- `api/sudo_utils.py` : expose `request._validation_user` après une validation
+  Sudo réussie.
+- `api/views/ventes/creances.py` :
+  - log du paiement individuel d’une créance (`ajouter_paiement`)
+  - log du règlement groupé de créances (`bulk_paiement`)
+- `api/views/ventes/caisse.py` : log de chaque encaissement créé (`perform_create`)
+- `api/views/ventes/client_credit.py` :
+  - correction du `create` de `AvoirClientViewSet` : le code Sudo était mort
+    (écrit après `return queryset` dans `get_queryset`) ; la création d’avoir
+    client exige maintenant `can_create_client_credit` et est loguée.
+  - log de validation d’un avoir client (`valider`)
+- `api/views/challenges.py` : logs CREATE / UPDATE / DELETE sur les challenges
+  (sudo requis)
+
+Vérifié : `py_compile` ✅, `manage.py check` ✅.
+
+---
+
+## 2026-09-27 — ↕️ Densité des tableaux : gain de hauteur (Commandes + pages principales)
+
+Plusieurs tableaux affichaient des zones vides sous les lignes ou des lignes
+peu denses, notamment sur écrans 14 pouces. Passage en revue des pages
+principales pour récupérer de la hauteur.
+
+- `CommandeList.tsx` : suppression de `max-h-[60vh]` pour que le tableau
+  remplisse la hauteur disponible ; marges verticales resserrées.
+- `shadcn/table.tsx` : hauteur de ligne par défaut réduite (`p-4 → py-2 px-4`,
+  `TableHead h-10 → h-9`) → impacte **tous** les tableaux utilisant les
+  composants shadcn (Clients, Fournisseurs, Produits, Créances, Avoirs, ...).
+- Suppression de contraintes `max-h` inutiles sur les pages principales :
+  - `divers/GestionDivers.tsx` (3 tableaux)
+  - `inventaire/editor/InventaireAnalysisTab.tsx`
+  - `products/ProductTabsContent.tsx`
+  - `caisse/JournalCaisseTable.tsx` (vue mobile)
+- `caisse/JournalCaisseTable.tsx` : l'état vide occupe maintenant toute la hauteur
+  du tableau (`h-full`) au lieu de flotter en haut avec un grand vide ; footer
+  et lignes mobile resserrés.
+- `HistoriqueVentes.tsx` : suppression de la sous-ligne de date doublon
+  (le `formatDateLong` est maintenant court).
+- `sales/SalesTable.tsx` : vérifié — pas de limite de hauteur inutile, il suit
+  déjà le parent flex.
+
+Vérifié : `tsc --noEmit` ✅, `eslint` ✅.
+
+---
+
 ## 2026-09-27 — 📅 Normalisation des dates longues → courtes
 
 Les formats longs (`samedi 26 septembre 2026`, `mois long`) ont été remplacés

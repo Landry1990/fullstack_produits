@@ -18,7 +18,8 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 
-from ...models import Caisse, Facture, FactureProduit, InvoiceSettings, RelevePaiement
+from ...audit_helpers import log_audit
+from ...models import AuditLog, Caisse, Facture, FactureProduit, InvoiceSettings, RelevePaiement
 from ...pagination import StandardResultsSetPagination
 from ...security_utils import build_safe_content_disposition
 from ...serializers import CreanceSerializer
@@ -550,6 +551,26 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
                     'hint': 'Rechargez la facture et réessayez'
                 }, status=status.HTTP_409_CONFLICT)
             
+            # Succès - tracer l'action métier
+            try:
+                log_audit(
+                    user=getattr(request, '_validation_user', None) or request.user,
+                    action=AuditLog.Action.UPDATE,
+                    model_name='Facture',
+                    object_id=facture.id,
+                    description=f"Paiement créance {facture.numero_facture or facture.id} - {montant} F",
+                    details={
+                        'facture_id': facture.id,
+                        'numero_facture': facture.numero_facture,
+                        'montant': float(montant),
+                        'mode_paiement': mode_paiement,
+                        'paiement_id': getattr(facture, '_paiement_id', None),
+                    },
+                    request=request
+                )
+            except Exception:
+                logger.exception("[CREANCE] Erreur lors du log d'audit du paiement")
+
             # Succès - retourner les données
             facture.refresh_from_db()
             serializer = self.get_serializer(facture)
@@ -756,6 +777,30 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         releve.save()
         
         reste_a_payer_global = total_dettes - total_paid_bulk
+
+        # Log métier du règlement groupé
+        try:
+            log_audit(
+                user=getattr(request, '_validation_user', None) or request.user,
+                action=AuditLog.Action.OTHER,
+                model_name='RelevePaiement',
+                object_id=releve.id,
+                description=f"Règlement groupé créances - {count_processed} factures - {total_paid_bulk} F",
+                details={
+                    'releve_id': releve.id,
+                    'releve_reference': releve.reference,
+                    'client_id': client.id,
+                    'nb_factures': count_processed,
+                    'total_dettes': float(total_dettes),
+                    'total_paye': float(total_paid_bulk),
+                    'reste_a_payer': float(reste_a_payer_global),
+                    'facture_ids': facture_ids,
+                    'mode_paiement': mode_paiement,
+                },
+                request=request
+            )
+        except Exception:
+            logger.exception("[CREANCE] Erreur lors du log d'audit du règlement groupé")
 
         return Response({
             'detail': f'Règlement effectué. {count_processed} factures traitées.',

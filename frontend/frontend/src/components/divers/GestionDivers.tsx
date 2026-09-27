@@ -589,7 +589,7 @@ const GestionDivers: React.FC<{ defaultTab?: DiversTab }> = ({ defaultTab = 'ca'
                     {t('divers.vat_breakdown')}
                   </h3>
                 </div>
-                <div className="overflow-auto max-h-[55vh]">
+                <div className="overflow-auto">
                   <Table className="[&_td]:py-2 [&_th]:h-9 [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:bg-slate-50 [&_thead_th]:z-10">
                     <TableHeader>
                       <TableRow>
@@ -620,7 +620,7 @@ const GestionDivers: React.FC<{ defaultTab?: DiversTab }> = ({ defaultTab = 'ca'
                     {t('divers.section_breakdown')}
                   </h3>
                 </div>
-                <div className="overflow-auto max-h-[55vh]">
+                <div className="overflow-auto">
                   <Table className="[&_td]:py-2 [&_th]:h-9 [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:bg-slate-50 [&_thead_th]:z-10">
                     <TableHeader>
                       <TableRow>
@@ -684,7 +684,7 @@ const GestionDivers: React.FC<{ defaultTab?: DiversTab }> = ({ defaultTab = 'ca'
                       {t('divers.export_excel')}
                     </Button>
                   </div>
-                  <div className="overflow-auto max-h-[55vh]">
+                  <div className="overflow-auto">
                     <Table className="[&_td]:py-2 [&_th]:h-9 [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:bg-slate-50 [&_thead_th]:z-10">
                       <TableHeader>
                         <TableRow>

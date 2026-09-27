@@ -15,5 +15,25 @@
   "dates": { "today": "Aujourd'hui", "yesterday": "Hier" },
   "view": { "flux": "Flux d'audit", "items": "éléments", "loading": "Chargement des logs…", "empty_title": "Aucun log trouvé", "empty_subtitle": "Essayez de modifier vos filtres de recherche", "sudo_badge": "SUDO", "system_user": "Système", "action_count_one": "{{count}} action", "action_count_other": "{{count}} actions", "page": "Page {{page}} / {{total}}", "technical_data": "Données techniques · ID #{{id}}" },
   "view_technical_details": "Voir les détails techniques",
-  "messages": { "load_error": "Impossible de charger le journal d'audit.", "export_error": "Impossible d'exporter le journal d'audit." }
+  "messages": { "load_error": "Impossible de charger le journal d'audit.", "export_error": "Impossible d'exporter le journal d'audit." },
+  "purge": {
+    "button": "Purger",
+    "title": "Purger les logs d'audit",
+    "description": "Supprime les entrées du journal d'audit comprises dans la période sélectionnée. Cette action est irréversible.",
+    "date_from": "Du",
+    "date_to": "Au",
+    "preview": "Prévisualiser",
+    "preview_count_one": "{{count}} entrée sera supprimée.",
+    "preview_count_other": "{{count}} entrées seront supprimées.",
+    "password_label": "Mot de passe admin",
+    "password_placeholder": "Mot de passe superutilisateur",
+    "password_required": "Le mot de passe est requis.",
+    "cancel": "Annuler",
+    "confirm": "Purger",
+    "success_one": "{{count}} entrée supprimée.",
+    "success_other": "{{count}} entrées supprimées.",
+    "error": "Échec de la purge des logs.",
+    "result_count_one": "{{count}} entrée supprimée.",
+    "result_count_other": "{{count}} entrées supprimées."
+  }
 }

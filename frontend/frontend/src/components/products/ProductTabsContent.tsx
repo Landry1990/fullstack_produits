@@ -450,7 +450,7 @@ const MovementsTabContent = ({ stockHistory, loadingHistory, onMovementClick, pr
                     {t('products:detail.movements.export_excel')}
                 </Button>
             </div>
-            <div className="max-h-[60vh] overflow-y-auto custom-scrollbar">
+            <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
             <Table>
                 <TableHeader className="sticky top-0 z-10">
                     <TableRow>
