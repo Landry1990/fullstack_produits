@@ -174,7 +174,7 @@ export default function CommandeList({
 
 
   return (
-    <div className="flex flex-col h-full p-4 space-y-4">
+    <div className="flex flex-col h-full p-4 space-y-3">
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-4 shrink-0">
         <div className="flex items-center gap-2">
@@ -340,7 +340,7 @@ export default function CommandeList({
         </div>
 
       {/* Table Section */}
-      <div className="flex-1 min-h-0 overflow-auto bg-white rounded-xl shadow-sm border border-slate-200 max-h-[60vh]">
+      <div className="flex-1 min-h-0 overflow-auto bg-white rounded-xl shadow-sm border border-slate-200">
         <Table className="table-fixed min-w-[1020px] text-sm">
           <TableHeader>
             <TableRow className="bg-slate-50 text-slate-500 border-b border-slate-200 hover:bg-slate-50">
@@ -628,7 +628,7 @@ export default function CommandeList({
 
 
       {/* Pagination Footer */}
-      <div className="flex flex-col px-4 py-3 bg-white rounded-lg border border-slate-200 shadow-sm shrink-0 gap-2">
+      <div className="flex flex-col px-4 py-2 bg-white rounded-lg border border-slate-200 shadow-sm shrink-0 gap-1.5">
         {/* Ligne 1 : Info + Pagination */}
         <div className="flex items-center justify-between">
           <div className="text-xs font-medium text-slate-400">
@@ -666,7 +666,7 @@ export default function CommandeList({
           const totalTva = selected.reduce((sum, c) => sum + Number(c.total_tva || 0), 0);
           const totalTtc = selected.reduce((sum, c) => sum + Number(c.total_ttc || c.total), 0);
           return (
-            <div className="flex flex-wrap items-center justify-end gap-4 text-sm border-t border-slate-100 pt-2">
+            <div className="flex flex-wrap items-center justify-end gap-4 text-sm border-t border-slate-100 pt-1.5">
               <span className="font-semibold text-slate-500">{t('orders:list.selected_count', { count: selectedOrderIds.size })}</span>
               <span className="text-slate-400">{t('orders:list.table.ht')} <span className="font-semibold text-slate-700">{formatCurrency(Number(totalHt.toFixed(2)))}</span></span>
               <span className="text-slate-400">{t('orders:list.table.tva')} <span className="font-semibold text-slate-700">{formatCurrency(Number(totalTva.toFixed(2)))}</span></span>

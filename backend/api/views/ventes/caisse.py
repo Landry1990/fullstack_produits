@@ -10,9 +10,10 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from ...audit_helpers import log_audit
 from ...centralized_configs import BaseViewSetConfig
 from ...idempotency import idempotent_action
-from ...models import Caisse, ClotureCaisse
+from ...models import AuditLog, Caisse, ClotureCaisse
 from ...serializers import (
     CaisseSerializer,
     ClotureCaisseSerializer,
@@ -183,6 +184,28 @@ class CaisseViewSet(CaisseReportingMixin, CaisseClotureMixin, BaseViewSetConfig,
         if instance.facture:
             from ...services.payment_service import PaymentService
             PaymentService.process_payment(instance, is_created=True)
+
+        # Log métier de l'encaissement (requiert sudo)
+        try:
+            validation_user = getattr(self.request, '_validation_user', None) or self.request.user
+            log_audit(
+                user=validation_user,
+                action=AuditLog.Action.OTHER,
+                model_name='Caisse',
+                object_id=instance.id,
+                description=f"Encaissement créé - {instance.montant} F ({instance.mode_paiement})",
+                details={
+                    'caisse_id': instance.id,
+                    'montant': float(instance.montant),
+                    'mode_paiement': instance.mode_paiement,
+                    'facture_id': instance.facture_id,
+                    'poste_caisse_id': instance.poste_caisse_id,
+                    'operator': self.request.user.username,
+                },
+                request=self.request
+            )
+        except Exception:
+            logger.exception("[CAISSE] Erreur lors du log d'audit de l'encaissement")
 
 
 class ClotureCaisseViewSet(BaseViewSetConfig, viewsets.ReadOnlyModelViewSet):

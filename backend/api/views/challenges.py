@@ -1,3 +1,5 @@
+import logging
+
 from rest_framework import status, viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -12,9 +14,12 @@ from datetime import timedelta
 from decimal import Decimal
 from collections import defaultdict
 
-from ..models import Challenge, ChallengeEquipe, ChallengePointTier, Facture, FactureProduit, FactureProduitAllocation, StockLot
+from ..audit_helpers import log_audit
+from ..models import AuditLog, Challenge, ChallengeEquipe, ChallengePointTier, Facture, FactureProduit, FactureProduitAllocation, StockLot
 from ..serializers.challenges import ChallengeSerializer
 from ..pagination import StandardResultsSetPagination
+
+logger = logging.getLogger(__name__)
 
 
 class ChallengeViewSet(viewsets.ModelViewSet):
@@ -50,6 +55,21 @@ class ChallengeViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
+
+        # Log métier (sudo requis pour créer un challenge)
+        try:
+            log_audit(
+                user=getattr(request, '_validation_user', None) or request.user,
+                action=AuditLog.Action.CREATE,
+                model_name='Challenge',
+                object_id=serializer.instance.id,
+                description=f"Création challenge {serializer.instance.nom}",
+                details={'challenge_id': serializer.instance.id, 'nom': serializer.instance.nom},
+                request=request
+            )
+        except Exception:
+            logger.exception("[CHALLENGE] Erreur log d'audit création")
+
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
@@ -66,6 +86,21 @@ class ChallengeViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance, data=data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
+
+        # Log métier (sudo requis pour modifier un challenge)
+        try:
+            log_audit(
+                user=getattr(request, '_validation_user', None) or request.user,
+                action=AuditLog.Action.UPDATE,
+                model_name='Challenge',
+                object_id=instance.id,
+                description=f"Modification challenge {instance.nom}",
+                details={'challenge_id': instance.id, 'nom': instance.nom},
+                request=request
+            )
+        except Exception:
+            logger.exception("[CHALLENGE] Erreur log d'audit modification")
+
         if getattr(instance, '_prefetched_objects_cache', None):
             instance._prefetched_objects_cache = {}
         return Response(serializer.data)
@@ -76,7 +111,28 @@ class ChallengeViewSet(viewsets.ModelViewSet):
         )
         if error_response:
             return error_response
-        return super().destroy(request, *args, **kwargs)
+
+        instance = self.get_object()
+        instance_id = instance.id
+        instance_nom = instance.nom
+
+        response = super().destroy(request, *args, **kwargs)
+
+        # Log métier (sudo requis pour supprimer un challenge)
+        try:
+            log_audit(
+                user=getattr(request, '_validation_user', None) or request.user,
+                action=AuditLog.Action.DELETE,
+                model_name='Challenge',
+                object_id=instance_id,
+                description=f"Suppression challenge {instance_nom}",
+                details={'challenge_id': instance_id, 'nom': instance_nom},
+                request=request
+            )
+        except Exception:
+            logger.exception("[CHALLENGE] Erreur log d'audit suppression")
+
+        return response
 
     @action(detail=True, methods=['get'])
     def classement(self, request, pk=None):
