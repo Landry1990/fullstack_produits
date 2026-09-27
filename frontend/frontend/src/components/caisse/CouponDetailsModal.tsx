@@ -272,7 +272,7 @@ export function CouponDetailsModal({
                 </div>
                 <div className="flex justify-between">
                   <span>{t('table.date')}</span>
-                  <span className="font-medium">{new Date(coupon.date_creation).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
+                  <span className="font-medium">{new Date(coupon.date_creation).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
                 </div>
               </div>
 
@@ -286,7 +286,7 @@ export function CouponDetailsModal({
                   {coupon.date_utilisation && (
                     <div className="flex justify-between">
                       <span>{t('table.date')}</span>
-                      <span>{new Date(coupon.date_utilisation).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
+                      <span>{new Date(coupon.date_utilisation).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
                     </div>
                   )}
                 </div>

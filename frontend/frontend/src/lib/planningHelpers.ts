@@ -28,7 +28,7 @@ export function formatDateISO(date: Date): string {
 }
 
 export function getMonthName(date: Date, locale: string): string {
-  return date.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
+  return date.toLocaleDateString(locale, { month: 'short', year: 'numeric' });
 }
 
 export function getDaysInMonth(year: number, month: number): Date[] {

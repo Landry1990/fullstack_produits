@@ -9,7 +9,7 @@ interface CommandeProductExpandedRowProps {
     colSpan: number;
 }
 
-const DATE_OPTIONS: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
+const DATE_OPTIONS: Intl.DateTimeFormatOptions = { day: '2-digit', month: '2-digit', year: 'numeric' };
 
 export function CommandeProductExpandedRow({ p, colSpan }: CommandeProductExpandedRowProps) {
     const { t, i18n } = useTranslation(['orders', 'common']);

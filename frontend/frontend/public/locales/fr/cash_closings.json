@@ -26,6 +26,9 @@
     "hide": "Masquer le classement",
     "show": "Afficher le classement",
     "months": {
+      "10": "Octobre",
+      "11": "Novembre",
+      "12": "Décembre",
       "01": "Janvier",
       "02": "Février",
       "03": "Mars",
@@ -34,10 +37,7 @@
       "06": "Juin",
       "07": "Juillet",
       "08": "Août",
-      "09": "Septembre",
-      "10": "Octobre",
-      "11": "Novembre",
-      "12": "Décembre"
+      "09": "Septembre"
     },
     "best_cashier": "Meilleur Caissier",
     "rigor_score": "Score de Rigueur",
@@ -53,7 +53,8 @@
   "stats": {
     "theoretical_total": "Total Théorique",
     "real_total": "Total Réel (Caisse)",
-    "global_gap": "Écart Global"
+    "global_gap": "Écart Global",
+    "section_title": "Totaux de la période"
   },
   "table": {
     "header_date": "Date & Heure",
