@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
-import { formatDate, getLocalDateString, formatDateLong } from '../utils/dateUtils';
+import { formatDate, getLocalDateString } from '../utils/dateUtils';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { gooeyToast } from 'goey-toast';
@@ -254,10 +254,7 @@ const HistoriqueVentes = () => {
                   {data.map((row) => (
                     <tr key={row.date} className="hover:bg-slate-50 transition-colors">
                       <td className="font-semibold text-slate-700 whitespace-nowrap py-2 px-3">
-                        <div className="flex flex-col">
-                          <span className="text-sm">{formatDate(row.date)}</span>
-                          <span className="text-caption text-slate-400 font-normal">{formatDateLong(row.date)}</span>
-                        </div>
+                        <span className="text-sm">{formatDate(row.date)}</span>
                       </td>
                       <td className="text-right py-2 px-3">
                         <Badge variant="default" className="font-bold">

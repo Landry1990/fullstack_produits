@@ -15,5 +15,25 @@
   "dates": { "today": "Today", "yesterday": "Yesterday" },
   "view": { "flux": "Audit feed", "items": "items", "loading": "Loading logs…", "empty_title": "No logs found", "empty_subtitle": "Try adjusting your search filters", "sudo_badge": "SUDO", "system_user": "System", "action_count_one": "{{count}} action", "action_count_other": "{{count}} actions", "page": "Page {{page}} / {{total}}", "technical_data": "Technical data · ID #{{id}}" },
   "view_technical_details": "View technical details",
-  "messages": { "load_error": "Unable to load the audit log.", "export_error": "Unable to export the audit log." }
+  "messages": { "load_error": "Unable to load the audit log.", "export_error": "Unable to export the audit log." },
+  "purge": {
+    "button": "Purge",
+    "title": "Purge audit logs",
+    "description": "Delete audit log entries within the selected period. This action is irreversible.",
+    "date_from": "From",
+    "date_to": "To",
+    "preview": "Preview",
+    "preview_count_one": "{{count}} entry will be deleted.",
+    "preview_count_other": "{{count}} entries will be deleted.",
+    "password_label": "Admin password",
+    "password_placeholder": "Superuser password",
+    "password_required": "Password is required.",
+    "cancel": "Cancel",
+    "confirm": "Purge",
+    "success_one": "{{count}} entry deleted.",
+    "success_other": "{{count}} entries deleted.",
+    "error": "Failed to purge audit logs.",
+    "result_count_one": "{{count}} entry deleted.",
+    "result_count_other": "{{count}} entries deleted."
+  }
 }

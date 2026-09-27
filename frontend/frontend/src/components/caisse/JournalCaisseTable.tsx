@@ -11,7 +11,6 @@ import {
   Landmark,
   Wallet,
   Smartphone,
-  Ticket,
   TicketPercent,
   TicketCheck,
   Coins,
@@ -77,12 +76,12 @@ export default function JournalCaisseTable({ state }: Props) {
             icon={<FolderOpen className="size-8" />}
             title={t('table.no_transaction')}
             description={t('caisse:journal.table.no_transaction_desc', { defaultValue: 'Aucune opération ne correspond à vos filtres actuels.' })}
-            className="p-12"
+            className="h-full p-8"
           />
         ) : (
           <>
             {/* Vue Mobile */}
-            <div className="md:hidden divide-y divide-slate-200 overflow-y-auto max-h-[60vh]">
+            <div className="md:hidden divide-y divide-slate-200 overflow-y-auto">
               {groupedItems.map((item: unknown) => {
                 const isMouvement = item._kind === 'mouvement';
                 const transaction = item as CaisseTransaction & { isReleveGroup?: boolean, items?: CaisseTransaction[] };
@@ -103,7 +102,7 @@ export default function JournalCaisseTable({ state }: Props) {
                 };
 
                 return (
-                  <div key={item.id} className="p-4 active:bg-slate-100 transition-colors flex flex-col gap-2">
+                  <div key={item.id} className="py-3 px-4 active:bg-slate-100 transition-colors flex flex-col gap-2">
                     <div className="flex justify-between items-start">
                       <div className="flex flex-col">
                         <span className="text-caption font-black text-slate-400 uppercase tracking-tighter">{info.date}</span>
@@ -322,7 +321,7 @@ export default function JournalCaisseTable({ state }: Props) {
         )}
       </div>
 
-      <div className="p-6 border-t border-slate-200 bg-slate-50/50 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="py-3 px-4 border-t border-slate-200 bg-slate-50/50 flex flex-col md:flex-row items-center justify-between gap-2">
         <div className="text-sm text-slate-500 font-medium">
           {t('pagination.showing')} <span className="text-slate-700">{filteredItems.length}</span> {filteredItems.length > 1 ? t('pagination.lines_plural') : t('pagination.lines')} {t('pagination.of')} <span className="text-slate-700">{totalCount}</span> {t('pagination.total')}
         </div>

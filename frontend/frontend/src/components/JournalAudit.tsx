@@ -15,6 +15,15 @@ import { Select } from './shadcn/select';
 import { Input } from './shadcn/input';
 import { Card } from './shadcn/card';
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from './shadcn/dialog';
+import { useAuth } from '../context/AuthContext';
+import {
   ClipboardList, Search, Download, RotateCcw, ChevronDown, ChevronUp,
   TrendingUp, Shield, PackagePlus, PackageMinus, Loader2, XCircle, Trash2,
   CheckCircle2, Boxes, ArrowDownToLine, BadgeAlert, Edit, LogIn, FileOutput,
@@ -93,11 +102,19 @@ function buildDetailChips(log: AuditLog, t: TFunction) {
 
 const JournalAudit: React.FC = () => {
   const { t } = useTranslation(['audit', 'common']);
+  const { user } = useAuth();
   const [page, setPage] = useState(1); const [quickFilter, setQuickFilter] = useState('');
   const [search, setSearch] = useState(''); const [debouncedSearch, setDebouncedSearch] = useState('');
   const [dateFrom, setDateFrom] = useState(''); const [dateTo, setDateTo] = useState('');
   const [userFilter, setUserFilter] = useState(''); const [modelFilter, setModelFilter] = useState('');
   const [expandedLog, setExpandedLog] = useState<number | null>(null); const [showFilters, setShowFilters] = useState(false);
+  const [showPurgeModal, setShowPurgeModal] = useState(false);
+  const [purgeDateFrom, setPurgeDateFrom] = useState('');
+  const [purgeDateTo, setPurgeDateTo] = useState('');
+  const [purgePassword, setPurgePassword] = useState('');
+  const [purging, setPurging] = useState(false);
+  const [purgePreview, setPurgePreview] = useState<number | null>(null);
+  const [purgeResult, setPurgeResult] = useState<{ deleted: number } | null>(null);
   useEffect(() => { const timer = window.setTimeout(() => { setDebouncedSearch(search.trim()); setPage(1); }, 400); return () => window.clearTimeout(timer); }, [search]);
 
   const filters = { action_in: quickFilter, user: userFilter, model_name: modelFilter, date_from: dateFrom, date_to: dateTo, q: debouncedSearch };
@@ -123,10 +140,62 @@ const JournalAudit: React.FC = () => {
     } catch { gooeyToast.error(t('messages.export_error')); }
   };
 
+  const fetchPurgePreview = async () => {
+    try {
+      const res = await api.post('maintenance/preview/', {
+        tables: ['audit_logs'],
+        date_from: purgeDateFrom || null,
+        date_to: purgeDateTo || null,
+      });
+      const auditPreview = res.data.results.find((r: { key: string; count: number }) => r.key === 'audit_logs');
+      setPurgePreview(auditPreview?.count ?? 0);
+    } catch { setPurgePreview(null); }
+  };
+
+  const handlePurge = async () => {
+    if (!purgePassword) {
+      gooeyToast.error(t('purge.password_required'));
+      return;
+    }
+    setPurging(true);
+    try {
+      const res = await api.post('maintenance/purge/', {
+        tables: ['audit_logs'],
+        date_from: purgeDateFrom || null,
+        date_to: purgeDateTo || null,
+        password: purgePassword,
+      });
+      const auditResult = res.data.results.find((r: { key: string; deleted: number }) => r.key === 'audit_logs');
+      setPurgeResult({ deleted: auditResult?.deleted ?? 0 });
+      setPurgePassword('');
+      setPurgePreview(null);
+      gooeyToast.success(t('purge.success', { count: auditResult?.deleted ?? 0 }));
+    } catch (err: unknown) {
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      gooeyToast.error(detail || t('purge.error'));
+    } finally {
+      setPurging(false);
+    }
+  };
+
+  const resetPurgeModal = () => {
+    setShowPurgeModal(false);
+    setPurgeDateFrom('');
+    setPurgeDateTo('');
+    setPurgePassword('');
+    setPurgePreview(null);
+    setPurgeResult(null);
+  };
+
   return <PageContainer variant="dense" className="lg:px-10">
     <div className="flex flex-wrap items-start justify-between gap-3 mb-5">
       <div className="flex items-center gap-3"><div className="p-2.5 bg-slate-800 text-white rounded-xl"><ClipboardList className="size-5" /></div><div><h2 className="text-2xl font-black text-slate-800">{t('title')}</h2><p className="text-sm text-slate-500">{t('subtitle')}</p></div></div>
       <div className="flex gap-2">
+        {user?.is_superuser && (
+          <Button variant="outline" size="sm" onClick={() => setShowPurgeModal(true)} className="border-red-200 text-red-700 hover:border-red-500 hover:text-red-700 hover:bg-red-50">
+            <Trash2 className="size-3.5" />{t('purge.button')}
+          </Button>
+        )}
         <Button variant="outline" size="sm" onClick={exportCSV} className="border-emerald-200 text-emerald-700 hover:border-emerald-500 hover:text-emerald-700"><Download className="size-3.5" />{t('filters.export')}</Button>
         <Button variant="outline" size="sm" onClick={() => setShowFilters(v => !v)}><Filter className="size-3.5" />{t('filters.button')}{hasActiveFilters && <span className="size-1.5 rounded-full bg-orange-400" />}</Button>
       </div>
@@ -153,13 +222,95 @@ const JournalAudit: React.FC = () => {
       <span className="text-xs text-slate-500">{t('view.page', { page, total: totalPages })}</span>
       <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>{t('common:pagination.next')}</Button>
     </div>}
+
+    <Dialog open={showPurgeModal} onOpenChange={v => { if (!v) resetPurgeModal(); setShowPurgeModal(v); }}>
+      <DialogContent size="sm">
+        <DialogHeader>
+          <DialogTitle>{t('purge.title')}</DialogTitle>
+          <DialogDescription>{t('purge.description')}</DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-3 py-2">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-caption font-black uppercase text-slate-500">{t('purge.date_from')}</label>
+              <Input type="date" value={purgeDateFrom} onChange={e => { setPurgeDateFrom(e.target.value); setPurgePreview(null); }} className="h-9 text-xs mt-1" />
+            </div>
+            <div>
+              <label className="text-caption font-black uppercase text-slate-500">{t('purge.date_to')}</label>
+              <Input type="date" value={purgeDateTo} onChange={e => { setPurgeDateTo(e.target.value); setPurgePreview(null); }} className="h-9 text-xs mt-1" />
+            </div>
+          </div>
+          <Button variant="outline" size="sm" onClick={fetchPurgePreview} disabled={!purgeDateFrom && !purgeDateTo}>
+            {t('purge.preview')}
+          </Button>
+          {purgePreview !== null && (
+            <p className="text-xs text-slate-600">{t('purge.preview_count', { count: purgePreview })}</p>
+          )}
+          {purgeResult && (
+            <p className="text-xs text-emerald-600 font-medium">{t('purge.result_count', { count: purgeResult.deleted })}</p>
+          )}
+          <div>
+            <label className="text-caption font-black uppercase text-slate-500">{t('purge.password_label')}</label>
+            <Input type="password" value={purgePassword} onChange={e => setPurgePassword(e.target.value)} placeholder={t('purge.password_placeholder')} className="h-9 text-xs mt-1" />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" size="sm" onClick={() => setShowPurgeModal(false)} disabled={purging}>{t('purge.cancel')}</Button>
+          <Button variant="destructive" size="sm" onClick={handlePurge} disabled={purging || !purgePassword}>
+            {purging ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+            {t('purge.confirm')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </PageContainer>;
 };
 
 function FilterSelect({ label, value, onChange, children }: { label: string; value: string; onChange: (v: string) => void; children: React.ReactNode }) { return <label className="text-caption font-black uppercase text-slate-500">{label}<Select value={value} onChange={e => onChange(e.target.value)} className="mt-1 h-9 text-xs">{children}</Select></label>; }
 function FilterInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) { return <label className="text-caption font-black uppercase text-slate-500">{label}<Input type="datetime-local" value={value} onChange={e => onChange(e.target.value)} className="mt-1 h-9 text-xs" /></label>; }
+function CompactDetails({ details }: { details: Record<string, unknown> }) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {Object.entries(details).map(([key, value]) => {
+        if (Array.isArray(value)) {
+          const preview = value.slice(0, 10);
+          const remaining = value.length - preview.length;
+          return (
+            <span key={key} className="inline-flex items-center gap-1.5 bg-white border border-slate-200 rounded-md px-2 py-1 text-xs text-slate-700">
+              <span className="font-semibold text-slate-500 uppercase text-[10px]">{key}:</span>
+              <span className="font-mono font-medium">{value.length}</span>
+              {preview.length > 0 && (
+                <span className="inline-flex items-center gap-1 overflow-x-auto max-w-[180px] sm:max-w-[260px] lg:max-w-sm align-bottom">
+                  {preview.map((v, i) => (
+                    <span key={i} className="font-mono text-slate-600 whitespace-nowrap">{String(v)}{i < preview.length - 1 || remaining > 0 ? ',' : ''}</span>
+                  ))}
+                  {remaining > 0 && <span className="text-slate-400 whitespace-nowrap">+{remaining}</span>}
+                </span>
+              )}
+            </span>
+          );
+        }
+        if (value !== null && typeof value === 'object') {
+          return (
+            <span key={key} className="inline-flex items-center gap-1.5 bg-white border border-slate-200 rounded-md px-2 py-1 text-xs text-slate-700 break-all">
+              <span className="font-semibold text-slate-500 uppercase text-[10px]">{key}:</span>
+              <span className="font-mono">{JSON.stringify(value)}</span>
+            </span>
+          );
+        }
+        return (
+          <span key={key} className="inline-flex items-center gap-1.5 bg-white border border-slate-200 rounded-md px-2 py-1 text-xs text-slate-700">
+            <span className="font-semibold text-slate-500 uppercase text-[10px]">{key}:</span>
+            <span className="break-all">{String(value)}</span>
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
 function AuditRow({ log, expanded, onToggle, t }: { log: AuditLog; expanded: boolean; onToggle: () => void; t: TFunction }) {
   const cfg = ACTION_CONFIG[log.action] || { Icon: Settings, labelKey: '', severity: 'neutral' as Severity }; const chips = buildDetailChips(log, t); const isSudo = Boolean(log.details?.sudo_validation); const hasDetails = Boolean(log.details && Object.keys(log.details).length);
-  return <div className="bg-white"><div className="min-h-11 px-2 sm:px-3 py-2 flex flex-wrap sm:flex-nowrap items-center gap-2"><span className="w-11 lg:w-14 shrink-0 text-caption lg:text-xs font-bold text-slate-500">{formatTime(log.timestamp)}</span><cfg.Icon className="size-3.5 lg:size-4 shrink-0 text-slate-500" /><Badge variant="outline" className={`shrink-0 text-micro lg:text-label font-black border-transparent ${SEVERITY_BADGE[cfg.severity]}`}>{cfg.labelKey ? t(cfg.labelKey) : (log.action_display || log.action)}</Badge>{isSudo && <Badge variant="outline" className="text-micro lg:text-label font-black text-purple-700 border-transparent bg-purple-50"><Shield className="inline size-3" /> {t('view.sudo_badge')}</Badge>}<p className="basis-[calc(100%-5rem)] sm:basis-auto sm:flex-1 min-w-0 text-xs lg:text-sm font-semibold text-slate-700 sm:truncate">{log.description || `${log.model_name} #${log.object_id}`}</p><div className="flex flex-wrap gap-1 basis-full sm:basis-auto">{chips.slice(0, 3).map((chip, i) => <Badge key={i} variant="outline" className={`text-micro lg:text-label border-transparent font-medium ${chip.highlight ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-100 text-slate-500'}`}><span className="opacity-60">{chip.label}:</span>&nbsp;{chip.value}</Badge>)}</div><div className="ml-auto flex items-center gap-1 lg:gap-1.5 shrink-0"><span className="size-5 lg:size-6 rounded-full bg-slate-200 text-micro lg:text-caption font-black grid place-items-center">{(log.user_name || t('view.system_user'))[0]}</span><span className="max-w-20 lg:max-w-32 truncate text-caption lg:text-xs text-slate-500">{log.user_name || t('view.system_user')}</span>{hasDetails && <Button variant="ghost" size="icon" onClick={onToggle} title={t('view_technical_details')} aria-label={t('view_technical_details')} className="size-7 text-slate-400">{expanded ? <ChevronUp className="size-3.5 lg:size-4" /> : <ChevronDown className="size-3.5 lg:size-4" />}</Button>}</div></div>{expanded && log.details && <div className="border-t bg-slate-50 p-3"><div className="text-micro lg:text-label font-black uppercase text-slate-500 mb-2"><BadgeAlert className="inline size-3" /> {t('view.technical_data', { id: log.id })}</div><pre className="text-caption lg:text-xs text-slate-700 whitespace-pre-wrap break-all">{JSON.stringify(log.details, null, 2)}</pre></div>}</div>;
+  return <div className="bg-white"><div className="min-h-11 px-2 sm:px-3 py-2 flex flex-wrap sm:flex-nowrap items-center gap-2"><span className="w-11 lg:w-14 shrink-0 text-caption lg:text-xs font-bold text-slate-500">{formatTime(log.timestamp)}</span><cfg.Icon className="size-3.5 lg:size-4 shrink-0 text-slate-500" /><Badge variant="outline" className={`shrink-0 text-micro lg:text-label font-black border-transparent ${SEVERITY_BADGE[cfg.severity]}`}>{cfg.labelKey ? t(cfg.labelKey) : (log.action_display || log.action)}</Badge>{isSudo && <Badge variant="outline" className="text-micro lg:text-label font-black text-purple-700 border-transparent bg-purple-50"><Shield className="inline size-3" /> {t('view.sudo_badge')}</Badge>}<p className="basis-[calc(100%-5rem)] sm:basis-auto sm:flex-1 min-w-0 text-xs lg:text-sm font-semibold text-slate-700 sm:truncate">{log.description || `${log.model_name} #${log.object_id}`}</p><div className="flex flex-wrap gap-1 basis-full sm:basis-auto">{chips.slice(0, 3).map((chip, i) => <Badge key={i} variant="outline" className={`text-micro lg:text-label border-transparent font-medium ${chip.highlight ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-100 text-slate-500'}`}><span className="opacity-60">{chip.label}:</span>&nbsp;{chip.value}</Badge>)}</div><div className="ml-auto flex items-center gap-1 lg:gap-1.5 shrink-0"><span className="size-5 lg:size-6 rounded-full bg-slate-200 text-micro lg:text-caption font-black grid place-items-center">{(log.user_name || t('view.system_user'))[0]}</span><span className="max-w-20 lg:max-w-32 truncate text-caption lg:text-xs text-slate-500">{log.user_name || t('view.system_user')}</span>{hasDetails && <Button variant="ghost" size="icon" onClick={onToggle} title={t('view_technical_details')} aria-label={t('view_technical_details')} className="size-7 text-slate-400">{expanded ? <ChevronUp className="size-3.5 lg:size-4" /> : <ChevronDown className="size-3.5 lg:size-4" />}</Button>}</div></div>{expanded && log.details && <div className="border-t bg-slate-50 p-3"><div className="text-micro lg:text-label font-black uppercase text-slate-500 mb-2"><BadgeAlert className="inline size-3" /> {t('view.technical_data', { id: log.id })}</div><CompactDetails details={log.details} /></div>}</div>;
 }
 export default JournalAudit;

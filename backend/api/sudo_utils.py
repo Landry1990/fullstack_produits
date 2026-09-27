@@ -88,6 +88,9 @@ def validate_sudo_mode(request, permission_attr=None, data_source=None):
                 'detail': f"L'utilisateur {validation_user.username} n'a pas les permissions requises ({', '.join(missing_permissions)})."
             }, status=status.HTTP_403_FORBIDDEN)
 
+    # Rendre le validateur accessible aux vues/action métier pour les logs d'audit
+    request._validation_user = validation_user
+
     # Enregistrement AuditLog (Optionnel mais recommandé si validé par un tiers)
     if validation_user != request.user:
         action_name = "Action nécessitant privilège d'encaissement/modification"

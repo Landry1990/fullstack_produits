@@ -1,3 +1,5 @@
+import logging
+
 from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
@@ -7,7 +9,9 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from ...audit_helpers import log_audit
 from ...models import (
+    AuditLog,
     AvoirClient,
     DepotClient,
     Facture,
@@ -20,6 +24,8 @@ from ...pagination import StandardResultsSetPagination
 from ...serializers import AvoirClientSerializer
 from ...services.lot_allocation_service import LotAllocationService
 from ...sudo_utils import validate_sudo_mode
+
+logger = logging.getLogger(__name__)
 
 
 class AvoirClientViewSet(viewsets.ModelViewSet):
@@ -41,12 +47,38 @@ class AvoirClientViewSet(viewsets.ModelViewSet):
         if date_fin:
             queryset = queryset.filter(date__lte=date_fin)
         return queryset
-        _validation_user, error_response = validate_sudo_mode(
+
+    def create(self, request, *args, **kwargs):
+        validation_user, error_response = validate_sudo_mode(
             request, permission_attr='can_create_client_credit'
         )
         if error_response:
             return error_response
-        return super().create(request, *args, **kwargs)
+
+        response = super().create(request, *args, **kwargs)
+
+        # Log métier de création d'avoir client (sudo requis)
+        if response.status_code == 201 and response.data and isinstance(response.data, dict):
+            try:
+                instance_id = response.data.get('id')
+                instance_numero = response.data.get('numero')
+                log_audit(
+                    user=validation_user,
+                    action=AuditLog.Action.CREATE,
+                    model_name='AvoirClient',
+                    object_id=instance_id,
+                    description=f"Création avoir client {instance_numero or instance_id}",
+                    details={
+                        'avoir_id': instance_id,
+                        'numero': instance_numero,
+                        'created_by': request.user.username,
+                    },
+                    request=request
+                )
+            except Exception:
+                logger.exception("[AVOIR CLIENT] Erreur log d'audit création")
+
+        return response
 
     @action(detail=True, methods=['post'])
     @transaction.atomic
@@ -151,6 +183,28 @@ class AvoirClientViewSet(viewsets.ModelViewSet):
 
         avoir.statut = AvoirClient.Statut.VALIDEE
         avoir.save(update_fields=['statut'])
+
+        # Log métier de validation d'avoir client (sudo requis)
+        try:
+            log_audit(
+                user=getattr(request, '_validation_user', None) or request.user,
+                action=AuditLog.Action.UPDATE,
+                model_name='AvoirClient',
+                object_id=avoir.id,
+                description=f"Validation avoir client {avoir.numero} - {avoir.montant_total} F ({refund_method})",
+                details={
+                    'avoir_id': avoir.id,
+                    'numero': avoir.numero,
+                    'montant': float(avoir.montant_total),
+                    'refund_method': refund_method,
+                    'client_id': avoir.client_id,
+                    'facture_origine_id': avoir.facture_origine_id,
+                },
+                request=request
+            )
+        except Exception:
+            logger.exception("[AVOIR CLIENT] Erreur lors du log d'audit de validation")
+
         return Response(self.get_serializer(avoir).data)
 
     @action(detail=False, methods=['get'])
