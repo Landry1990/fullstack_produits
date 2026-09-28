@@ -133,12 +133,12 @@ export default function PerformanceOverview({
       <div className={`grid gap-3 ${
         isVendeur
           ? 'grid-cols-1 sm:grid-cols-2'
-          : 'grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5'
+          : 'grid-cols-2 md:grid-cols-3 xl:grid-cols-5'
       }`}>
         {kpiCards.map((card: KpiCard, _i: number) => {
           const Icon = card.icon;
           const inner = (
-            <div className="relative p-2 sm:p-3 xl:p-3.5 flex flex-col gap-1 sm:gap-1.5 h-full overflow-hidden">
+            <div className="relative p-2 sm:p-3 xl:p-3 flex flex-col gap-1 sm:gap-1.5 h-full overflow-hidden">
               {/* accent bar top */}
               <div className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl" style={{ background: card.accent }} />
 

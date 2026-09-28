@@ -49,13 +49,13 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
   const { t } = useTranslation(['providers', 'common']);
   const currentLocale = t('common:locale', { defaultValue: 'fr-FR' });
   const Recharts = useRecharts();
-  if (!Recharts) return <div className="p-6"><Skeleton className="h-64 w-full" /></div>;
+  if (!Recharts) return <div className="p-4"><Skeleton className="h-64 w-full" /></div>;
   const { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } = Recharts;
 
 
   if (loading) {
     return (
-      <div className="p-4 sm:p-6 space-y-4">
+      <div className="p-4 space-y-3">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-24" />)}
         </div>
@@ -109,17 +109,17 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
   ];
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-700">
+    <div className="space-y-3 animate-in fade-in duration-700">
       
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {kpis.map((card) => (
           <div key={card.title} className="bg-base-100 border border-base-300 rounded-2xl shadow-sm overflow-hidden group hover:shadow-md transition-all">
-            <div className="relative p-4 flex flex-col gap-2 h-full">
+            <div className="relative px-3 py-2 flex flex-col gap-2 h-full">
               <div className="absolute top-0 left-0 right-0 h-1" style={{ background: card.accent }} />
               
               <div className="flex items-start justify-between">
-                <p className="text-caption font-black uppercase tracking-widest text-base-content/40 leading-tight">
+                <p className="text-xs font-black uppercase tracking-widest text-base-content/40 leading-tight">
                   {card.title}
                 </p>
                 <div className={`size-8 rounded-xl flex items-center justify-center shrink-0 ${card.alert ? 'animate-pulse' : ''}`} style={{ background: `color-mix(in srgb, ${card.accent} 10%, transparent)`, color: card.accent }}>
@@ -143,7 +143,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
         ))}
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
         
         {/* Evolution Chart */}
         <div className="xl:col-span-2 bg-base-100 border border-base-300 rounded-3xl shadow-sm overflow-hidden flex flex-col">
@@ -162,7 +162,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
             </button>
           </div>
           
-          <div className="p-6 h-[320px]">
+          <div className="p-4 h-[220px] lg:h-[260px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={stats?.evolution_dette ?? []} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <defs>
@@ -217,7 +217,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
             </div>
           </div>
           
-          <div className="p-6 flex-1 flex flex-col justify-center items-center">
+          <div className="p-4 flex-1 flex flex-col justify-center items-center">
             <div className="w-full h-[220px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -260,7 +260,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
       </div>
 
       {/* Upcoming Deadlines Table */}
-      <div className="bg-base-100 border border-base-300 rounded-3xl shadow-sm overflow-hidden flex flex-col max-h-[420px]">
+      <div className="bg-base-100 border border-base-300 rounded-3xl shadow-sm overflow-hidden flex flex-col max-h-[320px]">
         <div className="flex items-center justify-between px-6 py-5 border-b border-base-200 bg-base-200/50 shrink-0">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-success/20 text-success rounded-2xl">

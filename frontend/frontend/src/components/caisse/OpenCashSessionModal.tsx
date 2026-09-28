@@ -107,8 +107,8 @@ export const OpenCashSessionModal: React.FC<OpenCashSessionModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-2xl p-0 gap-0 overflow-hidden">
-        <DialogHeader className="p-6 pb-4 border-b border-slate-100">
+      <DialogContent className="sm:max-w-2xl p-0 gap-0 overflow-hidden max-h-[90vh] flex flex-col">
+        <DialogHeader className="p-6 pb-4 border-b border-slate-100 shrink-0">
           <div className="flex items-center gap-3">
             <div className="size-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
               <Monitor className="size-5" />
@@ -124,7 +124,7 @@ export const OpenCashSessionModal: React.FC<OpenCashSessionModalProps> = ({
           </div>
         </DialogHeader>
 
-        <div className="p-6 space-y-5">
+        <div className="p-6 space-y-5 flex-1 min-h-0 overflow-y-auto">
           {loadingCaisses ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Skeleton className="h-24 w-full rounded-xl" />
@@ -224,7 +224,7 @@ export const OpenCashSessionModal: React.FC<OpenCashSessionModalProps> = ({
           )}
         </div>
 
-        <DialogFooter className="p-6 pt-2 border-t border-slate-100 gap-3">
+        <DialogFooter className="p-6 pt-2 border-t border-slate-100 gap-3 shrink-0">
           <Button type="button" variant="outline" onClick={onClose} className="rounded-xl" disabled={isLoading}>
             {t('common:actions.cancel', 'Annuler')}
           </Button>

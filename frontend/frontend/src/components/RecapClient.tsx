@@ -156,21 +156,21 @@ export default function RecapClient() {
   }
 
   return (
-    <div className="h-screen bg-slate-100 p-6 font-sans overflow-auto">
-      <div className="max-w-5xl mx-auto space-y-6">
+    <div className="h-full min-h-0 bg-slate-100 p-3 lg:p-4 font-sans overflow-auto">
+      <div className="max-w-5xl mx-auto space-y-3">
         {/* Header */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 px-4 py-2.5">
           <div className="p-3 bg-emerald-50 rounded-xl">
             <FileText className="size-6 text-emerald-600" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">{t('recap:title')}</h1>
+            <h1 className="text-xl font-bold text-slate-800">{t('recap:title')}</h1>
             <p className="text-sm text-slate-500">{t('recap:subtitle')}</p>
           </div>
         </div>
 
         {/* Formulaire de saisie */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-5">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 space-y-3">
           {/* Nom client (optionnel) */}
           <div>
             <label htmlFor="recap-client-name" className="block text-xs font-semibold text-slate-600 mb-1.5">
@@ -289,22 +289,22 @@ export default function RecapClient() {
             {/* Résumé */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
               <h3 className="font-bold text-slate-800 mb-3">{t('recap:results.summary')}</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-slate-50 rounded-xl p-3 text-center">
-                  <div className="text-2xl font-bold text-emerald-600">{result.recap.nombre_factures}</div>
-                  <div className="text-caption text-slate-500 uppercase font-bold">{t('recap:results.tickets')}</div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <div className="bg-slate-50 rounded-xl px-3 py-2 text-center">
+                  <div className="text-xl font-bold text-emerald-600">{result.recap.nombre_factures}</div>
+                  <div className="text-xs text-slate-500 uppercase font-bold">{t('recap:results.tickets')}</div>
                 </div>
-                <div className="bg-slate-50 rounded-xl p-3 text-center">
-                  <div className="text-2xl font-bold text-slate-800">{fmt(result.recap.total_ht)} F</div>
-                  <div className="text-caption text-slate-500 uppercase font-bold">{t('recap:results.total_ht')}</div>
+                <div className="bg-slate-50 rounded-xl px-3 py-2 text-center">
+                  <div className="text-xl font-bold text-slate-800">{fmt(result.recap.total_ht)} F</div>
+                  <div className="text-xs text-slate-500 uppercase font-bold">{t('recap:results.total_ht')}</div>
                 </div>
-                <div className="bg-slate-50 rounded-xl p-3 text-center">
-                  <div className="text-2xl font-bold text-slate-800">{fmt(result.recap.total_tva)} F</div>
-                  <div className="text-caption text-slate-500 uppercase font-bold">{t('recap:results.total_tva')}</div>
+                <div className="bg-slate-50 rounded-xl px-3 py-2 text-center">
+                  <div className="text-xl font-bold text-slate-800">{fmt(result.recap.total_tva)} F</div>
+                  <div className="text-xs text-slate-500 uppercase font-bold">{t('recap:results.total_tva')}</div>
                 </div>
-                <div className="bg-emerald-50 rounded-xl p-3 text-center">
-                  <div className="text-2xl font-bold text-emerald-700">{fmt(result.recap.total_ttc)} F</div>
-                  <div className="text-caption text-emerald-600 uppercase font-bold">{t('recap:results.total_ttc')}</div>
+                <div className="bg-emerald-50 rounded-xl px-3 py-2 text-center">
+                  <div className="text-xl font-bold text-emerald-700">{fmt(result.recap.total_ttc)} F</div>
+                  <div className="text-xs text-emerald-600 uppercase font-bold">{t('recap:results.total_ttc')}</div>
                 </div>
               </div>
             </div>
@@ -336,7 +336,7 @@ export default function RecapClient() {
                     </div>
                     {facture.produits && facture.produits.length > 0 && (
                       <div className="ml-4 space-y-0.5">
-                        {facture.produits.map((p, idx) => {
+                        {facture.produits.map((p, _idx) => {
                           const name = p.produit_nom || p.produit_name || '?'
                           const qty = p.quantity || p.quantite || 1
                           const price = Number(p.selling_price || p.prix_vente || 0)

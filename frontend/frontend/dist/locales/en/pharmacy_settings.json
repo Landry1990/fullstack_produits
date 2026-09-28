@@ -16,6 +16,7 @@
         "printing_format": "Print Format",
         "multi_pos": "Multi-Terminals",
         "cash_register": "Centralized Cash Register",
+        "qz_tray": "ESC/POS Printer (QZ Tray)",
         "alerts_system": "Alert Thresholds & System",
         "cash_security": "Cash Security",
         "fiscal": "Withholding & Prepayment",
@@ -64,6 +65,8 @@
         "pharmacist_whatsapp": "Holder WhatsApp Number",
         "add_custom_mode": "Add a custom payment mode",
         "centralized_cash_register": "Centralized Cash Register",
+        "qz_printer": "QZ Tray Printer",
+        "open_drawer": "Open cash drawer",
         "telegram_bot_token": "Telegram Bot Token",
         "telegram_chat_id": "Chat ID",
         "monthly_report_enabled": "Enable automatic report",
@@ -105,7 +108,8 @@
         "custom_mode": "e.g. PayPal, Stripe, Wave...",
         "telegram_bot_token": "123456789:ABCDefGh...",
         "telegram_chat_id": "Numeric chat identifier",
-        "report_recipients": "email1@example.com, email2@example.com"
+        "report_recipients": "email1@example.com, email2@example.com",
+        "qz_printer": "Type or select a printer..."
     },
     "hints": {
         "pharmacy_name": "The official name as it will appear on invoices and receipts.",
@@ -128,6 +132,7 @@
         "custom_mode": "Type a name and press Enter or click Add. Do not forget to save.",
         "multi_pos": "If enabled, the system allows dispatching sales to different physical terminals.",
         "centralized_cash_register": "Groups sales by daily session for centralized closing.",
+        "qz_tray": "Requires QZ Tray installed and running on this workstation. The thermal printer will be used in native ESC/POS mode when available.",
         "telegram": "Create a bot via @BotFather, copy the token, send /start to the bot, then retrieve the Chat ID.",
         "telegram_start": "Send /start to your bot before clicking Retrieve.",
         "monthly_report": "Configure the items to include in the monthly report",
@@ -200,7 +205,10 @@
         "pos_confirm_close": "Close this sales point?",
         "caisse_confirm_delete": "Delete cash register {{nom}}?",
         "caisse_deleted": "Cash register deleted.",
-        "caisse_delete_error": "Error deleting cash register"
+        "caisse_delete_error": "Error deleting cash register",
+        "qz_not_found": "QZ Tray could not be found or could not connect. Make sure it is installed and running, then try again.",
+        "qz_printers_found": "{{count}} printer(s) detected.",
+        "print_test_sent": "Test ticket sent to the QZ Tray printer."
     },
     "buttons": {
         "logo_importing": "Import...",
@@ -211,7 +219,9 @@
         "delete_mode_title": "Delete this mode",
         "add": "+ Add",
         "get_chat_id": "🔍 Retrieve Chat ID",
-        "test": "Test"
+        "test": "Test",
+        "detect": "Detect",
+        "test_print": "Test print"
     },
     "options": {
         "regime_reel": "Real Regime",

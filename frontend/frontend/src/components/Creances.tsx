@@ -35,12 +35,12 @@ export default function Creances() {
     }, [data.selectedIds, data.creances]);
 
     return (
-        <div className="h-full flex flex-col bg-slate-100 p-4 sm:p-6 gap-4 sm:gap-6 font-sans overflow-auto max-w-[1600px] mx-auto w-full">
+        <div className="h-full min-h-0 flex flex-col bg-slate-100 p-2 lg:p-3 gap-3 font-sans overflow-hidden max-w-[1600px] mx-auto w-full">
 
             {/* Header Area */}
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-3 shrink-0">
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col">
-                    <div className="p-6 border-b border-slate-100 flex flex-wrap justify-between items-center gap-4 bg-white/50">
+                    <div className="px-4 py-3 border-b border-slate-100 flex flex-wrap justify-between items-center gap-3 bg-white/50">
                         <div>
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
@@ -59,7 +59,7 @@ export default function Creances() {
 
                         {/* Selection Bar inside Header if active */}
                         {data.filters.selectedClient && data.selectedIds.length > 0 && !data.filters.showHistory && (
-                            <div className="flex items-center gap-4 animate-in fade-in zoom-in duration-300">
+                            <div className="flex items-center gap-3 animate-in fade-in zoom-in duration-300">
                                 <div className="flex flex-col items-end">
                                     <span className="text-caption font-black uppercase tracking-widest text-slate-400">{t('creances:selection')}</span>
                                     <span className="text-sm font-black text-emerald-600">{t('creances:invoices_count', { count: data.selectedIds.length })}</span>

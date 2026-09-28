@@ -70,10 +70,10 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
 
     return (
         <div className="overflow-x-auto text-sm">
-            <table className="w-full">
+            <table className="w-full min-w-[900px]">
                 <thead>
                     <tr className="bg-slate-50 border-b border-slate-200 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                        <th className="px-4 py-3 w-10">
+                        <th className="h-9 px-3 py-1.5 w-10">
                             <input
                                 type="checkbox"
                                 className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
@@ -82,19 +82,19 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                                 aria-label={t('stock:cadencier.select_all')}
                             />
                         </th>
-                        <th className="px-6 py-3">
+                        <th className="h-9 px-3 py-1.5">
                             {selectedIds.size > 0 ? (
                                 <span className="text-emerald-600 font-semibold normal-case text-sm">
                                     {t('common:selection_count', { count: selectedIds.size })}
                                 </span>
                             ) : t('inventaire.list.date')}
                         </th>
-                        <th className="px-6 py-3">{t('inventaire.list.desc')}</th>
-                        <th className="px-6 py-3 text-right">{t('inventaire.list.val_theo')}</th>
-                        <th className="px-6 py-3 text-right">{t('inventaire.list.val_phys')}</th>
-                        <th className="px-6 py-3 text-right">{t('inventaire.list.ecart')}</th>
-                        <th className="px-6 py-3 text-center">{t('inventaire.list.status')}</th>
-                        <th className="px-6 py-3 text-right">{t('inventaire.list.actions')}</th>
+                        <th className="h-9 px-3 py-1.5">{t('inventaire.list.desc')}</th>
+                        <th className="h-9 px-3 py-1.5 text-right">{t('inventaire.list.val_theo')}</th>
+                        <th className="h-9 px-3 py-1.5 text-right">{t('inventaire.list.val_phys')}</th>
+                        <th className="h-9 px-3 py-1.5 text-right">{t('inventaire.list.ecart')}</th>
+                        <th className="h-9 px-3 py-1.5 text-center">{t('inventaire.list.status')}</th>
+                        <th className="h-9 px-3 py-1.5 text-right">{t('inventaire.list.actions')}</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -103,7 +103,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                             key={inv.id}
                             className={`group hover:bg-slate-50 transition-colors ${selectedIds.has(inv.id) ? 'bg-emerald-50/40' : ''}`}
                         >
-                            <td className="px-4 py-4" onClick={e => e.stopPropagation()}>
+                            <td className="px-2.5 py-2" onClick={e => e.stopPropagation()}>
                                 <input
                                     type="checkbox"
                                     className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
@@ -112,7 +112,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                                     aria-label={t('stock:inventaire.list.select_item', { id: inv.id })}
                                 />
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
+                            <td className="px-3 py-2 whitespace-nowrap">
                                 <div className="flex flex-col">
                                     <span className={`font-semibold text-slate-800 flex items-center gap-2`}>
                                         <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-caption font-bold uppercase tracking-wider border
@@ -131,21 +131,21 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                                     </span>
                                 </div>
                             </td>
-                            <td className="px-6 py-4 max-w-xs truncate font-medium text-slate-700">
+                            <td className="px-3 py-2 max-w-xs truncate font-medium text-slate-700">
                                 {inv.description || t('inventaire.list.no_description', '-')}
                                 <div className="text-caption text-slate-400 mt-1 flex items-center gap-1">
                                     <History className="h-3 w-3" />
                                     {t('inventaire.list.created_by_prefix')} {inv.created_by_name || '-'}
                                 </div>
                             </td>
-                            <td className="px-6 py-4 text-right font-medium text-slate-700">
+                            <td className="px-3 py-2 text-right font-medium text-slate-700">
                                 {formatCurrency(inv.total_valeur_theorique || 0)}
                             </td>
-                            <td className="px-6 py-4 text-right font-medium text-slate-700">
+                            <td className="px-3 py-2 text-right font-medium text-slate-700">
                                 {formatCurrency(inv.total_valeur_physique || 0)}
                             </td>
-                            <td className="px-6 py-4 text-right">
-                                <span className={`inline-flex items-center px-2.5 py-1 rounded-md font-mono font-semibold text-sm border
+                            <td className="px-3 py-2 text-right">
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md font-mono font-semibold text-sm border
                                     ${(inv.total_ecart_valeur || 0) < 0 ? 'bg-red-50 text-red-500 border-red-200' :
                                       (inv.total_ecart_valeur || 0) > 0 ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
                                       'bg-slate-100 text-slate-400 border-slate-200'}`}
@@ -153,15 +153,15 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                                     {(inv.total_ecart_valeur || 0) > 0 ? '+' : ''}{formatCurrency(inv.total_ecart_valeur || 0)}
                                 </span>
                             </td>
-                            <td className="px-6 py-4 text-center">
-                                <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border gap-1.5
+                            <td className="px-2.5 py-2 text-center">
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium border gap-1.5
                                     ${inv.status === 'VALIDEE' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-amber-50 text-amber-600 border-amber-200'}`}
                                 >
                                     {inv.status === 'VALIDEE' ? <CheckCircle2 className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
                                     {inv.status === 'VALIDEE' ? t('inventaire.status.validated') : t('inventaire.status.draft')}
                                 </span>
                             </td>
-                            <td className="px-6 py-4 text-right" onClick={e => e.stopPropagation()}>
+                            <td className="px-2.5 py-2 text-right" onClick={e => e.stopPropagation()}>
                                 <div className="flex items-center justify-end gap-1">
                                     <button
                                         type="button"

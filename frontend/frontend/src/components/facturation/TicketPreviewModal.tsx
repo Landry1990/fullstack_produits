@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { X, MessageCircle, Send } from 'lucide-react'
 import { TicketTemplate } from '../printing/TicketTemplate'
 import { buildTicketPrintHtml } from '../../utils/print/printHelpers'
+import { printTicketSmart } from '../../utils/print/printTicketSmart'
 import { gooeyToast } from 'goey-toast'
 import type { TicketCaisse, PharmacySettings } from '../../types'
 
@@ -36,28 +37,34 @@ export default function TicketPreviewModal({
 
   if (!isOpen || !ticket || !settings) return null
 
-  const handlePrint = () => {
-    const ticketElement = document.getElementById('ticket-preview');
-    if (!ticketElement) return;
-    
-    const ticketWidth = settings?.ticket_paper_width || 80;
-    
-    // Get all stylesheets and styles from the parent document to properly apply Tailwind classes
-    const styleTags = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
-      .map(node => node.outerHTML)
-      .join('\n');
+  const handlePrint = async () => {
+    if (!ticket || !settings) return;
 
-    const printWindow = window.open('', '_blank', '')
-    if (!printWindow) {
-      gooeyToast.error(t('common:popup_blocked'))
-      return
-    }
+    const htmlFallback = () => {
+      const ticketElement = document.getElementById('ticket-preview');
+      if (!ticketElement) return;
 
-    const html = buildTicketPrintHtml(ticketWidth, ticketElement.outerHTML, styleTags)
-    printWindow.document.open()
-    printWindow.document.write(html)
-    printWindow.document.close()
-    printWindow.focus()
+      const ticketWidth = settings.ticket_paper_width || 80;
+
+      // Get all stylesheets and styles from the parent document to properly apply Tailwind classes
+      const styleTags = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+        .map(node => node.outerHTML)
+        .join('\n');
+
+      const printWindow = window.open('', '_blank', '')
+      if (!printWindow) {
+        gooeyToast.error(t('common:popup_blocked'))
+        return
+      }
+
+      const html = buildTicketPrintHtml(ticketWidth, ticketElement.outerHTML, styleTags)
+      printWindow.document.open()
+      printWindow.document.write(html)
+      printWindow.document.close()
+      printWindow.focus()
+    };
+
+    await printTicketSmart(ticket, settings, htmlFallback);
   }
 
   return (

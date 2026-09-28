@@ -35,9 +35,10 @@ const ReconditionnementModal = lazy(() => import('./Commandes/ReconditionnementM
 
 interface CommandesProps {
     forcedType?: 'LOC' | 'DIR' | 'DIV';
+    embedded?: boolean;
 }
 
-export default function Commandes({ forcedType }: CommandesProps) {
+export default function Commandes({ forcedType, embedded }: CommandesProps) {
   const hook = useCommandesState(forcedType);
   const { state, listProps, detailsProps, formProps, modals, reconditionnement } = hook;
   const queryClient = useQueryClient();
@@ -95,55 +96,59 @@ export default function Commandes({ forcedType }: CommandesProps) {
   
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-slate-50 max-w-[1600px] mx-auto w-full">
-      {/* Header moderne */}
-      <div className="px-6 py-4 border-b border-slate-200 bg-white shrink-0 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-emerald-100 rounded-lg">
-              <ShoppingCart className="size-5 text-emerald-600" />
-            </div>
-            <h1 className="text-lg font-bold text-slate-800">
-                {state.activeTab === 'DIV' ? state.t('orders:title_divers') : state.activeTab === 'DIR' ? state.t('orders:title_direct') : state.t('orders:title_local')}
-            </h1>
-            <Badge variant="secondary" className="ml-2">
-              {listProps.totalCount || 0}
-            </Badge>
-          </div>
+      {!embedded && (
+        <>
+          {/* Header moderne */}
+          <div className="px-4 py-2.5 border-b border-slate-200 bg-white shrink-0 flex flex-col sm:flex-row items-center justify-between gap-2">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-emerald-100 rounded-lg">
+                  <ShoppingCart className="size-5 text-emerald-600" />
+                </div>
+                <h1 className="text-lg font-bold text-slate-800">
+                    {state.activeTab === 'DIV' ? state.t('orders:title_divers') : state.activeTab === 'DIR' ? state.t('orders:title_direct') : state.t('orders:title_local')}
+                </h1>
+                <Badge variant="secondary" className="ml-2">
+                  {listProps.totalCount || 0}
+                </Badge>
+              </div>
 
-          {!forcedType && (
-            <div className="bg-slate-100 p-1 rounded-lg flex gap-1">
-                <Button
-                  variant={state.activeTab === 'LOC' ? 'default' : 'ghost'}
-                  size="sm"
-                  className={cn(
-                    "px-5 py-2 rounded-md text-sm font-medium transition-all",
-                    state.activeTab === 'LOC' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-                  )}
-                  onClick={() => state.setActiveTab('LOC')}
-                >
-                  <Store className="size-4 mr-2" />
-                  {state.t('orders:tabs.local')}
-                </Button>
-                <Button
-                  variant={state.activeTab === 'DIR' ? 'default' : 'ghost'}
-                  size="sm"
-                  className={cn(
-                    "px-5 py-2 rounded-md text-sm font-medium transition-all",
-                    state.activeTab === 'DIR' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-                  )}
-                  onClick={() => state.setActiveTab('DIR')}
-                >
-                  <Truck className="size-4 mr-2" />
-                  {state.t('orders:tabs.direct')}
-                </Button>
-            </div>
-          )}
-      </div>
+              {!forcedType && (
+                <div className="bg-slate-100 p-1 rounded-lg flex gap-1">
+                    <Button
+                      variant={state.activeTab === 'LOC' ? 'default' : 'ghost'}
+                      size="sm"
+                      className={cn(
+                        "px-5 py-2 rounded-md text-sm font-medium transition-all",
+                        state.activeTab === 'LOC' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                      )}
+                      onClick={() => state.setActiveTab('LOC')}
+                    >
+                      <Store className="size-4 mr-2" />
+                      {state.t('orders:tabs.local')}
+                    </Button>
+                    <Button
+                      variant={state.activeTab === 'DIR' ? 'default' : 'ghost'}
+                      size="sm"
+                      className={cn(
+                        "px-5 py-2 rounded-md text-sm font-medium transition-all",
+                        state.activeTab === 'DIR' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                      )}
+                      onClick={() => state.setActiveTab('DIR')}
+                    >
+                      <Truck className="size-4 mr-2" />
+                      {state.t('orders:tabs.direct')}
+                    </Button>
+                </div>
+              )}
+          </div>
+        </>
+      )}
 
       <ErrorState
         error={state.error}
         onRetry={() => queryClient.invalidateQueries({ queryKey: ['commandes'] })}
         retrying={listProps.loading}
-        className="mx-4 mt-4 shrink-0"
+        className={cn("shrink-0", embedded ? "mx-0 mt-0" : "mx-4 mt-4")}
       />
 
       {state.viewMode === 'LIST' && (

@@ -224,7 +224,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
         <LockBanner lock={lock} documentLabel={t('orders:details.lock_document_label', { id: selectedCommande.numero_facture || selectedCommande.id })} />
       )}
       {/* Header */}
-      <div className="flex flex-wrap items-start gap-4 shrink-0">
+      <div className="flex flex-wrap items-start gap-2 shrink-0 px-4 py-2.5">
         <Button variant="ghost" size="icon" onClick={onBack} aria-label={t('orders:form.back_to_list')} className="size-9 text-slate-400 hover:text-slate-600">
           <ArrowLeft className="size-5" />
         </Button>
@@ -327,7 +327,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
 
 
       {/* Grid Info */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-white p-4 rounded-lg border border-slate-200 shadow-sm shrink-0">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-white px-3 py-2 rounded-lg border border-slate-200 shadow-sm shrink-0">
         <div>
           <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('orders:details.id')}</div>
           <div className="text-sm font-semibold text-slate-800">{selectedCommande.id}</div>

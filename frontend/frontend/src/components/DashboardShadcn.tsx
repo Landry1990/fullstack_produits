@@ -182,7 +182,7 @@ export default function DashboardShadcn() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 p-4 sm:p-6 space-y-6" aria-busy="true" aria-label={t('loading', 'Chargement...')}>
+      <div className="h-full min-h-0 bg-slate-50 p-3 space-y-3" aria-busy="true" aria-label={t('loading', 'Chargement...')}>
         <div className="flex items-center gap-4">
           <Skeleton className="size-12 rounded-xl" />
           <div className="space-y-2 flex-1">
@@ -202,7 +202,7 @@ export default function DashboardShadcn() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-slate-50 p-6">
+      <div className="h-full min-h-0 bg-slate-50 p-3">
         <Card className="border-red-200 bg-red-50">
           <CardContent className="p-6 flex items-center gap-3 text-red-700">
             <span className="font-semibold">{error}</span>
@@ -215,8 +215,8 @@ export default function DashboardShadcn() {
   return (
     <div className="h-full flex flex-col bg-slate-50 font-sans overflow-hidden">
       {/* ── HEADER ── */}
-      <div className="shrink-0 z-30 bg-white/70 backdrop-blur-md border-b border-slate-200/60 px-4 sm:px-6 py-3 sm:py-4">
-        <div className="flex items-center justify-between gap-4">
+      <div className="shrink-0 z-30 bg-white/70 backdrop-blur-md border-b border-slate-200/60 px-4 py-2.5">
+        <div className="flex items-center justify-between gap-2">
           {/* Left: title + info */}
           <div className="flex items-center gap-4 min-w-0">
             <div className="bg-emerald-100 text-emerald-600 rounded-xl p-2.5 shrink-0">
@@ -334,7 +334,7 @@ export default function DashboardShadcn() {
       </div>
 
       {/* ── TAB CONTENT ── */}
-      <div className="p-4 sm:p-6 flex-1 overflow-y-auto">
+      <div className="p-3 flex-1 overflow-y-auto">
         {isVendeur && (
           <DashboardVendeur formatCurrencyLocal={formatCurrencyLocal} />
         )}

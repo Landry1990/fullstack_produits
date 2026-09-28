@@ -49,7 +49,7 @@ export default function ForceStockModal({ product, onClose, onSubstitute, onForc
       }}
     >
       <div
-        className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 p-6"
+        className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 p-6 max-h-[92vh] overflow-y-auto"
         role="dialog"
         aria-modal="true"
         aria-labelledby="force-stock-modal-title"

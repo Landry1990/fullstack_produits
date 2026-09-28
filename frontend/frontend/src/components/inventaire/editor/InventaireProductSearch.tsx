@@ -103,8 +103,8 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                         }
                     }}
                 >
-                    <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden" role="dialog" aria-modal="true" aria-label={t('inventaire.lot_modal.title', { name: selectedProductForLot.name })}>
-                        <div className="p-6 border-b border-slate-100 bg-slate-50 flex items-center gap-4">
+                    <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden max-h-[calc(100dvh-2rem)] flex flex-col" role="dialog" aria-modal="true" aria-label={t('inventaire.lot_modal.title', { name: selectedProductForLot.name })}>
+                        <div className="px-4 py-3 border-b border-slate-100 bg-slate-50 flex items-center gap-4 shrink-0">
                             <div className="size-12 rounded-xl bg-emerald-50 flex items-center justify-center">
                                 <Database className="h-6 w-6 text-emerald-600" />
                             </div>
@@ -119,7 +119,7 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                         </div>
                         <div
                             ref={lotModalRef}
-                            className="p-4 bg-slate-50 max-h-[60vh] overflow-y-auto outline-none focus:ring-2 focus:ring-emerald-500/20"
+                            className="p-4 bg-slate-50 flex-1 min-h-0 overflow-y-auto outline-none focus:ring-2 focus:ring-emerald-500/20"
                             onKeyDown={(e) => {
                                 if (e.key === 'Escape') {
                                     e.preventDefault();

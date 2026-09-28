@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, createContext, type ReactNode } from 'react'
+import { useState, useEffect, useMemo, useRef, createContext, type ReactNode } from 'react'
 
 export interface SidebarContextType {
   isOpen: boolean
@@ -22,6 +22,7 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
     const saved = localStorage.getItem('sidebar-collapsed')
     return saved === 'true'
   })
+  const hasUserCollapsePreference = useRef(localStorage.getItem('sidebar-collapsed') !== null)
   const [isZenithMode, setIsZenithMode] = useState(false)
   const [isMidnightTheme, setIsMidnightTheme] = useState(() => {
     return localStorage.getItem('theme-midnight') === 'true'
@@ -38,13 +39,13 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
     }
   }, [isMidnightTheme])
 
-  // Auto-collapse on small desktop screens (1024px-1280px)
+  // Auto-collapse on small desktop screens (1024px-1439px), sauf préférence utilisateur.
   // Sur mobile (< 1024px), ne pas collapser — la sidebar s'affiche en overlay
-  // et doit montrer les labels complets + sous-menus cliquables
+  // et doit montrer les labels complets + sous-menus cliquables.
   useEffect(() => {
     const checkScreenWidth = () => {
-      const isSmallDesktop = window.innerWidth >= 1024 && window.innerWidth < 1280
-      if (isSmallDesktop) {
+      const isSmallDesktop = window.innerWidth >= 1024 && window.innerWidth < 1440
+      if (isSmallDesktop && !hasUserCollapsePreference.current) {
         setIsCollapsed(true)
       }
     }
@@ -53,11 +54,6 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('resize', checkScreenWidth)
   }, [])
 
-  // Persister les préférences utilisateur
-  useEffect(() => {
-    localStorage.setItem('sidebar-collapsed', String(isCollapsed))
-  }, [isCollapsed])
-
   useEffect(() => {
     localStorage.setItem('theme-midnight', String(isMidnightTheme))
   }, [isMidnightTheme])
@@ -65,7 +61,14 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
   const toggleSidebar = () => setIsOpen(prev => !prev)
   const closeSidebar = () => setIsOpen(false)
   const openSidebar = () => setIsOpen(true)
-  const toggleCollapse = () => setIsCollapsed(prev => !prev)
+  const toggleCollapse = () => {
+    hasUserCollapsePreference.current = true
+    setIsCollapsed(prev => {
+      const next = !prev
+      localStorage.setItem('sidebar-collapsed', String(next))
+      return next
+    })
+  }
   const toggleZenithMode = () => setIsZenithMode(prev => !prev)
   const toggleMidnightTheme = () => setIsMidnightTheme(prev => !prev)
 

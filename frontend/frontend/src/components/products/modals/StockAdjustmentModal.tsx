@@ -94,7 +94,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="max-w-md" aria-labelledby="stock-adjust-title">
+      <DialogContent className="max-w-md max-h-[90vh]" aria-labelledby="stock-adjust-title">
         <DialogHeader>
           <div className="flex items-center gap-3">
             <div className="p-2 bg-amber-50 rounded-lg">

@@ -22,10 +22,10 @@ export default function FacturationHeader({ hook, datamatrixEnabled, setDatamatr
   return (
     <>
       {/* ── HEADER SHADCN ─────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-slate-200 bg-white shrink-0 shadow-sm min-w-0">
+      <div className="flex items-center justify-between px-4 sm:px-6 py-2 border-b border-slate-200 bg-white shrink-0 shadow-sm min-w-0">
 
         {/* Left */}
-        <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center gap-3 min-w-0 overflow-hidden">
           <div className="p-2 bg-emerald-100 text-emerald-600 rounded-xl shrink-0">
             <FileText className="size-5" />
           </div>
@@ -93,7 +93,7 @@ export default function FacturationHeader({ hook, datamatrixEnabled, setDatamatr
         {/* Right: date + shortcuts */}
         <div className="flex flex-col items-end shrink-0">
           <span className="text-xs font-medium text-slate-500">{formatDateShort(new Date())}</span>
-          <div className="hidden sm:flex gap-3 text-caption text-slate-400 mt-0.5 uppercase font-semibold tracking-wider">
+          <div className="hidden xl:flex gap-3 text-caption text-slate-400 mt-0.5 uppercase font-semibold tracking-wider">
             <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-slate-600 font-mono text-caption">/</kbd> {hook.t('facturation:shortcuts.search')}</span>
             <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-slate-600 font-mono text-caption">F9</kbd> {hook.t('facturation:shortcuts.pay')}</span>
           </div>
@@ -101,7 +101,7 @@ export default function FacturationHeader({ hook, datamatrixEnabled, setDatamatr
       </div>
 
       {/* ── BARRE RAPPEL DE VENTE ── */}
-      <div className="flex flex-wrap items-center gap-2 px-4 py-2 bg-slate-50 border-b border-slate-200 shrink-0 min-w-0">
+      <div className="flex flex-wrap items-center gap-1.5 px-4 py-1.5 bg-slate-50 border-b border-slate-200 shrink-0 min-w-0">
         <span className="text-xs font-semibold text-slate-700 uppercase tracking-wide">{hook.t('facturation:recall_invoice.title')}</span>
         <div className="relative flex items-center">
           <span className="absolute left-2.5 text-sm text-slate-500 pointer-events-none">FAC-</span>
@@ -136,7 +136,7 @@ export default function FacturationHeader({ hook, datamatrixEnabled, setDatamatr
 
       {/* ── BANNIÈRE POINT DE VENTE NON ACTIF ── */}
       {!hook.isPosteCaisseActive && (
-        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2 bg-amber-50 border-b border-amber-200 shrink-0 min-w-0">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-1.5 bg-amber-50 border-b border-amber-200 shrink-0 min-w-0">
           <div className="flex items-center gap-2 text-sm text-amber-800 min-w-0">
             <Monitor className="size-4" />
             <span>{hook.hasMyActivePoste
@@ -156,13 +156,13 @@ export default function FacturationHeader({ hook, datamatrixEnabled, setDatamatr
 
       {/* ── BANNIÈRE MODE MODIFICATION SHADCN ── */}
       {hook.isModificationMode && hook.modificationInvoiceId && (
-        <div className="flex items-center gap-3 px-4 py-3 bg-amber-50 border-b border-amber-200 shrink-0">
+        <div className="flex items-center gap-2 px-4 py-1.5 bg-amber-50 border-b border-amber-200 shrink-0">
           <div className="p-2 bg-amber-100 text-amber-600 rounded-xl shrink-0">
             <AlertTriangle className="size-4" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-bold text-amber-800 uppercase tracking-wide">{hook.t('facturation:modification_mode.title')}</p>
-            <div className="flex flex-wrap gap-3 text-label text-amber-700 mt-0.5">
+            <div className="flex flex-wrap gap-2 text-label text-amber-700 mt-0.5">
               <span>{hook.t('facturation:modification_mode.original_total')}: <strong className="font-semibold">{formatCurrency(Math.round(hook.originalTotalTtc))}</strong></span>
               <span>{hook.t('facturation:modification_mode.new_total')}: <strong className="font-semibold">{formatCurrency(Math.round(hook.totals.totalTtc))}</strong></span>
               {hook.totals.totalTtc !== hook.originalTotalTtc && (

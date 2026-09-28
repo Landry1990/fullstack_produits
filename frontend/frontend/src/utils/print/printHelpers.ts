@@ -305,7 +305,10 @@ export function buildTicketPrintHtml(ticketWidth: number, content: string, style
       max-width: ${ticketWidth}mm !important;
       min-width: 0 !important;
       margin: 0 !important;
-      padding: 2mm !important;
+      /* Marges élargies : les imprimantes thermiques ont ~3-4mm de bord
+         non imprimable de chaque côté — sans cela, la colonne des montants
+         (alignée à droite) est rognée. */
+      padding: 1mm 4mm 2mm 3mm !important;
       background: white !important;
       color: black !important;
       box-shadow: none !important;
@@ -313,12 +316,28 @@ export function buildTicketPrintHtml(ticketWidth: number, content: string, style
       overflow: hidden;
       word-break: break-word;
       overflow-wrap: break-word;
+      font-size: 12px;
+      line-height: 1.3;
     }
     #ticket-preview * {
       color: black !important;
     }
+    /* Impression thermique 203 dpi : les traits fins (font-weight < 600)
+       ressortent gris/effacés. On force du semibold partout pour obtenir
+       des traits épais et un noir net, comme les tickets des autres caisses. */
+    #ticket-preview :where(p, span, td, th, div, h1, h2, h3, h4, h5, a, li, strong, b, em) {
+      font-weight: 600 !important;
+    }
     #ticket-preview table { table-layout: fixed; width: 100% !important; }
     #ticket-preview td, #ticket-preview th { overflow: hidden; text-overflow: ellipsis; }
+    /* Rehausse les tailles de police trop petites pour l'impression thermique
+       (text-micro=9px, text-caption=10px, [8px] pour les prix unitaires). */
+    #ticket-preview .text-micro { font-size: 11px !important; }
+    #ticket-preview .text-caption { font-size: 12px !important; }
+    #ticket-preview .text-xs { font-size: 11.5px !important; }
+    #ticket-preview .text-sm { font-size: 13px !important; }
+    #ticket-preview .text-base { font-size: 14px !important; }
+    #ticket-preview [class*="text-[8px]"] { font-size: 10px !important; }
   </style>
 </head>
 <body>

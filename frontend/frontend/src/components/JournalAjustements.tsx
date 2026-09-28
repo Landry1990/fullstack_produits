@@ -19,7 +19,7 @@ export default function JournalAjustements() {
     } = useAjustementsData();
 
     return (
-        <div className="h-screen bg-slate-100 p-2 sm:p-3 lg:p-4 flex flex-col overflow-hidden">
+        <div className="h-full min-h-0 bg-slate-100 p-2 sm:p-3 lg:p-4 flex flex-col overflow-hidden">
             <GoeyToaster position="top-right" />
 
             <div className="max-w-[1600px] mx-auto w-full flex flex-col h-full gap-2 lg:gap-4">

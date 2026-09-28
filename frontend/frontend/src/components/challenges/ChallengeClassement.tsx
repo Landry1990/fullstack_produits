@@ -19,17 +19,17 @@ interface Props {
 
 const MEDAL_CONFIG: Record<number, { className: string; rowClassName: string; icon: React.ReactNode }> = {
     1: {
-        className: 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-white',
+        className: 'bg-amber-100 text-amber-700 border border-amber-300',
         rowClassName: 'bg-yellow-50/60',
         icon: <Trophy className="size-4" />,
     },
     2: {
-        className: 'bg-gradient-to-br from-slate-300 to-slate-500 text-white',
+        className: 'bg-slate-100 text-slate-600 border border-slate-300',
         rowClassName: 'bg-slate-50/60',
         icon: <Medal className="size-4" />,
     },
     3: {
-        className: 'bg-gradient-to-br from-orange-400 to-orange-600 text-white',
+        className: 'bg-orange-100 text-orange-700 border border-orange-300',
         rowClassName: 'bg-orange-50/60',
         icon: <Medal className="size-4" />,
     },

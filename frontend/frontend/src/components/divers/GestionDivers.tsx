@@ -290,7 +290,7 @@ const GestionDivers: React.FC<{ defaultTab?: DiversTab }> = ({ defaultTab = 'ca'
   const ActiveIcon = activeMeta.icon;
 
   return (
-    <div className="p-4 sm:p-6 h-full flex flex-col space-y-5 bg-slate-50/50 dark:bg-slate-950/30">
+    <div className="p-2 lg:p-3 h-full flex flex-col gap-3 bg-slate-50/50 dark:bg-slate-950/30">
       <div className="flex items-center gap-3">
         <div className={`p-2.5 rounded-xl ${activeMeta.iconClass}`}>
           <ActiveIcon className="h-6 w-6" aria-hidden="true" />
@@ -303,17 +303,17 @@ const GestionDivers: React.FC<{ defaultTab?: DiversTab }> = ({ defaultTab = 'ca'
 
       <Tabs value={activeTab} onValueChange={(value) => handleTabChange(value as DiversTab)} className="flex-1 flex flex-col min-h-0">
         <TabsList className="grid h-auto w-full grid-cols-1 sm:grid-cols-3 gap-2 bg-transparent p-0">
-          <TabsTrigger value="ca" className="h-auto min-h-16 justify-start gap-3 border-2 border-transparent bg-white px-4 py-3 shadow-sm data-[state=active]:border-emerald-500 data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-800 dark:bg-slate-950 dark:data-[state=active]:bg-emerald-950/40 dark:data-[state=active]:text-emerald-300">
+          <TabsTrigger value="ca" className="h-auto min-h-10 justify-start gap-3 border-2 border-transparent bg-white px-3 py-2 shadow-sm data-[state=active]:border-emerald-500 data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-800 dark:bg-slate-950 dark:data-[state=active]:bg-emerald-950/40 dark:data-[state=active]:text-emerald-300">
             <DollarSign className="h-5 w-5 shrink-0" aria-hidden="true" />
-            <span className="text-left"><span className="block font-semibold">{t('divers.revenue_tab')}</span><span className="hidden lg:block text-xs font-normal opacity-70">{t('divers.revenue_tab_hint')}</span></span>
+            <span className="text-left"><span className="block font-semibold">{t('divers.revenue_tab')}</span><span className="hidden xl:block text-xs font-normal opacity-70">{t('divers.revenue_tab_hint')}</span></span>
           </TabsTrigger>
-          <TabsTrigger value="commandes" className="h-auto min-h-16 justify-start gap-3 border-2 border-transparent bg-white px-4 py-3 shadow-sm data-[state=active]:border-amber-500 data-[state=active]:bg-amber-50 data-[state=active]:text-amber-800 dark:bg-slate-950 dark:data-[state=active]:bg-amber-950/40 dark:data-[state=active]:text-amber-300">
+          <TabsTrigger value="commandes" className="h-auto min-h-10 justify-start gap-3 border-2 border-transparent bg-white px-3 py-2 shadow-sm data-[state=active]:border-amber-500 data-[state=active]:bg-amber-50 data-[state=active]:text-amber-800 dark:bg-slate-950 dark:data-[state=active]:bg-amber-950/40 dark:data-[state=active]:text-amber-300">
             <ShoppingBag className="h-5 w-5 shrink-0" aria-hidden="true" />
-            <span className="text-left"><span className="block font-semibold">{t('divers.orders_tab')}</span><span className="hidden lg:block text-xs font-normal opacity-70">{t('divers.orders_tab_hint')}</span></span>
+            <span className="text-left"><span className="block font-semibold">{t('divers.orders_tab')}</span><span className="hidden xl:block text-xs font-normal opacity-70">{t('divers.orders_tab_hint')}</span></span>
           </TabsTrigger>
-          <TabsTrigger value="stock" className="h-auto min-h-16 justify-start gap-3 border-2 border-transparent bg-white px-4 py-3 shadow-sm data-[state=active]:border-emerald-500 data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-800 dark:bg-slate-950 dark:data-[state=active]:bg-emerald-950/40 dark:data-[state=active]:text-emerald-300">
+          <TabsTrigger value="stock" className="h-auto min-h-10 justify-start gap-3 border-2 border-transparent bg-white px-3 py-2 shadow-sm data-[state=active]:border-emerald-500 data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-800 dark:bg-slate-950 dark:data-[state=active]:bg-emerald-950/40 dark:data-[state=active]:text-emerald-300">
             <Warehouse className="h-5 w-5 shrink-0" aria-hidden="true" />
-            <span className="text-left"><span className="block font-semibold">{t('divers.stock_tab')}</span><span className="hidden lg:block text-xs font-normal opacity-70">{t('divers.stock_tab_hint')}</span></span>
+            <span className="text-left"><span className="block font-semibold">{t('divers.stock_tab')}</span><span className="hidden xl:block text-xs font-normal opacity-70">{t('divers.stock_tab_hint')}</span></span>
           </TabsTrigger>
         </TabsList>
 
@@ -512,8 +512,8 @@ const GestionDivers: React.FC<{ defaultTab?: DiversTab }> = ({ defaultTab = 'ca'
             </div>
             {viewMode === 'daily' && dailyVentes.length > 0 && (
               <div className="px-4 py-3 border-t bg-muted/30">
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  <div className="flex items-center gap-6 text-sm">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-x-3 gap-y-1 text-xs">
                     <span className="text-muted-foreground"><strong className="text-slate-700">{dailyVentes.reduce((s, d) => s + d.nb_produits, 0)}</strong> {t('divers.products_count')}</span>
                     <span className="text-muted-foreground"><strong className="text-slate-700">{dailyVentes.reduce((s, d) => s + d.total_quantity, 0)}</strong> {t('divers.quantities_count')}</span>
                     <span className="text-muted-foreground"><strong className="text-slate-700">{dailyVentes.reduce((s, d) => s + d.nb_factures, 0)}</strong> {t('divers.invoices_count')}</span>
@@ -540,8 +540,8 @@ const GestionDivers: React.FC<{ defaultTab?: DiversTab }> = ({ defaultTab = 'ca'
           </Card>
         </TabsContent>
 
-        <TabsContent value="commandes" className="flex-1 min-h-0 mt-6 data-[state=inactive]:hidden">
-          <Commandes forcedType="DIV" />
+        <TabsContent value="commandes" className="flex-1 min-h-0 mt-2 data-[state=inactive]:hidden">
+          <Commandes forcedType="DIV" embedded />
         </TabsContent>
 
         <TabsContent value="stock" className="flex-1 min-h-0 overflow-auto space-y-4 mt-4 data-[state=inactive]:hidden">

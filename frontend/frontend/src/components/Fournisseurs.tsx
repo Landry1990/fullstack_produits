@@ -36,7 +36,7 @@ export default function Fournisseurs() {
       <ErrorState error={state.error} className="mx-4 mt-4 shrink-0" />
 
       {/* Header with Tabs */}
-      <div className="px-6 py-4 shrink-0 flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-slate-200 bg-white">
+      <div className="px-4 py-2.5 shrink-0 flex flex-col sm:flex-row items-center justify-between gap-2 border-b border-slate-200 bg-white">
         <div className="flex items-center gap-3">
            <div className="p-2.5 bg-emerald-100 rounded-lg">
               <Building2 className="size-5 text-emerald-600" />

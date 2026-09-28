@@ -256,8 +256,8 @@ export default function ReapproHistory() {
 
       {/* Detail Dialog */}
       <Dialog open={!!selectedSession} onOpenChange={(open) => !open && setSelectedSession(null)}>
-        <DialogContent className="max-w-2xl rounded-2xl p-0 overflow-hidden">
-          <div className="px-6 pt-6 pb-4 border-b border-slate-100">
+        <DialogContent className="max-h-[90vh] max-w-2xl rounded-2xl p-0 overflow-hidden flex flex-col">
+          <div className="px-6 pt-6 pb-4 border-b border-slate-100 shrink-0">
             <DialogHeader>
               <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-slate-100 text-slate-700 rounded-lg">
@@ -275,8 +275,8 @@ export default function ReapproHistory() {
             </DialogHeader>
           </div>
 
-          <div className="p-6 space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="flex flex-col flex-1 min-h-0 p-6 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 shrink-0">
               <Card variant="bordered" padding="md" className="rounded-xl">
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
                   {t('stock:reappro_history.summary')}
@@ -297,41 +297,43 @@ export default function ReapproHistory() {
               </Card>
             </div>
 
-            <Card variant="bordered" padding="none" className="rounded-xl overflow-hidden">
-              <Table className="table-fixed">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('common:product')}</TableHead>
-                    <TableHead className="px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('stock:reappro_history.col_lot_exp')}</TableHead>
-                    <TableHead className="px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">{t('stock:reappro_history.col_qty')}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {selectedSession?.adjustments?.map((adj) => (
-                    <TableRow key={adj.id}>
-                      <TableCell className="px-3 py-2 text-sm font-medium text-slate-700">
-                        {adj.produit_name}
-                      </TableCell>
-                      <TableCell className="px-3 py-2">
-                        <div className="flex flex-col text-xs">
-                          <span className="font-medium text-slate-600">{adj.lot_num}</span>
-                          <span className="text-slate-400">
-                            {formatDate(adj.expiry) !== '-' ? formatDate(adj.expiry) : 'N/A'}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="px-3 py-2 text-center">
-                        <Badge variant="success" size="sm">
-                          +{adj.quantity_change}
-                        </Badge>
-                      </TableCell>
+            <Card variant="bordered" padding="none" className="rounded-xl overflow-hidden flex-1 min-h-0">
+              <div className="overflow-auto h-full">
+                <Table className="table-fixed">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('common:product')}</TableHead>
+                      <TableHead className="px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('stock:reappro_history.col_lot_exp')}</TableHead>
+                      <TableHead className="px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">{t('stock:reappro_history.col_qty')}</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {selectedSession?.adjustments?.map((adj) => (
+                      <TableRow key={adj.id}>
+                        <TableCell className="px-3 py-2 text-sm font-medium text-slate-700">
+                          {adj.produit_name}
+                        </TableCell>
+                        <TableCell className="px-3 py-2">
+                          <div className="flex flex-col text-xs">
+                            <span className="font-medium text-slate-600">{adj.lot_num}</span>
+                            <span className="text-slate-400">
+                              {formatDate(adj.expiry) !== '-' ? formatDate(adj.expiry) : 'N/A'}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="px-3 py-2 text-center">
+                          <Badge variant="success" size="sm">
+                            +{adj.quantity_change}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </Card>
 
-            <DialogFooter className="pt-2">
+            <DialogFooter className="shrink-0 pt-2">
               <Button variant="outline" onClick={() => setSelectedSession(null)}>
                 {t('common:close')}
               </Button>

@@ -47,10 +47,10 @@ export function CaisseHeader({
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col">
-      <div className="p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{t('title')}</h1>
-          <p className="text-slate-500 text-sm mt-1">{t('subtitle')}</p>
+          <p className="hidden xl:block text-slate-500 text-sm mt-1">{t('subtitle')}</p>
         </div>
 
         {isMultiCaisse && (
