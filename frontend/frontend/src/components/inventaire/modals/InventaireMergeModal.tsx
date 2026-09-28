@@ -50,8 +50,8 @@ export function InventaireMergeModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setShowMergeModal(false)}>
-            <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden" role="dialog" aria-modal="true" aria-label={t('inventaire.merge.modal_title')} onClick={e => e.stopPropagation()}>
-                <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center gap-4">
+            <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden max-h-[92vh] flex flex-col" role="dialog" aria-modal="true" aria-label={t('inventaire.merge.modal_title')} onClick={e => e.stopPropagation()}>
+                <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center gap-4 shrink-0">
                     <div className="size-12 rounded-xl bg-blue-50 flex items-center justify-center">
                         <ArrowUpDown className="h-6 w-6 text-blue-500" />
                     </div>
@@ -65,7 +65,7 @@ export function InventaireMergeModal({
                     </div>
                 </div>
 
-                <div className="p-6 space-y-4">
+                <div className="p-6 space-y-4 flex-1 min-h-0 overflow-y-auto">
                     {/* Warning about list merging */}
                     {viewMode === 'LIST' && (
                         <div className="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-xl">
@@ -125,7 +125,7 @@ export function InventaireMergeModal({
                     </div>
                 </div>
 
-                <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex justify-end gap-3">
+                <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex justify-end gap-3 shrink-0">
                     <button
                         type="button"
                         className="inline-flex items-center justify-center h-9 px-5 rounded-xl text-sm font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors"

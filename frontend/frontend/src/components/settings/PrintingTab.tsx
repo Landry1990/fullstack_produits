@@ -1,9 +1,73 @@
-import { MessageSquare, ChevronRight, Printer, Smartphone } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { MessageSquare, ChevronRight, Printer, RefreshCw, Smartphone } from 'lucide-react'
 import { Checkbox } from '../shadcn/checkbox'
 import { Select } from '../ui/Select'
+import { gooeyToast } from 'goey-toast'
+import {
+  getSavedPrinterName,
+  setPrinterName as setSavedPrinterName,
+  shouldOpenDrawer,
+  setOpenDrawer as setSavedOpenDrawer,
+  listPrinters,
+  printTestTicket,
+} from '../../services/qzPrinter'
+import { logger } from '../../utils/logger'
 import type { PrintingTabProps } from './types'
 
 export function PrintingTab({ formData, handleChange, t, invSettings, updateInvSettings }: PrintingTabProps) {
+  const [printerName, setPrinterName] = useState(getSavedPrinterName() || '')
+  const [openDrawer, setOpenDrawer] = useState(shouldOpenDrawer())
+  const [printers, setPrinters] = useState<string[]>([])
+  const [detecting, setDetecting] = useState(false)
+  const [testingPrint, setTestingPrint] = useState(false)
+
+  useEffect(() => {
+    setPrinterName(getSavedPrinterName() || '')
+    setOpenDrawer(shouldOpenDrawer())
+  }, [])
+
+  const handlePrinterChange = (value: string) => {
+    setPrinterName(value)
+    setSavedPrinterName(value)
+  }
+
+  const handleOpenDrawerChange = (checked: boolean) => {
+    setOpenDrawer(checked)
+    setSavedOpenDrawer(checked)
+  }
+
+  const handleDetectPrinters = async () => {
+    setDetecting(true)
+    try {
+      const list = await listPrinters()
+      setPrinters(list)
+      if (!printerName && list.length > 0) {
+        handlePrinterChange(list[0])
+      }
+      gooeyToast.success(t('messages.qz_printers_found', { count: list.length, defaultValue: `${list.length} imprimante(s) détectée(s)` }))
+    } catch (err) {
+      logger.warn('Erreur détection imprimantes QZ Tray', err)
+      const detail = err instanceof Error ? ` (${err.message})` : ''
+      gooeyToast.error(t('messages.qz_not_found') + detail)
+    } finally {
+      setDetecting(false)
+    }
+  }
+
+  const handleTestPrint = async () => {
+    setTestingPrint(true)
+    try {
+      await printTestTicket(formData.pharmacy_name)
+      gooeyToast.success(t('messages.print_test_sent'))
+    } catch (err) {
+      logger.warn('Erreur test impression QZ Tray', err)
+      const detail = err instanceof Error ? ` (${err.message})` : ''
+      gooeyToast.error(t('messages.qz_not_found') + detail)
+    } finally {
+      setTestingPrint(false)
+    }
+  }
+
   return (
     <>
       {/* Section: Messages Ticket */}
@@ -127,6 +191,68 @@ export function PrintingTab({ formData, handleChange, t, invSettings, updateInvS
                 </p>
               </div>
             )}
+          </div>
+        </div>
+      </div>
+
+      {/* Section: Imprimante ESC/POS (QZ Tray) */}
+      <div className="bg-white shadow-xl border border-slate-200 rounded-2xl">
+        <div className="p-6 p-8">
+          <h3 className="font-bold text-lg flex items-center gap-3 mb-6">
+            <Printer className="size-6 text-indigo-600" />
+            {t('sections.qz_tray')}
+          </h3>
+          <p className="text-sm text-slate-500 italic leading-relaxed mb-6">
+            {t('hints.qz_tray')}
+          </p>
+
+          <div className="flex flex-col gap-1">
+            <label>
+              <span className="text-sm font-bold text-slate-500">{t('labels.qz_printer')}</span>
+            </label>
+            <div className="flex gap-2">
+              <input
+                list="qz-printer-list"
+                type="text"
+                value={printerName}
+                onChange={(e) => handlePrinterChange(e.target.value)}
+                placeholder={t('placeholders.qz_printer')}
+                className="flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+              <button
+                type="button"
+                onClick={handleDetectPrinters}
+                disabled={detecting}
+                className="inline-flex items-center gap-1 rounded-xl bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-600 hover:bg-indigo-100 disabled:opacity-50"
+              >
+                <RefreshCw className={`size-4 ${detecting ? 'animate-spin' : ''}`} />
+                {t('buttons.detect')}
+              </button>
+            </div>
+            <datalist id="qz-printer-list">
+              {printers.map((p) => (
+                <option key={p} value={p} />
+              ))}
+            </datalist>
+          </div>
+
+          <div className="mt-5 flex items-center justify-between">
+            <span className="text-sm font-bold text-slate-500">{t('labels.open_drawer')}</span>
+            <Checkbox
+              checked={openDrawer}
+              onCheckedChange={(checked) => handleOpenDrawerChange(!!checked)}
+            />
+          </div>
+
+          <div className="mt-6">
+            <button
+              type="button"
+              onClick={handleTestPrint}
+              disabled={testingPrint}
+              className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+            >
+              {t('buttons.test_print')}
+            </button>
           </div>
         </div>
       </div>

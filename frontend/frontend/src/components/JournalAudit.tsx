@@ -188,8 +188,8 @@ const JournalAudit: React.FC = () => {
   };
 
   return <PageContainer variant="dense" className="lg:px-10">
-    <div className="flex flex-wrap items-start justify-between gap-3 mb-5">
-      <div className="flex items-center gap-3"><div className="p-2.5 bg-slate-800 text-white rounded-xl"><ClipboardList className="size-5" /></div><div><h2 className="text-2xl font-black text-slate-800">{t('title')}</h2><p className="text-sm text-slate-500">{t('subtitle')}</p></div></div>
+    <div className="flex flex-wrap items-start justify-between gap-2 mb-3 px-4 py-2.5">
+      <div className="flex items-center gap-2"><div className="p-2 bg-slate-800 text-white rounded-xl"><ClipboardList className="size-5" /></div><div><h2 className="text-xl font-black text-slate-800">{t('title')}</h2><p className="hidden xl:block text-xs text-slate-500">{t('subtitle')}</p></div></div>
       <div className="flex gap-2">
         {user?.is_superuser && (
           <Button variant="outline" size="sm" onClick={() => setShowPurgeModal(true)} className="border-red-200 text-red-700 hover:border-red-500 hover:text-red-700 hover:bg-red-50">
@@ -201,15 +201,15 @@ const JournalAudit: React.FC = () => {
       </div>
     </div>
     {error && <div className="flex gap-2 p-3 rounded-xl bg-red-50 border border-red-200 mb-4 text-sm text-red-700"><AlertTriangle className="size-4" />{t('messages.load_error')}</div>}
-    {statistics && <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">{[
+    {statistics && <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">{[
       ['stats.total', formatNumber(statistics.total_logs), 'stats.all_time'], ['stats.last_24h', statistics.recent_activity.last_24h, 'stats.today'],
       ['stats.last_7d', statistics.recent_activity.last_7d, 'stats.this_week'], ['stats.last_30d', statistics.recent_activity.last_30d, 'stats.this_month'],
-    ].map(([label, value, sub]) => <Card key={label} className="p-3"><div className="text-caption lg:text-xs font-black uppercase text-slate-500">{t(String(label))}</div><div className="text-xl lg:text-2xl font-black text-slate-800">{value}</div><div className="text-caption lg:text-xs text-slate-500">{t(String(sub))}</div></Card>)}</div>}
+    ].map(([label, value, sub]) => <Card key={label} className="px-3 py-2"><div className="text-caption lg:text-xs font-black uppercase text-slate-500">{t(String(label))}</div><div className="text-xl font-black text-slate-800">{value}</div><div className="text-caption lg:text-xs text-slate-500">{t(String(sub))}</div></Card>)}</div>}
     <div className="flex flex-wrap gap-1.5 mb-4">
       {QUICK_FILTERS.map(item => <Button key={item.key} size="sm" variant={quickFilter === item.value ? 'secondary' : 'outline'} onClick={() => { setQuickFilter(item.value); setPage(1); }} className={`rounded-full ${quickFilter === item.value ? 'bg-indigo-600 hover:bg-indigo-700 shadow-none' : ''}`}>{t(item.key)}</Button>)}
       <div className="relative sm:ml-auto flex-1 sm:flex-none min-w-48"><Search className="absolute left-2.5 top-2.5 size-3.5 text-slate-400 pointer-events-none" /><Input disableUppercase value={search} onChange={e => setSearch(e.target.value)} placeholder={t('filters.search_placeholder')} aria-label={t('filters.search_label')} className="w-full sm:w-56 h-8 pl-8 rounded-full text-xs" /></div>
     </div>
-    {showFilters && <Card className="p-4 mb-4 grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
+    {showFilters && <Card className="p-3 mb-3 grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
       <FilterSelect label={t('filters.user_label')} value={userFilter} onChange={setUserFilter}><option value="">{t('filters.all_users')}</option>{users.filter(u => u.id).map(u => <option key={u.id} value={String(u.id)}>{u.first_name || u.last_name ? `${u.first_name} ${u.last_name}`.trim() : u.username}</option>)}</FilterSelect>
       <FilterSelect label={t('filters.model_label')} value={modelFilter} onChange={setModelFilter}><option value="">{t('filters.all_models')}</option>{MODELS.map(model => <option key={model} value={model}>{t(`models.${model}`)}</option>)}</FilterSelect>
       <FilterInput label={t('filters.date_from')} value={dateFrom} onChange={setDateFrom} /><FilterInput label={t('filters.date_to')} value={dateTo} onChange={setDateTo} />

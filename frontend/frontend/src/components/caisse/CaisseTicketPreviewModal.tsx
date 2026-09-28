@@ -8,6 +8,7 @@ import { ClientNameModal } from '../sales/modals/ClientNameModal'
 import api from '../../services/api'
 import type { TicketCaisse, Facture, PharmacySettings } from '../../types'
 import { printTicketInIframe } from '../../utils/print/printHelpers'
+import { printTicketSmart } from '../../utils/print/printTicketSmart'
 import { preparePrintAuthSync } from '../../utils/storage'
 
 interface CaisseTicketPreviewModalProps {
@@ -149,16 +150,22 @@ export function CaisseTicketPreviewModal({
     }
   }, [])
 
-  const handlePrint = useCallback(() => {
-    const ticketElement = document.getElementById('ticket-preview')
-    if (!ticketElement) return
+  const handlePrint = useCallback(async () => {
+    if (!ticket || !settings) return
 
-    const ticketWidth = settings?.ticket_paper_width || 80
-    const content = ticketElement.outerHTML
-    printTicketInIframe(ticketWidth, content, styleTags, () => {
-      gooeyToast.error(t('common:popup_blocked'))
-    })
-  }, [settings, styleTags, t])
+    const htmlFallback = () => {
+      const ticketElement = document.getElementById('ticket-preview')
+      if (!ticketElement) return
+
+      const ticketWidth = settings.ticket_paper_width || 80
+      const content = ticketElement.outerHTML
+      printTicketInIframe(ticketWidth, content, styleTags, () => {
+        gooeyToast.error(t('common:popup_blocked'))
+      })
+    };
+
+    await printTicketSmart(ticket, settings, htmlFallback)
+  }, [settings, styleTags, t, ticket])
 
   return (
     <>

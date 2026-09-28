@@ -406,9 +406,10 @@ const _navigate = useNavigate()
 
   return (
     <div className="h-full bg-slate-50 flex flex-col overflow-hidden font-sans">
-      <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4">
+      <div className="flex-1 min-h-0 overflow-hidden p-3 sm:p-4 flex flex-col gap-4">
 
       {/* Header Card */}
+      <div className="shrink-0">
       <CaisseHeader
         isMultiCaisse={isMultiCaisse}
         selectedPosteCaisseId={selectedPosteCaisseId}
@@ -429,17 +430,20 @@ const _navigate = useNavigate()
         selectedFactureIds={selectedFactureIds}
         onBulkCancelClick={handleBulkCancelClick}
       />
+      </div>
 
       {/* Quick Stats Cards */}
+      <div className="shrink-0">
       <CaisseStatsCards
         facturesCount={facturesEnAttente.length}
         totalMontantEnAttente={totalMontantEnAttente}
         activeCouponsCount={activeCouponsCount}
         appliedCouponsCount={appliedCouponsCount}
       />
+      </div>
 
       {/* Main Content: Sidebar + Table */}
-      <div className="flex gap-6 min-h-0" style={{ height: 'calc(100vh - 340px)' }}>
+      <div className="flex-1 min-h-0 flex gap-6">
         {/* Panneau des Coupons (Sidebar Gauche) */}
         {isCouponPanelOpen && (
           <CouponPanel
@@ -505,9 +509,11 @@ const _navigate = useNavigate()
       </div>
 
       {/* Récap Session Live — visible selon le paramètre global hide_cash_totals (titulaire), sauf superuser */}
-      {sessionRecap?.has_session && (user?.is_superuser || !pharmacySettings?.hide_cash_totals) && (
-        <SessionRecapBar sessionRecap={sessionRecap} />
-      )}
+      <div className="shrink-0">
+        {sessionRecap?.has_session && (user?.is_superuser || !pharmacySettings?.hide_cash_totals) && (
+          <SessionRecapBar sessionRecap={sessionRecap} />
+        )}
+      </div>
 
       </div>
 

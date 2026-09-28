@@ -1,9 +1,8 @@
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, PackagePlus, Plus, X } from 'lucide-react';
+import { AlertTriangle, PackagePlus, Plus } from 'lucide-react';
 import {
     Dialog,
     DialogContent,
-    DialogHeader,
     DialogTitle,
     DialogDescription,
 } from '../shadcn/dialog';
@@ -60,7 +59,7 @@ export default function DuplicateLotModal({
                         </p>
                     </DialogDescription>
 
-                    <div className="space-y-2">
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
                         {existingLines.map((line, i) => (
                             <button
                                 key={line.id}

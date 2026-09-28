@@ -240,12 +240,12 @@ export default function StockUGReportShadcn() {
   }, []);
 
   return (
-    <div className="h-full flex flex-col bg-base-200 p-3 sm:p-4 lg:p-6">
+    <div className="h-full flex flex-col bg-base-200 p-2 lg:p-3">
       <GoeyToaster position="top-right" />
 
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="max-w-[1600px] w-full space-y-3">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 px-4 py-2.5">
           <div className="flex items-center gap-3">
             <div className="size-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-200">
               <PackageOpen className="size-7" />
@@ -292,15 +292,15 @@ export default function StockUGReportShadcn() {
         </div>
 
         {/* Global KPIs */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
           {kpiCards.map((kpi) => (
-            <Card key={kpi.title} variant="default" className="flex items-center gap-4">
-              <div className={`size-12 rounded-xl ${kpi.bg} ${kpi.color} flex items-center justify-center shrink-0`}>
-                <kpi.icon className="size-6" />
+            <Card key={kpi.title} variant="default" className="flex items-center gap-2 px-3 py-2">
+              <div className={`size-10 rounded-xl ${kpi.bg} ${kpi.color} flex items-center justify-center shrink-0`}>
+                <kpi.icon className="size-5" />
               </div>
               <div>
-                <p className="text-caption font-black text-base-content/40 tracking-wider uppercase">{kpi.title}</p>
-                <p className={`text-2xl font-black tracking-tight ${kpi.color}`}>
+                <p className="text-xs font-black text-base-content/40 tracking-wider uppercase">{kpi.title}</p>
+                <p className={`text-xl font-black tracking-tight ${kpi.color}`}>
                   {loading ? '…' : (kpi.isCurrency ? kpi.value : formatNumber(kpi.value as number))}
                 </p>
               </div>
@@ -311,7 +311,7 @@ export default function StockUGReportShadcn() {
         {/* List Card */}
         <Card variant="default" className="overflow-hidden flex flex-col">
           {/* Toolbar */}
-          <div className="px-6 py-4 border-b border-base-200 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-base-200/50">
+          <div className="px-4 py-2.5 border-b border-base-200 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-2 bg-base-200/50">
             <h2 className="text-lg font-bold text-base-content flex items-center gap-2">
               {t('stock:rapport_ug.filters.supplier_split')}
               {data && <Badge variant="primary" size="sm">{filteredSuppliers.length}</Badge>}

@@ -16,6 +16,7 @@
         "printing_format": "Format d'Impression",
         "multi_pos": "Multi-Postes",
         "cash_register": "Caisse Centralisée",
+        "qz_tray": "Imprimante ESC/POS (QZ Tray)",
         "alerts_system": "Seuils d'Alerte & Système",
         "cash_security": "Sécurité Caisse",
         "fiscal": "Précompte & Accompte",
@@ -64,6 +65,8 @@
         "pharmacist_whatsapp": "Numéro WhatsApp Titulaire",
         "add_custom_mode": "Ajouter un mode personnalisé",
         "centralized_cash_register": "Caisse Centralisée",
+        "qz_printer": "Imprimante QZ Tray",
+        "open_drawer": "Ouvrir le tiroir-caisse",
         "telegram_bot_token": "Token Bot Telegram",
         "telegram_chat_id": "Chat ID",
         "monthly_report_enabled": "Activer le rapport automatique",
@@ -105,7 +108,8 @@
         "custom_mode": "Ex: PayPal, Stripe, Wave...",
         "telegram_bot_token": "123456789:ABCDefGh...",
         "telegram_chat_id": "Identifiant numérique du chat",
-        "report_recipients": "email1@exemple.com, email2@exemple.com"
+        "report_recipients": "email1@exemple.com, email2@exemple.com",
+        "qz_printer": "Saisissez ou sélectionnez une imprimante..."
     },
     "hints": {
         "pharmacy_name": "Le nom officiel tel qu'il apparaîtra sur les factures et tickets.",
@@ -128,6 +132,7 @@
         "custom_mode": "Saisissez un nom et appuyez sur Entrée ou cliquez Ajouter. N'oubliez pas de sauvegarder.",
         "multi_pos": "Si activé, le système permet de dispatcher les ventes vers différents terminaux physiques.",
         "centralized_cash_register": "Active le groupement des ventes par session journalière pour une clôture centralisée.",
+        "qz_tray": "Nécessite QZ Tray installé et lancé sur ce poste. L'imprimante thermique sera utilisée en mode natif ESC/POS quand elle est disponible.",
         "telegram": "Créez un bot via @BotFather, copiez le token, envoyez /start au bot, puis récupérez le Chat ID.",
         "telegram_start": "Envoyez /start à votre bot avant de cliquer sur Récupérer.",
         "monthly_report": "Configurez les éléments à inclure dans le rapport mensuel",
@@ -200,7 +205,10 @@
         "pos_confirm_close": "Fermer ce point de vente ?",
         "caisse_confirm_delete": "Supprimer la caisse {{nom}} ?",
         "caisse_deleted": "Caisse supprimée.",
-        "caisse_delete_error": "Erreur suppression caisse"
+        "caisse_delete_error": "Erreur suppression caisse",
+        "qz_not_found": "QZ Tray est introuvable ou n'a pas pu se connecter. Vérifiez qu'il est installé et lancé, puis réessayez.",
+        "qz_printers_found": "{{count}} imprimante(s) détectée(s).",
+        "print_test_sent": "Ticket de test envoyé à l'imprimante QZ Tray."
     },
     "buttons": {
         "logo_importing": "Import...",
@@ -211,7 +219,9 @@
         "delete_mode_title": "Supprimer ce mode",
         "add": "+ Ajouter",
         "get_chat_id": "🔍 Récupérer Chat ID",
-        "test": "Tester"
+        "test": "Tester",
+        "detect": "Détecter",
+        "test_print": "Tester l'impression"
     },
     "options": {
         "regime_reel": "Régime du Réel",

@@ -51,10 +51,10 @@ const Promis: React.FC = () => {
     const openDetail = (promis: Promis) => setDetailModalState({ isOpen: true, promis });
 
     return (
-        <div className="h-screen overflow-hidden bg-slate-50 p-2 sm:p-3 lg:p-4">
+        <div className="h-full min-h-0 overflow-hidden bg-slate-50 p-2 sm:p-3 lg:p-4">
             <div className="h-full max-w-[1600px] mx-auto space-y-3 overflow-hidden flex flex-col">
                 {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-4 py-2.5">
                     <div className="flex items-center gap-3">
                         <div className="size-10 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-600/20">
                             <PackageOpen className="size-5" />

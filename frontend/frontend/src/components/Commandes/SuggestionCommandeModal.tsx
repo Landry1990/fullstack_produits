@@ -215,7 +215,7 @@ export default function SuggestionCommandeModal({
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
       <DialogContent
-        className="max-w-5xl w-[95vw] p-0 overflow-hidden rounded-2xl border border-slate-200 shadow-2xl shadow-emerald-900/10 bg-white"
+        className="max-w-5xl w-[95vw] max-h-[90vh] p-0 overflow-hidden rounded-2xl border border-slate-200 shadow-2xl shadow-emerald-900/10 bg-white"
         aria-labelledby="suggestion-modal-title"
         aria-describedby="suggestion-modal-desc"
       >
@@ -267,7 +267,7 @@ export default function SuggestionCommandeModal({
         </DialogHeader>
 
         {/* ── Body ── */}
-        <div className="flex flex-col overflow-hidden" style={{ minHeight: '320px', maxHeight: '520px' }}>
+        <div className="flex flex-col overflow-hidden" style={{ minHeight: '320px', maxHeight: '60vh' }}>
           {stepSuggestion === 1 ? (
             /* ── STEP 1 : CONFIG ── */
             <div className="overflow-auto p-6 space-y-5">

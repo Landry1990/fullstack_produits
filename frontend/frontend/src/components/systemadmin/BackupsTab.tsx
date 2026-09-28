@@ -556,7 +556,7 @@ export function BackupsTab({
       {showRestoreConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div
-            className="bg-white rounded-xl shadow-xl border border-gray-200 w-full max-w-lg mx-4 p-6"
+            className="bg-white rounded-xl shadow-xl border border-gray-200 w-full max-w-lg mx-4 p-6 max-h-[92vh] overflow-y-auto"
             role="dialog"
             aria-modal="true"
             aria-labelledby="restore-confirm-title"

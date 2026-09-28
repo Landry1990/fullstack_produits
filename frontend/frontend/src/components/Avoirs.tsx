@@ -71,7 +71,7 @@ export default function Avoirs() {
 
     // Default 'LIST' view
     return (
-        <div className="h-screen overflow-hidden bg-slate-50 p-2 sm:p-3 lg:p-4">
+        <div className="h-full min-h-0 overflow-hidden bg-slate-50 p-2 sm:p-3 lg:p-4">
             <div className="h-full max-w-[1600px] mx-auto space-y-3 overflow-hidden flex flex-col">
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">

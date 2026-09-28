@@ -432,8 +432,8 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
 
       {/* Products Preview Popup */}
       <Dialog open={!!previewFacture} onOpenChange={(open) => { if (!open) { setPreviewFacture(null); onPreviewClosed?.(); } }}>
-        <DialogContent className="max-w-full sm:max-w-2xl p-0 gap-0 overflow-hidden" aria-labelledby="preview-title" aria-describedby="preview-desc">
-          <DialogHeader className="px-6 py-5 border-b border-slate-200 bg-gradient-to-r from-emerald-50 via-white to-sky-50">
+        <DialogContent className="max-w-full sm:max-w-2xl p-0 gap-0 overflow-hidden max-h-[90vh] flex flex-col" aria-labelledby="preview-title" aria-describedby="preview-desc">
+          <DialogHeader className="px-6 py-5 border-b border-slate-200 bg-gradient-to-r from-emerald-50 via-white to-sky-50 shrink-0">
             <div className="flex items-center gap-3">
               <div className="size-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-emerald-600">
                 <Package className="size-5" />
@@ -449,7 +449,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
             </div>
           </DialogHeader>
 
-          <div className="p-6">
+          <div className="p-6 flex-1 min-h-0 overflow-y-auto">
             {previewFacture?.produits && previewFacture.produits.length > 0 ? (
               <div className="rounded-xl border border-slate-200 overflow-hidden">
                 <Table className="table-fixed">
@@ -567,7 +567,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
             )}
           </div>
 
-          <DialogFooter className="px-6 py-4 border-t border-slate-200 bg-slate-50">
+          <DialogFooter className="px-6 py-4 border-t border-slate-200 bg-slate-50 shrink-0">
             <Button variant="outline" onClick={() => setPreviewFacture(null)}>
               {t('table.close')}
             </Button>

@@ -415,10 +415,10 @@ export default function ProduitShadcn() {
 
       {/* ── Main Content ── */}
       <main className="flex-1 p-4 min-h-0 overflow-hidden">
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 h-full min-h-0 w-full overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-full min-h-0 w-full overflow-hidden">
 
           {/* ═════ Left Panel : List ═════ */}
-          <section className="xl:col-span-5 flex flex-col h-full min-h-0 min-w-0 gap-3">
+          <section className="lg:col-span-5 flex flex-col h-full min-h-0 min-w-0 gap-3">
 
             {/* Search & Filters */}
             <Card variant="default" padding="md" className="shrink-0">
@@ -516,18 +516,18 @@ export default function ProduitShadcn() {
                               'hover:bg-slate-50'
                             }`}
                           >
-                            <td className="py-3 px-4 w-10" onClick={e => e.stopPropagation()}>
+                            <td className="py-2 px-4 w-10" onClick={e => e.stopPropagation()}>
                               <Checkbox size="sm" checked={isChecked} aria-label={produit.name} onChange={() => setSelectedIds(prev => { const s = new Set(prev); return s.has(produit.id) ? prev.filter(id => id !== produit.id) : [...prev, produit.id]; })} />
                             </td>
-                            <td className="py-3 px-2 w-36">
-                              <div className="flex flex-col gap-0.5">
+                            <td className="py-2 px-2 w-36">
+                              <div className="flex flex-wrap items-center gap-1">
                                 <span className="font-mono text-xs text-slate-500">{produit.cip1 || '-'}</span>
-                                {produit.cip2 && <span className="font-mono text-xs text-slate-400">{produit.cip2}</span>}
-                                {produit.cip3 && <span className="font-mono text-xs text-slate-400">{produit.cip3}</span>}
-                                {produit.cip4 && <span className="font-mono text-xs text-slate-400">{produit.cip4}</span>}
+                                {produit.cip2 && <Badge variant="outline" size="sm" className="font-mono h-4 px-1 text-[10px]">{produit.cip2}</Badge>}
+                                {produit.cip3 && <Badge variant="outline" size="sm" className="font-mono h-4 px-1 text-[10px]">{produit.cip3}</Badge>}
+                                {produit.cip4 && <Badge variant="outline" size="sm" className="font-mono h-4 px-1 text-[10px]">{produit.cip4}</Badge>}
                               </div>
                             </td>
-                            <td className="py-3 px-2">
+                            <td className="py-2 px-2">
                               <div className="flex min-w-0 items-center gap-2">
                                 <span className={cn("min-w-0 text-sm uppercase truncate", stockClass(stock))} title={produit.name}>
                                   {produit.name}
@@ -584,7 +584,7 @@ export default function ProduitShadcn() {
           </section>
 
           {/* ═════ Right Panel : Details ═════ */}
-          <section className="xl:col-span-7 h-full min-h-0 min-w-0">
+          <section className="lg:col-span-7 h-full min-h-0 min-w-0">
             <Card variant="default" padding="none" className="h-full flex flex-col overflow-hidden">
               {selectedProduit ? (
                 <>

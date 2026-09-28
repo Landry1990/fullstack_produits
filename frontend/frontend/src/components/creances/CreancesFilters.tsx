@@ -50,10 +50,10 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
     }, [showPrintMenu]);
 
     return (
-        <div className="p-6 bg-white">
-            <div className="flex flex-col xl:flex-row gap-6">
+        <div className="p-3 bg-white">
+            <div className="flex flex-col xl:flex-row gap-3">
                 {/* Main Filters Section */}
-                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="flex-1 grid grid-cols-2 lg:grid-cols-4 gap-2">
                     {/* Client Selector */}
                     <div className="space-y-2">
                         <label htmlFor="creances-client-filter" className="text-caption font-black uppercase tracking-widest text-slate-400 flex items-center gap-2 ml-1">

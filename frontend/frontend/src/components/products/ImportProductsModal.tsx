@@ -116,7 +116,7 @@ export default function ImportProductsModal({ onClose, onSuccess }: ImportProduc
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40" onClick={() => !uploading && onClose()} aria-hidden="true" />
-      <div className="relative bg-base-100 rounded-xl shadow-2xl border border-base-200 w-full max-w-lg" role="dialog" aria-modal="true" aria-label={t('products:import.title')}>
+      <div className="relative bg-base-100 rounded-xl shadow-2xl border border-base-200 w-full max-w-lg max-h-[92vh] overflow-y-auto" role="dialog" aria-modal="true" aria-label={t('products:import.title')}>
         {/* Header */}
         <div className="px-6 py-4 border-b border-base-200 flex items-center justify-between">
           <div className="flex items-center gap-3">
