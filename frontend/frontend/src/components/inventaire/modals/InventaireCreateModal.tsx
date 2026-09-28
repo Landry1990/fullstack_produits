@@ -65,7 +65,7 @@ const InventaireCreateModal: React.FC<InventaireCreateModalProps> = ({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-            <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden" role="dialog" aria-modal="true" aria-labelledby="create-inventory-title">
+            <div className="w-full max-w-2xl max-h-[92vh] overflow-y-auto bg-white rounded-2xl shadow-2xl border border-slate-200" role="dialog" aria-modal="true" aria-labelledby="create-inventory-title">
                 <div className="p-6 border-b border-slate-100 bg-slate-50 flex items-center gap-4">
                     <div className="size-12 rounded-xl bg-emerald-50 flex items-center justify-center">
                         <ClipboardIcon className="h-6 w-6 text-emerald-600" />

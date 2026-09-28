@@ -32,12 +32,12 @@ export default function AnalyseMargesProduit() {
     : [];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {/* Header avec sélecteur de période */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-4 py-2.5">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">{t('marge_produit.title', 'Analyse Marges par Produit')}</h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <h1 className="text-xl font-bold text-slate-800">{t('marge_produit.title', 'Analyse Marges par Produit')}</h1>
+          <p className="hidden xl:block text-xs text-slate-500 mt-0.5">
             {t('marge_produit.subtitle', 'Top/bottom produits par marge, produits à perte et impact promotions')}
           </p>
         </div>
@@ -55,22 +55,22 @@ export default function AnalyseMargesProduit() {
 
       {/* KPIs résumés */}
       {margeData && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 px-3 py-2">
             <div className="flex items-center gap-2 text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">
               <DollarSign size={14} />
               {t('marge_produit.total_ca', 'CA Total')}
             </div>
             <div className="text-xl font-black text-slate-800">{fmt(margeData.total_ca)}</div>
           </div>
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 px-3 py-2">
             <div className="flex items-center gap-2 text-emerald-500 text-xs font-bold uppercase tracking-wider mb-1">
               <TrendingUp size={14} />
               {t('marge_produit.total_marge', 'Marge Totale')}
             </div>
             <div className="text-xl font-black text-emerald-600">{fmt(margeData.total_marge)}</div>
           </div>
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 px-3 py-2">
             <div className="flex items-center gap-2 text-blue-500 text-xs font-bold uppercase tracking-wider mb-1">
               <Percent size={14} />
               {t('marge_produit.taux_marge_global', 'Taux Marge Global')}
@@ -79,7 +79,7 @@ export default function AnalyseMargesProduit() {
               {margeData.total_ca > 0 ? ((margeData.total_marge / margeData.total_ca) * 100).toFixed(1) : 0}%
             </div>
           </div>
-          <div className={`rounded-xl shadow-sm border p-4 ${margeData.negative_margin.length > 0 ? 'bg-red-50 border-red-200' : 'bg-white border-slate-200'}`}>
+          <div className={`rounded-xl shadow-sm border px-3 py-2 ${margeData.negative_margin.length > 0 ? 'bg-red-50 border-red-200' : 'bg-white border-slate-200'}`}>
             <div className={`flex items-center gap-2 text-xs font-bold uppercase tracking-wider mb-1 ${margeData.negative_margin.length > 0 ? 'text-red-500' : 'text-slate-400'}`}>
               <AlertTriangle size={14} />
               {t('marge_produit.produits_perte', 'Produits à Perte')}

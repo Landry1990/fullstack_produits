@@ -737,7 +737,7 @@ function PlanTab({ comptes, actions, t }: PlanTabProps) {
             {modalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
                     <div
-                        className="bg-white rounded-2xl shadow-2xl w-full max-w-md border border-slate-200"
+                        className="bg-white rounded-2xl shadow-2xl w-full max-w-md border border-slate-200 max-h-[92vh] overflow-y-auto"
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="plan-modal-title"
@@ -822,7 +822,7 @@ function PlanTab({ comptes, actions, t }: PlanTabProps) {
             {confirmDelete && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
                     <div
-                        className="bg-white rounded-2xl shadow-2xl w-full max-w-sm border border-red-200 p-6 text-center space-y-4"
+                        className="bg-white rounded-2xl shadow-2xl w-full max-w-sm border border-red-200 p-6 text-center space-y-4 max-h-[92vh] overflow-y-auto"
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="plan-delete-title"

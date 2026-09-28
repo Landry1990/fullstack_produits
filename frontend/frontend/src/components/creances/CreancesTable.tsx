@@ -71,15 +71,15 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
 
         return (
             <div className="overflow-auto h-full w-full relative">
-                <table className="w-full text-sm">
+                <table className="w-full min-w-[900px] text-sm">
                     <thead>
                         <tr className="bg-slate-50">
-                            <th className="text-caption font-black uppercase tracking-widest text-slate-400 py-4">{t('creances:client_list.client')}</th>
-                            <th className="text-caption font-black uppercase tracking-widest text-slate-400 text-right py-4">{t('creances:client_list.nb_invoices')}</th>
-                            <th className="text-caption font-black uppercase tracking-widest text-slate-400 text-right py-4">{t('creances:client_list.total_amount')}</th>
-                            <th className="text-caption font-black uppercase tracking-widest text-slate-400 text-right py-4">{t('creances:client_list.already_paid')}</th>
-                            <th className="text-caption font-black uppercase tracking-widest text-slate-400 text-right py-4">{t('creances:client_list.remaining_due')}</th>
-                            <th className="text-caption font-black uppercase tracking-widest text-slate-400 text-center py-4">{t('creances:client_list.actions')}</th>
+                            <th className="text-caption font-black uppercase tracking-widest text-slate-400 py-2 px-3">{t('creances:client_list.client')}</th>
+                            <th className="text-caption font-black uppercase tracking-widest text-slate-400 text-right py-2 px-3">{t('creances:client_list.nb_invoices')}</th>
+                            <th className="text-caption font-black uppercase tracking-widest text-slate-400 text-right py-2 px-3">{t('creances:client_list.total_amount')}</th>
+                            <th className="text-caption font-black uppercase tracking-widest text-slate-400 text-right py-2 px-3">{t('creances:client_list.already_paid')}</th>
+                            <th className="text-caption font-black uppercase tracking-widest text-slate-400 text-right py-2 px-3">{t('creances:client_list.remaining_due')}</th>
+                            <th className="text-caption font-black uppercase tracking-widest text-slate-400 text-center py-2 px-3">{t('creances:client_list.actions')}</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -96,8 +96,8 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                                     }
                                 }}
                             >
-                                <td className="py-4 px-6">
-                                    <div className="flex items-center gap-4">
+                                <td className="py-2 px-3">
+                                    <div className="flex items-center gap-2">
                                         <div className="size-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 font-black text-xs uppercase shadow-sm border border-emerald-200 group-hover:scale-110 transition-transform">
                                             {groupe.client.name.substring(0, 2)}
                                         </div>
@@ -107,21 +107,21 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                                         </div>
                                     </div>
                                 </td>
-                                <td className="text-right py-4 px-6">
+                                <td className="text-right py-2 px-3">
                                     <span className="px-2 py-1 bg-slate-100 rounded-lg font-mono text-xs font-black text-slate-500">{groupe.count}</span>
                                 </td>
-                                <td className="text-right py-4 px-6">
+                                <td className="text-right py-2 px-3">
                                     <span className="font-black text-sm text-slate-800">{formatCurrency(groupe.total)}</span>
                                 </td>
-                                <td className="text-right py-4 px-6 font-bold text-emerald-600 text-sm">
+                                <td className="text-right py-2 px-3 font-bold text-emerald-600 text-sm">
                                     {formatCurrency(groupe.paye)}
                                 </td>
-                                <td className="text-right py-4 px-6">
-                                    <span className="bg-amber-50 text-amber-600 px-4 py-2 rounded-xl font-black text-sm shadow-sm border border-amber-200">
+                                <td className="text-right py-2 px-3">
+                                    <span className="bg-amber-50 text-amber-600 px-2.5 py-1 rounded-lg font-black text-sm shadow-sm border border-amber-200">
                                         {formatCurrency(groupe.reste)}
                                     </span>
                                 </td>
-                                <td className="text-center py-4 px-6">
+                                <td className="text-center py-2 px-3">
                                     <button
                                         className="inline-flex items-center justify-center size-8 rounded-full text-slate-400 opacity-0 group-hover:opacity-100 transition-all hover:bg-emerald-50 hover:text-emerald-600"
                                         aria-label={t('common:details', { defaultValue: 'Voir le détail' })}
@@ -154,11 +154,11 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
 
     return (
         <div className="overflow-auto h-full w-full relative">
-            <table className="w-full text-sm border-separate border-spacing-0">
+            <table className="w-full min-w-[900px] text-sm border-separate border-spacing-0">
                 <thead>
                     <tr className="bg-slate-50 border-b border-slate-200">
                         {!showHistory && (
-                            <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 w-12 text-center p-4">
+                            <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 w-12 h-9 text-center px-3">
                                 <input
                                     type="checkbox"
                                     aria-label={t('common:select_all', { defaultValue: 'Tout sélectionner' })}
@@ -178,7 +178,7 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                         ] as const).map((col) => (
                             <th
                                 key={col.key}
-                                className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 text-caption font-black uppercase tracking-widest text-slate-400 cursor-pointer hover:text-emerald-600 transition-colors p-4 whitespace-nowrap"
+                                className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 text-caption font-black uppercase tracking-widest text-slate-400 cursor-pointer hover:text-emerald-600 transition-colors h-9 px-3 whitespace-nowrap"
                                 onClick={() => onSort(col.key)}
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter' || e.key === ' ') {
@@ -194,8 +194,8 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                                 </div>
                             </th>
                         ))}
-                        <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 text-caption font-black uppercase tracking-widest text-slate-400 text-center p-4">{t('creances:invoice_list.status')}</th>
-                        <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 text-caption font-black uppercase tracking-widest text-slate-400 text-center p-4">{t('creances:invoice_list.actions')}</th>
+                        <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 text-caption font-black uppercase tracking-widest text-slate-400 text-center h-9 px-3">{t('creances:invoice_list.status')}</th>
+                        <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 text-caption font-black uppercase tracking-widest text-slate-400 text-center h-9 px-3">{t('creances:invoice_list.actions')}</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -208,7 +208,7 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                         return (
                             <tr key={creance.id} className={`hover:bg-slate-50/50 transition-all group ${isSelected ? 'bg-emerald-50/30' : ''}`}>
                                 {!showHistory && (
-                                    <td className="text-center p-4">
+                                    <td className="text-center py-2 px-3">
                                         <input
                                             type="checkbox"
                                             aria-label={t('common:select_row', { defaultValue: 'Sélectionner cette facture' })}
@@ -219,7 +219,7 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                                         />
                                     </td>
                                 )}
-                                <td className="p-4">
+                                <td className="py-2 px-3">
                                     <div className="flex flex-col">
                                         <span className="font-mono text-xs font-black text-slate-500">
                                             {formatDate(creance.date)}
@@ -229,25 +229,25 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                                         </span>
                                     </div>
                                 </td>
-                                <td className="p-4">
+                                <td className="py-2 px-3">
                                     <span className="font-black text-sm text-emerald-600 tracking-tight">{creance.numero_facture || '-'}</span>
                                 </td>
-                                <td className="p-4 font-bold text-sm text-slate-500">{creance.ayant_droit_details?.nom || '-'}</td>
-                                <td className="p-4 text-right font-black text-sm text-slate-800 tabular-nums whitespace-nowrap">{formatCurrency(normalizeNumberInput(creance.total_ttc))}</td>
-                                <td className="p-4 text-right text-emerald-600 font-black text-sm tabular-nums whitespace-nowrap">{formatCurrency(normalizeNumberInput(creance.montant_paye))}</td>
-                                <td className="p-4 text-right">
+                                <td className="py-2 px-3 font-bold text-sm text-slate-500">{creance.ayant_droit_details?.nom || '-'}</td>
+                                <td className="py-2 px-3 text-right font-black text-sm text-slate-800 tabular-nums whitespace-nowrap">{formatCurrency(normalizeNumberInput(creance.total_ttc))}</td>
+                                <td className="py-2 px-3 text-right text-emerald-600 font-black text-sm tabular-nums whitespace-nowrap">{formatCurrency(normalizeNumberInput(creance.montant_paye))}</td>
+                                <td className="py-2 px-3 text-right">
                                     <span className={`${isPaid ? 'text-slate-300' : 'text-amber-600'} font-black text-sm tabular-nums whitespace-nowrap`}>
                                         {formatCurrency(remaining)}
                                     </span>
                                 </td>
-                                <td className="p-4 text-center">
+                                <td className="py-2 px-3 text-center">
                                     <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold transition-all ${
                                         isPaid ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600 animate-pulse'
                                     }`}>
                                         {isPaid ? t('creances:invoice_list.paid_badge') : t('creances:invoice_list.pending_badge')}
                                     </div>
                                 </td>
-                                <td className="p-4">
+                                <td className="py-2 px-3">
                                     <div className="flex gap-2 justify-center">
                                         <button
                                             onClick={() => onViewDetails(creance)}

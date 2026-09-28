@@ -331,7 +331,7 @@ export default function InteractionsManager() {
       {/* Modal Add/Edit */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowModal(false)}>
-          <div className="bg-base-100 rounded-2xl p-6 w-full max-w-lg shadow-2xl" role="dialog" aria-modal="true" aria-label={editingId ? t('products:interactions.edit_title') : t('products:interactions.new_title')} onClick={e => e.stopPropagation()}>
+          <div className="bg-base-100 rounded-2xl p-6 w-full max-w-lg shadow-2xl max-h-[92vh] overflow-y-auto" role="dialog" aria-modal="true" aria-label={editingId ? t('products:interactions.edit_title') : t('products:interactions.new_title')} onClick={e => e.stopPropagation()}>
             <h2 className="text-lg font-bold mb-4">{editingId ? t('products:interactions.edit_title') : t('products:interactions.new_title')}</h2>
             <div className="space-y-4">
               <div>

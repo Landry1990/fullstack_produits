@@ -57,12 +57,12 @@ export const ClientNameModal: React.FC<ClientNameModalProps> = ({
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
             <div
-                className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden"
+                className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden max-h-[92vh] flex flex-col"
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="client-name-modal-title"
             >
-                <div className="border-b border-slate-200 p-4 flex justify-between items-center">
+                <div className="border-b border-slate-200 p-4 flex justify-between items-center shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="bg-emerald-50 p-2 rounded-lg">
                             <Printer className="size-5 text-emerald-600" />
@@ -81,7 +81,7 @@ export const ClientNameModal: React.FC<ClientNameModalProps> = ({
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6">
+                <form onSubmit={handleSubmit} className="p-6 flex-1 min-h-0 overflow-y-auto">
                     <div className="mb-6">
                         <label htmlFor="client-name-input" className="block text-sm font-medium text-slate-700 mb-2">
                             {t('messages.prompt_client_name')}

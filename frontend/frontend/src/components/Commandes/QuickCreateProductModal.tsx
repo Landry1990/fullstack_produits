@@ -173,7 +173,7 @@ export default function QuickCreateProductModal({
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="max-w-lg p-0 overflow-hidden">
+      <DialogContent className="max-w-lg max-h-[90vh] flex flex-col p-0 overflow-hidden">
         <div className="px-5 py-3 border-b border-slate-200 flex items-center gap-2.5">
           <div className={`p-2 rounded-lg ${isEditMode ? 'bg-blue-50' : 'bg-emerald-50'}`}>
             <Icon className={`size-5 ${isEditMode ? 'text-blue-600' : 'text-emerald-600'}`} />
@@ -185,7 +185,7 @@ export default function QuickCreateProductModal({
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+        <form onSubmit={handleSubmit} className="p-5 space-y-4 flex-1 min-h-0 overflow-y-auto">
           <ErrorState error={error} compact />
 
           <DialogDescription className="sr-only">
@@ -344,7 +344,7 @@ export default function QuickCreateProductModal({
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="flex justify-end gap-3 pt-2 shrink-0">
             <Button type="button" variant="ghost" onClick={onClose} className="h-10 px-4">
               {t('common:cancel')}
             </Button>

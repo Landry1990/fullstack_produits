@@ -58,7 +58,7 @@ export default function CentreRapports() {
     }, []);
 
     return (
-        <div className="h-screen flex bg-slate-100 overflow-hidden">
+        <div className="h-full min-h-0 flex bg-slate-100 overflow-hidden">
             
             {/* Mobile drawer backdrop */}
             {mobileMenuOpen && (
@@ -111,23 +111,23 @@ export default function CentreRapports() {
                 </div>
 
                 {/* Dashboard Area */}
-                <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 custom-scrollbar bg-slate-100">
-                    <div className="max-w-[1600px] mx-auto space-y-6">
+                <div className="flex-1 overflow-y-auto p-3 md:p-4 custom-scrollbar bg-slate-100">
+                    <div className="max-w-[1600px] mx-auto space-y-3">
                         
                         {selectedQuery ? (
                             <>
                                 {/* Unified Header & Filters Card */}
                                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col animate-in slide-in-from-top-4 duration-500">
-                                    <div className="p-4 sm:p-6 border-b border-slate-100 flex flex-col gap-4 md:flex-row md:justify-between md:items-center md:gap-6">
-                                        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                                            <div className="size-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 border border-blue-100">
-                                                <LayoutPanelTop className="size-6" />
+                                    <div className="px-4 py-2.5 border-b border-slate-100 flex flex-col gap-2 md:flex-row md:justify-between md:items-center">
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <div className="size-9 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 border border-blue-100">
+                                                <LayoutPanelTop className="size-5" />
                                             </div>
                                             <div>
-                                                <h1 className="text-2xl font-bold text-slate-800 tracking-tight uppercase">
+                                                <h1 className="text-xl font-bold text-slate-800 tracking-tight uppercase">
                                                     {t(`queries.${selectedQuery.id}.name`, { defaultValue: selectedQuery.name })}
                                                 </h1>
-                                                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+                                                <p className="hidden xl:block text-xs font-bold text-slate-400 uppercase tracking-widest mt-0.5">
                                                     {t(`queries.${selectedQuery.id}.description`, { defaultValue: selectedQuery.description || '' })}
                                                 </p>
                                             </div>
@@ -158,7 +158,7 @@ export default function CentreRapports() {
                                             <button
                                                 onClick={() => actions.executeQuery()}
                                                 disabled={loading}
-                                                className="inline-flex items-center justify-center gap-3 h-12 px-6 bg-blue-600 text-white rounded-xl shadow-sm hover:bg-blue-700 transition-colors font-black uppercase tracking-widest text-xs w-full sm:w-auto disabled:opacity-60 group"
+                                                className="inline-flex items-center justify-center gap-2 h-9 px-4 bg-blue-600 text-white rounded-xl shadow-sm hover:bg-blue-700 transition-colors font-black uppercase tracking-widest text-xs w-full sm:w-auto disabled:opacity-60 group"
                                             >
                                                 {loading ? (
                                                     <span className="size-4 border-2 border-blue-300 border-t-white rounded-full animate-spin"></span>
@@ -191,7 +191,7 @@ export default function CentreRapports() {
                                     </div>
 
                                     {/* Filters Section (integrated in card) */}
-                                    <div className="p-6 bg-slate-50/30">
+                                    <div className="p-3 bg-slate-50/30">
                                         <ReportFilters 
                                             selectedQuery={selectedQuery}
                                             params={params}
@@ -275,7 +275,7 @@ export default function CentreRapports() {
             {/* Print Styles */}
             <style>{`
                 @media print {
-                    .h-screen { height: auto !important; overflow: visible !important; }
+                    .h-full { height: auto !important; overflow: visible !important; }
                     .flex-1 { overflow: visible !important; }
                     .p-8 { padding: 0 !important; }
                     .p-4, .p-6 { padding: 0.5rem !important; }

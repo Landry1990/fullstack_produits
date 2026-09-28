@@ -40,8 +40,8 @@ export const AvoirsLotModal: React.FC<LotModalProps> = ({
     const { t } = useTranslation(['stock', 'common']);
     return (
         <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
-            <DialogContent className="max-w-lg p-0 overflow-hidden" aria-describedby="lot-modal-desc">
-                <DialogHeader className="px-5 py-4 border-b border-slate-100">
+            <DialogContent className="max-w-lg max-h-[90vh] p-0 overflow-hidden flex flex-col" aria-describedby="lot-modal-desc">
+                <DialogHeader className="px-5 py-4 border-b border-slate-100 shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="size-9 rounded-xl bg-indigo-50 flex items-center justify-center">
                             <Package className="size-4 text-indigo-600" />
@@ -57,7 +57,7 @@ export const AvoirsLotModal: React.FC<LotModalProps> = ({
                     </div>
                 </DialogHeader>
 
-                <div className="p-5">
+                <div className="p-5 flex-1 min-h-0 overflow-auto">
                     {loadingLots ? (
                         <SkeletonTable rows={3} columns={5} />
                     ) : availableLots.length === 0 ? (
@@ -125,7 +125,7 @@ export const AvoirsLotModal: React.FC<LotModalProps> = ({
                     )}
                 </div>
 
-                <DialogFooter className="px-5 py-3 border-t border-slate-100">
+                <DialogFooter className="px-5 py-3 border-t border-slate-100 shrink-0">
                     <Button type="button" variant="ghost" size="sm" onClick={onClose}>
                         {t('common:cancel')}
                     </Button>

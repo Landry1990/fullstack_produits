@@ -67,9 +67,9 @@ const StockHealthSettingsModal: React.FC<StockHealthSettingsModalProps> = ({ isO
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="bg-white w-full max-w-xl p-0 overflow-hidden rounded-[40px] border border-slate-200 shadow-2xl relative z-10" role="dialog" aria-modal="true" aria-label={t('stock:health.config_title')}>
+            <div className="bg-white w-full max-w-xl max-h-[92vh] overflow-y-auto p-0 rounded-[40px] border border-slate-200 shadow-2xl relative z-10" role="dialog" aria-modal="true" aria-label={t('stock:health.config_title')}>
                 {/* Header */}
-                <div className="bg-slate-50 p-8 border-b border-slate-100">
+                <div className="bg-slate-50 p-5 border-b border-slate-100">
                     <div className="flex items-center gap-4 mb-2">
                         <div className="size-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600">
                             <Settings className="size-6" />
@@ -82,7 +82,7 @@ const StockHealthSettingsModal: React.FC<StockHealthSettingsModalProps> = ({ isO
                 </div>
 
                 {/* Body */}
-                <div className="p-8 space-y-8">
+                <div className="p-5 space-y-5">
                     {/* Explanation Alert */}
                     <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100 flex gap-4">
                         <Info className="size-6 text-blue-500 shrink-0" />
@@ -123,7 +123,7 @@ const StockHealthSettingsModal: React.FC<StockHealthSettingsModalProps> = ({ isO
                     </div>
 
                     {/* Logic Preview Card */}
-                    <div className="bg-slate-50 p-6 rounded-3xl space-y-3">
+                    <div className="bg-slate-50 p-5 rounded-3xl space-y-3">
                         <div className="text-xs font-black uppercase tracking-widest text-slate-400">{t('stock:health.current_logic')}</div>
                         <div className="flex items-center gap-2 font-mono text-sm">
                             <span className="text-emerald-600 font-bold">({availWeight}% × Dispo)</span>
@@ -134,7 +134,7 @@ const StockHealthSettingsModal: React.FC<StockHealthSettingsModalProps> = ({ isO
                 </div>
 
                 {/* Footer */}
-                <div className="p-8 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+                <div className="p-5 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
                     <button
                         onClick={handleReset}
                         className="inline-flex items-center justify-center h-9 px-4 rounded-xl text-sm font-bold gap-2 text-slate-600 hover:bg-slate-200 transition-colors"

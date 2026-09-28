@@ -197,12 +197,12 @@ export const OpenPointDeVenteModal: React.FC<OpenPointDeVenteModalProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open && !isForced) onClose() }}>
       <DialogContent
-        className="sm:max-w-2xl p-0 gap-0 overflow-hidden"
+        className="sm:max-w-2xl p-0 gap-0 overflow-hidden max-h-[90vh] flex flex-col"
         hideCloseButton={isForced}
         onInteractOutside={(e) => { if (isForced) e.preventDefault() }}
         onEscapeKeyDown={(e) => { if (isForced) e.preventDefault() }}
       >
-        <DialogHeader className="p-6 pb-4 border-b border-slate-100">
+        <DialogHeader className="p-6 pb-4 border-b border-slate-100 shrink-0">
           <div className="flex items-center gap-3">
             <div className="size-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
               <Store className="size-5" />
@@ -218,7 +218,7 @@ export const OpenPointDeVenteModal: React.FC<OpenPointDeVenteModalProps> = ({
           </div>
         </DialogHeader>
 
-        <div className="p-6">
+        <div className="p-6 flex-1 min-h-0 overflow-y-auto">
           {loadingPostes ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Skeleton className="h-24 w-full rounded-xl" />
@@ -299,7 +299,7 @@ export const OpenPointDeVenteModal: React.FC<OpenPointDeVenteModalProps> = ({
           )}
         </div>
 
-        <DialogFooter className="p-6 pt-2 border-t border-slate-100 gap-3">
+        <DialogFooter className="p-6 pt-2 border-t border-slate-100 gap-3 shrink-0">
           {isForced ? (
             <Button type="button" variant="outline" onClick={handleQuit} className="rounded-xl">
               <LogOut className="size-4 mr-2" />

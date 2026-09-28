@@ -131,14 +131,14 @@ export default function ModuleFinancier() {
   const { AreaChart, Area, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } = Recharts;
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 space-y-3">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 px-4 py-2.5">
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">
+            <h1 className="text-xl font-bold text-slate-800">
               {t('title', 'Module Financier')}
             </h1>
-            <p className="text-slate-500">
+            <p className="hidden xl:block text-xs text-slate-500">
               {t('subtitle', 'Analyse et prédictions du chiffre d\'affaires')}
             </p>
           </div>
@@ -156,64 +156,64 @@ export default function ModuleFinancier() {
         </div>
       {/* KPIs Cards */}
       {loadingKPIs ? (
-        <div data-testid="finance-loading" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div data-testid="finance-loading" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-white rounded-xl shadow-lg animate-pulse h-32"></div>
+            <div key={i} className="bg-white rounded-xl shadow-lg animate-pulse h-20"></div>
           ))}
         </div>
       ) : kpis && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
           {/* Panier Moyen */}
-          <div className="rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-lg">
-            <div className="p-4">
-              <h3 className="text-sm font-medium opacity-80">
+          <div className="rounded-xl bg-emerald-50 border border-emerald-200 shadow-sm">
+            <div className="px-3 py-2">
+              <h3 className="text-xs font-medium text-emerald-700">
                 {t('kpis.avg_basket', 'Panier Moyen')}
               </h3>
-              <p className="text-3xl font-bold">{formatMoneyFull(kpis.panier_moyen.mois)}</p>
-              <p className="text-xs text-white/70">
+              <p className="text-xl font-bold text-slate-800">{formatMoneyFull(kpis.panier_moyen.mois)}</p>
+              <p className="text-xs text-slate-500">
                 {t('kpis.annual')}: {formatMoneyFull(kpis.panier_moyen.annee)}
               </p>
             </div>
           </div>
 
           {/* Taux de Marge */}
-          <div className="rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg">
-            <div className="p-4">
-              <h3 className="text-sm font-medium opacity-80">
+          <div className="rounded-xl bg-blue-50 border border-blue-200 shadow-sm">
+            <div className="px-3 py-2">
+              <h3 className="text-xs font-medium text-blue-700">
                 {t('kpis.margin_rate', 'Taux de Marge')}
               </h3>
-              <p className="text-3xl font-bold">{kpis.taux_marge}%</p>
-              <p className="text-xs text-white/70">
+              <p className="text-xl font-bold text-slate-800">{kpis.taux_marge}%</p>
+              <p className="text-xs text-slate-500">
                 {kpis.nb_ventes_mois} {t('charts.sales_count', 'ventes ce mois')}
               </p>
             </div>
           </div>
 
           {/* DSI */}
-          <div className="rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg">
-            <div className="p-4">
-              <h3 className="text-sm font-medium opacity-80">
+          <div className="rounded-xl bg-purple-50 border border-purple-200 shadow-sm">
+            <div className="px-3 py-2">
+              <h3 className="text-xs font-medium text-purple-700">
                 {t('kpis.dsi', 'Jours Stock (DSI)')}
               </h3>
-              <p className="text-3xl font-bold">{kpis.dsi} {t('days_suffix')}</p>
-              <p className="text-xs text-white/70">
+              <p className="text-xl font-bold text-slate-800">{kpis.dsi} {t('days_suffix')}</p>
+              <p className="text-xs text-slate-500">
                 {t('common:stock')}: {formatMoneyFull(kpis.stock_value)}
               </p>
             </div>
           </div>
 
           {/* Croissance */}
-          <div className={`rounded-xl shadow-lg ${kpis.croissance_mensuelle >= 0
-            ? 'bg-gradient-to-br from-emerald-500 to-emerald-600'
-            : 'bg-gradient-to-br from-red-500 to-red-600'} text-white`}>
-            <div className="p-4">
-              <h3 className="text-sm font-medium opacity-80">
+          <div className={`rounded-xl border shadow-sm ${kpis.croissance_mensuelle >= 0
+            ? 'bg-emerald-50 border-emerald-200'
+            : 'bg-red-50 border-red-200'}`}>
+            <div className="px-3 py-2">
+              <h3 className={`text-xs font-medium ${kpis.croissance_mensuelle >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>
                 {t('kpis.growth', 'Croissance Mensuelle')}
               </h3>
-              <p className="text-3xl font-bold">
+              <p className="text-xl font-bold text-slate-800">
                 {kpis.croissance_mensuelle >= 0 ? '+' : ''}{kpis.croissance_mensuelle}%
               </p>
-              <p className="text-xs text-white/70">
+              <p className="text-xs text-slate-500">
                 {t('kpis.ca_label')}: {formatMoneyFull(kpis.ca_mois)}
               </p>
             </div>

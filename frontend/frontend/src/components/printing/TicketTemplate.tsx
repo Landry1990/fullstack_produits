@@ -297,11 +297,11 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
                 <Barcode 
                     value={barcodeValue} 
                     format="CODE128"
-                    height={50} 
-                    width={1.8} 
+                    height={ticketWidth <= 60 ? 36 : 45} 
+                    width={ticketWidth <= 60 ? 1.1 : 1.5} 
                     fontSize={10} 
                     displayValue={false}
-                    margin={15}
+                    margin={6}
                     background="#ffffff"
                 />
                 <div className="mt-1 font-mono text-caption font-medium">{barcodeValue}</div>

@@ -1,5 +1,349 @@
 # Changelog — Fullstack Produits
 
+## 2026-09-27 — 🖨️ Impression ESC/POS native via QZ Tray
+
+Ajout d'une couche d'impression native des tickets de caisse en commandes
+ESC/POS via QZ Tray, avec conservation du flux HTML actuel en fallback.
+Objectif : texte net sur imprimantes thermiques POS-80 (203 dpi) en
+évitant la rasterisation du navigateur.
+
+- `package.json` : ajout de `qz-tray@^2.2.6`.
+- `src/utils/escpos/encoder.ts` (nouveau) : constructeur de commandes
+  ESC/POS brutes (`ESC @`, `ESC t` WCP1252, alignements, gras,
+  double-taille, tiroir-caisse, coupe, code-barres CODE128, colonnes,
+  séparateurs).
+- `src/utils/escpos/ticketEscpos.ts` (nouveau) : mapping `TicketCaisse` +
+  `PharmacySettings` vers une commande ESC/POS complète, en reprenant la
+  logique visuelle de `TicketTemplate.tsx`.
+- `src/services/qzPrinter.ts` (nouveau) : service QZ Tray avec connexion
+  paresseuse, sélection d'imprimante via `localStorage` (`qz_printer_name`),
+  détection des imprimantes, impression RAW et ouverture du tiroir.
+- `src/utils/print/printTicketSmart.ts` (nouveau) : helper
+  `printTicketSmart(ticket, settings, htmlFallback)` qui tente ESC/POS puis
+  retombe en HTML si QZ est absent.
+- `src/components/facturation/TicketPreviewModal.tsx` et
+  `src/components/caisse/CaisseTicketPreviewModal.tsx` : intégration de
+  `printTicketSmart` pour tenter l'impression native avant le fallback HTML.
+- `src/components/settings/PrintingTab.tsx` : nouvelle section "Imprimante
+  ESC/POS (QZ Tray)" avec détection d'imprimantes, saisie manuelle,
+  persistance `localStorage`, option "Ouvrir le tiroir-caisse" et bouton
+  "Tester l'impression".
+- `public/locales/fr/pharmacy_settings.json` +
+  `public/locales/en/pharmacy_settings.json` : traductions des nouvelles
+  clés UI (section, labels, placeholder, hint, boutons, messages).
+- `src/types/qz-tray.d.ts` (nouveau) : déclarations TypeScript minimales
+  pour `qz-tray`.
+- `src/utils/print/printHelpers.ts` : réduction de la marge haute du ticket
+  HTML (`padding-top` de `#ticket-preview` 2mm → 1mm).
+
+---
+
+## 2026-09-27 — 🧾 Ticket de caisse : lisibilité et rognage à droite
+
+Ticket thermique illisible : colonne des montants rognée au bord droit
+(`TOTA`, `CLIENTS DIVER`, chiffres tronqués) et polices trop petites.
+
+- `utils/print/printHelpers.ts` (`buildTicketPrintHtml`) :
+  - `#ticket-preview` : `padding: 2mm` → `2mm 4mm 2mm 3mm` — marge droite
+    élargie pour couvrir la zone non imprimable des imprimantes thermiques
+    (~3-4mm par côté), ce qui rognait les montants alignés à droite.
+  - rehausse des polices à l'impression : `text-micro` 9→11px,
+    `text-caption` 10→12px, `text-xs` →11.5px, `text-sm` →13px,
+    `text-base` →14px, `[8px]` (prix unitaires) →10px, base 12px.
+  - **poids forcé à semibold (600)** sur tout le contenu du ticket : à
+    203 dpi (POS-80), les traits fins ressortaient gris/effacés — texte
+    maintenant gras et noir net, comme les tickets des autres caisses.
+- `components/printing/TicketTemplate.tsx` :
+  - code-barres adapté au papier : ≤60mm → height 36 / width 1.1 /
+    margin 6 ; >60mm → height 45 / width 1.5 / margin 6 (avant : 50/1.8/15,
+    trop large sur rouleaux 58mm).
+
+Vérifié : `tsc --noEmit` ✅, `eslint` ✅. À valider sur imprimante réelle.
+
+---
+
+## 2026-09-27 — 🏅 Cards flashy assagies : podium vendeurs + KPI finance
+
+Retour démo : les grosses cartes à gradients saturés (jaune/gris/orange,
+emerald/blue/purple) prenaient trop de place et criaient sur petit écran.
+Remplacement par des cartes claires tintées `bg-*-50` + `border-*-200` +
+texte slate, et compaction des pages concernées.
+
+- `components/ClassementVendeurs.tsx` :
+  - podium top-3 : gradients pleins `p-5` + médaille `text-4xl` → cartes
+    claires compactes en layout horizontal (`px-3 py-2`, médaille `text-2xl`)
+  - page `p-6 space-y-6` → `p-3 space-y-3`, header `px-4 py-2.5`, titre `text-xl`
+  - table : header `py-3` → `py-1.5`, cellules `py-2.5` → `py-2`
+  - graphiques : 350px → 280px, comparaison 300px → 240px
+- `components/ModuleFinancier.tsx` : 4 cards KPI gradients pleins →
+  `bg-*-50 border` (label coloré, montant `text-slate-800`)
+- `components/RapportMensuel.tsx` : 5 KPI principaux idem
+- `components/challenges/ChallengeClassement.tsx` : badges médailles
+  gradients → tintes douces `bg-*-100`
+
+Vérifié : `tsc --noEmit` ✅, `eslint` ✅.
+
+---
+
+## 2026-09-27 — 📏 Audit 1366×768 : dashboards, rapports et fiches compactés
+
+Réduction de la hauteur des en-têtes, cartes KPI, graphiques et panneaux de détail afin
+d'afficher davantage de lignes de tableaux sur les écrans clients 1366×768. Le rapport UG
+exploite aussi une largeur maximale de 1600 px et les cinq KPI du dashboard tiennent sur une
+rangée à partir du breakpoint `xl`. Aucune logique métier modifiée.
+
+- `components/StockUGReportShadcn.tsx`
+- `components/Fournisseurs/SupplierDashboard.tsx`
+- `components/Clients.tsx`
+- `components/DashboardShadcn.tsx`
+- `components/Promis.tsx`
+- `components/RecapClient.tsx`
+- `components/dashboard/PerformanceOverview.tsx`
+
+---
+
+## 2026-09-27 — 📐 Densité UI : rapports, finance et audit pour 1366×768
+
+Compactage uniforme des en-têtes de page, grilles KPI, blocs de totaux et filtres afin de
+libérer davantage de hauteur pour les tableaux sur les écrans 1366×768. Les titres et montants
+restent hiérarchisés, tandis que les sous-titres secondaires sont masqués sous `xl`. Aucune
+logique métier modifiée.
+
+- `components/JournalAudit.tsx`
+- `components/ModuleFinancier.tsx`
+- `components/RapportMensuel.tsx`
+- `components/AnalyseMargesProduit.tsx`
+- `components/Commandes/CommandeDetails.tsx`
+- `components/CentreRapports.tsx`
+
+---
+
+## 2026-09-27 — 🪟 Audit 1366×768 : modales custom bornées
+
+Correction minimale de neuf modales custom (`fixed inset-0`) qui ne bénéficient pas du
+`max-h` de `DialogContent`. Ajout d'une hauteur maximale et d'un défilement global pour
+les contenus simples ; les conteneurs avec `overflow-hidden` utilisent désormais une
+structure flex avec header/footer fixes et body scrollable. Aucune logique métier modifiée.
+
+- `components/InteractionsManager.tsx`
+- `components/inventaire/modals/InventaireMergeModal.tsx`
+- `components/sales/modals/ClientNameModal.tsx`
+- `components/products/ImportProductsModal.tsx`
+- `components/facturation/ForceStockModal.tsx`
+- `components/systemadmin/BackupsTab.tsx`
+- `components/compta/Comptabilite.tsx` (deux modales)
+- `components/inventaire/editor/InventaireProductSearch.tsx` (hauteur dynamique et header compact)
+
+---
+
+## 2026-09-27 — 📐 Densité UI : en-têtes Facturation et Caisse pour 1366×768
+
+Suite à l'audit 1366×768, compactage vertical des bandeaux de facturation et du
+header caisse pour libérer du contenu utile avant les panneaux principaux.
+Aucune logique métier modifiée.
+
+- `components/facturation/FacturationHeader.tsx` :
+  - header principal : `px-4 sm:px-6 py-3` → `px-4 sm:px-6 py-2`
+  - bloc titre/infos : ajout `overflow-hidden` sur le conteneur déjà en `min-w-0`
+  - raccourcis clavier header : `hidden sm:flex` → `hidden xl:flex`
+  - barre de rappel : `gap-2 px-4 py-2` → `gap-1.5 px-4 py-1.5`
+  - bannière point de vente : `gap-3 px-4 py-2` → `gap-2 px-4 py-1.5`
+  - bannière mode modification : `gap-3 px-4 py-3` → `gap-2 px-4 py-1.5`, lignes de
+totaux `gap-3` → `gap-2`
+
+- `components/facturation/FacturationRightPanel.tsx` :
+  - largeurs du panier : `lg:w-[380px] xl:w-[400px]` → `lg:w-[340px] xl:w-[380px]`
+
+- `components/facturation/FacturationLeftPanel.tsx` :
+  - padding : `p-4 sm:p-5 lg:p-6` → `p-3 lg:p-4 2xl:p-6`
+  - gaps principal et interne : `gap-4` → `gap-3`
+
+- `components/caisse/CaisseHeader.tsx` :
+  - header : `p-4 sm:p-6` → `p-3 sm:p-4`, `gap-4` → `gap-3`
+  - sous-titre : masqué sous `xl` (`hidden xl:block`)
+
+- `components/caisse/CaisseStatsCards.tsx` :
+  - grille : `gap-4` → `gap-3`
+  - cartes : `p-5` → `p-3`
+  - montants : `text-2xl` → `text-xl`
+
+---
+
+## 2026-09-27 — 💰 Audit 1366×768 (étape 3) : modales caisse à footer inaccessible
+
+Les modales caisse avec `p-0 gap-0 overflow-hidden` écrasaient le `max-h` du
+DialogContent de base via twMerge : header/footer hors écran à 768 px.
+Passage au pattern `max-h-[90vh] flex flex-col` + body `flex-1 min-h-0
+overflow-y-auto` + header/footer `shrink-0`. Aucune logique métier modifiée.
+
+- `components/caisse/FacturesTable.tsx` : aperçu produits d'une facture
+  (table non bornée → body scrollable, footer Fermer toujours visible).
+- `components/caisse/OpenCashSessionModal.tsx` : modale obligatoire
+  d'ouverture de caisse (grille de postes scrollable).
+- `components/caisse/OpenPointDeVenteModal.tsx` : grille de postes, idem —
+  critique en mode forcé (`isForced`, impossible de fermer la modale).
+
+---
+
+## 2026-09-27 — 🪟 Audit 1366×768 (étape 3) : modales à contenu non borné
+
+Suite de l’audit des modales pour écrans 1366 × 768. Les DialogContent avec
+`p-0 overflow-hidden` écrasaient le `max-h` de base via twMerge, ce qui faisait
+disparaître les boutons hors écran. Ajout d’une structure flex
+(header/body/footer) et de zones de défilement internes sur les modales à
+listes/tables non bornées. Aucune logique métier modifiée.
+
+- `components/stock/ReapproHistory.tsx` :
+  - `DialogContent` : ajout `max-h-[90vh] flex flex-col` (l. 259)
+  - header : ajout `shrink-0` (l. 260)
+  - body : passage en `flex flex-col flex-1 min-h-0 p-6 gap-6`
+  - table : encapsulée dans une `Card` `flex-1 min-h-0` + `div overflow-auto h-full`
+  - footer : ajout `shrink-0` (l. 336)
+
+- `components/avoirs/modals/AvoirsLotModal.tsx` :
+  - `DialogContent` : ajout `max-h-[90vh] flex flex-col` (l. 43)
+  - `DialogHeader` : ajout `shrink-0` (l. 44)
+  - body : `p-5 flex-1 min-h-0 overflow-auto` (l. 60)
+  - `DialogFooter` : ajout `shrink-0` (l. 128)
+
+- `components/products/modals/StockAdjustmentModal.tsx` :
+  - `DialogContent` : ajout `max-h-[90vh]` explicite (l. 97) — le défilement
+    global du DialogContent de base suffit car il n’y a pas d’`overflow-hidden`
+    interne.
+
+- `components/Commandes/DuplicateLotModal.tsx` :
+  - conteneur de la liste de lignes : ajout `max-h-64 overflow-y-auto` (l. 63)
+
+Non vérifié : `tsc --noEmit` n’a pas pu être lancé (agent en arrière-plan,
+commandes refusées automatiquement).
+
+---
+
+## 2026-09-27 — 🔒 Modales hautes sécurisées pour 1366×768 / zoom 110%
+
+Limite haute des modales borderline ajustée pour rester entièrement visible et
+scrollable sur écran 1366×768 avec zoom navigateur à 110% (~700 px utiles).
+Aucune logique métier modifiée.
+
+- `components/inventaire/modals/InventaireCreateModal.tsx` :
+  - conteneur custom : ajout `max-h-[92vh] overflow-y-auto`
+- `components/Commandes/QuickCreateProductModal.tsx` :
+  - `DialogContent` : ajout `max-h-[90vh] flex flex-col`
+  - `<form>` : ajout `flex-1 min-h-0 overflow-y-auto`
+  - footer : ajout `shrink-0`
+- `components/stock/StockHealthSettingsModal.tsx` :
+  - conteneur custom : ajout `max-h-[92vh] overflow-y-auto`
+  - header/body/footer : `p-8` → `p-5`
+  - body : `space-y-8` → `space-y-5`
+  - carte logique : `p-6` → `p-5`
+- `components/Commandes/SuggestionCommandeModal.tsx` :
+  - `DialogContent` : ajout `max-h-[90vh]`
+  - body : `maxHeight: '520px'` → `'60vh'`
+
+---
+
+## 2026-09-27 — 📏 Densité UI : Inventaire, Commandes, Fournisseurs, Caisse
+
+Suite à l'audit 1366×768, réduction des espacements sans changer la logique métier.
+
+- `components/inventaire/InventaireListTable.tsx` :
+  - header `th` : `px-4/6 py-3` → `h-9 px-3 py-1.5`
+  - cellules principales `px-6 py-4` → `px-3 py-2`
+  - colonnes secondaires (sélection, statut, actions) `px-2.5 py-2`
+  - badges `py-1` → `py-0.5`
+  - `table` : ajout `min-w-[900px]`
+- `components/Commandes/CommandeList.tsx` :
+  - `TableHead`/`TableCell` `py-3 px-4` → `py-2 px-3`
+  - `Table` `min-w-[1020px]` → `min-w-[900px]`
+- `components/Commandes.tsx` : header `px-6 py-4 ... gap-4` → `px-4 py-2.5 ... gap-2`
+- `components/Fournisseurs.tsx` : header `px-6 py-4 ... gap-4` → `px-4 py-2.5 ... gap-2`
+- `components/caisse/JournalCaisseTable.tsx` : `min-w-[1050px]` → `min-w-[920px]`
+
+Non modifié : aucune colonne masquée sous `xl` dans CommandeList (pas de colonne clairement non critique identifiée).
+
+---
+
+## 2026-09-27 — 🎨 Audit 1366×768 (étape 2) : ProduitShadcn, GestionDivers et Commandes
+
+Suite de l'audit densité pour les écrans 1366 × 768 (sidebar collapsée à 70 px).
+
+- `components/ProduitShadcn.tsx` :
+  - grille master/detail : `xl:grid-cols-12`/`xl:col-span-*` → `lg:grid-cols-12`/`lg:col-span-*` pour activer le split plus tôt (~1290 px utiles)
+  - lignes du tableau produits : `py-3` → `py-2`
+  - cellule CIP : `cip2`/`cip3`/`cip4` affichés en badges inline compacts (`flex flex-wrap gap-1`) au lieu d'être empilés verticalement ; `cip1` reste visible
+- `components/divers/GestionDivers.tsx` :
+  - padding global : `p-4 sm:p-6 space-y-5` → `p-2 lg:p-3 gap-3` (passage à `gap` sur le parent flex)
+  - onglets : `min-h-16 px-4 py-3` → `min-h-10 px-3 py-2`
+  - descriptions secondaires des onglets : `hidden lg:block` → `hidden xl:block`
+  - barre de résumé : `gap-4`/`gap-6 text-sm` → `gap-2`/`gap-x-3 gap-y-1 text-xs`
+  - onglet commandes : `mt-6` → `mt-2` et appel `<Commandes forcedType="DIV" embedded />`
+- `components/Commandes.tsx` :
+  - ajout de la prop optionnelle `embedded?: boolean`
+  - quand `embedded` est vrai, le header de page (titre, badge, tabs) est masqué et la marge de `ErrorState` est ajustée pour s'intégrer proprement dans l'onglet Divers
+
+Non vérifié : `tsc --noEmit` n'a pas pu être lancé (agent en arrière-plan, commandes refusées automatiquement).
+
+---
+
+## 2026-09-27 — 📏 Créances densifiées pour les écrans 1366×768
+
+- `components/Creances.tsx` : réduction des marges et espacements du conteneur et du header ; le défilement global est remplacé par un layout borné afin que la carte du tableau porte son propre scroll.
+- `components/creances/CreancesFilters.tsx` : filtres plus compacts et grille à deux colonnes minimum.
+- `components/creances/CreancesTable.tsx` : cellules, en-têtes et badges densifiés dans les vues clients et factures ; largeur minimale de 900 px conservée dans les zones défilables.
+- Aucun changement de logique métier.
+
+---
+
+## 2026-09-27 — 🪟 Audit 1366×768 (étape 1) : modales plafonnées + dialog de base
+
+Cause racine : le `DialogContent` de base n'avait ni `max-h` ni `overflow` —
+toute modale >768 px était rognée en haut ET en bas sans possibilité de
+scroller (bouton Valider inaccessible).
+
+- `components/shadcn/dialog.tsx` : ajout de `max-h-[92vh] overflow-y-auto`
+  sur `DialogContent`. Les modales passant `overflow-hidden`/`p-0 gap-0` en
+  className gardent leur layout custom grâce à twMerge (~25 modales corrigées
+  d'un coup).
+- `components/ui/Dialog.tsx` (deprecated mais encore utilisé par ~10 modales) :
+  même traitement.
+
+Audit complet préalable réalisé (3 sous-agents) : reste à traiter les modales
+à tables non bornées (FacturesTable, ReapproHistory, AvoirsLotModal,
+StockAdjustmentModal, OpenCashSessionModal, OpenPointDeVenteModal), la
+densité Créances/Inventaire/Commandes et les headers compacts (étapes 2-3).
+
+Vérifié : `tsc --noEmit` ✅.
+
+---
+
+## 2026-09-27 — ↕️ Correction double scrollbar sur écrans 768 px
+
+Les pages rendues dans l’Outlet utilisaient `h-screen`, ce qui les forçait à
+100 vh et les faisait dépasser du conteneur flex du shell (`Layout.tsx`),
+provoquant une double scrollbar et du contenu coupé sur les écrans de 768 px.
+
+- `components/stock/Cadencier.tsx:226` : `h-screen overflow-hidden` → `h-full min-h-0 overflow-hidden`
+- `components/StockAnalysis.tsx:99` : `h-screen overflow-hidden` → `h-full min-h-0 overflow-hidden`
+- `components/Inventaire.tsx:58` : `h-screen ... overflow-hidden flex flex-col` → `h-full min-h-0 ... overflow-hidden flex flex-col`
+- `components/JournalAjustements.tsx:22` : `h-screen ... flex flex-col overflow-hidden` → `h-full min-h-0 ... flex flex-col overflow-hidden`
+- `components/RecapClient.tsx:159` : `h-screen ... overflow-auto` → `h-full min-h-0 ... overflow-auto`
+- `components/CentreRapports.tsx:61` : `h-screen flex ... overflow-hidden` → `h-full min-h-0 flex ... overflow-hidden`
+- `components/Avoirs.tsx:74` : `h-screen overflow-hidden` → `h-full min-h-0 overflow-hidden`
+- `components/Promis.tsx:54` : `h-screen overflow-hidden` → `h-full min-h-0 overflow-hidden`
+- `components/CentreRapports.tsx:278` : mise à jour du sélecteur d’impression `.h-screen` → `.h-full` pour préserver le comportement d’impression après le changement de classe racine.
+
+Décision sur le wrapper : `Layout.tsx` a été analysé (lignes 67-89) et laissé inchangé. Le wrapper Outlet est `flex-1 flex flex-col overflow-y-auto` ; `h-full min-h-0` sur l’enfant permet aux pages applicatives (`overflow-hidden`) de remplir exactement l’espace disponible sans déborder, tout en conservant le scroll normal des pages documentaires longues qui reposent sur `overflow-y-auto`.
+
+Pages hors layout et spinners plein écran laissés intacts : `LicenceScreen.tsx`, `PrintPage.tsx`, `RouteErrorBoundary.tsx`, `ErrorBoundary.tsx`, `auth/RouteGuards.tsx`, `auth/PermissionRoute.tsx`, ainsi que les états de chargement des tableaux de bord.
+
+---
+
+## 2026-09-27 — 📐 Caisse adaptée aux écrans 1366 × 768
+
+- `context/SidebarContext.tsx` : auto-collapse étendu aux largeurs desktop de 1024 à 1439 px, sans écraser une préférence manuelle déjà persistée ; seules les actions utilisateur sont désormais enregistrées dans `localStorage`.
+- `components/CaisseCentralisee.tsx` : remplacement de la hauteur calculée fixe par une structure flex avec header/KPI/récap fixes et table occupant l’espace restant avec son propre défilement.
+- Réduction du padding desktop de la caisse (`sm:p-6` → `sm:p-4`) afin de préserver davantage d’espace vertical sur les écrans 768 px.
+
 ---
 
 ## 2026-09-27 — 🗑️ Journal d’audit : purge depuis l’écran (superuser)
