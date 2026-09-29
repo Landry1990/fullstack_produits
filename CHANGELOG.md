@@ -1,5 +1,513 @@
 # Changelog — Fullstack Produits
 
+## 2026-09-30 — 🌱 Fix : données par défaut recréées à chaque redémarrage Docker
+
+### Pourquoi
+
+Les fournisseurs par défaut (LABOREX CMR, SIAP, UBIPHARM, DIVERS, SLOY,
+PHARMA EXPRESS) réapparaissaient après chaque `docker compose up`, même
+après suppression par l'utilisateur. Cause : `backend/entrypoint.sh`
+exécutait un bloc de seed à **chaque démarrage du conteneur**, et le check
+`deleted_at__isnull=True` excluait les fiches soft-deletées → elles
+paraissaient absentes et étaient recréées. Le même comportement existait
+pour les postes de caisse, postes de vente (COMPTOIR1-3) et taux de TVA.
+
+### Changements
+
+- **Migration `0260_seed_defauts`** : toutes les données par défaut
+  (2 postes de caisse, 3 postes de vente, 2 taux de TVA, 6 fournisseurs)
+  sont désormais semées **une seule fois** via `RunPython`, tracée dans
+  `django_migrations`. Les suppressions (soft ou hard delete) sont
+  désormais définitives.
+- `backend/entrypoint.sh` : bloc de seed supprimé (~100 lignes). Restent
+  le bootstrap admin/profil et le compte de secours (sécurité, volontaire).
+- Pour les fournisseurs, le check `name__iexact` n'exclut plus les fiches
+  supprimées : une fiche soft-deletée empêche aussi la recréation.
+
+### Vérification
+
+- Test réel en Docker local : `PHARMA EXPRESS` soft-deleté et
+  `SLOY PHARMA` hard-deleté → **non recréés** après `docker restart`.
+- Logs de démarrage propres, migrations appliquées, compte admin intact.
+
+### Conséquence
+
+Supprimer un fournisseur/poste/taux par défaut est maintenant permanent.
+Pour le restaurer : le recréer via l'UI. Sur une install fraîche, les
+défauts sont toujours créés au `migrate` initial.
+
+## 2026-09-29 — 🧾 Paramètre : afficher le nom du pharmacien (licence) sur ticket et facture
+
+### Pourquoi
+
+Le ticket et la facture n'affichaient pas le nom du pharmacien titulaire.
+Certains propriétaires préfèrent ne pas afficher leur nom — il fallait donc
+un interrupteur optionnel plutôt qu'un affichage forcé.
+Le nom **provient de la licence** (`pharmacien_nom`) : aucun champ de saisie,
+pas de champ en base — juste le toggle.
+
+### Changements
+
+- `PharmacySettings` : nouveau champ `show_pharmacist_on_documents`
+  (BooleanField, défaut **False** — rien ne change tant que le pharmacien
+  n'active pas l'option). Migrations `0257`–`0259`.
+- `PharmacySettingsContext` : `settings.pharmacist_name` est **dérivé** de
+  `licence.pharmacien_nom` (comme `pharmacy_name` l'est de `pharmacie_nom`) ;
+  il est exclu du PUT vers l'API (champ non persisté).
+- `PrintPage` : le nom de licence est injecté dans les settings de la
+  facture A4/A5.
+- Paramètres → Impression → "Configuration du Ticket" : interrupteur
+  *Afficher le nom du pharmacien sur ticket et facture*.
+- Affichage (uniquement si l'option est activée ET un nom de pharmacien
+  existe dans la licence) :
+  - Ticket thermique HTML (`TicketTemplate`) : ligne "Pharmacien : X" dans
+    l'en-tête, sous NIU/RC.
+  - Ticket natif ESC/POS (`ticketEscpos`) : même ligne centrée.
+  - Facture A4/A5 (`InvoiceTemplate`) : ligne dans le bloc légal du pied
+    de page, à côté de NIU/RC.
+  - En-tête générique `usePrint` (autres documents imprimés).
+- Traductions fr/en : `pharmacy_settings` (label, hint) et
+  `printing.invoice.pharmacist`.
+
+### Fichiers
+
+- `backend/api/models/settings.py`
+- `backend/api/migrations/0257_pharmacist_name_documents.py`,
+  `0258_remove_pharmacist_name.py`,
+  `0259_alter_pharmacysettings_show_pharmacist_on_documents.py` (nouveaux)
+- `frontend/frontend/src/types/pharmacy.ts`
+- `frontend/frontend/src/context/PharmacySettingsContext.tsx`
+- `frontend/frontend/src/components/settings/PrintingTab.tsx`
+- `frontend/frontend/src/components/printing/TicketTemplate.tsx`
+- `frontend/frontend/src/components/printing/InvoiceTemplate.tsx`
+- `frontend/frontend/src/components/printing/PrintPage.tsx`
+- `frontend/frontend/src/utils/escpos/ticketEscpos.ts`
+- `frontend/frontend/src/hooks/usePrint.ts`
+- `frontend/frontend/public/locales/{fr,en}/pharmacy_settings.json`
+- `frontend/frontend/public/locales/{fr,en}/printing.json`
+
+### Vérification
+
+- `tsc --noEmit` : OK. Build Vite : OK.
+- Migrations `api.0257`–`0259` appliquées dans le conteneur.
+- Déploiement `all-full` : OK.
+
+---
+
+## 2026-09-29 — 🖨️ Ticket fallback HTML : mise en page aérée (comme l'ESC/POS)
+
+### Pourquoi
+
+Le ticket du fallback HTML (quand QZ Tray est absent, ex. Safari/MacBook)
+réutilisait les styles de l'aperçu modal — compact, interligne serré —
+alors que le ticket natif ESC/POS est aéré : air entre les sections,
+espace entre les lignes produits, total mis en avant, blanc avant la coupe.
+
+### Changements
+
+- `buildTicketPrintHtml` (printHelpers.ts) : CSS d'impression enrichi —
+  - Corps 12px → 13px, interligne 1.3 → 1.55 ; `leading-tight` assoupli à 1.5.
+  - Espaces entre sections doublés (mb-2→10px, mt-2→10px, pt-2→10px, etc.).
+  - Lignes produits : padding vertical 6px au lieu de ~2px.
+  - Ligne "Net à payer" (border-y) : 16px, padding 8px — équivalent du
+    double-size ESC/POS.
+  - `::after` de 7mm en fin de ticket : équivalent du `feed(3)` avant coupe.
+  - Tailles de police thermique rehaussées (micro 12px, caption 13px,
+    text-[8px] 11px, sm 15px, base 16px).
+  - **Police monospace** (`Courier New / Lucida Console / ui-monospace`) sur
+    tout le ticket + léger `letter-spacing` : reproduit le rendu de la police
+    bitmap ESC/POS des imprimantes thermiques.
+  - Marges latérales conservées (4mm droite / 3mm gauche) : zone non
+    imprimable des imprimantes thermiques.
+- Aucun changement sur `TicketTemplate.tsx` : l'aperçu modal reste compact,
+  seul le document imprimé est affecté.
+
+### Fichiers
+
+- `frontend/frontend/src/utils/print/printHelpers.ts`
+
+### Vérification
+
+- Build Vite : OK.
+- Déploiement frontend Docker : OK.
+
+---
+
+## 2026-09-29 — 🖨️ Impression : fallback HTML instantané sans QZ Tray + anti double-clic
+
+### Pourquoi
+
+Sur Safari/MacBook sans QZ Tray installé, cliquer plusieurs fois sur Imprimer
+(ticket de caisse) bloquait le navigateur : chaque clic lançait une tempête de
+tentatives WebSocket (8 ports × retries) puis une popup de fallback. Les clics
+s'empilaient en parallèle → freeze.
+
+### Changements
+
+- `qzPrinter.ts` :
+  - **Cooldown 60 s** après un échec de connexion : `ensureConnected` jette
+    immédiatement → le fallback HTML démarre sans délai ni trafic réseau.
+    Le bouton "Détecter" des paramètres bypass le cooldown (`listPrinters`)
+    pour permettre une nouvelle détection après installation.
+  - **File d'impression** : `printEscpos` sérialise les appels — deux
+    impressions ne tournent jamais en parallèle.
+- `TicketPreviewModal.tsx` (facturation) et `CaisseTicketPreviewModal.tsx`
+  (caisse) : état `printing` — le bouton Imprimer est désactivé pendant
+  l'opération (anti double-clic).
+
+### Fichiers
+
+- `frontend/frontend/src/services/qzPrinter.ts`
+- `frontend/frontend/src/components/facturation/TicketPreviewModal.tsx`
+- `frontend/frontend/src/components/caisse/CaisseTicketPreviewModal.tsx`
+
+### Vérification
+
+- Build Vite : OK.
+- Déploiement frontend Docker : OK.
+
+---
+
+## 2026-09-29 — 🔒 Protection de la dernière caisse active
+
+### Pourquoi
+
+Un utilisateur pouvait désactiver ou supprimer toutes les caisses, bloquant
+complètement la pharmacie. Les users sont parfois maladroits.
+
+### Changements
+
+- `PosteCaisseViewSet.update` : refus de désactiver si c'est la dernière caisse
+  active (message explicite pour réactiver/créer une autre caisse d'abord).
+- `PosteCaisseViewSet.destroy` : refus de supprimer la dernière caisse active.
+- `PosteVenteSettingsSection.tsx` : boutons ⚡ et 🗑️ désactivés sur la dernière
+  caisse active, avec tooltip explicatif.
+- Traduction fr/en : `postes_vente.last_active_hint`.
+
+### Fichiers
+
+- `backend/api/views/ventes/caisse_poste.py`
+- `frontend/frontend/src/components/settings/PosteVenteSettingsSection.tsx`
+- `frontend/frontend/public/locales/fr/pharmacy_settings.json`
+- `frontend/frontend/public/locales/en/pharmacy_settings.json`
+
+### Vérification
+
+- Build Vite : OK.
+- Déploiement backend + frontend Docker : OK.
+
+---
+
+## 2026-09-29 — 🎨 Redesign et amélioration du système de ventes en attente
+
+### Pourquoi
+
+Le système de mise en attente était basique : aperçu au survol peu accessible,
+actions confusées, pas de fusion possible, pas de rappel sur les ventes oubliées.
+Sur écran 14" (1366×768) il fallait un affichage compact et explicite pour les
+pharmaciens.
+
+### Changements
+
+- Refonte complète de `PendingSalesDrawer.tsx` :
+  - Cartes `shadcn/ui` avec hiérarchie visuelle claire.
+  - Avatar vendeur, nom client, badge durée et heure en en-tête.
+  - Liste des articles affichée **en ligne** (plus d'aperçu au survol).
+  - Total et actions séparés proprement en bas.
+  - Boutons avec icônes et libellés explicites.
+  - Modal limité à `90vh`, body scrollable — pas de bouton coupé.
+- **Fusion** : bouton "Fusionner" pour ajouter une vente en attente au panier
+  actuel (sans perdre le panier en cours). Doublons ignorés avec message.
+- **Note** : champ note éditable directement sur chaque vente en attente.
+- **Avertissement vieilles ventes** : bandeau si une vente attend depuis plus de
+  15 min, bordure orange sur la carte concernée.
+- **Ticket en attente** : bouton imprimer un petit ticket récapitulatif (client,
+  articles, total, note) pour donner au patient.
+- **Flags restaurés** : le mode rétrocession et le format A4 sont maintenant
+  conservés et restaurés avec la vente en attente.
+- Traductions fr/en enrichies : `merge`, `old_warning`, `note_placeholder`,
+  `print_ticket`, etc.
+
+### Fichiers
+
+- `frontend/frontend/src/components/facturation/PendingSalesDrawer.tsx`
+- `frontend/frontend/src/hooks/usePendingSales.ts`
+- `frontend/frontend/src/hooks/useFacturationActions.ts`
+- `frontend/frontend/src/hooks/useFacturationState.ts`
+- `frontend/frontend/src/components/facturation/FacturationModals.tsx`
+- `frontend/frontend/public/locales/fr/facturation.json`
+- `frontend/frontend/public/locales/en/facturation.json`
+- `frontend/frontend/public/locales/fr/common.json`
+- `frontend/frontend/public/locales/en/common.json`
+
+### Vérification
+
+- Build Vite : OK.
+- Déploiement frontend Docker : OK.
+
+---
+
+## 2026-09-29 — 🧪 Suite complète tests financiers client + 3 bugs réels corrigés
+
+### Pourquoi
+
+Demande de tests exhaustifs sur tout ce qui touche au client : plafond de crédit,
+dépôts/acomptes, fidélité/remise auto, tiers payant, dette. La suite a révélé
+**trois bugs réels en production** :
+
+1. **Signaux dépôt jamais chargés** : `signals_depot.py` n'était pas importé dans
+   `apps.py::ready()` → `solde_depot` n'était JAMAIS mis à jour en prod, et les
+   paiements en mode `depot` ne créaient pas de ligne `ACHAT`. Le solde affiché
+   était donc toujours faux.
+2. **Paiement `depot` sans vérification de solde** : aucun contrôle n'empêchait
+   de payer 10 000 F avec un solde de 500 F → découvert silencieux.
+3. **Crash du log d'audit à chaque encaissement** : `instance.poste_caisse_id`
+   n'existe pas sur `Caisse` → AttributeError (attrapée mais log perdu).
+
+### Correctifs
+
+- `apps.py` : `signals_depot` importé dans `ready()` → solde_depot vit enfin.
+- `signals_depot.py` : cast `Decimal` (le default du champ est un float avant
+  refresh → TypeError sur `+=`).
+- `CaisseViewSet` : `_check_depot_solde` — refuse un paiement `depot` si le
+  client n'a pas `is_deposit_enabled` ou si `solde_depot < montant`
+  (appliqué à `create` ET `bulk_create`).
+- `SaleFinalizer._handle_payments` : même garde en mode vente directe.
+- `caisse.py` : audit log utilise `facture.poste_caisse_id` (champ existant).
+
+### Tests ajoutés — `test_client_financials.py` (29 tests)
+
+- **Plafond** : sous-plafond OK, dépassement refusé, `-1` = illimité,
+  particulier jamais bloqué, paiement immédiat réduit l'incrément.
+- **Dette** : impayée comptée, `en_compte` ne réduit pas la dette,
+  `recalculate_solde` met à jour les champs dénormalisés.
+- **Dépôts** : crédit/débit + `MouvementCaisse`, retrait > solde refusé,
+  montant ≤ 0 refusé, type invalide refusé, paiement `depot` débite,
+  annulation recrédite (`ANNULATION_ACHAT`), découvert refusé.
+- **Fidélité** : points gagnés/utilisés, seuil auto → `pending_discount`,
+  `use_pending_discount` consommé, exclusions (non-membre, PRO, CLIENTS DIVERS).
+- **Tiers payant** : `taux_couverture` → `part_client`, AUTO-CREDIT `en_compte`,
+  dette auto pour client PRO.
+- **Remise** : remise > total refusée à la validation.
+- **Ayants droit** : liaison à la facture.
+
+### Tests corrigés
+
+- `test_client_merge.py` : adapté au signal dépôt désormais actif.
+
+### Vérification
+
+- `test_client_financials` : **29/29 OK**.
+- Régression (client merge/credit + toutes les suites caisse) : **60/60 OK**.
+
+⚠️ **Production** : les `solde_depot` existants peuvent être faux (signal mort
+depuis le début). Un recalcul depuis l'historique `DepotClient` peut être
+nécessaire sur les clients ayant des dépôts.
+
+## 2026-09-29 — 🎁 Traçage exact des UG consommées (annulation/modification sans dérive)
+
+### Pourquoi
+
+Lors d'une vente, les unités gratuites (UG) du lot sont consommées en premier
+(`quantity_free_remaining`). Mais `FactureProduitAllocation` n'enregistrait que
+la quantité totale prélevée — pas la part gratuite. À l'annulation ou la
+modification, `restore_allocations` recréditait **toute** la quantité dans le
+compteur gratuit → des **UG fantômes** apparaissaient quand la vente avait pioché
+à la fois dans l'UG et le payant.
+
+### Correctif
+
+- `FactureProduitAllocation.quantity_free` (nouveau champ, migration `0256`) :
+  enregistre combien d'unités gratuites ont réellement été prélevées.
+- `allocate_fifo`, `allocate_specific_lot` (lot_allocation_service) et les trois
+  chemins d'allocation de `SaleValidator` calculent et stockent `free_taken`.
+- `restore_allocations` restaure `alloc.quantity_free` au lieu de
+  `alloc.quantity` dans `quantity_free_remaining` — restauration exacte.
+
+Fichiers : `backend/api/models/billing.py`,
+`backend/api/migrations/0256_factureproduitallocation_quantity_free.py`,
+`backend/api/services/lot_allocation_service.py`,
+`backend/api/services/sale_validator.py`.
+
+### Vérification
+
+- `test_sale_modification_stock` : **7/7 OK** (dont `test_annulation_ne_cree_pas_ug_fantome`).
+- Régression (stock comprehensive + robustness + caisse integrity) : **23/23 OK**.
+- Migration `0256` appliquée.
+
+## 2026-09-29 — 📜 Listes d'analyse d'inventaire scrollables (max 50 produits)
+
+- `src/components/inventaire/editor/InventaireAnalysisTab.tsx` — les listes
+  « Top Pertes » / « Top Surplus » sont désormais scrollables (`max-h-[480px]`)
+  et limitées à 50 produits (`slice(0, 50)`).
+
+## 2026-09-29 — 🎨 Refonte de l'Audit des Pertes et Écarts en shadcn/ui
+
+### Pourquoi
+
+Poursuite de la migration DaisyUI/Tailwind brut → shadcn/ui : la page audit
+utilisait des divs et boutons stylés à la main.
+
+### Modifications (`src/components/inventaire/audit/InventaireAudit.tsx`)
+
+- Réécriture complète du JSX avec les composants `components/shadcn/` :
+  - `Button` (ghost icon) pour le bouton retour + boutons de l'état d'erreur.
+  - `Tabs`/`TabsList`/`TabsTrigger` pour les toggles Par rayon/Par groupe et
+    Valeur/Fréquence (actif coloré emerald/blue).
+  - `Card`/`CardHeader`/`CardTitle`/`CardContent` pour les 4 cartes de stats,
+    le graphique et le tableau.
+  - `Table`/`TableHeader`/`TableBody`/`TableRow`/`TableHead`/`TableCell` pour le
+    top produits (tri conservé sur les colonnes).
+  - `Badge` pour le tag métrique du graphique, le badge "critique" et les
+    occurrences (>5 = destructive).
+- Compacité conservée : cartes `p-3`, table `h-8`/`py-1.5`, titres `text-sm`.
+- État d'erreur simplifié (2 boutons shadcn côte à côte).
+
+### Vérification
+
+- `npx tsc --noEmit` : OK.
+
+## 2026-09-29 — 📐 En-têtes Inventaires + Audit compactés (écrans 13")
+
+### Pourquoi
+
+Sur écran 13 pouces, l'en-tête de la liste des inventaires (titre + filtres +
+cartes de stats) et celui de l'Audit des Pertes et Écarts occupaient trop de
+hauteur et compressaient le contenu utile.
+
+### Modifications (frontend uniquement, classes Tailwind)
+
+- `src/components/Inventaire.tsx` — padding page réduit (`lg:p-4` → `lg:p-3`).
+- `src/components/inventaire/editor/InventaireList.tsx` — barre de titre compactée
+  (padding `lg:p-4` → `lg:px-3 lg:py-2`, titre `text-xl` → `text-base`, icône 5→4,
+  boutons `h-9` → `h-8`), espacements `lg:gap-4`/`lg:space-y-3` supprimés.
+- `src/components/inventaire/InventaireFilters.tsx` — recherche `h-10` → `h-8`,
+  selects `h-9` → `h-8`, icônes 5→4, paddings réduits, boutons refresh/corbeille
+  `h-9 w-9` → `h-8 w-8`.
+- `src/components/inventaire/InventaireQuickStats.tsx` — cartes `lg:p-4` → `p-2`,
+  valeurs `text-lg` → `text-base`, `mt-4` supprimé.
+- `src/components/inventaire/audit/InventaireAudit.tsx` — page `space-y-6` →
+  `space-y-3`, titre `text-2xl font-black` → `text-base font-bold`, bouton retour
+  `size-9` → `size-8`, toggles rayon/groupe et valeur/fréquence resserrés
+  (`px-4 py-1.5` → `px-3 py-1`), zone dates `p-2` → `p-1` (inputs `h-8` → `h-7`),
+  cartes stats `p-6` → `p-3` avec valeurs `text-2xl` → `text-lg`, cartes
+  graphique/tableau `p-6` → `p-4`, `rounded-2xl` → `rounded-lg`, en-têtes de
+  tableau `py-3` → `py-2`, grille stats `md:grid-cols-4` passe en 2 colonnes
+  sur mobile (`grid-cols-2`).
+
+### Vérification
+
+- `npx tsc --noEmit` : OK.
+
+## 2026-09-29 — 🐛 Correction de 2 bugs de stock dans la modification de vente + tests dédiés
+
+### Pourquoi
+
+Une suite de tests dédiée aux mouvements de stock lors de la modification d'une
+vente validée (`facture-modifier`) a révélé deux bugs réels dans `SaleModifier` :
+
+1. **Stock jamais re-facturé** : après restauration du stock, la nouvelle quantité
+   n'était décrémentée que pour les produits sans gestion de lots. Un produit avec
+   `use_lot_management=True` mais sans lot allouable (pas de lot en stock) voyait
+   son stock restauré sans être re-décrémenté → **stock gonflé artificiellement**
+   à chaque modification de vente.
+2. **Mouvement de trace faux** : les `MouvementStock` de type SORTIE créés par la
+   modification étaient enregistrés avec une quantité **positive** (+2) au lieu de
+   négative (−2) — convention opposée à toutes les autres sorties de stock.
+
+### Correctifs (`backend/api/services/sale_modifier.py`)
+
+- `_create_new_products` : quand l'allocation de lots échoue, décrément manuel du
+  stock pour **tout** produit (aligné sur `SaleValidator._allocate_lots` qui fait
+  déjà `manual_stock_decrements` dans ce cas).
+- `_create_modification_movements` : `quantite=delta` (delta > 0 = RETOUR +,
+  delta < 0 = SORTIE −) au lieu de `-delta` qui inversait le signe des sorties.
+
+### Tests ajoutés
+
+- `backend/api/tests/test_sale_modification_stock.py` — 6 tests :
+  augmentation de quantité, diminution (retour), remplacement de produit,
+  ajout de produit, cohérence des lots, aucune modification sans changement.
+
+### Vérification
+
+- `test_sale_modification_stock` : **6/6 OK**.
+- Régression : `test_stock_movements_comprehensive` + `test_sales_robustness` +
+  `test_caisse_integrity` : **23/23 OK**.
+
+## 2026-09-29 — 🔌 Désactivation des postes de caisse (au lieu de la suppression)
+
+### Pourquoi
+
+La suppression d'une caisse physique est refusée dès qu'un historique de sessions
+existe (`SessionCaisse` en CASCADE). Plutôt que de casser l'audit, on introduit un
+état **désactivée** : la caisse reste en base avec tout son historique mais ne peut
+plus être ouverte ni proposée à la vente.
+
+### Backend
+
+- `PosteCaisse.actif` (BooleanField, default `True`) — migration `0255_postecaisse_actif`.
+- `PosteVenteViewSet.postes_caisses_disponibles` filtre désormais `actif=True`.
+- `PosteVenteViewSet.ouvrir` refuse l'ouverture d'une caisse désactivée (400).
+- `PosteCaisseViewSet.update/partial_update` bloque la désactivation si un point
+  de vente est actif sur la caisse (400 : "Fermez-le avant de la désactiver").
+- La suppression (`destroy`) reste possible quand aucune session/active poste
+  n'existe — inchangé.
+
+Fichiers : `backend/api/models/billing.py`, `backend/api/views/ventes/caisse_poste.py`,
+`backend/api/migrations/0255_postecaisse_actif.py`.
+
+### Frontend
+
+- `PosteCaisse` : nouveau champ `actif` (+ doc sur `est_actif` = session ouverte).
+- `cashSessionService.updateCaisse(id, { actif })` pour activer/désactiver.
+- **Paramètres → Points de vente** : la liste des caisses physiques affiche toutes
+  les caisses avec badge de statut (Active / En cours / Désactivée), un bouton
+  **Power** pour désactiver/réactiver (confirm dialog), et la suppression gardée
+  mais désactivée si une session est ouverte.
+- `OpenCashSessionModal` : les caisses désactivées sont masquées de la liste
+  d'ouverture.
+- Traductions fr/en ajoutées (`messages.caisse_*`, `postes_vente.*`).
+
+Fichiers : `frontend/frontend/src/services/cashSessionService.ts`,
+`frontend/frontend/src/components/settings/PosteVenteSettingsSection.tsx`,
+`frontend/frontend/src/components/caisse/OpenCashSessionModal.tsx`,
+`public/locales/{fr,en}/pharmacy_settings.json`.
+
+## 2026-09-29 — 🐛 Fix urgent : double envoi de vente à la caisse (double Entrée)
+
+### Pourquoi
+
+Un double appui sur **Entrée** dans le modal d'encaissement envoyait la vente
+deux fois à la caisse (facture dupliquée). `setLoading` est asynchrone : les
+deux événements passaient avant le re-render. De plus, `saleInProgressRef`
+était relâché juste avant l'ouverture du modal sudo, et
+`completeExistingInvoicePayment` / `enregistrerPaiement` n'avaient aucun verrou.
+
+### Correctifs
+
+- `useFacturationState.handleCompleteSale` : le verrou `saleInProgressRef`
+  couvre désormais **tout le flux y compris le modal sudo** ; libéré après la
+  validation sudo ou via `onCancel`. Les appels internes avec credentials
+  poursuivent le même flux.
+- `useSudo.onValidate` : garde synchrone `validatingRef` contre la
+  ré-entrance (double Enter dans le champ mot de passe).
+- `useSaleCompletion` : nouveau `inFlightRef` protégeant `completeSale` et
+  `completeExistingInvoicePayment` (qui n'avait aucun garde-fou).
+- `useCaissePayment.enregistrerPaiement` : même verrou `inFlightRef`
+  (paiement depuis la caisse).
+- `facturation/PaymentModal` : `onSubmit` ignore la soumission quand
+  `loading` (Entrée dans l'input contourne le bouton désactivé).
+
+Fichiers : `src/hooks/useFacturationState.ts`, `src/hooks/useSudo.ts`,
+`src/hooks/useSaleCompletion.ts`, `src/hooks/useCaissePayment.ts`,
+`src/components/facturation/PaymentModal.tsx`.
+
+Bonus : le champ **Montant** du modal d'encaissement est désormais en lecture
+seule en mode **caisse centrale** (montant fixe = total de la facture, encaissé
+par la caissière). Il reste modifiable en vente directe POS pour le calcul de
+la monnaie rendue. Traductions fr/en `payment.amount_locked_caisse`.
+
 ## 2026-09-28 — 🔐 Signature QZ Tray : suppression du popup "Untrusted website"
 
 Mise en place d'un certificat de signature côté serveur pour les requêtes QZ Tray.
@@ -166,35 +674,6 @@ portrait).
   `A4 | A5 | A5L`.
 - `src/components/printing/PrintPage.tsx` : sélecteur de format et
   paramètre d'URL `?format=a5` / `?format=a5l`.
-
----
-
-## 2026-09-28 — 📄 Facture A4 compactée + option A5
-
-Réduction de l'espace vide sur la facture A4 : désignations en 9px,
-CIP/lot/date de péremption regroupés à la suite du nom, interlignes et
-marges resserrées.
-
-Ajout d'une option **A5** dans la page d'impression facture : sélecteur
-A4/A5, mise en page adaptée (largeur 148 mm, total/TVA empilés en
-portrait A5) et `@page { size: A5 }`.
-
-- `src/components/printing/InvoiceTemplate.tsx` : compactage A4, support
-  `paperSize` et layout A5.
-- `src/components/printing/PrintPage.tsx` : sélecteur A4/A5, paramètre
-  d'URL `?format=a5`, dimension d'impression dynamique.
-
----
-
-## 2026-09-28 — 📄 Facture A4 compactée
-
-Réduction de l'espace vide sur la facture A4 pour les factures à une seule
-ligne : désignations en 9px, CIP/lot/date de péremption regroupés à la suite
-du nom, interlignes et marges de section resserrées.
-
-- `src/components/printing/InvoiceTemplate.tsx` : padding des métadonnées,
-  header et footer réduits ; header table plus compact ; lignes produit `py-1.5`
-  et texte 9px.
 
 ---
 
@@ -5224,7 +5703,7 @@ explicite). La recherche/scan sur `cip4` fonctionne via l'index produit existant
 
 ---
 
-## 2026-09-04 — i18n : formatage des dates selon la langue (frontend)
+## 2026-09-04 — i18n : formatage des dates selon la langue (frontend, suite)
 
 ### 🔧 Corrections frontend
 

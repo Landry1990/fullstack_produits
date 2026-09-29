@@ -16,7 +16,6 @@ class ClientMergeTests(TestCase):
             name='Alice Dupont',
             phone='0699999999',
             points_fidelite=50,
-            solde_depot=Decimal('5000.00'),
         )
         target = TestDataFactory.create_client(
             name='Alice D.',
@@ -26,6 +25,7 @@ class ClientMergeTests(TestCase):
         )
 
         # Créer un historique de fidélité et un dépôt liés à la source
+        # (le dépôt met à jour solde_depot via le signal post_save)
         LoyaltyHistory.objects.create(
             client=source,
             type_transaction=LoyaltyHistory.TYPE_GAIN,

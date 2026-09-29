@@ -19,6 +19,13 @@ type QzApi = import('qz-tray').default;
 let qzLoadPromise: Promise<QzApi> | null = null;
 let connectionPromise: Promise<void> | null = null;
 let securityConfigured = false;
+let qzUnavailableUntil = 0;
+let printQueue: Promise<unknown> = Promise.resolve();
+
+/** Durée pendant laquelle QZ Tray est considéré absent après un échec de
+ * connexion. Évite de relancer la tempête de tentatives WebSocket (8 ports ×
+ * retries) à chaque clic sur Imprimer — c'était la cause du blocage Safari. */
+const QZ_UNAVAILABLE_COOLDOWN_MS = 60_000;
 
 async function loadQz(): Promise<QzApi> {
   if (qzLoadPromise) return qzLoadPromise;
@@ -75,10 +82,16 @@ async function configureSecurity(qz: QzApi): Promise<void> {
   });
 }
 
-async function ensureConnected(): Promise<void> {
+async function ensureConnected(force = false): Promise<void> {
   const qz = await loadQz();
   await configureSecurity(qz);
   if (qz.websocket.isActive()) return Promise.resolve();
+
+  // QZ Tray est absent/injoignable : on refuse immédiatement pendant le
+  // cooldown pour que le fallback HTML démarre sans délai ni tempête réseau.
+  if (!force && Date.now() < qzUnavailableUntil) {
+    throw new Error('QZ Tray indisponible (cooldown actif)');
+  }
   if (connectionPromise) return connectionPromise;
 
   // L'app est servie en HTTP : on tente les ports non sécurisés de QZ Tray
@@ -94,9 +107,11 @@ async function ensureConnected(): Promise<void> {
     retries: 2,
     delay: 0,
   } as never).then(() => {
+    qzUnavailableUntil = 0;
     logger.info('QZ Tray connecté');
   }).catch((err: unknown) => {
     connectionPromise = null;
+    qzUnavailableUntil = Date.now() + QZ_UNAVAILABLE_COOLDOWN_MS;
     logger.error('QZ Tray connexion échouée', err);
     throw err;
   });
@@ -141,7 +156,9 @@ export function setOpenDrawer(value: boolean): void {
 
 export async function listPrinters(): Promise<string[]> {
   const qz = await loadQz();
-  await ensureConnected();
+  // La détection manuelle (Paramètres > Impression) ignore le cooldown :
+  // l'utilisateur vient peut-être de (ré)installer QZ Tray.
+  await ensureConnected(true);
   return qz.printers.find();
 }
 
@@ -170,9 +187,20 @@ async function resolvePrinterName(): Promise<string | null> {
 
 /**
  * Envoie des commandes ESC/POS brutes à l'imprimante via QZ Tray.
+ * Les appels sont sérialisés : deux impressions ne tournent jamais en
+ * parallèle (protège la connexion WebSocket et l'imprimante).
  * Retourne `true` si le job a été envoyé, `false` si la connexion/ impression a échoué.
  */
 export async function printEscpos(commands: string | string[]): Promise<boolean> {
+  const task = printQueue.then(() => printEscposInternal(commands));
+  printQueue = task.then(
+    () => undefined,
+    () => undefined
+  );
+  return task;
+}
+
+async function printEscposInternal(commands: string | string[]): Promise<boolean> {
   const qz = await loadQz();
   await ensureConnected();
 

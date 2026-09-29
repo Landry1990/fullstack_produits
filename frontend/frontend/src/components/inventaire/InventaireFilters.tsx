@@ -51,27 +51,27 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
     }, []);
 
     return (
-        <div className="bg-white p-2 lg:p-4 space-y-2 lg:space-y-4">
+        <div className="bg-white p-2 lg:px-3 lg:py-2 space-y-2">
             {/* Top Row: Search & Dates */}
-            <div className="flex flex-col md:flex-row gap-2 lg:gap-4">
+            <div className="flex flex-col md:flex-row gap-2">
                 {/* Search Bar */}
                 <div className="flex-1 relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Search className="h-5 w-5 text-slate-400" />
+                        <Search className="h-4 w-4 text-slate-400" />
                     </div>
                     <input
                         type="text"
                         placeholder={t('inventaire.filters.search_placeholder')}
                         aria-label={t('inventaire.filters.search_placeholder')}
-                        className="w-full h-10 pl-10 pr-3 rounded-md border border-slate-200 bg-white text-sm text-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-colors"
+                        className="w-full h-8 pl-9 pr-3 rounded-md border border-slate-200 bg-white text-sm text-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-colors"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
 
                 {/* Date Range */}
-                <div className="flex items-center gap-2 bg-white p-1.5 rounded-md border border-slate-200 px-3">
-                    <Calendar className="h-5 w-5 text-slate-400" />
+                <div className="flex items-center gap-2 bg-white py-1 rounded-md border border-slate-200 px-3">
+                    <Calendar className="h-4 w-4 text-slate-400" />
                     <LocalizedDateInput
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
@@ -89,8 +89,8 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
             </div>
 
             {/* Bottom Row: Advanced Filters & Actions */}
-            <div className="flex flex-col md:flex-row gap-2 lg:gap-4 items-center">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 lg:gap-4 flex-1 w-full">
+            <div className="flex flex-col md:flex-row gap-2 items-center">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 flex-1 w-full">
                     {/* Status Filter */}
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -100,7 +100,7 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
                             aria-label={t('inventaire.filters.status_all')}
-                            className="w-full h-9 pl-10 pr-3 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-colors"
+                            className="w-full h-8 pl-9 pr-3 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-colors"
                         >
                             <option value="">{t('inventaire.filters.status_all')}</option>
                             <option value="EN_COURS">{t('inventaire.status.draft')}</option>
@@ -117,7 +117,7 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                             value={creatorFilter || ''}
                             onChange={(e) => setCreatorFilter(e.target.value)}
                             aria-label={t('inventaire.filters.creators_all')}
-                            className="w-full h-9 pl-10 pr-3 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-colors"
+                            className="w-full h-8 pl-9 pr-3 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-colors"
                         >
                             <option value="">{t('inventaire.filters.creators_all')}</option>
                             {users.map(u => (
@@ -137,7 +137,7 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                             value={ordering}
                             onChange={(e) => setOrdering(e.target.value)}
                             aria-label={t('inventaire.detail.sort.title')}
-                            className="w-full h-9 pl-10 pr-3 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-colors"
+                            className="w-full h-8 pl-9 pr-3 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-colors"
                         >
                             <option value="-date">{t('inventaire.filters.sort_date_desc')}</option>
                             <option value="date">{t('inventaire.filters.sort_date_asc')}</option>
@@ -151,27 +151,27 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                 </div>
 
                 {/* Actions Buttons */}
-                <div className="flex gap-2 shrink-0 border-l border-slate-200 pl-4">
+                <div className="flex gap-1.5 shrink-0 border-l border-slate-200 pl-3">
                     {onDeleteDrafts && (
                         <button
                             type="button"
                             onClick={onDeleteDrafts}
-                            className="inline-flex items-center justify-center h-9 w-9 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
+                            className="inline-flex items-center justify-center h-8 w-8 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
                             title={t('inventaire.filters.delete_drafts')}
                             aria-label={t('inventaire.filters.delete_drafts')}
                         >
-                            <Trash2 className="size-5" />
+                            <Trash2 className="size-4" />
                         </button>
                     )}
 
                     <button
                         type="button"
                         onClick={onRefresh}
-                        className="inline-flex items-center justify-center h-9 w-9 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors"
+                        className="inline-flex items-center justify-center h-8 w-8 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors"
                         title={t('common:refresh')}
                         aria-label={t('common:refresh')}
                     >
-                        <RefreshCw className="size-5" />
+                        <RefreshCw className="size-4" />
                     </button>
                 </div>
             </div>

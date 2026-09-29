@@ -30,6 +30,29 @@ class PosteCaisseViewSet(viewsets.ModelViewSet):
         permission_classes = [IsAdminUser] if self.action in {'create', 'update', 'partial_update', 'destroy'} else [IsAuthenticated]
         return [permission() for permission in permission_classes]
 
+    def update(self, request, *args, **kwargs):
+        """Empêche la désactivation d'une caisse ayant un point de vente actif,
+        ainsi que la désactivation de la dernière caisse active."""
+        caisse = self.get_object()
+        actif = request.data.get('actif')
+        if actif in (False, 'false', 'False', 0, '0'):
+            if caisse.postes_vente.filter(est_actif=True).exists():
+                return Response(
+                    {"detail": f"La caisse {caisse.nom} a un point de vente actif. Fermez-le avant de la désactiver."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            autres_actives = PosteCaisse.objects.filter(actif=True).exclude(id=caisse.id).exists()
+            if not autres_actives:
+                return Response(
+                    {"detail": f"Impossible de désactiver la caisse {caisse.nom} : c'est la dernière caisse active. Créez ou réactivez d'abord une autre caisse."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        kwargs['partial'] = True
+        return self.update(request, *args, **kwargs)
+
     def destroy(self, request, *args, **kwargs):
         """Bloque la suppression si la caisse est en cours d'utilisation ou si
         des sessions historiques lui sont liées (FK CASCADE sur SessionCaisse
@@ -54,6 +77,13 @@ class PosteCaisseViewSet(viewsets.ModelViewSet):
         if has_legacy_sessions:
             return Response(
                 {"detail": f"La caisse {caisse.nom} possède un historique de sessions : suppression impossible."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Ne jamais permettre de supprimer la dernière caisse active.
+        if caisse.actif and not PosteCaisse.objects.filter(actif=True).exclude(id=caisse.id).exists():
+            return Response(
+                {"detail": f"Impossible de supprimer la caisse {caisse.nom} : c'est la dernière caisse active."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -90,7 +120,7 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
     def postes_caisses_disponibles(self, request):
         """Retourne les caisses physiques qui n'ont pas de poste de vente actif."""
         caisses_actives = PosteVente.objects.filter(est_actif=True).values_list('caisse_id', flat=True)
-        caisses = PosteCaisse.objects.exclude(id__in=caisses_actives)
+        caisses = PosteCaisse.objects.filter(actif=True).exclude(id__in=caisses_actives)
         serializer = PosteCaisseSerializer(caisses, many=True)
         return Response(serializer.data)
 
@@ -175,6 +205,11 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
         caisse = PosteCaisse.objects.filter(pk=pk).first()
         if not caisse:
             return Response({"detail": "Caisse introuvable."}, status=status.HTTP_404_NOT_FOUND)
+        if not caisse.actif:
+            return Response(
+                {"detail": f"La caisse {caisse.nom} est désactivée."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         # Vérifier si la caisse est déjà utilisée par un poste de vente actif
         actif = PosteVente.objects.filter(caisse=caisse, est_actif=True).first()

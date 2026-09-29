@@ -298,7 +298,11 @@ export function useFacturationState() {
     secureUpdateQuantite,
     user,
     myActivePoste: multiCaisse.myActivePoste,
-    postesCaisses: multiCaisse.postesCaisses
+    postesCaisses: multiCaisse.postesCaisses,
+    isRetrocession,
+    setIsRetrocession,
+    isFactureA4,
+    setIsFactureA4
   })
 
   // --- Sale Completion ---
@@ -396,8 +400,11 @@ export function useFacturationState() {
 
   // --- Complete Sale Handler ---
   const handleCompleteSale = async (sudoCredentials?: { validatorId: number, password: string }) => {
-    if (saleInProgressRef.current) return
-    saleInProgressRef.current = true
+    // Le verrou couvre tout le flux (y compris le modal sudo) : un second
+    // appel sans credentials (double Entrée, double clic) est ignoré.
+    // Les appels internes avec credentials sont la suite du même flux.
+    if (saleInProgressRef.current && !sudoCredentials) return
+    if (!sudoCredentials) saleInProgressRef.current = true
 
     // En mode caisse centrale, une caisse doit être ouverte avant toute vente
     if (multiCaisse.centralizedCashRegister && !hasActiveCaisse) {
@@ -408,7 +415,6 @@ export function useFacturationState() {
 
     // Sudo required when sending to centralized cash register or when selling on an opened cash register point
     if ((multiCaisse.centralizedCashRegister || isPosteCaisseActive) && !sudoCredentials) {
-      saleInProgressRef.current = false
       requireSudo(async (validatorId, password) => {
         await handleCompleteSale({ validatorId, password })
       }, {
@@ -418,6 +424,7 @@ export function useFacturationState() {
           : t('facturation:payment.sudo_send_to_caisse'),
         permission: 'can_validate_sales',
         forceCurrentUser: false,
+        onCancel: () => { saleInProgressRef.current = false },
       })
       return
     }
@@ -810,6 +817,7 @@ export function useFacturationState() {
     mettreEnAttente: actions.mettreEnAttente,
     annulerVente: actions.annulerVente,
     restaurerVente: actions.restaurerVente,
+    fusionnerVenteEnAttente: actions.fusionnerVenteEnAttente,
     supprimerVenteEnAttente: actions.supprimerVenteEnAttente,
     handlePaymentClick,
     handlePaymentClickWithSudo,

@@ -228,104 +228,10 @@ echo ""
 echo "🔐 Vérification du compte de secours..."
 python scripts/ensure_emergency_admin.py || echo "⚠️  Vérification du compte de secours échouée"
 
-# ── 6c. Garantir les postes de caisse et de vente par défaut ──
-echo ""
-echo "🏪 Vérification des postes de caisse et de vente par défaut..."
-python -c "
-import os, django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
-django.setup()
-from api.models import PosteCaisse, PosteVente
-
-# Postes de caisse physiques
-caisses_defaults = [
-    ('Caisse Principale', 'caisse-principale'),
-    ('Caisse Secondaire', 'caisse-secondaire')
-    
-]
-caisses_created = []
-for nom, code in caisses_defaults:
-    obj, was_created = PosteCaisse.objects.get_or_create(
-        nom=nom,
-        defaults={'code': code}
-    )
-    if was_created:
-        caisses_created.append(nom)
-
-if caisses_created:
-    print('✓ Postes de caisse créés: ' + ', '.join(caisses_created))
-else:
-    print('✓ Postes de caisse par défaut déjà présents')
-
-# Postes de vente
-ventes_defaults = ['COMPTOIR1', 'COMPTOIR2', 'COMPTOIR3']
-ventes_created = []
-for nom in ventes_defaults:
-    poste, was_created = PosteVente.objects.get_or_create(
-        nom=nom,
-        defaults={'est_actif': False, 'caisse': None, 'vendeur': None}
-    )
-    if was_created:
-        ventes_created.append(nom)
-
-if ventes_created:
-    print('✓ Postes de vente créés: ' + ', '.join(ventes_created))
-else:
-    print('✓ Postes de vente par défaut déjà présents')
-
-# Taux de TVA par défaut (taux unique → get_or_create idempotent)
-from decimal import Decimal
-from api.models import TVA
-
-tva_defaults = [
-    (Decimal('19.25'), 'TVA Normale'),
-    (Decimal('0'), 'Exonéré'),
-]
-tva_created = []
-for taux, libelle in tva_defaults:
-    obj, was_created = TVA.objects.get_or_create(
-        taux=taux,
-        defaults={'libelle': libelle, 'is_active': True}
-    )
-    if was_created:
-        tva_created.append(f'{taux}%')
-
-if tva_created:
-    print('✓ Taux de TVA créés: ' + ', '.join(tva_created))
-else:
-    print('✓ Taux de TVA par défaut déjà présents')
-
-# Fournisseurs par défaut (name non unique → vérification manuelle iexact,
-# en ignorant les fiches soft-deletées pour ne pas les réactiver par accident)
-from api.models import Fournisseur
-
-# (nom, is_divers, type_reglement) — Ubipharm/Laborex sont payés sur relevé,
-# les autres à la facture (cf. commentaire du modèle Fournisseur)
-fournisseurs_defaults = [
-    ('LABOREX CMR', False, 'RELEVE'),
-    ('SIAP PHARMA', False, 'FACTURE'),
-    ('UBIPHARM CMR', False, 'RELEVE'),
-    ('DIVERS', True, 'FACTURE'),
-    ('SLOY PHARMA', False, 'FACTURE'),
-    ('PHARMA EXPRESS', False, 'FACTURE'),
-]
-fournisseurs_created = []
-for nom, is_divers, reglement in fournisseurs_defaults:
-    deja_present = Fournisseur.objects.filter(
-        name__iexact=nom, deleted_at__isnull=True
-    ).exists()
-    if not deja_present:
-        Fournisseur.objects.create(
-            name=nom, is_divers=is_divers, type_reglement=reglement,
-            is_active=True
-        )
-        fournisseurs_created.append(nom)
-
-if fournisseurs_created:
-    print('✓ Fournisseurs créés: ' + ', '.join(fournisseurs_created))
-else:
-    print('✓ Fournisseurs par défaut déjà présents')
-"
+# ── 6c. Données par défaut (postes de caisse/vente, TVA, fournisseurs) ──
+# Semées une seule fois par la migration 0260_seed_defauts — volontairement
+# absentes d'ici : les recréer à chaque démarrage annulerait les suppressions
+# faites par l'utilisateur.
 
 # ── 7. Import des données fournisseur si spécifié et base vide ──
 if [ -n "$SUPPLIER_DATA" ]; then

@@ -17,6 +17,10 @@ class PosteCaisse(models.Model):
     """Représente une caisse physique (matériel)."""
     nom = models.CharField(max_length=100, unique=True)
     code = models.SlugField(max_length=50, unique=True, help_text="Code court pour identification (ex: CAISSE-01)")
+    actif = models.BooleanField(
+        default=True,
+        help_text="False = caisse désactivée (masquée à l'ouverture, historique conservé)"
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -433,6 +437,10 @@ class FactureProduitAllocation(models.Model):
     )
     stock_lot = models.ForeignKey('StockLot', on_delete=models.PROTECT, null=True, blank=True)
     quantity = models.IntegerField(help_text="Quantité prélevée de ce lot")
+    quantity_free = models.IntegerField(
+        default=0,
+        help_text="Part de la quantité prélevée sur les unités gratuites (UG) du lot"
+    )
     cost_price = models.DecimalField(max_digits=10, decimal_places=2, help_text="Prix d'achat du lot")
     selling_price = models.DecimalField(max_digits=10, decimal_places=2, help_text="Prix de vente")
     created_at = models.DateTimeField(auto_now_add=True)

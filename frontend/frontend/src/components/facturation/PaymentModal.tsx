@@ -98,6 +98,7 @@ export default function PaymentModal({
           {(facturePourPaiement || isNewSale) ? (
             <form onSubmit={(e) => {
               e.preventDefault();
+              if (loading) return;
               if (isNewSale) {
                 onCompleteSale();
               } else {
@@ -339,7 +340,9 @@ export default function PaymentModal({
                       step="0.01"
                       value={montantPaye}
                       onChange={(e) => setMontantPaye(e.target.value)}
-                      className="w-full h-12 px-3 rounded-lg border border-slate-200 bg-white font-light text-2xl text-center text-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none"
+                      readOnly={centralizedCashRegister}
+                      title={centralizedCashRegister ? t('facturation:payment.amount_locked_caisse', { defaultValue: 'Montant fixe : encaissé à la caisse' }) : undefined}
+                      className={`w-full h-12 px-3 rounded-lg border border-slate-200 font-light text-2xl text-center outline-none ${centralizedCashRegister ? 'bg-slate-50 text-slate-500 cursor-not-allowed' : 'bg-white text-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20'}`}
                       placeholder={t('facturation:payment.amount_label')}
                     />
                   </div>

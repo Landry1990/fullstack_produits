@@ -74,6 +74,7 @@ const PrintPage: React.FC = () => {
                 const mergedSettings: PharmacySettings = {
                     ...pharmacySettingsRes.data,
                     pharmacy_name: licence?.pharmacie_nom || pharmacySettingsRes.data.pharmacy_name,
+                    pharmacist_name: licence?.pharmacien_nom || '',
                     primary_color: invoiceSettingsRes.data.primary_color || pharmacySettingsRes.data.primary_color,
                     logo: pharmacySettingsRes.data.logo || invoiceSettingsRes.data.logo,
                 };

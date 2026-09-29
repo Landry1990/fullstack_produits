@@ -173,6 +173,7 @@ function usePrint(): UsePrintReturn {
         ${settings.email ? `<p>${escHtml(settings.email)}</p>` : ''}
         ${settings.niu ? `<p>NIU: ${escHtml(settings.niu)}</p>` : ''}
         ${settings.registre_commerce ? `<p>RC: ${escHtml(settings.registre_commerce)}</p>` : ''}
+        ${settings.show_pharmacist_on_documents && settings.pharmacist_name ? `<p>${escHtml(docT('printing:invoice.pharmacist'))}: ${escHtml(settings.pharmacist_name)}</p>` : ''}
       </div>
     `;
   }, [settings, docT]);

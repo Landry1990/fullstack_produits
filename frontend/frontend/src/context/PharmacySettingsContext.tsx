@@ -21,6 +21,9 @@ export interface PharmacySettings {
   registre_commerce: string;
   ticket_footer_message: string;
   receipt_header: string;
+  /** Dérivé de la licence (pharmacien_nom) — jamais persisté ni envoyé à l'API. */
+  pharmacist_name?: string;
+  show_pharmacist_on_documents?: boolean;
   logo?: string;
   coefficient_direct_commande?: string;
   taux_change_actif?: string;
@@ -90,6 +93,8 @@ const DEFAULT_SETTINGS: PharmacySettings = {
   registre_commerce: '',
   ticket_footer_message: 'Merci de votre visite!',
   receipt_header: '',
+  pharmacist_name: '',
+  show_pharmacist_on_documents: false,
   logo: undefined,
   coefficient_direct_commande: '1.35',
   taux_change_actif: '655.957',
@@ -169,7 +174,9 @@ export const PharmacySettingsProvider = ({ children }: { children: ReactNode }) 
 
   const updateSettings = useCallback(async (updates: Partial<PharmacySettings>) => {
     try {
-      const { data } = await api.put<PharmacySettings>('pharmacy-settings/', updates);
+      // pharmacist_name est dérivé de la licence : on ne le renvoie pas à l'API
+      const { pharmacist_name: _ignored, ...payload } = updates;
+      const { data } = await api.put<PharmacySettings>('pharmacy-settings/', payload);
       setSettings(data);
       gooeyToast.success(t('messages.settings_saved'));
       return data;
@@ -222,7 +229,8 @@ export const PharmacySettingsProvider = ({ children }: { children: ReactNode }) 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const effectiveSettings = {
     ...settings,
-    pharmacy_name: licence?.pharmacie_nom || settings.pharmacy_name
+    pharmacy_name: licence?.pharmacie_nom || settings.pharmacy_name,
+    pharmacist_name: licence?.pharmacien_nom || ''
   };
 
   // Synchronise la langue des documents (utils/documentLang) pour les helpers

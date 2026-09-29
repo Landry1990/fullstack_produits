@@ -1,0 +1,360 @@
+{
+  "title": "Aide et Formation",
+  "subtitle": "Guides et documentation pour l'utilisation de ZENITH",
+  "tabs": {
+    "overview": "Accueil",
+    "videos": "Vidéos",
+    "guides": "Guides",
+    "shortcuts": "Raccourcis",
+    "troubleshooting": "Dépannage",
+    "faq": "FAQ"
+  },
+  "search": {
+    "placeholder": "Rechercher un guide, une astuce, un raccourci...",
+    "no_results": "Aucun résultat",
+    "try_again": "Essayez un autre mot-clé"
+  },
+  "overview": {
+    "title": "Centre d'aide ZENITH",
+    "subtitle": "Tutoriels, guides pas-à-pas, raccourcis et dépannage.",
+    "welcome": "Bienvenue",
+    "welcome_desc": "Ce centre regroupe tout ce qu'il faut pour maîtriser ZENITH rapidement.",
+    "progress": "Progression",
+    "progress_desc": "Marquez les guides comme lus pour suivre votre avancement.",
+    "progress_empty": "Aucun guide lu — commencez par le guide Faire une vente.",
+    "sections": {
+      "videos": {
+        "title": "Tutoriels vidéo",
+        "desc": "Formation par thème (vente, stock, fournisseurs...).",
+        "action": "Voir"
+      },
+      "guides": {
+        "title": "Guides écrits",
+        "desc": "Procédures détaillées, étape par étape.",
+        "action": "Lire"
+      },
+      "shortcuts": {
+        "title": "Raccourcis clavier",
+        "desc": "Gagnez du temps au quotidien.",
+        "action": "Découvrir"
+      },
+      "troubleshooting": {
+        "title": "Dépannage",
+        "desc": "Solutions aux problèmes les plus courants.",
+        "action": "Résoudre"
+      },
+      "faq": {
+        "title": "FAQ",
+        "desc": "Réponses aux questions fréquentes.",
+        "action": "Consulter"
+      }
+    }
+  },
+  "training": {
+    "title": "Formation",
+    "subtitle": "Tutoriels vidéo ZENITH",
+    "categories": {
+      "ventes": "Ventes & Caisse",
+      "stock": "Gestion du Stock",
+      "fournisseurs": "Fournisseurs",
+      "clients": "Clients & Créances",
+      "dashboard": "Tableau de Bord",
+      "parametres": "Paramètres"
+    },
+    "videos": {
+      "v1": "Faire une vente rapide",
+      "v2": "Gérer les modes de paiement",
+      "v3": "Émettre une facture client",
+      "v4": "Réceptionner une commande",
+      "v5": "Faire un inventaire",
+      "v6": "Gérer les péremptions",
+      "v7": "Créer une commande fournisseur",
+      "v8": "Enregistrer un paiement fournisseur",
+      "v9": "Gérer les créances clients",
+      "v10": "Programme de fidélité",
+      "v11": "Lire le rapport flash",
+      "v12": "Analyser les statistiques",
+      "v13": "Configurer la pharmacie",
+      "v14": "Gérer les utilisateurs"
+    },
+    "soon": "Bientôt disponible",
+    "videos_count": "vidéo",
+    "no_results": "Aucun tutoriel trouvé",
+    "try_again": "Essayez un autre mot-clé"
+  },
+  "guides": {
+    "title": "Guides écrits",
+    "description": "Suivez les étapes une par une pour apprendre à utiliser ZENITH.",
+    "mark_as_read": "Marquer comme lu",
+    "mark_as_unread": "Marquer comme non lu",
+    "expand": "Voir les étapes",
+    "collapse": "Réduire",
+    "completed": "Terminé",
+    "estimated_time": "min",
+    "items": {
+      "sell": {
+        "title": "Faire une vente",
+        "description": "De l'ouverture de la caisse à l'impression du ticket.",
+        "duration": 3,
+        "steps": [
+          "Ouvrez le menu Facturation / Caisse.",
+          "Recherchez un produit par nom, CIP ou code-barres (F2).",
+          "Ajustez les quantités avec les touches + / - ou le raccourci *.",
+          "Sélectionnez le client si nécessaire (F4).",
+          "Cliquez sur Encaisser (F9) et choisissez le mode de règlement.",
+          "Le ticket s'imprime automatiquement si l'imprimante est configurée."
+        ]
+      },
+      "ticket": {
+        "title": "Imprimer un ticket thermique",
+        "description": "Configurer et utiliser une imprimante ESC/POS avec QZ Tray.",
+        "duration": 4,
+        "steps": [
+          "Installez et lancez QZ Tray sur le poste (icône verte près de l'horloge).",
+          "Dans Paramètres > Impression, cliquez sur Détecter.",
+          "Sélectionnez votre imprimante thermique POS-80.",
+          "Cochez Ouvrir le tiroir-caisse si vous en avez un.",
+          "Laissez QZ Tray mémoriser le site lors du premier popup.",
+          "Imprimez un ticket : l'aperçu n'est plus nécessaire en mode automatique."
+        ]
+      },
+      "import": {
+        "title": "Importer une base produits",
+        "description": "Chargez votre catalogue depuis un fichier CSV ou Excel.",
+        "duration": 5,
+        "steps": [
+          "Allez dans Maintenance > Import / Export.",
+          "Préparez un fichier avec au minimum Nom, Prix d'achat et Prix de vente.",
+          "Choisissez le format CSV ou Excel.",
+          "Mappez les colonnes si les intitulés diffèrent.",
+          "Vérifiez l'aperçu puis validez l'import.",
+          "Les produits existants (même CIP ou nom) sont mis à jour automatiquement."
+        ]
+      },
+      "stock_alert": {
+        "title": "Gérer une rupture de stock",
+        "description": "Identifier les produits à risque et passer une commande.",
+        "duration": 4,
+        "steps": [
+          "Ouvrez Analyse de stock > Rupture.",
+          "Filtrez par fournisseur ou horizon de jours.",
+          "Sélectionnez les produits critiques à commander.",
+          "Cliquez sur Générer une commande.",
+          "Vérifiez les quantités suggérées puis validez.",
+          "Suivez la commande dans Commandes > En attente."
+        ]
+      },
+      "settings": {
+        "title": "Configurer la pharmacie",
+        "description": "Renseigner les informations et préférences de votre officine.",
+        "duration": 3,
+        "steps": [
+          "Allez dans Paramètres > Pharmacie.",
+          "Remplissez le nom, l'adresse, le téléphone et le NIU.",
+          "Ajoutez votre logo pour les impressions.",
+          "Dans Paramètres > Impression, choisissez le format A4 ou A5.",
+          "Enregistrez et testez un ticket de caisse."
+        ]
+      }
+    }
+  },
+  "shortcuts": {
+    "title": "Raccourcis clavier",
+    "description": "Gagnez en vitesse avec les raccourcis ZENITH.",
+    "global": "Globaux",
+    "billing": "Caisse / Facturation",
+    "stock": "Stock",
+    "items": {
+      "slash": {
+        "key": "/",
+        "label": "Focus recherche produit (depuis n'importe où)"
+      },
+      "f2": {
+        "key": "F2",
+        "label": "Focus recherche / vider le champ"
+      },
+      "f4": {
+        "key": "F4",
+        "label": "Sélection client / focus quantité"
+      },
+      "f9": {
+        "key": "F9",
+        "label": "Encaisser / finaliser la vente"
+      },
+      "ctrl_s": {
+        "key": "Ctrl + S",
+        "label": "Mettre la vente en attente"
+      },
+      "alt_z": {
+        "key": "Alt + Z",
+        "label": "Mode Zenith (plein écran épuré)"
+      },
+      "esc": {
+        "key": "Échap",
+        "label": "Annuler l'action / fermer"
+      },
+      "qty_star": {
+        "key": "*5",
+        "label": "Quantité rapide : * puis nombre"
+      }
+    }
+  },
+  "troubleshooting": {
+    "title": "Dépannage",
+    "description": "Solutions aux problèmes les plus fréquents.",
+    "steps_count": "{{count}} étapes",
+    "items": {
+      "qz_connect": {
+        "title": "QZ Tray ne se connecte pas",
+        "steps": [
+          "Vérifiez que QZ Tray est lancé (icône verte près de l'horloge).",
+          "Ouvrez l'application avec http://localhost (pas une IP réseau).",
+          "Si Kaspersky est installé : désactivez 'Injecter un script dans le trafic web'.",
+          "Faites Ctrl+Maj+R pour vider le cache PWA.",
+          "Vérifiez dans la console F12 qu'aucune CSP ne bloque ws://localhost:8182."
+        ]
+      },
+      "ticket_blurry": {
+        "title": "Ticket flou ou texte coupé",
+        "steps": [
+          "Utilisez l'impression ESC/POS via QZ Tray (texte natif, pas image).",
+          "Dans Paramètres > Impression, sélectionnez l'imprimante POS-80.",
+          "Augmentez la densité d'impression dans les préférences du driver POS-80.",
+          "Pour l'impression A4, choisissez le format A5 si la facture a peu de lignes."
+        ]
+      },
+      "license": {
+        "title": "Problème de licence",
+        "steps": [
+          "Vérifiez votre connexion Internet.",
+          "Allez dans Paramètres > Licence.",
+          "Saisissez le code journalier à 6 caractères fourni par le support.",
+          "Si le problème persiste, contactez le support avec le message d'erreur exact."
+        ]
+      },
+      "printer_windows": {
+        "title": "L'imprimante n'apparaît pas dans Windows",
+        "steps": [
+          "Vérifiez le câble USB et l'alimentation.",
+          "Installez le driver POS-80-Series.",
+          "Ouvrez Panneau de configuration > Périphériques et imprimantes.",
+          "Imprimez une page de test Windows avant de tester dans ZENITH."
+        ]
+      }
+    }
+  },
+  "faq": {
+    "title": "Questions fréquentes",
+    "description": "Réponses rapides aux questions les plus courantes.",
+    "items": {
+      "offline": {
+        "q": "Puis-je vendre sans Internet ?",
+        "a": "ZENITH nécessite une connexion au serveur local ou distant pour valider les ventes. En cas de coupure, mettez les ventes en attente et validez-les dès le retour de la connexion."
+      },
+      "backup": {
+        "q": "Comment sauvegarder mes données ?",
+        "a": "Un script de sauvegarde est disponible : sauvegardez régulièrement la base de données et les fichiers de configuration. Contactez votre administrateur système pour planifier les backups."
+      },
+      "update": {
+        "q": "Comment mettre à jour ZENITH ?",
+        "a": "Le déploiement se fait via Docker. Sur le serveur client, exécutez git pull puis docker compose up -d. En développement, utilisez le script deploy.ps1."
+      },
+      "multi_poste": {
+        "q": "Plusieurs postes peuvent-ils utiliser ZENITH ?",
+        "a": "Oui. ZENITH est multi-poste : chaque caisse ouvre ZENITH dans son navigateur et partage la même base de données. Configurez une imprimante par poste dans Paramètres > Impression."
+      },
+      "thermal_labels": {
+        "q": "Puis-je imprimer des étiquettes thermiques ?",
+        "a": "Oui, mais cela nécessite une imprimante à étiquettes compatible TSPL/ZPL (Xprinter, TSC, etc.). Cette fonction sera activée après validation des tickets ESC/POS."
+      }
+    }
+  },
+  "import": {
+    "title": "Importation de Base Produit",
+    "description": "ZENITH permet d'importer massivement vos produits depuis des fichiers CSV ou Excel (XLSX/XLS).",
+    "format": {
+      "title": "Formats Supportés",
+      "csv": "Fichiers CSV (délimiteur ';' ou ',')",
+      "excel": "Fichiers Excel (.xlsx, .ls)"
+    },
+    "columns": {
+      "title": "Colonnes du Fichier",
+      "required": "Champs Obligatoires",
+      "optional": "Champs Optionnels",
+      "required_details": "Vous devez fournir au moins le **Nom** et l'un des deux **Prix** (Achat ou Vente).",
+      "nom": "Désignation / Nom du produit",
+      "prix_public": "Prix de Vente (Public)",
+      "prix_cession": "Prix d'Achat (Cession)",
+      "stock": "Quantité en stock",
+      "cip": "Codes CIP (1, 2 ou 3)",
+      "tva": "TVA ou Code TVA",
+      "expire_date": "Date d'expiration"
+    },
+    "logic": {
+      "title": "Logique d'Importation",
+      "tva": "Si la TVA n'est pas spécifiée, elle est calculée automatiquement : 0% si un prix public existe, 19.25% si le prix public est 0.",
+      "update": "Si un produit existe déjà (même CIP ou même Nom), il sera mis à jour. Sinon, il sera créé.",
+      "delimiter": "Le système détecte automatiquement si vous utilisez le point-virgule (;) ou la virgule (,) dans vos fichiers CSV."
+    }
+  },
+  "billing": {
+    "title": "Gestion de la Facturation",
+    "description": "Le module de facturation est conçu pour une productivité maximale avec le concept 'Zero Mouse' (Tout au clavier).",
+    "shortcuts": {
+      "title": "Raccourcis 'Zero Mouse'",
+      "f2": "Focus Recherche Produit / Vider le champ",
+      "slash": "Focus Recherche (depuis n'importe où)",
+      "f4": "Sélection Client / Focus Quantité (Panier)",
+      "f9": "Encaisser / Finaliser la vente",
+      "ctrl_s": "Mettre la vente en attente",
+      "alt_z": "Mode Zenith (Plein écran épuré)",
+      "esc": "Annuler l'action en cours / Fermer"
+    },
+    "tips": {
+      "title": "Astuces de Productivité",
+      "qty_shortcut": {
+        "title": "Raccourci Quantité Rapide",
+        "description": "Dans la barre de recherche, tapez '*' suivi d'un nombre (ex: *5) pour changer instantanément la quantité du dernier produit ajouté."
+      },
+      "navigation": {
+        "title": "Navigation dans le Panier",
+        "description": "Utilisez les flèches ↑↓ pour sélectionner une ligne, '+' et '-' pour ajuster la quantité, et 'Suppr' pour retirer l'article."
+      },
+      "search": {
+        "title": "Recherche Intelligente",
+        "description": "Le système recherche simultanément par Nom, Code CIP ou Code-barres. Le scan est automatique."
+      }
+    },
+    "guide": {
+      "title": "Comment vendre : Guide étape par étape",
+      "step1": {
+        "title": "Étape 1 : Ouvrir la Vente",
+        "description": "Accédez au menu 'Facturation'. L'interface ZENITH est épurée pour vous permettre de vous concentrer sur l'essentiel."
+      },
+      "step2": {
+        "title": "Étape 2 : Rechercher un Produit",
+        "description": "Utilisez le champ 'Recherche Produit' (F2). Tapez le nom ou scannez directement. ZENITH affiche les stocks en temps réel."
+      },
+      "step3": {
+        "title": "Étape 3 : Gérer le Panier",
+        "description": "Une fois ajouté, ajustez les quantités. Le système sépare automatiquement ce que le patient doit payer."
+      }
+    }
+  },
+  "tips": {
+    "title": "Astuces",
+    "score_title": "Score de Santé du Stock (Pilotage Expert)",
+    "score_intro": "Le score est calculé automatiquement sur <0>5 critères</0>, chacun avec un poids différent :",
+    "crit_availability": "<0>Disponibilité</0> — peu de ruptures de stock",
+    "crit_fluidity": "<0>Fluidité</0> — pas de stock dormant sur produits actifs",
+    "crit_coverage": "<0>Couverture</0> — stock entre 15 et 90 jours de ventes",
+    "crit_activity": "<0>Activité</0> — produits vendus dans les 30 derniers jours",
+    "crit_immobilization": "<0>Immobilisation</0> — peu de capital bloqué en stock mort",
+    "score_good": "≥ 80% Bon",
+    "score_medium": "50–79% Moyen",
+    "score_critical": "< 50% Critique",
+    "print_title": "Impression Rapport Mensuel",
+    "print_ink_tip": "Pour économiser l'encre, utiliser le bouton <0>« PDF »</0> plutôt que Ctrl+P. Le PDF est généré en noir et blanc sans fonds colorés.",
+    "print_browser_tip": "Si vous imprimez depuis le navigateur : décocher <0>« Graphiques en arrière-plan »</0> dans les options d'impression."
+  }
+}

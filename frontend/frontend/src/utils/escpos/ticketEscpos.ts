@@ -114,6 +114,9 @@ export function buildTicketEscpos(
   if (settings.email) parts.push(esc.line(`${t('invoice.email')}: ${settings.email}`));
   if (settings.niu) parts.push(esc.line(`${t('invoice.niu')}: ${settings.niu}`));
   if (settings.registre_commerce) parts.push(esc.line(`${t('invoice.rc')}: ${settings.registre_commerce}`));
+  if (settings.show_pharmacist_on_documents && settings.pharmacist_name) {
+    parts.push(esc.line(`${t('invoice.pharmacist')}: ${settings.pharmacist_name}`));
+  }
   if (settings.receipt_header) parts.push(esc.line(settings.receipt_header));
   parts.push(esc.left());
   parts.push(esc.hr(cols));

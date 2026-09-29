@@ -21,6 +21,9 @@ export type VenteEnAttente = {
         societe: string
         showNew: boolean
     } | null
+    note?: string | null
+    isRetrocession?: boolean
+    isFactureA4?: boolean
 }
 
 export function usePendingSales() {
@@ -52,6 +55,10 @@ export function usePendingSales() {
         setVentesEnAttente(prev => prev.filter(v => v.id !== id))
     }, [])
 
+    const updatePendingSale = useCallback((id: number, patch: Partial<Pick<VenteEnAttente, 'note'>>) => {
+        setVentesEnAttente(prev => prev.map(v => v.id === id ? { ...v, ...patch } : v))
+    }, [])
+
     const clearAllPendingSales = useCallback(() => {
         setVentesEnAttente([])
     }, [])
@@ -62,6 +69,7 @@ export function usePendingSales() {
         setShowPendingSales,
         savePendingSale,
         deletePendingSale,
+        updatePendingSale,
         clearAllPendingSales
     }
 }

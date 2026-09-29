@@ -43,9 +43,10 @@ export const OpenCashSessionModal: React.FC<OpenCashSessionModalProps> = ({
     setLoadingCaisses(true)
     try {
       const caisses = await cashSessionService.getAllCaisses()
-      setAllCaisses(caisses)
+      const enabledCaisses = caisses.filter((c) => c.actif !== false)
+      setAllCaisses(enabledCaisses)
 
-      const available = caisses.filter((c) => !c.est_actif)
+      const available = enabledCaisses.filter((c) => !c.est_actif)
       if (available.length === 1) {
         setSelectedPosteId(available[0].id)
       }

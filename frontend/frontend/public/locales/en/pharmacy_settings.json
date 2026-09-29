@@ -46,6 +46,7 @@
         "logo": "Pharmacy logo",
         "receipt_header": "Receipt Header",
         "ticket_footer": "Footer Message",
+        "show_pharmacist": "Show pharmacist's name on receipt and invoice",
         "paper_width": "Paper Width (Thermal)",
         "paper_standard": "Standard (80mm)",
         "paper_small": "Narrow (58mm)",
@@ -96,6 +97,7 @@
         "email": "contact@pharmacy.com",
         "receipt_header": "Text that will appear at the top of the receipt...",
         "ticket_footer": "Thank you for your visit!",
+
         "currency": "e.g., CFA or F",
         "tva_rate": "19.25",
         "tva_label": "Standard VAT",
@@ -119,6 +121,7 @@
         "logo": "The logo will appear on cash receipts and invoices. PNG or JPG, max 2 MB.",
         "receipt_header": "Use \\n to go to a new line.",
         "ticket_footer": "Displayed at the very bottom of the receipt.",
+        "show_pharmacist": "The name comes from your licence. Some owners prefer not to display it — it only appears if the option is enabled.",
         "low_stock": "Number of days of autonomy remaining before considering stock as low.",
         "dormant_stock": "Number of days without sales to consider a product as dormant.",
         "debt": "Total amount of customer debt above which an alert is displayed.",
@@ -206,9 +209,23 @@
         "caisse_confirm_delete": "Delete cash register {{nom}}?",
         "caisse_deleted": "Cash register deleted.",
         "caisse_delete_error": "Error deleting cash register",
+        "caisse_confirm_deactivate": "Deactivate cash register {{nom}}? It can no longer be opened, but its history is kept.",
+        "caisse_confirm_activate": "Reactivate cash register {{nom}}?",
+        "caisse_deactivated": "Cash register deactivated.",
+        "caisse_activated": "Cash register reactivated.",
+        "caisse_toggle_error": "Error changing cash register state",
         "qz_not_found": "QZ Tray could not be found or could not connect. Make sure it is installed and running, then try again.",
         "qz_printers_found": "{{count}} printer(s) detected.",
         "print_test_sent": "Test ticket sent to the QZ Tray printer."
+    },
+    "postes_vente": {
+        "table": { "status": "Status" },
+        "status_active": "Active",
+        "status_in_use": "In use",
+        "status_disabled": "Disabled",
+        "deactivate": "Deactivate",
+        "reactivate": "Reactivate",
+        "last_active_hint": "Last active cash register: cannot be deactivated or deleted"
     },
     "buttons": {
         "logo_importing": "Import...",

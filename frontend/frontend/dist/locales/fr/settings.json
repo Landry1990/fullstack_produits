@@ -1,0 +1,42 @@
+{
+    "title": "Paramètres",
+    "subtitle": "Configuration du système et de l'officine",
+    "sections": {
+        "pharmacy": "Informations Officine",
+        "system": "Système",
+        "backups": "Sauvegardes",
+        "printing": "Impression"
+    },
+    "pharmacy": {
+        "name": "Nom de l'Officine",
+        "address": "Adresse",
+        "phone": "Téléphone",
+        "email": "Email",
+        "logo": "Logo"
+    },
+    "system": {
+        "language": "Langue",
+        "currency": "Devise",
+        "timezone": "Fuseau horaire"
+    },
+    "messages": {
+        "settings_saved": "Paramètres sauvegardés",
+        "settings_save_error": "Erreur lors de la sauvegarde",
+        "logo_uploaded": "Logo importé avec succès",
+        "logo_upload_error": "Erreur lors de l'import du logo",
+        "logo_removed": "Logo supprimé",
+        "logo_remove_error": "Erreur lors de la suppression du logo"
+    },
+    "shortcuts": {
+        "navigate": "Naviguer",
+        "home_end": "Début / Fin",
+        "page": "Page précédente / suivante",
+        "quick_select": "Sélection rapide",
+        "cash_in": "Encaisser",
+        "view_products": "Voir les produits",
+        "coupon": "Appliquer coupon",
+        "refresh": "Rafraîchir",
+        "help": "Aide",
+        "close": "Fermer"
+    }
+}

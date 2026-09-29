@@ -46,6 +46,7 @@
         "logo": "Logo de la pharmacie",
         "receipt_header": "En-tête du Ticket",
         "ticket_footer": "Message de pied de page",
+        "show_pharmacist": "Afficher le nom du pharmacien sur ticket et facture",
         "paper_width": "Largeur du papier (Thermique)",
         "paper_standard": "Standard (80mm)",
         "paper_small": "Étroit (58mm)",
@@ -96,6 +97,7 @@
         "email": "contact@pharmacie.com",
         "receipt_header": "Texte qui apparaîtra en haut du ticket...",
         "ticket_footer": "Merci de votre visite !",
+
         "currency": "Ex: CFA ou F",
         "tva_rate": "19.25",
         "tva_label": "TVA Normale",
@@ -119,6 +121,7 @@
         "logo": "Le logo apparaîtra sur les tickets de caisse et les factures. Format PNG ou JPG, 2 Mo max.",
         "receipt_header": "Utilisez \\n pour passer à la ligne.",
         "ticket_footer": "S'affiche tout en bas du ticket de caisse.",
+        "show_pharmacist": "Le nom provient de votre licence. Certains titulaires préfèrent ne pas l'afficher — il n'apparaît que si l'option est activée.",
         "low_stock": "Nombre de jours d'autonomie restant avant de considérer un stock comme faible.",
         "dormant_stock": "Nombre de jours sans vente pour considérer un produit comme dormant.",
         "debt": "Montant total de dettes client à partir duquel une alerte s'affiche.",
@@ -206,9 +209,23 @@
         "caisse_confirm_delete": "Supprimer la caisse {{nom}} ?",
         "caisse_deleted": "Caisse supprimée.",
         "caisse_delete_error": "Erreur suppression caisse",
+        "caisse_confirm_deactivate": "Désactiver la caisse {{nom}} ? Elle ne pourra plus être ouverte, mais son historique est conservé.",
+        "caisse_confirm_activate": "Réactiver la caisse {{nom}} ?",
+        "caisse_deactivated": "Caisse désactivée.",
+        "caisse_activated": "Caisse réactivée.",
+        "caisse_toggle_error": "Erreur changement d'état caisse",
         "qz_not_found": "QZ Tray est introuvable ou n'a pas pu se connecter. Vérifiez qu'il est installé et lancé, puis réessayez.",
         "qz_printers_found": "{{count}} imprimante(s) détectée(s).",
         "print_test_sent": "Ticket de test envoyé à l'imprimante QZ Tray."
+    },
+    "postes_vente": {
+        "table": { "status": "Statut" },
+        "status_active": "Active",
+        "status_in_use": "En cours",
+        "status_disabled": "Désactivée",
+        "deactivate": "Désactiver",
+        "reactivate": "Réactiver",
+        "last_active_hint": "Dernière caisse active : impossible de désactiver ou supprimer"
     },
     "buttons": {
         "logo_importing": "Import...",
