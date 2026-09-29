@@ -1,5 +1,15 @@
 import { logger } from '../utils/logger';
+import { safeStorage } from '../utils/storage';
 import * as esc from '../utils/escpos/encoder';
+
+/** Convertit une chaîne de commandes ESC/POS (1 caractère = 1 octet) en Base64 pour QZ Tray. */
+function commandsToBase64(commands: string): string {
+  let binary = '';
+  for (let i = 0; i < commands.length; i++) {
+    binary += String.fromCharCode(commands.charCodeAt(i) & 0xFF);
+  }
+  return btoa(binary);
+}
 
 const STORAGE_PRINTER_KEY = 'qz_printer_name';
 const STORAGE_DRAWER_KEY = 'qz_open_drawer';
@@ -8,6 +18,7 @@ type QzApi = import('qz-tray').default;
 
 let qzLoadPromise: Promise<QzApi> | null = null;
 let connectionPromise: Promise<void> | null = null;
+let securityConfigured = false;
 
 async function loadQz(): Promise<QzApi> {
   if (qzLoadPromise) return qzLoadPromise;
@@ -15,8 +26,58 @@ async function loadQz(): Promise<QzApi> {
   return qzLoadPromise;
 }
 
+async function configureSecurity(qz: QzApi): Promise<void> {
+  if (securityConfigured) return;
+  securityConfigured = true;
+
+  const qzAny = qz as unknown as Record<string, unknown>;
+  const security = qzAny.security as {
+    setSignatureAlgorithm: (algo: string) => void;
+    setCertificatePromise: (fn: (resolve: (v: string) => void, reject: (e: unknown) => void) => void) => void;
+    setSignaturePromise: (
+      fn: (toSign: string) => (resolve: (sig: string) => void, reject: (e: unknown) => void) => void
+    ) => void;
+  };
+
+  // Algorithme de signature attendu par QZ Tray 2.1+
+  security.setSignatureAlgorithm('SHA512');
+
+  const getToken = (): string | null => {
+    // Le token est stocké en sessionStorage par défaut dans cette app.
+    return safeStorage.getItem('authToken');
+  };
+
+  security.setCertificatePromise((resolve, reject) => {
+    fetch('/api/qz/certificate/')
+      .then((res) => {
+        if (!res.ok) throw new Error(`Certificat QZ HTTP ${res.status}`);
+        return res.text();
+      })
+      .then(resolve)
+      .catch(reject);
+  });
+
+  security.setSignaturePromise((toSign) => (resolve, reject) => {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    const token = getToken();
+    if (token) headers.Authorization = `Token ${token}`;
+    fetch('/api/qz/sign/', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ request: toSign }),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error(`Signature QZ HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((data) => resolve(data.signature as string))
+      .catch(reject);
+  });
+}
+
 async function ensureConnected(): Promise<void> {
   const qz = await loadQz();
+  await configureSecurity(qz);
   if (qz.websocket.isActive()) return Promise.resolve();
   if (connectionPromise) return connectionPromise;
 
@@ -121,11 +182,12 @@ export async function printEscpos(commands: string | string[]): Promise<boolean>
     return false;
   }
 
-  const data = Array.isArray(commands) ? commands.join('') : commands;
+  const joined = Array.isArray(commands) ? commands.join('') : commands;
+  const data = commandsToBase64(joined);
   const config = qz.configs.create(printer);
 
   await qz.print(config, [
-    { type: 'RAW', format: 'COMMAND', data },
+    { type: 'RAW', format: 'BASE64', data },
   ]);
   return true;
 }
@@ -135,7 +197,7 @@ export async function openCashDrawer(): Promise<boolean> {
   return printEscpos(esc.init() + esc.drawerPulse());
 }
 
-/** Imprime un ticket de test minimal (texte + coupe). */
+/** Imprime un ticket de test minimal (texte + accents + coupe). */
 export async function printTestTicket(pharmacyName?: string): Promise<boolean> {
   const commands =
     esc.init() +
@@ -146,6 +208,7 @@ export async function printTestTicket(pharmacyName?: string): Promise<boolean> {
     esc.line(pharmacyName || 'Zenith POS') +
     esc.lf() +
     esc.line('0123456789 ABC abc') +
+    esc.line('Accents : é è à ç ï ô') +
     esc.feed(3) +
     esc.cut(true);
   return printEscpos(commands);

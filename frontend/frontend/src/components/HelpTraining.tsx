@@ -1,374 +1,139 @@
 import React, { useState } from 'react';
-import { 
-  BookOpen, Play, Search, ShoppingCart, Package,
-  TrendingUp, Users, Settings, Truck, Clock, ChevronRight, Keyboard, Lightbulb, Printer, Activity
+import { useTranslation } from 'react-i18next';
+import {
+  BookOpen, Search, LayoutGrid, PlayCircle, FileText,
+  Keyboard, Wrench, HelpCircle, X
 } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from './shadcn/tabs';
+import { Input } from './shadcn/input';
 import { Button } from './shadcn/button';
-import { EmptyState } from './ui/EmptyState';
-import { Trans, useTranslation } from 'react-i18next';
-import type { TFunction } from 'i18next';
+import HelpOverview from './help/HelpOverview';
+import HelpVideos from './help/HelpVideos';
+import HelpGuides from './help/HelpGuides';
+import HelpShortcuts from './help/HelpShortcuts';
+import HelpTroubleshooting from './help/HelpTroubleshooting';
+import HelpFaq from './help/HelpFaq';
+import { useHelpProgress } from './help/useHelpProgress';
 
-interface Video {
-  id: string;
-  title: string;
-  duration: string;
-  youtubeId: string;
-}
+const GUIDE_IDS = ['sell', 'ticket', 'import', 'stock_alert', 'settings'];
 
-interface Category {
-  id: string;
-  label: string;
-  color: string;
-  bg: string;
-  icon: React.ElementType;
-  videos: Video[];
-}
-
-interface Shortcut {
-  key: string;
-  label: string;
-  highlight?: boolean;
-}
-
-const getCategories = (t: TFunction): Category[] => [
-  {
-    id: 'ventes',
-    label: t('help:training.categories.ventes'),
-    color: 'text-success',
-    bg: 'bg-success/10 border-emerald-200',
-    icon: ShoppingCart,
-    videos: [
-      { id: 'v1', title: t('help:training.videos.v1'), duration: '3:20', youtubeId: 'YOUTUBE_ID_ICI' },
-      { id: 'v2', title: t('help:training.videos.v2'), duration: '2:45', youtubeId: 'YOUTUBE_ID_ICI' },
-      { id: 'v3', title: t('help:training.videos.v3'), duration: '4:10', youtubeId: 'YOUTUBE_ID_ICI' },
-    ]
-  },
-  {
-    id: 'stock',
-    label: t('help:training.categories.stock'),
-    color: 'text-warning',
-    bg: 'bg-warning/10 border-amber-200',
-    icon: Package,
-    videos: [
-      { id: 'v4', title: t('help:training.videos.v4'), duration: '5:00', youtubeId: 'YOUTUBE_ID_ICI' },
-      { id: 'v5', title: t('help:training.videos.v5'), duration: '6:30', youtubeId: 'YOUTUBE_ID_ICI' },
-      { id: 'v6', title: t('help:training.videos.v6'), duration: '3:15', youtubeId: 'YOUTUBE_ID_ICI' },
-    ]
-  },
-  {
-    id: 'fournisseurs',
-    label: t('help:training.categories.fournisseurs'),
-    color: 'text-primary',
-    bg: 'bg-info/10 border-blue-200',
-    icon: Truck,
-    videos: [
-      { id: 'v7', title: t('help:training.videos.v7'), duration: '4:50', youtubeId: 'YOUTUBE_ID_ICI' },
-      { id: 'v8', title: t('help:training.videos.v8'), duration: '3:00', youtubeId: 'YOUTUBE_ID_ICI' },
-    ]
-  },
-  {
-    id: 'clients',
-    label: t('help:training.categories.clients'),
-    color: 'text-purple-600',
-    bg: 'bg-secondary/10 border-purple-200',
-    icon: Users,
-    videos: [
-      { id: 'v9', title: t('help:training.videos.v9'), duration: '4:00', youtubeId: 'YOUTUBE_ID_ICI' },
-      { id: 'v10', title: t('help:training.videos.v10'), duration: '2:30', youtubeId: 'YOUTUBE_ID_ICI' },
-    ]
-  },
-  {
-    id: 'dashboard',
-    label: t('help:training.categories.dashboard'),
-    color: 'text-primary',
-    bg: 'bg-primary/10 border-indigo-200',
-    icon: TrendingUp,
-    videos: [
-      { id: 'v11', title: t('help:training.videos.v11'), duration: '3:45', youtubeId: 'YOUTUBE_ID_ICI' },
-      { id: 'v12', title: t('help:training.videos.v12'), duration: '5:20', youtubeId: 'YOUTUBE_ID_ICI' },
-    ]
-  },
-  {
-    id: 'parametres',
-    label: t('help:training.categories.parametres'),
-    color: 'text-rose-600',
-    bg: 'bg-rose-50 border-rose-200',
-    icon: Settings,
-    videos: [
-      { id: 'v13', title: t('help:training.videos.v13'), duration: '4:00', youtubeId: 'YOUTUBE_ID_ICI' },
-      { id: 'v14', title: t('help:training.videos.v14'), duration: '3:10', youtubeId: 'YOUTUBE_ID_ICI' },
-    ]
-  },
-];
-
-const getShortcuts = (t: TFunction): Shortcut[] => [
-  { key: 'F2', label: t('help:training.shortcuts.f2') },
-  { key: '/', label: t('help:training.shortcuts.slash') },
-  { key: 'F4', label: t('help:training.shortcuts.f4') },
-  { key: 'F9', label: t('help:training.shortcuts.f9'), highlight: true },
-  { key: 'Ctrl+S', label: t('help:training.shortcuts.ctrl_s') },
-  { key: 'Alt+Z', label: t('help:training.shortcuts.alt_z') },
-  { key: 'Esc', label: t('help:training.close') },
+const tabConfig = [
+  { id: 'overview', icon: LayoutGrid, labelKey: 'tabs.overview' },
+  { id: 'videos', icon: PlayCircle, labelKey: 'tabs.videos' },
+  { id: 'guides', icon: FileText, labelKey: 'tabs.guides' },
+  { id: 'shortcuts', icon: Keyboard, labelKey: 'tabs.shortcuts' },
+  { id: 'troubleshooting', icon: Wrench, labelKey: 'tabs.troubleshooting' },
+  { id: 'faq', icon: HelpCircle, labelKey: 'tabs.faq' },
 ];
 
 const HelpTraining = () => {
-  const { t } = useTranslation(['help', 'common']);
+  const { t } = useTranslation('help');
+  const [activeTab, setActiveTab] = useState('overview');
   const [search, setSearch] = useState('');
-  const [activeCategory, setActiveCategory] = useState('ventes');
-  const [activeVideo, setActiveVideo] = useState<Video | null>(null);
+  const { completed, toggle, isCompleted, reset } = useHelpProgress();
 
-  const CATEGORIES = getCategories(t);
-  const SHORTCUTS = getShortcuts(t);
+  const completedCount = GUIDE_IDS.filter(isCompleted).length;
+  const showSearch = activeTab !== 'overview';
 
-  const currentCategory = CATEGORIES.find((c: Category) => c.id === activeCategory) || CATEGORIES[0];
-
-  const filteredCategories = search.trim()
-    ? CATEGORIES.flatMap((cat: Category) => {
-        const filteredVideos = cat.videos.filter((v: Video) => v.title.toLowerCase().includes(search.toLowerCase()));
-        return filteredVideos.length > 0 ? [{ ...cat, videos: filteredVideos }] : [];
-      })
-    : CATEGORIES;
-
-  const allVideos = search.trim() ? filteredCategories.flatMap((c: Category) => c.videos) : currentCategory.videos;
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    if (value === 'overview') setSearch('');
+  };
 
   return (
-    <div className="min-h-screen bg-base-200/40 p-3 md:p-6">
-      <div className="max-w-6xl mx-auto space-y-6">
-
+    <div className="h-full min-h-0 overflow-hidden bg-slate-50 p-2 sm:p-3 lg:p-4">
+      <div className="h-full max-w-[1600px] mx-auto flex flex-col gap-3 overflow-hidden">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-primary/10 text-primary rounded-2xl">
-              <BookOpen className="size-6" />
+            <div className="size-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
+              <BookOpen className="size-5" />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-base-content tracking-tight">{t('help:training.title')}</h1>
-              <p className="text-xs text-base-content/40 font-medium">{t('help:training.subtitle')}</p>
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+                {t('title')}
+              </h1>
+              <p className="text-xs font-medium text-slate-500">{t('subtitle')}</p>
             </div>
           </div>
-          <div className="relative w-full sm:w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-base-content/30" />
-            <input
-              type="text"
-              placeholder={t('help:training.search_placeholder')}
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="w-full pl-9 text-sm rounded-xl h-10 border border-base-300 bg-base-100 px-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-            />
-          </div>
-        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-
-          {/* Sidebar catégories */}
-          {!search && (
-            <div className="lg:col-span-1 space-y-1">
-              {CATEGORIES.map((cat: Category) => {
-                const Icon = cat.icon;
-                const isActive = cat.id === activeCategory;
-                return (
+          <div className="flex items-center gap-2">
+            {showSearch && (
+              <div className="relative w-full sm:w-72">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+                <Input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder={t('search.placeholder')}
+                  className="pl-9 pr-8 h-9 text-sm"
+                />
+                {search && (
                   <button
-                    key={cat.id}
-                    onClick={() => { setActiveCategory(cat.id); setActiveVideo(null); }}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all text-sm font-bold ${
-                      isActive
-                        ? 'bg-base-100 shadow-sm border border-base-200 text-base-content'
-                        : 'text-base-content/50 hover:bg-base-100/60 hover:text-base-content'
-                    }`}
+                    onClick={() => setSearch('')}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-slate-100 text-slate-400"
                   >
-                    <Icon className={`size-4 shrink-0 ${isActive ? cat.color : ''}`} />
-                    <span>{cat.label}</span>
-                    <span className={`ml-auto text-caption font-black px-1.5 py-0.5 rounded-full ${isActive ? cat.bg + ' ' + cat.color : 'bg-base-200 text-base-content/30'}`}>
-                      {cat.videos.length}
-                    </span>
+                    <X className="size-3.5" />
                   </button>
-                );
-              })}
-
-              {/* Raccourcis clavier */}
-              <div className="mt-4 pt-4 border-t border-base-200">
-                <div className="flex items-center gap-2 px-2 mb-3">
-                  <Keyboard className="size-4 text-base-content/30" />
-                  <span className="text-caption font-black uppercase tracking-widest text-base-content/30">{t('help:training.shortcuts.title')}</span>
-                </div>
-                <div className="space-y-1.5">
-                  {SHORTCUTS.map((s: Shortcut) => (
-                    <div key={s.key} className="flex items-center justify-between px-2 py-1">
-                      <span className="text-xs text-base-content/50">{s.label}</span>
-                      <kbd className={`inline-flex items-center justify-center rounded border border-base-300 bg-base-200 px-1.5 py-0.5 font-mono text-caption ${s.highlight ? 'bg-primary text-white border-primary' : ''}`}>{s.key}</kbd>
-                    </div>
-                  ))}
-                </div>
+                )}
               </div>
-
-              {/* Astuces pratiques */}
-              <div className="mt-4 pt-4 border-t border-base-200">
-                <div className="flex items-center gap-2 px-2 mb-3">
-                  <Lightbulb className="size-4 text-amber-400" />
-                  <span className="text-caption font-black uppercase tracking-widest text-base-content/30">{t('help:tips.title')}</span>
-                </div>
-                <div className="space-y-2">
-
-                  {/* Astuce score santé stock */}
-                  <div className="px-2 py-2.5 rounded-xl bg-emerald-50 border border-emerald-200">
-                    <div className="flex items-start gap-2">
-                      <Activity className="size-3.5 text-emerald-500 mt-0.5 shrink-0" />
-                      <div>
-                        <p className="text-label font-bold text-emerald-700 leading-tight mb-1">
-                          {t('help:tips.score_title')}
-                        </p>
-                        <p className="text-caption text-emerald-700/70 leading-snug mb-1.5">
-                          <Trans i18nKey="tips.score_intro" ns="help" components={[<strong key="s" />]} />
-                        </p>
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-mono text-caption font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded w-8 text-center">30</span>
-                            <span className="text-caption text-emerald-700/80"><Trans i18nKey="tips.crit_availability" ns="help" components={[<strong key="s" />]} /></span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-mono text-caption font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded w-8 text-center">25</span>
-                            <span className="text-caption text-emerald-700/80"><Trans i18nKey="tips.crit_fluidity" ns="help" components={[<strong key="s" />]} /></span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-mono text-caption font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded w-8 text-center">20</span>
-                            <span className="text-caption text-emerald-700/80"><Trans i18nKey="tips.crit_coverage" ns="help" components={[<strong key="s" />]} /></span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-mono text-caption font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded w-8 text-center">15</span>
-                            <span className="text-caption text-emerald-700/80"><Trans i18nKey="tips.crit_activity" ns="help" components={[<strong key="s" />]} /></span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-mono text-caption font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded w-8 text-center">10</span>
-                            <span className="text-caption text-emerald-700/80"><Trans i18nKey="tips.crit_immobilization" ns="help" components={[<strong key="s" />]} /></span>
-                          </div>
-                        </div>
-                        <div className="mt-2 pt-1.5 border-t border-emerald-200 flex gap-2 flex-wrap">
-                          <span className="text-caption bg-emerald-500 text-white px-1.5 py-0.5 rounded font-bold">{t('help:tips.score_good')}</span>
-                          <span className="text-caption bg-amber-400 text-white px-1.5 py-0.5 rounded font-bold">{t('help:tips.score_medium')}</span>
-                          <span className="text-caption bg-red-400 text-white px-1.5 py-0.5 rounded font-bold">{t('help:tips.score_critical')}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Astuce impression rapport mensuel */}
-                  <div className="px-2 py-2.5 rounded-xl bg-amber-50 border border-amber-200">
-                    <div className="flex items-start gap-2">
-                      <Printer className="size-3.5 text-amber-500 mt-0.5 shrink-0" />
-                      <div>
-                        <p className="text-label font-bold text-amber-700 leading-tight mb-1">
-                          {t('help:tips.print_title')}
-                        </p>
-                        <p className="text-caption text-amber-600/80 leading-snug">
-                          <Trans i18nKey="tips.print_ink_tip" ns="help" components={[<strong key="s" />]} />
-                        </p>
-                        <p className="text-caption text-amber-600/80 leading-snug mt-1">
-                          <Trans i18nKey="tips.print_browser_tip" ns="help" components={[<strong key="s" />]} />
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Contenu principal */}
-          <div className={`${search ? 'lg:col-span-4' : 'lg:col-span-3'} space-y-4`}>
-
-            {/* Lecteur vidéo actif */}
-            {activeVideo && (
-              <div className="bg-base-100 rounded-2xl border border-base-200 shadow-sm overflow-hidden">
-                <div className="aspect-video w-full bg-gray-950">
-                  <iframe
-                    className="size-full"
-                    src={`https://www.youtube.com/embed/${activeVideo.youtubeId}?autoplay=1`}
-                    title={activeVideo.title}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
-                </div>
-                <div className="p-4 flex items-center justify-between">
-                  <div>
-                    <h3 className="font-bold text-base-content">{activeVideo.title}</h3>
-                    <div className="flex items-center gap-1 text-xs text-base-content/40 mt-0.5">
-                      <Clock className="size-3" />
-                      <span>{activeVideo.duration}</span>
-                    </div>
-                  </div>
-                  <Button onClick={() => setActiveVideo(null)} variant="ghost" size="sm" className="text-xs">{t('help:training.close')}</Button>
-                </div>
-              </div>
-            )}
-
-            {/* Titre catégorie ou résultats recherche */}
-            {search ? (
-              <p className="text-sm font-bold text-base-content/50">
-                {allVideos.length} {t('common:results', { count: allVideos.length })} « {search} »
-              </p>
-            ) : (
-              <div className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-bold ${currentCategory.bg} ${currentCategory.color}`}>
-                <currentCategory.icon className="size-4" />
-                {currentCategory.label}
-                <span className="ml-auto text-xs opacity-60">{currentCategory.videos.length} {t('help:training.videos_count')}{currentCategory.videos.length > 1 ? 's' : ''}</span>
-              </div>
-            )}
-
-            {/* Grille de vidéos */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {(search ? allVideos : currentCategory.videos).map(video => (
-                <button
-                  key={video.id}
-                  onClick={() => setActiveVideo(video)}
-                  className="group bg-base-100 border border-base-200 rounded-2xl overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all text-left"
-                >
-                  {/* Thumbnail */}
-                  <div className="relative aspect-video bg-slate-900 overflow-hidden">
-                    {video.youtubeId !== 'YOUTUBE_ID_ICI' ? (
-                      <img
-                        src={`https://img.youtube.com/vi/${video.youtubeId}/mqdefault.jpg`}
-                        alt={video.title}
-                        className="size-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    ) : (
-                      <div className="size-full flex items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900">
-                        <div className="text-center">
-                          <Play className="size-8 text-white/20 mx-auto mb-1" />
-                          <span className="text-caption text-white/20 font-bold uppercase tracking-wider">{t('help:training.soon')}</span>
-                        </div>
-                      </div>
-                    )}
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="size-12 bg-base-100 rounded-full flex items-center justify-center shadow-xl">
-                        <Play className="size-5 text-base-content ml-0.5" />
-                      </div>
-                    </div>
-                    <div className="absolute bottom-2 right-2 bg-black/70 text-white text-caption font-bold px-1.5 py-0.5 rounded flex items-center gap-1">
-                      <Clock className="size-2.5" />
-                      {video.duration}
-                    </div>
-                  </div>
-                  {/* Info */}
-                  <div className="p-3 flex items-center justify-between gap-2">
-                    <p className="text-sm font-bold text-base-content leading-snug">{video.title}</p>
-                    <ChevronRight className="size-4 text-base-content/20 shrink-0 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            {allVideos.length === 0 && (
-              <EmptyState
-                variant="base"
-                className="py-20 opacity-60"
-                icon={<Search className="size-8" />}
-                title={t('help:training.no_results')}
-                description={t('help:training.try_again')}
-              />
             )}
           </div>
         </div>
+
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1 min-h-0 flex flex-col">
+          <TabsList className="shrink-0 flex flex-wrap h-auto gap-1 p-1 bg-slate-200/60 justify-start">
+            {tabConfig.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <TabsTrigger
+                  key={tab.id}
+                  value={tab.id}
+                  className="flex items-center gap-1.5 text-xs h-8 px-3"
+                >
+                  <Icon className="size-3.5" />
+                  <span className="hidden sm:inline">{t(tab.labelKey)}</span>
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+
+          <div className="flex-1 min-h-0 overflow-y-auto pr-1 -mr-1 mt-3">
+            <TabsContent value="overview" className="mt-0 h-full">
+              <HelpOverview
+                totalGuides={GUIDE_IDS.length}
+                completedCount={completedCount}
+                onTabChange={handleTabChange}
+                onResetProgress={reset}
+              />
+            </TabsContent>
+
+            <TabsContent value="videos" className="mt-0 h-full">
+              <HelpVideos search={search} />
+            </TabsContent>
+
+            <TabsContent value="guides" className="mt-0 h-full">
+              <HelpGuides
+                search={search}
+                completed={completed}
+                onToggle={toggle}
+              />
+            </TabsContent>
+
+            <TabsContent value="shortcuts" className="mt-0 h-full">
+              <HelpShortcuts search={search} />
+            </TabsContent>
+
+            <TabsContent value="troubleshooting" className="mt-0 h-full">
+              <HelpTroubleshooting search={search} />
+            </TabsContent>
+
+            <TabsContent value="faq" className="mt-0 h-full">
+              <HelpFaq search={search} />
+            </TabsContent>
+          </div>
+        </Tabs>
       </div>
     </div>
   );

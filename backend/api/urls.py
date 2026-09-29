@@ -169,6 +169,7 @@ from .views.groupes import GroupeViewSet
 from .views.interactions import DrugInteractionViewSet
 from .views.licence import LicenceNotificationsView, LicenceStatusView
 from .views.loyalty import LoyaltyHistoryViewSet
+from .views.qz import QzSignView, qz_certificate
 from .views.margin_views import MarginViewSet
 from .views.meds_reference import MedicamentReferenceViewSet
 from .views.objectifs import ObjectifViewSet
@@ -305,6 +306,8 @@ urlpatterns = [
     path('version/', app_version, name='app-version'),
     path('licence/', LicenceStatusView.as_view(), name='licence-status'),
     path('licence/notifications/', LicenceNotificationsView.as_view(), name='licence-notifications'),
+    path('qz/certificate/', qz_certificate, name='qz-certificate'),
+    path('qz/sign/', QzSignView.as_view(), name='qz-sign'),
     path('debug/score/', DebugStockScoreView.as_view(), name='debug-score'),
     path('health/', health_check, name='health-check'),
     
