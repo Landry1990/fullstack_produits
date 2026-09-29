@@ -73,6 +73,8 @@ export interface PharmacySettings {
   ticket_footer_message: string;
   niu?: string;
   registre_commerce?: string;
+  pharmacist_name?: string;
+  show_pharmacist_on_documents?: boolean;
   logo?: string;
   primary_color?: string;
 }
@@ -391,6 +393,7 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
             <p className="font-bold text-base-content text-[10.5px] mb-1.5">{settings.ticket_footer_message || t('invoice.thank_you')}</p>
             
             <div className="flex justify-center flex-wrap gap-x-8 gap-y-1 text-[8.5px] uppercase tracking-[0.1em] font-bold text-base-content/30">
+               {settings.show_pharmacist_on_documents && settings.pharmacist_name && <div className="flex items-center gap-1">{t('invoice.pharmacist')}: <span className="text-base-content/80">{settings.pharmacist_name}</span></div>}
                {settings.niu && <div className="flex items-center gap-1">{t('invoice.niu')}: <span className="text-base-content/80">{settings.niu}</span></div>}
                {settings.registre_commerce && <div className="flex items-center gap-1">{t('invoice.rc')}: <span className="text-base-content/80">{settings.registre_commerce}</span></div>}
                <div className="flex items-center gap-1">{t('invoice.software')}: <span className="text-base-content/80 uppercase">ZENITH</span></div>

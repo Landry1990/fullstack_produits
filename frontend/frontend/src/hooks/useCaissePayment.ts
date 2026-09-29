@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
 import { gooeyToast } from 'goey-toast'
@@ -122,17 +122,22 @@ export const useCaissePayment = ({
   const { t } = useTranslation('caisse')
   const queryClient = useQueryClient()
   const [loading, setLoading] = useState(false)
+  // Verrou synchrone : un double Enter/clic avant le re-render ne doit pas
+  // enregistrer le paiement deux fois.
+  const inFlightRef = useRef(false)
 
   const enregistrerPaiement = useCallback(async (
     paiementsValides: { mode: string; montant: number }[],
     user: unknown,
     successMessage?: string
   ) => {
-    if (!selectedFacture) return
+    if (!selectedFacture || inFlightRef.current) return
+    inFlightRef.current = true
 
     const montantTotal = paiementsValides.reduce((acc, p) => acc + p.montant, 0)
 
     if (montantTotal === 0) {
+      inFlightRef.current = false
       gooeyToast.error(t('messages.invalid_amount'))
       return
     }
@@ -203,6 +208,7 @@ export const useCaissePayment = ({
       logger.error('Erreur lors du paiement:', err)
       gooeyToast.error(getApiErrorDetail(err, t('messages.save_payment_error')))
     } finally {
+      inFlightRef.current = false
       setLoading(false)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -130,7 +130,10 @@ export default function FacturationModals({ hook, showOpenPosteModal, setShowOpe
         onClose={() => hook.setShowPendingSales(false)}
         ventesEnAttente={hook.ventesEnAttente}
         onRestore={hook.restaurerVente}
+        onMerge={hook.fusionnerVenteEnAttente}
         onDelete={hook.supprimerVenteEnAttente}
+        onUpdateNote={hook.pendingSales.updatePendingSale}
+        cartEmpty={hook.lignesFacture.length === 0}
       />
 
       {/* Confirmation Modal */}

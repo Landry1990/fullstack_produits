@@ -112,6 +112,7 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
                {settings.email && <div>{t('invoice.email', { defaultValue: 'Email' })}: {settings.email}</div>}
                {settings.niu && <div>{t('invoice.niu')}: {settings.niu}</div>}
                {settings.registre_commerce && <div>{t('invoice.rc')}: {settings.registre_commerce}</div>}
+               {settings.show_pharmacist_on_documents && settings.pharmacist_name && <div>{t('invoice.pharmacist')}: {settings.pharmacist_name}</div>}
             </div>
             {settings.receipt_header && <p className="mt-1 whitespace-pre-line">{settings.receipt_header}</p>}
         </div>

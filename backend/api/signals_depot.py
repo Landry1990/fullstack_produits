@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
@@ -15,12 +17,15 @@ def handle_depot_client_change(sender, instance, created, **kwargs):
         return
 
     client = instance.client
-    
-    # 1. Mise à jour du solde
+
+    # 1. Mise à jour du solde (cast Decimal : le default du champ est un float
+    # tant que l'objet n'est pas rechargé depuis la DB)
+    solde = Decimal(str(client.solde_depot or 0))
+    montant = Decimal(str(instance.montant))
     if instance.type in [DepotClient.Type.DEPOT, DepotClient.Type.ANNULATION_ACHAT]:
-        client.solde_depot += instance.montant
+        client.solde_depot = solde + montant
     elif instance.type in [DepotClient.Type.RETRAIT, DepotClient.Type.ACHAT]:
-        client.solde_depot -= instance.montant
+        client.solde_depot = solde - montant
     
     client.save(update_fields=['solde_depot'])
 

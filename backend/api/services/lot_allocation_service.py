@@ -52,8 +52,11 @@ class LotAllocationService:
             if not lot:
                 continue
             lot.quantity_remaining += alloc.quantity
+            # Restaurer exactement le nombre d'UG prélevées par cette
+            # allocation — sinon les annulations/modifications gonflent
+            # le compteur d'unités gratuites (UG fantômes).
             lot.quantity_free_remaining = min(
-                lot.quantity_free_remaining + alloc.quantity,
+                lot.quantity_free_remaining + getattr(alloc, 'quantity_free', 0),
                 lot.quantity_free
             )
             lot.save()
@@ -133,16 +136,17 @@ class LotAllocationService:
             if qty_to_alloc <= 0:
                 break
             qty_from_lot = min(lot.quantity_remaining, qty_to_alloc)
+            free_taken = min(qty_from_lot, lot.quantity_free_remaining) if lot.quantity_free_remaining > 0 else 0
             allocations_created.append(FactureProduitAllocation(
                 facture_produit=facture_produit,
                 stock_lot=lot,
                 quantity=qty_from_lot,
+                quantity_free=free_taken,
                 cost_price=lot.price_cost,
                 selling_price=sp
             ))
             lot.quantity_remaining -= qty_from_lot
-            if lot.quantity_free_remaining > 0:
-                lot.quantity_free_remaining -= min(qty_from_lot, lot.quantity_free_remaining)
+            lot.quantity_free_remaining -= free_taken
             lots_updated.append(lot)
             used_lot_names.append(lot.lot)
             qty_to_alloc -= qty_from_lot
@@ -174,16 +178,17 @@ class LotAllocationService:
                 f"(demandé {quantity}, disponible {lot.quantity_remaining})."
             )
 
+        free_taken = min(quantity, lot.quantity_free_remaining) if lot.quantity_free_remaining > 0 else 0
         allocation = FactureProduitAllocation.objects.create(
             facture_produit=facture_produit,
             stock_lot=lot,
             quantity=quantity,
+            quantity_free=free_taken,
             cost_price=lot.price_cost,
             selling_price=sp
         )
         lot.quantity_remaining -= quantity
-        if lot.quantity_free_remaining > 0:
-            lot.quantity_free_remaining -= min(quantity, lot.quantity_free_remaining)
+        lot.quantity_free_remaining -= free_taken
         lot.save()
 
         return allocation

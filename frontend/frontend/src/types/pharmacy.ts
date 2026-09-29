@@ -9,6 +9,8 @@ export interface PharmacySettings {
     rccm?: string
     ticket_footer_message?: string
     receipt_header?: string
+    pharmacist_name?: string
+    show_pharmacist_on_documents?: boolean
     logo?: string
     coefficient_direct_commande?: string
     niu?: string

@@ -78,25 +78,25 @@ export const InventaireList: React.FC<InventaireListProps> = ({
     const isSaving = editorLogic.saving || deleting;
 
     return (
-        <div className="flex flex-col gap-2 lg:gap-4 animate-in fade-in duration-500 flex-1 overflow-hidden">
+        <div className="flex flex-col gap-2 animate-in fade-in duration-500 flex-1 overflow-hidden">
             {/* Title & Filters & QuickStats */}
-            <div className="w-full space-y-2 lg:space-y-3 shrink-0">
+            <div className="w-full space-y-2 shrink-0">
                 <div className="bg-white rounded-lg border border-slate-200 flex flex-col">
-                    <div className="p-2 lg:p-4 border-b border-slate-100">
-                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 lg:gap-4">
+                    <div className="p-2 lg:px-3 lg:py-2 border-b border-slate-100">
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
                             <div>
-                                <h1 className="text-base lg:text-xl font-semibold text-slate-800 tracking-tight flex items-center gap-2">
-                                    <ClipboardList className="h-5 w-5 text-emerald-600" />
+                                <h1 className="text-sm lg:text-base font-semibold text-slate-800 tracking-tight flex items-center gap-2">
+                                    <ClipboardList className="h-4 w-4 text-emerald-600" />
                                     {t('inventaire.title')}
                                 </h1>
-                                <p className="text-slate-500 text-xs lg:text-sm mt-1 hidden lg:block">
+                                <p className="text-slate-500 text-xs mt-0.5 hidden lg:block">
                                     {t('inventaire.subtitle')}
                                 </p>
                             </div>
                             <div className="flex items-center gap-2">
                                 <button
                                     type="button"
-                                    className="inline-flex items-center justify-center h-9 px-5 rounded-md gap-2 text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors disabled:opacity-60"
+                                    className="inline-flex items-center justify-center h-8 px-4 rounded-md gap-2 text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors disabled:opacity-60"
                                     onClick={onCreate}
                                     disabled={listLogic.loading || isSaving}
                                 >
@@ -110,7 +110,7 @@ export const InventaireList: React.FC<InventaireListProps> = ({
                                 >
                                     <button
                                         type="button"
-                                        className="inline-flex items-center justify-center h-9 px-4 rounded-md gap-2 text-sm font-medium border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="inline-flex items-center justify-center h-8 px-3 rounded-md gap-2 text-sm font-medium border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                         onClick={onOpenMergeModal}
                                         disabled={!canMerge.canMerge}
                                     >
@@ -125,7 +125,7 @@ export const InventaireList: React.FC<InventaireListProps> = ({
                                 </div>
                                 <button
                                     type="button"
-                                    className="inline-flex items-center justify-center h-9 px-4 rounded-md gap-2 text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                                    className="inline-flex items-center justify-center h-8 px-3 rounded-md gap-2 text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors"
                                     onClick={onOpenAudit}
                                 >
                                     <BarChart3 className="h-4 w-4" />

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
 interface SudoOptions {
     title?: string;
@@ -20,6 +20,7 @@ interface SudoState {
 }
 
 export const useSudo = () => {
+    const validatingRef = useRef(false);
     const [sudoState, setSudoState] = useState<SudoState>({
         isOpen: false,
         onValidate: async () => { },
@@ -34,6 +35,10 @@ export const useSudo = () => {
             isOpen: true,
             isValidating: false,
             onValidate: async (validatorId: number, password: string) => {
+                // Garde synchrone : un double Enter/clic avant le re-render
+                // ne doit pas déclencher onSuccess deux fois.
+                if (validatingRef.current) return;
+                validatingRef.current = true;
                 setSudoState(prev => ({ ...prev, isValidating: true }));
                 try {
                     await onSuccess(validatorId, password);
@@ -44,6 +49,8 @@ export const useSudo = () => {
                     // L'erreur est gérée par le composant qui appelle requireSudo (toast)
                     setSudoState(prev => ({ ...prev, isValidating: false }));
                     throw error; // Re-lancer pour que l'appelant puisse gérer l'erreur
+                } finally {
+                    validatingRef.current = false;
                 }
             },
             onCancel: options?.onCancel,

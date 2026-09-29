@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Store, Plus, Loader2, Trash2, AlertCircle } from 'lucide-react'
+import { Store, Plus, Loader2, Trash2, AlertCircle, Power } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Input } from '../shadcn/input'
 import { Badge } from '../shadcn/badge'
@@ -28,7 +28,7 @@ export default function PosteVenteSettingsSection() {
   const { t, i18n } = useTranslation('pharmacy_settings')
   const confirm = useConfirm()
   const [postes, setPostes] = useState<PosteVente[]>([])
-  const [caissesDisponibles, setCaissesDisponibles] = useState<PosteCaisse[]>([])
+  const [caisses, setCaisses] = useState<PosteCaisse[]>([])
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [newNom, setNewNom] = useState('')
@@ -36,12 +36,12 @@ export default function PosteVenteSettingsSection() {
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
-      const [data, caisses] = await Promise.all([
+      const [data, caissesList] = await Promise.all([
         cashSessionService.getPostesVente().catch(() => []),
-        cashSessionService.getCaissesDisponibles().catch(() => [])
+        cashSessionService.getAllCaisses().catch(() => [])
       ])
       setPostes(data)
-      setCaissesDisponibles(caisses)
+      setCaisses(caissesList)
     } catch (err) {
       gooeyToast.error(getApiErrorDetail(err, t('messages.pos_load_error')))
     } finally {
@@ -89,6 +89,28 @@ export default function PosteVenteSettingsSection() {
     }
   }
 
+  const handleToggleCaisse = async (caisse: PosteCaisse) => {
+    const nouvelEtat = caisse.actif === false
+    const confirmed = await confirm({
+      title: t('common:confirmation'),
+      message: nouvelEtat
+        ? t('messages.caisse_confirm_activate', { nom: caisse.nom, defaultValue: `Réactiver la caisse ${caisse.nom} ?` })
+        : t('messages.caisse_confirm_deactivate', { nom: caisse.nom, defaultValue: `Désactiver la caisse ${caisse.nom} ? Elle ne pourra plus être ouverte, mais son historique est conservé.` }),
+      confirmText: t('common:confirm'),
+      variant: nouvelEtat ? 'info' : 'danger'
+    })
+    if (!confirmed) return
+    try {
+      await cashSessionService.updateCaisse(caisse.id, { actif: nouvelEtat })
+      gooeyToast.success(nouvelEtat
+        ? t('messages.caisse_activated', { defaultValue: 'Caisse réactivée.' })
+        : t('messages.caisse_deactivated', { defaultValue: 'Caisse désactivée.' }))
+      await loadData()
+    } catch (err) {
+      gooeyToast.error(getApiErrorDetail(err, t('messages.caisse_toggle_error', { defaultValue: "Erreur changement d'état caisse" })))
+    }
+  }
+
   const handleDeleteCaisse = async (caisse: PosteCaisse) => {
     const confirmedDelete = await confirm({
       title: t('common:confirmation'),
@@ -129,6 +151,10 @@ export default function PosteVenteSettingsSection() {
 
   // Postes créés depuis une caisse physique (ouverture depuis Caisse Centrale)
   const caisseActives = postes.filter((p) => !!p.caisse && p.est_actif)
+
+  // Nombre de caisses physiques actives — la dernière ne doit jamais être
+  // désactivée ni supprimée (protection contre les erreurs utilisateur).
+  const nbCaissesActives = caisses.filter((c) => c.actif !== false).length
 
   return (
     <div className="bg-white shadow-xl shadow-slate-200/50 border border-slate-200 overflow-hidden rounded-2xl">
@@ -284,39 +310,82 @@ export default function PosteVenteSettingsSection() {
               </div>
             )}
 
-            {/* Caisses physiques disponibles */}
-            {caissesDisponibles.length > 0 && (
+            {/* Caisses physiques */}
+            {caisses.length > 0 && (
               <div>
                 <h4 className="font-bold text-slate-800 mb-3 flex items-center gap-2">
-                  {t('postes_vente.caisse_available', { defaultValue: 'Points de caisse disponibles' })}
-                  <Badge className="bg-slate-400 text-white">{caissesDisponibles.length}</Badge>
+                  {t('postes_vente.caisse_available', { defaultValue: 'Points de caisse' })}
+                  <Badge className="bg-slate-400 text-white">{caisses.length}</Badge>
                 </h4>
                 <div className="rounded-xl border border-slate-200 overflow-hidden overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead className="bg-slate-100 text-slate-500">
                       <tr>
                         <th className="px-4 py-3 text-left font-semibold">{t('postes_vente.table.name', { defaultValue: 'Nom' })}</th>
+                        <th className="px-4 py-3 text-left font-semibold">{t('postes_vente.table.status', { defaultValue: 'Statut' })}</th>
                         <th className="px-4 py-3 text-right font-semibold">{t('postes_vente.table.actions', { defaultValue: 'Actions' })}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {caissesDisponibles.map((caisse: PosteCaisse) => (
-                        <tr key={caisse.id} className="hover:bg-slate-50">
-                          <td className="px-4 py-3 font-medium text-slate-800">{caisse.nom}</td>
-                          <td className="px-4 py-3 text-right">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeleteCaisse(caisse)}
-                              className="text-red-600 hover:bg-red-50 hover:text-red-600"
-                              title={t('postes_vente.delete', { defaultValue: 'Supprimer' })}
-                            >
-                              <Trash2 className="size-4" />
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
+                      {caisses.map((caisse: PosteCaisse) => {
+                        const desactivee = caisse.actif === false
+                        const enCours = caisse.est_actif === true
+                        const derniereActive = !desactivee && nbCaissesActives <= 1
+                        return (
+                          <tr key={caisse.id} className="hover:bg-slate-50">
+                            <td className="px-4 py-3 font-medium text-slate-800">{caisse.nom}</td>
+                            <td className="px-4 py-3">
+                              {desactivee ? (
+                                <Badge variant="outline" className="text-slate-500 border-slate-300">
+                                  {t('postes_vente.status_disabled', { defaultValue: 'Désactivée' })}
+                                </Badge>
+                              ) : enCours ? (
+                                <Badge className="bg-amber-500 text-white hover:bg-amber-500">
+                                  {t('postes_vente.status_in_use', { defaultValue: 'En cours' })}
+                                </Badge>
+                              ) : (
+                                <Badge className="bg-emerald-500 text-white hover:bg-emerald-500">
+                                  {t('postes_vente.status_active', { defaultValue: 'Active' })}
+                                </Badge>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleToggleCaisse(caisse)}
+                                  disabled={(enCours && !desactivee) || derniereActive}
+                                  className={desactivee
+                                    ? 'text-emerald-600 hover:bg-emerald-50 hover:text-emerald-600'
+                                    : 'text-amber-600 hover:bg-amber-50 hover:text-amber-600'}
+                                  title={derniereActive
+                                    ? t('postes_vente.last_active_hint', { defaultValue: 'Dernière caisse active : impossible à désactiver' })
+                                    : desactivee
+                                      ? t('postes_vente.reactivate', { defaultValue: 'Réactiver' })
+                                      : t('postes_vente.deactivate', { defaultValue: 'Désactiver' })}
+                                >
+                                  <Power className="size-4" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDeleteCaisse(caisse)}
+                                  disabled={enCours || derniereActive}
+                                  className="text-red-600 hover:bg-red-50 hover:text-red-600"
+                                  title={derniereActive
+                                    ? t('postes_vente.last_active_hint', { defaultValue: 'Dernière caisse active : impossible à supprimer' })
+                                    : t('postes_vente.delete', { defaultValue: 'Supprimer' })}
+                                >
+                                  <Trash2 className="size-4" />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      })}
                     </tbody>
                   </table>
                 </div>

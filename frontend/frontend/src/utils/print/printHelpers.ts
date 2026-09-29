@@ -308,7 +308,7 @@ export function buildTicketPrintHtml(ticketWidth: number, content: string, style
       /* Marges élargies : les imprimantes thermiques ont ~3-4mm de bord
          non imprimable de chaque côté — sans cela, la colonne des montants
          (alignée à droite) est rognée. */
-      padding: 1mm 4mm 2mm 3mm !important;
+      padding: 2mm 4mm 4mm 3mm !important;
       background: white !important;
       color: black !important;
       box-shadow: none !important;
@@ -316,12 +316,45 @@ export function buildTicketPrintHtml(ticketWidth: number, content: string, style
       overflow: hidden;
       word-break: break-word;
       overflow-wrap: break-word;
-      font-size: 12px;
-      line-height: 1.3;
+      /* Police monospace : reproduit le rendu de la police bitmap ESC/POS
+         des imprimantes thermiques (caractères à chasse fixe, ticket "machine"). */
+      font-family: 'Courier New', 'Lucida Console', ui-monospace, monospace !important;
+      font-size: 13px;
+      line-height: 1.55;
+      letter-spacing: 0.2px;
     }
+    #ticket-preview * {
+      font-family: inherit !important;
+    }
+    /* Rythme "aéré" : reproduit l'espacement du ticket ESC/POS (sauts de ligne
+       entre sections, air entre les produits, blanc avant la coupe). */
     #ticket-preview * {
       color: black !important;
     }
+    #ticket-preview .mb-1 { margin-bottom: 5px !important; }
+    #ticket-preview .mb-2 { margin-bottom: 10px !important; }
+    #ticket-preview .mb-3 { margin-bottom: 12px !important; }
+    #ticket-preview .my-2 { margin-top: 10px !important; margin-bottom: 10px !important; }
+    #ticket-preview .mt-1 { margin-top: 5px !important; }
+    #ticket-preview .mt-2 { margin-top: 10px !important; }
+    #ticket-preview .mt-3 { margin-top: 12px !important; }
+    #ticket-preview .mt-4 { margin-top: 14px !important; }
+    #ticket-preview .mt-5 { margin-top: 16px !important; }
+    #ticket-preview .pt-1 { padding-top: 5px !important; }
+    #ticket-preview .pt-2 { padding-top: 10px !important; }
+    #ticket-preview .pt-3 { padding-top: 12px !important; }
+    #ticket-preview .pb-2 { padding-bottom: 10px !important; }
+    #ticket-preview td.py-1 { padding-top: 6px !important; padding-bottom: 6px !important; }
+    #ticket-preview .leading-tight { line-height: 1.5 !important; }
+    /* Total net à payer : mis en avant comme le double-size ESC/POS.
+       On cible la ligne border-y (pas la ligne "en lettres" qui est border-b). */
+    #ticket-preview [class~="py-1.5"][class~="border-y"] {
+      padding-top: 8px !important;
+      padding-bottom: 8px !important;
+      font-size: 16px !important;
+    }
+    /* Blanc avant la "coupe" : équivalent du feed(3) ESC/POS. */
+    #ticket-preview::after { content: ''; display: block; height: 7mm; }
     /* Impression thermique 203 dpi : les traits fins (font-weight < 600)
        ressortent gris/effacés. On force du semibold partout pour obtenir
        des traits épais et un noir net, comme les tickets des autres caisses. */
@@ -332,12 +365,12 @@ export function buildTicketPrintHtml(ticketWidth: number, content: string, style
     #ticket-preview td, #ticket-preview th { overflow: hidden; text-overflow: ellipsis; }
     /* Rehausse les tailles de police trop petites pour l'impression thermique
        (text-micro=9px, text-caption=10px, [8px] pour les prix unitaires). */
-    #ticket-preview .text-micro { font-size: 11px !important; }
-    #ticket-preview .text-caption { font-size: 12px !important; }
-    #ticket-preview .text-xs { font-size: 11.5px !important; }
-    #ticket-preview .text-sm { font-size: 13px !important; }
-    #ticket-preview .text-base { font-size: 14px !important; }
-    #ticket-preview [class*="text-[8px]"] { font-size: 10px !important; }
+    #ticket-preview .text-micro { font-size: 12px !important; }
+    #ticket-preview .text-caption { font-size: 13px !important; }
+    #ticket-preview .text-xs { font-size: 12.5px !important; }
+    #ticket-preview .text-sm { font-size: 15px !important; }
+    #ticket-preview .text-base { font-size: 16px !important; }
+    #ticket-preview [class*="text-[8px]"] { font-size: 11px !important; }
   </style>
 </head>
 <body>

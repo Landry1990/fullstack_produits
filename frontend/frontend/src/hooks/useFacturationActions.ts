@@ -40,6 +40,10 @@ export interface UseFacturationActionsProps {
     user: User | null;
     myActivePoste?: PosteVente | null;
     postesCaisses?: { id: number }[];
+    isRetrocession?: boolean;
+    setIsRetrocession?: (value: boolean) => void;
+    isFactureA4?: boolean;
+    setIsFactureA4?: (value: boolean) => void;
 }
 
 export function useFacturationActions({
@@ -60,7 +64,11 @@ export function useFacturationActions({
     secureUpdateQuantite,
     user,
     myActivePoste,
-    postesCaisses: _postesCaisses
+    postesCaisses: _postesCaisses,
+    isRetrocession,
+    setIsRetrocession,
+    isFactureA4,
+    setIsFactureA4
 }: UseFacturationActionsProps) {
     const confirm = useConfirm();
 
@@ -527,11 +535,14 @@ export function useFacturationActions({
             lignes: cart.lignesFacture,
             remise: ui.remiseGlobale,
             remiseMode: ui.remiseMode,
-            ayantDroit: ayantDroitData
+            ayantDroit: ayantDroitData,
+            note: null,
+            isRetrocession,
+            isFactureA4
         })
         _resetSale()
         gooeyToast.success(t('facturation:messages.pending_sale_success'))
-    }, [cart.lignesFacture, clientsHook, pendingSales, ui, setError, _resetSale, t])
+    }, [cart.lignesFacture, clientsHook, pendingSales, ui, setError, _resetSale, t, isRetrocession, isFactureA4])
 
     const annulerVente = useCallback(() => {
         if (cart.lignesFacture.length > 0) {
@@ -544,6 +555,34 @@ export function useFacturationActions({
         }
         _resetSale()
     }, [cart.lignesFacture.length, ui, t, _resetSale])
+
+    const _applyRestoredVente = useCallback((vente: typeof pendingSales.ventesEnAttente[number], mode: 'replace' | 'merge') => {
+        if (mode === 'replace') {
+            cart.setLignesFacture(vente.lignes)
+            clientsHook.setUseManualClient(vente.useManualClient)
+            clientsHook.setManualClientName(vente.manualClientName)
+            ui.setRemiseGlobale(vente.remise)
+            ui.setRemiseMode(vente.remiseMode)
+            if (vente.client) clientsHook.setSelectedClient(vente.client)
+            else clientsHook.setSelectedClient(null)
+            if (vente.ayantDroit) {
+                clientsHook.setSelectedAyantDroit(vente.ayantDroit.id)
+                clientsHook.setAyantDroitNom(vente.ayantDroit.nom)
+                clientsHook.setAyantDroitMatricule(vente.ayantDroit.matricule)
+                clientsHook.setAyantDroitSociete(vente.ayantDroit.societe)
+                clientsHook.setShowNewAyantDroit(vente.ayantDroit.showNew)
+            }
+        } else {
+            const existingIds = new Set(cart.lignesFacture.map(l => l.lineId))
+            const uniqueNewLines = vente.lignes.filter(l => !existingIds.has(l.lineId))
+            cart.setLignesFacture(prev => [...prev, ...uniqueNewLines])
+            if (uniqueNewLines.length < vente.lignes.length) {
+                gooeyToast.info(t('facturation:messages.pending_merge_duplicates_skipped', { defaultValue: 'Certains articles identiques étaient déjà dans le panier.' }))
+            }
+        }
+        if (setIsRetrocession) setIsRetrocession(!!vente.isRetrocession)
+        if (setIsFactureA4) setIsFactureA4(!!vente.isFactureA4)
+    }, [cart, clientsHook, ui, setIsRetrocession, setIsFactureA4, t])
 
     const restaurerVente = useCallback(async (id: number) => {
         const vente = pendingSales.ventesEnAttente.find((v) => v.id === id)
@@ -558,24 +597,20 @@ export function useFacturationActions({
             })
             if (!ok) return
         }
-        cart.setLignesFacture(vente.lignes)
-        clientsHook.setUseManualClient(vente.useManualClient)
-        clientsHook.setManualClientName(vente.manualClientName)
-        ui.setRemiseGlobale(vente.remise)
-        ui.setRemiseMode(vente.remiseMode)
-        if (vente.client) clientsHook.setSelectedClient(vente.client)
-        else clientsHook.setSelectedClient(null)
-        if (vente.ayantDroit) {
-            clientsHook.setSelectedAyantDroit(vente.ayantDroit.id)
-            clientsHook.setAyantDroitNom(vente.ayantDroit.nom)
-            clientsHook.setAyantDroitMatricule(vente.ayantDroit.matricule)
-            clientsHook.setAyantDroitSociete(vente.ayantDroit.societe)
-            clientsHook.setShowNewAyantDroit(vente.ayantDroit.showNew)
-        }
+        _applyRestoredVente(vente, 'replace')
         pendingSales.deletePendingSale(id)
         pendingSales.setShowPendingSales(false)
         gooeyToast.success(t('facturation:messages.save_success'))
-    }, [pendingSales, cart, clientsHook, ui, t, confirm])
+    }, [pendingSales, cart, clientsHook, ui, t, confirm, _applyRestoredVente])
+
+    const fusionnerVenteEnAttente = useCallback(async (id: number) => {
+        const vente = pendingSales.ventesEnAttente.find((v) => v.id === id)
+        if (!vente) return
+        _applyRestoredVente(vente, 'merge')
+        pendingSales.deletePendingSale(id)
+        pendingSales.setShowPendingSales(false)
+        gooeyToast.success(t('facturation:messages.pending_merge_success', { defaultValue: 'Articles ajoutés au panier actuel.' }))
+    }, [pendingSales, _applyRestoredVente])
 
     const supprimerVenteEnAttente = useCallback((id: number) => {
         ui.setConfirmModal({
@@ -605,6 +640,7 @@ export function useFacturationActions({
         mettreEnAttente,
         annulerVente,
         restaurerVente,
+        fusionnerVenteEnAttente,
         supprimerVenteEnAttente
     }
 }

@@ -255,13 +255,14 @@ class SaleValidator:
             if target_lot.quantity_remaining < qty_to_alloc:
                 raise ValueError(f"Stock insuffisant dans le lot {target_lot.lot}.")
 
+            free_taken = min(qty_to_alloc, target_lot.quantity_free_remaining) if target_lot.quantity_free_remaining > 0 else 0
             allocations_to_create.append(FactureProduitAllocation(
                 facture_produit=item, stock_lot=target_lot, quantity=qty_to_alloc,
+                quantity_free=free_taken,
                 cost_price=target_lot.price_cost, selling_price=item.selling_price
             ))
             target_lot.quantity_remaining -= qty_to_alloc
-            if target_lot.quantity_free_remaining > 0:
-                target_lot.quantity_free_remaining -= min(qty_to_alloc, target_lot.quantity_free_remaining)
+            target_lot.quantity_free_remaining -= free_taken
             lots_to_update_set.add(target_lot)
             item.lot = target_lot.lot[:20]
             item.date_expiration = target_lot.date_expiration
@@ -274,13 +275,14 @@ class SaleValidator:
                 if qty_to_alloc <= 0:
                     break
                 qty_from_lot = min(lot.quantity_remaining, qty_to_alloc)
+                free_taken = min(qty_from_lot, lot.quantity_free_remaining) if lot.quantity_free_remaining > 0 else 0
                 allocations_to_create.append(FactureProduitAllocation(
                     facture_produit=item, stock_lot=lot, quantity=qty_from_lot,
+                    quantity_free=free_taken,
                     cost_price=lot.price_cost, selling_price=item.selling_price
                 ))
                 lot.quantity_remaining -= qty_from_lot
-                if lot.quantity_free_remaining > 0:
-                    lot.quantity_free_remaining -= min(qty_from_lot, lot.quantity_free_remaining)
+                lot.quantity_free_remaining -= free_taken
                 lots_to_update_set.add(lot)
                 used_lot_names.append(lot.lot)
                 qty_to_alloc -= qty_from_lot
@@ -307,13 +309,14 @@ class SaleValidator:
                 raise ValueError(f"Lot de stock {lot_id} introuvable pour le produit {item.produit_id}.")
             if target_lot.quantity_remaining < qty:
                 raise ValueError(f"Stock insuffisant dans le lot {target_lot.lot} (demandé {qty}, disponible {target_lot.quantity_remaining}).")
+            free_taken = min(qty, target_lot.quantity_free_remaining) if target_lot.quantity_free_remaining > 0 else 0
             allocations_to_create.append(FactureProduitAllocation(
                 facture_produit=item, stock_lot=target_lot, quantity=qty,
+                quantity_free=free_taken,
                 cost_price=target_lot.price_cost, selling_price=item.selling_price
             ))
             target_lot.quantity_remaining -= qty
-            if target_lot.quantity_free_remaining > 0:
-                target_lot.quantity_free_remaining -= min(qty, target_lot.quantity_free_remaining)
+            target_lot.quantity_free_remaining -= free_taken
             lots_to_update_set.add(target_lot)
             used_lot_names.append(target_lot.lot)
         if used_lot_names:

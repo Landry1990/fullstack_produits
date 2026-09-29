@@ -45,6 +45,7 @@ export function CaisseTicketPreviewModal({
 
   const [showClientNameModal, setShowClientNameModal] = useState(false)
   const [pendingFacture, setPendingFacture] = useState<Facture | null>(null)
+  const [printing, setPrinting] = useState(false)
 
   const handlePrintInvoice = useCallback(() => {
     if (!ticket) return
@@ -151,7 +152,8 @@ export function CaisseTicketPreviewModal({
   }, [])
 
   const handlePrint = useCallback(async () => {
-    if (!ticket || !settings) return
+    if (!ticket || !settings || printing) return
+    setPrinting(true)
 
     const htmlFallback = () => {
       const ticketElement = document.getElementById('ticket-preview')
@@ -164,8 +166,12 @@ export function CaisseTicketPreviewModal({
       })
     };
 
-    await printTicketSmart(ticket, settings, htmlFallback)
-  }, [settings, styleTags, t, ticket])
+    try {
+      await printTicketSmart(ticket, settings, htmlFallback)
+    } finally {
+      setPrinting(false)
+    }
+  }, [settings, styleTags, t, ticket, printing])
 
   return (
     <>
@@ -223,10 +229,11 @@ export function CaisseTicketPreviewModal({
           <button
             ref={printButtonRef}
             type="button"
-            className="inline-flex items-center justify-center h-8 px-6 rounded-lg text-xs font-semibold bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-emerald-600 transition-colors"
+            className="inline-flex items-center justify-center h-8 px-6 rounded-lg text-xs font-semibold bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={handlePrint}
+            disabled={printing || loading}
           >
-            {t('common:print')}
+            {printing ? t('common:sending') : t('common:print')}
           </button>
         </div>
       }

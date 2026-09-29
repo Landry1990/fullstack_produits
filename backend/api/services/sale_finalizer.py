@@ -364,6 +364,18 @@ class SaleFinalizer:
             return
         for p_data in paiements_data:
             if Decimal(str(p_data.get('montant', 0))) > 0:
+                if p_data.get('mode') == 'depot':
+                    client = facture.client
+                    montant = Decimal(str(p_data['montant']))
+                    if not client or not client.is_deposit_enabled:
+                        raise ValueError(
+                            "Paiement par dépôt impossible : ce client n'a pas le dépôt/acompte activé."
+                        )
+                    if client.solde_depot < montant:
+                        raise ValueError(
+                            f"Solde dépôt insuffisant : {client.solde_depot} F disponibles, "
+                            f"{montant} F demandés."
+                        )
                 paiement = Caisse.objects.create(
                     facture=facture,
                     mode_paiement=p_data.get('mode', 'especes'),
