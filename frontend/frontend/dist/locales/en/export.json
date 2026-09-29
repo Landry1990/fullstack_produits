@@ -1,0 +1,39 @@
+{
+  "title": "Supplier Order Export",
+  "select_cip": "Select CIP code to export",
+  "cip1_desc": "Primary supplier",
+  "cip3_desc": "Secondary supplier",
+  "buttons": {
+    "cancel": "Cancel",
+    "export_csv": "Export CSV",
+    "export_sans_cip": "Products without CIP (TXT)"
+  },
+  "stats": {
+    "total": "Total products",
+    "avec_cip": "With CIP",
+    "sans_cip": "Without CIP"
+  },
+  "alert": {
+    "sans_cip_title": "Warning: Products without CIP",
+    "sans_cip_desc": "Some products don't have a CIP for this supplier. They will appear in a separate section."
+  },
+  "list": {
+    "avec_cip": "Exportable products",
+    "sans_cip": "Products to enter manually"
+  },
+  "table": {
+    "libelle": "Label",
+    "qte": "Qty",
+    "ug": "FU"
+  },
+  "more": "more products",
+  "messages": {
+    "export_success": "CSV export downloaded successfully",
+    "txt_export_success": "Products without CIP list downloaded",
+    "load_failed": "Error loading preview"
+  },
+  "errors": {
+    "load_failed": "Failed to load export preview",
+    "export_failed": "Export error"
+  }
+}

@@ -1,0 +1,35 @@
+{
+    "title": "Templates d'Étiquettes",
+    "add_option": "Ajouter Option",
+    "tabs": {
+        "STOCK_ADJ": "Motifs Ajustement Stock",
+        "SUPPLIER_RET": "Motifs Retour Fournisseur",
+        "MONEY_DENOM": "Coupures Monnaie"
+    },
+    "empty": "Aucune option configurée",
+    "inactive": "Inactif",
+    "value_label": "Val: {{value}}",
+    "delete_confirm": "Supprimer {{label}} ?",
+    "success": {
+        "deleted": "Supprimé",
+        "updated": "Mis à jour",
+        "created": "Créé"
+    },
+    "errors": {
+        "load": "Erreur chargement options",
+        "delete": "Erreur suppression",
+        "save": "Erreur sauvegarde"
+    },
+    "modal": {
+        "edit_title": "Modifier",
+        "new_title": "Nouvelle Option",
+        "label": "Label (Affiché)",
+        "code": "Code (Technique)",
+        "value": "Valeur (Optionnel)",
+        "value_hint": "Ex: 10000 pour un billet",
+        "active": "Actif",
+        "cancel": "Annuler",
+        "save": "Enregistrer",
+        "create": "Créer"
+    }
+}

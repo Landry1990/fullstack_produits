@@ -30,7 +30,8 @@ logs/
 # ============== Node / React ==============
 node_modules/
 .next/
-# dist/ du frontend est commité pour déploiement production sans npm sur le serveur
+# dist/ est régénéré par npm run build (local) et par Dockerfile.prod (serveur)
+frontend/frontend/dist/
 build/
 *.tsbuildinfo
 
@@ -88,3 +89,7 @@ backups/
 
 # PDF files (not part of the application)
 *.pdf
+
+# Fichiers fantômes créés par des redirections >nul sous Git Bash
+nul
+NUL

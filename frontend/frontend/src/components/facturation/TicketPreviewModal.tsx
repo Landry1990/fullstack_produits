@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { X, MessageCircle, Send } from 'lucide-react'
 import { TicketTemplate } from '../printing/TicketTemplate'
@@ -25,6 +25,7 @@ export default function TicketPreviewModal({
   onSendTelegram
 }: TicketPreviewModalProps) {
   const { t } = useTranslation(['facturation', 'common'])
+  const [printing, setPrinting] = useState(false)
 
   useEffect(() => {
     if (!isOpen) return
@@ -38,7 +39,8 @@ export default function TicketPreviewModal({
   if (!isOpen || !ticket || !settings) return null
 
   const handlePrint = async () => {
-    if (!ticket || !settings) return;
+    if (!ticket || !settings || printing) return;
+    setPrinting(true)
 
     const htmlFallback = () => {
       const ticketElement = document.getElementById('ticket-preview');
@@ -64,7 +66,11 @@ export default function TicketPreviewModal({
       printWindow.focus()
     };
 
-    await printTicketSmart(ticket, settings, htmlFallback);
+    try {
+      await printTicketSmart(ticket, settings, htmlFallback);
+    } finally {
+      setPrinting(false)
+    }
   }
 
   return (
@@ -113,10 +119,11 @@ export default function TicketPreviewModal({
           )}
 
           <button
-            className="inline-flex items-center justify-center h-9 px-4 rounded-lg text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+            className="inline-flex items-center justify-center h-9 px-4 rounded-lg text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={handlePrint}
+            disabled={printing}
           >
-            {t('common:print')}
+            {printing ? t('common:sending') : t('common:print')}
           </button>
         </div>
       </div>

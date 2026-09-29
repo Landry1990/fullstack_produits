@@ -1,6 +1,6 @@
 import { extractErrorMessage } from '../utils/errorHandling';
 import { generateUUID } from '../utils/uuid';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { gooeyToast } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
 import type {
@@ -70,6 +70,9 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [lastResult, setLastResult] = useState<SaleCompletionResult | null>(null);
+    // Verrou synchrone : setLoading est asynchrone (React), deux Enter/clics
+    // rapides passeraient tous les deux avant le re-render et créeraient un doublon.
+    const inFlightRef = useRef(false);
 
     /**
      * Créer ou récupérer l'ayant droit
@@ -152,6 +155,8 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
      * Fonction principale de finalisation de vente
      */
     const completeSale = useCallback(async (params: SaleCompletionParams): Promise<SaleCompletionResult> => {
+        if (inFlightRef.current) return { success: false, error: 'sale_in_progress' };
+        inFlightRef.current = true;
         setLoading(true);
         setError(null);
 
@@ -434,6 +439,7 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
             if (printWindow) printWindow.close()
             return { success: false, error: errorMessage };
         } finally {
+            inFlightRef.current = false;
             setLoading(false);
         }
     }, [
@@ -458,6 +464,8 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
         manualClientName?: string;
         prescriptionImage?: File | null;
     }): Promise<SaleCompletionResult> => {
+        if (inFlightRef.current) return { success: false, error: 'payment_in_progress' };
+        inFlightRef.current = true;
         setLoading(true);
         setError(null);
 
@@ -622,6 +630,7 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
             if (printWindow) printWindow.close()
             return { success: false, error: errorMessage };
         } finally {
+            inFlightRef.current = false;
             setLoading(false);
         }
     }, [pharmacySettings, t, onSuccess, onError, onReset]);

@@ -1,0 +1,100 @@
+{
+  "list": {
+    "title": "Avoirs clients",
+    "description": "Gérez les notes de crédit, retours et remboursements clients.",
+    "new_credit": "Nouvel avoir",
+    "no_client": "Passager",
+    "no_results": "Aucun avoir client trouvé.",
+    "validate": "Valider",
+    "view": "Consulter",
+    "export": "Exporter Excel",
+    "columns": {
+      "number": "Numéro",
+      "date": "Date",
+      "client": "Client",
+      "invoice": "Facture d'origine",
+      "amount": "Montant",
+      "status": "Statut",
+      "actions": "Actions"
+    },
+    "pagination": {
+      "showing": "{{start}}-{{end}} sur {{total}}",
+      "prev": "Précédent",
+      "next": "Suivant",
+      "page": "Page {{page}} / {{total}}"
+    }
+  },
+  "form": {
+    "invoice_origin": "Facture d'origine",
+    "invoice_search_placeholder": "Rechercher une facture par numéro...",
+    "selected_invoice": "Facture sélectionnée",
+    "client": "Client",
+    "refund_method": "Mode de remboursement",
+    "type_motif": "Motif",
+    "notes": "Notes",
+    "notes_placeholder": "Motif ou observation...",
+    "lines_title": "Lignes de l'avoir",
+    "add_line": "Ajouter une ligne",
+    "no_lines": "Aucune ligne. Ajoutez au moins un produit.",
+    "product": "Produit",
+    "product_placeholder": "Rechercher un produit...",
+    "no_products": "Aucun produit trouvé.",
+    "quantity": "Qté",
+    "unit_price": "Prix unit.",
+    "discount": "Remise",
+    "vat": "TVA",
+    "total": "Total",
+    "create": "Créer l'avoir",
+    "lot": "Lot",
+    "expires": "Expire",
+    "lot_from_invoice": "Lot issu de la facture d'origine",
+    "lot_required": "Ce produit nécessite un lot. Chargez une facture d'origine pour pré-remplir le lot."
+  },
+  "refund_methods": {
+    "cash": "Espèces (sortie de caisse)",
+    "credit": "Crédit client"
+  },
+  "motifs": {
+    "erreur": "Erreur",
+    "retour": "Retour",
+    "remise": "Remise",
+    "autre": "Autre"
+  },
+  "detail": {
+    "title": "Avoir client {{numero}}",
+    "subtitle": "Détails de l'avoir",
+    "date": "Date",
+    "client": "Client",
+    "invoice": "Facture d'origine",
+    "status": "Statut",
+    "motif": "Motif",
+    "amount": "Montant total",
+    "notes": "Notes",
+    "lines": "Lignes",
+    "product": "Produit",
+    "quantity": "Qté",
+    "unit_price": "Prix unit.",
+    "total": "Total"
+  },
+  "statuts": {
+    "brouillon": "Brouillon",
+    "validee": "Validée",
+    "annulee": "Annulée"
+  },
+  "messages": {
+    "confirm_credit_refund": "Le client recevra un crédit sur son compte. Confirmer ?",
+    "invoice_load_error": "Impossible de charger les informations de la facture.",
+    "no_lines": "L'avoir doit contenir au moins une ligne.",
+    "credit_requires_client": "Un client est requis pour un remboursement en crédit.",
+    "created": "Avoir client créé.",
+    "create_error": "Erreur lors de la création de l'avoir.",
+    "updated": "Avoir client mis à jour.",
+    "update_error": "Erreur lors de la mise à jour de l'avoir.",
+    "deleted": "Avoir client supprimé.",
+    "delete_error": "Erreur lors de la suppression de l'avoir.",
+    "validated": "Avoir client validé.",
+    "validate_error": "Erreur lors de la validation de l'avoir.",
+    "export_success": "Export Excel téléchargé.",
+    "export_error": "Erreur lors de l'export Excel."
+  }
+}

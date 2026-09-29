@@ -4,7 +4,10 @@ export interface PosteCaisse {
   id: number
   nom: string
   code: string
+  /** true = une session est ouverte sur cette caisse */
   est_actif?: boolean
+  /** false = caisse désactivée (masquée à l'ouverture) */
+  actif?: boolean
 }
 
 export interface PosteVente {
@@ -56,6 +59,11 @@ export const cashSessionService = {
 
   async deleteCaisse(caisseId: number): Promise<void> {
     await api.delete(`postes-caisses/${caisseId}/`)
+  },
+
+  async updateCaisse(caisseId: number, payload: Partial<Pick<PosteCaisse, 'actif' | 'nom' | 'code'>>): Promise<PosteCaisse> {
+    const { data } = await api.patch(`postes-caisses/${caisseId}/`, payload)
+    return data
   },
 
   // --- Postes de vente ---

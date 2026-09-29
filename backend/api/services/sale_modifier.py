@@ -181,7 +181,11 @@ class SaleModifier:
 
             if lots_allocated:
                 new_product_ids_with_allocations.add(produit_id)
-            elif produit and not produit.use_lot_management:
+            elif produit:
+                # Allocation de lot impossible (pas de lot disponible ou gestion
+                # par lots désactivée) : décrément manuel comme dans
+                # SaleValidator._allocate_lots — sinon le stock restauré n'est
+                # jamais re-facturé et la modification gonfle le stock.
                 Produit.objects.filter(pk=produit_id).update(stock=F('stock') - quantity)
 
             # Sync FactureProduit fields from allocated lots
@@ -262,7 +266,8 @@ class SaleModifier:
                     MouvementStock.TypeMouvement.RETOUR if is_return
                     else MouvementStock.TypeMouvement.SORTIE
                 ),
-                quantite=delta if is_return else -delta,
+                # Signe : delta > 0 = RETOUR (+), delta < 0 = SORTIE (-)
+                quantite=delta,
                 stock_apres=product_stock_map.get(pid),
                 user=user,
                 facture=facture,

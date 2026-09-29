@@ -1,2 +1,19 @@
 # Les scripts shell doivent rester en LF (CRLF casse le shebang sous Linux)
 *.sh text eol=lf
+
+# Sources déployées dans des conteneurs Linux — garder LF partout
+# (évite les warnings "LF will be replaced by CRLF" sous Windows)
+*.py text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.js text eol=lf
+*.jsx text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.ps1 text eol=lf
+Dockerfile* text eol=lf
+*.txt text eol=lf

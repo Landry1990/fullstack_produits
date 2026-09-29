@@ -81,6 +81,41 @@ class CaisseViewSet(CaisseReportingMixin, CaisseClotureMixin, BaseViewSetConfig,
             )
         return None
 
+    def _check_depot_solde(self, data):
+        """Refuse un paiement 'depot' si le client ne peut pas le couvrir."""
+        if data.get('mode_paiement') != 'depot':
+            return None
+        facture_id = data.get('facture') or data.get('facture_id')
+        if not facture_id:
+            return Response(
+                {'detail': "Un paiement par dépôt doit être lié à une facture."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        from ...models import Facture as FactureModel
+        try:
+            facture_obj = FactureModel.objects.select_related('client').get(pk=facture_id)
+        except FactureModel.DoesNotExist:
+            return None
+        client = facture_obj.client
+        try:
+            montant = Decimal(str(data.get('montant', 0)))
+        except (InvalidOperation, TypeError, ValueError):
+            montant = Decimal(0)
+        if not client or not client.is_deposit_enabled:
+            return Response(
+                {'detail': "Ce client n'a pas le dépôt/acompte activé."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        if client.solde_depot < montant:
+            return Response(
+                {'detail': (
+                    f"Solde dépôt insuffisant : {client.solde_depot} F "
+                    f"disponibles, {montant} F demandés."
+                )},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return None
+
     def _cap_montant(self, data):
         """Cap le montant au reste à payer de la facture (copie et retourne les données)."""
         try:
@@ -118,6 +153,10 @@ class CaisseViewSet(CaisseReportingMixin, CaisseClotureMixin, BaseViewSetConfig,
             return Response({'detail': "Le montant d'un paiement ne peut pas être négatif."}, status=status.HTTP_400_BAD_REQUEST)
 
         error_res = self._check_poste_vente(request)
+        if error_res:
+            return error_res
+
+        error_res = self._check_depot_solde(request.data)
         if error_res:
             return error_res
 
@@ -164,6 +203,9 @@ class CaisseViewSet(CaisseReportingMixin, CaisseClotureMixin, BaseViewSetConfig,
 
         created = []
         for item in items:
+            error_res = self._check_depot_solde(item)
+            if error_res:
+                return error_res
             data = item.copy()
             # Alias : le frontend envoie historiquement facture_id
             if 'facture' not in data and data.get('facture_id') is not None:
@@ -199,7 +241,7 @@ class CaisseViewSet(CaisseReportingMixin, CaisseClotureMixin, BaseViewSetConfig,
                     'montant': float(instance.montant),
                     'mode_paiement': instance.mode_paiement,
                     'facture_id': instance.facture_id,
-                    'poste_caisse_id': instance.poste_caisse_id,
+                    'poste_caisse_id': instance.facture.poste_caisse_id if instance.facture else None,
                     'operator': self.request.user.username,
                 },
                 request=self.request

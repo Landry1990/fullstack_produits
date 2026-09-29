@@ -117,6 +117,21 @@ export function PrintingTab({ formData, handleChange, t, invSettings, updateInvS
                 </span>
               </label>
             </div>
+
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-bold text-slate-500">{t('labels.show_pharmacist')}</span>
+                <Checkbox
+                  checked={formData.show_pharmacist_on_documents || false}
+                  onCheckedChange={(checked) => handleChange('show_pharmacist_on_documents', !!checked)}
+                />
+              </div>
+              <label>
+                <span className="text-xs text-slate-400 flex items-center gap-1">
+                  <ChevronRight className="size-3" /> {t('hints.show_pharmacist')}
+                </span>
+              </label>
+            </div>
           </div>
         </div>
       </div>

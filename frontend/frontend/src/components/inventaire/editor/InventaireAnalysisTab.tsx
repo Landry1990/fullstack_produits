@@ -35,14 +35,14 @@ const StatsList = memo(({ title, data, type, t }: StatsListProps) => {
                     {data?.length || 0}
                 </span>
             </div>
-            <div className="p-0 flex-1 overflow-y-auto">
+            <div className="p-0 flex-1 overflow-y-auto max-h-[480px]">
                 {!data || data.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full py-12 gap-3 text-slate-200">
                         <PieChart className="h-10 w-10" />
                         <p className="text-sm font-medium text-slate-400">{t('inventaire.analysis.no_data')}</p>
                     </div>
                 ) : (
-                    data.map((p, i) => (
+                    data.slice(0, 50).map((p, i) => (
                         <div key={`${type}-${p.produit_nom}-${p.ecart}`} className="group flex items-center justify-between p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors last:border-0">
                             <div className="flex items-center gap-4">
                                 <div className={`size-8 rounded-lg bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-400 group-hover:${bgColorClass} group-hover:${colorClass} transition-colors`}>
@@ -88,7 +88,8 @@ export const InventaireAnalysisTab: React.FC<InventaireAnalysisTabProps> = ({
             await api.post('telegram/rapport-inventaire/', inventaireId ? { inventaire_id: inventaireId } : {});
             gooeyToast.success(t('common:telegram.send_success'), { icon: <Send className="h-4 w-4 text-brand-telegram" /> });
         } catch (err: unknown) {
-            gooeyToast.error(err?.response?.data?.message || t('common:telegram.send_error'));
+            const apiMessage = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+            gooeyToast.error(apiMessage || t('common:telegram.send_error'));
         } finally {
             setSendingTelegram(false);
         }

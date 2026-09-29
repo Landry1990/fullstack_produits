@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zenith Pharma - Loading / Chargement</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .container {
+            text-align: center;
+            padding: 2rem;
+            max-width: 480px;
+        }
+        .logo {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        p {
+            opacity: 0.9;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 2rem;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .retry-btn {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .retry-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+        .status {
+            margin-top: 1.5rem;
+            font-size: 0.875rem;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">&#x2695;</div>
+        <h1>Zenith Pharma</h1>
+        <p id="message">Le système est en cours de démarrage.<br>Merci de patienter quelques instants.</p>
+        <div class="spinner"></div>
+        <button class="retry-btn" id="retryBtn" onclick="location.reload()">Actualiser la page</button>
+        <div class="status" id="status">Vérification en cours...</div>
+    </div>
+    <script>
+        // Auto-détection de la langue
+        const lang = navigator.language || navigator.userLanguage;
+        const isEn = lang.startsWith('en');
+
+        const i18n = {
+            message: isEn
+                ? 'The system is starting up.<br>Please wait a moment.'
+                : 'Le système est en cours de démarrage.<br>Merci de patienter quelques instants.',
+            retry: isEn ? 'Refresh page' : 'Actualiser la page',
+            checking: isEn ? 'Checking...' : 'Vérification en cours...',
+            ready: isEn ? 'System ready! Redirecting...' : 'Système prêt ! Redirection...',
+            starting: isEn ? 'System still starting up...' : 'Système encore en cours de démarrage...',
+            waiting: isEn ? 'Waiting for backend server...' : 'En attente du serveur backend...'
+        };
+
+        document.getElementById('message').innerHTML = i18n.message;
+        document.getElementById('retryBtn').textContent = i18n.retry;
+        document.getElementById('status').textContent = i18n.checking;
+
+        // Auto-refresh toutes les 10 secondes si le backend redevient disponible
+        async function checkBackend() {
+            try {
+                const res = await fetch('/api/health/', { method: 'GET', cache: 'no-store' });
+                if (res.ok) {
+                    document.getElementById('status').textContent = i18n.ready;
+                    setTimeout(() => location.href = '/', 1000);
+                } else {
+                    document.getElementById('status').textContent = i18n.starting;
+                }
+            } catch (e) {
+                document.getElementById('status').textContent = i18n.waiting;
+            }
+        }
+        checkBackend();
+        setInterval(checkBackend, 10000);
+    </script>
+</body>
+</html>

@@ -57,6 +57,10 @@ class PharmacySettings(models.Model):
     )
     ticket_footer_message = models.TextField(blank=True, default="Merci de votre visite!")
     receipt_header = models.TextField(blank=True, default="", help_text="Message en haut du ticket")
+    show_pharmacist_on_documents = models.BooleanField(
+        default=False,
+        help_text="Afficher le nom du pharmacien (issu de la licence) sur les tickets et factures"
+    )
     logo = models.ImageField(
         upload_to='pharmacy_logos/', blank=True, null=True, 
         help_text="Logo de la pharmacie"
