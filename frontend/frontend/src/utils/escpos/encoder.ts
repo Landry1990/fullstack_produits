@@ -132,7 +132,10 @@ export function encodeWcp1252(text: string): string {
   let out = '';
   for (const ch of String(text)) {
     const code = ch.charCodeAt(0);
-    if (code < 128) {
+    // Espaces spéciaux (insécables, demi-cadratin…) → espace normal
+    if (code === 0x00A0 || code === 0x202F || code === 0x2009 || code === 0x2003) {
+      out += ' ';
+    } else if (code < 128) {
       out += ch;
     } else if (code < 256) {
       // Plage haute Latin-1 (160-255) transmise en un octet directement.
@@ -230,7 +233,7 @@ export function columns(label: string, value: string, width = 48): string {
   return text(trimmedLabel) + ' '.repeat(pad) + text(safeValue) + LF;
 }
 
-/** Code-barres CODE128 en mode natif (format B). */
+/** Code-barres CODE128 en mode natif (format B), taille réduite. */
 export function barcodeCODE128(data: string): string {
   // CODE128 B accepte l'ASCII imprimable (0x20-0x7E)
   const sanitized = String(data)
@@ -238,5 +241,6 @@ export function barcodeCODE128(data: string): string {
     .slice(0, 40);
   const payload = `{B${sanitized}`;
   const len = payload.length;
-  return `${GS}kI${String.fromCharCode(len)}${payload}`;
+  // Hauteur 40 points, largeur module 2, HRI désactivé pour éviter doublon
+  return `${GS}h${String.fromCharCode(40)}${GS}w${String.fromCharCode(2)}${GS}H${String.fromCharCode(0)}${GS}kI${String.fromCharCode(len)}${payload}`;
 }

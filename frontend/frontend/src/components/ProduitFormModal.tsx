@@ -126,9 +126,10 @@ export default function ProduitFormModal({
   const handleCipBlur = (field: typeof CIP_FIELDS[number]) => {
     setCipErrors(prev => ({ ...prev, [field]: !isCipValid(form[field]) }));
   };
-  // État local pour le coef — permet la saisie directe sans recalcul en temps réel
-  // qui écraserait la valeur en cours de frappe
+  // État local pour le coef et le % de marge — permet la saisie directe sans
+  // recalcul en temps réel qui écraserait la valeur en cours de frappe
   const [coefInput, setCoefInput] = useState('');
+  const [marginPercentInput, setMarginPercentInput] = useState('');
 
   const costPrice = normalizeNumberInput(form.cost_price);
   const sellingPriceTTC = normalizeNumberInput(form.selling_price);
@@ -171,6 +172,24 @@ export default function ProduitFormModal({
       setForm(p => ({ ...p, selling_price: Math.round(sellingTTC).toString() }));
     }
     setCoefInput('');
+  };
+
+  // Quand l'utilisateur saisit le % de marge → recalculer le PV TTC au blur
+  const handleMarginPercentChange = (value: string) => {
+    setMarginPercentInput(value);
+  };
+
+  const handleMarginPercentBlur = () => {
+    const margin = normalizeNumberInput(marginPercentInput);
+    const cp = normalizeNumberInput(form.cost_price);
+    const tva = parseFloat(form.tva) || 0;
+    if (cp > 0 && margin > 0 && margin < 100) {
+      // PV HT = PA HT / (1 - %marge)   avec %marge = (PVHT - PAHT)/PVHT
+      const sellingHT = cp / (1 - margin / 100);
+      const sellingTTC = sellingHT * (1 + tva / 100);
+      setForm(p => ({ ...p, selling_price: Math.round(sellingTTC).toString() }));
+    }
+    setMarginPercentInput('');
   };
 
   // Quand l'utilisateur change le cost_price → selling_price TTC se recalcule si coef déjà défini
@@ -516,7 +535,18 @@ export default function ProduitFormModal({
               </div>
               <div>
                 <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.margin_percent')}</label>
-                <div className={`${inputSm} flex items-center justify-center font-bold ${pourcMarge < 0 ? 'text-red-600' : 'text-emerald-600'}`}>{pourcMarge.toFixed(1)}%</div>
+                <Input
+                  type="number"
+                  className={`${inputBase} font-bold ${pourcMarge < 0 ? 'text-red-600' : 'text-emerald-600'}`}
+                  aria-label={t('products:form.margin_percent')}
+                  value={marginPercentInput !== '' ? marginPercentInput : (costPrice > 0 ? pourcMarge.toFixed(1) : '')}
+                  onChange={(e) => handleMarginPercentChange(e.target.value)}
+                  onBlur={handleMarginPercentBlur}
+                  step="0.1"
+                  min="0"
+                  max="99.9"
+                  placeholder="20"
+                />
               </div>
             </div>
             {costPrice > 0 && sellingPriceTTC > 0 && margeHT < 0 && (

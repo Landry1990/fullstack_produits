@@ -80,7 +80,7 @@ const StockAnalysis = () => {
                 [t('stock:analyse.columns.product', 'Produit')]: item.name,
                 CIP: item.cip || '-',
                 [t('stock:analyse.columns.current_stock', 'Stock actuel')]: item.stock,
-                [t('stock:analyse.columns.avg_daily_sales', 'Ventes journalières moy.')]: item.avg_daily_sales ?? '-',
+                [t('stock:analyse.columns.avg_rotation', 'Rotation moyenne')]: item.rotation_moyenne ?? '-',
                 [t('stock:analyse.columns.days_until_stockout', 'Jours avant rupture')]: item.days_until_stockout ?? '-',
                 [t('stock:analyse.columns.urgency', 'Urgence')]: item.urgency ?? '-',
                 [t('stock:analyse.columns.value_at_risk', 'Valeur à risque')]: item.value,

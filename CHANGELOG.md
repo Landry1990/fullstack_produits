@@ -1,5 +1,214 @@
 # Changelog — Fullstack Produits
 
+## 2026-09-28 — 🔐 Signature QZ Tray : suppression du popup "Untrusted website"
+
+Mise en place d'un certificat de signature côté serveur pour les requêtes QZ Tray.
+
+### Nouveautés
+
+- Génération automatique d'une paire RSA 2048 + certificat CA auto-signé valable 10 ans
+  (extensions `Basic Constraints: CA TRUE` et `Key Usage: Certificate Sign`).
+- Endpoints protégés :
+  - `GET /api/qz/certificate/` → certificat public PEM
+  - `POST /api/qz/sign/` → signature Base64 de la requête QZ
+- Frontend `qzPrinter.ts` configure `qz.security.setCertificatePromise` et
+  `setSignaturePromise` pour signer automatiquement chaque impression ;
+  ajout du header `Authorization: Token …` pour l'endpoint de signature
+  (lecture correcte depuis `sessionStorage` via `safeStorage`).
+
+### Installation côté client
+
+**Option A — Script automatique (recommandé)** :
+   `http://localhost/api/qz/certificate/`
+   La page doit afficher **uniquement** un bloc commençant par
+   `-----BEGIN CERTIFICATE-----` (pas de menu DRF).
+   Faire **Ctrl+F5** si tu vois encore l'interface DRF.
+2. Sélectionner tout le texte, copier/coller dans un fichier texte nommé
+   `override.crt` dans :
+   ```
+   C:\Program Files\QZ Tray\override.crt
+   ```
+   *(C'est un dossier protégé : accepter l'élevation UAC si demandée.)*
+**Option A — Script automatique (recommandé)** :
+Exécuter `scripts/install-qz-cert.ps1` en PowerShell **administrateur** :
+
+```powershell
+.\scripts\install-qz-cert.ps1
+# si le serveur est sur une autre IP :
+.\scripts\install-qz-cert.ps1 -ServerUrl "http://192.168.1.181"
+```
+
+Le script télécharge le certificat, configure QZ Tray et le redémarre.
+
+**Option B — Manuelle** :
+1. Ouvrir dans le navigateur : `http://localhost/api/qz/certificate/`
+2. Copier le bloc PEM dans `C:\Program Files\QZ Tray\override.crt`
+3. Créer `C:\ProgramData\qz\qz-tray.properties` avec (utiliser des `/` ou des `\\`) :
+   ```
+   authcert.override=C:/Program Files/QZ Tray/override.crt
+   ```
+4. Redémarrer QZ Tray.
+
+Au premier popup QZ Tray : cocher **"Remember this decision"** puis **Allow**.
+Si le bouton Allow reste bloqué, c'est Kaspersky : désactiver *"Injecter un script
+dans le trafic web"* et l'extension navigateur.
+
+### Fichiers touchés
+
+- `backend/api/utils/qz_cert.py`
+- `backend/api/views/qz.py`
+- `backend/api/urls.py`
+- `frontend/frontend/src/services/qzPrinter.ts`
+- `scripts/install-qz-cert.ps1` : script PowerShell d'installation certificat/QZ Tray
+
+## 2026-09-28 — 🖨️ Corrections ESC/POS (accents, milliers, retour ligne, code-barres)
+
+Après premier test sur POS-80 :
+
+- **Encodage binaire** : QZ Tray envoyait les commandes ESC/POS en UTF-8,
+  ce qui transformait `é` en `Ã©`. Les commandes sont maintenant converties en
+  **Base64** (`format: 'BASE64'`) pour envoi brut des octets.
+- **Accents** : mapping des espaces insécables et demi-cadratins vers
+  espace normal avant encodage Windows-1252.
+- **Séparateurs de milliers** : les espaces fins insécables (`\u202F`) sont
+  remplacés par des espaces classiques, évitant le `?`.
+- **Retour ligne sur les gros montants** : largeur ticket 80 mm ajustée à
+  **46 caractères** et le total est scindé en deux lignes double-taille
+  (`NET À PAYER (CFA)` / montant).
+- **Code-barres** : hauteur réduite (40 points), largeur module 2, HRI
+  désactivé pour éviter le numéro de facture en double.
+
+Fichiers touchés :
+- `src/services/qzPrinter.ts` : envoi binaire via QZ Tray
+- `src/utils/escpos/encoder.ts` : encodage + taille code-barres
+- `src/utils/escpos/ticketEscpos.ts` : largeur + total + suppression doublon
+
+## 2026-09-28 — 📚 Refonte UX du centre d'aide et formation
+
+Refonte complète de l'écran Aide & Formation autour d'une navigation par
+onglets et de contenus pédagogiques structurés.
+
+### Nouveautés
+
+- **Accueil** avec progression des guides lus (persistée dans `localStorage`).
+- **Vidéos** : catégories thématiques, lecteur intégré, placeholders "Bientôt
+  disponible" pour les vidéos non créées.
+- **Guides écrits** : 5 guides pas-à-pas (vendre, ticket thermique, import,
+  rupture de stock, config pharmacie), marquage "lu / non lu".
+- **Raccourcis clavier** : grille filtrable avec regroupement par contexte.
+- **Dépannage** : fiches techniques (QZ Tray, ticket flou, licence, imprimante
+  Windows).
+- **FAQ** : questions fréquentes accordéon.
+- Barre de recherche filtrant le contenu de l'onglet actif.
+
+### Fichiers touchés
+
+- `src/components/HelpTraining.tsx` : container avec onglets et recherche.
+- `src/components/help/useHelpProgress.ts` : hook de progression local.
+- `src/components/help/HelpOverview.tsx`
+- `src/components/help/HelpVideos.tsx`
+- `src/components/help/HelpGuides.tsx`
+- `src/components/help/HelpShortcuts.tsx`
+- `src/components/help/HelpTroubleshooting.tsx`
+- `src/components/help/HelpFaq.tsx`
+- `src/config/helpVideos.ts` : IDs YouTube des tutoriels (intégré au build).
+- `public/locales/fr/help.json`
+- `public/locales/en/help.json`
+
+## 2026-09-28 — 📊 Alignement rotation moyenne : Cadencier ↔ Analyse rupture
+
+L'onglet **Rupture** de l'analyse de stock affichait une moyenne journalière
+sur 30j convertie en mensuel, alors que le Cadencier affiche la
+`rotation_moyenne` du produit. Les deux valeurs et formats différaient.
+
+Maintenant l'onglet Rupture affiche directement la **rotation moyenne**
+du produit, avec le même format `Math.ceil(...) / mois` que le Cadencier.
+
+- Backend `api/views/stocks/analysis.py` : ajout de `rotation_moyenne` dans
+  la réponse de `StockAnalysisShortageView`.
+- Frontend `src/hooks/useStockAnalysis.ts` : ajout du champ
+  `rotation_moyenne` dans l'interface.
+- Frontend `src/components/stock/StockAnalysisTable.tsx` : colonne
+  "Rotation" affichée avec `rotation_moyenne`.
+- Frontend `src/components/StockAnalysis.tsx` : export Excel mis à jour.
+
+## 2026-09-28 — 💰 Taux de marge éditable dans le formulaire produit
+
+Le taux de marge n'était qu'affiché en lecture seule. Il devient éditable :
+saisir un % de marge cible recalcule automatiquement le **prix de vente
+TTC** depuis le prix d'achat HT et la TVA. Le coefficient multiplicateur
+reste également éditable.
+
+Formule : `PV HT = PA HT / (1 - %marge)`, puis `PV TTC = PV HT × (1 + TVA)`.
+
+- `src/components/ProduitFormModal.tsx`
+
+## 2026-09-28 — 🧩 Uniformisation des CIP dans la liste produits
+
+Dans `ProduitShadcn.tsx`, les CIP `cip2/cip3/cip4` étaient affichés en
+badges alors que `cip1` était en texte simple. Tous les CIP sont maintenant
+rendus de manière identique : texte mono à plat, séparés par `•`.
+
+- `src/components/ProduitShadcn.tsx`
+
+## 2026-09-28 — 📄 Facture A4 compactée + options A5 paysage/portrait
+
+Réduction de l'espace vide sur la facture A4 : désignations en 9px,
+CIP/lot/date de péremption regroupés à la suite du nom, interlignes et
+marges resserrées.
+
+Ajout d'un sélecteur de format dans la page d'impression facture :
+**A4**, **A5 paysage** et **A5 portrait**, avec `@page { size: ... }`
+dynamique et mise en page adaptée (largeur + empilement TVA/total en A5
+portrait).
+
+- `src/components/printing/InvoiceTemplate.tsx` : support `paperSize`
+  `A4 | A5 | A5L`.
+- `src/components/printing/PrintPage.tsx` : sélecteur de format et
+  paramètre d'URL `?format=a5` / `?format=a5l`.
+
+---
+
+## 2026-09-28 — 📄 Facture A4 compactée + option A5
+
+Réduction de l'espace vide sur la facture A4 : désignations en 9px,
+CIP/lot/date de péremption regroupés à la suite du nom, interlignes et
+marges resserrées.
+
+Ajout d'une option **A5** dans la page d'impression facture : sélecteur
+A4/A5, mise en page adaptée (largeur 148 mm, total/TVA empilés en
+portrait A5) et `@page { size: A5 }`.
+
+- `src/components/printing/InvoiceTemplate.tsx` : compactage A4, support
+  `paperSize` et layout A5.
+- `src/components/printing/PrintPage.tsx` : sélecteur A4/A5, paramètre
+  d'URL `?format=a5`, dimension d'impression dynamique.
+
+---
+
+## 2026-09-28 — 📄 Facture A4 compactée
+
+Réduction de l'espace vide sur la facture A4 pour les factures à une seule
+ligne : désignations en 9px, CIP/lot/date de péremption regroupés à la suite
+du nom, interlignes et marges de section resserrées.
+
+- `src/components/printing/InvoiceTemplate.tsx` : padding des métadonnées,
+  header et footer réduits ; header table plus compact ; lignes produit `py-1.5`
+  et texte 9px.
+
+---
+
+## 2026-09-28 — 🐛 Traduction licence toast corrigée
+
+Correction de la clé i18n utilisée pour les toasts d'alerte de licence.
+Le code appelait `licence_gooeyToast.expiry_warning` / `expired`, mais la
+section définie dans les traductions est `licence_toast`.
+
+- `src/context/LicenceContext.tsx` : remplacement de `licence_gooeyToast`
+  par `licence_toast` pour `expiry_warning` et `expired`.
+
+---
+
 ## 2026-09-27 — 🖨️ Impression ESC/POS native via QZ Tray
 
 Ajout d'une couche d'impression native des tickets de caisse en commandes
@@ -35,6 +244,11 @@ Objectif : texte net sur imprimantes thermiques POS-80 (203 dpi) en
   pour `qz-tray`.
 - `src/utils/print/printHelpers.ts` : réduction de la marge haute du ticket
   HTML (`padding-top` de `#ticket-preview` 2mm → 1mm).
+- `nginx.conf` : CSP `connect-src` étendu avec `ws://localhost:*`,
+  `wss://localhost:*`, `127.0.0.1` et `localhost.qz.io` — `ws://*` ne couvre
+  que le port 80, ce qui bloquait la connexion websocket QZ Tray (8182).
+- `src/services/qzPrinter.ts` : connexion explicite multi-ports QZ Tray et
+  remontée de l'erreur réelle dans le toast de `PrintingTab`.
 
 ---
 

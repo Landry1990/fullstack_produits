@@ -10,6 +10,7 @@ export interface StockAnalysisItem {
     name: string;
     stock: number;
     rotation?: number;
+    rotation_moyenne?: number;
     threshold?: number;
     excess_qty?: number;
     avg_daily_sales?: number;
