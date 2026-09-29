@@ -520,11 +520,8 @@ export default function ProduitShadcn() {
                               <Checkbox size="sm" checked={isChecked} aria-label={produit.name} onChange={() => setSelectedIds(prev => { const s = new Set(prev); return s.has(produit.id) ? prev.filter(id => id !== produit.id) : [...prev, produit.id]; })} />
                             </td>
                             <td className="py-2 px-2 w-36">
-                              <div className="flex flex-wrap items-center gap-1">
-                                <span className="font-mono text-xs text-slate-500">{produit.cip1 || '-'}</span>
-                                {produit.cip2 && <Badge variant="outline" size="sm" className="font-mono h-4 px-1 text-[10px]">{produit.cip2}</Badge>}
-                                {produit.cip3 && <Badge variant="outline" size="sm" className="font-mono h-4 px-1 text-[10px]">{produit.cip3}</Badge>}
-                                {produit.cip4 && <Badge variant="outline" size="sm" className="font-mono h-4 px-1 text-[10px]">{produit.cip4}</Badge>}
+                              <div className="font-mono text-xs text-slate-500">
+                                {[produit.cip1, produit.cip2, produit.cip3, produit.cip4].filter(Boolean).join(' • ') || '-'}
                               </div>
                             </td>
                             <td className="py-2 px-2">

@@ -4,7 +4,7 @@ import { formatNumber } from '../formatters';
 import { getDocumentLocale, getDocumentLanguage } from '../documentLang';
 import * as esc from './encoder';
 
-const CHAR_WIDTH_80 = 48;
+const CHAR_WIDTH_80 = 46;
 const CHAR_WIDTH_58 = 32;
 
 function formatDate(dateStr: string, locale: string): string {
@@ -168,7 +168,8 @@ export function buildTicketEscpos(
   }
 
   parts.push(esc.center(), esc.boldOn(), esc.doubleSize());
-  parts.push(esc.line(`${t('ticket.net_a_payer_cfa')}  ${formatM(totalTTC)}`));
+  parts.push(esc.line(t('ticket.net_a_payer_cfa')));
+  parts.push(esc.line(formatM(totalTTC)));
   parts.push(esc.normalSize(), esc.boldOff(), esc.left());
 
   const totalLettres = ticket.total_lettres || facture?.total_lettres;
@@ -211,7 +212,6 @@ export function buildTicketEscpos(
   parts.push(esc.line(settings.ticket_footer_message || t('ticket.visit_thanks')));
   if (barcodeValue) {
     parts.push(esc.barcodeCODE128(barcodeValue));
-    parts.push(esc.line(barcodeValue));
   }
   parts.push(esc.lf(), esc.lf());
   parts.push(esc.left());

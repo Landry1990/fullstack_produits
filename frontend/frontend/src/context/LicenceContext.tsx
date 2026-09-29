@@ -63,13 +63,13 @@ export const LicenceProvider = ({ children }: { children: ReactNode }) => {
 
                 // Alerte si < 7 jours
                 if (days <= 7 && days > 0) {
-                    gooeyToast.error(i18n.t('licence_gooeyToast.expiry_warning', { days, plural: days > 1 ? 's' : '', ns: 'common' }), {
+                    gooeyToast.error(i18n.t('licence_toast.expiry_warning', { days, plural: days > 1 ? 's' : '', ns: 'common' }), {
                         duration: 8000,
                         id: 'licence-expiry-warning',
                         icon: '⚠️'
                     });
                 } else if (days <= 0) {
-                    gooeyToast.error(i18n.t('licence_gooeyToast.expired', { ns: 'common' }), {
+                    gooeyToast.error(i18n.t('licence_toast.expired', { ns: 'common' }), {
                         duration: 10000,
                         id: 'licence-expired-error',
                         icon: '🚫'

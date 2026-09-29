@@ -23,9 +23,27 @@ const PrintPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const [searchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
     const clientNameOverride = searchParams.get('client_name');
     const type = searchParams.get('type');
+    const formatParam = searchParams.get('format');
+    const parseFormat = (v: string | null): 'A4' | 'A5' | 'A5L' => {
+        if (v === 'a5l' || v === 'A5L') return 'A5L';
+        if (v === 'a5' || v === 'A5') return 'A5';
+        return 'A4';
+    };
+    const [paperSize, setPaperSize] = useState<'A4' | 'A5' | 'A5L'>(parseFormat(formatParam));
+
+    useEffect(() => {
+        const desired = paperSize === 'A4' ? undefined : paperSize === 'A5L' ? 'a5l' : 'a5';
+        const current = searchParams.get('format');
+        if (desired !== current) {
+            const next = new URLSearchParams(searchParams);
+            if (desired) next.set('format', desired);
+            else next.delete('format');
+            setSearchParams(next, { replace: true });
+        }
+    }, [paperSize, searchParams, setSearchParams]);
 
     const [inventoryData, setInventoryData] = useState<InventairePrintData | null>(null);
     const [stockValuationData, setStockValuationData] = useState<StockValuationData | null>(null);
@@ -161,7 +179,7 @@ const PrintPage: React.FC = () => {
             <style>
                 {`
                     @media print {
-                        @page { margin: 10mm; size: A4; }
+                        @page { margin: 10mm; size: ${paperSize === 'A4' ? 'A4' : paperSize === 'A5L' ? 'A5 landscape' : 'A5 portrait'}; }
                         html, body, #root { margin: 0; width: 100%; height: auto; overflow: visible; background: white; -webkit-print-color-adjust: economy; print-color-adjust: economy; }
                         .no-print { display: none !important; }
                         .print-page { display: block !important; min-height: 0 !important; overflow: visible !important; padding: 0 !important; background: white !important; }
@@ -183,6 +201,29 @@ const PrintPage: React.FC = () => {
             </style>
             
             <div className="no-print fixed top-4 right-4 z-50 flex gap-4">
+                <div className="bg-white rounded-lg shadow-lg p-1 flex gap-1">
+                    <button
+                        type="button"
+                        onClick={() => setPaperSize('A4')}
+                        className={`px-3 py-2 rounded-md text-sm font-bold ${paperSize === 'A4' ? 'bg-info text-white' : 'text-base-content hover:bg-base-200'}`}
+                    >
+                        A4
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setPaperSize('A5L')}
+                        className={`px-3 py-2 rounded-md text-sm font-bold ${paperSize === 'A5L' ? 'bg-info text-white' : 'text-base-content hover:bg-base-200'}`}
+                    >
+                        A5 paysage
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setPaperSize('A5')}
+                        className={`px-3 py-2 rounded-md text-sm font-bold ${paperSize === 'A5' ? 'bg-info text-white' : 'text-base-content hover:bg-base-200'}`}
+                    >
+                        A5 portrait
+                    </button>
+                </div>
                 <button 
                     onClick={handlePrint}
                     disabled={isPrinting}
@@ -222,6 +263,7 @@ const PrintPage: React.FC = () => {
                     settings={settings} 
                     data={invoiceData} 
                     isBonDeLivraison={type === 'BL'}
+                    paperSize={paperSize}
                 />
             ) : stockValuationData ? (
                 <StockValuationTemplate 

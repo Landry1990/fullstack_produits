@@ -98,12 +98,12 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
             headers: [
                 t('stock:analyse.columns.product'),
                 t('stock:analyse.columns.current_stock'),
-                t('stock:analyse.columns.avg_daily_sales'),
+                t('stock:cadencier.rotation', 'Rotation'),
                 t('stock:analyse.columns.days_until_stockout'),
                 t('stock:analyse.columns.urgency'),
                 t('stock:analyse.columns.value_at_risk'),
             ],
-            widths: ['w-[36%]', 'w-16', 'w-28', 'w-28', 'w-24', 'w-32'],
+            widths: ['w-[36%]', 'w-16', 'w-24', 'w-28', 'w-24', 'w-32'],
         };
 
     const { headers, widths } = config;
@@ -258,7 +258,7 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                                 ) : (
                                     <>
                                         <TableCell className="px-3 py-2 text-center font-mono text-xs text-slate-700">
-                                            {item.avg_daily_sales ? Math.ceil(item.avg_daily_sales * 30) : 0}
+                                            {Math.ceil(item.rotation_moyenne || 0)}
                                             <span className="text-caption text-slate-400 ml-1">/ {t('stock:analyse.per_month')}</span>
                                         </TableCell>
                                         <TableCell className="px-3 py-2 text-center font-semibold text-sm">

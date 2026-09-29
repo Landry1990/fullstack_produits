@@ -81,6 +81,7 @@ interface InvoiceTemplateProps {
   settings: PharmacySettings;
   data: InvoiceData;
   isBonDeLivraison?: boolean;
+  paperSize?: 'A4' | 'A5' | 'A5L';
 }
 
 const formatDate = (dateStr: string, locale?: string) => formatLocaleDate(dateStr, locale);
@@ -97,25 +98,28 @@ const calculateHTUnit = (priceTTC: number, tva: number) => {
   return priceTTC / (1 + (Number(tva) || 0) / 100);
 };
 
-const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBonDeLivraison }) => {
+const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBonDeLivraison, paperSize = 'A4' }) => {
   const { lang: docLang, locale: docLocale } = useDocumentLocale();
   const { t } = useTranslation('printing', { lng: docLang });
+  const isA5 = paperSize === 'A5';
+  const isA5L = paperSize === 'A5L';
+  const isSmallWidth = isA5;
 
   const totalQuantity = data.produits.reduce((acc, item) => acc + item.quantity, 0);
 
   return (
-    <div data-theme="light" className="bg-base-100 p-4 max-w-[210mm] mx-auto text-base-content font-sans text-label leading-tight shadow-none print:shadow-none print:max-w-none print:w-full" style={{ display: 'flex', flexDirection: 'column' }}>
+    <div data-theme="light" className={`bg-base-100 p-4 mx-auto text-base-content font-sans text-label leading-tight shadow-none print:shadow-none print:max-w-none print:w-full ${isA5 ? 'max-w-[148mm]' : 'max-w-[210mm]'}`} style={{ display: 'flex', flexDirection: 'column' }}>
       
       {/* HEADER SECTION - SYNCED WITH IMAGE */}
-      <div className="flex justify-between items-start mb-6 border-b-2 border-slate-900 pb-4">
+      <div className="flex justify-between items-start mb-4 border-b-2 border-slate-900 pb-3">
         
         {/* Left: Pharmacy Info */}
         <div className="flex-1 flex items-start gap-4">
             {settings.logo && (
-              <img src={settings.logo} alt={t('common:aria.logo', { defaultValue: 'Logo' })} className="w-20 h-20 object-contain shrink-0" />
+              <img src={settings.logo} alt={t('common:aria.logo', { defaultValue: 'Logo' })} className={`object-contain shrink-0 ${isSmallWidth ? 'w-16 h-16' : 'w-20 h-20'}`} />
             )}
             <div>
-            <h1 className="text-2xl font-black uppercase tracking-tight text-base-content mb-1 leading-none">
+            <h1 className={`font-black uppercase tracking-tight text-base-content mb-1 leading-none ${isSmallWidth ? 'text-xl' : 'text-2xl'}`}>
                 {settings.pharmacy_name}
             </h1>
             
@@ -155,9 +159,9 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
       </div>
 
       {/* METADATA BOXES - SYNCED WITH IMAGE */}
-      <div className="grid grid-cols-2 gap-6 mb-6">
-        <div className="bg-base-100 p-4 rounded-xl border border-base-200">
-            <div className="text-micro uppercase tracking-widest font-black text-base-content/40 mb-2 border-b border-slate-100 pb-1.5">
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="bg-base-100 p-3 rounded-xl border border-base-200">
+            <div className="text-micro uppercase tracking-widest font-black text-base-content/40 mb-1.5 border-b border-slate-100 pb-1">
                 {t('invoice.client')}
             </div>
             <div className="flex flex-col gap-1 text-sm">
@@ -176,8 +180,8 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
             </div>
         </div>
 
-        <div className="bg-base-100 p-4 rounded-xl border border-base-200">
-            <div className="text-micro uppercase tracking-widest font-black text-base-content/40 mb-2 border-b border-slate-100 pb-1.5">
+        <div className="bg-base-100 p-3 rounded-xl border border-base-200">
+            <div className="text-micro uppercase tracking-widest font-black text-base-content/40 mb-1.5 border-b border-slate-100 pb-1">
                 {t('invoice.invoice_details')}
             </div>
             <div className="space-y-1 text-label">
@@ -209,34 +213,36 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
         <table className="w-full mb-4 border-collapse">
             <thead className="table-header-group">
                 <tr className="bg-base-200/50 text-base-content border-b-2 border-slate-900 text-micro uppercase tracking-[0.1em]">
-                    <th className="py-2.5 px-3 text-left font-black rounded-l">{t('invoice.designation')}</th>
-                    <th className="py-2.5 px-2 text-center font-black w-12">{t('invoice.qty')}</th>
-                    <th className="py-2.5 px-2 text-right font-black w-24">{t('invoice.unit_price_ht')}</th>
-                    <th className="py-2.5 px-2 text-right font-black w-20">{t('invoice.discount')}</th>
-                    <th className="py-2.5 px-3 text-right font-black w-28 rounded-r">{t('invoice.total_ht')}</th>
+                    <th className="py-2 px-2 text-left font-black rounded-l">{t('invoice.designation')}</th>
+                    <th className="py-2 px-2 text-center font-black w-12">{t('invoice.qty')}</th>
+                    <th className="py-2 px-2 text-right font-black w-24">{t('invoice.unit_price_ht')}</th>
+                    <th className="py-2 px-2 text-right font-black w-20">{t('invoice.discount')}</th>
+                    <th className="py-2 px-2 text-right font-black w-28 rounded-r">{t('invoice.total_ht')}</th>
                 </tr>
             </thead>
             <tbody className="text-caption">
                 {data.produits.map((item, _idx) => {
                     const htUnit = calculateHTUnit(item.selling_price, item.tva);
                     const totalLineNetHT = ((Number(item.selling_price) - Number(item.discount)) * item.quantity) / (1 + (Number(item.tva)||0)/100);
-                    
+                    const infoParts: string[] = [];
+                    if (item.cip) infoParts.push(`${t('invoice.cip')}: ${item.cip}`);
+                    if (item.lot) infoParts.push(`${t('invoice.lot')}: ${item.lot}`);
+                    if (item.date_expiration) infoParts.push(`${t('invoice.exp')}: ${formatExpiryDate(item.date_expiration)}`);
+
                     return (
                       <tr key={item.cip ?? item.produit_nom ?? `item-${item.lot}`} className="group border-b border-slate-50 hover:bg-base-200/30 transition-colors break-inside-avoid">
-                          <td className="py-2 px-3">
-                              <div className="font-bold text-base-content text-[10.5px] uppercase leading-tight">{item.produit_nom}</div>
-                              {item.cip && <div className="text-[8.5px] text-base-content/40 font-mono mt-0.5 tracking-tight inline-block mr-3">{t('invoice.cip')}: {item.cip}</div>}
-                              {(item.lot || item.date_expiration) && (
-                                <div className="text-[7.5px] text-base-content/60 font-mono mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
-                                    {item.lot && <span>{t('invoice.lot')}: {item.lot}</span>}
-                                    {item.date_expiration && <span>{t('invoice.exp')}: {formatExpiryDate(item.date_expiration)}</span>}
+                          <td className="py-1.5 px-2">
+                              <div className="font-bold text-base-content text-[9px] uppercase leading-tight">{item.produit_nom}</div>
+                              {infoParts.length > 0 && (
+                                <div className="text-[7.5px] text-base-content/55 font-mono mt-0.5 leading-tight">
+                                  {infoParts.join(' | ')}
                                 </div>
                               )}
                           </td>
-                          <td className="py-2 px-2 text-center align-middle font-bold text-base-content">{item.quantity}</td>
-                          <td className="py-2 px-2 text-right align-middle text-base-content/80 font-medium">{formatNumber(htUnit, 0, docLocale)}</td>
-                          <td className="py-2 px-2 text-right align-middle text-red-400 font-medium">{item.discount > 0 ? `-${formatNumber(item.discount, 0, docLocale)}` : '-'}</td>
-                          <td className="py-2 px-3 text-right align-middle font-black text-base-content text-[10.5px]">{formatNumber(totalLineNetHT, 0, docLocale)}</td>
+                          <td className="py-1.5 px-2 text-center align-middle font-bold text-base-content">{item.quantity}</td>
+                          <td className="py-1.5 px-2 text-right align-middle text-base-content/80 font-medium">{formatNumber(htUnit, 0, docLocale)}</td>
+                          <td className="py-1.5 px-2 text-right align-middle text-red-400 font-medium">{item.discount > 0 ? `-${formatNumber(item.discount, 0, docLocale)}` : '-'}</td>
+                          <td className="py-1.5 px-2 text-right align-middle font-black text-base-content text-[10px]">{formatNumber(totalLineNetHT, 0, docLocale)}</td>
                       </tr>
                     );
                 })}
@@ -253,9 +259,9 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
       </div>
 
       {/* FOOTER AREA */}
-      <div className="mt-6">
-        <div className="flex gap-8 items-start border-t-2 border-slate-900 pt-4">
-            
+      <div className="mt-4">
+        <div className={`items-start border-t-2 border-slate-900 pt-3 ${isSmallWidth ? 'flex flex-col gap-4' : 'flex gap-6'}`}>
+
             {/* VAT Analysis & Text Amount */}
             <div className="flex-1">
                 <div className="text-micro uppercase tracking-widest font-black text-base-content/40 mb-2 ml-1">{t('invoice.vat_analysis')}</div>
@@ -300,7 +306,7 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
             </div>
 
             {/* Totals & Signature */}
-            <div className="w-64">
+            <div className={isSmallWidth ? 'w-full' : 'w-64'}>
                 <div className="space-y-1 mt-4 p-0">
                     {/* Rows use grid-cols-[1fr,115px] to have a fixed amount area */}
                     
@@ -381,7 +387,7 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
         </div>
 
         {/* LEGAL FOOTER */}
-        <div className="mt-8 pt-4 border-t border-base-200 text-center">
+        <div className="mt-4 pt-3 border-t border-base-200 text-center">
             <p className="font-bold text-base-content text-[10.5px] mb-1.5">{settings.ticket_footer_message || t('invoice.thank_you')}</p>
             
             <div className="flex justify-center flex-wrap gap-x-8 gap-y-1 text-[8.5px] uppercase tracking-[0.1em] font-bold text-base-content/30">
