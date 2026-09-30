@@ -10,7 +10,7 @@ Provides list, restore, and permanent delete actions.
 """
 from django.contrib.auth.models import User
 from django.db import transaction
-from django.db.models import ProtectedError
+from django.db.models import Count, ProtectedError, Sum
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
@@ -21,14 +21,34 @@ from ..cache_utils import SearchCache
 from ..models import (
     AuditLog,
     Avoir,
+    AyantDroit,
     Client,
     Commande,
+    CommandeProduit,
+    DepotClient,
     Facture,
+    FactureProduit,
     Fournisseur,
     Inventaire,
+    LigneAvoirClient,
+    OrderSchedule,
+    PaiementFournisseur,
     Produit,
     Promis,
+    RelevePaiement,
+    StockLot,
 )
+
+
+def _count_map(model, fk_field, ids):
+    """Retourne {fk_id: count} pour les IDs donnés (une seule requête GROUP BY)."""
+    if not ids:
+        return {}
+    return {
+        row[fk_field]: row['c']
+        for row in model.objects.filter(**{f'{fk_field}__in': ids})
+        .values(fk_field).annotate(c=Count('id'))
+    }
 
 MODEL_MAP = {
     'produit': Produit,
@@ -68,8 +88,33 @@ class CorbeilleViewSet(ViewSet):
             'users': [],
         }
 
-        # Produits inactifs
-        for p in Produit.objects.filter(is_active=False).select_related('deleted_by').order_by('-deleted_at')[:200]:
+        # Produits inactifs — avec compteurs de liens transactionnels
+        produits_qs = list(
+            Produit.objects.filter(is_active=False)
+            .select_related('deleted_by').order_by('-deleted_at')[:200]
+        )
+        produit_ids = [p.id for p in produits_qs]
+        ventes_map = _count_map(FactureProduit, 'produit_id', produit_ids)
+        lignes_cmd_map = _count_map(CommandeProduit, 'produit_id', produit_ids)
+        avoir_client_map = _count_map(LigneAvoirClient, 'produit_id', produit_ids)
+        stock_lots_map = (
+            {
+                row['produit_id']: row['s'] or 0
+                for row in StockLot.objects.filter(produit_id__in=produit_ids)
+                .values('produit_id').annotate(s=Sum('quantity_remaining'))
+            }
+            if produit_ids else {}
+        )
+        for p in produits_qs:
+            links = {}
+            if ventes_map.get(p.id):
+                links['sales'] = ventes_map[p.id]
+            if lignes_cmd_map.get(p.id):
+                links['order_lines'] = lignes_cmd_map[p.id]
+            if avoir_client_map.get(p.id):
+                links['client_credits'] = avoir_client_map[p.id]
+            if stock_lots_map.get(p.id):
+                links['stock'] = stock_lots_map[p.id]
             items['produits'].append({
                 'id': p.id,
                 'name': p.name,
@@ -82,10 +127,33 @@ class CorbeilleViewSet(ViewSet):
                 },
                 'deleted_at': p.deleted_at.isoformat() if p.deleted_at else (p.updated_at.isoformat() if p.updated_at else None),
                 'deleted_by': p.deleted_by.get_username() if p.deleted_by else None,
+                'links': links,
+                'has_history': bool(links),
+                # LigneAvoirClient.produit = PROTECT → la purge échouera
+                'purge_blocked': bool(avoir_client_map.get(p.id)),
+                'cascade_data': False,
             })
 
-        # Clients inactifs
-        for c in Client.objects.filter(is_active=False).select_related('deleted_by').order_by('-deleted_at')[:200]:
+        # Clients inactifs — avec compteurs de liens transactionnels
+        clients_qs = list(
+            Client.objects.filter(is_active=False)
+            .select_related('deleted_by').order_by('-deleted_at')[:200]
+        )
+        client_ids = [c.id for c in clients_qs]
+        factures_map = _count_map(Facture, 'client_id', client_ids)
+        releves_map = _count_map(RelevePaiement, 'client_id', client_ids)
+        depots_map = _count_map(DepotClient, 'client_id', client_ids)
+        ayants_map = _count_map(AyantDroit, 'client_id', client_ids)
+        for c in clients_qs:
+            links = {}
+            if factures_map.get(c.id):
+                links['invoices'] = factures_map[c.id]
+            if releves_map.get(c.id):
+                links['statements'] = releves_map[c.id]
+            if depots_map.get(c.id):
+                links['deposits'] = depots_map[c.id]
+            if ayants_map.get(c.id):
+                links['beneficiaries'] = ayants_map[c.id]
             items['clients'].append({
                 'id': c.id,
                 'name': c.name,
@@ -97,10 +165,31 @@ class CorbeilleViewSet(ViewSet):
                 },
                 'deleted_at': c.deleted_at.isoformat() if c.deleted_at else (c.created_at.isoformat() if c.created_at else None),
                 'deleted_by': c.deleted_by.get_username() if c.deleted_by else None,
+                'links': links,
+                'has_history': bool(links),
+                # Facture.client et RelevePaiement.client = PROTECT → purge bloquée
+                'purge_blocked': bool(factures_map.get(c.id) or releves_map.get(c.id)),
+                # DepotClient et AyantDroit = CASCADE → seront perdus à la purge
+                'cascade_data': bool(depots_map.get(c.id) or ayants_map.get(c.id)),
             })
 
-        # Fournisseurs inactifs
-        for f in Fournisseur.objects.filter(is_active=False).select_related('deleted_by').order_by('-deleted_at')[:200]:
+        # Fournisseurs inactifs — avec compteurs de liens transactionnels
+        fournisseurs_qs = list(
+            Fournisseur.objects.filter(is_active=False)
+            .select_related('deleted_by').order_by('-deleted_at')[:200]
+        )
+        fournisseur_ids = [f.id for f in fournisseurs_qs]
+        commandes_map = _count_map(Commande, 'fournisseur_id', fournisseur_ids)
+        paiements_map = _count_map(PaiementFournisseur, 'fournisseur_id', fournisseur_ids)
+        schedules_map = _count_map(OrderSchedule, 'fournisseur_id', fournisseur_ids)
+        for f in fournisseurs_qs:
+            links = {}
+            if commandes_map.get(f.id):
+                links['orders'] = commandes_map[f.id]
+            if paiements_map.get(f.id):
+                links['payments'] = paiements_map[f.id]
+            if schedules_map.get(f.id):
+                links['schedules'] = schedules_map[f.id]
             items['fournisseurs'].append({
                 'id': f.id,
                 'name': f.name,
@@ -111,6 +200,12 @@ class CorbeilleViewSet(ViewSet):
                 },
                 'deleted_at': f.deleted_at.isoformat() if f.deleted_at else None,
                 'deleted_by': f.deleted_by.get_username() if f.deleted_by else None,
+                'links': links,
+                'has_history': bool(links),
+                'purge_blocked': False,
+                # PaiementFournisseur et OrderSchedule = CASCADE → historique
+                # des paiements et planifications perdu à la purge
+                'cascade_data': bool(paiements_map.get(f.id) or schedules_map.get(f.id)),
             })
 
         # Commandes inactives

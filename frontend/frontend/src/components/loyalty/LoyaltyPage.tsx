@@ -15,6 +15,7 @@ import {
     TableRow,
 } from '../shadcn/table';
 import { cn } from '../../lib/utils';
+import { formatCurrency as formatCurrencyValue } from '../../utils/formatters';
 import LoyaltyConfigModal from '../LoyaltyConfigModal';
 import {
     useLoyaltyHistory,
@@ -121,15 +122,7 @@ const LoyaltyPage: React.FC = () => {
 
     const formatCurrency = (value: string | number) => {
         const num = typeof value === 'string' ? parseFloat(value) : value;
-        const safeNum = isNaN(num) ? 0 : num;
-        try {
-            return new Intl.NumberFormat(locale, {
-                style: 'decimal',
-                minimumFractionDigits: 0,
-            }).format(safeNum) + ' FCFA';
-        } catch {
-            return `${safeNum.toLocaleString(locale)} FCFA`;
-        }
+        return formatCurrencyValue(isNaN(num) ? 0 : num, locale, 'FCFA');
     };
 
     const formatDate = (date: string) => {

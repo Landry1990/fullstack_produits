@@ -221,8 +221,8 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                                             <span className="text-caption font-medium text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
                                                                 {t('details.manual_lots_split', { count: prod.allocations.length })}
                                                             </span>
-                                                            {prod.allocations.map((alloc, idx) => (
-                                                                <span key={alloc.id || idx} className="text-caption text-blue-600 font-mono bg-blue-50/50 px-1.5 py-0.5 rounded border border-blue-100">
+                                                            {prod.allocations.map((alloc) => (
+                                                                <span key={alloc.id ?? `${alloc.lot}-${alloc.date_expiration}-${alloc.quantity}`} className="text-caption text-blue-600 font-mono bg-blue-50/50 px-1.5 py-0.5 rounded border border-blue-100">
                                                                     {t('details.lot')}: {alloc.lot || 'N/A'} × {alloc.quantity}
                                                                     {alloc.date_expiration && ` (${t('details.exp')}: ${alloc.date_expiration})`}
                                                                 </span>

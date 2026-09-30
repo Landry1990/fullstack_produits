@@ -1,8 +1,62 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRecharts } from '../hooks/useRecharts';
 import { usePeakHours, useDailyComparison, useSeasonality } from '../hooks/useTemporalAnalysis';
 import { formatCurrency, formatNumber } from '../utils/formatters';
+import { ReportTableHead } from './common/ReportTableHead';
+
+const TABS = [
+  { id: 'hours', labelKey: 'stock:temporal_analysis.peak_hours' },
+  { id: 'days', labelKey: 'stock:temporal_analysis.daily_comparison' },
+  { id: 'seasons', labelKey: 'stock:temporal_analysis.seasonality' },
+] as const;
+
+const TOOLTIP_CONTENT_STYLE = { borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' };
+
+function ChartLoading() {
+  return (
+    <div className="h-80 flex items-center justify-center">
+      <span className="size-12 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin"></span>
+    </div>
+  );
+}
+
+interface PanelHeaderProps {
+  icon: ReactNode;
+  iconClassName: string;
+  title: string;
+  summary: ReactNode;
+  selectValue: number;
+  onSelectChange: (value: number) => void;
+  selectAriaLabel: string;
+  options: { value: number; label: string }[];
+}
+
+function PanelHeader({ icon, iconClassName, title, summary, selectValue, onSelectChange, selectAriaLabel, options }: PanelHeaderProps) {
+  return (
+    <div className="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-100">
+      <div className="flex items-center gap-4">
+        <div className={`size-12 rounded-full flex items-center justify-center text-2xl ${iconClassName}`}>
+          {icon}
+        </div>
+        <div>
+          <h3 className="font-bold text-lg text-slate-800">{title}</h3>
+          <p className="text-sm text-slate-500">{summary}</p>
+        </div>
+      </div>
+      <select
+        className="h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
+        value={selectValue}
+        onChange={(e) => onSelectChange(Number(e.target.value))}
+        aria-label={selectAriaLabel}
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>{o.label}</option>
+        ))}
+      </select>
+    </div>
+  );
+}
 
 export default function AnalyseTemporelle() {
   const { t } = useTranslation(['stock', 'common']);
@@ -38,33 +92,18 @@ export default function AnalyseTemporelle() {
         
         {/* Tabs */}
         <div className="flex bg-slate-100 p-1 rounded-xl gap-1">
-          <button
-            type="button"
-            className={`h-8 px-4 rounded-lg text-xs font-bold transition-all ${
-              activeTab === 'hours' ? 'bg-blue-600 text-white shadow' : 'text-slate-500 hover:bg-slate-200'
-            }`}
-            onClick={() => setActiveTab('hours')}
-          >
-            {t('stock:temporal_analysis.peak_hours')}
-          </button>
-          <button
-            type="button"
-            className={`h-8 px-4 rounded-lg text-xs font-bold transition-all ${
-              activeTab === 'days' ? 'bg-blue-600 text-white shadow' : 'text-slate-500 hover:bg-slate-200'
-            }`}
-            onClick={() => setActiveTab('days')}
-          >
-            {t('stock:temporal_analysis.daily_comparison')}
-          </button>
-          <button
-            type="button"
-            className={`h-8 px-4 rounded-lg text-xs font-bold transition-all ${
-              activeTab === 'seasons' ? 'bg-blue-600 text-white shadow' : 'text-slate-500 hover:bg-slate-200'
-            }`}
-            onClick={() => setActiveTab('seasons')}
-          >
-            {t('stock:temporal_analysis.seasonality')}
-          </button>
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              className={`h-8 px-4 rounded-lg text-xs font-bold transition-all ${
+                activeTab === tab.id ? 'bg-blue-600 text-white shadow' : 'text-slate-500 hover:bg-slate-200'
+              }`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              {t(tab.labelKey)}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -75,40 +114,29 @@ export default function AnalyseTemporelle() {
           {/* TAB 1: PEAK HOURS */}
           {activeTab === 'hours' && (
             <div className="space-y-6">
-              <div className="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-100">
-                <div className="flex items-center gap-4">
-                  <div className="size-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-2xl">
-                    ⚡
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg text-slate-800">{t('stock:temporal_analysis.peak_hour_title')}</h3>
-                    <p className="text-sm text-slate-500">
-                      {loadingHours ? t('common:loading') : 
-                       peakHoursData?.peak_hour ? 
-                       t('stock:temporal_analysis.peak_hour_summary', { 
-                          hour: peakHoursData.peak_hour, 
-                          revenue: formatCurrency(Math.round(peakHoursData.peak_revenue)) 
-                       }) : 
-                       t('stock:temporal_analysis.no_data')}
-                    </p>
-                  </div>
-                </div>
-                <select 
-                  className="h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
-                  value={hoursDays}
-                  onChange={(e) => setHoursDays(Number(e.target.value))}
-                  aria-label={t('common:period')}
-                >
-                  <option value={7}>{t('common:last_7_days', '7 derniers jours')}</option>
-                  <option value={30}>{t('common:last_30_days', '30 derniers jours')}</option>
-                  <option value={90}>{t('common:last_90_days', '90 derniers jours')}</option>
-                </select>
-              </div>
+              <PanelHeader
+                icon="⚡"
+                iconClassName="bg-blue-100 text-blue-600"
+                title={t('stock:temporal_analysis.peak_hour_title')}
+                summary={loadingHours ? t('common:loading') :
+                  peakHoursData?.peak_hour ?
+                  t('stock:temporal_analysis.peak_hour_summary', {
+                    hour: peakHoursData.peak_hour,
+                    revenue: formatCurrency(Math.round(peakHoursData.peak_revenue))
+                  }) :
+                  t('stock:temporal_analysis.no_data')}
+                selectValue={hoursDays}
+                onSelectChange={setHoursDays}
+                selectAriaLabel={t('common:period')}
+                options={[
+                  { value: 7, label: t('common:last_7_days', '7 derniers jours') },
+                  { value: 30, label: t('common:last_30_days', '30 derniers jours') },
+                  { value: 90, label: t('common:last_90_days', '90 derniers jours') },
+                ]}
+              />
 
               {loadingHours ? (
-                <div className="h-80 flex items-center justify-center">
-                  <span className="size-12 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin"></span>
-                </div>
+                <ChartLoading />
               ) : (
                 <div className="h-80 w-full">
                   <ResponsiveContainer width="100%" height="100%">
@@ -123,8 +151,8 @@ export default function AnalyseTemporelle() {
                       <XAxis dataKey="hour" tick={{ fontSize: 12 }} />
                       <YAxis yAxisId="left" tick={{ fontSize: 12 }} tickFormatter={(val: number) => `${val/1000}k`} />
                       <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} />
-                      <Tooltip 
-                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                      <Tooltip
+                        contentStyle={TOOLTIP_CONTENT_STYLE}
                         formatter={(value: number, name: string) => [
                           name === 'revenue' || name === 'avg_basket' ? `${formatCurrency(Math.round(value))}` : formatNumber(value),
                           name === 'revenue' ? t('stock:temporal_analysis.columns.avg_revenue') : name === 'sales_count' ? t('stock:temporal_analysis.columns.avg_sales') : t('stock:temporal_analysis.columns.avg_basket')
@@ -159,40 +187,29 @@ export default function AnalyseTemporelle() {
           {/* TAB 2: DAILY COMPARISON */}
           {activeTab === 'days' && (
             <div className="space-y-6">
-              <div className="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-100">
-                <div className="flex items-center gap-4">
-                  <div className="size-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-2xl">
-                    📅
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg text-slate-800">{t('stock:temporal_analysis.best_day_title')}</h3>
-                    <p className="text-sm text-slate-500">
-                      {loadingDays ? t('common:loading') : 
-                       dailyData?.best_day ? 
-                       t('stock:temporal_analysis.best_day_summary', {
-                          day: dailyData.best_day,
-                          revenue: formatCurrency(Math.round(dailyData.best_revenue))
-                       }) : 
-                       t('stock:temporal_analysis.no_data')}
-                    </p>
-                  </div>
-                </div>
-                <select 
-                  className="h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
-                  value={daysWeeks}
-                  onChange={(e) => setDaysWeeks(Number(e.target.value))}
-                  aria-label={t('common:period')}
-                >
-                  <option value={4}>{t('common:last_4_weeks', '4 dernières semaines')}</option>
-                  <option value={12}>{t('common:last_12_weeks', '12 dernières semaines')}</option>
-                  <option value={26}>{t('common:last_6_months', '6 derniers mois')}</option>
-                </select>
-              </div>
+              <PanelHeader
+                icon="📅"
+                iconClassName="bg-emerald-100 text-emerald-600"
+                title={t('stock:temporal_analysis.best_day_title')}
+                summary={loadingDays ? t('common:loading') :
+                  dailyData?.best_day ?
+                  t('stock:temporal_analysis.best_day_summary', {
+                    day: dailyData.best_day,
+                    revenue: formatCurrency(Math.round(dailyData.best_revenue))
+                  }) :
+                  t('stock:temporal_analysis.no_data')}
+                selectValue={daysWeeks}
+                onSelectChange={setDaysWeeks}
+                selectAriaLabel={t('common:period')}
+                options={[
+                  { value: 4, label: t('common:last_4_weeks', '4 dernières semaines') },
+                  { value: 12, label: t('common:last_12_weeks', '12 dernières semaines') },
+                  { value: 26, label: t('common:last_6_months', '6 derniers mois') },
+                ]}
+              />
 
               {loadingDays ? (
-                <div className="h-80 flex items-center justify-center">
-                  <span className="size-12 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin"></span>
-                </div>
+                <ChartLoading />
               ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div className="h-80 w-full">
@@ -201,9 +218,9 @@ export default function AnalyseTemporelle() {
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
                         <XAxis dataKey="day" tick={{ fontSize: 12 }} />
                         <YAxis tick={{ fontSize: 12 }} tickFormatter={(val: number) => `${val/1000}k`} />
-                        <Tooltip 
+                        <Tooltip
                           cursor={{fill: 'transparent'}}
-                          contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                          contentStyle={TOOLTIP_CONTENT_STYLE}
                         formatter={(value: number) => [`${formatCurrency(Math.round(value))}`, t('stock:temporal_analysis.columns.avg_revenue')]}
                         />
                         <Bar dataKey="revenue" fill="#10b981" radius={[4, 4, 0, 0]} />
@@ -214,14 +231,12 @@ export default function AnalyseTemporelle() {
                   {/* DataTable for Days */}
                   <div className="overflow-x-auto">
                     <table className="w-full border-separate border-spacing-0 text-sm">
-                      <thead>
-                        <tr className="bg-slate-50 text-label font-black text-slate-400 uppercase tracking-widest">
-                          <th className="py-3 pl-4 text-left border-b border-slate-200">{t('stock:temporal_analysis.columns.day')}</th>
-                          <th className="py-3 text-right border-b border-slate-200">{t('stock:temporal_analysis.columns.avg_sales')}</th>
-                          <th className="py-3 text-right border-b border-slate-200">{t('stock:temporal_analysis.columns.avg_basket')}</th>
-                          <th className="py-3 text-right border-b border-slate-200 pr-4">{t('stock:temporal_analysis.columns.avg_revenue')}</th>
-                        </tr>
-                      </thead>
+                      <ReportTableHead columns={[
+                        { key: 'day', label: t('stock:temporal_analysis.columns.day'), align: 'left' },
+                        { key: 'avg_sales', label: t('stock:temporal_analysis.columns.avg_sales') },
+                        { key: 'avg_basket', label: t('stock:temporal_analysis.columns.avg_basket') },
+                        { key: 'avg_revenue', label: t('stock:temporal_analysis.columns.avg_revenue') },
+                      ]} />
                       <tbody className="divide-y divide-slate-100">
                         {dailyData?.data?.map((day) => (
                           <tr key={day.day_number} className={`transition-colors ${day.is_best ? 'bg-emerald-50' : 'hover:bg-slate-50'}`}>
@@ -245,37 +260,26 @@ export default function AnalyseTemporelle() {
           {/* TAB 3: SEASONALITY */}
           {activeTab === 'seasons' && (
             <div className="space-y-6">
-              <div className="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-100">
-                <div className="flex items-center gap-4">
-                  <div className="size-12 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-2xl">
-                    🍂
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg text-slate-800">{t('stock:temporal_analysis.seasonality_title')}</h3>
-                    <p className="text-sm text-slate-500">
-                      {loadingSeasons ? t('common:loading') : 
-                       t('stock:temporal_analysis.seasonality_summary', {
-                          months: seasonsMonths,
-                          count: seasonalityData?.seasonal_products?.length || 0
-                       })}
-                    </p>
-                  </div>
-                </div>
-                <select 
-                  className="h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
-                  value={seasonsMonths}
-                  onChange={(e) => setSeasonsMonths(Number(e.target.value))}
-                  aria-label={t('common:period')}
-                >
-                  <option value={12}>{t('common:last_12_months', '12 derniers mois')}</option>
-                  <option value={24}>{t('common:last_24_months', '24 derniers mois')}</option>
-                </select>
-              </div>
+              <PanelHeader
+                icon="🍂"
+                iconClassName="bg-amber-100 text-amber-600"
+                title={t('stock:temporal_analysis.seasonality_title')}
+                summary={loadingSeasons ? t('common:loading') :
+                  t('stock:temporal_analysis.seasonality_summary', {
+                    months: seasonsMonths,
+                    count: seasonalityData?.seasonal_products?.length || 0
+                  })}
+                selectValue={seasonsMonths}
+                onSelectChange={setSeasonsMonths}
+                selectAriaLabel={t('common:period')}
+                options={[
+                  { value: 12, label: t('common:last_12_months', '12 derniers mois') },
+                  { value: 24, label: t('common:last_24_months', '24 derniers mois') },
+                ]}
+              />
 
               {loadingSeasons ? (
-                <div className="h-80 flex items-center justify-center">
-                  <span className="size-12 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin"></span>
-                </div>
+                <ChartLoading />
               ) : (
                 <div className="space-y-8">
                   {/* Monthly Trend Chart */}
@@ -286,8 +290,8 @@ export default function AnalyseTemporelle() {
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
                         <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                         <YAxis tick={{ fontSize: 12 }} tickFormatter={(val: number) => `${val/1000000}M`} />
-                        <Tooltip 
-                          contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                        <Tooltip
+                          contentStyle={TOOLTIP_CONTENT_STYLE}
                           formatter={(value: number) => [`${formatCurrency(Math.round(value))}`, t('stock:temporal_analysis.columns.avg_revenue')]}
                         />
                         <Line type="monotone" dataKey="revenue" stroke="#f97316" strokeWidth={3} dot={{ r: 4 }} />
@@ -300,15 +304,13 @@ export default function AnalyseTemporelle() {
                     <h4 className="text-sm font-bold uppercase text-slate-400 mb-2">{t('stock:temporal_analysis.top_seasonal_products')}</h4>
                     <div className="overflow-x-auto border border-slate-200 rounded-xl">
                       <table className="w-full border-separate border-spacing-0 text-sm">
-                        <thead>
-                          <tr className="bg-slate-50 text-label font-black text-slate-400 uppercase tracking-widest">
-                            <th className="py-3 pl-4 text-left border-b border-slate-200">{t('stock:temporal_analysis.columns.product')}</th>
-                            <th className="py-3 text-left border-b border-slate-200">{t('stock:temporal_analysis.columns.peak_month')}</th>
-                            <th className="py-3 text-right border-b border-slate-200">{t('stock:temporal_analysis.columns.peak_volume')}</th>
-                            <th className="py-3 text-right border-b border-slate-200">{t('stock:temporal_analysis.columns.monthly_avg')}</th>
-                            <th className="py-3 text-right border-b border-slate-200 pr-4">{t('stock:temporal_analysis.columns.variation')}</th>
-                          </tr>
-                        </thead>
+                        <ReportTableHead columns={[
+                          { key: 'product', label: t('stock:temporal_analysis.columns.product'), align: 'left' },
+                          { key: 'peak_month', label: t('stock:temporal_analysis.columns.peak_month'), align: 'left' },
+                          { key: 'peak_volume', label: t('stock:temporal_analysis.columns.peak_volume') },
+                          { key: 'monthly_avg', label: t('stock:temporal_analysis.columns.monthly_avg') },
+                          { key: 'variation', label: t('stock:temporal_analysis.columns.variation') },
+                        ]} />
                         <tbody className="divide-y divide-slate-100">
                           {seasonalityData?.seasonal_products?.map((prod) => (
                             <tr key={prod.id} className="hover:bg-slate-50 transition-colors">

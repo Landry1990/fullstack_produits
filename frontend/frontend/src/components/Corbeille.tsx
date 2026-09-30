@@ -12,7 +12,7 @@ import { Card } from './ui/Card';
 import {
   Trash2, RotateCcw, Package, Users, Truck, Search, X,
   ShoppingCart, CreditCard, Clock, ClipboardList, Receipt, ChevronDown,
-  ChevronUp, Archive, ArrowUpFromLine, User as UserIcon
+  ChevronUp, Archive, ArrowUpFromLine, User as UserIcon, AlertTriangle
 } from 'lucide-react';
 
 interface TrashedItem {
@@ -22,6 +22,10 @@ interface TrashedItem {
   details: Record<string, unknown>;
   deleted_at: string | null;
   deleted_by: string | null;
+  links?: Record<string, number>;
+  has_history?: boolean;
+  purge_blocked?: boolean;
+  cascade_data?: boolean;
 }
 
 interface CorbeilleData {
@@ -156,10 +160,30 @@ export default function Corbeille() {
     finally { setActionLoading(false); }
   };
 
+  const linkSummary = (item: TrashedItem) => {
+    if (!item.links) return '';
+    return Object.entries(item.links)
+      .filter(([, v]) => v > 0)
+      .map(([k, v]) => t(`links.${k}`, { count: v }))
+      .join(' · ');
+  };
+
+  const buildPurgeMessage = (items: { model: string; id: number }[]) => {
+    const affected = allItems.filter(i => items.some(s => s.model === i.type && s.id === i.id));
+    const nbLinked = affected.filter(i => i.has_history).length;
+    const nbCascade = affected.filter(i => i.cascade_data).length;
+    const nbBlocked = affected.filter(i => i.purge_blocked).length;
+    let message = t('messages.purge_confirm_body', { count: items.length });
+    if (nbLinked > 0) message += `\n⚠️ ${t('messages.purge_confirm_linked', { count: nbLinked })}`;
+    if (nbCascade > 0) message += `\n🔥 ${t('messages.purge_confirm_cascade', { count: nbCascade })}`;
+    if (nbBlocked > 0) message += `\n⛔ ${t('messages.purge_confirm_blocked', { count: nbBlocked })}`;
+    return message;
+  };
+
   const handlePurge = async (items: { model: string; id: number }[]) => {
     const ok = await confirm({
       title: t('messages.purge_confirm_title'),
-      message: t('messages.purge_confirm_body', { count: items.length }),
+      message: buildPurgeMessage(items),
       variant: 'danger',
       confirmText: t('messages.purge_confirm_btn'),
     });
@@ -186,9 +210,16 @@ export default function Corbeille() {
   };
 
   const handleEmptyTrash = async () => {
+    const nbLinked = allItems.filter(i => i.has_history).length;
+    const nbCascade = allItems.filter(i => i.cascade_data).length;
+    const nbBlocked = allItems.filter(i => i.purge_blocked).length;
+    let message = t('messages.empty_confirm_body', { count: data?.total || 0 });
+    if (nbLinked > 0) message += `\n⚠️ ${t('messages.purge_confirm_linked', { count: nbLinked })}`;
+    if (nbCascade > 0) message += `\n🔥 ${t('messages.purge_confirm_cascade', { count: nbCascade })}`;
+    if (nbBlocked > 0) message += `\n⛔ ${t('messages.purge_confirm_blocked', { count: nbBlocked })}`;
     const ok = await confirm({
       title: t('messages.empty_confirm_title'),
-      message: t('messages.empty_confirm_body', { count: data?.total || 0 }),
+      message,
       variant: 'danger',
       confirmText: t('messages.empty_confirm_btn'),
     });
@@ -351,6 +382,18 @@ export default function Corbeille() {
                           {item.type === 'client' && item.details.phone ? (
                             <span className="text-caption text-muted-foreground">{String(item.details.phone)}</span>
                           ) : null}
+                          {item.has_history && (
+                            <span
+                              className={`text-caption font-medium flex items-center gap-1 ${item.purge_blocked ? 'text-error' : 'text-amber-600'}`}
+                              title={item.purge_blocked ? t('purge_blocked_hint') : t('linked_hint')}
+                            >
+                              <AlertTriangle className="size-3 shrink-0" aria-hidden="true" />
+                              <span className="truncate">
+                                {item.purge_blocked ? `${t('purge_blocked_label')} · ` : ''}
+                                {linkSummary(item)}
+                              </span>
+                            </span>
+                          )}
                         </div>
                       </div>
                       {/* Actions */}

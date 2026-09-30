@@ -36,15 +36,19 @@ interface Props {
 
 interface EquipeForm {
     id?: number;
+    _key: string;
     nom: string;
     membres: number[];
 }
 
 interface PointTierForm {
     id?: number;
+    _key: string;
     mois_max: string;
     points: string;
 }
+
+const genKey = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 
 interface FormState {
     nom: string;
@@ -123,6 +127,7 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
                     mode: challenge.mode ?? 'INDIVIDUEL',
                     equipes: (challenge.equipes ?? []).map((eq) => ({
                         id: eq.id,
+                        _key: genKey(),
                         nom: eq.nom,
                         membres: eq.membres ?? [],
                     })),
@@ -130,6 +135,7 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
                     peremption_mois: challenge.peremption_mois != null ? String(challenge.peremption_mois) : '',
                     point_tiers: (challenge.point_tiers ?? []).map((tier) => ({
                         id: tier.id,
+                        _key: genKey(),
                         mois_max: String(tier.mois_max),
                         points: String(tier.points),
                     })),
@@ -159,6 +165,10 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
 
     const allUsers = users ?? [];
     const allProducts = productResults ?? [];
+
+    // Sets for O(1) membership checks inside render loops
+    const participantsSet = useMemo(() => new Set(form.participants), [form.participants]);
+    const produitsSet = useMemo(() => new Set(form.produits), [form.produits]);
 
     // Map of selected product ids -> display info (from search results)
     const selectedProducts = useMemo(() => {
@@ -201,7 +211,7 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
     const addEquipe = () => {
         setForm((prev) => ({
             ...prev,
-            equipes: [...prev.equipes, { nom: '', membres: [] }],
+            equipes: [...prev.equipes, { _key: genKey(), nom: '', membres: [] }],
         }));
     };
 
@@ -250,7 +260,7 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
     const addPointTier = () => {
         setForm((prev) => ({
             ...prev,
-            point_tiers: [...prev.point_tiers, { mois_max: '', points: '' }],
+            point_tiers: [...prev.point_tiers, { _key: genKey(), mois_max: '', points: '' }],
         }));
     };
 
@@ -327,7 +337,9 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
             type_objectif: form.type_objectif,
             objectif_valeur: objectifVal,
             mode: form.mode,
-            equipes_data: form.mode === 'EQUIPES' ? form.equipes : [],
+            equipes_data: form.mode === 'EQUIPES'
+                ? form.equipes.map((eq) => ({ nom: eq.nom, membres: eq.membres }))
+                : [],
             source_produits: form.source_produits,
             peremption_mois: form.source_produits === 'AUTO_PEREMPTION' && form.peremption_mois.trim()
                 ? parseInt(form.peremption_mois, 10)
@@ -452,7 +464,6 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
                                     </label>
                                     <LocalizedDateInput
                                         id="ch-dd"
-                                        disableUppercase
                                         value={form.date_debut}
                                         onChange={(e) => update('date_debut', e.target.value)}
                                         className="h-11"
@@ -464,7 +475,6 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
                                     </label>
                                     <LocalizedDateInput
                                         id="ch-df"
-                                        disableUppercase
                                         value={form.date_fin}
                                         onChange={(e) => update('date_fin', e.target.value)}
                                         className="h-11"
@@ -711,7 +721,7 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
                                     ) : (
                                         <div className="space-y-2">
                                             {form.point_tiers.map((tier, idx) => (
-                                                <div key={idx} className="flex items-center gap-2">
+                                                <div key={tier._key} className="flex items-center gap-2">
                                                     <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
                                                         <div className="relative">
                                                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">
@@ -797,7 +807,7 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
                                         ) : (
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                                 {allUsers.map((u) => {
-                                                    const checked = form.participants.includes(u.id);
+                                                    const checked = participantsSet.has(u.id);
                                                     return (
                                                         <label
                                                             key={u.id}
@@ -857,7 +867,7 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
                                         <div className="space-y-3">
                                             {form.equipes.map((equipe, idx) => (
                                                 <div
-                                                    key={idx}
+                                                    key={equipe._key}
                                                     className="border border-slate-200 rounded-lg p-3 bg-white space-y-3"
                                                 >
                                                     <div className="flex items-center gap-2">
@@ -884,8 +894,10 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
                                                     </div>
                                                     <div className="border border-slate-100 rounded-md p-2 max-h-32 overflow-y-auto bg-slate-50/50">
                                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                                                            {allUsers.map((u) => {
-                                                                const checked = equipe.membres.includes(u.id);
+                                                            {(() => {
+                                                                const membresSet = new Set(equipe.membres);
+                                                                return allUsers.map((u) => {
+                                                                const checked = membresSet.has(u.id);
                                                                 return (
                                                                     <label
                                                                         key={u.id}
@@ -903,7 +915,8 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
                                                                         <span className="truncate">{userLabel(u)}</span>
                                                                     </label>
                                                                 );
-                                                            })}
+                                                                });
+                                                            })()}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -968,7 +981,7 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
                                         {showProductDropdown && allProducts.length > 0 && (
                                             <ul className="absolute z-50 w-full bg-white shadow-xl rounded-xl mt-2 max-h-60 overflow-auto border border-slate-200 py-2">
                                                 {allProducts.map((p) => {
-                                                    const already = form.produits.includes(p.id);
+                                                    const already = produitsSet.has(p.id);
                                                     return (
                                                         <li key={p.id}>
                                                             <button

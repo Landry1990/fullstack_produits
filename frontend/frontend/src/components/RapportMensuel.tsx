@@ -8,6 +8,7 @@ import { usePharmacySettings } from '../context/PharmacySettingsContext';
 import { generateMonthlyReportPdfDraft } from '../utils/print/reportPdfDraft';
 import { logger } from '../utils/logger'
 import { LocalizedDateInput } from './LocalizedDateInput';
+import { ReportTableHead } from './common/ReportTableHead';
 
 interface RapportData {
   mois: string;
@@ -413,13 +414,11 @@ export default function RapportMensuel() {
               <div className="overflow-x-auto">
                 {rapport.achats_par_fournisseur.length > 0 ? (
                   <table className="w-full border-separate border-spacing-0 text-sm">
-                    <thead>
-                      <tr className="bg-slate-50 text-label font-black text-slate-400 uppercase tracking-widest">
-                        <th className="py-3 pl-4 text-left border-b border-slate-200">{t('suppliers.name')}</th>
-                        <th className="py-3 text-right border-b border-slate-200">{t('suppliers.orders')}</th>
-                        <th className="py-3 text-right border-b border-slate-200 pr-4">{t('suppliers.amount')}</th>
-                      </tr>
-                    </thead>
+                    <ReportTableHead columns={[
+                      { key: 'name', label: t('suppliers.name'), align: 'left' },
+                      { key: 'orders', label: t('suppliers.orders') },
+                      { key: 'amount', label: t('suppliers.amount') },
+                    ]} />
                     <tbody className="divide-y divide-slate-100">
                       {rapport.achats_par_fournisseur.map((f) => (
                         <tr key={f.fournisseur_id} className="hover:bg-slate-50 transition-colors">
@@ -579,12 +578,10 @@ export default function RapportMensuel() {
               <div className="overflow-x-auto">
                 {rapport.encaissements.length > 0 ? (
                   <table className="w-full border-separate border-spacing-0 text-sm">
-                    <thead>
-                      <tr className="bg-slate-50 text-label font-black text-slate-400 uppercase tracking-widest">
-                        <th className="py-3 pl-4 text-left border-b border-slate-200">{t('encaissements.mode')}</th>
-                        <th className="py-3 text-right border-b border-slate-200 pr-4">{t('encaissements.amount')}</th>
-                      </tr>
-                    </thead>
+                    <ReportTableHead columns={[
+                      { key: 'mode', label: t('encaissements.mode'), align: 'left' },
+                      { key: 'amount', label: t('encaissements.amount') },
+                    ]} />
                     <tbody className="divide-y divide-slate-100">
                       {rapport.encaissements.map((enc) => (
                         <tr key={enc.mode ?? enc.mode_label} className="hover:bg-slate-50 transition-colors">
@@ -694,15 +691,13 @@ export default function RapportMensuel() {
             <div className="overflow-x-auto">
               {rapport.mouvements_caisse?.liste && rapport.mouvements_caisse.liste.length > 0 ? (
                 <table className="w-full border-separate border-spacing-0 text-sm">
-                  <thead>
-                    <tr className="bg-slate-50 text-label font-black text-slate-400 uppercase tracking-widest">
-                      <th className="py-3 pl-4 text-left border-b border-slate-200">{t('caisse_mvts.date')}</th>
-                      <th className="py-3 text-left border-b border-slate-200">{t('caisse_mvts.type')}</th>
-                      <th className="py-3 text-left border-b border-slate-200">{t('caisse_mvts.reason')}</th>
-                      <th className="py-3 text-left border-b border-slate-200">{t('caisse_mvts.user')}</th>
-                      <th className="py-3 text-right border-b border-slate-200 pr-4">{t('encaissements.amount')}</th>
-                    </tr>
-                  </thead>
+                  <ReportTableHead columns={[
+                    { key: 'date', label: t('caisse_mvts.date'), align: 'left' },
+                    { key: 'type', label: t('caisse_mvts.type'), align: 'left' },
+                    { key: 'reason', label: t('caisse_mvts.reason'), align: 'left' },
+                    { key: 'user', label: t('caisse_mvts.user'), align: 'left' },
+                    { key: 'amount', label: t('encaissements.amount') },
+                  ]} />
                   <tbody className="divide-y divide-slate-100">
                     {rapport.mouvements_caisse.liste.map((mvt) => (
                       <tr key={mvt.id} className="hover:bg-slate-50 transition-colors">
@@ -741,14 +736,12 @@ export default function RapportMensuel() {
               <h2 className="text-base font-bold text-slate-800 mb-4">{t('tva.title')}</h2>
               <div className="overflow-x-auto">
                 <table className="w-full border-separate border-spacing-0 text-sm">
-                  <thead>
-                    <tr className="bg-slate-50 text-label font-black text-slate-400 uppercase tracking-widest">
-                      <th className="py-3 pl-4 text-left border-b border-slate-200">{t('tva.rate')}</th>
-                      <th className="py-3 text-right border-b border-slate-200">{t('tva.ht')}</th>
-                      <th className="py-3 text-right border-b border-slate-200">{t('tva.tax')}</th>
-                      <th className="py-3 text-right border-b border-slate-200 pr-4">{t('tva.ttc')}</th>
-                    </tr>
-                  </thead>
+                  <ReportTableHead columns={[
+                    { key: 'rate', label: t('tva.rate'), align: 'left' },
+                    { key: 'ht', label: t('tva.ht') },
+                    { key: 'tax', label: t('tva.tax') },
+                    { key: 'ttc', label: t('tva.ttc') },
+                  ]} />
                   <tbody className="divide-y divide-slate-100">
                     {rapport.ca_par_tva.map((tva) => (
                       <tr key={`tva-${tva.taux}`} className="hover:bg-slate-50 transition-colors">

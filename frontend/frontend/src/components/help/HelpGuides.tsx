@@ -36,6 +36,7 @@ const HelpGuides: React.FC<HelpGuidesProps> = ({ search, completed, onToggle }) 
   const [openId, setOpenId] = React.useState<string | null>(null);
 
   const guides = getGuides(t);
+  const completedSet = useMemo(() => new Set(completed), [completed]);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -75,7 +76,7 @@ const HelpGuides: React.FC<HelpGuidesProps> = ({ search, completed, onToggle }) 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {filtered.map((guide) => {
             const isOpen = openId === guide.id;
-            const isRead = completed.includes(guide.id);
+            const isRead = completedSet.has(guide.id);
             return (
               <Card key={guide.id} className={isRead ? 'border-emerald-200 bg-emerald-50/30' : ''}>
                 <CardHeader className="pb-3">
@@ -99,7 +100,7 @@ const HelpGuides: React.FC<HelpGuidesProps> = ({ search, completed, onToggle }) 
                     <ol className="space-y-2">
                       {guide.steps.map((step, idx) => (
                         <li
-                          key={idx}
+                          key={`${guide.id}-${idx}`}
                           className="flex items-start gap-2 text-sm text-base-content/80"
                         >
                           <span className="flex-none flex items-center justify-center size-5 rounded-full bg-primary/10 text-primary text-xs font-bold">
