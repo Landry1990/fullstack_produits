@@ -76,8 +76,16 @@ const MODELS = ['Produit', 'Facture', 'Commande', 'Client', 'Fournisseur', 'User
 function buildDetailChips(log: AuditLog, t: TFunction) {
   const d = log.details as LogDetails | null;
   if (!d || !Object.keys(d).length) return [];
-  const chips: { label: string; value: string; highlight?: boolean }[] = [];
-  const add = (key: string, value: unknown, highlight = false) => chips.push({ label: t(`chips.${key}`), value: String(value ?? '—'), highlight });
+  const chips: { key: string; label: string; value: string; highlight?: boolean }[] = [];
+  const seen = new Map<string, number>();
+  const push = (label: string, value: unknown, highlight = false) => {
+    const val = String(value ?? '—');
+    const base = `${label}:${val}`;
+    const n = seen.get(base) ?? 0;
+    seen.set(base, n + 1);
+    chips.push({ key: n ? `${base}#${n}` : base, label, value: val, highlight });
+  };
+  const add = (key: string, value: unknown, highlight = false) => push(t(`chips.${key}`), value, highlight);
   if (log.action === 'PRICE_CHG') {
     add('before', `${d.old_price ?? '—'} FCFA`); add('after', `${d.new_price ?? '—'} FCFA`, true);
     if (d.produit_nom) add('product', d.produit_nom);
@@ -88,7 +96,7 @@ function buildDetailChips(log: AuditLog, t: TFunction) {
   } else if (d.sudo_validation) {
     add('validated_by', d.sudo_user, true); if (d.sudo_permission) add('permission', d.sudo_permission);
   } else if (d.changes && typeof d.changes === 'object') {
-    Object.entries(d.changes).slice(0, 3).forEach(([key, val]) => chips.push({ label: key, value: `${val.old ?? '—'} → ${val.new ?? '—'}`, highlight: true }));
+    Object.entries(d.changes).slice(0, 3).forEach(([key, val]) => push(key, `${val.old ?? '—'} → ${val.new ?? '—'}`, true));
   } else {
     if (d.amount !== undefined) add('amount', `${Number(d.amount).toLocaleString()} FCFA`, true);
     if (d.montant !== undefined) add('amount', `${Number(d.montant).toLocaleString()} FCFA`, true);
@@ -281,9 +289,9 @@ function CompactDetails({ details }: { details: Record<string, unknown> }) {
               <span className="font-mono font-medium">{value.length}</span>
               {preview.length > 0 && (
                 <span className="inline-flex items-center gap-1 overflow-x-auto max-w-[180px] sm:max-w-[260px] lg:max-w-sm align-bottom">
-                  {preview.map((v, i) => (
-                    <span key={i} className="font-mono text-slate-600 whitespace-nowrap">{String(v)}{i < preview.length - 1 || remaining > 0 ? ',' : ''}</span>
-                  ))}
+                  <span className="font-mono text-slate-600 whitespace-nowrap">
+                    {preview.map((v) => String(v)).join(', ')}{remaining > 0 ? ',' : ''}
+                  </span>
                   {remaining > 0 && <span className="text-slate-400 whitespace-nowrap">+{remaining}</span>}
                 </span>
               )}
@@ -311,6 +319,6 @@ function CompactDetails({ details }: { details: Record<string, unknown> }) {
 
 function AuditRow({ log, expanded, onToggle, t }: { log: AuditLog; expanded: boolean; onToggle: () => void; t: TFunction }) {
   const cfg = ACTION_CONFIG[log.action] || { Icon: Settings, labelKey: '', severity: 'neutral' as Severity }; const chips = buildDetailChips(log, t); const isSudo = Boolean(log.details?.sudo_validation); const hasDetails = Boolean(log.details && Object.keys(log.details).length);
-  return <div className="bg-white"><div className="min-h-11 px-2 sm:px-3 py-2 flex flex-wrap sm:flex-nowrap items-center gap-2"><span className="w-11 lg:w-14 shrink-0 text-caption lg:text-xs font-bold text-slate-500">{formatTime(log.timestamp)}</span><cfg.Icon className="size-3.5 lg:size-4 shrink-0 text-slate-500" /><Badge variant="outline" className={`shrink-0 text-micro lg:text-label font-black border-transparent ${SEVERITY_BADGE[cfg.severity]}`}>{cfg.labelKey ? t(cfg.labelKey) : (log.action_display || log.action)}</Badge>{isSudo && <Badge variant="outline" className="text-micro lg:text-label font-black text-purple-700 border-transparent bg-purple-50"><Shield className="inline size-3" /> {t('view.sudo_badge')}</Badge>}<p className="basis-[calc(100%-5rem)] sm:basis-auto sm:flex-1 min-w-0 text-xs lg:text-sm font-semibold text-slate-700 sm:truncate">{log.description || `${log.model_name} #${log.object_id}`}</p><div className="flex flex-wrap gap-1 basis-full sm:basis-auto">{chips.slice(0, 3).map((chip, i) => <Badge key={i} variant="outline" className={`text-micro lg:text-label border-transparent font-medium ${chip.highlight ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-100 text-slate-500'}`}><span className="opacity-60">{chip.label}:</span>&nbsp;{chip.value}</Badge>)}</div><div className="ml-auto flex items-center gap-1 lg:gap-1.5 shrink-0"><span className="size-5 lg:size-6 rounded-full bg-slate-200 text-micro lg:text-caption font-black grid place-items-center">{(log.user_name || t('view.system_user'))[0]}</span><span className="max-w-20 lg:max-w-32 truncate text-caption lg:text-xs text-slate-500">{log.user_name || t('view.system_user')}</span>{hasDetails && <Button variant="ghost" size="icon" onClick={onToggle} title={t('view_technical_details')} aria-label={t('view_technical_details')} className="size-7 text-slate-400">{expanded ? <ChevronUp className="size-3.5 lg:size-4" /> : <ChevronDown className="size-3.5 lg:size-4" />}</Button>}</div></div>{expanded && log.details && <div className="border-t bg-slate-50 p-3"><div className="text-micro lg:text-label font-black uppercase text-slate-500 mb-2"><BadgeAlert className="inline size-3" /> {t('view.technical_data', { id: log.id })}</div><CompactDetails details={log.details} /></div>}</div>;
+  return <div className="bg-white"><div className="min-h-11 px-2 sm:px-3 py-2 flex flex-wrap sm:flex-nowrap items-center gap-2"><span className="w-11 lg:w-14 shrink-0 text-caption lg:text-xs font-bold text-slate-500">{formatTime(log.timestamp)}</span><cfg.Icon className="size-3.5 lg:size-4 shrink-0 text-slate-500" /><Badge variant="outline" className={`shrink-0 text-micro lg:text-label font-black border-transparent ${SEVERITY_BADGE[cfg.severity]}`}>{cfg.labelKey ? t(cfg.labelKey) : (log.action_display || log.action)}</Badge>{isSudo && <Badge variant="outline" className="text-micro lg:text-label font-black text-purple-700 border-transparent bg-purple-50"><Shield className="inline size-3" /> {t('view.sudo_badge')}</Badge>}<p className="basis-[calc(100%-5rem)] sm:basis-auto sm:flex-1 min-w-0 text-xs lg:text-sm font-semibold text-slate-700 sm:truncate">{log.description || `${log.model_name} #${log.object_id}`}</p><div className="flex flex-wrap gap-1 basis-full sm:basis-auto">{chips.slice(0, 3).map((chip) => <Badge key={chip.key} variant="outline" className={`text-micro lg:text-label border-transparent font-medium ${chip.highlight ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-100 text-slate-500'}`}><span className="opacity-60">{chip.label}:</span>&nbsp;{chip.value}</Badge>)}</div><div className="ml-auto flex items-center gap-1 lg:gap-1.5 shrink-0"><span className="size-5 lg:size-6 rounded-full bg-slate-200 text-micro lg:text-caption font-black grid place-items-center">{(log.user_name || t('view.system_user'))[0]}</span><span className="max-w-20 lg:max-w-32 truncate text-caption lg:text-xs text-slate-500">{log.user_name || t('view.system_user')}</span>{hasDetails && <Button variant="ghost" size="icon" onClick={onToggle} title={t('view_technical_details')} aria-label={t('view_technical_details')} className="size-7 text-slate-400">{expanded ? <ChevronUp className="size-3.5 lg:size-4" /> : <ChevronDown className="size-3.5 lg:size-4" />}</Button>}</div></div>{expanded && log.details && <div className="border-t bg-slate-50 p-3"><div className="text-micro lg:text-label font-black uppercase text-slate-500 mb-2"><BadgeAlert className="inline size-3" /> {t('view.technical_data', { id: log.id })}</div><CompactDetails details={log.details} /></div>}</div>;
 }
 export default JournalAudit;

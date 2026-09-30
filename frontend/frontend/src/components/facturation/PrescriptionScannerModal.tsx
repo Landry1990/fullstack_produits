@@ -266,29 +266,25 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
             {/* Left Column: Image Source */}
             <div className="flex flex-col gap-4">
               {!preview && !showCamera && (
-                <div
-                  className="flex-1 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-4 bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer"
-                  role="button"
-                  tabIndex={0}
-                  aria-label={t('facturation:prescription_scanner.click_browse')}
-                  onClick={() => fileInputRef.current?.click()}
-                  onKeyDown={(e) => {
-                    if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
-                      e.preventDefault();
-                      fileInputRef.current?.click();
-                    }
-                  }}
-                >
-                  <div className="p-4 bg-emerald-50 rounded-full text-emerald-600">
-                    <Upload className="size-8" />
-                  </div>
-                  <div className="text-center">
-                    <p className="font-bold text-slate-800">{t('facturation:prescription_scanner.drag_image')}</p>
-                    <p className="text-sm text-slate-400">{t('facturation:prescription_scanner.click_browse')}</p>
-                  </div>
+                <div className="flex-1 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-4 bg-slate-50 transition-colors p-4">
                   <button
+                    type="button"
+                    className="flex-1 w-full rounded-xl flex flex-col items-center justify-center gap-4 hover:bg-slate-100 transition-colors cursor-pointer"
+                    aria-label={t('facturation:prescription_scanner.click_browse')}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <div className="p-4 bg-emerald-50 rounded-full text-emerald-600">
+                      <Upload className="size-8" />
+                    </div>
+                    <div className="text-center">
+                      <p className="font-bold text-slate-800">{t('facturation:prescription_scanner.drag_image')}</p>
+                      <p className="text-sm text-slate-400">{t('facturation:prescription_scanner.click_browse')}</p>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
                     className="inline-flex items-center justify-center h-8 px-4 rounded-lg text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
-                    onClick={(e) => { e.stopPropagation(); startCamera(); }}
+                    onClick={startCamera}
                   >
                     <Camera className="size-4 mr-2" />
                     {t('facturation:prescription_scanner.use_camera')}

@@ -54,6 +54,22 @@
     "facture": "Sale",
     "user": "User"
   },
+  "links": {
+    "sales": "{{count}} sale(s)",
+    "order_lines": "{{count}} order line(s)",
+    "client_credits": "{{count}} client credit note(s)",
+    "stock": "{{count}} unit(s) in stock",
+    "invoices": "{{count}} invoice(s)",
+    "statements": "{{count}} payment statement(s)",
+    "deposits": "{{count}} deposit(s)",
+    "beneficiaries": "{{count}} beneficiary(ies)",
+    "orders": "{{count}} order(s)",
+    "payments": "{{count}} payment(s)",
+    "schedules": "{{count}} schedule(s)"
+  },
+  "linked_hint": "This item is linked to existing transactions",
+  "purge_blocked_label": "Deletion blocked",
+  "purge_blocked_hint": "Protected references prevent this item from being permanently deleted",
   "messages": {
     "fetch_error": "Error loading recycle bin",
     "restore_success": "{{count}} item(s) restored ✓",
@@ -64,6 +80,9 @@
     "purge_confirm_title": "⚠️ Permanent Deletion",
     "purge_confirm_body": "Permanently delete {{count}} item(s)? This action is IRREVERSIBLE.",
     "purge_confirm_btn": "Delete Permanently",
+    "purge_confirm_linked": "{{count}} item(s) have a linked history (sales, orders, payments…).",
+    "purge_confirm_cascade": "{{count}} item(s) will permanently delete linked data (payments, deposits, beneficiaries, schedules…).",
+    "purge_confirm_blocked": "{{count}} item(s) will be refused because they are referenced by protected records.",
     "empty_confirm_title": "🗑️ Empty Recycle Bin",
     "empty_confirm_body": "Delete ALL {{count}} items in the recycle bin? This action is IRREVERSIBLE and affects products, clients, and suppliers.",
     "empty_confirm_btn": "Delete All"

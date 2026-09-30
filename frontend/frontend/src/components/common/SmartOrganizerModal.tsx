@@ -64,6 +64,7 @@ function getSuggestions(
 
     const getKey = (item: IndexedProduct) => (caseSensitive ? item.rawName : item.lowerName);
     const result: string[] = [];
+    const seen = new Set<string>();
 
     if (mode === 'range') {
         let l = 0;
@@ -78,14 +79,15 @@ function getSuggestions(
         }
         for (let i = l; i < source.length && result.length < max; i++) {
             const name = source[i].product.name?.trim() || '';
-            if (!result.includes(name)) result.push(name);
+            if (!seen.has(name)) { seen.add(name); result.push(name); }
         }
     } else {
+        const containsTerm = (item: IndexedProduct) => getKey(item).includes(key);
         for (const item of source) {
             if (result.length >= max) break;
-            if (getKey(item).includes(key)) {
+            if (containsTerm(item)) {
                 const name = item.product.name?.trim() || '';
-                if (!result.includes(name)) result.push(name);
+                if (!seen.has(name)) { seen.add(name); result.push(name); }
             }
         }
     }
@@ -368,9 +370,8 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
         const candidates = source.slice(start, end);
 
         if (cTerm) {
-            return candidates
-                .filter(item => (caseSensitive ? item.rawName : item.lowerName).includes(cTerm))
-                .map(item => item.product);
+            const containsTerm = (item: IndexedProduct) => (caseSensitive ? item.rawName : item.lowerName).includes(cTerm);
+            return candidates.filter(containsTerm).map(item => item.product);
         }
 
         return candidates.map(item => item.product);

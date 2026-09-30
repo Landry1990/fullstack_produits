@@ -19,6 +19,7 @@ export function useUserForm(menuHierarchy: MenuItem[], adminOnlyKeys?: string[])
   const [formData, setFormData] = useState<UserFormData>(() => buildInitialFormData());
 
   const adminKeys = adminOnlyKeys && adminOnlyKeys.length > 0 ? adminOnlyKeys : ADMIN_MENU_KEYS_FALLBACK;
+  const adminKeySet = new Set(adminKeys);
   const getAllMenuKeys = () => getAllMenuKeysFromHierarchy(menuHierarchy);
 
   const applyRole = (role: string, preserveMenus: boolean = false) => {
@@ -64,7 +65,7 @@ export function useUserForm(menuHierarchy: MenuItem[], adminOnlyKeys?: string[])
 
   /** Initialise le formulaire pour l'édition d'un utilisateur existant. */
   const initForEdit = (user: ManagedUser) => {
-    const cleanedMenus = (user.profile?.allowed_menus || []).filter(k => !adminKeys.includes(k));
+    const cleanedMenus = (user.profile?.allowed_menus || []).filter(k => !adminKeySet.has(k));
     const base: UserFormData = {
       username: user.username,
       email: user.email,

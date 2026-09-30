@@ -38,6 +38,7 @@ export default function FournisseursList({ hook }: Props) {
     showInactive,
     searchInputRef
   } = state;
+  const selectedSet = React.useMemo(() => new Set(selectedIds), [selectedIds]);
 
   return (
     <div className="md:col-span-1 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden h-full">
@@ -164,7 +165,6 @@ export default function FournisseursList({ hook }: Props) {
       <div className="flex-1 overflow-auto p-2 space-y-0.5">
         {fournisseurs.length > 0 ? (
           fournisseurs.map((fournisseur, index) => {
-            const selectedSet = new Set(selectedIds);
             const isSelected = selectedFournisseur?.id === fournisseur.id;
             const isChecked = selectedSet.has(fournisseur.id!);
             const isHighlighted = searchTerm && highlightedIndex === index;
@@ -173,24 +173,14 @@ export default function FournisseursList({ hook }: Props) {
             return (
               <div
                 key={fournisseur.id}
-                className={cn("group flex items-center p-2.5 rounded-lg cursor-pointer transition-all border border-transparent relative",
+                className={cn("group flex items-center rounded-lg transition-all border border-transparent relative",
                   isSelected ? 'bg-emerald-50 border-emerald-100 shadow-sm' : isHighlighted ? 'bg-slate-100 border-slate-200' : isChecked ? 'bg-emerald-50/50 border-emerald-100' : 'hover:bg-slate-100')}
-                onClick={() => actions.selectFournisseur(fournisseur)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.target !== e.currentTarget) return;
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    actions.selectFournisseur(fournisseur);
-                  }
-                }}
               >
                 {/* Selection Indicator */}
                 {isSelected && <div className="absolute left-0 top-2.5 bottom-2.5 w-0.5 bg-emerald-500 rounded-full" />}
 
                 {/* Checkbox */}
-                <div className="mr-2" onClick={(e) => e.stopPropagation()}>
+                <div className="pl-2.5 pr-1 flex items-center self-stretch">
                   <input
                     type="checkbox"
                     aria-label={fournisseur.name}
@@ -200,6 +190,20 @@ export default function FournisseursList({ hook }: Props) {
                   />
                 </div>
 
+                {/* Row content (interactive) */}
+                <div
+                  role="button"
+                  tabIndex={0}
+                  className="flex items-center flex-1 min-w-0 py-2.5 pr-2.5 pl-1 cursor-pointer"
+                  onClick={() => actions.selectFournisseur(fournisseur)}
+                  onKeyDown={(e) => {
+                    if (e.target !== e.currentTarget) return;
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      actions.selectFournisseur(fournisseur);
+                    }
+                  }}
+                >
                 {/* Avatar */}
                 <div className={cn("size-9 rounded-lg flex items-center justify-center text-sm font-semibold shrink-0 transition-all",
                   isSelected ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200')}>
@@ -234,6 +238,7 @@ export default function FournisseursList({ hook }: Props) {
                     </Badge>
                   </div>
                 )}
+                </div>
               </div>
             );
           })

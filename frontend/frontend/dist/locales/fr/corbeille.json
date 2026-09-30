@@ -54,6 +54,22 @@
     "facture": "Vente",
     "user": "Utilisateur"
   },
+  "links": {
+    "sales": "{{count}} vente(s)",
+    "order_lines": "{{count}} ligne(s) de commande",
+    "client_credits": "{{count}} avoir(s) client",
+    "stock": "{{count}} unité(s) en stock",
+    "invoices": "{{count}} facture(s)",
+    "statements": "{{count}} relevé(s) de paiement",
+    "deposits": "{{count}} dépôt(s)",
+    "beneficiaries": "{{count}} ayant(s) droit",
+    "orders": "{{count}} commande(s)",
+    "payments": "{{count}} paiement(s)",
+    "schedules": "{{count}} planification(s)"
+  },
+  "linked_hint": "Cet élément est lié à des transactions existantes",
+  "purge_blocked_label": "Suppression bloquée",
+  "purge_blocked_hint": "Des liens protégés empêchent la suppression définitive de cet élément",
   "messages": {
     "fetch_error": "Erreur lors du chargement de la corbeille",
     "restore_success": "{{count}} élément(s) restauré(s) ✓",
@@ -64,6 +80,9 @@
     "purge_confirm_title": "⚠️ Suppression définitive",
     "purge_confirm_body": "Supprimer définitivement {{count}} élément(s) ? Cette action est IRRÉVERSIBLE.",
     "purge_confirm_btn": "Supprimer définitivement",
+    "purge_confirm_linked": "{{count}} élément(s) ont un historique lié (ventes, commandes, paiements…).",
+    "purge_confirm_cascade": "{{count}} élément(s) entraîneront la perte définitive de données liées (paiements, dépôts, ayants droit, planifications…).",
+    "purge_confirm_blocked": "{{count}} élément(s) seront refusés car référencés par des enregistrements protégés.",
     "empty_confirm_title": "🗑️ Vider la corbeille",
     "empty_confirm_body": "Supprimer TOUS les {{count}} éléments de la corbeille ? Cette action est IRRÉVERSIBLE et concerne produits, clients et fournisseurs.",
     "empty_confirm_btn": "Tout supprimer"
