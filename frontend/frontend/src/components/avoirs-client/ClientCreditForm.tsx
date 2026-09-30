@@ -11,6 +11,7 @@ import { Textarea } from '../shadcn/textarea';
 import api from '../../services/api';
 import { useProductSearch } from '../../hooks/useProductSearch';
 import { cn } from '../../lib/utils';
+import { formatCurrency as formatCurrencyValue } from '../../utils/formatters';
 import { EmptyState } from '../ui/EmptyState';
 import { Skeleton } from '../ui/Skeleton';
 import { gooeyToast } from 'goey-toast';
@@ -227,15 +228,7 @@ export const ClientCreditForm: React.FC<ClientCreditFormProps> = ({
 
     const formatCurrency = (value: number) => {
         const num = isNaN(value) ? 0 : value;
-        try {
-            return new Intl.NumberFormat(locale, {
-                style: 'decimal',
-                minimumFractionDigits: 0,
-            })
-                .format(num) + ' FCFA';
-        } catch {
-            return `${num.toLocaleString(locale)} FCFA`;
-        }
+        return formatCurrencyValue(num, locale, 'FCFA');
     };
 
     return (

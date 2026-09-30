@@ -10,6 +10,7 @@ import {
     TableRow,
 } from '../shadcn/table';
 import { cn } from '../../lib/utils';
+import { formatCurrency as formatCurrencyValue, formatNumber as formatNumberValue } from '../../utils/formatters';
 import { useChallengeClassement } from '../../hooks/useChallenges';
 import type { ChallengeClassementEntry } from '../../types';
 
@@ -42,23 +43,12 @@ const ChallengeClassement: React.FC<Props> = ({ challengeId }) => {
 
     const formatCurrency = (value: number) => {
         const num = Number(value) || 0;
-        try {
-            return new Intl.NumberFormat(locale, {
-                style: 'decimal',
-                minimumFractionDigits: 0,
-            }).format(num) + ' FCFA';
-        } catch {
-            return `${num.toLocaleString(locale)} FCFA`;
-        }
+        return formatCurrencyValue(num, locale, 'FCFA');
     };
 
     const formatNumber = (value: number) => {
         const num = Number(value) || 0;
-        try {
-            return new Intl.NumberFormat(locale).format(num);
-        } catch {
-            return String(num);
-        }
+        return formatNumberValue(num, 0, locale);
     };
 
     const formatMetric = (value: number, typeObjectif: string) => {

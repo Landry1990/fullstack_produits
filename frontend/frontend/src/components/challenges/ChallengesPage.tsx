@@ -38,6 +38,7 @@ import {
     DialogFooter,
 } from '../shadcn/dialog';
 import { cn } from '../../lib/utils';
+import { formatCurrency as formatCurrencyValue } from '../../utils/formatters';
 import { EmptyState } from '../ui/EmptyState';
 import { Skeleton } from '../ui/Skeleton';
 import {
@@ -340,7 +341,7 @@ const ChallengesPage: React.FC = () => {
                                                     <span className="inline-flex items-center gap-1 text-caption text-amber-700 font-bold">
                                                         <Target className="size-3" />
                                                         {challenge.type_objectif === 'CA'
-                                                            ? new Intl.NumberFormat(locale).format(challenge.objectif_valeur) + ' FCFA'
+                                                            ? formatCurrencyValue(challenge.objectif_valeur, locale, 'FCFA')
                                                             : challenge.objectif_valeur}
                                                     </span>
                                                 )}

@@ -1,5 +1,82 @@
 # Changelog — Fullstack Produits
 
+## 2026-09-30 — 🩺 React Doctor : 28 warnings + 1 erreur corrigés (score 83 → 100)
+
+### Pourquoi
+
+`npx react-doctor` rapportait 28 warnings (clés index, formatters `Intl`
+recréés, `includes()` en boucle, contrôles interactifs imbriqués, JSX
+dupliqués) puis une erreur supply-chain : `axios@1.18.1` avec CVE connues
+(score Socket vulnérabilité 30/100).
+
+### Changements
+
+- **Clés stables** : `JournalAudit` (chips déduquées via compteur d'occurrence,
+  preview de listes rendue par `join()`), `ChallengeFormModal` (clé interne
+  `_key` sur les paliers), `HelpGuides`, `HelpTroubleshooting`,
+  `ProductDetailsModal`.
+- **Formatters Intl** : utilisation du cache partagé `utils/formatters.ts`
+  (`formatCurrency`/`formatNumber`) dans `ClientCreditForm`,
+  `ClientCreditsList`, `ChallengeClassement`, `ChallengesPage`, `LoyaltyPage`,
+  `Comptabilite` (suppression des `new Intl.NumberFormat` par render).
+- **Lookups en boucle** : `Set` dans `ChallengeFormModal`, `SmartOrganizerModal`,
+  `HelpGuides`, `useUserForm` ; `new Set(selectedIds)` hoisté hors du `map` dans
+  `FournisseursList`. Les 2 `String.includes` restants (sous-chaîne, faux
+  positifs) sont sortis des boucles via prédicats nommés.
+- **A11y — interactifs imbriqués** : `JournalCaisseClosingModal` (input readOnly
+  remplacé par un div visuel), `PrescriptionScannerModal` (dropzone et bouton
+  caméra en siblings `<button>`), `FournisseursList` (checkbox sortie du
+  `role="button"`, ligne restructurée en wrapper + zone interactive).
+- **JSX dupliqués — composants partagés** : `common/ReportTableHead.tsx`
+  (en-têtes de tableaux, utilisé par `AnalyseTemporelle` ×2 et `RapportMensuel`
+  ×4), `clients/WarningModalShell.tsx` (shell + `StatCard` + `InfoBox` communs
+  à `BulkDeleteWarningModal` et `ClientDeleteWarningModal`),
+  `printing/PharmacyContactBlock.tsx` (bloc coordonnées pharmacie commun à
+  `InvoiceTemplate` et `RecapTemplate`). `AnalyseTemporelle` : `PanelHeader` +
+  `ChartLoading` extraits, tabs rendus par map.
+- **Sécurité** : `axios` `^1.18.1` → `^1.20.0` (racine + frontend) — corrige
+  les advisories GHSA-vh66-26gq-q6x8, GHSA-9fr6-4gfg-395g, GHSA-c29m-xwm3-cm6r
+  (prototype pollution, ReDoS).
+- Divers : `setBreakdown`/`isA5L` non lus préfixés `_` (ESLint).
+
+### Vérification
+
+- `npx react-doctor --json --no-cache` : **score 100/100, 0 finding**.
+- `npm run build` OK ; ESLint propre sur tous les fichiers touchés.
+
+## 2026-09-30 — 🗑️ Corbeille : avertissement sur les éléments liés à des transactions
+
+### Pourquoi
+
+La purge définitive dans la corbeille pouvait détruire silencieusement des
+données : un fournisseur purgé perdait tout son historique de paiements
+(`PaiementFournisseur` en CASCADE) et faussait la dette globale ; un client
+sans facture perdait ses dépôts (`DepotClient` CASCADE) ; un produit dans un
+avoir client voyait sa purge échouer (`LigneAvoirClient.produit` PROTECT).
+Aucun indicateur ne signalait ces risques avant la suppression.
+
+### Changements
+
+- `backend/api/views/corbeille.py` : `list()` annote chaque produit, client
+  et fournisseur avec `links` (compteurs par type de lien), `has_history`,
+  `purge_blocked` (liens PROTECT qui feront échouer la purge) et
+  `cascade_data` (données CASCADE qui seront perdues). Compteurs calculés en
+  requêtes `GROUP BY` groupées (pas de N+1). Helper `_count_map` ajouté.
+- `frontend/frontend/src/components/Corbeille.tsx` : badge ⚠ sur chaque
+  élément lié affichant le résumé ("3 ventes · 2 paiements"), rouge +
+  "Suppression bloquée" si liens PROTECT. Messages de confirmation de purge
+  et de vidage enrichis : avertissement historique, perte de données CASCADE
+  et blocages PROTECT.
+- Traductions `corbeille.json` fr + en : clés `links.*`, `linked_hint`,
+  `purge_blocked_label/hint`, `messages.purge_confirm_linked/cascade/blocked`.
+
+### Vérification
+
+- `npm run build` OK, ESLint propre sur `Corbeille.tsx`.
+- Test réel en Docker : `GET /api/corbeille/` retourne `links: {'orders': 1}`
+  sur le fournisseur DIVERS (1 commande liée) — flaggé correctement.
+- Déployé via `deploy.ps1 -Target all`.
+
 ## 2026-09-30 — 🌱 Fix : données par défaut recréées à chaque redémarrage Docker
 
 ### Pourquoi

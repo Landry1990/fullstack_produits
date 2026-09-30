@@ -27,10 +27,11 @@ import Pagination from '../ui/Pagination';
 import { PageContainer } from '../ui/PageContainer';
 import { LocalizedDateInput } from '../LocalizedDateInput';
 import i18n from '../../i18n';
+import { formatCurrency as formatCurrencyValue, formatNumber as formatNumberValue } from '../../utils/formatters';
 
-const amountFormatter = () => new Intl.NumberFormat(i18n.language.startsWith('en') ? 'en-GB' : 'fr-FR', { maximumFractionDigits: 0 });
-const formatFCFA = (amount: number) => amountFormatter().format(amount) + ' F';
-const formatAmount = (amount: number) => amountFormatter().format(amount);
+const comptaLocale = () => (i18n.language.startsWith('en') ? 'en-GB' : 'fr-FR');
+const formatFCFA = (amount: number) => formatCurrencyValue(amount, comptaLocale());
+const formatAmount = (amount: number) => formatNumberValue(amount, 0, comptaLocale());
 
 interface ComptabiliteProps {
     defaultTab?: string;

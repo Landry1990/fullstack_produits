@@ -38,7 +38,7 @@ export default function JournalCaisseClosingModal({ state }: Props) {
   const [newMontant, setNewMontant] = useState('');
   const [newType, setNewType] = useState<'ENTREE' | 'SORTIE'>('SORTIE');
   const [isBreakdownOpen, setIsBreakdownOpen] = useState(false);
-  const [breakdown, setBreakdown] = useState<CashBreakdown | null>(null);
+  const [, setBreakdown] = useState<CashBreakdown | null>(null);
 
   const getModeLabel = (mode: string) => getPaymentModeLabel(mode, t);
 
@@ -288,17 +288,17 @@ export default function JournalCaisseClosingModal({ state }: Props) {
                       role="button"
                       aria-label={t('caisse:journal.closing.breakdown_open', { defaultValue: 'Ouvrir le billetage' })}
                     >
-                      <input
+                      <div
                         id="closing-real-amount"
-                        type="text"
-                        readOnly
-                        tabIndex={-1}
                         aria-hidden="true"
-                        placeholder={t('caisse:journal.closing.breakdown_placeholder', { defaultValue: 'Touchez pour billetter' })}
-                        className="w-full h-12 px-4 rounded-lg bg-slate-100 border border-slate-200 font-black text-2xl text-center text-slate-700 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all cursor-pointer"
-                        value={actualAmount}
-                        onFocus={() => setIsBreakdownOpen(true)}
-                      />
+                        className="w-full h-12 px-4 rounded-lg bg-slate-100 border border-slate-200 font-black text-2xl text-center text-slate-700 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all cursor-pointer flex items-center justify-center"
+                      >
+                        {actualAmount ? actualAmount : (
+                          <span className="text-sm font-semibold text-slate-400">
+                            {t('caisse:journal.closing.breakdown_placeholder', { defaultValue: 'Touchez pour billetter' })}
+                          </span>
+                        )}
+                      </div>
                       <span className="absolute right-6 top-1/2 -translate-y-1/2 font-black text-slate-300 pointer-events-none">{t('currency_symbol')}</span>
                     </div>
                   ) : (

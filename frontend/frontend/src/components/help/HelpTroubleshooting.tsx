@@ -87,7 +87,7 @@ const HelpTroubleshooting: React.FC<HelpTroubleshootingProps> = ({ search }) => 
                 {isOpen && (
                   <CardContent className="space-y-2">
                     {item.steps.map((step, idx) => (
-                      <div key={idx} className="flex items-start gap-3">
+                      <div key={`${item.id}-${idx}`} className="flex items-start gap-3">
                         <Badge variant="outline" className="shrink-0 mt-0.5 font-mono text-[10px]">
                           {idx + 1}
                         </Badge>

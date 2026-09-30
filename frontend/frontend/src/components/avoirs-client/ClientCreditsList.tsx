@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatDate } from '../../utils/dateUtils';
+import { formatCurrency as formatCurrencyValue } from '../../utils/formatters';
 import { Check, ChevronLeft, ChevronRight, Download, Eye, FileText, Loader2, Plus, RotateCcw } from 'lucide-react';
 import type { ClientCredit } from '../../types';
 import { Button } from '../shadcn/button';
@@ -89,16 +90,7 @@ export const ClientCreditsList: React.FC<ClientCreditsListProps> = ({
 
     const formatCurrency = (value: string | number) => {
         const num = typeof value === 'string' ? parseFloat(value) : value;
-        const safeNum = isNaN(num) ? 0 : num;
-        try {
-            return new Intl.NumberFormat(locale, {
-                style: 'decimal',
-                minimumFractionDigits: 0,
-            })
-                .format(safeNum) + ' FCFA';
-        } catch {
-            return `${safeNum.toLocaleString(locale)} FCFA`;
-        }
+        return formatCurrencyValue(isNaN(num) ? 0 : num, locale, 'FCFA');
     };
 
     return (

@@ -2,6 +2,7 @@ import { formatDate as formatLocaleDate } from '../../utils/dateUtils';
 import { formatNumber, formatCurrency } from '../../utils/formatters';
 import { useTranslation } from 'react-i18next';
 import { useDocumentLocale } from '../../context/PharmacySettingsContext';
+import { PharmacyContactBlock } from './PharmacyContactBlock';
 
 // Interfaces matching FacturePrintSerializer
 export interface InvoiceClient {
@@ -100,11 +101,32 @@ const calculateHTUnit = (priceTTC: number, tva: number) => {
   return priceTTC / (1 + (Number(tva) || 0) / 100);
 };
 
+function TotalRow({ label, amount, rowClassName = '', labelClassName = 'text-micro uppercase font-bold tracking-widest pl-1', valueClassName = 'text-right font-mono font-bold text-base-content pr-2' }: {
+  label: string;
+  amount: React.ReactNode;
+  rowClassName?: string;
+  labelClassName?: string;
+  valueClassName?: string;
+}) {
+  return (
+    <div className={`grid grid-cols-[1fr,115px] items-center px-1 ${rowClassName}`}>
+      <span className={labelClassName}>{label}</span>
+      <div className={valueClassName}>{amount}</div>
+    </div>
+  );
+}
+
+function FooterItem({ label, value, valueClassName = '' }: { label: string; value: string; valueClassName?: string }) {
+  return (
+    <div className="flex items-center gap-1">{label}: <span className={`text-base-content/80 ${valueClassName}`}>{value}</span></div>
+  );
+}
+
 const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBonDeLivraison, paperSize = 'A4' }) => {
   const { lang: docLang, locale: docLocale } = useDocumentLocale();
   const { t } = useTranslation('printing', { lng: docLang });
   const isA5 = paperSize === 'A5';
-  const isA5L = paperSize === 'A5L';
+  const _isA5L = paperSize === 'A5L';
   const isSmallWidth = isA5;
 
   const totalQuantity = data.produits.reduce((acc, item) => acc + item.quantity, 0);
@@ -125,27 +147,7 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
                 {settings.pharmacy_name}
             </h1>
             
-            <div className="space-y-1 text-base-content/60 max-w-sm text-label">
-                <div className="whitespace-pre-line leading-tight italic">
-                    {settings.address}
-                </div>
-                <div className="flex flex-col gap-0.5 mt-2 font-bold text-base-content/90">
-                    {(settings.phone || settings.phone2) && (
-                      <div className="flex items-center gap-1">
-                        <span>{t('invoice.tel')} : {settings.phone}{settings.phone2 ? ` | ${settings.phone2}` : ''}</span>
-                      </div>
-                    )}
-                    {settings.email && (
-                      <div className="flex items-center gap-1">
-                        <span>{t('invoice.email', { defaultValue: 'Email' })} : {settings.email}</span>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-1 uppercase">
-                        {settings.niu && <span>{t('invoice.niu')} : {settings.niu} |</span>}
-                        {settings.registre_commerce && <span>{t('invoice.rc')} : {settings.registre_commerce}</span>}
-                    </div>
-                </div>
-            </div>
+            <PharmacyContactBlock settings={settings} t={t} />
             </div>
         </div>
 
@@ -313,29 +315,28 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
                     {/* Rows use grid-cols-[1fr,115px] to have a fixed amount area */}
                     
                     {/* Total HT */}
-                    <div className="grid grid-cols-[1fr,115px] items-center px-1 text-base-content/60">
-                        <span className="text-micro uppercase font-bold tracking-widest pl-1">{t('invoice.subtotal_ht')}</span>
-                        <div className="text-right font-mono font-bold text-base-content pr-2">
-                          {formatCurrency(Math.round(Number(data.total_ht)), docLocale)}
-                        </div>
-                    </div>
+                    <TotalRow
+                      rowClassName="text-base-content/60"
+                      label={t('invoice.subtotal_ht')}
+                      amount={formatCurrency(Math.round(Number(data.total_ht)), docLocale)}
+                    />
 
                     {Number(data.total_tva) > 0 && (
-                      <div className="grid grid-cols-[1fr,115px] items-center px-1 text-base-content/60">
-                          <span className="text-micro uppercase font-bold tracking-widest pl-1">{t('invoice.taxes_tva')}</span>
-                          <div className="text-right font-mono font-bold text-base-content pr-2">
-                            {formatCurrency(Math.round(Number(data.total_tva)), docLocale)}
-                          </div>
-                      </div>
+                      <TotalRow
+                        rowClassName="text-base-content/60"
+                        label={t('invoice.taxes_tva')}
+                        amount={formatCurrency(Math.round(Number(data.total_tva)), docLocale)}
+                      />
                     )}
 
                     {data.remise > 0 && (
-                      <div className="grid grid-cols-[1fr,115px] items-center px-1 py-1 bg-error/10/50 rounded-md text-error border border-red-100/50">
-                          <span className="text-micro uppercase font-black tracking-widest pl-1">{t('invoice.discount_label')}</span>
-                          <div className="text-right font-mono font-black pr-2">
-                            -{formatCurrency(Math.round(Number(data.remise)), docLocale)}
-                          </div>
-                      </div>
+                      <TotalRow
+                        rowClassName="py-1 bg-error/10/50 rounded-md text-error border border-red-100/50"
+                        labelClassName="text-micro uppercase font-black tracking-widest pl-1"
+                        valueClassName="text-right font-mono font-black pr-2"
+                        label={t('invoice.discount_label')}
+                        amount={`-${formatCurrency(Math.round(Number(data.remise)), docLocale)}`}
+                      />
                     )}
 
                     <div className="border-t border-base-200 my-1 mx-2"></div>
@@ -363,12 +364,12 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
                     {/* Bloc Tiers-Payant (Patient/Assurance) */}
                     {(data.part_assurance ?? 0) > 0 && (
                       <div className="space-y-1.5 pt-1">
-                        <div className="grid grid-cols-[1fr,115px] items-center px-1 py-0.5 text-base-content/80">
-                          <span className="text-micro uppercase font-bold tracking-widest pl-1">{t('invoice.part_patient')}</span>
-                          <div className="text-right font-mono font-bold text-base-content text-base pr-2 text-right">
-                            {formatCurrency(Math.round(Number(data.part_client ?? 0)), docLocale)}
-                          </div>
-                        </div>
+                        <TotalRow
+                          rowClassName="py-0.5 text-base-content/80"
+                          valueClassName="text-right font-mono font-bold text-base-content text-base pr-2"
+                          label={t('invoice.part_patient')}
+                          amount={formatCurrency(Math.round(Number(data.part_client ?? 0)), docLocale)}
+                        />
                         <div className="bg-success rounded-lg shadow-sm text-white grid grid-cols-[1fr,115px] items-center px-1 py-2.5 ring-1 ring-emerald-700/10">
                           <span className="text-micro uppercase font-black tracking-[0.1em] pl-1">{t('invoice.part_assurance')}</span>
                           <div className="text-right font-mono font-black text-lg leading-none pr-2 text-right">
@@ -393,10 +394,10 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
             <p className="font-bold text-base-content text-[10.5px] mb-1.5">{settings.ticket_footer_message || t('invoice.thank_you')}</p>
             
             <div className="flex justify-center flex-wrap gap-x-8 gap-y-1 text-[8.5px] uppercase tracking-[0.1em] font-bold text-base-content/30">
-               {settings.show_pharmacist_on_documents && settings.pharmacist_name && <div className="flex items-center gap-1">{t('invoice.pharmacist')}: <span className="text-base-content/80">{settings.pharmacist_name}</span></div>}
-               {settings.niu && <div className="flex items-center gap-1">{t('invoice.niu')}: <span className="text-base-content/80">{settings.niu}</span></div>}
-               {settings.registre_commerce && <div className="flex items-center gap-1">{t('invoice.rc')}: <span className="text-base-content/80">{settings.registre_commerce}</span></div>}
-               <div className="flex items-center gap-1">{t('invoice.software')}: <span className="text-base-content/80 uppercase">ZENITH</span></div>
+               {settings.show_pharmacist_on_documents && settings.pharmacist_name && <FooterItem label={t('invoice.pharmacist')} value={settings.pharmacist_name} />}
+               {settings.niu && <FooterItem label={t('invoice.niu')} value={settings.niu} />}
+               {settings.registre_commerce && <FooterItem label={t('invoice.rc')} value={settings.registre_commerce} />}
+               <FooterItem label={t('invoice.software')} value="ZENITH" valueClassName="uppercase" />
             </div>
         </div>
       </div>
