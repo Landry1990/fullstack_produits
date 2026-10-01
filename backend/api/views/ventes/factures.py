@@ -6,6 +6,7 @@ from django.db.models.functions import Coalesce
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 
@@ -18,7 +19,7 @@ from api.models import (
     Facture,
 )
 from api.serializer_mixins import OptimizedSerializerMixin
-from api.serializers import FactureSerializer
+from api.serializers import FactureSerializer, FactureUpdateSerializer
 from api.serializers_optimized import (
     FactureDetailSerializer,
     FactureListSerializer,
@@ -150,6 +151,8 @@ class FactureViewSet(
     search_fields = ['numero_facture', 'client__name', 'produits__produit__name']
     
     def get_serializer_class(self):
+        if self.action in ('update', 'partial_update'):
+            return FactureUpdateSerializer
         if self.request.query_params.get('layout') == 'omnisearch':  # type: ignore[attr-defined]
             return FactureOmnisearchSerializer
         if self.request.query_params.get('include_details') == 'true':  # type: ignore[attr-defined]
@@ -247,6 +250,24 @@ class FactureViewSet(
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
+        self._invalidate_cache()
+
+    def perform_update(self, serializer):
+        instance = serializer.instance
+        new_status = serializer.validated_data.get('status')
+        if new_status and new_status != instance.status:
+            if new_status != Facture.Status.PAYEE:
+                raise ValidationError({
+                    'status': "Seule la transition vers le statut « Payée » est autorisée via cette route."
+                })
+            montant_paye = instance.paiements.filter(
+                statut='completee'
+            ).aggregate(total=Sum('montant'))['total'] or Decimal('0.00')
+            if montant_paye < instance.total_ttc - Decimal('0.1'):
+                raise ValidationError({
+                    'status': "Impossible de marquer cette facture comme payée : le montant encaissé ne couvre pas le total TTC."
+                })
+        serializer.save()
         self._invalidate_cache()
 
     def destroy(self, request, *args, **kwargs):

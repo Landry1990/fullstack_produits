@@ -61,4 +61,4 @@ class LeaveRequestSerializer(UppercaseSerializerMixin, serializers.ModelSerializ
         fields = ['id', 'user', 'user_detail', 'start_date', 'end_date',
                   'leave_type', 'status', 'notes', 'approved_by', 'approved_by_name',
                   'approved_at', 'created_at', 'updated_at', 'days_count']
-        read_only_fields = ['id', 'approved_by', 'approved_at', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'user', 'approved_by', 'approved_at', 'created_at', 'updated_at']

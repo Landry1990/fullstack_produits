@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 from django.contrib.auth.models import User
 from django.contrib.postgres.indexes import GinIndex  # Recherche textuelle performante
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
@@ -176,17 +177,35 @@ class Produit(models.Model):
     cip2 = models.CharField(max_length=20, unique=True, blank=True, null=True, db_index=True)
     cip3 = models.CharField(max_length=20, unique=True, blank=True, null=True, db_index=True)
     cip4 = models.CharField(max_length=20, unique=True, blank=True, null=True, db_index=True)
-    cost_price = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
-    selling_price = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    cost_price = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal('0.00'),
+        validators=[MinValueValidator(Decimal('0'))]
+    )
+    selling_price = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal('0.00'),
+        validators=[MinValueValidator(Decimal('0'))]
+    )
     expire_date = models.DateField(blank=True, null=True)
-    stock_alert = models.IntegerField(default=0)
-    stock_minimum = models.IntegerField(default=0)
-    stock_maximum = models.IntegerField(default=0)
-    tva = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
-    rotation_moyenne = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    stock_alert = models.IntegerField(default=0, validators=[MinValueValidator(0)])
+    stock_minimum = models.IntegerField(default=0, validators=[MinValueValidator(0)])
+    stock_maximum = models.IntegerField(default=0, validators=[MinValueValidator(0)])
+    tva = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0.00,
+        validators=[MinValueValidator(Decimal('0')), MaxValueValidator(Decimal('100'))]
+    )
+    rotation_moyenne = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0.00,
+        validators=[MinValueValidator(Decimal('0'))]
+    )
+    # NOTE: taux_marge / pourcentage_marge peuvent être négatifs (vente à perte)
+    # — volontairement non bornés.
     taux_marge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, editable=False)
     pourcentage_marge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, editable=False)
-    pmp = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="Prix Moyen Pondéré")
+    pmp = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0.00,
+        validators=[MinValueValidator(Decimal('0'))],
+        help_text="Prix Moyen Pondéré"
+    )
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
     date_premiere_vente = models.DateField(
@@ -280,14 +299,17 @@ class Produit(models.Model):
     )
     capacite_rayon = models.IntegerField(
         default=0,
+        validators=[MinValueValidator(0)],
         help_text="Capacité maximale d'exposition en rayon"
     )
     min_rayon = models.IntegerField(
         default=0,
+        validators=[MinValueValidator(0)],
         help_text="Seuil de déclenchement du réapprovisionnement"
     )
     stock_reserve = models.IntegerField(
         default=0,
+        validators=[MinValueValidator(0)],
         help_text="Quantité totale en réserve (stock tampon)"
     )
 
@@ -298,6 +320,7 @@ class Produit(models.Model):
     )
     default_treatment_days = models.IntegerField(
         default=30,
+        validators=[MinValueValidator(1)],
         help_text="Durée par défaut du traitement en jours (utilisé pour les rappels)"
     )
 

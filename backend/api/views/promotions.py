@@ -1,10 +1,11 @@
 from django.db.models import Count
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, permissions, viewsets
+from rest_framework import filters, viewsets
 
 from ..models import Promotion
 from ..pagination import StandardResultsSetPagination
 from ..serializers import PromotionSerializer
+from .settings import IsAdminOrMenuAllowed
 
 
 class PromotionViewSet(viewsets.ModelViewSet):
@@ -18,7 +19,8 @@ class PromotionViewSet(viewsets.ModelViewSet):
         rayons_count=Count('rayons', distinct=True)
     ).order_by('-priority', '-created_at')
     serializer_class = PromotionSerializer
-    permission_classes = [permissions.IsAuthenticated] # Or IsAdminUser if restricted
+    permission_classes = [IsAdminOrMenuAllowed] # Lecture pour tous (caisse), écriture admin ou menu autorisé
+    write_menu_keys = ('ventes', 'ventes_promotions')
     pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ['active', 'discount_type']

@@ -28,6 +28,7 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
     serializer_class = PromisSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = StandardResultsSetPagination
+    http_method_names = ['get', 'post', 'head', 'options']
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ['status', 'client', 'produit']
     search_fields = ['client_name', 'client_phone', 'produit__name', 'notes']
@@ -36,6 +37,12 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
 
     def _reserve_stock_for_promis(self, promis):
         """Réserve le stock au moment de la création d'un promis."""
+        # Garde-fou : une quantité <= 0 créerait du stock au lieu d'en retirer
+        if promis.quantite is None or promis.quantite <= 0:
+            raise ValueError(
+                f"Quantité de promis invalide ({promis.quantite}) : doit être strictement positive."
+            )
+
         if not promis.produit_id:
             return
 

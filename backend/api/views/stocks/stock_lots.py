@@ -13,9 +13,10 @@ from ...audit_helpers import log_audit
 from ...centralized_configs import BaseViewSetConfig
 from ...models import AuditLog, MouvementStock, Produit, StockAdjustment, StockLot
 from ...serializer_mixins import OptimizedSerializerMixin
-from ...serializers import StockLotSerializer
+from ...serializers import StockLotSerializer, StockLotUpdateSerializer
 from ...serializers_optimized import StockLotDetailSerializer, StockLotListSerializer
 from ...sudo_utils import validate_sudo_mode
+from ...utils.validation import MAX_INT32, parse_date_param, parse_id, parse_int
 
 
 class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.ModelViewSet):
@@ -33,11 +34,15 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
     # Serializers optimisés
     list_serializer_class = StockLotListSerializer
     detail_serializer_class = StockLotDetailSerializer
+    # En mise à jour, seuls le numéro de lot et la date d'expiration sont modifiables
+    update_serializer_class = StockLotUpdateSerializer
 
     def get_queryset(self):
         qs = super().get_queryset()
         # Filter by expiry date if provided
-        date_expiration_lte = self.request.query_params.get('date_expiration_lte')
+        date_expiration_lte = parse_date_param(
+            self.request.query_params.get('date_expiration_lte'), field='date_expiration_lte'
+        )
         if date_expiration_lte:
             qs = qs.filter(date_expiration__lte=date_expiration_lte)
         
@@ -56,13 +61,25 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
         Supporte le mode SUDO pour valider par un autre utilisateur.
         """
         lot = StockLot.objects.select_for_update().get(pk=self.kwargs['pk'])
-        quantity_to_remove = int(request.data.get('quantity', lot.quantity_remaining))
+
+        # Cast protégé : 'abc'/'1.5'/None → 400 propre (au lieu de 500)
+        raw_quantity = request.data.get('quantity', lot.quantity_remaining)
+        try:
+            if isinstance(raw_quantity, bool) or (isinstance(raw_quantity, float) and not raw_quantity.is_integer()):
+                raise ValueError
+            quantity_to_remove = int(raw_quantity)
+        except (TypeError, ValueError, OverflowError):
+            return Response({'detail': 'La quantité doit être un nombre entier.'}, status=status.HTTP_400_BAD_REQUEST)
+
         reason = request.data.get('reason', 'Périmé')
 
         validation_user, error_res = validate_sudo_mode(request, permission_attr='can_manage_perimes')
         if error_res:
              return error_res
         # -------------------------
+
+        if quantity_to_remove <= 0:
+            return Response({'detail': 'La quantité à sortir doit être strictement positive.'}, status=status.HTTP_400_BAD_REQUEST)
 
         if quantity_to_remove > lot.quantity_remaining:
             return Response({'detail': 'Quantité insuffisante dans le lot.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -139,8 +156,10 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
         lot_ids = request.data.get('lot_ids', [])
         reason = request.data.get('reason', 'Sortie groupée périmés')
 
-        if not lot_ids:
+        if not lot_ids or not isinstance(lot_ids, (list, tuple)):
             return Response({'detail': 'Aucun lot sélectionné.'}, status=status.HTTP_400_BAD_REQUEST)
+        # 'abc' dans id__in → ValueError ORM → 500 ; on assainit chaque id.
+        lot_ids = [parse_id(v, field='lot_ids') for v in lot_ids]
 
         validation_user, error_res = validate_sudo_mode(request, permission_attr='can_manage_perimes')
         if error_res:
@@ -300,8 +319,8 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
         from django.utils import timezone
 
         # Paramètres configurables
-        days_ahead = int(request.query_params.get('days', 30))
-        min_quantity = int(request.query_params.get('min_quantity', 1))
+        days_ahead = parse_int(request.query_params.get('days', 30), field='days', min_value=1, max_value=3650)
+        min_quantity = parse_int(request.query_params.get('min_quantity', 1), field='min_quantity', min_value=0, max_value=MAX_INT32)
         include_critical_only = request.query_params.get('critical_only', 'false').lower() == 'true'
 
         today = timezone.localtime(timezone.now()).date()
@@ -384,7 +403,10 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
         today = timezone.localtime(timezone.now()).date()
         
         # Paramètres de période pour le CA (par défaut: 12 derniers mois)
-        periode_jours = int(request.query_params.get('periode_jours', 365))
+        periode_jours = parse_int(
+            request.query_params.get('periode_jours', 365),
+            field='periode_jours', min_value=1, max_value=3650
+        )
         date_debut_ca = today - timedelta(days=periode_jours)
         
         # === LOTS DÉJÀ PÉRIMÉS ===
@@ -501,21 +523,20 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
         """
         Rapport des Unités Gratuites (UG) groupées par fournisseur, avec détails par lot.
         """
-        try:
-            date_debut = request.query_params.get('date_debut')
-            date_fin = request.query_params.get('date_fin')
+        # Dates validées AVANT le try/except générique : une date invalide doit
+        # produire un 400 (ValidationError DRF), pas être avalée par le except → 500.
+        date_debut = parse_date_param(request.query_params.get('date_debut'), field='date_debut')
+        date_fin = parse_date_param(request.query_params.get('date_fin'), field='date_fin')
 
+        try:
             qs = StockLot.objects.filter(quantity_free__gt=0).select_related('fournisseur', 'produit', 'commande_produit__commande')
 
             if date_debut:
                 qs = qs.filter(date_reception__gte=date_debut)
             if date_fin:
-                try:
-                    date_fin_obj = datetime.strptime(date_fin, '%Y-%m-%d')
-                    date_fin_inclusive = date_fin_obj + timedelta(days=1) - timedelta(seconds=1)
-                    qs = qs.filter(date_reception__lte=date_fin_inclusive)
-                except ValueError:
-                     pass
+                fin_date = date_fin.date() if isinstance(date_fin, datetime) else date_fin
+                date_fin_inclusive = datetime.combine(fin_date, datetime.min.time()) + timedelta(days=1) - timedelta(seconds=1)
+                qs = qs.filter(date_reception__lte=date_fin_inclusive)
 
             lots = list(qs)
             

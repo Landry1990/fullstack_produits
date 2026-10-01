@@ -29,6 +29,7 @@ from ...models import (
     Produit,
 )
 from ..rapports.tz_utils import parse_api_datetime
+from ...utils.validation import parse_int
 
 
 class StatistiquesViewSet(viewsets.ViewSet):
@@ -152,8 +153,8 @@ class StatistiquesViewSet(viewsets.ViewSet):
 
         from ...models import AuditLog
     
-        threshold = int(request.query_params.get('threshold', 5))
-        days = int(request.query_params.get('days', 30))
+        threshold = parse_int(request.query_params.get('threshold', 5), field='threshold', min_value=1, max_value=1000000)
+        days = parse_int(request.query_params.get('days', 30), field='days', min_value=1, max_value=3650)
     
         start_date = timezone.localtime(timezone.now()) - timedelta(days=days)
     
@@ -301,7 +302,6 @@ class StatistiquesViewSet(viewsets.ViewSet):
                 critical_soon_value += Decimal(str(produit.stock)) * Decimal(str(produit.pmp or 0))
     
         # 4. Score de Santé Global — 5 composantes dynamiques
-        Produit.objects.filter(is_active=True).count() or 1
         total_stock_value = Produit.objects.filter(is_active=True, stock__gt=0).aggregate(
             total=Coalesce(Sum(ExpressionWrapper(F('stock') * F('pmp'), output_field=DecimalField())), Decimal(0))
         )['total'] or Decimal(1)

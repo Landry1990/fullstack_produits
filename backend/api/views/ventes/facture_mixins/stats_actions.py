@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from api.models import Facture
 from api.serializers_optimized import FactureDetailSerializer
 from api.services.sales_statistics import build_sales_statistics
+from api.utils.validation import parse_date_param
 
 logger = logging.getLogger(__name__)
 
@@ -20,10 +21,12 @@ class FactureStatsMixin:
 
     @action(detail=False, methods=['get'])
     def stats_jour(self, request):
+        # parse_date_param → None si absent, ValidationError (400) si invalide
+        # (chaîne brute dans le filtre ORM → ValidationError Django → 500).
         result = build_sales_statistics(
             self.get_queryset(),
-            request.query_params.get('date__gte'),
-            request.query_params.get('date__lte'),
+            parse_date_param(request.query_params.get('date__gte'), field='date__gte'),
+            parse_date_param(request.query_params.get('date__lte'), field='date__lte'),
         )
         return Response(result)
 
@@ -129,14 +132,16 @@ class FactureStatsMixin:
         Body: {"numeros": ["FAC-001", "FAC-002", ...], "client_name": "Nom client (optionnel)"}
         """
         numeros = request.data.get('numeros', [])
-        if not numeros:
+        # isinstance(list) obligatoire : une chaîne serait itérée caractère par
+        # caractère ; un élément non-str casserait sur .strip() → 500.
+        if not isinstance(numeros, list) or not numeros:
             return Response(
                 {'detail': 'Veuillez fournir au moins un numéro de ticket.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Nettoyer les numéros (trim, enlever les vides)
-        numeros = [n.strip() for n in numeros if n and n.strip()]
+        # Nettoyer les numéros (trim, enlever les vides et les non-chaînes)
+        numeros = [n.strip() for n in numeros if isinstance(n, str) and n.strip()]
         if not numeros:
             return Response(
                 {'detail': 'Aucun numéro valide fourni.'},

@@ -59,6 +59,11 @@ class PaiementFournisseurSerializer(serializers.ModelSerializer):
         model = PaiementFournisseur
         fields = '__all__'
 
+    def validate_montant(self, value):
+        if value is None or value <= Decimal('0'):
+            raise serializers.ValidationError("Le montant du paiement doit être supérieur à zéro.")
+        return value
+
     def get_commandes_liees(self, obj):
         # Retourne une liste de numéros de factures pour un affichage facile
         return [c.numero_facture or f"CMD-{c.id}" for c in obj.commandes.all()]

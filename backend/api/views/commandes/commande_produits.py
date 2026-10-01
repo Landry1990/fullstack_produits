@@ -38,9 +38,15 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         selling_price = serializer.validated_data.pop('selling_price', None)
+        commande = serializer.validated_data.get('commande')
+        if commande is not None and commande.status == Commande.Status.CLOTUREE:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied(
+                "Création impossible : cette commande est déjà clôturée."
+            )
         with transaction.atomic():
             commande_produit = serializer.save()
-            if selling_price is not None:
+            if selling_price is not None and commande_produit.produit_id:
                 produit = commande_produit.produit
                 produit.selling_price = selling_price
                 produit.save(update_fields=['selling_price'])
@@ -102,15 +108,31 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
         items_to_create = []
         items_to_update = []
         warnings_list = []
-        
-        # Helper to convert values to Decimal safely
+        errors_list = []
+
+        # Helper STRICT : lève ValueError sur entrée invalide au lieu de retourner
+        # silencieusement un défaut ('abc' → 0 masquait des erreurs de saisie).
+        def to_int(val, default: int | None = 0):
+            if val is None or val == '':
+                return default
+            if isinstance(val, bool) or (isinstance(val, float) and not val.is_integer()):
+                raise ValueError(f"Nombre entier invalide : {val!r}")
+            try:
+                return int(val)
+            except (TypeError, ValueError, OverflowError):
+                raise ValueError(f"Nombre entier invalide : {val!r}")
+
+        # Helper STRICT : idem pour les décimaux (rejette aussi NaN/inf).
         def to_decimal(val, default: int | None = 0):
             if val is None or val == '' or str(val).strip() == '':
                 return Decimal(str(default)) if default is not None else None
             try:
-                return Decimal(str(val))
+                parsed = Decimal(str(val))
             except Exception:
-                return Decimal(str(default)) if default is not None else None
+                raise ValueError(f"Nombre décimal invalide : {val!r}")
+            if not parsed.is_finite():
+                raise ValueError(f"Nombre décimal invalide : {val!r}")
+            return parsed
 
         def parse_expiration(val):
             if val is None:
@@ -141,17 +163,27 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
                 return date(y, m, last_day)
 
             if '-' in s:
-                parts = s.split('T')[0].split('-')
-                if len(parts) != 3:
+                try:
+                    parts = s.split('T')[0].split('-')
+                    if len(parts) != 3:
+                        return None
+                    y, m, _d = (int(parts[0]), int(parts[1]), int(parts[2]))
+                    last_day = calendar.monthrange(y, m)[1]
+                    return date(y, m, last_day)
+                except (ValueError, IndexError):
                     return None
-                y, m, _d = (int(parts[0]), int(parts[1]), int(parts[2]))
-                last_day = calendar.monthrange(y, m)[1]
-                return date(y, m, last_day)
 
             return None
 
-        # Get product TVAs for fallback
-        product_ids_in_payload = {p.get('produit') for p in produits_data if p.get('produit')}
+        # Get product TVAs for fallback (IDs invalides ignorés : erreur collectée plus bas)
+        product_ids_in_payload = set()
+        for _p in produits_data:
+            try:
+                _pid = to_int(_p.get('produit'), None)
+            except ValueError:
+                continue
+            if _pid:
+                product_ids_in_payload.add(_pid)
         product_tva_map = {p.id: p.tva for p in Produit.objects.filter(id__in=product_ids_in_payload)}
         # Fetch existing items for this order to know what to update vs create
         existing_qs = CommandeProduit.objects.filter(commande=commande)
@@ -160,24 +192,52 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
 
         # Process each item in the payload individually (NO MERGING)
         # Merging existing lines with distinct IDs is dangerous for dependencies.
-        for p in produits_data:
-            item_id = p.get('id')
-            produit_id = p.get('produit')
-            lot = p.get('lot') or None
+        for idx, p in enumerate(produits_data):
+            try:
+                item_id = to_int(p.get('id'), None)
+                produit_id = to_int(p.get('produit'), None)
+                lot = p.get('lot') or None
 
-            data = {
-                'produit_id': produit_id,
-                'quantity': int(p.get('quantity', 0)) if p.get('quantity') else 0,
-                'unites_gratuites': int(p.get('unites_gratuites', 0)) if p.get('unites_gratuites') else 0,
-                'price': to_decimal(p.get('price', 0)),
-                'price_cost': to_decimal(p.get('price_cost', p.get('price', 0))),
-                'selling_price': to_decimal(p.get('selling_price', 0)),
-                'prix_euro': to_decimal(p.get('prix_euro'), None) if p.get('prix_euro') else None,
-                'tva': to_decimal(p.get('tva') if p.get('tva') is not None else product_tva_map.get(produit_id, 19.25)),
-                'taux_marge': to_decimal(p.get('taux_marge'), None) if p.get('taux_marge') is not None else None,
-                'lot': lot,
-                'date_expiration': parse_expiration(p.get('date_expiration')),
-            }
+                quantity = to_int(p.get('quantity'))
+                unites_gratuites = to_int(p.get('unites_gratuites'))
+                # quantity=0 tolérée : le frontend envoie parseInt(...) || 0
+                # pour les lignes encore vides (autosave). Les négatifs restent
+                # bloqués (inflation de stock à la réception).
+                if quantity is None or quantity < 0:
+                    raise ValueError("La quantité ne peut pas être négative.")
+                if unites_gratuites is not None and unites_gratuites < 0:
+                    raise ValueError("Les unités gratuites ne peuvent pas être négatives.")
+
+                price = to_decimal(p.get('price', 0))
+                price_cost = to_decimal(p.get('price_cost', p.get('price', 0)))
+                selling_price = to_decimal(p.get('selling_price', 0))
+                prix_euro = to_decimal(p.get('prix_euro'), None) if p.get('prix_euro') else None
+                tva = to_decimal(p.get('tva') if p.get('tva') is not None else product_tva_map.get(produit_id, 19.25))
+                taux_marge = to_decimal(p.get('taux_marge'), None) if p.get('taux_marge') is not None else None
+
+                for _field, _val in (('price', price), ('price_cost', price_cost),
+                                     ('selling_price', selling_price), ('prix_euro', prix_euro)):
+                    if _val is not None and _val < 0:
+                        raise ValueError(f"Le champ '{_field}' ne peut pas être négatif.")
+                if tva is None or tva < 0 or tva > 100:
+                    raise ValueError("La TVA doit être comprise entre 0 et 100.")
+
+                data = {
+                    'produit_id': produit_id,
+                    'quantity': quantity,
+                    'unites_gratuites': unites_gratuites,
+                    'price': price,
+                    'price_cost': price_cost,
+                    'selling_price': selling_price,
+                    'prix_euro': prix_euro,
+                    'tva': tva,
+                    'taux_marge': taux_marge,
+                    'lot': lot,
+                    'date_expiration': parse_expiration(p.get('date_expiration')),
+                }
+            except (ValueError, AttributeError) as e:
+                errors_list.append(f"Ligne {idx + 1}: {e!s}")
+                continue
 
             # Contrôle de Marge
             if data['selling_price'] < data['price_cost'] and data['selling_price'] > 0:
@@ -200,6 +260,13 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
                 # Create new item
                 items_to_create.append(CommandeProduit(commande=commande, **data))
         
+        # Rejet global si au moins une ligne est invalide (sync atomique : tout ou rien)
+        if errors_list:
+            return Response({
+                'error': 'Certaines lignes sont invalides.',
+                'errors': errors_list
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         # Bulk create new items
         if items_to_create:
             CommandeProduit.objects.bulk_create(items_to_create, batch_size=100)
@@ -218,13 +285,24 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
         for p_id in product_ids_in_payload:
             # On prend la dernière ligne de ce produit pour la sync
             # (Si l'utilisateur a plusieurs lignes identiques, la dernière gagne)
-            latest_p_data = next((p for p in reversed(produits_data) if p.get('produit') == p_id), None)
+            latest_p_data = next(
+                (p for p in reversed(produits_data) if to_int(p.get('produit'), None) == p_id),
+                None
+            )
             if latest_p_data:
-                Produit.objects.filter(id=p_id).update(
-                    tva=to_decimal(latest_p_data.get('tva'), product_tva_map.get(p_id, 19.25)),
-                    selling_price=to_decimal(latest_p_data.get('selling_price', 0)),
-                    cost_price=to_decimal(latest_p_data.get('price_cost', latest_p_data.get('price', 0)))
-                )
+                # Ne jamais propager de valeurs négatives/invalides sur la fiche produit
+                new_tva = to_decimal(latest_p_data.get('tva'), product_tva_map.get(p_id, 19.25))
+                new_selling = to_decimal(latest_p_data.get('selling_price', 0))
+                new_cost = to_decimal(latest_p_data.get('price_cost', latest_p_data.get('price', 0)))
+                update_kwargs = {}
+                if new_tva is not None and 0 <= new_tva <= 100:
+                    update_kwargs['tva'] = new_tva
+                if new_selling is not None and new_selling >= 0:
+                    update_kwargs['selling_price'] = new_selling
+                if new_cost is not None and new_cost >= 0:
+                    update_kwargs['cost_price'] = new_cost
+                if update_kwargs:
+                    Produit.objects.filter(id=p_id).update(**update_kwargs)
                 p_obj = Produit.objects.get(id=p_id)
                 p_obj.save(update_fields=['taux_marge', 'pourcentage_marge'])
         

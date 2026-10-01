@@ -2,26 +2,32 @@
 Application settings models: Loyalty, Pharmacy, and Invoice settings (Singletons).
 """
 import uuid
+from decimal import Decimal
 
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 
 class LoyaltySetting(models.Model):
     """Configuration du système de fidélité (Singleton)"""
     amount_per_point = models.DecimalField(
-        max_digits=10, decimal_places=0, default=1000, 
+        max_digits=10, decimal_places=0, default=1000,
+        validators=[MinValueValidator(Decimal('1'))],
         help_text="Montant en FCFA pour gagner 1 point"
     )
     point_value = models.DecimalField(
-        max_digits=10, decimal_places=0, default=10, 
+        max_digits=10, decimal_places=0, default=10,
+        validators=[MinValueValidator(Decimal('0'))],
         help_text="Valeur d'un point en FCFA"
     )
     auto_reward_threshold = models.IntegerField(
-        default=0, 
+        default=0,
+        validators=[MinValueValidator(0)],
         help_text="Nombre de points pour déclencher la récompense auto (0=désactivé)"
     )
     auto_reward_percent = models.DecimalField(
-        max_digits=5, decimal_places=2, default=0, 
+        max_digits=5, decimal_places=2, default=0,
+        validators=[MinValueValidator(Decimal('0')), MaxValueValidator(Decimal('100'))],
         help_text="Pourcentage de remise auto"
     )
 
@@ -83,9 +89,10 @@ class PharmacySettings(models.Model):
     )
 
     coefficient_direct_commande = models.DecimalField(
-        max_digits=5, 
-        decimal_places=2, 
-        default=1.35, 
+        max_digits=5,
+        decimal_places=2,
+        default=1.35,
+        validators=[MinValueValidator(Decimal('0.01'))],
         help_text="Coefficient multiplicateur pour les commandes directes (Euro -> Revient)"
     )
 
@@ -93,6 +100,7 @@ class PharmacySettings(models.Model):
         max_digits=10,
         decimal_places=3,
         default=655.957,
+        validators=[MinValueValidator(Decimal('0.001'))],
         help_text="Taux de change actif pour les commandes directes (Euro -> FCFA). Source de vérité unique."
     )
 
@@ -101,26 +109,31 @@ class PharmacySettings(models.Model):
         max_digits=5,
         decimal_places=2,
         default=1.34,
+        validators=[MinValueValidator(Decimal('0.01'))],
         help_text="Taux de marge minimum acceptable pour les commandes (ex: 1.34 = 25% de marge)"
     )
     low_stock_threshold_days = models.IntegerField(
         default=15,
+        validators=[MinValueValidator(0)],
         help_text="Seuil d'alerte stock bas (en jours de couverture)"
     )
     last_stock_analytics_run = models.DateTimeField(null=True, blank=True)
     dormant_stock_days = models.IntegerField(
         default=90,
+        validators=[MinValueValidator(0)],
         help_text="Seuil pour considérer un stock comme dormant (sans vente depuis X jours)"
     )
     debt_alert_threshold = models.DecimalField(
         max_digits=12,
         decimal_places=0,
         default=100000,
+        validators=[MinValueValidator(Decimal('0'))],
         help_text="Seuil d'alerte pour la dette client (FCFA)"
     )
-    
+
     auto_logout_timeout = models.IntegerField(
         default=15,
+        validators=[MinValueValidator(0)],
         help_text="Délai d'inactivité avant déconnexion automatique (en minutes, 0 pour désactiver)"
     )
     
@@ -179,10 +192,12 @@ class PharmacySettings(models.Model):
     )
     backup_interval_minutes = models.IntegerField(
         default=1440,
+        validators=[MinValueValidator(1)],
         help_text="Intervalle entre deux sauvegardes automatiques (en minutes, ex: 60=toutes les heures, 1440=quotidien, 10080=hebdomadaire)"
     )
     backup_retention_count = models.IntegerField(
         default=30,
+        validators=[MinValueValidator(0)],
         help_text="Nombre maximal de sauvegardes à conserver"
     )
     secondary_backup_path = models.CharField(
@@ -261,44 +276,54 @@ class PharmacySettings(models.Model):
     # --- Paramètres Expert IA (Santé du Stock) ---
     availability_weight = models.IntegerField(
         default=60,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
         help_text="Poids de la disponibilité dans le score de santé global (0-100)"
     )
     rotation_weight = models.IntegerField(
         default=40,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
         help_text="Poids de la rotation dans le score de santé global (0-100)"
     )
 
     # --- Seuils d'alertes et de performance configurables ---
     perf_drop_threshold = models.DecimalField(
-        max_digits=3, decimal_places=2, default=0.70, 
+        max_digits=3, decimal_places=2, default=0.70,
+        validators=[MinValueValidator(Decimal('0')), MaxValueValidator(Decimal('1'))],
         help_text="Seuil de baisse CA pour alerte (0.7 = 30% de baisse)"
     )
     perf_alert_hour = models.IntegerField(
-        default=14, 
+        default=14,
+        validators=[MinValueValidator(0), MaxValueValidator(23)],
         help_text="Heure à partir de laquelle l'alerte performance se déclenche"
     )
     good_coverage_min_days = models.IntegerField(
-        default=15, 
+        default=15,
+        validators=[MinValueValidator(0)],
         help_text="Couverture stock min (jours) pour score santé"
     )
     good_coverage_max_days = models.IntegerField(
-        default=90, 
+        default=90,
+        validators=[MinValueValidator(0)],
         help_text="Couverture stock max (jours) pour score santé"
     )
     critical_stock_days = models.IntegerField(
-        default=7, 
+        default=7,
+        validators=[MinValueValidator(0)],
         help_text="Seuil stock critique (jours)"
     )
     imminent_rupture_days = models.IntegerField(
-        default=3, 
+        default=3,
+        validators=[MinValueValidator(0)],
         help_text="Seuil rupture imminente (jours)"
     )
     traffic_analysis_days = models.IntegerField(
-        default=30, 
+        default=30,
+        validators=[MinValueValidator(0)],
         help_text="Fenêtre d'analyse du trafic horaire (jours)"
     )
     shortage_alert_threshold = models.IntegerField(
-        default=10, 
+        default=10,
+        validators=[MinValueValidator(0)],
         help_text="Nb de produits en rupture avant alerte"
     )
 
@@ -310,6 +335,7 @@ class PharmacySettings(models.Model):
     )
     monthly_report_day = models.IntegerField(
         default=1,
+        validators=[MinValueValidator(1), MaxValueValidator(28)],
         help_text="Jour du mois pour l'envoi du rapport (1-28)"
     )
     # Éléments du rapport (cases à cocher)
@@ -402,26 +428,32 @@ class PharmacySettings(models.Model):
     )
     taux_accompte_reel = models.DecimalField(
         max_digits=5, decimal_places=2, default=2.00,
+        validators=[MinValueValidator(Decimal('0')), MaxValueValidator(Decimal('100'))],
         help_text="Taux d'accompte mensuel sur CA en régime Réel (2% par défaut)"
     )
     taux_accompte_simplifie = models.DecimalField(
         max_digits=5, decimal_places=2, default=5.00,
+        validators=[MinValueValidator(Decimal('0')), MaxValueValidator(Decimal('100'))],
         help_text="Taux d'accompte mensuel sur CA en régime Simplifié (5% par défaut)"
     )
     taux_cac = models.DecimalField(
         max_digits=5, decimal_places=2, default=10.00,
+        validators=[MinValueValidator(Decimal('0')), MaxValueValidator(Decimal('100'))],
         help_text="Taux CAC (Centimes Additionnels Communaux) appliqué sur l'accompte (10% par défaut)"
     )
     taux_precompte_reel = models.DecimalField(
         max_digits=5, decimal_places=2, default=1.00,
+        validators=[MinValueValidator(Decimal('0')), MaxValueValidator(Decimal('100'))],
         help_text="Taux de précompte sur achats en régime Réel (1% par défaut)"
     )
     taux_precompte_simplifie = models.DecimalField(
         max_digits=5, decimal_places=2, default=5.00,
+        validators=[MinValueValidator(Decimal('0')), MaxValueValidator(Decimal('100'))],
         help_text="Taux de précompte sur achats en régime Simplifié (3-5%, 5% par défaut)"
     )
     taux_marge_brute = models.DecimalField(
         max_digits=5, decimal_places=2, default=14.00,
+        validators=[MinValueValidator(Decimal('0')), MaxValueValidator(Decimal('100'))],
         help_text="Taux sur marge brute en mode marge administrée (14% par défaut)"
     )
 
@@ -505,6 +537,7 @@ class TVA(models.Model):
     """
     taux = models.DecimalField(
         max_digits=5, decimal_places=2, unique=True,
+        validators=[MinValueValidator(Decimal('0')), MaxValueValidator(Decimal('100'))],
         help_text="Taux de TVA en pourcentage (ex: 19.25)"
     )
     libelle = models.CharField(

@@ -2,9 +2,9 @@
 Tests pour LotAllocationService — allocation FIFO/FEFO, restauration, sync stock.
 Purement additif : aucun impact sur le code existant.
 """
-import pytest
 from decimal import Decimal
 from django.contrib.auth import get_user_model
+from django.test import TestCase
 
 from api.models import (
     Facture,
@@ -19,8 +19,7 @@ from api.services.lot_allocation_service import LotAllocationService
 User = get_user_model()
 
 
-@pytest.mark.django_db
-class TestLotAllocationService:
+class TestLotAllocationService(TestCase):
 
     def _create_product_with_lots(self, lots_data):
         """Helper: crée un produit + plusieurs lots."""
@@ -166,7 +165,7 @@ class TestLotAllocationService:
         ])
         facture, fp = self._create_facture_produit(produit, quantity=10)
 
-        with pytest.raises(ValueError, match="Stock insuffisant"):
+        with self.assertRaisesRegex(ValueError, "Stock insuffisant"):
             LotAllocationService.allocate_specific_lot(fp, lots[0], 10)
 
     def test_allocate_specific_lot_zero_quantity(self):

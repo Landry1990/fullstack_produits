@@ -1,5 +1,5 @@
 from rest_framework import permissions, status, viewsets
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import BasePermission, IsAuthenticated, SAFE_METHODS
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -19,7 +19,23 @@ from ..serializers import (
     PharmacySettingsSerializer,
 )
 
-# ... (existing classes)
+class IsAdminOrMenuAllowed(BasePermission):
+    """Lecture pour tout utilisateur authentifié ; écriture réservée au
+    staff/superuser ou aux profils dont `allowed_menus` contient une des
+    clés `write_menu_keys` définies sur la vue."""
+    message = "Vous n'avez pas les droits pour modifier cette configuration."
+
+    def has_permission(self, request, view):
+        user = request.user
+        if not (user and user.is_authenticated):
+            return False
+        if request.method in SAFE_METHODS:
+            return True
+        if user.is_superuser or user.is_staff:
+            return True
+        allowed = getattr(getattr(user, 'profile', None), 'allowed_menus', None) or []
+        return any(m in allowed for m in getattr(view, 'write_menu_keys', ()))
+
 
 class ConfigurationOptionViewSet(viewsets.ModelViewSet):
     """
@@ -27,7 +43,8 @@ class ConfigurationOptionViewSet(viewsets.ModelViewSet):
     """
     queryset = ConfigurationOption.objects.all()
     serializer_class = ConfigurationOptionSerializer
-    permission_classes = [permissions.IsAuthenticated] # Read allowed for all, Write restricted if needed elsewhere
+    permission_classes = [IsAdminOrMenuAllowed] # Lecture pour tous les authentifiés, écriture admin ou menu autorisé
+    write_menu_keys = ('inventaire', 'inventaire_organisation')
     pagination_class = StandardResultsSetPagination
     filterset_fields = ['type', 'code', 'is_active']
     ordering_fields = ['order', 'label']
@@ -64,7 +81,8 @@ class LoyaltySettingViewSet(viewsets.ModelViewSet):
     """
     queryset = LoyaltySetting.objects.all()
     serializer_class = LoyaltySettingSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAdminOrMenuAllowed]
+    write_menu_keys = ('clients',)
     pagination_class = None
 
     def list(self, request, *args, **kwargs):
@@ -125,7 +143,7 @@ class InvoiceConfigurationView(APIView):
     """
 
     def get_permissions(self):
-        permission_classes = [permissions.IsAdminUser] if self.request.method == 'PUT' else [IsAuthenticated]
+        permission_classes = [permissions.IsAdminUser] if self.request.method not in permissions.SAFE_METHODS else [IsAuthenticated]
         return [permission() for permission in permission_classes]
 
     def get(self, request):
@@ -158,7 +176,7 @@ class PharmacySettingsView(APIView):
     """
 
     def get_permissions(self):
-        permission_classes = [permissions.IsAdminUser] if self.request.method == 'PUT' else [IsAuthenticated]
+        permission_classes = [permissions.IsAdminUser] if self.request.method not in permissions.SAFE_METHODS else [IsAuthenticated]
         return [permission() for permission in permission_classes]
 
     def get(self, request):
@@ -192,7 +210,8 @@ class PharmacySettingsView(APIView):
 
 class WhatsAppTestView(APIView):
     """Endpoint pour tester l'envoi d'un message WhatsApp."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrMenuAllowed]
+    write_menu_keys = ('settings', 'settings_pharmacie')
 
     def post(self, request):
         import logging
@@ -298,7 +317,8 @@ class WhatsAppTestView(APIView):
 
 class TelegramTestView(APIView):
     """Envoie un message test via le bot Telegram."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrMenuAllowed]
+    write_menu_keys = ('settings', 'settings_pharmacie')
 
     def post(self, request):
         from ..models import PharmacySettings
@@ -332,7 +352,8 @@ class TelegramTestView(APIView):
 
 class TelegramGetChatIdView(APIView):
     """Récupère automatiquement le chat_id depuis les mises à jour du bot."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrMenuAllowed]
+    write_menu_keys = ('settings', 'settings_pharmacie')
 
     def post(self, request):
         import requests as req_lib
@@ -372,7 +393,10 @@ class TelegramGetChatIdView(APIView):
 
 class TelegramRapportFlashView(APIView):
     """Envoie le rapport flash du jour via Telegram."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrMenuAllowed]
+    # Appelé aussi depuis le Dashboard (bouton "Rapport flash") : on garde la clé
+    # du menu appelant pour ne pas casser le workflow existant.
+    write_menu_keys = ('settings', 'settings_pharmacie', 'dashboard')
 
     def post(self, request):
 
@@ -405,10 +429,10 @@ class TelegramRapportFlashView(APIView):
             if not stats:
                 from ..models import Facture, Produit
                 today = timezone.localtime(timezone.now()).date()
-                factures_today = Facture.objects.filter(date__date=today, status='VALIDEE')
+                factures_today = Facture.objects.filter(date__date=today, status=Facture.Status.VALIDEE)
                 ca = sum(f.total_ttc for f in factures_today) or 0
                 nb_ventes = factures_today.count()
-                ruptures = Produit.objects.filter(stock_quantity__lte=0, est_actif=True).count()
+                ruptures = Produit.objects.filter(stock__lte=0, is_active=True).count()
                 creances = 0
 
             arrow = "📈" if float(change) >= 0 else "📉"
@@ -439,7 +463,9 @@ class TelegramRapportFlashView(APIView):
 
 class TelegramRapportFlashDateView(APIView):
     """Envoie le rapport flash d'une date précise via Telegram."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrMenuAllowed]
+    # Appelé aussi depuis HistoriqueVentes (ventes/ventes_historique).
+    write_menu_keys = ('settings', 'settings_pharmacie', 'ventes', 'ventes_historique')
 
     def post(self, request):
 
@@ -538,7 +564,9 @@ class TelegramRapportFlashDateView(APIView):
 
 class TelegramRapportInventaireView(APIView):
     """Envoie un résumé d'inventaire via Telegram : valeur stock, écarts, top + et top -."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrMenuAllowed]
+    # Appelé aussi depuis l'éditeur d'inventaire et le Dashboard.
+    write_menu_keys = ('settings', 'settings_pharmacie', 'inventaire', 'inventaire_saisie', 'dashboard')
 
     def post(self, request):
         from django.utils import timezone
@@ -642,7 +670,9 @@ class TelegramRapportInventaireView(APIView):
 
 class TelegramRapportMensuelView(APIView):
     """Envoie un résumé du rapport mensuel/période via Telegram. Reçoit les données déjà calculées du frontend."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrMenuAllowed]
+    # Appelé aussi depuis l'écran Rapport mensuel (statistiques/statistiques_mensuels).
+    write_menu_keys = ('settings', 'settings_pharmacie', 'statistiques', 'statistiques_mensuels')
 
     def post(self, request):
         from django.utils import timezone
@@ -736,9 +766,10 @@ class TVAViewSet(viewsets.ModelViewSet):
     
     queryset = TVA.objects.all()
     serializer_class = TVASerializer
-    permission_classes = [permissions.IsAuthenticated] # Read/Write for authenticated users (manage in settings)
+    permission_classes = [IsAdminOrMenuAllowed] # Lecture pour tous les authentifiés, écriture admin ou menu autorisé
+    write_menu_keys = ('settings', 'settings_pharmacie')
     pagination_class = StandardResultsSetPagination
-    
+
     def perform_create(self, serializer):
         obj = serializer.save()
         log_audit(

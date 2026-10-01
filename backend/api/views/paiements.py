@@ -7,6 +7,7 @@ from rest_framework.response import Response
 
 from ..idempotency import idempotent_action
 from ..models import PaiementFournisseur
+from ..utils.validation import parse_date_param, parse_id
 from ..pagination import StandardResultsSetPagination
 from ..serializers import PaiementFournisseurSerializer
 
@@ -17,6 +18,7 @@ class PaiementFournisseurViewSet(viewsets.ModelViewSet):
     serializer_class = PaiementFournisseurSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = StandardResultsSetPagination
+    http_method_names = ['get', 'post', 'delete', 'head', 'options']
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['fournisseur', 'commande', 'mode_paiement']
     search_fields = ['reference', 'fournisseur__name', 'notes']
@@ -25,8 +27,9 @@ class PaiementFournisseurViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        date_debut = self.request.query_params.get('date_debut')
-        date_fin = self.request.query_params.get('date_fin')
+        # Date invalide → 400 au lieu d'une chaîne brute en filtre (500 ou filtre incohérent)
+        date_debut = parse_date_param(self.request.query_params.get('date_debut'), field='date_debut')
+        date_fin = parse_date_param(self.request.query_params.get('date_fin'), field='date_fin')
         if date_debut:
             queryset = queryset.filter(date_paiement__gte=date_debut)
         if date_fin:
@@ -47,7 +50,8 @@ class PaiementFournisseurViewSet(viewsets.ModelViewSet):
         fournisseur_id = request.query_params.get('fournisseur_id')
         if not fournisseur_id:
             return Response({"error": "fournisseur_id est requis"}, status=status.HTTP_400_BAD_REQUEST)
-        
+        fournisseur_id = parse_id(fournisseur_id, field='fournisseur_id')
+
         paiements = self.queryset.filter(fournisseur_id=fournisseur_id)
         serializer = self.get_serializer(paiements, many=True)
         return Response(serializer.data)
@@ -78,9 +82,9 @@ class PaiementFournisseurViewSet(viewsets.ModelViewSet):
         """
         Génère un récapitulatif des paiements par date et fournisseur.
         """
-        date_debut = request.query_params.get('date_debut')
-        date_fin = request.query_params.get('date_fin')
-        
+        date_debut = parse_date_param(request.query_params.get('date_debut'), field='date_debut')
+        date_fin = parse_date_param(request.query_params.get('date_fin'), field='date_fin')
+
         query = PaiementFournisseur.objects.all().select_related('fournisseur')
         
         if date_debut:

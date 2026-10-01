@@ -8,6 +8,7 @@ from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from ...audit_helpers import log_audit
@@ -19,6 +20,7 @@ from ...serializers import (
     ClotureCaisseSerializer,
 )
 from ...sudo_utils import validate_sudo_mode
+from ...utils.validation import parse_date_param, parse_id
 from ..rapports.tz_utils import parse_api_datetime as _parse_iso_datetime
 from .caisse_mixins.cloture_mixin import CaisseClotureMixin
 from .caisse_mixins.reporting_mixin import CaisseReportingMixin
@@ -40,6 +42,7 @@ class CaisseViewSet(CaisseReportingMixin, CaisseClotureMixin, BaseViewSetConfig,
     serializer_class = CaisseSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ['facture', 'mode_paiement', 'statut', 'user']
+    http_method_names = ['get', 'post', 'head', 'options']
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -53,18 +56,24 @@ class CaisseViewSet(CaisseReportingMixin, CaisseClotureMixin, BaseViewSetConfig,
         date_fin = self.request.query_params.get('date_fin')
         user_id = self.request.query_params.get('user') or self.request.query_params.get('user_id')
 
+        # parse_id lève ValidationError (400) : 'abc' dans le filtre ORM
+        # lèverait ValueError → 500.
         if user_id:
-            queryset = queryset.filter(user_id=user_id)
+            queryset = queryset.filter(user_id=parse_id(user_id, field='user_id'))
 
+        # Date invalide → 400 (ignorer le filtre renverrait des résultats
+        # non filtrés, trompeurs pour l'utilisateur).
         if date_debut:
             dt = _parse_iso_datetime(date_debut)
-            if dt:
-                queryset = queryset.filter(date_paiement__gte=dt)
+            if dt is None:
+                raise ValidationError({'detail': f"Le paramètre 'date_debut' est invalide : '{date_debut}'. Format attendu : AAAA-MM-JJ."})
+            queryset = queryset.filter(date_paiement__gte=dt)
 
         if date_fin:
             dt = _parse_iso_datetime(date_fin)
-            if dt:
-                queryset = queryset.filter(date_paiement__lte=dt)
+            if dt is None:
+                raise ValidationError({'detail': f"Le paramètre 'date_fin' est invalide : '{date_fin}'. Format attendu : AAAA-MM-JJ."})
+            queryset = queryset.filter(date_paiement__lte=dt)
 
         return queryset
 
@@ -148,9 +157,9 @@ class CaisseViewSet(CaisseReportingMixin, CaisseClotureMixin, BaseViewSetConfig,
         try:
             montant = Decimal(str(request.data.get('montant', 0)))
         except (InvalidOperation, TypeError, ValueError):
-            montant = Decimal(0)
-        if montant < Decimal(0):
-            return Response({'detail': "Le montant d'un paiement ne peut pas être négatif."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': "Le montant du paiement est invalide."}, status=status.HTTP_400_BAD_REQUEST)
+        if not montant.is_finite() or montant <= Decimal(0):
+            return Response({'detail': "Le montant d'un paiement doit être supérieur à zéro."}, status=status.HTTP_400_BAD_REQUEST)
 
         error_res = self._check_poste_vente(request)
         if error_res:
@@ -192,10 +201,11 @@ class CaisseViewSet(CaisseReportingMixin, CaisseClotureMixin, BaseViewSetConfig,
 
         for item in items:
             try:
-                if Decimal(str(item.get('montant', 0))) < Decimal(0):
-                    return Response({'detail': "Le montant d'un paiement ne peut pas être négatif."}, status=status.HTTP_400_BAD_REQUEST)
+                montant = Decimal(str(item.get('montant', 0)))
             except (InvalidOperation, TypeError, ValueError):
-                pass
+                return Response({'detail': "Le montant du paiement est invalide."}, status=status.HTTP_400_BAD_REQUEST)
+            if not montant.is_finite() or montant <= Decimal(0):
+                return Response({'detail': "Le montant d'un paiement doit être supérieur à zéro."}, status=status.HTTP_400_BAD_REQUEST)
 
         _validation_user, error_res = validate_sudo_mode(request, permission_attr='can_cash_out')
         if error_res:
@@ -262,14 +272,16 @@ class ClotureCaisseViewSet(BaseViewSetConfig, viewsets.ReadOnlyModelViewSet):
         user_id = drf_request.query_params.get('user') or drf_request.query_params.get('user_id')  # type: ignore[attr-defined]
         poste_caisse_id = drf_request.query_params.get('poste_caisse')  # type: ignore[attr-defined]
 
+        # Dates/ids invalides → 400 (chaîne brute dans le filtre ORM → 500,
+        # ou filtre silencieusement ignoré → résultats trompeurs).
         if date_debut:
-            queryset = queryset.filter(date__date__gte=date_debut)
+            queryset = queryset.filter(date__date__gte=parse_date_param(date_debut, field='date_debut'))
         if date_fin:
-            queryset = queryset.filter(date__date__lte=date_fin)
+            queryset = queryset.filter(date__date__lte=parse_date_param(date_fin, field='date_fin'))
         if user_id:
-            queryset = queryset.filter(user_id=user_id)
+            queryset = queryset.filter(user_id=parse_id(user_id, field='user_id'))
         if poste_caisse_id:
-            queryset = queryset.filter(poste_caisse_id=poste_caisse_id)
+            queryset = queryset.filter(poste_caisse_id=parse_id(poste_caisse_id, field='poste_caisse'))
 
         return queryset
 
@@ -306,7 +318,7 @@ class ClotureCaisseViewSet(BaseViewSetConfig, viewsets.ReadOnlyModelViewSet):
 
         qs = ClotureCaisse.objects.filter(date__month=month, date__year=year)
         if user_id:
-            qs = qs.filter(user_id=user_id)
+            qs = qs.filter(user_id=parse_id(user_id, field='user_id'))
 
         performances = qs.values(
             'user__id', 'user__username', 'user__first_name', 'user__last_name'

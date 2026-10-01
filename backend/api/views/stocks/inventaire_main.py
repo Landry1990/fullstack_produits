@@ -28,8 +28,13 @@ from ...models import (
 )
 from ...pagination import StandardResultsSetPagination
 from ...search_mixins import MultiTermSearchMixin
-from ...serializers import InventaireSerializer, LigneInventaireSerializer
+from ...serializers import (
+    InventaireSerializer,
+    LigneInventaireSerializer,
+    LigneInventaireUpdateSerializer,
+)
 from ...serializers_optimized import InventaireListSerializer
+from ...utils.validation import parse_id
 from .inventaire import (
     audit_discrepancies,
     bulk_delete_lignes_inventaire,
@@ -335,7 +340,21 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
                     # Fusionner : on ajoute la quantité physique
                     # On recalcule l'écart par rapport au théorique initial
                     new_qte = data.get('quantite_physique', data.get('quantite_comptee', 0))
-                    existing_ligne.quantite_physique += int(new_qte)
+                    try:
+                        if isinstance(new_qte, bool) or (isinstance(new_qte, float) and not new_qte.is_integer()):
+                            raise ValueError
+                        new_qte = int(new_qte)
+                    except (TypeError, ValueError, OverflowError):
+                        return Response(
+                            {'error': 'La quantité physique doit être un nombre entier.'},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                    if new_qte < 0:
+                        return Response(
+                            {'error': 'La quantité physique ne peut pas être négative.'},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                    existing_ligne.quantite_physique += new_qte
                     existing_ligne.save() # Le ecart est calculé dans save() du modèle
                     
                     serializer = LigneInventaireSerializer(existing_ligne)
@@ -351,6 +370,10 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
             except (StockLot.DoesNotExist, Produit.DoesNotExist) as e:
                 transaction.set_rollback(True)
                 return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            except (ValueError, TypeError) as e:
+                # ex: id produit/lot non numérique ('abc') → 400 au lieu de 500
+                transaction.set_rollback(True)
+                return Response({'error': f'Valeur invalide: {e!s}'}, status=status.HTTP_400_BAD_REQUEST)
             except ValidationError as e:
                 transaction.set_rollback(True)
                 return Response({'error': f"Erreur de validation: {e!s}"}, status=status.HTTP_400_BAD_REQUEST)
@@ -537,8 +560,9 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         filter_id_str = request.query_params.get('filter_id')
         inventaire_id_str = request.query_params.get('inventaire_id')
 
-        filter_id = int(filter_id_str) if filter_id_str and filter_id_str.isdigit() else None
-        inventaire_id = int(inventaire_id_str) if inventaire_id_str and inventaire_id_str.isdigit() else None
+        # IDs invalides → 400 (un filtre silencieusement supprimé = résultats trompeurs)
+        filter_id = parse_id(filter_id_str, field='filter_id', required=False)
+        inventaire_id = parse_id(inventaire_id_str, field='inventaire_id', required=False)
 
         if inventaire_id:
             grouped = _get_rows_from_inventaire(inventaire_id, group_by, stock_filter, filter_id)
@@ -571,8 +595,9 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         blind = request.query_params.get('blind', 'false').lower() in ('true', '1', 'yes')
         stock_location = request.query_params.get('stock_location', 'tous')
 
-        filter_id = int(filter_id_str) if filter_id_str and filter_id_str.isdigit() else None
-        inventaire_id = int(inventaire_id_str) if inventaire_id_str and inventaire_id_str.isdigit() else None
+        # IDs invalides → 400 (un filtre silencieusement supprimé = résultats trompeurs)
+        filter_id = parse_id(filter_id_str, field='filter_id', required=False)
+        inventaire_id = parse_id(inventaire_id_str, field='inventaire_id', required=False)
 
         return generate_listing_excel(
             group_by=group_by,
@@ -591,7 +616,13 @@ class LigneInventaireViewSet(viewsets.ModelViewSet):
     pagination_class = StandardResultsSetPagination
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ['inventaire']
-    
+
+    def get_serializer_class(self):
+        # En mise à jour, seule la quantité physique comptée est modifiable
+        if self.action in ('update', 'partial_update'):
+            return LigneInventaireUpdateSerializer
+        return super().get_serializer_class()
+
     @transaction.atomic
     def create(self, request, *args, **kwargs):
         """

@@ -8,6 +8,7 @@ from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, permissions, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from ..audit_helpers import log_audit
@@ -15,6 +16,7 @@ from ..filters import AuditLogFilter
 from ..models import AuditLog
 from ..pagination import StandardResultsSetPagination
 from ..serializers import AuditLogSerializer
+from ..utils.validation import parse_date_param
 
 
 class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
@@ -37,12 +39,21 @@ class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
         return [permissions.IsAuthenticated()]
 
     def _filtered_queryset(self):
-        """Applique le filterset aux paramètres GET et retourne le queryset filtré."""
+        """Applique le filterset aux paramètres GET et retourne le queryset filtré.
+
+        Lève ValidationError (400) si un paramètre de filtre fourni est
+        invalide — un queryset non filtré retourné silencieusement serait
+        trompeur.
+        """
+        # date_from/date_to sont des CharFilter custom : une valeur invalide y
+        # serait ignorée silencieusement → validation explicite ici.
+        parse_date_param(self.request.GET.get('date_from'), field='date_from')
+        parse_date_param(self.request.GET.get('date_to'), field='date_to')
         qs = self.get_queryset()
         filterset = AuditLogFilter(self.request.GET, queryset=qs)
-        if filterset.is_valid():
-            return filterset.qs
-        return qs
+        if not filterset.is_valid():
+            raise ValidationError(filterset.errors)
+        return filterset.qs
 
     def get_queryset(self):
         user = self.request.user

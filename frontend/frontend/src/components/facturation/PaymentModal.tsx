@@ -338,6 +338,7 @@ export default function PaymentModal({
                       ref={paymentInputRef}
                       type="number"
                       step="0.01"
+                      min={0}
                       value={montantPaye}
                       onChange={(e) => setMontantPaye(e.target.value)}
                       readOnly={centralizedCashRegister}
@@ -353,7 +354,7 @@ export default function PaymentModal({
                 <button
                     ref={submitBtnRef}
                     type="submit"
-                    disabled={loading || (isNewSale && !montantPaye) || (isMultiCaisse && !centralizedCashRegister && isNewSale && !selectedPosteVenteId) || (centralizedCashRegister && isNewSale && !postesVenteActifs?.some((p) => !!p.caisse))}
+                    disabled={loading || (isNewSale && (!montantPaye || Number(montantPaye) < 0)) || (isMultiCaisse && !centralizedCashRegister && isNewSale && !selectedPosteVenteId) || (centralizedCashRegister && isNewSale && !postesVenteActifs?.some((p) => !!p.caisse))}
                     className="inline-flex items-center justify-center w-full h-10 rounded-lg text-sm font-semibold bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {loading ? (

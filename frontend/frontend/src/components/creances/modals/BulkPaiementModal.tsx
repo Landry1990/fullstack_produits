@@ -79,6 +79,7 @@ export const BulkPaiementModal: React.FC<BulkPaiementModalProps> = ({
                         <input
                             id="bulk-montant"
                             type="number"
+                            min={0}
                             placeholder={t('creances:bulk_payment.amount_placeholder', { x: formatCurrency(totalAmount) })}
                             value={form.montantTotalBulk}
                             onChange={(e) => {
@@ -124,6 +125,7 @@ export const BulkPaiementModal: React.FC<BulkPaiementModalProps> = ({
                         <input
                             id="bulk-reference"
                             type="text"
+                            maxLength={100}
                             placeholder={t('creances:bulk_modal.reference_placeholder')}
                             value={form.referencePaiement}
                             onChange={(e) => form.setReferencePaiement(e.target.value)}

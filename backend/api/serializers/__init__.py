@@ -28,10 +28,15 @@ from .billing import (
     FactureProduitAllocationSerializer,
     FactureProduitSerializer,
     FactureSerializer,
+    FactureUpdateSerializer,
 )
 
 # Clients & Tiers
-from .client_credit import AvoirClientSerializer, LigneAvoirClientSerializer
+from .client_credit import (
+    AvoirClientSerializer,
+    AvoirClientUpdateSerializer,
+    LigneAvoirClientSerializer,
+)
 from .clients import (
     AyantDroitSerializer,
     ClientSerializer,
@@ -63,7 +68,9 @@ from .inventory import (
     HistoriqueTransformationSerializer,
     InventaireSerializer,
     LigneAvoirSerializer,
+    LigneAvoirUpdateSerializer,
     LigneInventaireSerializer,
+    LigneInventaireUpdateSerializer,
     MouvementStockSerializer,
     RelationTransformationSerializer,
     StockAdjustmentSerializer,
@@ -94,8 +101,10 @@ from .products import (
     GroupeSerializer,
     MedicamentReferenceSerializer,
     ProduitSerializer,
+    ProduitUpdateSerializer,
     RayonSerializer,
     StockLotSerializer,
+    StockLotUpdateSerializer,
     SubstanceSerializer,
 )
 
@@ -135,6 +144,7 @@ __all__ = [
     # Audit
     'AuditLogSerializer',
     'AvoirClientSerializer',
+    'AvoirClientUpdateSerializer',
     'AvoirSerializer',
     'AyantDroitSerializer',
     'CaisseSerializer',
@@ -158,6 +168,7 @@ __all__ = [
     'FactureProduitAllocationSerializer',
     'FactureProduitSerializer',
     'FactureSerializer',
+    'FactureUpdateSerializer',
     'FamilleRisqueSerializer',
     'FormeSerializer',
     # Orders
@@ -170,10 +181,12 @@ __all__ = [
     'JournalComptableSerializer',
     'LeaveRequestSerializer',
     'LigneAvoirSerializer',
+    'LigneAvoirUpdateSerializer',
     'LigneAvoirClientSerializer',
     'LigneEcritureSerializer',
     # Inventory
     'LigneInventaireSerializer',
+    'LigneInventaireUpdateSerializer',
     'LigneOrdonnancierSerializer',
     'LoyaltySettingSerializer',
     'MedicamentReferenceSerializer',
@@ -189,6 +202,7 @@ __all__ = [
     'PosteCaisseSerializer',
     'PosteVenteSerializer',
     'ProduitSerializer',
+    'ProduitUpdateSerializer',
     # Users
     'ProfileSerializer',
     # Promis
@@ -212,6 +226,7 @@ __all__ = [
     'SmsTemplateSerializer',
     'StockAdjustmentSerializer',
     'StockLotSerializer',
+    'StockLotUpdateSerializer',
     # Products
     'SubstanceSerializer',
     # Config

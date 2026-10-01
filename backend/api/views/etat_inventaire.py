@@ -18,6 +18,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from ..models import Forme, Groupe, Produit, Rayon, StockLot
+from ..utils.validation import parse_id, parse_int
 
 
 class EtatInventairePDFView(APIView):
@@ -77,10 +78,12 @@ class EtatInventairePDFView(APIView):
         ).prefetch_related(active_lots_prefetch).order_by('name')
 
         # Filtrer par entité spécifique si filter_id est fourni
+        # Un filter_id non entier ou sans entité correspondante → 400
+        # (le filtre ne doit pas être silencieusement supprimé : résultats trompeurs)
         filter_name = None
         if filter_id:
+            filter_id = parse_id(filter_id, field='filter_id')
             try:
-                filter_id = int(filter_id)
                 if group_by == 'RAYON':
                     produits = produits.filter(rayon_id=filter_id)
                     rayon = Rayon.objects.get(id=filter_id)
@@ -93,8 +96,11 @@ class EtatInventairePDFView(APIView):
                     produits = produits.filter(groupe_id=filter_id)
                     groupe = Groupe.objects.get(id=filter_id)
                     filter_name = groupe.nom
-            except (ValueError, Rayon.DoesNotExist, Forme.DoesNotExist, Groupe.DoesNotExist):
-                pass  # Ignorer le filtre invalide
+            except (Rayon.DoesNotExist, Forme.DoesNotExist, Groupe.DoesNotExist):
+                return Response(
+                    {'error': 'Paramètre filter_id invalide : aucune entité correspondante.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
         # Limite de sécurité pour éviter les timeouts / OOM sur les très gros catalogues
         MAX_PRODUITS = 5000
@@ -149,13 +155,9 @@ class EtatInventairePDFView(APIView):
 
         # Support du format JSON pour l'impression frontend
         if request.query_params.get('format', '').lower() == 'json':
-            try:
-                page = int(request.query_params.get('page', 1))
-                page_size = int(request.query_params.get('page_size', 50))
-            except (ValueError, TypeError):
-                page, page_size = 1, 50
-            page = max(1, page)
-            page_size = max(1, min(page_size, 200))
+            # Pagination : paramètres fournis mais invalides → 400
+            page = parse_int(request.query_params.get('page', 1), field='page', min_value=1, max_value=500)
+            page_size = parse_int(request.query_params.get('page_size', 50), field='page_size', min_value=1, max_value=500)
 
             # Aplatir toutes les lignes pour la pagination JSON
             all_items = []

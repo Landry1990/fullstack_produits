@@ -23,7 +23,12 @@ class PromisSerializer(serializers.ModelSerializer):
             'quantite', 'status', 'status_display', 'date_promis', 'date_livraison',
             'notes', 'created_by', 'created_by_name'
         ]
-        read_only_fields = ['date_promis', 'date_livraison', 'created_by']
+        read_only_fields = ['date_promis', 'date_livraison', 'created_by', 'status']
+
+    def validate_quantite(self, value):
+        if value is None or value <= 0:
+            raise serializers.ValidationError("La quantité doit être un entier strictement positif.")
+        return value
 
     def get_produit_name(self, obj):
         return obj.produit.name if obj.produit else obj.produit_nom
@@ -96,6 +101,15 @@ class CouponMonnaieSerializer(serializers.ModelSerializer):
             'facture_origine', 'facture_utilisation', 'notes'
         ]
         read_only_fields = ['id', 'numero', 'date_creation', 'date_utilisation']
+
+    def validate_montant(self, value):
+        """Un coupon de monnaie doit être strictement positif
+        (un montant négatif créerait de la monnaie fictive)."""
+        if value is None or not value.is_finite() or value <= 0:
+            raise serializers.ValidationError(
+                "Le montant du coupon doit être supérieur à zéro."
+            )
+        return value
 
     def get_cree_par_nom(self, obj):
         if obj.cree_par:

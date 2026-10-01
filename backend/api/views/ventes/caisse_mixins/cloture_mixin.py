@@ -1,6 +1,7 @@
 """Mixin pour l'action de clôture de caisse (cloturer).
 """
 import logging
+import math
 from decimal import Decimal, InvalidOperation
 
 from django.contrib.auth.models import User
@@ -32,16 +33,32 @@ class CaisseClotureMixin:
             montant_reel = Decimal(str(montant_reel))
         except (ValueError, TypeError, InvalidOperation):
             return Response({'detail': 'Montant invalide.'}, status=status.HTTP_400_BAD_REQUEST)
+        # Decimal('NaN')/Infinity passent le cast mais font planter les calculs
+        # (InvalidOperation) et les montants négatifs n'ont pas de sens métier.
+        # La borne haute correspond au DecimalField(12, 2) de ClotureCaisse.
+        if not montant_reel.is_finite() or montant_reel < 0 or montant_reel > Decimal('9999999999.99'):
+            return Response({'detail': 'Montant invalide.'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Billetage (détail des coupures comptées) — optionnel
         billetage = request.data.get('billetage')
-        if billetage is not None and not isinstance(billetage, dict):
+        if billetage is not None and not self._est_billetage_valide(billetage):
             billetage = None
 
         date_debut = request.data.get('date_debut')
         date_fin = request.data.get('date_fin')
         user_id = request.data.get('user_id')
         poste_caisse_id = request.data.get('poste_caisse_id')
+
+        # user_id / poste_caisse_id doivent être numériques : un string arbitraire
+        # lèverait ValueError dans les requêtes ORM (get/filter) → 500.
+        try:
+            user_id = self._parse_id_ou_none(user_id)
+        except (ValueError, TypeError):
+            return Response({'detail': 'Identifiant de caissier invalide.'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            poste_caisse_id = self._parse_id_ou_none(poste_caisse_id)
+        except (ValueError, TypeError):
+            return Response({'detail': 'Identifiant de poste de caisse invalide.'}, status=status.HTTP_400_BAD_REQUEST)
 
         start_date = None
         end_date = None
@@ -50,11 +67,13 @@ class CaisseClotureMixin:
             start_date = _parse_iso_datetime(date_debut)
             if start_date is None:
                 logger.error(f"Error parsing date_debut {date_debut}")
+                return Response({'detail': 'Date de début invalide.'}, status=status.HTTP_400_BAD_REQUEST)
 
         if date_fin:
             end_date = _parse_iso_datetime(date_fin)
             if end_date is None:
                 logger.error(f"Error parsing date_fin {date_fin}")
+                return Response({'detail': 'Date de fin invalide.'}, status=status.HTTP_400_BAD_REQUEST)
 
         if not start_date:
             # FIX: Filtrer la dernière clôture par user_id pour éviter de mélanger les caissiers
@@ -136,23 +155,40 @@ class CaisseClotureMixin:
         fond_de_caisse = Decimal(str(last_poste.fond_de_caisse)) if last_poste and last_poste.fond_de_caisse else Decimal('0.00')
 
         # Créer les mouvements manuels envoyés par le frontend
+        # Chaque item est validé strictement : le frontend n'envoie que des items
+        # complets ({motif, montant > 0, type ENTREE|SORTIE}) — toute donnée
+        # non conforme est donc suspecte et rejetée en 400.
         mouvements_manuels_data = request.data.get('mouvements_manuels', [])
+        if not isinstance(mouvements_manuels_data, list):
+            return Response({'detail': 'Format des mouvements manuels invalide.'}, status=status.HTTP_400_BAD_REQUEST)
         logger.info(f"[CLOTURE] Mouvements manuels reçus pour user={user_id}: {mouvements_manuels_data}")
         mouvements_crees = []
         mouvements_to_create = []
         for mv in mouvements_manuels_data:
-            montant_mv = mv.get('montant', 0)
+            if not isinstance(mv, dict):
+                return Response({'detail': 'Mouvement manuel invalide.'}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                montant_mv = Decimal(str(mv.get('montant', 0)))
+            except (ValueError, TypeError, InvalidOperation):
+                return Response({'detail': 'Montant de mouvement manuel invalide.'}, status=status.HTTP_400_BAD_REQUEST)
+            if not montant_mv.is_finite() or montant_mv <= 0 or montant_mv > Decimal('9999999999.99'):
+                return Response({'detail': 'Montant de mouvement manuel invalide.'}, status=status.HTTP_400_BAD_REQUEST)
+            type_mv = mv.get('type', 'SORTIE')
+            if type_mv not in ('ENTREE', 'SORTIE'):
+                return Response({'detail': 'Type de mouvement manuel invalide.'}, status=status.HTTP_400_BAD_REQUEST)
             motif_mv = mv.get('motif')
-            logger.info(f"[CLOTURE] Traitement mouvement: montant={montant_mv}, motif={motif_mv}, type={mv.get('type')}")
-            if montant_mv > 0 and motif_mv:
-                mouvements_to_create.append(MouvementCaisse(
-                    type=mv.get('type', 'SORTIE'),
-                    montant=Decimal(str(mv['montant'])),
-                    motif=mv['motif'],
-                    user=target_user,
-                    poste_caisse_id=poste_caisse_id,
-                    date=end_date or timezone.now()
-                ))
+            if not isinstance(motif_mv, str) or not motif_mv.strip():
+                return Response({'detail': 'Motif de mouvement manuel requis.'}, status=status.HTTP_400_BAD_REQUEST)
+            motif_mv = motif_mv.strip()[:200]
+            logger.info(f"[CLOTURE] Traitement mouvement: montant={montant_mv}, motif={motif_mv}, type={type_mv}")
+            mouvements_to_create.append(MouvementCaisse(
+                type=type_mv,
+                montant=montant_mv,
+                motif=motif_mv,
+                user=target_user,
+                poste_caisse_id=poste_caisse_id,
+                date=end_date or timezone.now()
+            ))
         # OPTIMISATION : bulk_create au lieu de N create() individuels
         if mouvements_to_create:
             mouvements_crees = MouvementCaisse.objects.bulk_create(mouvements_to_create)
@@ -199,15 +235,11 @@ class CaisseClotureMixin:
         # recouv_total déjà calculé via ventes_recouv_agg (1 requête au lieu de 2)
         recouv_total = ventes_recouv_agg['total_recouv']
 
-        # Utiliser le montant théorique calculé côté frontend (déjà inclut fond + ventes + entrées - sorties)
-        montant_theorique_frontend = request.data.get('montant_theorique_frontend')
-        if montant_theorique_frontend is not None:
-            try:
-                total_theorique = Decimal(str(montant_theorique_frontend))
-            except (ValueError, TypeError, InvalidOperation):
-                total_theorique = fond_de_caisse + total_ventes + total_entrees - total_sorties
-        else:
-            total_theorique = fond_de_caisse + total_ventes + total_entrees - total_sorties
+        # Le montant théorique est TOUJOURS calculé côté serveur.
+        # 'montant_theorique_frontend' envoyé par le client est volontairement
+        # ignoré : sinon un caissier pourrait envoyer montant_theorique = montant_reel
+        # et masquer un écart de caisse (vol).
+        total_theorique = fond_de_caisse + total_ventes + total_entrees - total_sorties
         ecart = montant_reel - total_theorique
 
         # type: ignore[index] - details is a mixed dict[str, Any] for API response
@@ -273,3 +305,33 @@ class CaisseClotureMixin:
         }
 
         return Response({'status': 'success', 'cloture': cloture_data})  # type: ignore[attr-defined]
+
+    @staticmethod
+    def _parse_id_ou_none(value):
+        """Cast un identifiant en int. Retourne None si absent/vide,
+        lève ValueError/TypeError si non numérique (→ 400 côté appelant)."""
+        if value in (None, ''):
+            return None
+        if isinstance(value, bool):
+            raise ValueError('Identifiant booléen non accepté')
+        return int(value)
+
+    @staticmethod
+    def _est_billetage_valide(data):
+        """Valide le billetage (descriptif des coupures) : dict ≤ 50 clés dont
+        les valeurs sont des nombres finis ≥ 0, ou des dicts imbriqués
+        (1 niveau, ex: billets/pièces) respectant la même règle."""
+        def _nombre_ok(v):
+            return (
+                isinstance(v, (int, float))
+                and not isinstance(v, bool)
+                and math.isfinite(v)
+                and v >= 0
+            )
+        if not isinstance(data, dict) or len(data) > 50:
+            return False
+        return all(
+            _nombre_ok(v)
+            or (isinstance(v, dict) and len(v) <= 50 and all(_nombre_ok(x) for x in v.values()))
+            for v in data.values()
+        )

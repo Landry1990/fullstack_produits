@@ -52,19 +52,23 @@ class Fournisseur(models.Model):
     )
     delai_paiement_jours = models.IntegerField(
         default=0,
+        validators=[MinValueValidator(0)],
         help_text="Délai de paiement accordé en jours après fin de tranche/facture (ex: 10, 15). 0 = au comptant."
     )
     periode_releve_jours = models.IntegerField(
         default=10,
+        validators=[MinValueValidator(0)],
         help_text="Durée en jours d'une tranche de relevé (ex: 10 = du 1-10, 11-20, 21-31). Utilisé uniquement si type_reglement=RELEVE."
     )
     # ── Paramètres logistiques pour le moteur de réapprovisionnement ──
     delai_livraison_jours = models.IntegerField(
         default=7,
+        validators=[MinValueValidator(0)],
         help_text="Délai moyen entre validation de la commande et réception physique (jours)."
     )
     marge_retard_jours = models.IntegerField(
         default=2,
+        validators=[MinValueValidator(0)],
         help_text="Marge de sécurité pour les retards de livraison fréquents (jours)."
     )
 
@@ -136,11 +140,18 @@ class Client(models.Model):
         ('PROFESSIONNEL', 'Professionnel'),
     ]
     client_type = models.CharField(max_length=20, choices=CLIENT_TYPE_CHOICES, default='PARTICULIER', db_index=True)
-    plafond = models.DecimalField(max_digits=12, decimal_places=2, default=-1.00)
+    # NOTE: -1.00 est le sentinel « crédit illimité » (cf. sale_validator.py).
+    # La borne est donc >= -1, pas >= 0 : elle bloque les valeurs négatives
+    # arbitraires tout en préservant le default/sentinel existant.
+    plafond = models.DecimalField(
+        max_digits=12, decimal_places=2, default=-1.00,
+        validators=[MinValueValidator(Decimal('-1.00'))]
+    )
     taux_couverture = models.DecimalField(
-        max_digits=5, 
-        decimal_places=2, 
+        max_digits=5,
+        decimal_places=2,
         default=0.00,
+        validators=[MinValueValidator(Decimal('0')), MaxValueValidator(Decimal('100'))],
         help_text="Taux de couverture assurance en % (0-100) pour tiers payant"
     )
     
@@ -162,9 +173,10 @@ class Client(models.Model):
         verbose_name="Majoration Pro (%)"
     )
     
-    points_fidelite = models.IntegerField(default=0)
+    points_fidelite = models.IntegerField(default=0, validators=[MinValueValidator(0)])
     pending_discount = models.DecimalField(
-        max_digits=5, decimal_places=2, default=0.00, 
+        max_digits=5, decimal_places=2, default=0.00,
+        validators=[MinValueValidator(Decimal('0')), MaxValueValidator(Decimal('100'))],
         help_text="Remise en % acquise pour la prochaine vente"
     )
     is_loyalty_member = models.BooleanField(
@@ -201,6 +213,7 @@ class Client(models.Model):
     )
     nombre_factures_impayees = models.IntegerField(
         default=0,
+        validators=[MinValueValidator(0)],
         help_text="Nombre de factures non réglées (denormalisé)",
         verbose_name="Factures impayées"
     )
@@ -337,7 +350,11 @@ class LoyaltyHistory(models.Model):
     type_transaction = models.CharField(max_length=20, choices=TYPE_CHOICES)
     points = models.IntegerField(help_text="Points gagnés (positif) ou utilisés (négatif)")
     solde_apres = models.IntegerField(default=0, help_text="Solde de points après la transaction")
-    montant = models.DecimalField(max_digits=10, decimal_places=2, default=0, help_text="Valeur monétaire (FCFA) si applicable")
+    montant = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0,
+        validators=[MinValueValidator(Decimal('0'))],
+        help_text="Valeur monétaire (FCFA) si applicable"
+    )
     created_by = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     notes = models.TextField(blank=True, default='')

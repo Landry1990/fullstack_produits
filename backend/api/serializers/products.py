@@ -81,6 +81,17 @@ class StockLotSerializer(serializers.ModelSerializer):
         read_only_fields = ['date_reception']
 
 
+class StockLotUpdateSerializer(StockLotSerializer):
+    """Mise à jour d'un lot : seuls le numéro de lot et la date d'expiration sont modifiables."""
+
+    class Meta(StockLotSerializer.Meta):
+        read_only_fields = [
+            'produit', 'quantity_initial', 'quantity_paid', 'quantity_free',
+            'quantity_remaining', 'quantity_reserved', 'price_cost', 'selling_price',
+            'fournisseur', 'commande_produit', 'date_reception', 'is_divers'
+        ]
+
+
 class ProduitSerializer(UppercaseSerializerMixin, serializers.ModelSerializer):
     """Serializer optimisé pour Produit avec gestion N+1 des lots et promotions."""
     rayon_name = serializers.CharField(source='rayon.name', read_only=True)
@@ -140,3 +151,11 @@ class ProduitSerializer(UppercaseSerializerMixin, serializers.ModelSerializer):
             return None
         except Exception:
             return None
+
+
+class ProduitUpdateSerializer(ProduitSerializer):
+    """Mise à jour d'un produit : stock et PMP ne sont pas modifiables via PATCH/PUT.
+    Le formulaire produit continue d'envoyer `stock` à la création (stock initial)."""
+
+    class Meta(ProduitSerializer.Meta):
+        read_only_fields = ['stock', 'stock_reserve', 'pmp']

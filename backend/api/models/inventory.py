@@ -1,7 +1,10 @@
 """
 Inventory-related models: Inventaire, LigneInventaire, RelationTransformation, HistoriqueTransformation.
 """
+from decimal import Decimal
+
 from django.contrib.auth.models import User
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils import timezone
 
@@ -75,10 +78,14 @@ class LigneInventaire(models.Model):
         related_name='inventaires',
         help_text="Lot spécifique compté (si inventaire par lot)"
     )
+    # NOTE: stock_theorique et ecart peuvent être négatifs (stock négatif possible) — non bornés.
     stock_theorique = models.IntegerField(help_text="Stock au moment de l'ajout dans l'inventaire")
-    quantite_physique = models.IntegerField(default=0)
+    quantite_physique = models.IntegerField(default=0, validators=[MinValueValidator(0)])
     ecart = models.IntegerField(default=0, editable=False)
-    pmp_snapshot = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    pmp_snapshot = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0.00,
+        validators=[MinValueValidator(Decimal('0'))]
+    )
     
     class Meta:
         constraints = [
@@ -138,8 +145,9 @@ class RelationTransformation(models.Model):
         help_text="Produit résultant (ex: DETAIL)"
     )
     ratio = models.DecimalField(
-        max_digits=10, 
+        max_digits=10,
         decimal_places=2,
+        validators=[MinValueValidator(Decimal('0.01'))],
         help_text="Ratio de conversion (ex: 20.00 si 1 boîte = 20 détails)"
     )
     actif = models.BooleanField(default=True)
@@ -178,8 +186,14 @@ class HistoriqueTransformation(models.Model):
         related_name='hist_trans_dest'
     )
     produit_destination_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit destination sauvegardé")
-    quantite_source = models.IntegerField(help_text="Quantité transformée (source)")
-    quantite_destination = models.IntegerField(help_text="Quantité obtenue (destination)")
+    quantite_source = models.IntegerField(
+        validators=[MinValueValidator(1)],
+        help_text="Quantité transformée (source)"
+    )
+    quantite_destination = models.IntegerField(
+        validators=[MinValueValidator(1)],
+        help_text="Quantité obtenue (destination)"
+    )
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     date_transformation = models.DateTimeField(auto_now_add=True)
     notes = models.TextField(blank=True)

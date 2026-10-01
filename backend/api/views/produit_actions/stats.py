@@ -9,6 +9,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from ...models import CommandeProduit, FactureProduit, LigneAvoirClient, Produit
+from ...utils.validation import parse_id, parse_int
 
 
 class ProduitStatsMixin:
@@ -157,13 +158,11 @@ class ProduitStatsMixin:
 
     @action(detail=False, methods=['get'])
     def analyse_abc(self, request):
-        try:
-            periode = int(request.query_params.get('periode', 6))
-        except ValueError:
-            periode = 6
+        # Période en mois : absent → 6 ; invalide/hors bornes → 400
+        periode = parse_int(request.query_params.get('periode', 6), field='periode', min_value=1, max_value=120)
 
-        rayon_id = request.query_params.get('rayon_id')
-        fournisseur_id = request.query_params.get('fournisseur_id')
+        rayon_id = parse_id(request.query_params.get('rayon_id'), field='rayon_id', required=False)
+        fournisseur_id = parse_id(request.query_params.get('fournisseur_id'), field='fournisseur_id', required=False)
 
         date_debut = timezone.now() - relativedelta(months=periode)
 
@@ -304,7 +303,7 @@ class ProduitStatsMixin:
         stats['C'] += nb_produits_sans_ventes
 
         include_no_sales = request.query_params.get('include_no_sales', 'false').lower() == 'true'
-        limite_c = int(request.query_params.get('limite_c', 100))
+        limite_c = parse_int(request.query_params.get('limite_c', 100), field='limite_c', min_value=1, max_value=5000)
 
         if include_no_sales:
             produits_sans_ventes = Produit.objects.filter(

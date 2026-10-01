@@ -10,6 +10,7 @@ from decimal import Decimal
 from django.db import transaction
 from django.db.models import F, Sum
 from django.utils import timezone
+from rest_framework.exceptions import ValidationError
 
 from ..models import (
     Caisse,
@@ -21,11 +22,26 @@ from ..models import (
     Promis,
     StockLot,
 )
+from ..utils.validation import (
+    MAX_DECIMAL_10_2,
+    MAX_DECIMAL_12_2,
+    MAX_DECIMAL_5_2,
+    MAX_INT32,
+    parse_decimal,
+    parse_int,
+    validation_error_message,
+)
 from .lot_allocation_service import LotAllocationService
 from .promotion_service import PromotionService
 from .sale_integrity import is_invoice_period_closed
 
 logger = logging.getLogger(__name__)
+
+
+def _as_value_error(exc):
+    """Convertit une ValidationError DRF en ValueError (contrat des services :
+    les appelants traduisent ValueError en HTTP 400)."""
+    return ValueError(validation_error_message(exc))
 
 
 class SaleModifier:
@@ -64,9 +80,23 @@ class SaleModifier:
         SaleModifier._cancel_pending_promis(facture)
 
         # 2. Apply changes to facture
-        facture.remise = Decimal(str(data.get('remise', '0')))
+        # Decimal fini >= 0 dans la borne du DecimalField(12, 2) de Facture.remise ;
+        # 'abc'/'NaN'/-5 → ValueError → 400 (au lieu de InvalidOperation → 500).
+        try:
+            facture.remise = parse_decimal(
+                data.get('remise', '0'), field='remise',
+                min_value=Decimal(0), max_value=MAX_DECIMAL_12_2
+            )
+        except ValidationError as exc:
+            raise _as_value_error(exc) from exc
         if data.get('client'):
-            facture.client_id = data.get('client')
+            # Un dict/liste ici lèverait TypeError dans le .save() ORM → 500.
+            try:
+                facture.client_id = parse_int(
+                    data.get('client'), field='client', min_value=1, max_value=MAX_INT32
+                )
+            except ValidationError as exc:
+                raise _as_value_error(exc) from exc
         facture.client_name_override = data.get('client_name_override', facture.client_name_override)
         facture.save()
 
@@ -153,7 +183,17 @@ class SaleModifier:
         """Crée les nouvelles lignes FactureProduit et alloue les lots."""
         new_quantity_by_product = {}
         new_product_ids_with_allocations = set()
-        product_ids = [p.get('produit') for p in new_products]
+        if not all(isinstance(p, dict) for p in new_products):
+            raise ValueError("Format de ligne produit invalide.")
+        # Les ids sont normalisés AVANT le filtre ORM : un dict/liste dans
+        # id__in lèverait TypeError → 500.
+        try:
+            product_ids = [
+                parse_int(p.get('produit'), field='produit', min_value=1, max_value=MAX_INT32)
+                for p in new_products
+            ]
+        except ValidationError as exc:
+            raise _as_value_error(exc) from exc
         # Verrouiller les produits pour éviter les race conditions
         if product_ids:
             products_by_id = {
@@ -164,16 +204,42 @@ class SaleModifier:
             products_by_id = {}
 
         for prod_data in new_products:
-            produit_id = prod_data.get('produit')
-            quantity = int(prod_data.get('quantity', 1))
-            selling_price = prod_data.get('selling_price', '0')
+            if not isinstance(prod_data, dict):
+                raise ValueError("Format de ligne produit invalide.")
+            try:
+                produit_id = parse_int(
+                    prod_data.get('produit'), field='produit',
+                    min_value=1, max_value=MAX_INT32
+                )
+                quantity = parse_int(
+                    prod_data.get('quantity', 1), field='quantity',
+                    max_value=MAX_INT32
+                )
+                selling_price = parse_decimal(
+                    prod_data.get('selling_price', '0'), field='selling_price',
+                    min_value=Decimal(0), max_value=MAX_DECIMAL_10_2
+                )
+                discount = parse_decimal(
+                    prod_data.get('discount', '0'), field='discount',
+                    min_value=Decimal(0), max_value=MAX_DECIMAL_10_2
+                )
+                tva = parse_decimal(
+                    prod_data.get('tva', '0'), field='tva',
+                    min_value=Decimal(0), max_value=MAX_DECIMAL_5_2
+                )
+            except ValidationError as exc:
+                raise _as_value_error(exc) from exc
             lot_id = prod_data.get('lot_id')
             produit = products_by_id.get(produit_id)
+            if produit is None:
+                # Avant : produit_id=None créait une ligne fantôme, et un id
+                # inexistant finissait en IntegrityError → 500.
+                raise ValueError(f"Produit introuvable (id={produit_id}).")
 
             fp = FactureProduit.objects.create(
                 facture=facture, produit_id=produit_id, quantity=quantity,
-                selling_price=selling_price, discount=Decimal(str(prod_data.get('discount', '0'))),
-                tva=Decimal(str(prod_data.get('tva', '0'))), stock_lot_id=lot_id
+                selling_price=selling_price, discount=discount,
+                tva=tva, stock_lot_id=lot_id
             )
             new_quantity_by_product[produit_id] = new_quantity_by_product.get(produit_id, 0) + quantity
 
@@ -200,7 +266,11 @@ class SaleModifier:
             return False
 
         if lot_id:
-            target_lot = StockLot.objects.get(id=lot_id)
+            try:
+                target_lot = StockLot.objects.get(id=lot_id)
+            except (StockLot.DoesNotExist, ValueError, TypeError) as exc:
+                # Id invalide/inexistant : ValueError métier → 400 (au lieu de 500).
+                raise ValueError(f"Lot de stock introuvable ou invalide (id={lot_id}).") from exc
             LotAllocationService.allocate_specific_lot(fp, target_lot, quantity, selling_price)
             return True
         else:
@@ -211,7 +281,11 @@ class SaleModifier:
     def _sync_fp_lot_info(fp, lot_id, produit, lots_allocated):
         """Synchronise les champs lot et date_expiration du FactureProduit."""
         if lot_id:
-            target_lot = StockLot.objects.get(id=lot_id)
+            try:
+                target_lot = StockLot.objects.get(id=lot_id)
+            except (StockLot.DoesNotExist, ValueError, TypeError) as exc:
+                # Id invalide/inexistant : ValueError métier → 400 (au lieu de 500).
+                raise ValueError(f"Lot de stock introuvable ou invalide (id={lot_id}).") from exc
             fp.lot = target_lot.lot[:20]
             fp.date_expiration = target_lot.date_expiration
             fp.save(update_fields=['lot', 'date_expiration'])

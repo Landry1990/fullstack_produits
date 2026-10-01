@@ -267,7 +267,13 @@ class ClientViewSet(SimpleListCacheMixin, OptimizedSerializerMixin, viewsets.Mod
         """Met à jour l'alerte personnalisée d'un client."""
         client = self.get_object()
         client.message_alerte = request.data.get('message_alerte', '')
-        client.blocking_alerte = bool(request.data.get('blocking_alerte', False))
+        # Parsing booléen strict : "false"/"0" ne doivent pas passer truthy
+        blocking = request.data.get('blocking_alerte', False)
+        if isinstance(blocking, str):
+            blocking = blocking.strip().lower() in ('true', '1', 'yes', 'on')
+        else:
+            blocking = bool(blocking)
+        client.blocking_alerte = blocking
         client.save(update_fields=['message_alerte', 'blocking_alerte'])
         return Response({
             'message_alerte': client.message_alerte,
@@ -291,7 +297,7 @@ class ClientViewSet(SimpleListCacheMixin, OptimizedSerializerMixin, viewsets.Mod
         
         try:
             amount = Decimal(str(data.get('montant', 0)))
-            if amount <= 0:
+            if not amount.is_finite() or amount <= 0:
                 return Response({'detail': "Le montant doit être supérieur à 0."}, status=400)
             
             depot_type = data.get('type')

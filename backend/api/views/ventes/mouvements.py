@@ -3,6 +3,7 @@ import logging
 from django.db import transaction
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, viewsets
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 
 from ...audit_helpers import log_audit
@@ -20,6 +21,7 @@ class MouvementCaisseViewSet(viewsets.ModelViewSet):
     serializer_class = MouvementCaisseSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = StandardResultsSetPagination
+    http_method_names = ['get', 'post', 'head', 'options']
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['type', 'user']
     search_fields = ['motif', 'description']
@@ -31,15 +33,19 @@ class MouvementCaisseViewSet(viewsets.ModelViewSet):
         date_debut = self.request.query_params.get('date_debut')
         date_fin = self.request.query_params.get('date_fin')
         
+        # Paramètre fourni mais invalide → 400 : ignorer le filtre renverrait
+        # des résultats non filtrés, trompeurs pour l'utilisateur.
         if date_debut:
             dt = parse_api_datetime(date_debut)
-            if dt:
-                queryset = queryset.filter(date__gte=dt)
+            if dt is None:
+                raise ValidationError({'detail': f"Le paramètre 'date_debut' est invalide : '{date_debut}'. Format attendu : AAAA-MM-JJ."})
+            queryset = queryset.filter(date__gte=dt)
 
         if date_fin:
             dt = parse_api_datetime(date_fin, end_of_day=True)
-            if dt:
-                queryset = queryset.filter(date__lte=dt)
+            if dt is None:
+                raise ValidationError({'detail': f"Le paramètre 'date_fin' est invalide : '{date_fin}'. Format attendu : AAAA-MM-JJ."})
+            queryset = queryset.filter(date__lte=dt)
             
         return queryset
     

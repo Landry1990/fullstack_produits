@@ -12,6 +12,7 @@ from rest_framework.response import Response
 
 from ...models.stock import RuptureFournisseur
 from ...serializers import RuptureFournisseurSerializer
+from ...utils.validation import parse_int
 
 
 class RuptureFournisseurViewSet(viewsets.ModelViewSet):
@@ -43,7 +44,8 @@ class RuptureFournisseurViewSet(viewsets.ModelViewSet):
     def _get_frequency_stats(self, days=None):
         queryset = RuptureFournisseur.objects.all()
         if days:
-            start_date = timezone.now() - timedelta(days=int(days))
+            days = parse_int(days, field='days', min_value=1, max_value=3650)
+            start_date = timezone.now() - timedelta(days=days)
             queryset = queryset.filter(date_debut__gte=start_date)
             
         stats = queryset.values(

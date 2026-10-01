@@ -9,6 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from ..models import Commande, CommandeProduit
+from ..utils.validation import parse_date_param, parse_id
 
 
 class HistoriqueAchatsPagination(PageNumberPagination):
@@ -30,17 +31,18 @@ class HistoriqueAchatsViewSet(viewsets.ViewSet):
         # Filter only completed/closed orders (non supprimées)
         queryset = Commande.objects.filter(status=Commande.Status.CLOTUREE, is_active=True)
 
-        # Date filtering
+        # Date filtering — parse_date_param → 400 si la date fournie est
+        # invalide (chaîne brute dans le filtre ORM → ValidationError → 500).
         if date_debut:
-            queryset = queryset.filter(date__date__gte=date_debut)
-        
+            queryset = queryset.filter(date__date__gte=parse_date_param(date_debut, field='date_debut'))
+
         if date_fin:
             # Inclusive end date filtering
-            queryset = queryset.filter(date__date__lte=date_fin)
-        
-        # Supplier filtering
+            queryset = queryset.filter(date__date__lte=parse_date_param(date_fin, field='date_fin'))
+
+        # Supplier filtering — id invalide → 400 (ValueError ORM → 500 sinon).
         if fournisseur_id:
-            queryset = queryset.filter(fournisseur_id=fournisseur_id)
+            queryset = queryset.filter(fournisseur_id=parse_id(fournisseur_id, field='fournisseur_id'))
 
         # Type filtering
         if commande_type:
@@ -83,6 +85,8 @@ class HistoriqueAchatsViewSet(viewsets.ViewSet):
                     'total_achat': stat['total_achat'] or 0,
                 })
             response = paginator.get_paginated_response(results)
+            if response.data is None:
+                return response
             response.data['extras'] = {
                 'total_achat_global': global_totals['total_achat_global'] or 0,
                 'nb_commandes_global': global_totals['nb_commandes_global'],
@@ -113,15 +117,15 @@ class HistoriqueAchatsViewSet(viewsets.ViewSet):
         # Filter only completed/closed orders (non supprimées)
         queryset = CommandeProduit.objects.filter(commande__status=Commande.Status.CLOTUREE, commande__is_active=True)
 
-        # Date filtering (on the parent Commande)
+        # Date filtering (on the parent Commande) — idem : invalide → 400.
         if date_debut:
-            queryset = queryset.filter(commande__date__date__gte=date_debut)
+            queryset = queryset.filter(commande__date__date__gte=parse_date_param(date_debut, field='date_debut'))
         if date_fin:
-            queryset = queryset.filter(commande__date__date__lte=date_fin)
-        
+            queryset = queryset.filter(commande__date__date__lte=parse_date_param(date_fin, field='date_fin'))
+
         # Supplier filtering
         if fournisseur_id:
-            queryset = queryset.filter(commande__fournisseur_id=fournisseur_id)
+            queryset = queryset.filter(commande__fournisseur_id=parse_id(fournisseur_id, field='fournisseur_id'))
 
         # Type filtering
         if commande_type:

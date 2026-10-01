@@ -63,7 +63,12 @@
         "copy_permissions": "Copy permissions from a user",
         "select_user": "Select a user...",
         "copy_btn": "Copy",
-        "copy_help": "Copy all rights, allowed menus and special permissions from the selected user."
+        "copy_help": "Copy all rights, allowed menus and special permissions from the selected user.",
+        "apply_to_role": "Apply to entire role",
+        "apply_to_role_btn": "Apply to role",
+        "apply_to_role_help": "Propagates the form's rights, allowed menus and max discount to all active users with this role.",
+        "apply_to_role_confirm_title": "Apply to entire role?",
+        "apply_to_role_confirm": "{{count}} active user(s) with the role \"{{role}}\" will receive these rights, allowed menus and max discount."
     },
     "modal": {
         "new_title": "New User",
@@ -119,6 +124,8 @@
         "deactivate_btn": "Deactivate",
         "save_error": "Error saving user",
         "permissions_copied": "Permissions copied from {{username}}",
+        "applied_to_role": "Rights applied to {{count}} user(s)",
+        "apply_to_role_error": "Error applying rights to role",
         "deactivate_confirm_title": "Move to trash?",
         "deactivate_confirm": "Do you want to deactivate {{username}} and move them to trash?",
         "restored": "{{username}} has been restored successfully.",

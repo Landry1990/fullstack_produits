@@ -21,6 +21,7 @@ from ..serializers.planning import (
     ShiftConfigSerializer,
     ShiftScheduleSerializer,
 )
+from ..utils.validation import parse_int
 
 # ── Algorithme de génération ──────────────────────────────────────────────────
 
@@ -402,10 +403,10 @@ class ShiftScheduleViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         # Permettre de forcer la régénération complète avec from_day=1
         from_day_param = request.data.get('from_day') if request.method == 'POST' else None
         if from_day_param is not None:
-            try:
-                start_day = max(1, int(from_day_param))
-            except (ValueError, TypeError):
-                pass
+            # Invalide → 400 (au lieu d'être ignoré silencieusement).
+            # Clamp dans [1, num_days] : un from_day > nb de jours du mois
+            # provoquait un ValueError (datetime.date hors limites) → 500.
+            start_day = max(1, min(parse_int(from_day_param, field='from_day'), _num_days))
 
         # Supprimer uniquement les affectations à partir de start_day
         start_date = datetime.date(year, month, start_day)

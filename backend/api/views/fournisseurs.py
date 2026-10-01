@@ -29,6 +29,7 @@ from ..services.supplier_finance import (
     build_supplier_statement,
 )
 from ..sudo_utils import validate_sudo_mode
+from ..utils.validation import parse_id
 
 logger = logging.getLogger(__name__)
 
@@ -183,7 +184,7 @@ class FournisseurViewSet(viewsets.ModelViewSet):
         fournisseur_id = request.query_params.get('fournisseur_id')
         fournisseurs = self.get_queryset().filter(is_active=True)
         if fournisseur_id:
-            fournisseurs = fournisseurs.filter(id=int(fournisseur_id))
+            fournisseurs = fournisseurs.filter(id=parse_id(fournisseur_id, field='fournisseur_id'))
         return Response(build_supplier_schedule(fournisseurs))
 
     @action(detail=True, methods=['get'])

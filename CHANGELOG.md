@@ -1,5 +1,695 @@
 # Changelog — Fullstack Produits
 
+## 2026-10-01 — 🛡️ Remédiation P2 : validation des query params + robustesse frontend
+
+### Pourquoi
+
+Troisième vague de l'audit des entrées (`AUDIT_INPUTS.md`) : les paramètres de
+requête GET et listes d'IDs n'étaient presque jamais validés. Une date, un ID
+ou un nombre mal formé finissait soit en HTTP 500 (`ValueError`/`ValidationError`
+dans les filtres ORM), soit — pire — en **filtre silencieusement ignoré**
+renvoyant des résultats non filtrés, trompeurs pour l'utilisateur.
+
+### Helpers centralisés (`backend/api/utils/validation.py`)
+
+- `parse_id` : entier ≥ 1 ou `ValidationError` (400) — fin des `ValueError → 500`
+  sur `id__in=['abc']`, `get(pk='x')`, `filter(user_id='...')`.
+- `parse_date_param` : date ISO ou 400 — fin des chaînes brutes dans les
+  filtres `__date__gte`/`__gte`.
+- Règle uniforme : **paramètre absent → comportement par défaut inchangé ;
+  paramètre fourni mais invalide → 400 explicite**.
+
+### Backend — query params & payloads validés (~35 fichiers)
+
+- **Stock/inventaire** : `analysis`, `cadencier`, `ruptures`, `stock_lots`
+  (dates expiration, `lot_ids` bulk), `etat_inventaire`, `inventaire_main`
+  (`filter_id`/`inventaire_id`), `inventaire/bulk` (liste `ids`), `stats`.
+- **Ventes/caisse** : `caisse` (dates, `user`, `poste_caisse`), `caisse_poste`
+  (`pk` détail, `poste_caisse`, `hide_amounts` via `parse_bool` — fin du piège
+  `bool("false") == True`), `creances` (dates, `client_id`, `paiement_id`,
+  bornes `mode_paiement`/`reference` contre `DataError`), `mouvements`,
+  `client_credit`, `bulk_actions`, `historique_*`, `comptabilite` (dates
+  OHADA, `ligne_ids`).
+- **Commandes/divers** : `suggestions` (`periode`, `fournisseur_id`,
+  `budget_max`, dates ISO ventes horaire), `bulk_actions_mixin` (`ids`,
+  `source_commande_id`), `paiements`, `interactions` (`substance`),
+  `planning` (`from_day` → 400 au lieu d'être ignoré ; >nb_jours toujours
+  clampé), `produits` (filtres numériques + IDs relation), `users`,
+  `dci_admin`, `fournisseurs`, `schedules`.
+- **Stats/rapports/dashboard** : `finance_stats`, `temporal_analysis`,
+  `margin_views`, `challenges`, `dashboard/*`, `omnisearch` (`limit`),
+  `ordonnancier_view`, `rapports/*` (`poste_caisse_id`, IDs filtres,
+  `conditions` JSON invalide → 400, `limit` borné), `audit`.
+- **Divers** : `purge` (`sans_ventes` via `parse_bool`), `sales_actions`
+  (`mode_paiement` borné, `sync_mobile` accepte `produit` **ou** `product_id`),
+  `serializers/billing` (`client_name_override` borné à 100 car.).
+
+### Frontend
+
+- `maxLength` alignés aux `CharField` des modèles, `isFinite`/`min`/`required`
+  sur les champs montants, bug de concaténation `'2'+'3'='23'` corrigé dans la
+  fusion de lots commandes, `QuickCreateProductModal` envoie des valeurs
+  normalisées, `OrdonnanceModal` champs morts retirés, traductions fr+en.
+
+### Tests mis à jour (contrat volontairement changé)
+
+4 tests figeaient le fallback silencieux — alignés sur le nouveau contrat 400 :
+`test_creances` (dates), `test_integration_recent_fixes` (omnisearch `limit`),
+`test_planning` (`from_day='abc'`), `test_rapport_dynamique_robustness`
+(`conditions` JSON).
+
+### Vérification
+
+- Compilation Python OK · `manage.py check` : 0 issue.
+- Suite complète `api.tests` : 857 tests → 4 échecs (tests obsolètes, corrigés)
+  puis **OK** sur les modules touchés (146 + 74 tests relancés, 0 échec).
+- Build frontend `npm run build` : OK.
+
+## 2026-10-01 — 🗓️ Couverture tests : planning.py + settings.py (153 tests) + fixes prod
+
+### Pourquoi
+
+Suite de la campagne de couverture backend : `planning.py` (16%) et `settings.py`
+(24%) étaient parmi les modules critiques les moins testés (planning opérateurs,
+congés, configuration pharmacie, rapports Telegram/WhatsApp). Deux sous-agents
+en parallèle ont produit les tests ; la passe de contrôle a débusqué et corrigé
+des bugs réels.
+
+### Bugs production corrigés
+
+- **`planning.py`** : `ShiftScheduleViewSet.generate` plantait en 500 si
+  `from_day` dépassait le nombre de jours du mois (`datetime.date` ValueError) —
+  la valeur est maintenant bornée `[1, nb_jours_du_mois]`.
+- **`settings.py`** : le rapport flash Telegram utilisait `status='VALIDEE'`
+  (inexistant — la valeur DB est `'VAL'`) et les champs `stock_quantity` /
+  `est_actif` qui n'existent pas sur `Produit` → fallback de statistiques
+  silencieusement faux. Corrigé avec `Facture.Status.VALIDEE`,
+  `stock__lte=0`, `is_active=True`.
+- **`serializers/planning.py`** : `LeaveRequestSerializer.user` était requis en
+  entrée alors que `perform_create()` assigne toujours `request.user` → toute
+  création de congé sans champ `user` retournait 400. Le champ est maintenant
+  `read_only`.
+
+### Nouveaux tests
+
+- `api/tests/test_planning.py` (**75 tests**) : `ShiftConfigViewSet` (singleton,
+  upsert, régénération du mois), `ShiftScheduleViewSet` (CRUD, normalisation
+  mois, doublons, assignments imbriqués, filtres, publish, stats, envoi aux
+  opérateurs), algorithme `_build_assignments` (cycle travail/repos, rotation
+  matin/nuit, gardes réservées aux pharmaciens, repos post-garde, congés
+  approuvés → `CONGE`, modes équipe fixe/tournante, régénération partielle
+  `from_day`, staffing minimal), `LeaveRequestViewSet` (visibilité
+  user/admin, approbation/rejet, solde de congés).
+- `api/tests/test_settings.py` (**78 tests**) : `PharmacySettingsView`
+  (singleton auto-créé, PUT admin-only, validations email/régime fiscal/TVA/
+  largeur ticket, JSON payment modes, audit), `InvoiceConfigurationView`,
+  `LoyaltySettingViewSet`, `ConfigurationOptionViewSet` (pagination, filtres,
+  unicité type+code), `TVAViewSet` (CRUD, tri décroissant, doublons),
+  endpoints WhatsApp/Telegram/rapports (credentials manquants, erreurs Meta/
+  Telegram, timeouts, mocks HTTP).
+
+### Vérification
+
+- Ciblé : **153/153 OK** (1 skipped — endpoint WhatsApp non implémenté).
+- Régression complète `api.tests` : **857 tests OK** (run validé sur la base
+  consolidée incluant les remédiations P0/P1).
+- ⚠️ Incident de run : une suite lancée en parallèle sans `--keepdb` a détruit
+  `test_fullstack_db` en plein run → les tests doivent toujours passer
+  `--keepdb` et ne jamais tourner en double.
+
+### Fichiers touchés
+
+- `backend/api/views/planning.py` (clamp `from_day`)
+- `backend/api/views/settings.py` (statuts/champs réels)
+- `backend/api/serializers/planning.py` (`user` read-only)
+- `backend/api/tests/test_planning.py` (nouveau), `backend/api/tests/test_settings.py` (nouveau)
+- Corrections lint accessoires : `creances.py`, `client_credit.py`,
+  `historique_achats.py`, `rapports/inventory.py`, `historique_ventes.py`,
+  `dashboard/statistiques.py`, `dashboard/fournisseurs.py` (`remaining or 0` —
+  évite un 500 si `total_annotated` est `None`).
+
+## 2026-10-01 — 📏 Remédiation P1 : bornes de valeurs, parsing centralisé, imports durcis
+
+### Pourquoi
+
+Deuxième vague du plan `AUDIT_INPUTS.md` §9 : P0 a bloqué les falsifications
+(permissions/mass assignment) ; P1 ajoute les **bornes de valeurs** — négatifs,
+NaN/infini, hors plage — au niveau des modèles (validators → auto-appliqués par
+les ModelSerializers) et des endpoints d'écriture, plus un module de parsing
+centralisé qui transforme les ~44 casts non protégés en 400 propres.
+
+### Nouveau module `backend/api/utils/validation.py`
+
+- `parse_decimal` / `parse_positive_decimal` / `parse_int` / `parse_bool` :
+  rejettent bool, `None`, NaN, ±infini, non-entiers → `ValidationError` (400,
+  messages français). `parse_bool` corrige le piège `bool("false") == True`.
+- Constantes `MAX_DECIMAL_12_2` / `MAX_DECIMAL_10_2` / `MAX_DECIMAL_5_2` /
+  `MAX_INT32` calées sur les champs du schéma → fini les `DataError` overflow → 500.
+- `validation_error_message` : re-extrait le message pour les services qui
+  remontent `ValueError` → 400 (`SaleFinalizer`, `SaleModifier`).
+
+### Validators sur les modèles (migration `0261`, AlterField sans impact DB)
+
+- **≥ 0** : `Produit` prix/pmp/seuils/réserve, `StockLot` quantités & prix,
+  `Facture` remise/montant_verse/rendu/part_client/fidélité, `FactureProduit`
+  prix/discount/free_qty, `LigneInventaire.quantite_physique`,
+  `Client.plafond` (borne `-1` : sentinel « illimité »), `taux_couverture`,
+  `PosteVente`/`SessionCaisse` fonds, `ClotureCaisse` réel/entrées/sorties,
+  `PharmacySettings` (~30 champs numériques), `AvoirClient`, `LigneAvoirClient`…
+- **0–100** : tous les taux (`Produit.tva`, `TVA.taux`, `Facture.tva`,
+  `PharmacySettings` taux fiscaux, `LoyaltySetting.auto_reward_percent`…).
+- **> 0** : `CouponMonnaie.montant`, `PaiementFournisseur.montant`,
+  `Promis.quantite`, `CommandeProduit.quantity`, `LigneAvoir.quantity`,
+  `RelationTransformation.ratio`, `Commande.taux_change`.
+- **Non bornés volontairement** (documenté dans le code) : `Caisse.montant`
+  (ajustements négatifs légitimes de `sale_modifier`), `FactureProduit.quantity`
+  (retours `can_do_returns`), `Produit.stock` (négatif possible post-vente),
+  `MouvementStock`, `solde_depot`/`solde_factures`, `Promotion.value` (montants
+  fixes/packs).
+
+⚠️ Les validators n'agissent que via les serializers (aucun `full_clean()` dans
+le codebase) — c'est voulu : filet sans risque de migration bloquée par des
+données existantes.
+
+### Endpoints d'écriture durcis (400 au lieu de 500 / corruption)
+
+- **Stock** : `sortir_perimes` (quantity entier >0 ≤ remaining — corrige
+  l'inflation `-5` → `+5`), `adjust_stock` (new_quantity ≥0 fini),
+  `transformations` (quantité + ratio >0 vérifié **avant** le bloc atomique),
+  `inventaire_main` + `inventaire/bulk` + `csv_import` (`quantite_physique`
+  entier ≥0, ids produit/lot assainis), `inventaire/validation` (garde-fou
+  sur lignes héritées corrompues).
+- **Commandes** : `bulk_sync` strict (`'abc'` n'est plus ramené à 0, erreurs
+  collectées par ligne → 400 tout-ou-rien, prix négatifs non propagés à la
+  fiche produit ; `quantity` négative rejetée, 0 toléré pour l'autosave),
+  `bulk_actions_mixin`, `avoirs` (`quantity ≤ 0` → 400, corrige le retour
+  de stock inversé), `promis` (`quantite > 0` — corrige `-500` → `+500` stock),
+  `suggestions` (`abc_a_only` : `"false"` string n'est plus truthy).
+- **Ventes/caisse** : `creances` `ajouter_paiement`/`bulk_paiement`/`vider`
+  (montant >0 fini, `mode_paiement` doit être une string, ids normalisés),
+  `caisse_poste` `fond_de_caisse` (décimal ≥0 fini), `coupons` (`facture_id`
+  entier), `sale_finalizer`/`sale_modifier` (remise, prix, quantités,
+  paiements, ids — tous bornés ; lignes de paiement ≤0 ignorées comme avant),
+  `sale_validator` (`paiement_immediat` NaN → 400, `points_to_use` protégé),
+  `comptabilite` `creer_lettrage` (`compte_id`/`ligne_ids` typés).
+- **Clients** : `add_depot` rejette `Infinity`, `update_alerte` parse les
+  booléens proprement.
+- **Imports** : `produit_import`, `import_views`, `import_excel_csv`,
+  `purge.import_produits` — rejet NaN/±infini, prix négatifs, TVA hors 0-100,
+  stock négatif ; **limite 20 Mo** sur les uploads ; `purge` dates
+  `date_from`/`date_to` invalides → 400 propre (était 500 ORM).
+
+### Permissions résiduelles colmatées
+
+- `StockAdjustmentViewSet` : `AllowAny` → `IsAuthenticated` (le journal
+  d'ajustements était lisible anonymement).
+- Les 7 endpoints Telegram/WhatsApp (`test`, `get-chat-id`, rapports flash/
+  inventaire/mensuel) : `IsAuthenticated` → `IsAdminOrMenuAllowed` avec les
+  clés menu des écrans appelants réels (settings, dashboard, ventes_historique,
+  inventaire, statistiques) — tout compte connecté pouvait envoyer des messages
+  avec les credentials de la pharmacie.
+
+### Compatibilité préservée
+
+- `bulk_sync` : `quantity=0` toléré (frontend envoie `parseInt()||0` sur lignes
+  vides en autosave) ; seuls négatifs/valeurs invalides → 400.
+- `_handle_payments` : lignes de paiement `montant ≤ 0` ignorées (contrat
+  existant — lignes par mode inutilisé) ; `'abc'`/`NaN` → 400.
+- `Client.is_loyalty_member`/`is_deposit_enabled` restent éditables (switches
+  légitimes du formulaire client).
+
+### Vérification
+
+- `manage.py check` : OK. `makemigrations` : `0261` (validators uniquement).
+- **Suite complète `api.tests` : 857 tests — OK** (2 écarts de contrat détectés
+  et résolus : message « hors limites » prix vente, paiements ≤0 ignorés ;
+  `test_commande_produits` mis à jour : `'abc'` → 400 au lieu du 0 silencieux).
+
+### Reste P2
+
+- Validation des query params GET (~20 endpoints → 500 aujourd'hui).
+- `maxLength` frontend alignés aux `max_length` modèles ; `Number.isFinite`
+  dans `validateSaleData` ; `mode_paiement` → `choices` ; concaténation
+  `'2'+'3'='23'` fusion de lots ; `_cap_montant` silencieux → signaler.
+- `hide_amounts` (caisse_poste) : `"false"` string masque les montants —
+  sens inverse du safe, à trancher métier.
+
+## 2026-10-01 — 🛡️ Remédiation P0 : blocage des falsifications financières et de permissions
+
+### Pourquoi
+
+Suite de `AUDIT_INPUTS.md` : les findings critiques (mass assignment sur les champs
+financiers, PATCH/DELETE libres sur les enregistrements historiques, bypass sudo,
+clôture de caisse falsifiable, configuration ouverte à tout compte authentifié)
+sont exploitables par n'importe quel utilisateur connecté via un simple appel API.
+Vague P0 = bloquer la falsification, sans toucher encore aux bornes de valeurs (P1)
+ni à la robustesse 500/UX (P2).
+
+### Backend — whitelists et méthodes HTTP restreintes
+
+- **`FactureUpdateSerializer`** (`serializers/billing.py`) : seuls
+  `client_name_override`, `montant_verse`, `montant_rendu`, `notes`, `date_document`,
+  `client`, `ayant_droit`, `status` restent écritables en PATCH — la réponse garde
+  la représentation complète (compatibilité frontend). `FactureViewSet.perform_update`
+  n'accepte plus la transition `status → PAY` que si les paiements enregistrés
+  couvrent le total TTC (kill le « marquer payé sans encaisser »).
+- **PATCH/PUT/DELETE désactivés** (`http_method_names`) sur `CaisseViewSet`,
+  `MouvementCaisseViewSet`, `FactureProduitViewSet`, `CouponMonnaieViewSet`,
+  `PromisViewSet`. `PaiementFournisseurViewSet` garde DELETE (utilisé par l'UI)
+  mais bloque PATCH/PUT.
+- **Serializers d'update** : `StockLotUpdateSerializer` (seuls `lot` +
+  `date_expiration`), `ProduitUpdateSerializer` (`stock`/`stock_reserve`/`pmp`
+  read-only), `ClientSerializer` (`solde_depot`, `points_fidelite`,
+  `solde_factures`, `pending_discount` read-only = fin de la monnaie fictive),
+  `LigneInventaireUpdateSerializer` (seule `quantite_physique`),
+  `InventaireSerializer` (`status`, `validated_by` read-only),
+  `LigneAvoirUpdateSerializer`, `AvoirSerializer`, `AvoirClientUpdateSerializer`
+  (statuts, totaux, audit read-only), `PromisSerializer` (`status` read-only).
+- **`CaisseViewSet`** : création/bulk_create rejettent décimaux invalides, NaN,
+  ±infini et montants ≤ 0.
+
+### Backend — finalisation de vente (`sales_actions.py`)
+
+- Rejet JSON mal formé / payload non-objet (400 au lieu de 500).
+- Quantités, prix, remises : rejet NaN/infini, quantités non entières, prix et
+  remises négatifs ; `int()` protégé.
+- `quantity < 0` exige `can_do_returns` ; `is_avoir_client` ne contourne plus
+  `can_validate_zero_amount`.
+- `remise_validated_by_id` / `prix_validated_by_id` : l'ID client ne suffit plus —
+  le mot de passe du validateur est re-vérifié via `validate_sudo_mode` (le
+  frontend envoyait déjà `*_validated_password`).
+
+### Backend — clôture de caisse (`cloture_mixin.py`)
+
+- `montant_theorique_frontend` ignoré : théorique toujours recalculé serveur.
+- `montant_reel` : rejet négatif, non fini, surdimensionné ; `user_id` /
+  `poste_caisse_id` typés ; dates invalides → 400.
+- `mouvements_manuels` schématisés (type `ENTREE`/`SORTIE`, montant positif fini,
+  motif tronqué à 200 cars) ; `billetage` validé en profondeur.
+
+### Backend — permissions configuration (`settings.py`, `promotions.py`)
+
+- Nouvelle permission `IsAdminOrMenuAllowed` (pattern existant `CanAccessReports`) :
+  écriture = staff/superuser OU `allowed_menus` contenant la clé —
+  `ConfigurationOptionViewSet` (`inventaire`/`inventaire_organisation`),
+  `LoyaltySettingViewSet` (`clients`), `TVAViewSet` (`settings`/`settings_pharmacie`),
+  `PromotionViewSet` (`ventes`/`ventes_promotions`). La délégation existante par
+  menus est préservée ; le compte lambda connecté est bloqué.
+- `PharmacySettingsView` / `InvoiceConfigurationView` : restent `IsAdminUser`
+  en écriture (comportement déjà admin-only — le trou PATCH contournant le
+  `permission_classes` sur PUT seul est colmaté).
+
+### Frontend
+
+- `useSaleCompletion.ts` : les paiements (`bulk_create`, avoirs client, dépôts)
+  sont créés **avant** le PATCH `status: 'PAY'` — requis par le contrôle serveur
+  de couverture des paiements (était en parallèle → course aléatoire).
+
+### Vérification
+
+- `manage.py check` : OK. Compilation Python des fichiers touchés : OK.
+- Tests backend ciblés : **340 passés, 0 échec** (sale_finalizer, facturation,
+  sales_robustness, sensitive_permissions, caisse integrity/multi-payment/
+  overpayment, settings, promotions, client_credit, commandes, creances,
+  stock_inventory/management/loophole, client_financials/merge,
+  facturation_contract, forced_sale, sale_modification_stock, purge,
+  produit_filtering).
+- Build frontend `npm run build` : OK.
+
+### Reste à faire (P1/P2)
+
+- Validators de bornes au niveau modèles (MinValueValidator/CheckConstraint).
+- Helper `parse_decimal` centralisé contre les ~44 casts non protégés (500 → 400).
+- Telegram/WhatsApp test endpoints encore `IsAuthenticated` simple.
+- UX frontend : masquer les boutons d'écriture config sans permission (aujourd'hui → 403).
+
+## 2026-10-01 — 🔍 Audit de validation des inputs (frontend + backend)
+
+### Pourquoi
+
+Demande utilisateur : vérifier que les inputs rejettent les données invalides
+(ex : texte dans un champ numérique). Audit statique complet via 5 sous-agents
+parallèles (facturation, caisse, stock/commandes/inventaire, produits/clients/
+maintenance, validation backend transversale).
+
+### Livrable
+
+- **`AUDIT_INPUTS.md`** (nouveau, racine) — rapport complet classé par risque.
+
+### Findings majeurs (aucune correction appliquée)
+
+- 🔴 **Mass assignment** : ~12 `ModelViewSet` exposent `PATCH/DELETE` avec
+  `fields='__all__'` et sans `read_only_fields` — `Facture` (status, validated_by),
+  `Caisse` (montant d'encaissements passés), `MouvementCaisse`, `FactureProduit`,
+  `CouponMonnaie`, `PaiementFournisseur`, `Client` (`solde_depot`, `points_fidelite` !),
+  `Produit` (stock/prix/pmp), `StockLot`, `Inventaire` (status), `Avoirs`, `Promis`.
+- 🔴 **Valeurs négatives acceptées** → corruption stock/finance : `sortir_perimes`
+  (-5 → +5 stock), `adjust_stock`, `promis` (création de stock), lignes commandes/
+  avoirs/inventaire, paiements créances/fournisseurs négatifs, coupons négatifs.
+- 🔴 **Bypass sudo** : `remise_validated_by_id`/`prix_validated_by_id` =
+  n'importe quel user_id sans preuve (`sales_actions.py:189-218`) ;
+  `is_avoir_client` flag client contourne `can_validate_zero_amount` ;
+  `montant_theorique_frontend` falsifie l'écart de clôture ;
+  `LoyaltySetting`/`ConfigurationOption`/`Promotion`/`TVA` en `IsAuthenticated` écriture.
+- 🔴 **NaN/Infinity** → `InvalidOperation` → 500 (caisse, créances, clôture) ou
+  `Decimal('NaN')` persisté en `numeric` (imports produits, bulk_sync).
+- 🟠 ~44 casts `int()/Decimal()` non protégés → 500 au lieu de 400 ;
+  ~8 champs texte > `max_length` → `DataError` → 500.
+- 🟡 Frontend : `normalizeNumberInput` → 0 silencieux ; filtres `[^0-9.]` acceptent
+  `'1.2.3'` ; nombreux `type="number"` sans `min` ; concaténation `'2'+'3'='23'`
+  dans la fusion de lots de commandes.
+
+### Recommandations
+
+Plan de remédiation P0/P1/P2 dans `AUDIT_INPUTS.md` §9 — en attente de décision
+utilisateur avant toute modification.
+
+## 2026-10-01 — 🧪 Tests commande-produits/interactions + 5 bugs production corrigés
+
+### Pourquoi
+
+Suite de la campagne de couverture backend (2 sous-agents en parallèle) :
+`commandes/commande_produits.py` (18%) et `interactions.py` (24%).
+
+### Bugs production corrigés
+
+- **`commande_produits.py` — création de ligne possible sur commande
+  clôturée** : `perform_create` ne vérifiait pas `commande.status`
+  (contrairement à update/destroy/bulk_sync). → `PermissionDenied` (403).
+- **`commande_produits.py` — crash 500 si `selling_price` fourni sans
+  produit** : accès à `commande_produit.produit` sans garde → ajout du
+  test `produit_id`.
+- **`commande_produits.py` — `bulk_sync` crashe (500) sur données non
+  numériques** : `int()` sur `quantity`/`unites_gratuites`/`id`/`produit`
+  non parsables → helper `to_int()` avec défaut sûr.
+- **`commande_produits.py` — `parse_expiration` crashe (500) sur dates
+  malformées** (`a-b-c`, `2026-13-01` → `ValueError`/`IllegalMonthError`) :
+  wrappé en try/except → retourne `None` (date ignorée).
+- **`interactions.py` — `?search=` ignoré silencieusement** : la vue
+  définissait une méthode `get_search_fields()` orpheline alors que DRF
+  `SearchFilter` lit l'attribut `search_fields` → la recherche texte ne
+  filtrait jamais. Remplacé par l'attribut.
+- **`interactions.py` — paire inversée → 500 au lieu de 400** : la
+  normalisation de paire (substance_a < substance_b) se fait après le
+  `UniqueTogetherValidator`, qui valide l'ordre soumis. Une paire
+  inversée d'une interaction existante passait puis levait un
+  `IntegrityError` → garde-fou `ValidationError` ajouté dans
+  `perform_create`/`perform_update` (`views/interactions.py`).
+
+### Nouveaux tests (78)
+
+- **`tests/test_commande_produits.py`** (41) : CRUD complet, blocage
+  création/update/partial/destroy sur commande `CLOT`, filtre `?produit=`
+  (uniquement commandes réceptionnées), `bulk_sync` (création, update,
+  suppression des lignes absentes, payload vide, parsing dates `MM/YY`
+  et ISO, warnings marge négative / prix de vente manquant, sync fiche
+  produit TVA/prix/marge, commande clôturée/inexistante), `correct_lot`
+  (correction lot+date même sur commande clôturée, date invalide/effacée,
+  mise à jour du `StockLot` associé).
+- **`tests/test_interactions.py`** (38) : CRUD interactions
+  médicamenteuses, normalisation automatique des paires, rejet doublon
+  même ordre **et ordre inversé** (400), filtres `gravity`/`substance`
+  (a OU b)/`search`/`ordering`, endpoint `stats`, `upload_csv`
+  (auto-création des substances, update existant, lignes invalides
+  skippées, encodages utf-8/latin-1/cp1252, compteurs), fonction
+  `_normalize` (accents/casse/ponctuation).
+
+### Vérification
+
+- 78/78 tests ciblés verts, régression complète **704 tests OK**
+  (3 skipped), `manage.py check` propre.
+- Déployé via `deploy.ps1 -Target backend`.
+
+## 2026-10-01 — 🧪 Tests maintenance/purge/backups + 3 bugs production corrigés
+
+### Pourquoi
+
+Suite de la campagne de couverture backend : `purge.py` (13%, destructif)
+et `backup_views.py` (16%, sauvegardes) non couverts.
+
+### Bugs production corrigés
+
+- **`purge_produits` et `run_update` crasheaient (500)** sur tout appel :
+  `authenticate(username=..., password=...)` appelé **sans `request`** →
+  `AxesBackendRequestParameterRequired` car `axes.backends.AxesBackend`
+  est le premier backend d'auth. Passage de `request` dans les 2 appels
+  (`views/purge.py`).
+- **Restauration/suppression de backup groupé impossible**
+  (`backup_views.py`) : le frontend envoie `group_YYYY-MM-DD HH:MM:SS`
+  (timestamp formaté) mais le `glob` cherchait ce format littéral alors
+  que les fichiers sont nommés `YYYYMMDD_HHMMSS_<table>.sql.gz` →
+  aucun match. Conversion du timestamp ajoutée (restore + delete).
+- **Restore incrémental inexistant renvoyait `success: true`** : avec
+  `backup_files=[]`, rien n'était restauré mais la réponse affichait un
+  succès trompeur. → 404 si aucun fichier ne correspond.
+
+### Nouveaux tests (48)
+
+- **`tests/test_purge.py`** (37) : liste des tables, preview (comptes
+  parents + enfants, filtre dates, table inconnue), export ZIP/CSV,
+  purge (400 sans password, 403 mauvais password, 403 staff non-superuser
+  même avec bon password, suppression réelle + CASCADE + AuditLog,
+  respect de la plage de dates), `produits_count`, `import_produits`
+  (400 sans fichier, 400 extension, 409 import en cours),
+  `import_status` (idle/404), `export_produits` (xlsx), `purge_produits`
+  (validation + `sans_ventes` conserve les produits liés à des ventes),
+  `download_rapport` (400 traversal `../`, 404), `changelog` (404/200),
+  `update_status`, `run_update` (403/404), `restore` (validations),
+  `backup` (erreur commande → 500).
+- **`tests/test_backup_views.py`** (11) : listage incrémental/complet/
+  groupé (2 fichiers même timestamp → groupés), tailles formatées,
+  création réelle via `docker exec pg_dump` (dans un répertoire
+  temporaire), restore (400 sans filename, 404 full incrémental ou
+  groupe absent), delete (fichier + groupe).
+
+### Vérification
+
+- 48/48 nouveaux tests OK, régression **172/172** (purge + backups +
+  finance + créances + suggestions + rapports + user management),
+  `manage.py check` propre.
+
+### Note technique
+
+Le socket Docker est accessible depuis le conteneur backend
+(`DOCKER_HOST=tcp://docker-socket-proxy:2375`) — `CreateBackupView`
+exécute réellement `docker exec <db> pg_dump` en dev. Les tests restore
+retournent 400/404 **avant** `docker stop` donc le conteneur n'est
+jamais arrêté pendant les tests.
+
+### Reste à couvrir
+
+`commandes/commande_produits.py` (18%), `interactions.py` (24%),
+`consumers.py`/signals (0%), `planning.py` (16%), `settings.py` (24%).
+
+## 2026-10-01 — 🧪 Tests rapports financiers + bug export comptable corrigé
+
+### Pourquoi
+
+`rapports/finance.py` était le plus gros trou de couverture mesuré (7%,
+891 lignes non testées) — endpoints servant les chiffres financiers au
+pharmacien. L'audit a aussi révélé que plusieurs fichiers de tests
+« existants » ne tournaient jamais.
+
+### Bug production corrigé
+
+- **`export_comptable_csv` crashait (500)** dès qu'une facture existait dans
+  la période : `format_doc_date` était utilisé mais jamais importé
+  (`views/rapports/finance.py` ligne ~476). Ajout de l'import depuis
+  `api.utils_doclang`.
+
+### Nouveaux tests — `tests/test_finance.py` (43 tests)
+
+Couvre les 18 endpoints du mixin finance :
+- **JSON** : `rapport_mensuel`, `rapport_par_dates`, `rapport_ca_multi_annuel`
+  (structure 13 lignes + totaux annuels), `rapport_tva_vendus` (calcul TVA
+  19.25% vérifié), `rapport_remises`, `rapport_remises_details`,
+  `rapport_detail_marges` (lot alloué, fallback PMP "SANS LOT", filtre marge
+  négative, groupement par produit avec statut PERTE/FAIBLE/OK),
+  `stats_marges` (lignes jour + TOTAL).
+- **Rapport dynamique** : sources `ventes`/`achats`/`stock`, `group_by`,
+  `sort_by`, conditions.
+- **Exports** : `export_comptable_csv` (contenu CSV, montants format FR),
+  `export_sage_i7` (journaux VT/CA, comptes 411100/701100/571100, libellé
+  `Regl Espèces` — régression du fix `get_mode_paiement_display`),
+  `livre_caisse_excel` (2 feuilles, solde jour = espèces + entrées − sorties),
+  `rapport_remises_excel`, `rapport_remises_details_excel`,
+  `rapport_general_excel`, `rapport_mensuel_pdf`, `rapport_par_dates_pdf`.
+- **Fiscal** : `rapport_fiscal_mensuel` — accompte droit commun réel
+  (CA HT × 2% + CAC 10%), marge administrée (marge brute × 14%), erreurs
+  sans settings/dates.
+- **Sécurité** : 401 non authentifié, 403 sans menu `statistiques`.
+
+### Tests morts réactivés (13 de plus)
+
+- `test_rapport_modular.py` + `test_rapport_dynamique_robustness.py` :
+  classes pytest pures sans `TestCase` → **jamais découvertes par le runner
+  Django** (ni erreur ni exécution). Converties en `TestCase` — 9 tests.
+- `test_stats_discrepancy.py` : 2 échecs 403 pré-existants — le test créait
+  un pharmacien sans `allowed_menus`, refusé à juste titre par
+  `CanAccessReports`. Ajout du menu `statistiques` dans le setup.
+
+### Vérification
+
+- 99/99 tests rapports passent (43 finance + 9 réactivés + marges +
+  créances + suggestions + discrepancy), `manage.py check` propre.
+
+### Reste à couvrir
+
+`purge.py` (13%), `backup_views.py` (16%), `commandes/commande_produits.py`
+(18%), `interactions.py` (24%), `consumers.py`/signals (0%).
+
+## 2026-09-30 — 🧪 Couverture tests backend + 4 bugs production corrigés
+
+### Pourquoi
+
+Audit de couverture des tests backend (`coverage` sur les 454 tests : ~36% des vues
+couvertes) pour identifier les zones non testées à risque. L'écriture de tests
+ciblés a immédiatement débusqué **4 bugs de production réels**.
+
+### Bugs corrigés (trouvés par les nouveaux tests)
+
+- **`Facture.get_status_display` retournait `None`** (`models/billing.py`) :
+  stub `...` écrasait la méthode auto-générée de Django → toutes les réponses
+  API facture renvoyaient `status_display: null` (7 serializers exposent ce champ).
+- **`Caisse.get_mode_paiement_display` retournait `None`** : crash ReportLab
+  (`AttributeError`) lors de l'impression du reçu de règlement de créance
+  (`views/ventes/creances.py`), libellés comptables `"Règlement None Fact X"`
+  (`signals_comptabilite.py`) et rapports finance. Implémenté : retourne le
+  label du mode custom depuis `PharmacySettings.custom_payment_modes`, sinon
+  le label des choix natifs, sinon la valeur brute.
+- **`Caisse.get_statut_display` et `Promis.get_status_display`** : mêmes stubs
+  `...` retournant `None` supprimés → labels `choices` Django corrects.
+- **`generer-suggestions/` crashait (500)** avec un filtre fournisseur en mode
+  `simple` (`views/commandes/suggestions.py`) : le queryset était slicé
+  `[:5000]` **avant** le `filter(fournisseurs__id=...)` →
+  `TypeError: Cannot filter a query once a slice has been taken`.
+  Ordre corrigé : filtres d'abord, slice ensuite.
+
+### Nouveaux tests (36 ajoutés + 38 récupérés)
+
+- **`tests/test_creances.py`** (19 tests) — créances clients : auth, liste,
+  factures impayées/partielles, exclusion des paiements "en compte", détail,
+  synthèse par client, impression reçu PDF.
+- **`tests/test_commande_suggestions.py`** (17 tests) — suggestions de
+  réappro : modes simple/marge ABC/tranches horaires, filtre fournisseur,
+  budget, réappro cumulatif, entrées invalides, cache.
+- **`test_sale_finalizer.py` + `test_lot_allocation_service.py`** (38 tests)
+  convertis de `pytest` vers `TestCase` : ils faisaient `import pytest` sans
+  l'avoir installé → **erreurs silencieuses au chargement, jamais exécutés**.
+
+### Code mort supprimé
+
+- `api/views/ventes/caisse_mixins/caisse_mixins/` — sous-dossier dupliqué
+  obsolète du parent (330 stmts, 0% couverture, zéro import).
+- `api/models_avoir.py` — module `Avoir` orphelin (zéro import, zéro
+  référence en migrations).
+
+### Vérification
+
+- 74/74 tests ciblés OK, régression 102/102 OK, `manage.py check` propre.
+- Labels vérifiés en shell : `Facture 'VAL' → "Validée"`,
+  `Caisse 'especes' → "Espèces"`, `Promis 'ATT' → "En attente"`.
+
+### Reste à couvrir (top trous mesurés)
+
+`rapports/finance.py` (7%), `creances` restants, `purge.py` (13%),
+`commandes/commande_produits.py` (18%), `backup_views.py` (16%),
+`interactions.py` (24%), `consumers.py`/signals (0%).
+
+## 2026-09-30 — ✨ Feat : application groupée des droits par rôle
+
+### Pourquoi
+
+Impossible de modifier les droits d'un groupe d'utilisateurs (ex: ajouter une
+permission à tous les vendeurs) — il fallait éditer chaque compte un par un.
+
+### Changements
+
+- **Backend** (`backend/api/views/users.py`) : nouvel endpoint admin
+  `POST /api/users/apply-to-role/` — applique un profil de droits
+  (permissions, menus autorisés, remise max) à tous les utilisateurs actifs
+  du rôle visé, en une seule requête `UPDATE` + entrée `AuditLog`.
+  Le rôle des cibles n'est jamais modifié ; `IsAdminUser` requis.
+- **Frontend** :
+  - `UserPermissionsTab` : bouton "Appliquer à tout le rôle" (carte warning,
+    masqué pour un superuser) avec confirmation listant le nombre de
+    comptes affectés.
+  - `GestionUtilisateurs` : `buildProfilePayload()` factorisé (réutilisé par
+    le submit et l'application groupée) + `handleApplyToRole` avec modale de
+  - confirmation + toast + refresh de la liste.
+  - `UserFormDialog` : propagation de la prop `onApplyToRole`.
+- **i18n** : clés `form.apply_to_role*` et `messages.applied_to_role`/
+  `apply_to_role_error` en `fr` et `en`.
+
+### Vérification
+
+- Test réel `APIClient` : 3 vendeurs mis à jour, caissier + inactif intacts,
+  rôle non modifié, `400` sur rôle invalide, `403` pour non-admin.
+- `test_user_management` : 25/25 OK. `tsc --noEmit` propre, build OK.
+
+## 2026-09-30 — 🐛 Fix : copie des droits utilisateur — 4 champs perdus silencieusement
+
+### Pourquoi
+
+La fonction "Copier les droits d'un utilisateur" (création utilisateur) copiait
+visuellement tous les droits dans le formulaire, mais le backend en perdait 4
+à l'enregistrement — vérifié par test réel sur `UserSerializer`.
+
+### Champs perdus avant le fix
+
+- `can_generate_coupon` : absent de `ProfileSerializer.Meta.fields` → DRF le
+  rejetait silencieusement en entrée et ne le renvoyait jamais en GET
+  (la copie lisait `undefined` → toujours `false`).
+- `can_manage_challenges` : dans le serializer mais jamais assigné dans
+  `create()` **ni** `update()` → checkbox morte dans les deux sens.
+- `can_modify_price` : assigné dans `update()` mais pas dans `create()` →
+  toujours `False` à la création.
+- `max_discount_rate` : idem → toujours `0` à la création (ex: copie d'un
+  caissier à 50% de remise donnait 0%).
+
+### Changements (`backend/api/serializers/users.py`)
+
+- `ProfileSerializer.fields` : ajout de `can_generate_coupon`.
+- `UserSerializer.create()` : ajout de `can_modify_price`,
+  `can_manage_challenges`, `max_discount_rate`.
+- `UserSerializer.update()` : ajout de `can_manage_challenges`.
+
+### Vérification
+
+- Test réel `manage.py shell` : tous les champs persistent en create ET update
+  (max_discount_rate 50→50, can_generate_coupon True→True, etc.).
+- `test_user_management` : 25/25 tests OK. `manage.py check` : propre.
+- Aucune migration nécessaire (champs déjà en base).
+
+## 2026-09-30 — 🔒 Sécurité : `npm audit` passé de 29 vulnérabilités à 0
+
+### Pourquoi
+
+Le audit frontend signalait 29 vulns (16 high) : deps directes `axios`,
+`react-router-dom`, `postcss`, `dompurify`, `i18next-http-backend`, `vitest`,
+`@vitest/coverage-v8`, `xlsx` + transitifs (undici, nanoid, minimatch,
+picomatch, ws, js-yaml, qs…).
+
+### Changements
+
+- `npm audit fix` : 25 packages mis à jour dans leur range semver.
+- `vitest` + `@vitest/coverage-v8` → `^4.1.11` (fix GHSA-82fw-gwwq-j7x9).
+- **`xlsx` `^0.18.5` → `0.20.3` via tarball officiel SheetJS**
+  (`https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz`) : SheetJS ne publie
+  plus les correctifs sur npm — la version npm 0.18.5 reste vulnérable à
+  GHSA-4r6h-8v6p-xvw6 (prototype pollution) et GHSA-5pgg-2g8v-p4x9 (ReDoS).
+  API utilisée (`writeFile`, `utils.*`) compatible, aucun code modifié.
+- Bonus : 2 props `disableUppercase` invalides retirées de `LocalizedDateInput`
+  dans `ChallengeFormModal` (erreurs TS pré-existantes — `vite build` ne
+  typechecke pas).
+
+### Vérification
+
+- `npm audit` : **0 vulnerabilities**.
+- `npm test` : 383/383 tests passent (dont `excelExport.test.ts` qui
+  couvre xlsx).
+- `npm run build` OK, `tsc --noEmit` propre.
+
 ## 2026-09-30 — 🩺 React Doctor : 28 warnings + 1 erreur corrigés (score 83 → 100)
 
 ### Pourquoi

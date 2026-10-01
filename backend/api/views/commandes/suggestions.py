@@ -4,10 +4,12 @@ from django.conf import settings
 from django.core.cache import cache
 from django.utils import timezone
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from ...models import Facture, FactureProduit, Produit
+from ...utils.validation import parse_decimal, parse_id, parse_int
 
 
 def get_produits_a_par_marge(periode=90, fournisseur_id=None):
@@ -81,10 +83,16 @@ def generer_suggestions_commande(request):
     Supporte un budget_max optionnel pour limiter le montant total HT.
     """
     mode = request.data.get('mode', 'simple')
-    periode = int(request.data.get('periode', 30))
-    fournisseur_id = request.data.get('fournisseur_id')
+    # Période en jours : invalide → 400 (au lieu d'un ValueError → 500)
+    periode = parse_int(request.data.get('periode', 30), field='periode', min_value=1, max_value=3650)
+    fournisseur_id = parse_id(request.data.get('fournisseur_id'), field='fournisseur_id', required=False)
     budget_max = request.data.get('budget_max')  # Optionnel, en HT
+    # Parsing booléen strict : "false"/"0" ne doivent pas passer truthy
     abc_a_only = request.data.get('abc_a_only', False)
+    if isinstance(abc_a_only, str):
+        abc_a_only = abc_a_only.strip().lower() in ('true', '1', 'yes', 'on')
+    else:
+        abc_a_only = bool(abc_a_only)
     
     # Cache: 5 min par combinaison de paramètres
     cache_key = f"suggestions:{mode}:{periode}:{fournisseur_id}:{budget_max}:{abc_a_only}"
@@ -92,12 +100,12 @@ def generer_suggestions_commande(request):
     if cached is not None:
         return Response(cached)
     
-    # Convertir budget en float si fourni
-    if budget_max:
-        try:
-            budget_max = float(budget_max)
-        except (ValueError, TypeError):
-            budget_max = None
+    # Convertir budget en float si fourni — valeur invalide → 400
+    # (plus de fallback silencieux qui ignorait le budget demandé)
+    if budget_max is not None and str(budget_max).strip() != '':
+        budget_max = float(parse_decimal(budget_max, field='budget_max', min_value=0))
+    else:
+        budget_max = None
     
     if mode == 'ventes_horaire':
         date_debut = request.data.get('date_debut')
@@ -172,8 +180,7 @@ def calculer_reapprovisionnement_simple(periode, fournisseur_id=None, budget_max
     from django.db.models import Q, Sum
     
     # Récupérer les produits actifs uniquement (pas les inactifs/supprimés)
-    # Limiter à 5000 produits max pour éviter les timeouts
-    produits = Produit.objects.filter(is_active=True).select_related('fournisseur')[:5000]
+    produits = Produit.objects.filter(is_active=True).select_related('fournisseur')
     fournisseur_obj = None
     if fournisseur_id:
         from ...models import Fournisseur, StockLot
@@ -188,7 +195,7 @@ def calculer_reapprovisionnement_simple(periode, fournisseur_id=None, budget_max
             factureproduit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         ))
     )
-    
+
     if fournisseur_id:
         from django.db.models import OuterRef, Subquery
 
@@ -197,10 +204,14 @@ def calculer_reapprovisionnement_simple(periode, fournisseur_id=None, budget_max
             produit=OuterRef('pk'),
             fournisseur_id=fournisseur_id
         ).order_by('-date_reception').values('price_cost')[:1]
-        
+
         produits = produits.annotate(
             last_supplier_price=Subquery(last_price_subquery)
         )
+
+    # Limiter à 5000 produits max pour éviter les timeouts
+    # (slice en dernier — filtrer/annoter après un slice lève TypeError)
+    produits = produits[:5000]
     
     suggestions = [
         {
@@ -517,12 +528,15 @@ def calculer_ventes_tranche_horaire(date_debut, date_fin, fournisseur_id=None):
     from django.db.models import Q, Sum
     from django.utils.dateparse import parse_datetime
     
-    # Parser les dates ISO
-    dt_debut = parse_datetime(date_debut)
-    dt_fin = parse_datetime(date_fin)
-    
+    # Parser les dates ISO — invalide → 400 (au lieu d'un retour vide
+    # silencieux qui laissait croire à "aucune vente")
+    dt_debut = parse_datetime(date_debut) if isinstance(date_debut, str) else None
+    dt_fin = parse_datetime(date_fin) if isinstance(date_fin, str) else None
+
     if not dt_debut or not dt_fin:
-        return [], 0
+        raise ValidationError({
+            'detail': "Les paramètres date_debut et date_fin doivent être des dates/heures ISO valides (ex : 2024-01-15T08:00:00)."
+        })
     
     # Si les dates sont naïves et que USE_TZ est True, les rendre aware
     if settings.USE_TZ:

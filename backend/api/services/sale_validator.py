@@ -5,7 +5,7 @@ déstockage, gestion fidélité, promotions.
 Extrait de SalesService.validate_invoice pour lisibilité et maintenabilité.
 """
 import logging
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 from django.core.cache import cache
 from django.db import transaction
@@ -127,7 +127,12 @@ class SaleValidator:
         """Vérifie le plafond de crédit pour les clients professionnels."""
         if not facture.client:
             return
-        paiement_immediat = Decimal(str(data.get('paiement_immediat', 0)))
+        try:
+            paiement_immediat = Decimal(str(data.get('paiement_immediat', 0)))
+        except (InvalidOperation, ValueError, TypeError):
+            raise ValueError("Le montant du paiement immédiat est invalide.")
+        if not paiement_immediat.is_finite() or paiement_immediat < 0:
+            raise ValueError("Le montant du paiement immédiat est invalide.")
         new_debt_increment = max(Decimal(0), facture.total_ttc - paiement_immediat)
 
         if (facture.client.client_type == 'PROFESSIONNEL'
@@ -371,7 +376,10 @@ class SaleValidator:
             client.pending_discount = 0
             save_client = True
 
-        points_to_use = int(data.get('points_to_use', 0))
+        try:
+            points_to_use = int(data.get('points_to_use', 0))
+        except (TypeError, ValueError):
+            raise ValueError("Le nombre de points de fidélité est invalide.")
         if points_to_use > 0 and client.points_fidelite >= points_to_use:
             client.points_fidelite -= points_to_use
             facture.points_fidelite_utilises = points_to_use
