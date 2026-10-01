@@ -59,6 +59,16 @@ def validate_inventaire(
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        # Garde-fou : une quantité physique négative (donnée corrompue) produirait
+        # des lots/stocks négatifs à la validation.
+        lignes_invalides = [l for l in lignes if l.quantite_physique is None or l.quantite_physique < 0]
+        if lignes_invalides:
+            ids = ', '.join(str(l.id) for l in lignes_invalides[:10])
+            return Response(
+                {'detail': f'Quantité physique négative ou manquante sur {len(lignes_invalides)} ligne(s) (ids: {ids}). Corrigez avant de valider.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         # On verrouille les Produits et les Lots pour éviter toute modification concurrentielle (ex: vente)
         product_ids = {l.produit_id for l in lignes if l.produit_id}
         lot_ids = {l.stock_lot_id for l in lignes if l.stock_lot_id}

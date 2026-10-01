@@ -2,9 +2,9 @@
 Tests pour SaleFinalizer — finalisation d'une vente (facture, produits, promis, ordonnancier).
 Purement additif : aucun impact sur le code existant.
 """
-import pytest
 from decimal import Decimal
 from django.contrib.auth import get_user_model
+from django.test import TestCase
 
 from api.models import (
     Facture,
@@ -24,8 +24,7 @@ from api.services.sale_finalizer import SaleFinalizer
 User = get_user_model()
 
 
-@pytest.mark.django_db
-class TestSaleFinalizerValidateProducts:
+class TestSaleFinalizerValidateProducts(TestCase):
 
     def _create_user_and_product(self):
         user = User.objects.create_user(username="seller", password="testpass123")
@@ -54,7 +53,7 @@ class TestSaleFinalizerValidateProducts:
         produits_data = [
             {"produit": 99999, "quantity": 1, "selling_price": "100"},
         ]
-        with pytest.raises(ValueError, match="Produit introuvable"):
+        with self.assertRaisesRegex(ValueError, "Produit introuvable"):
             SaleFinalizer._validate_products(produits_data)
 
     def test_validate_products_invalid_price(self):
@@ -63,7 +62,7 @@ class TestSaleFinalizerValidateProducts:
         produits_data = [
             {"produit": produit.id, "quantity": 1, "selling_price": "not-a-number"},
         ]
-        with pytest.raises(ValueError, match="Prix de vente invalide"):
+        with self.assertRaisesRegex(ValueError, "Prix de vente invalide"):
             SaleFinalizer._validate_products(produits_data)
 
     def test_validate_products_price_too_high(self):
@@ -72,7 +71,7 @@ class TestSaleFinalizerValidateProducts:
         produits_data = [
             {"produit": produit.id, "quantity": 1, "selling_price": "10000000000"},
         ]
-        with pytest.raises(ValueError, match="hors limites"):
+        with self.assertRaisesRegex(ValueError, "hors limites"):
             SaleFinalizer._validate_products(produits_data)
 
     def test_validate_products_invalid_quantity(self):
@@ -81,17 +80,16 @@ class TestSaleFinalizerValidateProducts:
         produits_data = [
             {"produit": produit.id, "quantity": "abc", "selling_price": "500"},
         ]
-        with pytest.raises(ValueError, match="Quantité invalide"):
+        with self.assertRaisesRegex(ValueError, "Quantité invalide"):
             SaleFinalizer._validate_products(produits_data)
 
 
-@pytest.mark.django_db
-class TestSaleFinalizerValidatePosteVente:
+class TestSaleFinalizerValidatePosteVente(TestCase):
 
     def test_validate_poste_vente_no_active_poste(self):
         """Aucun poste de vente actif — lève ValueError."""
         user = User.objects.create_user(username="lonely", password="testpass123")
-        with pytest.raises(ValueError, match="aucun point de vente"):
+        with self.assertRaisesRegex(ValueError, "aucun point de vente"):
             SaleFinalizer._validate_poste_vente(user, None, centralized=False)
 
     def test_validate_poste_vente_inactive_id(self):
@@ -103,7 +101,7 @@ class TestSaleFinalizerValidatePosteVente:
             est_actif=False,
             mode_pos=False,
         )
-        with pytest.raises(ValueError, match="pas actif"):
+        with self.assertRaisesRegex(ValueError, "pas actif"):
             SaleFinalizer._validate_poste_vente(user, poste.id, centralized=False)
 
     def test_validate_poste_vente_wrong_user_non_centralized(self):
@@ -116,7 +114,7 @@ class TestSaleFinalizerValidatePosteVente:
             est_actif=True,
             mode_pos=False,
         )
-        with pytest.raises(ValueError, match="Seul"):
+        with self.assertRaisesRegex(ValueError, "Seul"):
             SaleFinalizer._validate_poste_vente(other, poste.id, centralized=False)
 
     def test_validate_poste_vente_superuser_bypass(self):
@@ -148,8 +146,7 @@ class TestSaleFinalizerValidatePosteVente:
         assert result.id == poste.id
 
 
-@pytest.mark.django_db
-class TestSaleFinalizerCreateFactureProduits:
+class TestSaleFinalizerCreateFactureProduits(TestCase):
 
     def test_create_facture_produits_basic(self):
         """Création de lignes FactureProduit en bulk."""
@@ -179,8 +176,7 @@ class TestSaleFinalizerCreateFactureProduits:
         assert lines[1].discount == Decimal("50.00")
 
 
-@pytest.mark.django_db
-class TestSaleFinalizerHandlePromis:
+class TestSaleFinalizerHandlePromis(TestCase):
 
     def test_handle_promis_creates_entries(self):
         """Les produits marqués is_promis créent des entrées Promis."""
@@ -229,8 +225,7 @@ class TestSaleFinalizerHandlePromis:
         assert Promis.objects.filter(facture=facture).count() == 0
 
 
-@pytest.mark.django_db
-class TestSaleFinalizerHandleOrdonnancier:
+class TestSaleFinalizerHandleOrdonnancier(TestCase):
 
     def test_handle_ordonnancier_creates_entry(self):
         """Création d'un ordonnancier avec ses lignes."""
@@ -263,13 +258,12 @@ class TestSaleFinalizerHandleOrdonnancier:
         assert ordonnanciers[0].lignes.count() == 2
 
 
-@pytest.mark.django_db
-class TestSaleFinalizerFinalizeSale:
+class TestSaleFinalizerFinalizeSale(TestCase):
 
     def test_finalize_sale_empty_products_raises(self):
         """Finalisation avec liste de produits vide — lève ValueError."""
         user = User.objects.create_user(username="seller", password="testpass123")
-        with pytest.raises(ValueError, match="vide"):
+        with self.assertRaisesRegex(ValueError, "vide"):
             SaleFinalizer.finalize_sale(user, {"produits": []}, centralized=False)
 
     def test_finalize_sale_no_poste_vente_raises(self):
@@ -283,7 +277,7 @@ class TestSaleFinalizerFinalizeSale:
         data = {
             "produits": [{"produit": produit.id, "quantity": 1, "selling_price": "500"}],
         }
-        with pytest.raises(ValueError, match="point de vente"):
+        with self.assertRaisesRegex(ValueError, "point de vente"):
             SaleFinalizer.finalize_sale(user, data, centralized=False)
 
     def test_finalize_sale_centralized_no_caisse_raises(self):
@@ -305,12 +299,11 @@ class TestSaleFinalizerFinalizeSale:
             "produits": [{"produit": produit.id, "quantity": 1, "selling_price": "500"}],
             "poste_vente_id": None,
         }
-        with pytest.raises(ValueError, match="point de caisse"):
+        with self.assertRaisesRegex(ValueError, "point de caisse"):
             SaleFinalizer.finalize_sale(user, data, centralized=True)
 
 
-@pytest.mark.django_db
-class TestSaleFinalizerMultiLotPayload:
+class TestSaleFinalizerMultiLotPayload(TestCase):
     """Tests pour la finalisation d'une vente multi-lots."""
 
     def test_finalize_sale_multi_lot_creates_lignes_and_movements(self):

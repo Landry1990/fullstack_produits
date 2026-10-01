@@ -30,6 +30,7 @@ from ..serializers import (
     WhatsAppLogSerializer,
 )
 from ..services.sms import SmsService
+from ..utils.validation import parse_id
 
 
 class SmsViewSet(viewsets.ModelViewSet):
@@ -74,17 +75,19 @@ class SmsViewSet(viewsets.ModelViewSet):
             )
 
         # Construction du contexte
+        # parse_id lève ValidationError (400) : id='abc' dans .get() lèverait
+        # ValueError (non attrapé par DoesNotExist) → 500.
         context = {}
         if context_type == 'PROMIS' and context_id:
             try:
-                promis = Promis.objects.get(id=context_id)
+                promis = Promis.objects.get(id=parse_id(context_id, field='context_id'))
                 context['promis'] = promis
             except Promis.DoesNotExist:
                 pass
-                
+
         elif context_type == 'CLIENT' and context_id:
             try:
-                client = Client.objects.get(id=context_id)
+                client = Client.objects.get(id=parse_id(context_id, field='context_id'))
                 context['client'] = client
             except Client.DoesNotExist:
                 pass
@@ -129,7 +132,7 @@ class WhatsAppLogViewSet(viewsets.ReadOnlyModelViewSet):
         if status_filter:
             qs = qs.filter(status=status_filter)
         if client_id:
-            qs = qs.filter(client_id=client_id)
+            qs = qs.filter(client_id=parse_id(client_id, field='client'))
 
         return qs
 
@@ -156,7 +159,7 @@ class TelegramLogViewSet(viewsets.ReadOnlyModelViewSet):
         if status_filter:
             qs = qs.filter(status=status_filter)
         if client_id:
-            qs = qs.filter(client_id=client_id)
+            qs = qs.filter(client_id=parse_id(client_id, field='client'))
         if search:
             qs = qs.filter(
                 models.Q(message__icontains=search) |

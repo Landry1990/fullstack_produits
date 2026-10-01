@@ -10,6 +10,7 @@ from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from django.db import transaction
 from django.db.utils import DataError
 from django.utils import timezone
+from rest_framework.exceptions import ValidationError
 
 from ..models import (
     Caisse,
@@ -23,9 +24,24 @@ from ..models import (
     Promis,
     get_next_ticket_session,
 )
+from ..utils.validation import (
+    MAX_DECIMAL_10_2,
+    MAX_DECIMAL_12_2,
+    MAX_DECIMAL_5_2,
+    MAX_INT32,
+    parse_decimal,
+    parse_int,
+    validation_error_message,
+)
 from .sale_validator import SaleValidator
 
 logger = logging.getLogger(__name__)
+
+
+def _as_value_error(exc):
+    """Convertit une ValidationError DRF en ValueError (contrat des services :
+    les appelants traduisent ValueError en HTTP 400)."""
+    return ValueError(validation_error_message(exc))
 
 
 class SaleFinalizer:
@@ -42,10 +58,26 @@ class SaleFinalizer:
         client_id = data.get('client')
         client_name_override = data.get('client_name_override')
         ayant_droit_id = data.get('ayant_droit')
+        # Un dict/liste ici lèverait TypeError dans le .create() ORM → 500.
+        for id_field, id_value in (('client', client_id), ('ayant_droit', ayant_droit_id)):
+            if id_value:
+                try:
+                    parsed_id = parse_int(id_value, field=id_field, min_value=1, max_value=MAX_INT32)
+                except ValidationError as exc:
+                    raise _as_value_error(exc) from exc
+                if id_field == 'client':
+                    client_id = parsed_id
+                else:
+                    ayant_droit_id = parsed_id
+        # Decimal fini >= 0 borné au DecimalField(12, 2) de Facture.remise.
+        # Avant : 'NaN' passait le cast et se persistait en numeric.
         try:
-            remise_montant = Decimal(str(data.get('remise', '0') or '0'))
-        except (InvalidOperation, ValueError):
-            remise_montant = Decimal(0)
+            remise_montant = parse_decimal(
+                data.get('remise', '0') or '0', field='remise',
+                min_value=Decimal(0), max_value=MAX_DECIMAL_12_2
+            )
+        except ValidationError as exc:
+            raise _as_value_error(exc) from exc
         produits_data = data.get('produits') or []
         paiements_data = data.get('paiements', [])
         loyalty_data = data.get('loyalty', {})
@@ -60,6 +92,14 @@ class SaleFinalizer:
 
         # 2. Validate poste de vente
         poste_vente_id = data.get('poste_vente_id')
+        if poste_vente_id:
+            # Un dict/liste ici lèverait TypeError dans le filtre ORM → 500.
+            try:
+                poste_vente_id = parse_int(
+                    poste_vente_id, field='poste_vente_id', min_value=1, max_value=MAX_INT32
+                )
+            except ValidationError as exc:
+                raise _as_value_error(exc) from exc
         poste_vente = SaleFinalizer._validate_poste_vente(user, poste_vente_id, centralized)
 
         if centralized:
@@ -78,6 +118,14 @@ class SaleFinalizer:
 
         # 4. Create or update Facture
         existing_id = data.get('existing_id')
+        if existing_id:
+            # Un dict/liste ici lèverait TypeError dans le .get() ORM → 500.
+            try:
+                existing_id = parse_int(
+                    existing_id, field='existing_id', min_value=1, max_value=MAX_INT32
+                )
+            except ValidationError as exc:
+                raise _as_value_error(exc) from exc
         if poste_vente_id and poste_vente:
             poste_vente_id = poste_vente.id
             poste_caisse_id = poste_vente.caisse_id
@@ -126,12 +174,17 @@ class SaleFinalizer:
         montant_rendu = data.get('montant_rendu')
         if montant_verse is not None:
             try:
-                facture.montant_verse = Decimal(str(montant_verse))
+                verse_dec = Decimal(str(montant_verse))
+                # Rejette NaN/Infinity (persistables en numeric sinon)
+                if verse_dec.is_finite():
+                    facture.montant_verse = verse_dec
             except (InvalidOperation, TypeError, ValueError):
                 pass
         if montant_rendu is not None:
             try:
-                facture.montant_rendu = Decimal(str(montant_rendu))
+                rendu_dec = Decimal(str(montant_rendu))
+                if rendu_dec.is_finite():
+                    facture.montant_rendu = rendu_dec
             except (InvalidOperation, TypeError, ValueError):
                 pass
         facture.save(
@@ -140,10 +193,27 @@ class SaleFinalizer:
         )
 
         # 10. Validation (caisse centralisée ou directe)
+        if not isinstance(loyalty_data, dict):
+            # 'loyalty' non-dict → .get() lèverait AttributeError → 500.
+            loyalty_data = {}
+        if not isinstance(paiements_data, list):
+            raise ValueError("Le format des paiements est invalide.")
+        paiement_immediat = Decimal(0)
+        for p in paiements_data:
+            if not isinstance(p, dict):
+                # p['montant'] sur un non-dict → TypeError → 500.
+                raise ValueError("Le format d'un paiement est invalide.")
+            try:
+                paiement_immediat += parse_decimal(
+                    p.get('montant', 0), field='montant du paiement',
+                    min_value=Decimal(0), max_value=MAX_DECIMAL_10_2
+                )
+            except ValidationError as exc:
+                raise _as_value_error(exc) from exc
         validation_data = {
             'use_pending_discount': loyalty_data.get('use_pending_discount', False),
             'points_to_use': loyalty_data.get('points_to_use', 0),
-            'paiement_immediat': sum(Decimal(str(p['montant'])) for p in paiements_data),
+            'paiement_immediat': paiement_immediat,
             'mode_paiement': data.get('mode_paiement')
         }
         SaleValidator.validate_invoice(facture, validation_user, validation_data)
@@ -218,25 +288,37 @@ class SaleFinalizer:
     @staticmethod
     def _validate_products(produits_data):
         """Valide les entrées produit avant toute opération DB."""
+        if not all(isinstance(p, dict) for p in produits_data):
+            # p.get() sur un non-dict → AttributeError → 500.
+            raise ValueError("Format de ligne produit invalide.")
+        try:
+            requested_ids = [
+                parse_int(p.get('produit'), field='produit', min_value=1, max_value=MAX_INT32)
+                for p in produits_data if p.get('produit') is not None
+            ]
+        except ValidationError as exc:
+            raise _as_value_error(exc) from exc
         valid_product_ids = set(
-            Produit.objects.filter(
-                id__in=[p.get('produit') for p in produits_data if p.get('produit')]
-            ).values_list('id', flat=True)
+            Produit.objects.filter(id__in=requested_ids).values_list('id', flat=True)
         )
         for p in produits_data:
-            pid = p.get('produit')
-            if not pid or pid not in valid_product_ids:
+            try:
+                pid = parse_int(p.get('produit'), field='produit', min_value=1, max_value=MAX_INT32)
+            except ValidationError as exc:
+                raise _as_value_error(exc) from exc
+            if pid not in valid_product_ids:
                 raise ValueError(f"Produit introuvable (id={pid}).")
             try:
-                price = Decimal(str(p.get('selling_price', '0')))
-                if abs(price) >= Decimal(10000000000):
-                    raise ValueError(f"Prix de vente hors limites pour le produit id={pid}.")
-            except (InvalidOperation, ValueError) as exc:
-                raise ValueError(f"Prix de vente invalide pour le produit id={pid}: {exc}") from exc
+                parse_decimal(
+                    p.get('selling_price', '0'), field='selling_price',
+                    min_value=Decimal(0), max_value=MAX_DECIMAL_10_2
+                )
+            except ValidationError as exc:
+                raise ValueError(f"Prix de vente invalide ou hors limites pour le produit id={pid}.") from exc
             try:
-                int(p.get('quantity', 0))
-            except (TypeError, ValueError):
-                raise ValueError(f"Quantité invalide pour le produit id={pid}.")
+                parse_int(p.get('quantity', 0), field='quantity', max_value=MAX_INT32)
+            except ValidationError as exc:
+                raise ValueError(f"Quantité invalide ou hors limites pour le produit id={pid}.") from exc
 
     @staticmethod
     def _update_existing_facture(existing_id, client_id, client_name_override, ayant_droit_id,
@@ -273,23 +355,56 @@ class SaleFinalizer:
     def _create_facture_produits(facture, produits_data):
         """Crée les lignes FactureProduit en bulk."""
         try:
-            facture_produits_to_create = [
-                FactureProduit(
+            facture_produits_to_create = []
+            for p in produits_data:
+                # Champs déjà validés par _validate_products, mais on re-parse
+                # défensivement : 'discount'/'tva' n'y sont pas contrôlés et
+                # NaN/infini passeraient le cast Decimal puis planteraient le
+                # quantize (InvalidOperation → 500).
+                try:
+                    produit_id = parse_int(
+                        p.get('produit'), field='produit',
+                        min_value=1, max_value=MAX_INT32
+                    )
+                    quantity = parse_int(
+                        p.get('quantity', 0), field='quantity', max_value=MAX_INT32
+                    )
+                    selling_price = parse_decimal(
+                        p.get('selling_price', '0'), field='selling_price',
+                        min_value=Decimal(0), max_value=MAX_DECIMAL_10_2
+                    )
+                    discount = parse_decimal(
+                        p.get('discount', '0'), field='discount',
+                        min_value=Decimal(0), max_value=MAX_DECIMAL_10_2
+                    )
+                    tva = parse_decimal(
+                        p.get('tva', '0'), field='tva',
+                        min_value=Decimal(0), max_value=MAX_DECIMAL_5_2
+                    )
+                except ValidationError as exc:
+                    raise _as_value_error(exc) from exc
+                # lot_id : un dict/liste lèverait TypeError dans bulk_create → 500.
+                lot_id = p.get('lot_id')
+                if lot_id is not None:
+                    try:
+                        lot_id = parse_int(lot_id, field='lot_id', min_value=1, max_value=MAX_INT32)
+                    except ValidationError as exc:
+                        raise _as_value_error(exc) from exc
+                facture_produits_to_create.append(FactureProduit(
                     facture=facture,
-                    produit_id=p.get('produit'),
-                    quantity=int(p.get('quantity', 0)),
-                    selling_price=Decimal(str(p.get('selling_price', '0'))).quantize(
+                    produit_id=produit_id,
+                    quantity=quantity,
+                    selling_price=selling_price.quantize(
                         Decimal('0.01'), rounding=ROUND_HALF_UP
                     ),
-                    discount=Decimal(str(p.get('discount', '0'))).quantize(
+                    discount=discount.quantize(
                         Decimal('0.01'), rounding=ROUND_HALF_UP
                     ),
-                    tva=Decimal(str(p.get('tva', '0'))).quantize(
+                    tva=tva.quantize(
                         Decimal('0.01'), rounding=ROUND_HALF_UP
                     ),
-                    stock_lot_id=p.get('lot_id')
-                ) for p in produits_data
-            ]
+                    stock_lot_id=lot_id
+                ))
             if facture_produits_to_create:
                 FactureProduit.objects.bulk_create(facture_produits_to_create)
                 for item, p in zip(facture_produits_to_create, produits_data):
@@ -320,24 +435,41 @@ class SaleFinalizer:
     @staticmethod
     def _handle_promis(facture, produits_data, client_id, client_name_override, validation_user):
         """Crée les promis pour les produits marqués is_promis."""
-        promis_to_create = [
-            Promis(
+        promis_to_create = []
+        for p in produits_data:
+            if not isinstance(p, dict):
+                raise ValueError("Format de ligne produit invalide.")
+            # '5' > 0 lèverait TypeError → 500 ; on parse d'abord en entier.
+            try:
+                promis_qty = parse_int(
+                    p.get('promis_quantity', 0), field='promis_quantity', max_value=MAX_INT32
+                )
+            except ValidationError as exc:
+                raise _as_value_error(exc) from exc
+            if not p.get('is_promis') or promis_qty <= 0:
+                continue
+            promis_to_create.append(Promis(
                 facture=facture,
                 client_id=client_id,
                 client_name=client_name_override or '',
                 client_phone=p.get('promis_phone', ''),
-                produit_id=p['produit'],
-                quantite=p['promis_quantity'],
+                produit_id=p.get('produit'),
+                quantite=promis_qty,
                 status=Promis.Status.EN_ATTENTE,
                 created_by=validation_user
-            ) for p in produits_data if p.get('is_promis') and p.get('promis_quantity', 0) > 0
-        ]
+            ))
         if promis_to_create:
             Promis.objects.bulk_create(promis_to_create)
 
     @staticmethod
     def _handle_ordonnancier(ordonnance_data, facture, validation_user, image_file):
         """Crée l'ordonnancier et ses lignes."""
+        if not isinstance(ordonnance_data, dict):
+            # .get() sur un non-dict → AttributeError → 500.
+            raise ValueError("Le format de l'ordonnance est invalide.")
+        lignes = ordonnance_data.get('lignes', [])
+        if not isinstance(lignes, list) or not all(isinstance(l, dict) for l in lignes):
+            raise ValueError("Le format des lignes d'ordonnance est invalide.")
         ord_obj = Ordonnancier.objects.create(
             patient_nom=ordonnance_data.get('patient_nom'),
             prescripteur_nom=ordonnance_data.get('prescripteur_nom'),
@@ -352,7 +484,7 @@ class SaleFinalizer:
                 produit_nom=l.get('produit_nom'),
                 quantite=l.get('quantite'),
                 surveillance_category=l.get('surveillance_category', 'NONE')
-            ) for l in ordonnance_data.get('lignes', [])
+            ) for l in lignes
         ]
         if lignes_to_create:
             LigneOrdonnancier.objects.bulk_create(lignes_to_create)
@@ -363,29 +495,59 @@ class SaleFinalizer:
         if Caisse.objects.filter(facture=facture).exists():
             return
         for p_data in paiements_data:
-            if Decimal(str(p_data.get('montant', 0))) > 0:
-                if p_data.get('mode') == 'depot':
-                    client = facture.client
-                    montant = Decimal(str(p_data['montant']))
-                    if not client or not client.is_deposit_enabled:
-                        raise ValueError(
-                            "Paiement par dépôt impossible : ce client n'a pas le dépôt/acompte activé."
-                        )
-                    if client.solde_depot < montant:
-                        raise ValueError(
-                            f"Solde dépôt insuffisant : {client.solde_depot} F disponibles, "
-                            f"{montant} F demandés."
-                        )
-                paiement = Caisse.objects.create(
-                    facture=facture,
-                    mode_paiement=p_data.get('mode', 'especes'),
-                    montant=Decimal(str(p_data['montant'])),
-                    reference=p_data.get('reference'),
-                    statut='completee',
-                    user=validation_user,
-                    part_patient=p_data.get('part_patient'),
-                    part_assurance=p_data.get('part_assurance')
+            if not isinstance(p_data, dict):
+                # p_data[...] sur un non-dict → TypeError → 500.
+                raise ValueError("Le format d'un paiement est invalide.")
+            try:
+                montant = parse_decimal(
+                    p_data.get('montant', 0), field='montant du paiement',
+                    max_value=MAX_DECIMAL_10_2
                 )
-                from .payment_service import PaymentService
-                PaymentService.process_payment(paiement, is_created=True)
+            except ValidationError as exc:
+                raise _as_value_error(exc) from exc
+            if montant <= 0:
+                # Lignes vides/négatives ignorées (le frontend envoie des
+                # lignes par mode inutilisé) — jamais persistées.
+                continue
+            try:
+                # part_patient/part_assurance : DecimalField(10, 2) nullables —
+                # 'abc'/NaN/-5 passaient bruts jusqu'au create → 500 ou
+                # montant négatif/NaN persisté.
+                part_patient = (
+                    parse_decimal(
+                        p_data.get('part_patient'), field='part_patient',
+                        min_value=Decimal(0), max_value=MAX_DECIMAL_10_2
+                    ) if p_data.get('part_patient') is not None else None
+                )
+                part_assurance = (
+                    parse_decimal(
+                        p_data.get('part_assurance'), field='part_assurance',
+                        min_value=Decimal(0), max_value=MAX_DECIMAL_10_2
+                    ) if p_data.get('part_assurance') is not None else None
+                )
+            except ValidationError as exc:
+                raise _as_value_error(exc) from exc
+            if p_data.get('mode') == 'depot':
+                client = facture.client
+                if not client or not client.is_deposit_enabled:
+                    raise ValueError(
+                        "Paiement par dépôt impossible : ce client n'a pas le dépôt/acompte activé."
+                    )
+                if client.solde_depot < montant:
+                    raise ValueError(
+                        f"Solde dépôt insuffisant : {client.solde_depot} F disponibles, "
+                        f"{montant} F demandés."
+                    )
+            paiement = Caisse.objects.create(
+                facture=facture,
+                mode_paiement=p_data.get('mode', 'especes'),
+                montant=montant,
+                reference=p_data.get('reference'),
+                statut='completee',
+                user=validation_user,
+                part_patient=part_patient,
+                part_assurance=part_assurance
+            )
+            from .payment_service import PaymentService
+            PaymentService.process_payment(paiement, is_created=True)
         facture.refresh_from_db()

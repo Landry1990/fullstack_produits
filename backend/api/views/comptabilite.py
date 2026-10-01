@@ -21,6 +21,7 @@ from ..serializers import (
     ExerciceComptableSerializer,
     JournalComptableSerializer,
 )
+from ..utils.validation import parse_date_param, parse_id
 
 
 class CompteComptableViewSet(viewsets.ModelViewSet):
@@ -89,9 +90,11 @@ class EcritureComptableViewSet(viewsets.ModelViewSet):
         Génère la balance des comptes sur une période (OHADA complète).
         Structure: Solde ouverture | Mouvements période | Solde clôture
         """
-        date_debut = request.query_params.get('date_debut')
-        date_fin = request.query_params.get('date_fin')
-        
+        # parse_date_param → None si absent, ValidationError (400) si invalide
+        # (chaîne brute dans les filtres ORM → ValidationError Django → 500).
+        date_debut = parse_date_param(request.query_params.get('date_debut'), field='date_debut')
+        date_fin = parse_date_param(request.query_params.get('date_fin'), field='date_fin')
+
         # Cache: 5 min pour la balance
         cache_key = f"compta_balance:{date_debut}:{date_fin}"
         cached = cache.get(cache_key)
@@ -189,9 +192,9 @@ class EcritureComptableViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def compte_resultat(self, request):
         """Génère un compte de résultat simplifié (Produits - Charges)."""
-        date_debut = request.query_params.get('date_debut')
-        date_fin = request.query_params.get('date_fin')
-        
+        date_debut = parse_date_param(request.query_params.get('date_debut'), field='date_debut')
+        date_fin = parse_date_param(request.query_params.get('date_fin'), field='date_fin')
+
         # Cache: 5 min
         cache_key = f"compta_resultat:{date_debut}:{date_fin}"
         cached = cache.get(cache_key)
@@ -248,7 +251,10 @@ class EcritureComptableViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def bilan(self, request):
         """Génère un bilan simplifié (Actif vs Passif)."""
-        date_fin = request.query_params.get('date_fin', timezone.now().date())
+        # Paramètre absent → date du jour ; invalide → 400.
+        date_fin = parse_date_param(
+            request.query_params.get('date_fin'), field='date_fin'
+        ) or timezone.now().date()
         
         # Cache: 5 min
         cache_key = f"compta_bilan:{date_fin}"
@@ -368,9 +374,9 @@ class EcritureComptableViewSet(viewsets.ModelViewSet):
         Retourne le détail des mouvements avec lettrage.
         """
         compte_numero = request.query_params.get('compte')
-        date_debut = request.query_params.get('date_debut')
-        date_fin = request.query_params.get('date_fin')
-        
+        date_debut = parse_date_param(request.query_params.get('date_debut'), field='date_debut')
+        date_fin = parse_date_param(request.query_params.get('date_fin'), field='date_fin')
+
         # Cache: 5 min
         cache_key = f"compta_grand_livre:{date_debut}:{date_fin}:{compte_numero}"
         cached = cache.get(cache_key)
@@ -460,16 +466,20 @@ class EcritureComptableViewSet(viewsets.ModelViewSet):
         ligne_ids = request.data.get('ligne_ids', [])
         compte_id = request.data.get('compte_id')
         commentaire = request.data.get('commentaire', '')
-        
-        if not ligne_ids or len(ligne_ids) < 2:
+
+        if not isinstance(ligne_ids, (list, tuple)) or len(ligne_ids) < 2:
             return Response(
                 {'error': 'Au moins 2 lignes sont nécessaires pour un lettrage'},
                 status=400
             )
-        
+
+        # Chaque id doit être un entier positif : 'abc' dans id__in lèverait
+        # ValueError → 500. parse_id lève ValidationError (400).
+        ligne_ids = [parse_id(lid, field='ligne_ids') for lid in ligne_ids]
+
         try:
-            compte = CompteComptable.objects.get(id=compte_id, numero__startswith='4')
-        except CompteComptable.DoesNotExist:
+            compte = CompteComptable.objects.get(id=int(compte_id), numero__startswith='4')
+        except (CompteComptable.DoesNotExist, TypeError, ValueError):
             return Response({'error': 'Compte tiers invalide'}, status=400)
         
         # Vérifier que toutes les lignes existent et appartiennent au même compte

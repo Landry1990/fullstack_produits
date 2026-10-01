@@ -217,12 +217,21 @@ class ProduitStockMixin:
             return Response({'detail': 'reason_type invalide. Choisir parmi les motifs standards ou personnaliss.'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
+            # Cast strict : rejette booléens, floats non entiers (1.5), NaN, inf
             if new_quantity is not None:
+                if isinstance(new_quantity, bool) or (isinstance(new_quantity, float) and not new_quantity.is_integer()):
+                    raise ValueError
                 new_quantity = int(new_quantity)
             if new_reserve_quantity is not None:
+                if isinstance(new_reserve_quantity, bool) or (isinstance(new_reserve_quantity, float) and not new_reserve_quantity.is_integer()):
+                    raise ValueError
                 new_reserve_quantity = int(new_reserve_quantity)
-        except ValueError:
+        except (TypeError, ValueError, OverflowError):
             return Response({'detail': 'Les quantités doivent être des entiers'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if (new_quantity is not None and new_quantity < 0) or \
+                (new_reserve_quantity is not None and new_reserve_quantity < 0):
+            return Response({'detail': 'Les quantités ne peuvent pas être négatives.'}, status=status.HTTP_400_BAD_REQUEST)
 
         stock_lot = None
         if new_lot_number:

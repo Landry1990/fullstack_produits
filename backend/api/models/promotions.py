@@ -2,6 +2,9 @@
 Promotion logic: Percentage, Fixed Amount, Buy X Get Y.
 """
 
+from decimal import Decimal
+
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils import timezone
 
@@ -45,8 +48,11 @@ class Promotion(models.Model):
     )
     
     # Valeur pour PERCENTAGE ou FIXED_AMOUNT ou BUNDLE (Prix du pack)
+    # NOTE: pas de borne haute — value peut être un montant fixe ou un prix de
+    # pack, pas uniquement un pourcentage.
     value = models.DecimalField(
         max_digits=10, decimal_places=2, default=0,
+        validators=[MinValueValidator(Decimal('0'))],
         help_text="Valeur de la remise (en % ou en F) ou Prix Total du Pack"
     )
 
@@ -54,11 +60,13 @@ class Promotion(models.Model):
     
     # Conditions pour BUY_X_GET_Y ou seuil pour remise
     buy_quantity = models.IntegerField(
-        default=1, 
+        default=1,
+        validators=[MinValueValidator(0)],
         help_text="Quantité minimale à acheter pour déclencher la promo"
     )
     get_quantity = models.IntegerField(
-        default=0, 
+        default=0,
+        validators=[MinValueValidator(0)],
         help_text="Quantité offerte (pour Buy X Get Y)"
     )
     
@@ -89,7 +97,10 @@ class PromotionPackItem(models.Model):
     """
     promotion = models.ForeignKey(Promotion, on_delete=models.CASCADE, related_name='pack_items')
     product = models.ForeignKey('Produit', on_delete=models.CASCADE)
-    quantity = models.PositiveIntegerField(default=1, help_text="Quantité requise dans le pack")
+    quantity = models.PositiveIntegerField(
+        default=1, validators=[MinValueValidator(1)],
+        help_text="Quantité requise dans le pack"
+    )
     
     class Meta:
         unique_together = ('promotion', 'product')

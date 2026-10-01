@@ -105,7 +105,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const handleAddPayment = (forcedMode?: string) => {
     const mode = forcedMode || modePaiement
     const montant = Number(montantPaye)
-    if (!montant || montant === 0) return
+    if (!Number.isFinite(montant) || montant <= 0) return
 
     if (mode === 'depot') {
       const alreadyPaidWithDepot = paiements
@@ -254,6 +254,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 ref={montantInputRef}
                 id="payment-amount"
                 type="number"
+                min={0}
                 className="w-full h-14 px-4 rounded-xl border-2 border-slate-200 bg-white text-right font-mono text-2xl font-semibold text-slate-800 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 outline-none transition-all"
                 value={montantPaye}
                 onChange={(e) => setMontantPaye(e.target.value)}
@@ -261,7 +262,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   if (e.key === 'Enter') {
                     e.preventDefault()
                     const montant = Number(montantPaye)
-                    if (montant <= 0) return
+                    if (!Number.isFinite(montant) || montant <= 0) return
                     if (montant < resteReel) {
                       // Montant insuffisant: focus sur les modes de règlement
                       // L'utilisateur choisira un mode avec Entrée, puis le focus
@@ -280,7 +281,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               type="button"
               className="inline-flex items-center justify-center h-14 w-14 rounded-xl text-2xl font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors mb-0.5 shrink-0"
               onClick={() => handleAddPayment()}
-              disabled={!montantPaye || Number(montantPaye) === 0}
+              disabled={!montantPaye || !Number.isFinite(Number(montantPaye)) || Number(montantPaye) <= 0}
               title={t('payment.amount_input_hint')}
               aria-label={t('payment.add')}
             >

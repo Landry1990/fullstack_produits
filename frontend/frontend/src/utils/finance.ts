@@ -149,7 +149,9 @@ export const buildPaymentsList = (
             if (paiements.length > 0) {
                 paiements.forEach(p => {
                     if (resteAPatient <= 0) return;
-                    const montantReel = Math.min(p.montant, resteAPatient);
+                    const montantP = Number(p.montant);
+                    if (!Number.isFinite(montantP)) return; // NaN ne doit pas entrer dans le payload
+                    const montantReel = Math.min(montantP, resteAPatient);
                     paiementsList.push({
                         mode: p.mode,
                         montant: montantReel,
@@ -198,9 +200,11 @@ export const buildPaymentsList = (
                 if (!isRefund && resteAEnregistrer <= 0) return;
                 if (isRefund && resteAEnregistrer >= 0) return;
 
+                const montantP = Number(p.montant);
+                if (!Number.isFinite(montantP)) return; // NaN ne doit pas entrer dans le payload
                 const montantReel = isRefund
-                    ? Math.max(p.montant, resteAEnregistrer)
-                    : Math.min(p.montant, resteAEnregistrer);
+                    ? Math.max(montantP, resteAEnregistrer)
+                    : Math.min(montantP, resteAEnregistrer);
 
                 paiementsList.push({
                     mode: p.mode,

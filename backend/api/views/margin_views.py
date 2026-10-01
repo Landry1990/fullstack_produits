@@ -11,6 +11,7 @@ from rest_framework.response import Response
 
 from api.models import Produit
 from api.services.margin_service import MarginService
+from api.utils.validation import parse_decimal, parse_id
 
 
 class MarginViewSet(viewsets.ViewSet):
@@ -25,10 +26,8 @@ class MarginViewSet(viewsets.ViewSet):
         Calcule la marge pour un produit spécifique
         ?product_id=123
         """
-        product_id = request.query_params.get('product_id')
-        if not product_id:
-            return Response({'error': 'product_id requis'}, status=400)
-        
+        product_id = parse_id(request.query_params.get('product_id'), field='product_id')
+
         try:
             product = Produit.objects.get(id=product_id)
             margins = MarginService.calculate_product_margin(
@@ -59,7 +58,11 @@ class MarginViewSet(viewsets.ViewSet):
         product_ids = request.data.get('product_ids', [])
         if not product_ids:
             return Response({'error': 'product_ids requis'}, status=400)
-        
+        if not isinstance(product_ids, (list, tuple)):
+            return Response({'error': 'product_ids doit être une liste'}, status=400)
+        # 400 (et non 500 via ORM) si un id n'est pas un entier positif
+        product_ids = [parse_id(pid, field='product_ids') for pid in product_ids]
+
         count = MarginService.update_product_margins(product_ids)
         return Response({
             'message': f'{count} produits mis à jour',
@@ -127,15 +130,19 @@ class MarginViewSet(viewsets.ViewSet):
         Identifie les produits avec des marges anormalement élevées
         ?threshold=80&min_ca=1000
         """
-        threshold = float(request.query_params.get('threshold', 80.0))
-        min_ca = request.query_params.get('min_ca', '1000.00')
-        
-        try:
-            min_ca_decimal = Decimal(min_ca)
-            products = MarginService.get_products_with_anomalous_margins(threshold, min_ca_decimal)
-            return Response({
-                'count': len(products),
-                'products': products
-            })
-        except ValueError:
-            return Response({'error': 'Valeurs invalides'}, status=400)
+        threshold = float(parse_decimal(
+            request.query_params.get('threshold', 80.0),
+            field='threshold', min_value=Decimal(0),
+        ))
+        # Decimal('abc') lève InvalidOperation (ArithmeticError), pas ValueError —
+        # parse_decimal garantit un 400 propre.
+        min_ca_decimal = parse_decimal(
+            request.query_params.get('min_ca', '1000.00'),
+            field='min_ca', min_value=Decimal(0),
+        )
+
+        products = MarginService.get_products_with_anomalous_margins(threshold, min_ca_decimal)
+        return Response({
+            'count': len(products),
+            'products': products
+        })

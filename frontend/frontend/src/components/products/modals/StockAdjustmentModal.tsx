@@ -173,6 +173,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
                   <Input
                     type="text"
                     label={t('products:adjustment.lot_number')}
+                    maxLength={20}
                     value={form.new_lot_number?.trim() === '' ? '' : form.new_lot_number}
                     onChange={(e) => setForm((prev) => ({ ...prev, new_lot_number: e.target.value }))}
                     placeholder={t('products:adjustment.lot_placeholder')}

@@ -30,7 +30,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 from ..audit_helpers import log_audit
 from ..centralized_configs import BaseViewSetConfig, StandardResultsSetPagination
-from ..models import AuditLog, Facture, FactureProduit, Team, UserDailySession
+from ..models import AuditLog, Facture, FactureProduit, Profile, Team, UserDailySession
+from ..utils.validation import parse_int
 from ..serializers import ProfileSerializer as UserProfileSerializer
 from ..serializers import TeamSerializer, UserSerializer
 
@@ -204,7 +205,7 @@ class UserViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         if self.action == 'login_options':
             return [AllowAny()]
         # CRUD utilisateur réservé aux admins; endpoints utilitaires pour utilisateurs authentifiés.
-        admin_actions = {'list', 'retrieve', 'create', 'update', 'partial_update', 'destroy'}
+        admin_actions = {'list', 'retrieve', 'create', 'update', 'partial_update', 'destroy', 'apply_to_role'}
         if self.action in admin_actions:
             return [IsAdminUser()]
         return [IsAuthenticated()]
@@ -313,6 +314,42 @@ class UserViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
             request=request
         )
         return response
+
+    @action(detail=False, methods=['post'], url_path='apply-to-role')
+    def apply_to_role(self, request):
+        """
+        Applique un profil de droits (permissions, menus autorisés, remise max)
+        à tous les utilisateurs actifs portant un rôle donné.
+        POST { "role": "VENDEUR", "profile": { ...champs ProfileSerializer... } }
+        Le rôle des utilisateurs cibles n'est jamais modifié.
+        """
+        role = request.data.get('role')
+        valid_roles = [choice[0] for choice in Profile.ROLE_CHOICES]
+        if role not in valid_roles:
+            return Response(
+                {'detail': 'Rôle invalide.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        serializer = UserProfileSerializer(data=request.data.get('profile') or {}, partial=True)
+        serializer.is_valid(raise_exception=True)
+        updates = dict(serializer.validated_data)
+        updates.pop('role', None)
+
+        targets = Profile.objects.filter(role=role, user__is_active=True)
+        updated = targets.update(**updates) if updates else targets.count()
+
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='Profile',
+            object_id=None,
+            description=f"Droits appliqués au rôle {role} ({updated} utilisateur(s))",
+            details={'role': role, 'updated': updated, 'fields': sorted(updates.keys())},
+            request=request
+        )
+
+        return Response({'updated': updated, 'role': role})
 
     @action(detail=False, methods=['post'])
     def verify_password(self, request):
@@ -509,12 +546,13 @@ class UserDailySessionViewSet(viewsets.ReadOnlyModelViewSet):
         
         month = request.query_params.get('month')
         year = request.query_params.get('year')
-        
-        if not month or not year:
-            today = datetime.date.today()
-            month = today.month
-            year = today.year
-            
+
+        today = datetime.date.today()
+        # Paramètre absent → mois/année courants ; fourni invalide → 400
+        # (une chaîne brute en filtre date__month/date__year levait un 500)
+        month = parse_int(month, field='month', min_value=1, max_value=12) if month else today.month
+        year = parse_int(year, field='year', min_value=2000, max_value=2100) if year else today.year
+
         sessions = self.get_queryset().filter(
             date__month=month,
             date__year=year,

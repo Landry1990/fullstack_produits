@@ -1,8 +1,11 @@
 """
 Stock-related models: StockLot, LotSequence, StockAdjustment, MouvementStock.
 """
+from decimal import Decimal
+
 from django.contrib.auth.models import User
 from django.core.cache import cache
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
@@ -15,8 +18,11 @@ class LotSequence(models.Model):
     Singleton : une seule instance (id=1) stocke le dernier numéro utilisé.
     """
     id = models.IntegerField(primary_key=True, default=1)
-    last_number = models.IntegerField(default=0, help_text="Dernier numéro de séquence utilisé")
-    
+    last_number = models.IntegerField(
+        default=0, validators=[MinValueValidator(0)],
+        help_text="Dernier numéro de séquence utilisé"
+    )
+
     class Meta:
         db_table = 'lot_sequence'
     
@@ -29,7 +35,7 @@ class TicketSessionSequence(models.Model):
     Reset quotidien.
     """
     date = models.DateField(primary_key=True)
-    last_number = models.IntegerField(default=0)
+    last_number = models.IntegerField(default=0, validators=[MinValueValidator(0)])
     
     class Meta:
         db_table = 'ticket_session_sequence'
@@ -126,18 +132,40 @@ class StockLot(models.Model):
         'Fournisseur', on_delete=models.SET_NULL, null=True, blank=True, db_index=True
     )
     fournisseur_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du fournisseur sauvegardé")
-    quantity_initial = models.IntegerField(help_text="Quantité totale initiale (payée + gratuites)")
-    quantity_paid = models.IntegerField(default=0, help_text="Quantité payée uniquement")
-    quantity_free = models.IntegerField(default=0, help_text="Unités gratuites (UG)")
-    quantity_free_remaining = models.IntegerField(default=0, help_text="Unités gratuites restantes en rayon")
-    quantity_remaining = models.IntegerField(help_text="Quantité totale restante en rayon")
-    quantity_reserved = models.IntegerField(default=0, help_text="Quantité en réserve pour ce lot")
+    # NOTE: quantity_initial=0 est légitime — les inventaires créent des lots vides
+    # (lot découvert au comptage sans réception préalable).
+    quantity_initial = models.IntegerField(
+        validators=[MinValueValidator(0)],
+        help_text="Quantité totale initiale (payée + gratuites)"
+    )
+    quantity_paid = models.IntegerField(
+        default=0, validators=[MinValueValidator(0)],
+        help_text="Quantité payée uniquement"
+    )
+    quantity_free = models.IntegerField(
+        default=0, validators=[MinValueValidator(0)],
+        help_text="Unités gratuites (UG)"
+    )
+    quantity_free_remaining = models.IntegerField(
+        default=0, validators=[MinValueValidator(0)],
+        help_text="Unités gratuites restantes en rayon"
+    )
+    quantity_remaining = models.IntegerField(
+        validators=[MinValueValidator(0)],
+        help_text="Quantité totale restante en rayon"
+    )
+    quantity_reserved = models.IntegerField(
+        default=0, validators=[MinValueValidator(0)],
+        help_text="Quantité en réserve pour ce lot"
+    )
     price_cost = models.DecimalField(
-        max_digits=10, decimal_places=2, 
+        max_digits=10, decimal_places=2,
+        validators=[MinValueValidator(Decimal('0'))],
         help_text="Prix d'achat unitaire effectif (ajusté avec UG)"
     )
     selling_price = models.DecimalField(
-        max_digits=10, decimal_places=2, default=0.00, 
+        max_digits=10, decimal_places=2, default=0.00,
+        validators=[MinValueValidator(Decimal('0'))],
         help_text="Prix de vente lors de la réception"
     )
     lot = models.CharField(
@@ -185,8 +213,14 @@ class ReapproSession(models.Model):
     """
     id = models.BigAutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, help_text="Utilisateur ayant effectué le réappro")
-    total_products = models.IntegerField(default=0, help_text="Nombre de produits distincts impactés")
-    total_units = models.IntegerField(default=0, help_text="Nombre total d'unités transférées")
+    total_products = models.IntegerField(
+        default=0, validators=[MinValueValidator(0)],
+        help_text="Nombre de produits distincts impactés"
+    )
+    total_units = models.IntegerField(
+        default=0, validators=[MinValueValidator(0)],
+        help_text="Nombre total d'unités transférées"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     notes = models.TextField(blank=True, default="")
 

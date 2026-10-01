@@ -63,7 +63,12 @@
         "copy_permissions": "Copier les droits d'un utilisateur",
         "select_user": "Sélectionner un utilisateur...",
         "copy_btn": "Copier",
-        "copy_help": "Copie tous les droits, menus autorisés et permissions spéciales de l'utilisateur sélectionné."
+        "copy_help": "Copie tous les droits, menus autorisés et permissions spéciales de l'utilisateur sélectionné.",
+        "apply_to_role": "Appliquer à tout le rôle",
+        "apply_to_role_btn": "Appliquer au rôle",
+        "apply_to_role_help": "Propage les droits, menus autorisés et remise max du formulaire à tous les utilisateurs actifs ayant ce rôle.",
+        "apply_to_role_confirm_title": "Appliquer à tout le rôle ?",
+        "apply_to_role_confirm": "{{count}} utilisateur(s) actif(s) avec le rôle « {{role}} » recevront ces droits, menus autorisés et remise max."
     },
     "modal": {
         "new_title": "Nouvel Utilisateur",
@@ -119,6 +124,8 @@
         "deactivate_btn": "Désactiver",
         "save_error": "Erreur lors de l'enregistrement de l'utilisateur",
         "permissions_copied": "Droits copiés de {{username}}",
+        "applied_to_role": "Droits appliqués à {{count}} utilisateur(s)",
+        "apply_to_role_error": "Erreur lors de l'application des droits au rôle",
         "deactivate_confirm_title": "Mettre à la corbeille ?",
         "deactivate_confirm": "Voulez-vous désactiver l'utilisateur {{username}} et le placer dans la corbeille ?",
         "restored": "{{username}} a été restauré avec succès.",

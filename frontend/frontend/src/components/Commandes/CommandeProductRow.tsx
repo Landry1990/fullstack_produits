@@ -329,6 +329,7 @@ export function CommandeProductRow({
                         data-row={index}
                         data-field="lot"
                         aria-label={t('orders:product_table.headers.lot')}
+                        maxLength={20}
                         value={p.lot || ''}
                         onChange={(e) => updateCommandeProduitField(index, 'lot', e.target.value)}
                         onKeyDown={(e) => handleTableFieldKeyDown(e, index, (commandeType === 'DIR' ? 7 : 6))}

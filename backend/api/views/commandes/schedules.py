@@ -13,6 +13,7 @@ from ...services.auto_order import (
     create_order_from_suggestions,
     run_suggestions_for_schedule,
 )
+from ...utils.validation import parse_id
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +34,7 @@ class OrderScheduleViewSet(viewsets.ModelViewSet):
         queryset = super().get_queryset()
         fournisseur_id = self.request.query_params.get('fournisseur')
         if fournisseur_id:
-            queryset = queryset.filter(fournisseur_id=fournisseur_id)
+            queryset = queryset.filter(fournisseur_id=parse_id(fournisseur_id, field='fournisseur'))
         return queryset
 
     @action(detail=True, methods=['post'], url_path='trigger-now')

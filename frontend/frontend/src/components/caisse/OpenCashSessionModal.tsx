@@ -211,6 +211,7 @@ export const OpenCashSessionModal: React.FC<OpenCashSessionModalProps> = ({
                     id="open-session-fond"
                     type="number"
                     step="0.01"
+                    min={0}
                     className="w-full h-10 px-3 pl-10 rounded-lg border border-slate-200 bg-white text-right font-mono text-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none text-sm"
                     value={fondCaisse}
                     onChange={(e) => setFondCaisse(e.target.value)}

@@ -515,10 +515,12 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
                 };
             }).filter((p): p is NonNullable<typeof p> => p !== null);
 
-            const [_, updatedFacture] = await Promise.all([
-                api.post('caisse/bulk_create/', { items: paiementPayloads }),
-                venteService.update(facture.id, { status: 'PAY' })
-            ]);
+            // Le backend n'autorise le passage en PAY que si les encaissements
+            // couvrent le total : les paiements doivent être enregistrés AVANT.
+            if (paiementPayloads.length > 0) {
+                await api.post('caisse/bulk_create/', { items: paiementPayloads });
+            }
+            const updatedFacture = await venteService.update(facture.id, { status: 'PAY' });
 
             const rendu = totalVerse - Number(updatedFacture.total_ttc);
 

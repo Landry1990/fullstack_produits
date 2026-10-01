@@ -1,7 +1,8 @@
 from datetime import date
+from decimal import Decimal
 
 from django.contrib.auth.models import User
-from django.core.validators import MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 
@@ -29,7 +30,10 @@ class AvoirClient(models.Model):
         related_name='avoirs_clients',
     )
     date = models.DateField(default=date.today)
-    montant_total = models.DecimalField(max_digits=12, decimal_places=2)
+    montant_total = models.DecimalField(
+        max_digits=12, decimal_places=2,
+        validators=[MinValueValidator(Decimal('0'))]
+    )
     statut = models.CharField(max_length=10, choices=Statut.choices, default=Statut.BROUILLON)
     type_motif = models.CharField(max_length=10, choices=TypeMotif.choices, default=TypeMotif.AUTRE)
     created_by = models.ForeignKey(
@@ -68,9 +72,18 @@ class LigneAvoirClient(models.Model):
     avoir_client = models.ForeignKey(AvoirClient, on_delete=models.CASCADE, related_name='lignes')
     produit = models.ForeignKey('Produit', on_delete=models.PROTECT)
     quantity = models.IntegerField(validators=[MinValueValidator(1)])
-    prix_unitaire = models.DecimalField(max_digits=10, decimal_places=2)
-    remise = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    tva = models.DecimalField(max_digits=5, decimal_places=2)
+    prix_unitaire = models.DecimalField(
+        max_digits=10, decimal_places=2,
+        validators=[MinValueValidator(Decimal('0'))]
+    )
+    remise = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0,
+        validators=[MinValueValidator(Decimal('0'))]
+    )
+    tva = models.DecimalField(
+        max_digits=5, decimal_places=2,
+        validators=[MinValueValidator(Decimal('0')), MaxValueValidator(Decimal('100'))]
+    )
     lot = models.CharField(max_length=100, blank=True, default='')
     stock_lot = models.ForeignKey('StockLot', on_delete=models.SET_NULL, null=True, blank=True)
 

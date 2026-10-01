@@ -148,10 +148,14 @@ def _process_csv_row(
 
     try:
         quantite = float(quantite_str.replace(',', '.'))
-        if quantite.is_integer():
-            quantite = int(quantite)
     except ValueError:
         raise ValueError(f"Quantité invalide '{quantite_str}'.")
+    # Rejette 'nan', 'inf', les décimaux non entiers ('1.5') et les négatifs
+    if not quantite.is_integer():
+        raise ValueError(f"Quantité invalide '{quantite_str}' (nombre entier attendu).")
+    quantite = int(quantite)
+    if quantite < 0:
+        raise ValueError(f"Quantité négative interdite '{quantite_str}'.")
 
     produit = Produit.objects.filter(
         Q(cip1=cip) | Q(cip2=cip) | Q(cip3=cip) | Q(cip4=cip)

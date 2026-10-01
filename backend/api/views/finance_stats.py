@@ -2,7 +2,7 @@
 Finance Statistics ViewSet - Refactorisé.
 Les services sous-jacents sont dans api/services/finance_*.py
 """
-from datetime import date, timedelta
+from datetime import timedelta
 from decimal import Decimal
 
 import numpy as np
@@ -53,20 +53,20 @@ from ..services.finance_predictions import (
     linear_regression,
     moving_average,
 )
+from ..utils.validation import parse_date_param, parse_int
 
 
 class FinanceStatsViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
     @staticmethod
-    def _parse_iso_date(value):
-        """Parse une date ISO (YYYY-MM-DD). Retourne None si absente ou invalide."""
-        if not value:
-            return None
-        try:
-            return date.fromisoformat(value)
-        except (ValueError, TypeError):
-            return None
+    def _parse_iso_date(value, field='date'):
+        """Parse une date ISO (YYYY-MM-DD).
+
+        Retourne None si absente ; lève ValidationError (400) si la valeur
+        fournie est invalide — plus de fallback silencieux.
+        """
+        return parse_date_param(value, field=field)
 
     # ── 1. CA Evolution ──────────────────────────────────
     @action(detail=False, methods=['get'])
@@ -429,7 +429,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
     def evolution_categories(self, request):
         cat_type = request.query_params.get('type', 'rayon')
-        top_n = int(request.query_params.get('top', 5))
+        top_n = parse_int(request.query_params.get('top', 5), field='top', min_value=1, max_value=200)
         today = timezone.localtime(timezone.now()).date()
         start_date = (today - relativedelta(months=11)).replace(day=1)
 
@@ -564,8 +564,8 @@ class FinanceStatsViewSet(viewsets.ViewSet):
 
         from ..models import Fournisseur, StockAdjustment, StockLot
         today = timezone.localtime(timezone.now()).date()
-        start_date = self._parse_iso_date(request.query_params.get('date_debut')) or today - relativedelta(months=12)
-        end_date = self._parse_iso_date(request.query_params.get('date_fin')) or today
+        start_date = self._parse_iso_date(request.query_params.get('date_debut'), 'date_debut') or today - relativedelta(months=12)
+        end_date = self._parse_iso_date(request.query_params.get('date_fin'), 'date_fin') or today
 
         fournisseurs = list(Fournisseur.objects.filter(
             stocklot__date_reception__date__gte=start_date,
@@ -650,8 +650,8 @@ class FinanceStatsViewSet(viewsets.ViewSet):
 
         from ..models import StockLot
         today = timezone.localtime(timezone.now()).date()
-        start_date = self._parse_iso_date(request.query_params.get('date_debut')) or today - relativedelta(months=12)
-        end_date = self._parse_iso_date(request.query_params.get('date_fin')) or today
+        start_date = self._parse_iso_date(request.query_params.get('date_debut'), 'date_debut') or today - relativedelta(months=12)
+        end_date = self._parse_iso_date(request.query_params.get('date_fin'), 'date_fin') or today
 
         produits_multi_source = StockLot.objects.filter(
             date_reception__date__gte=start_date,
@@ -705,8 +705,8 @@ class FinanceStatsViewSet(viewsets.ViewSet):
     def repartition_achats(self, request):
         from ..models import StockLot
         today = timezone.localtime(timezone.now()).date()
-        start_date = self._parse_iso_date(request.query_params.get('date_debut')) or today - relativedelta(months=12)
-        end_date = self._parse_iso_date(request.query_params.get('date_fin')) or today
+        start_date = self._parse_iso_date(request.query_params.get('date_debut'), 'date_debut') or today - relativedelta(months=12)
+        end_date = self._parse_iso_date(request.query_params.get('date_fin'), 'date_fin') or today
 
         achats = StockLot.objects.filter(
             date_reception__date__gte=start_date,
@@ -737,7 +737,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         today = timezone.localtime(timezone.now()).date()
 
         # Période glissante configurable : 7j, 30j, 90j (défaut: 7j)
-        period_days = int(request.query_params.get('period_days', 7))
+        period_days = parse_int(request.query_params.get('period_days', 7), field='period_days', min_value=1, max_value=3650)
         if period_days not in (7, 30, 90):
             period_days = 7
 
@@ -746,11 +746,11 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         p2_end = p1_start - timedelta(days=1)
         p2_start = p2_end - timedelta(days=period_days - 1)
 
-        # Override manuel possible
-        p1_start = request.query_params.get('p1_start', p1_start.isoformat())
-        p1_end = request.query_params.get('p1_end', p1_end.isoformat())
-        p2_start = request.query_params.get('p2_start', p2_start.isoformat())
-        p2_end = request.query_params.get('p2_end', p2_end.isoformat())
+        # Override manuel possible (400 si la date fournie est invalide)
+        p1_start = parse_date_param(request.query_params.get('p1_start'), field='p1_start') or p1_start
+        p1_end = parse_date_param(request.query_params.get('p1_end'), field='p1_end') or p1_end
+        p2_start = parse_date_param(request.query_params.get('p2_start'), field='p2_start') or p2_start
+        p2_end = parse_date_param(request.query_params.get('p2_end'), field='p2_end') or p2_end
 
         def get_period_stats(start, end):
             factures = get_validated_invoices_queryset().filter(

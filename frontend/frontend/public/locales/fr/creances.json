@@ -134,7 +134,8 @@
         "releve_generated": "Relevé généré avec succès.",
         "excel_loading": "Génération du fichier Excel...",
         "excel_export_success": "Export Excel généré avec succès.",
-        "excel_export_error": "Erreur lors de l'export Excel."
+        "excel_export_error": "Erreur lors de l'export Excel.",
+        "invalid_date_range": "La date de début doit être antérieure à la date de fin"
     },
     "print_view": {
         "title": "RELEVÉ DE CRÉANCES",

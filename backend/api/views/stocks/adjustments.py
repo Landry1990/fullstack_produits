@@ -25,7 +25,7 @@ class StockAdjustmentViewSet(MultiTermSearchMixin, viewsets.ReadOnlyModelViewSet
     queryset = StockAdjustment.objects.select_related('produit', 'user', 'stock_lot').order_by('-created_at')
     serializer_class = StockAdjustmentSerializer
     pagination_class = StandardResultsSetPagination
-    permission_classes = [permissions.AllowAny] # As per original view
+    permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = {
         'produit': ['exact'],

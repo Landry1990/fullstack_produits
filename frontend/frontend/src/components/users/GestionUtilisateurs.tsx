@@ -12,7 +12,7 @@ import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { UserPlus } from 'lucide-react';
 import { logger } from '../../utils/logger'
-import { PERMISSIONS_META, type ManagedUser } from './usersMeta';
+import { PERMISSIONS_META, ROLES, type ManagedUser } from './usersMeta';
 import { MENU_HIERARCHY_FALLBACK } from './menuHierarchyFallback';
 import UserListItem from './UserListItem';
 import UserFormDialog from './UserFormDialog';
@@ -106,17 +106,46 @@ export default function GestionUtilisateurs() {
 
   // La restauration se fait depuis le menu Corbeille global (Corbeille.tsx)
 
+  const buildProfilePayload = (): Record<string, unknown> => {
+    const profilePayload: Record<string, unknown> = {
+      role: formData.role,
+      allowed_menus: formData.allowed_menus,
+      max_discount_rate: formData.max_discount_rate,
+    };
+    PERMISSIONS_META.forEach(p => {
+      profilePayload[p.key] = formData[p.key];
+    });
+    return profilePayload;
+  };
+
+  const handleApplyToRole = async () => {
+    const role = formData.role;
+    const roleMeta = ROLES.find(r => r.value === role);
+    const roleLabel = roleMeta ? t(roleMeta.labelKey) : role;
+    const targetCount = users.filter(u => u.is_active && u.profile?.role === role).length;
+
+    const confirmed = await confirm({
+      title: t('form.apply_to_role_confirm_title'),
+      message: t('form.apply_to_role_confirm', { count: targetCount, role: roleLabel }),
+      variant: 'danger',
+      confirmText: t('form.apply_to_role_btn')
+    });
+    if (!confirmed) return;
+
+    try {
+      const { data } = await api.post('users/apply-to-role/', { role, profile: buildProfilePayload() });
+      gooeyToast.success(t('messages.applied_to_role', { count: data.updated }));
+      fetchUsers();
+    } catch (error) {
+      logger.error('Error applying rights to role:', error);
+      gooeyToast.error(getApiErrorDetail(error, t('messages.apply_to_role_error')));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const profilePayload: Record<string, unknown> = {
-        role: formData.role,
-        allowed_menus: formData.allowed_menus,
-        max_discount_rate: formData.max_discount_rate,
-      };
-      PERMISSIONS_META.forEach(p => {
-        profilePayload[p.key] = formData[p.key];
-      });
+      const profilePayload = buildProfilePayload();
 
       const payload: Record<string, unknown> & { profile: Record<string, unknown> } = {
         username: formData.username,
@@ -203,6 +232,7 @@ export default function GestionUtilisateurs() {
         menuHierarchy={MENU_HIERARCHY}
         form={form}
         onSubmit={handleSubmit}
+        onApplyToRole={handleApplyToRole}
       />
 
       <PasswordConfirmModal

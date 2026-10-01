@@ -3,7 +3,6 @@ ViewSet pour le système d'ordonnancier de la pharmacie.
 Gère le registre des médicaments délivrés sur ordonnance.
 """
 import io
-from datetime import datetime
 
 from django.db.models import Q
 from django.http import HttpResponse
@@ -20,6 +19,7 @@ from rest_framework.response import Response
 
 from .models import LigneOrdonnancier, Ordonnancier
 from .serializers import OrdonnancierCreateSerializer, OrdonnancierSerializer
+from .utils.validation import parse_date_param, parse_int
 
 
 class OrdonnancierViewSet(viewsets.ModelViewSet):
@@ -47,23 +47,17 @@ class OrdonnancierViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
         
-        # Filtres par date
-        date_debut = self.request.query_params.get('date_debut')
-        date_fin = self.request.query_params.get('date_fin')
-        
+        # Filtres par date — 400 si la valeur fournie est invalide
+        # (plus de filtre silencieusement ignoré → résultats non filtrés trompeurs)
+        date_debut = parse_date_param(
+            self.request.query_params.get('date_debut'), field='date_debut')
+        date_fin = parse_date_param(
+            self.request.query_params.get('date_fin'), field='date_fin')
+
         if date_debut:
-            try:
-                date_debut = datetime.strptime(date_debut, '%Y-%m-%d')
-                queryset = queryset.filter(date_delivrance__date__gte=date_debut)
-            except ValueError:
-                pass
-        
+            queryset = queryset.filter(date_delivrance__date__gte=date_debut)
         if date_fin:
-            try:
-                date_fin = datetime.strptime(date_fin, '%Y-%m-%d')
-                queryset = queryset.filter(date_delivrance__date__lte=date_fin)
-            except ValueError:
-                pass
+            queryset = queryset.filter(date_delivrance__date__lte=date_fin)
         
         # Filtre par patient
         patient = self.request.query_params.get('patient')
@@ -102,7 +96,7 @@ class OrdonnancierViewSet(viewsets.ModelViewSet):
         queryset = self.get_queryset()
         
         # Limiter pour la lisibilité
-        limit = int(request.query_params.get('limit', 100))
+        limit = parse_int(request.query_params.get('limit', 100), field='limit', min_value=1, max_value=10000)
         entries = queryset[:limit]
         
         # Créer le PDF

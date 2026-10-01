@@ -13,6 +13,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from ...audit_helpers import log_audit
+from ...utils.validation import parse_id
 from ...models import (
     AuditLog,
     Commande,
@@ -36,8 +37,16 @@ class CommandeBulkActionsMixin:
         Si aucune commande n'existe, en crée une nouvelle.
         """
         produit_id = request.data.get('produit_id')
-        quantity = int(request.data.get('quantity', 1))
-        
+        raw_quantity = request.data.get('quantity', 1)
+        try:
+            if isinstance(raw_quantity, bool) or (isinstance(raw_quantity, float) and not raw_quantity.is_integer()):
+                raise ValueError
+            quantity = int(raw_quantity)
+        except (TypeError, ValueError, OverflowError):
+            return Response({'error': 'La quantité doit être un nombre entier.'}, status=status.HTTP_400_BAD_REQUEST)
+        if quantity <= 0:
+            return Response({'error': 'La quantité doit être strictement positive.'}, status=status.HTTP_400_BAD_REQUEST)
+
         if not produit_id:
             return Response({'error': 'produit_id requis'}, status=status.HTTP_400_BAD_REQUEST)
             
@@ -102,8 +111,16 @@ class CommandeBulkActionsMixin:
         Regroupe automatiquement les produits par fournisseur.
         """
         produit_ids = request.data.get('produit_ids', [])
-        quantity = int(request.data.get('quantity', 1))
-        
+        raw_quantity = request.data.get('quantity', 1)
+        try:
+            if isinstance(raw_quantity, bool) or (isinstance(raw_quantity, float) and not raw_quantity.is_integer()):
+                raise ValueError
+            quantity = int(raw_quantity)
+        except (TypeError, ValueError, OverflowError):
+            return Response({'error': 'La quantité doit être un nombre entier.'}, status=status.HTTP_400_BAD_REQUEST)
+        if quantity <= 0:
+            return Response({'error': 'La quantité doit être strictement positive.'}, status=status.HTTP_400_BAD_REQUEST)
+
         if not produit_ids or not isinstance(produit_ids, list):
             return Response({'error': 'Liste de produit_ids requise'}, status=status.HTTP_400_BAD_REQUEST)
             
@@ -201,6 +218,10 @@ class CommandeBulkActionsMixin:
         ids = request.data.get('ids', [])
         if not ids:
             return Response({'detail': 'Aucun ID fourni.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not isinstance(ids, list):
+            return Response({'detail': "'ids' doit être une liste d'identifiants."}, status=status.HTTP_400_BAD_REQUEST)
+        # Assainir chaque id : non-entier → 400 au lieu d'un ValueError → 500 via id__in
+        ids = [parse_id(v, field='ids') for v in ids]
         
         logger.info(f"Bulk delete requested for IDs: {ids}")
         
@@ -290,7 +311,10 @@ class CommandeBulkActionsMixin:
         
         if not source_id:
             return Response({'error': 'ID de la commande source requis'}, status=status.HTTP_400_BAD_REQUEST)
-            
+
+        # id non entier → 400 au lieu d'un ValueError → 500 dans get(pk=...)
+        source_id = parse_id(source_id, field='source_commande_id')
+
         try:
             source_commande = Commande.objects.get(pk=source_id)
         except Commande.DoesNotExist:

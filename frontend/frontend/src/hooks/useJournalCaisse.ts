@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { gooeyToast } from 'goey-toast';
 import api from '../services/api';
 import type { CaisseTransaction, MouvementCaisse } from '../types';
 import { usePharmacySettings } from './usePharmacySettings';
@@ -111,6 +112,11 @@ export function useJournalCaisse() {
   }, [PAGE_SIZE]);
 
   const fetchPageInit = useCallback(async (signal?: AbortSignal) => {
+    // Plage de dates invalide : bloquer la requête plutôt que d'envoyer au backend
+    if (dateDebut && dateFin && dateDebut.getTime() > dateFin.getTime()) {
+      gooeyToast.error(t('cash_journal:messages.invalid_date_range'));
+      return;
+    }
     setLoading(true);
     setError(null);
     try {

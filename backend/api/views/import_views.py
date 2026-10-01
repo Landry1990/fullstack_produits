@@ -1,4 +1,5 @@
 import logging
+import math
 
 import pandas as pd
 from django.db import transaction
@@ -30,6 +31,11 @@ class ProductImportView(APIView):
         file_obj = request.FILES.get('file')
         if not file_obj:
             return Response({'error': "Aucun fichier fourni"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Limite de taille côté serveur (protection contre les fichiers trop gros)
+        max_file_size = 20 * 1024 * 1024  # 20 Mo
+        if file_obj.size > max_file_size:
+            return Response({'error': "Fichier trop volumineux (maximum 20 Mo)."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             # Determine file type and read with proper separator detection
@@ -132,7 +138,23 @@ class ProductImportView(APIView):
 
                     selling_price = float(row['selling_price'])
                     cost_price = float(row.get('cost_price', 0))
-                    
+                    # Rejet des valeurs corrompues : NaN/infini (pd.to_numeric laisse passer inf),
+                    # prix négatifs, stock négatif. Rollback du savepoint comme les autres erreurs.
+                    stock_raw = float(row.get('stock', 0)) if 'stock' in df.columns else 0.0
+                    if not (math.isfinite(selling_price) and math.isfinite(cost_price) and math.isfinite(stock_raw)):
+                        errors.append(f"Ligne {index + 2} ({name}): valeur numérique invalide (NaN/infini)")
+                        transaction.savepoint_rollback(sid)
+                        continue
+                    if selling_price < 0 or cost_price < 0:
+                        errors.append(f"Ligne {index + 2} ({name}): prix négatif")
+                        transaction.savepoint_rollback(sid)
+                        continue
+                    if stock_raw < 0:
+                        errors.append(f"Ligne {index + 2} ({name}): quantité/stock négatif ({stock_raw:g})")
+                        transaction.savepoint_rollback(sid)
+                        continue
+                    stock_val = int(stock_raw)
+
                     # TVA Logic:
                     # 1. If TVCODE column exists: tvcode=0 -> TVA 0%, tvcode=2 -> TVA 19.25%
                     # 2. Fallback: public=0 -> TVA 19.25%, public>0 -> TVA 0%
@@ -162,7 +184,7 @@ class ProductImportView(APIView):
                         'name': name,
                         'selling_price': selling_price,
                         'cost_price': cost_price,
-                        'stock': int(row.get('stock', 0)) if 'stock' in df.columns else 0,
+                        'stock': stock_val,
                         'cip1': cip1 if cip1 else None,
                         'cip2': cip2 if cip2 else None,
                         'cip3': cip3 if cip3 else None,
@@ -201,7 +223,7 @@ class ProductImportView(APIView):
                         
                         # Only update stock if explicitly provided in file
                         if 'stock' in df.columns:
-                            product.stock = int(row.get('stock', 0))
+                            product.stock = stock_val
                             
                         product.save()
                         updated_count += 1

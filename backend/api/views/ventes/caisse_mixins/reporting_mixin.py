@@ -10,11 +10,13 @@ from django.db.models.functions import Coalesce
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from ....centralized_configs import StandardResultsSetPagination
 from ....models import Caisse, ClotureCaisse, MouvementCaisse
 from ....serializers import MouvementCaisseSerializer
+from ....utils.validation import parse_date_param, parse_id
 from ...rapports.tz_utils import parse_api_datetime as _parse_iso_datetime
 
 logger = logging.getLogger(__name__)
@@ -83,10 +85,12 @@ class CaisseReportingMixin:
             'stock_lot'
         ).order_by('-created_at')
 
+        # parse_date_param → 400 si la date fournie seule est invalide
+        # (chaîne brute dans le filtre ORM → ValidationError Django → 500).
         if date_debut:
-            queryset = queryset.filter(created_at__date__gte=date_debut)
+            queryset = queryset.filter(created_at__date__gte=parse_date_param(date_debut, field='date_debut'))
         if date_fin:
-            queryset = queryset.filter(created_at__date__lte=date_fin)
+            queryset = queryset.filter(created_at__date__lte=parse_date_param(date_fin, field='date_fin'))
 
         # Agrégation DB pour le total CA (pas de boucle Python)
         from django.db.models import ExpressionWrapper
@@ -109,12 +113,12 @@ class CaisseReportingMixin:
         if single_date:
             try:
                 datetime.strptime(single_date, '%Y-%m-%d').date()
-                queryset = queryset.filter(created_at__date=single_date)
             except ValueError:
                 return Response(
                     {'detail': 'Format de date invalide. Utiliser YYYY-MM-DD'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
+            queryset = queryset.filter(created_at__date=parse_date_param(single_date, field='date'))
 
         # Regroupement par jour
         if group_by == 'day':
@@ -172,15 +176,21 @@ class CaisseReportingMixin:
         start_date = None
         end_date = None
 
+        # Paramètre fourni mais invalide → 400 (au lieu d'ignorer le filtre,
+        # ce qui renverrait des totaux non bornés trompeurs).
         if date_debut:
             start_date = _parse_iso_datetime(date_debut)
             if start_date is None:
-                logger.error(f"Error parsing date_debut {date_debut}")
+                raise ValidationError({'detail': f"Le paramètre 'date_debut' est invalide : '{date_debut}'. Format attendu : AAAA-MM-JJ."})
 
         if date_fin:
             end_date = _parse_iso_datetime(date_fin)
             if end_date is None:
-                logger.error(f"Error parsing date_fin {date_fin}")
+                raise ValidationError({'detail': f"Le paramètre 'date_fin' est invalide : '{date_fin}'. Format attendu : AAAA-MM-JJ."})
+
+        # Ids invalides → 400 (sinon ValueError dans les filtres ORM → 500).
+        user_id = parse_id(user_id, field='user_id', required=False)
+        poste_caisse_id = parse_id(poste_caisse_id, field='poste_caisse_id', required=False)
 
         if not start_date:
             last_cloture = ClotureCaisse.objects.order_by('-date').first()
@@ -306,15 +316,19 @@ class CaisseReportingMixin:
 
         mouvements_qs = MouvementCaisse.objects.select_related('user').all().order_by('-date')
         if user_id:
-            mouvements_qs = mouvements_qs.filter(user_id=user_id)
+            mouvements_qs = mouvements_qs.filter(user_id=parse_id(user_id, field='user'))
+        # Date fournie mais invalide → 400 (filtre silencieusement ignoré =
+        # résultats non filtrés trompeurs).
         if date_debut:
             start_dt = _parse_iso_datetime(date_debut)
-            if start_dt:
-                mouvements_qs = mouvements_qs.filter(date__gte=start_dt)
+            if start_dt is None:
+                raise ValidationError({'detail': f"Le paramètre 'date_debut' est invalide : '{date_debut}'. Format attendu : AAAA-MM-JJ."})
+            mouvements_qs = mouvements_qs.filter(date__gte=start_dt)
         if date_fin:
             end_dt = _parse_iso_datetime(date_fin)
-            if end_dt:
-                mouvements_qs = mouvements_qs.filter(date__lte=end_dt)
+            if end_dt is None:
+                raise ValidationError({'detail': f"Le paramètre 'date_fin' est invalide : '{date_fin}'. Format attendu : AAAA-MM-JJ."})
+            mouvements_qs = mouvements_qs.filter(date__lte=end_dt)
         mouvements_data = MouvementCaisseSerializer(mouvements_qs, many=True).data
         totals_response = self.get_totals(request)
 
@@ -337,6 +351,8 @@ class CaisseReportingMixin:
         user_id = request.query_params.get('user_id')
         if not user_id:
             return Response({'detail': 'user_id is required'}, status=400)
+        # Id invalide → 400 (sinon ValueError dans les filtres ORM → 500).
+        user_id = parse_id(user_id, field='user_id')
 
         now = timezone.localtime(timezone.now())
         today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)

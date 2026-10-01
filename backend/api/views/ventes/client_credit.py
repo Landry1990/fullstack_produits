@@ -21,9 +21,10 @@ from ...models import (
     StockLot,
 )
 from ...pagination import StandardResultsSetPagination
-from ...serializers import AvoirClientSerializer
+from ...serializers import AvoirClientSerializer, AvoirClientUpdateSerializer
 from ...services.lot_allocation_service import LotAllocationService
 from ...sudo_utils import validate_sudo_mode
+from ...utils.validation import parse_date_param, parse_id
 
 logger = logging.getLogger(__name__)
 
@@ -38,14 +39,22 @@ class AvoirClientViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['statut', 'client', 'facture_origine', 'type_motif']
 
+    def get_serializer_class(self):
+        # En mise à jour, le montant et les lignes d'un avoir client sont figés
+        if self.action in ('update', 'partial_update'):
+            return AvoirClientUpdateSerializer
+        return super().get_serializer_class()
+
     def get_queryset(self):
         queryset = super().get_queryset()
         date_debut = self.request.query_params.get('date_debut')
         date_fin = self.request.query_params.get('date_fin')
+        # parse_date_param → None si absent, ValidationError (400) si invalide
+        # (chaîne brute dans le filtre ORM → ValidationError Django → 500).
         if date_debut:
-            queryset = queryset.filter(date__gte=date_debut)
+            queryset = queryset.filter(date__gte=parse_date_param(date_debut, field='date_debut'))
         if date_fin:
-            queryset = queryset.filter(date__lte=date_fin)
+            queryset = queryset.filter(date__lte=parse_date_param(date_fin, field='date_fin'))
         return queryset
 
     def create(self, request, *args, **kwargs):
@@ -212,6 +221,8 @@ class AvoirClientViewSet(viewsets.ModelViewSet):
         facture_id = request.query_params.get('facture_id')
         if not facture_id:
             return Response({'detail': 'Le paramètre facture_id est requis.'}, status=status.HTTP_400_BAD_REQUEST)
+        # Id non entier → 400 (et non 404 : le paramètre est mal formé).
+        facture_id = parse_id(facture_id, field='facture_id')
         try:
             facture = Facture.objects.select_related('client').prefetch_related(
                 'produits__produit', 'produits__allocations__stock_lot'
@@ -273,6 +284,7 @@ class AvoirClientViewSet(viewsets.ModelViewSet):
 
         wb = openpyxl.Workbook()
         ws = wb.active
+        assert ws is not None  # un Workbook() neuf a toujours une feuille
         ws.title = 'Avoirs clients'
 
         header_font = Font(bold=True, color='FFFFFF')

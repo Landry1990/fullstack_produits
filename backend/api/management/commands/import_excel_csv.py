@@ -180,7 +180,15 @@ class Command(BaseCommand):
         cost_price = self.parse_decimal(self.get_value(row, ['prix_achat', 'cost_price', 'pa', 'prix_achat_ht', 'prix_cession', 'cession']))
         selling_price = self.parse_decimal(self.get_value(row, ['prix_vente', 'selling_price', 'pv', 'prix_vente_ttc', 'prix_public', 'public']))
         stock = self.parse_int(self.get_value(row, ['stock', 'quantite', 'qty', 'quantity']))
-        
+
+        # Rejeter les valeurs corrompues : prix/coûts négatifs, quantités négatives.
+        # ValueError est capturée par ligne dans import_data() et consignée au rapport.
+        for label, val in (("Prix d'achat", cost_price), ("Prix de vente", selling_price)):
+            if val is not None and val < 0:
+                raise ValueError(f"{label} négatif : {val}")
+        if stock is not None and stock < 0:
+            raise ValueError(f"Stock négatif : {stock}")
+
         # Créer ou récupérer fournisseur
         fournisseur_nom = self.get_value(row, ['fournisseur', 'supplier', 'labo', 'laboratoire'])
         fournisseur = None
@@ -239,17 +247,29 @@ class Command(BaseCommand):
 
         # Champs optionnels
         if 'stock_alert' in row or 'alerte' in row:
-            defaults['stock_alert'] = self.parse_int(self.get_value(row, ['stock_alert', 'alerte'])) or 0
+            alerte = self.parse_int(self.get_value(row, ['stock_alert', 'alerte']))
+            if alerte is not None and alerte < 0:
+                raise ValueError(f"Stock alerte négatif : {alerte}")
+            defaults['stock_alert'] = alerte or 0
         if 'stock_minimum' in row or 'minimum' in row:
-            defaults['stock_minimum'] = self.parse_int(self.get_value(row, ['stock_minimum', 'minimum'])) or 0
+            minimum = self.parse_int(self.get_value(row, ['stock_minimum', 'minimum']))
+            if minimum is not None and minimum < 0:
+                raise ValueError(f"Stock minimum négatif : {minimum}")
+            defaults['stock_minimum'] = minimum or 0
         if 'tva' in row or 'tva%' in row or 'tvcode' in row:
-            defaults['tva'] = self.parse_decimal(self.get_value(row, ['tva', 'tva%', 'tvcode'])) or 0
+            tva_val = self.parse_decimal(self.get_value(row, ['tva', 'tva%', 'tvcode']))
+            if tva_val is not None and (tva_val < 0 or tva_val > 100):
+                raise ValueError(f"TVA hors bornes 0-100 : {tva_val}")
+            defaults['tva'] = tva_val or 0
         if 'description' in row or 'descr' in row:
             defaults['description'] = self.get_value(row, ['description', 'descr', 'commentaire'])
         if 'substance_active' in row or 'substance' in row:
             defaults['substance_active'] = self.get_value(row, ['substance_active', 'substance', 'dci'])
         if 'stock_maximum' in row or 'maximum' in row:
-            defaults['stock_maximum'] = self.parse_int(self.get_value(row, ['stock_maximum', 'maximum'])) or 0
+            maximum = self.parse_int(self.get_value(row, ['stock_maximum', 'maximum']))
+            if maximum is not None and maximum < 0:
+                raise ValueError(f"Stock maximum négatif : {maximum}")
+            defaults['stock_maximum'] = maximum or 0
         if 'expire_date' in row or 'expiration' in row or 'peremption' in row:
             from datetime import datetime as dt
             val = self.get_value(row, ['expire_date', 'expiration', 'peremption', 'date_expiration'])
@@ -395,7 +415,13 @@ class Command(BaseCommand):
             elif ',' in val:
                 # Format FR: 1.234,56 -> 1234.56
                 val = val.replace('.', '').replace(',', '.')
-            return Decimal(val) if val else None
+            if not val:
+                return None
+            d = Decimal(val)
+            # Decimal('nan')/Decimal('inf') ne lève PAS d'erreur mais corrompt le numeric en base
+            if not d.is_finite():
+                return None
+            return d
         except Exception:
             return None
 

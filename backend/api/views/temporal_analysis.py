@@ -18,6 +18,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from ..models import Facture, FactureProduit
+from ..utils.validation import parse_int
 
 
 class TemporalAnalysisViewSet(viewsets.ViewSet):
@@ -36,7 +37,7 @@ class TemporalAnalysisViewSet(viewsets.ViewSet):
         Query params:
             - days: Number of days to analyze (default: 30)
         """
-        days = int(request.query_params.get('days', 30))
+        days = parse_int(request.query_params.get('days', 30), field='days', min_value=1, max_value=3650)
         today = timezone.localtime(timezone.now()).date()
         date_start = today - timedelta(days=days)
         
@@ -100,7 +101,7 @@ class TemporalAnalysisViewSet(viewsets.ViewSet):
         Query params:
             - weeks: Number of weeks to analyze (default: 12)
         """
-        weeks = int(request.query_params.get('weeks', 12))
+        weeks = parse_int(request.query_params.get('weeks', 12), field='weeks', min_value=1, max_value=200)
         days = weeks * 7
         today = timezone.localtime(timezone.now()).date()
         date_start = today - timedelta(days=days)
@@ -181,8 +182,8 @@ class TemporalAnalysisViewSet(viewsets.ViewSet):
             - months: Number of months to analyze (default: 12)
             - top_n: Number of top seasonal products to return (default: 20)
         """
-        months = int(request.query_params.get('months', 12))
-        top_n = int(request.query_params.get('top_n', 20))
+        months = parse_int(request.query_params.get('months', 12), field='months', min_value=1, max_value=200)
+        top_n = parse_int(request.query_params.get('top_n', 20), field='top_n', min_value=1, max_value=200)
         today = timezone.localtime(timezone.now()).date()
         date_start = today - timedelta(days=months * 30)
         

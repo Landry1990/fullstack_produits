@@ -57,3 +57,14 @@ class AvoirClientSerializer(serializers.ModelSerializer):
                 LigneAvoirClient(avoir_client=instance, **ligne) for ligne in lignes
             ])
         return instance
+
+
+class AvoirClientUpdateSerializer(AvoirClientSerializer):
+    """Mise à jour d'un avoir client : montant et lignes figés après création.
+    La réintégration de stock et le remboursement utilisent les lignes/montant
+    enregistrés — ils ne doivent pas être modifiables via PATCH/PUT."""
+
+    lignes = LigneAvoirClientSerializer(many=True, read_only=True)
+
+    class Meta(AvoirClientSerializer.Meta):
+        read_only_fields = ['numero', 'statut', 'created_by', 'montant_total']

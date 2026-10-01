@@ -18,6 +18,7 @@ from ..audit_helpers import log_audit
 from ..models import AuditLog, Challenge, ChallengeEquipe, ChallengePointTier, Facture, FactureProduit, FactureProduitAllocation, StockLot
 from ..serializers.challenges import ChallengeSerializer
 from ..pagination import StandardResultsSetPagination
+from ..utils.validation import parse_int
 
 logger = logging.getLogger(__name__)
 
@@ -547,7 +548,7 @@ class ChallengeViewSet(viewsets.ModelViewSet):
         péremptible dans ≤ mois mois, avec quantity_remaining > 0.
         Déduplique par produit en gardant le lot le plus urgent.
         """
-        mois = int(request.query_params.get('mois', 6))
+        mois = parse_int(request.query_params.get('mois', 6), field='mois', min_value=1, max_value=120)
         today = timezone.now().date()
         future = today + timedelta(days=mois * 30)
 

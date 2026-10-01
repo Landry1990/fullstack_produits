@@ -30,6 +30,7 @@ from api.models import (
     Produit,
     StockLot,
 )
+from api.utils.validation import parse_date_param, parse_decimal, parse_int
 from api.views.rapports.tz_utils import local_trunc_date
 
 
@@ -112,15 +113,13 @@ class RapportInventoryMixin:
 
     @action(detail=False, methods=['get'])
     def stocks_morts(self, request):
-        try:
-            min_value = Decimal(request.query_params.get('min_value', 100000))
-            months = int(request.query_params.get('months', 6))
-            export_format = request.query_params.get('format')
-            page = int(request.query_params.get('page', 1))
-            page_size = int(request.query_params.get('page_size', 50))
-            page = max(1, page)
-            page_size = max(1, min(page_size, 200))
-        except (ValueError, TypeError): return Response({'error': 'Paramètres invalides'}, status=status.HTTP_400_BAD_REQUEST)
+        # Decimal() lève InvalidOperation (ArithmeticError), pas ValueError —
+        # parse_decimal/parse_int garantissent un 400 propre.
+        min_value = parse_decimal(request.query_params.get('min_value', 100000), field='min_value', min_value=Decimal(0))
+        months = parse_int(request.query_params.get('months', 6), field='months', min_value=1, max_value=1200)
+        export_format = request.query_params.get('format')
+        page = parse_int(request.query_params.get('page', 1), field='page', min_value=1, max_value=100000)
+        page_size = parse_int(request.query_params.get('page_size', 50), field='page_size', min_value=1, max_value=200)
 
         limit_date = (timezone.now() - timedelta(days=months*30)).date()
         # Filtrage et tri en SQL : valeur du stock = stock * pmp, plus de vente depuis N mois
@@ -166,10 +165,10 @@ class RapportInventoryMixin:
         db_param, df_param = request.query_params.get('date_debut'), request.query_params.get('date_fin')
         lang, exclude_zero = request.query_params.get('lang', 'fr'), request.query_params.get('exclude_zero') == 'true'
         if not db_param or not df_param: return Response({'error': 'Dates requises'}, status=400)
-        try:
-            from django.utils.dateparse import parse_date
-            date_debut, date_fin = datetime.combine(parse_date(db_param), time.min), datetime.combine(parse_date(df_param), time.max)
-        except (ValueError, TypeError): return Response({'error': 'Date invalide'}, status=400)
+        # parse_date retourne None (pas d'exception) sur valeur invalide :
+        # datetime.combine(None, ...) levait un TypeError → 500. parse_date_param → 400.
+        date_debut = datetime.combine(parse_date_param(db_param, field='date_debut'), time.min)
+        date_fin = datetime.combine(parse_date_param(df_param, field='date_fin'), time.max)
 
         produits = Produit.objects.filter(is_active=True).only('id', 'name', 'cip1', 'stock', 'stock_reserve')
         stock_initial_dict = {item['produit_id']: item['total'] or 0 for item in MouvementStock.objects.filter(date__lt=date_debut).values('produit_id').annotate(total=Sum('quantite'))}
@@ -181,6 +180,7 @@ class RapportInventoryMixin:
 
         wb = openpyxl.Workbook()
         ws = wb.active
+        assert ws is not None  # un Workbook() neuf a toujours une feuille
         h = {'fr': {'title': "Balance des Stocks", 'cip': "Code CIP", 'designation': "Désignation", 'stock_initial': "Stock Initial", 'achats': "Achats", 'ventes': "Ventes", 'ajustements': "Ajustements", 'stock_final': "Stock Final"}, 'en': {'title': "Stock Balance", 'cip': "CIP Code", 'designation': "Designation", 'stock_initial': "Initial Stock", 'achats': "Purchases", 'ventes': "Sales", 'ajustements': "Adjustments", 'stock_final': "Final Stock"}}.get(lang, 'fr')
         
         ws.merge_cells('A1:G1'); ws['A1'] = f"{h['title']} - {date_debut.strftime('%d/%m/%Y')} au {date_fin.strftime('%d/%m/%Y')}"

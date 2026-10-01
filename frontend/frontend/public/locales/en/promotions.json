@@ -97,6 +97,8 @@
             "cancel": "Cancel",
             "save": "Save Offer"
         },
-        "save_error": "Error while saving promotion"
+        "save_error": "Error while saving promotion",
+        "invalid_dates": "The entered dates are invalid",
+        "end_before_start": "End date must be after start date"
     }
 }

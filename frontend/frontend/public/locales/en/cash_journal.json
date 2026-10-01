@@ -42,7 +42,8 @@
         "shift_error": "Error detecting shift",
         "close_success": "Closing successful",
         "close_error": "Error during closing",
-        "no_cashier_selected": "Please select a cashier to close"
+        "no_cashier_selected": "Please select a cashier to close",
+        "invalid_date_range": "Start date must be before end date"
     },
     "print": {
         "report_title": "CLOSING REPORT",

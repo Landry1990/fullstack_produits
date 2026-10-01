@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 from django.contrib.auth.models import User
 from django.contrib.postgres.indexes import GinIndex
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import DecimalField, F, Sum
 from django.db.models.signals import post_delete, post_save, pre_save
@@ -48,12 +49,14 @@ class PosteVente(models.Model):
     )
     fond_de_caisse = models.DecimalField(
         max_digits=12, decimal_places=2, null=True, blank=True,
+        validators=[MinValueValidator(Decimal('0'))],
         help_text="Fond de caisse initial saisi à l'ouverture"
     )
     date_ouverture = models.DateTimeField(null=True, blank=True)
     date_fermeture = models.DateTimeField(null=True, blank=True)
     montant_total_encaisse = models.DecimalField(
-        max_digits=12, decimal_places=2, null=True, blank=True
+        max_digits=12, decimal_places=2, null=True, blank=True,
+        validators=[MinValueValidator(Decimal('0'))]
     )
     est_actif = models.BooleanField(default=False)
     mode_pos = models.BooleanField(
@@ -85,12 +88,14 @@ class SessionCaisse(models.Model):
         related_name='sessions_caisses'
     )
     fond_de_caisse = models.DecimalField(
-        max_digits=12, decimal_places=2, null=True, blank=True
+        max_digits=12, decimal_places=2, null=True, blank=True,
+        validators=[MinValueValidator(Decimal('0'))]
     )
     date_ouverture = models.DateTimeField(default=timezone.now)
     date_fermeture = models.DateTimeField(null=True, blank=True)
     montant_total_encaisse = models.DecimalField(
-        max_digits=12, decimal_places=2, null=True, blank=True
+        max_digits=12, decimal_places=2, null=True, blank=True,
+        validators=[MinValueValidator(Decimal('0'))]
     )
     est_active = models.BooleanField(default=True)
 
@@ -153,18 +158,28 @@ class Facture(models.Model):
         related_name='deleted_factures', help_text="Utilisateur ayant supprimé cette facture"
     )
     deleted_at = models.DateTimeField(null=True, blank=True, help_text="Date/heure de la suppression")
-    remise = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
-    tva = models.DecimalField(max_digits=5, decimal_places=2, default=19.25)
+    remise = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0.00,
+        validators=[MinValueValidator(Decimal('0'))]
+    )
+    tva = models.DecimalField(
+        max_digits=5, decimal_places=2, default=19.25,
+        validators=[MinValueValidator(Decimal('0')), MaxValueValidator(Decimal('100'))]
+    )
     notes = models.TextField(blank=True, null=True)
     date_annulation = models.DateTimeField(null=True, blank=True)
     date_document = models.DateTimeField(null=True, blank=True, help_text="Date affichée sur les documents (si différente de la date de création)")
     
-    points_fidelite_gagnes = models.IntegerField(default=0)
-    points_fidelite_utilises = models.IntegerField(default=0)
-    montant_fidelite = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    points_fidelite_gagnes = models.IntegerField(default=0, validators=[MinValueValidator(0)])
+    points_fidelite_utilises = models.IntegerField(default=0, validators=[MinValueValidator(0)])
+    montant_fidelite = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0.00,
+        validators=[MinValueValidator(Decimal('0'))]
+    )
 
     part_client = models.DecimalField(
-        max_digits=12, decimal_places=2, null=True, blank=True, 
+        max_digits=12, decimal_places=2, null=True, blank=True,
+        validators=[MinValueValidator(Decimal('0'))],
         help_text="Part à payer par le client (Tiers Payant)"
     )
     
@@ -186,10 +201,12 @@ class Facture(models.Model):
     ticket_session = models.IntegerField(null=True, blank=True, help_text="Numéro de ticket pour la session du jour")
     montant_verse = models.DecimalField(
         max_digits=12, decimal_places=2, null=True, blank=True, default=0.00,
+        validators=[MinValueValidator(Decimal('0'))],
         help_text="Montant total reçu du client (pour ticket de caisse)"
     )
     montant_rendu = models.DecimalField(
         max_digits=12, decimal_places=2, null=True, blank=True, default=0.00,
+        validators=[MinValueValidator(Decimal('0'))],
         help_text="Monnaie rendue au client (pour ticket de caisse)"
     )
 
@@ -220,8 +237,6 @@ class Facture(models.Model):
     if TYPE_CHECKING:
         paiements: models.Manager['Caisse']
         produits: models.Manager['FactureProduit']
-
-    def get_status_display(self) -> str: ...
 
     def __str__(self):
         return f"Facture {self.numero_facture or self.id}"
@@ -392,20 +407,29 @@ class FactureProduit(models.Model):
     produit_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit sauvegardé")
     facture = models.ForeignKey(Facture, on_delete=models.CASCADE, related_name='produits')
     quantity = models.IntegerField()
-    free_quantity = models.IntegerField(default=0, help_text="Unités gratuites (Promotion)")
-    selling_price = models.DecimalField(max_digits=10, decimal_places=2)
+    free_quantity = models.IntegerField(
+        default=0, validators=[MinValueValidator(0)],
+        help_text="Unités gratuites (Promotion)"
+    )
+    selling_price = models.DecimalField(
+        max_digits=10, decimal_places=2,
+        validators=[MinValueValidator(Decimal('0'))]
+    )
     discount = models.DecimalField(
-        max_digits=10, decimal_places=2, default=0.00, 
+        max_digits=10, decimal_places=2, default=0.00,
+        validators=[MinValueValidator(Decimal('0'))],
         help_text="Montant de la remise unitaire"
     )
     tva = models.DecimalField(
-        max_digits=5, 
-        decimal_places=2, 
+        max_digits=5,
+        decimal_places=2,
         default=0.00,
+        validators=[MinValueValidator(Decimal('0')), MaxValueValidator(Decimal('100'))],
         help_text="TVA applicable à cette ligne"
     )
     treatment_duration_days = models.IntegerField(
         null=True, blank=True,
+        validators=[MinValueValidator(1)],
         help_text="Durée du traitement en jours pour ce produit (pour rappels chroniques)"
     )
     lot = models.CharField(max_length=20, blank=True, null=True)
@@ -436,13 +460,25 @@ class FactureProduitAllocation(models.Model):
         'FactureProduit', on_delete=models.CASCADE, related_name='allocations'
     )
     stock_lot = models.ForeignKey('StockLot', on_delete=models.PROTECT, null=True, blank=True)
-    quantity = models.IntegerField(help_text="Quantité prélevée de ce lot")
+    quantity = models.IntegerField(
+        validators=[MinValueValidator(0)],
+        help_text="Quantité prélevée de ce lot"
+    )
     quantity_free = models.IntegerField(
         default=0,
+        validators=[MinValueValidator(0)],
         help_text="Part de la quantité prélevée sur les unités gratuites (UG) du lot"
     )
-    cost_price = models.DecimalField(max_digits=10, decimal_places=2, help_text="Prix d'achat du lot")
-    selling_price = models.DecimalField(max_digits=10, decimal_places=2, help_text="Prix de vente")
+    cost_price = models.DecimalField(
+        max_digits=10, decimal_places=2,
+        validators=[MinValueValidator(Decimal('0'))],
+        help_text="Prix d'achat du lot"
+    )
+    selling_price = models.DecimalField(
+        max_digits=10, decimal_places=2,
+        validators=[MinValueValidator(Decimal('0'))],
+        help_text="Prix de vente"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -478,7 +514,10 @@ class RelevePaiement(models.Model):
     client = models.ForeignKey('Client', on_delete=models.PROTECT, related_name='releves')
     generated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    total_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    total_amount = models.DecimalField(
+        max_digits=12, decimal_places=2,
+        validators=[MinValueValidator(Decimal('0'))]
+    )
     reference = models.CharField(max_length=50, unique=True, help_text="Ex: REL-20231212-001")
 
     def __str__(self):
@@ -533,8 +572,20 @@ class Caisse(models.Model):
         help_text="Part prise en charge par l'assurance"
     )
     
-    def get_mode_paiement_display(self) -> str: ...
-    def get_statut_display(self) -> str: ...
+    def get_mode_paiement_display(self) -> str:
+        """Label lisible : modes fixes + modes personnalisés (PharmacySettings)."""
+        builtin = dict(self.MODES_PAIEMENT).get(self.mode_paiement)
+        if builtin:
+            return builtin
+        try:
+            from .settings import PharmacySettings
+            settings = PharmacySettings.objects.filter(pk=1).only('custom_payment_modes').first()
+            for mode in (settings.custom_payment_modes if settings else []) or []:
+                if mode.get('value') == self.mode_paiement:
+                    return mode.get('label') or self.mode_paiement
+        except Exception:
+            pass
+        return self.mode_paiement or ''
     
     def __str__(self):
         return f"Paiement {self.id} - {self.montant} F - {self.get_mode_paiement_display()}"
@@ -554,7 +605,8 @@ class ClotureCaisse(models.Model):
     """Model representing a cash register closure."""
     date = models.DateTimeField(default=timezone.now)
     montant_reel = models.DecimalField(
-        max_digits=12, decimal_places=2, 
+        max_digits=12, decimal_places=2,
+        validators=[MinValueValidator(Decimal('0'))],
         help_text="Montant réellement compté en caisse"
     )
     montant_theorique = models.DecimalField(
@@ -568,11 +620,13 @@ class ClotureCaisse(models.Model):
     
     total_ventes = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     total_entrees = models.DecimalField(
-        max_digits=12, decimal_places=2, default=0, 
+        max_digits=12, decimal_places=2, default=0,
+        validators=[MinValueValidator(Decimal('0'))],
         help_text="Entrées de caisse hors ventes"
     )
     total_sorties = models.DecimalField(
-        max_digits=12, decimal_places=2, default=0, 
+        max_digits=12, decimal_places=2, default=0,
+        validators=[MinValueValidator(Decimal('0'))],
         help_text="Sorties de caisse"
     )
     details_paiement = models.JSONField(
@@ -622,7 +676,10 @@ class CouponMonnaie(models.Model):
         ANNULE = 'ANNULE', 'Annulé'
     
     numero = models.CharField(max_length=50, unique=True, editable=False)
-    montant = models.DecimalField(max_digits=10, decimal_places=0)
+    montant = models.DecimalField(
+        max_digits=10, decimal_places=0,
+        validators=[MinValueValidator(Decimal('1'))]
+    )
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.ACTIF)
     date_creation = models.DateTimeField(auto_now_add=True)
     date_utilisation = models.DateTimeField(null=True, blank=True)
@@ -684,7 +741,10 @@ class Promis(models.Model):
         'Produit', on_delete=models.SET_NULL, null=True, blank=True, related_name='promis'
     )
     produit_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit sauvegardé")
-    quantite = models.IntegerField(help_text="Quantité promise au client")
+    quantite = models.IntegerField(
+        validators=[MinValueValidator(1)],
+        help_text="Quantité promise au client"
+    )
     status = models.CharField(max_length=4, choices=Status.choices, default=Status.EN_ATTENTE)
     date_promis = models.DateTimeField(auto_now_add=True, help_text="Date de la promesse")
     date_livraison = models.DateTimeField(null=True, blank=True, help_text="Date de livraison effective")
@@ -697,8 +757,6 @@ class Promis(models.Model):
     )
     deleted_at = models.DateTimeField(null=True, blank=True, help_text="Date/heure de la suppression")
     
-    def get_status_display(self) -> str: ...
-
     class Meta:
         ordering = ['-date_promis']
         verbose_name = 'Promis'

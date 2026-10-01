@@ -22,6 +22,7 @@ class FactureProduitViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ['produit', 'facture']
     permission_classes = [IsAuthenticated]
+    http_method_names = ['get', 'post', 'head', 'options']
 
     @action(detail=False, methods=['post'])
     @transaction.atomic

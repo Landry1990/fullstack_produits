@@ -1,6 +1,7 @@
 """
 Statistiques et audit pour les inventaires.
 """
+from datetime import datetime
 from decimal import Decimal
 
 from django.db.models import (
@@ -17,6 +18,7 @@ from django.db.models.functions import Cast, Coalesce
 from rest_framework.response import Response
 
 from api.models import Inventaire, LigneInventaire
+from api.utils.validation import parse_date_param
 
 
 def get_inventaire_stats(inventaire: Inventaire) -> Response:
@@ -111,6 +113,15 @@ def audit_discrepancies(
     Returns:
         Response DRF avec les statistiques d'audit
     """
+    # Dates validées : absentes → pas de filtre ; invalides → ValidationError → 400
+    # (au lieu d'un ValueError/ValidationError ORM avalé en 500)
+    start_date = parse_date_param(start_date, field='start_date')
+    end_date = parse_date_param(end_date, field='end_date')
+    if isinstance(start_date, datetime):
+        start_date = start_date.date()
+    if isinstance(end_date, datetime):
+        end_date = end_date.date()
+
     queryset = LigneInventaire.objects.filter(inventaire__status=Inventaire.Status.VALIDEE)
 
     if start_date:

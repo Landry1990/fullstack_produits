@@ -134,7 +134,8 @@
         "releve_generated": "Statement generated successfully.",
         "excel_loading": "Generating Excel file...",
         "excel_export_success": "Excel export generated successfully.",
-        "excel_export_error": "Error during Excel export."
+        "excel_export_error": "Error during Excel export.",
+        "invalid_date_range": "Start date must be before end date"
     },
     "print_view": {
         "title": "ACCOUNTS RECEIVABLE STATEMENT",

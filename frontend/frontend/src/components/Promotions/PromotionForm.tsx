@@ -185,6 +185,20 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Valider les dates AVANT toISOString : une Invalid Date lève un RangeError
+        // qui laisserait le formulaire bloqué en état "loading".
+        const startDateObj = new Date(startDate);
+        const endDateObj = endDate ? new Date(`${endDate}T23:59:59.999`) : null;
+        if (!Number.isFinite(startDateObj.getTime()) || (endDateObj !== null && !Number.isFinite(endDateObj.getTime()))) {
+            gooeyToast.error(t('promotions:form.invalid_dates'));
+            return;
+        }
+        if (endDateObj && startDateObj > endDateObj) {
+            gooeyToast.error(t('promotions:form.end_before_start'));
+            return;
+        }
+
         setLoading(true);
 
         const payload: Record<string, unknown> = {
@@ -195,8 +209,8 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
             value: Number(value),
             buy_quantity: Number(buyQuantity),
             get_quantity: Number(getQuantity),
-            start_date: new Date(startDate).toISOString(),
-            end_date: endDate ? new Date(`${endDate}T23:59:59.999`).toISOString() : null,
+            start_date: startDateObj.toISOString(),
+            end_date: endDateObj ? endDateObj.toISOString() : null,
             active,
             priority: 1,
         };

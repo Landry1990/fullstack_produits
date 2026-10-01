@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import type { Creance, Client } from '../types';
 import { useTranslation } from 'react-i18next';
+import { gooeyToast } from 'goey-toast';
 import creanceService from '../services/creanceService';
 import clientService from '../services/clientService';
 import { logger } from '../utils/logger'
@@ -93,6 +94,11 @@ export const useCreancesData = (): UseCreancesDataReturn => {
     }, [clients]);
 
     const fetchCreances = useCallback(async () => {
+        // Plage de dates invalide : bloquer la requête plutôt que d'envoyer au backend
+        if (dateDebut && dateFin && dateDebut > dateFin) {
+            gooeyToast.error(t('creances:toasts.invalid_date_range'));
+            return;
+        }
         setLoading(true);
         setError(null);
         try {
