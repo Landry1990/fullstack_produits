@@ -19,9 +19,10 @@ interface Props {
   menuHierarchy: MenuItem[];
   form: UserForm;
   onSubmit: (e: React.FormEvent) => void | Promise<void>;
+  onApplyToRole?: () => void | Promise<void>;
 }
 
-export default function UserFormDialog({ open, onOpenChange, editingUser, users, menuHierarchy, form, onSubmit }: Props) {
+export default function UserFormDialog({ open, onOpenChange, editingUser, users, menuHierarchy, form, onSubmit, onApplyToRole }: Props) {
   const { t } = useTranslation(['users', 'sidebar', 'common']);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -64,7 +65,7 @@ export default function UserFormDialog({ open, onOpenChange, editingUser, users,
               </TabsContent>
 
               <TabsContent value="permissions">
-                <UserPermissionsTab form={form} />
+                <UserPermissionsTab form={form} onApplyToRole={onApplyToRole} />
               </TabsContent>
             </Tabs>
           </div>

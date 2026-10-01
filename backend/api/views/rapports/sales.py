@@ -12,6 +12,7 @@ from rest_framework.response import Response
 
 from api.audit_helpers import log_audit
 from api.models import AuditLog, Caisse, Facture, FactureProduit, FactureProduitAllocation, Fournisseur
+from api.utils.validation import parse_id, parse_int
 
 from .tz_utils import parse_api_datetime
 
@@ -20,6 +21,32 @@ class RapportSalesMixin:
     """
     Rapports de performance commerciale et analytique des ventes.
     """
+
+    @staticmethod
+    def _check_pagination_params(request):
+        """Lève ValidationError (400) si page/page_size fournis sont invalides.
+
+        Le paginateur DRF ignore silencieusement un page_size invalide
+        (fallback au défaut) — on valide explicitement.
+        """
+        if request.query_params.get('page') is not None:
+            parse_int(request.query_params.get('page'), field='page', min_value=1, max_value=100000)
+        if request.query_params.get('page_size') is not None:
+            parse_int(request.query_params.get('page_size'), field='page_size', min_value=1, max_value=1000)
+
+    @staticmethod
+    def _parse_period_or_400(db_str, df_str, required=True):
+        """Parse date_debut/date_fin via parse_api_datetime → 400 si invalide."""
+        if required and (not db_str or not df_str):
+            return None, None, Response({'error': 'Dates requises'}, status=400)
+        date_debut = parse_api_datetime(db_str) if db_str else None
+        date_fin = parse_api_datetime(df_str, end_of_day=True) if df_str else None
+        if db_str and date_debut is None:
+            return None, None, Response({'error': 'date_debut invalide'}, status=400)
+        if df_str and date_fin is None:
+            return None, None, Response({'error': 'date_fin invalide'}, status=400)
+        return date_debut, date_fin, None
+
     
     @action(detail=False, methods=['get'])
     def stats_vendeurs(self, request):
@@ -142,15 +169,19 @@ class RapportSalesMixin:
     @action(detail=False, methods=['get'])
     def produits_annules(self, request):
         db, df = request.query_params.get('date_debut'), request.query_params.get('date_fin')
+        date_debut, date_fin, error = self._parse_period_or_400(db, df, required=False)
+        if error is not None:
+            return error
         # On exclut les factures en corbeille : une facture annulée puis supprimée
         # ne doit plus apparaître dans ce rapport.
         qs = FactureProduit.objects.filter(
             facture__status=Facture.Status.ANNULEE,
             facture__is_active=True,
         ).select_related('facture', 'produit', 'facture__cancelled_by').order_by('-facture__date_annulation')
-        if db: qs = qs.filter(facture__date_annulation__gte=db)
-        if df: qs = qs.filter(facture__date_annulation__lte=df)
-        
+        if date_debut: qs = qs.filter(facture__date_annulation__gte=date_debut)
+        if date_fin: qs = qs.filter(facture__date_annulation__lte=date_fin)
+
+        self._check_pagination_params(request)
         page = self.paginator.paginate_queryset(qs, request, view=self)
         data = []
         for fp in (page if page is not None else qs):
@@ -224,8 +255,9 @@ class RapportSalesMixin:
                 ).values_list('created_by', flat=True).distinct()
             ))
         else:
+            vid = parse_id(vid_param, field='vendeur_id')
             try:
-                v_list = [User.objects.get(id=int(vid_param))]
+                v_list = [User.objects.get(id=vid)]
             except User.DoesNotExist:
                 return Response({'error': 'Vendeur introuvable'}, status=404)
 
@@ -287,8 +319,8 @@ class RapportSalesMixin:
         """
         db_str = request.query_params.get('date_debut')
         df_str = request.query_params.get('date_fin')
-        fid = request.query_params.get('fournisseur_id')
-        
+        fid = parse_id(request.query_params.get('fournisseur_id'), field='fournisseur_id', required=False)
+
         date_debut = parse_api_datetime(db_str) if db_str else timezone.now() - timedelta(days=30)
         date_fin = parse_api_datetime(df_str, end_of_day=True) if df_str else timezone.now()
         if date_debut is None or date_fin is None:
@@ -325,6 +357,7 @@ class RapportSalesMixin:
         ).order_by('-qty')
 
         # Pagination
+        self._check_pagination_params(request)
         page = self.paginator.paginate_queryset(stats, request, view=self)
         
         results = []
@@ -357,7 +390,7 @@ class RapportSalesMixin:
         """
         db_str = request.query_params.get('date_debut')
         df_str = request.query_params.get('date_fin')
-        vendeur_id = request.query_params.get('vendeur_id')
+        vendeur_id = parse_id(request.query_params.get('vendeur_id'), field='vendeur_id', required=False)
 
         if not db_str or not df_str:
             return Response({'error': 'Dates requises'}, status=400)
@@ -385,6 +418,7 @@ class RapportSalesMixin:
 
         qs = qs.order_by('-facture__date')
 
+        self._check_pagination_params(request)
         page = self.paginator.paginate_queryset(qs, request, view=self)
 
         results = []

@@ -47,7 +47,7 @@ export const useCaisseCoupons = ({
     notes: string,
     factureId: number | null
   ) => {
-    if (!montant || Number(montant) <= 0) {
+    if (!montant || !Number.isFinite(Number(montant)) || Number(montant) <= 0) {
       gooeyToast.error(t('messages.invalid_amount'))
       return
     }

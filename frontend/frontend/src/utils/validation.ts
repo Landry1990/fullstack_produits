@@ -27,7 +27,12 @@ export function validateSaleData(params: SaleCompletionParams): string | null {
 
     if (montantAttendu > 0) {
         const montantSaisi = Number(montantPaye);
-        const totalSplit = paiements.reduce((acc, p) => acc + p.montant, 0);
+        const totalSplit = paiements.reduce((acc, p) => acc + Number(p.montant), 0);
+
+        // NaN ou montant négatif : invalide — sinon le contrôle "montant insuffisant" est contourné
+        if (!Number.isFinite(montantSaisi) || !Number.isFinite(totalSplit) || montantSaisi < 0) {
+            return i18n.t('facturation:validation.invalid_amount', { defaultValue: 'Veuillez entrer un montant valide' });
+        }
 
         if (paiements.length === 0 && (!montantPaye || montantSaisi === 0)) {
             return i18n.t('facturation:validation.invalid_amount', { defaultValue: 'Veuillez entrer un montant valide' });
@@ -38,7 +43,7 @@ export function validateSaleData(params: SaleCompletionParams): string | null {
             const totalSaisi = totalSplit + montantSaisi;
             // On autorise un montant supérieur (pour le rendu de monnaie), 
             // mais pas inférieur (tolérance de 1F pour les arrondis)
-            if (totalSaisi < montantAttendu - 1) {
+            if (!Number.isFinite(totalSaisi) || totalSaisi < montantAttendu - 1) {
                 return i18n.t('facturation:validation.insufficient_amount', {
                     total: totalSaisi,
                     expected: montantAttendu,

@@ -14,6 +14,12 @@ from ...serializers import (
     PosteVenteSerializer,
     SessionCaisseSerializer,
 )
+from ...utils.validation import (
+    MAX_DECIMAL_12_2,
+    parse_bool,
+    parse_decimal,
+    parse_id,
+)
 
 
 class PosteCaisseViewSet(viewsets.ModelViewSet):
@@ -175,7 +181,13 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
         )
 
         fond = request.data.get('fond_de_caisse')
-        fond_decimal = Decimal(fond) if fond else None
+        # Lève ValidationError (400) si non numérique, NaN/infini, négatif
+        # ou hors borne du DecimalField(12, 2) de PosteVente.fond_de_caisse.
+        fond_decimal = (
+            parse_decimal(fond, field='fond_de_caisse',
+                          min_value=Decimal(0), max_value=MAX_DECIMAL_12_2)
+            if fond else None
+        )
 
         poste.vendeur = request.user
         poste.fond_de_caisse = fond_decimal
@@ -202,7 +214,9 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
     @transaction.atomic
     def ouvrir(self, request, pk=None):
         """Ouvre un poste de vente sur une caisse physique."""
-        caisse = PosteCaisse.objects.filter(pk=pk).first()
+        # parse_id lève ValidationError (400) : pk='abc' dans le filtre ORM
+        # lèverait ValueError → 500.
+        caisse = PosteCaisse.objects.filter(pk=parse_id(pk, field='pk')).first()
         if not caisse:
             return Response({"detail": "Caisse introuvable."}, status=status.HTTP_404_NOT_FOUND)
         if not caisse.actif:
@@ -220,7 +234,13 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         fond = request.data.get('fond_de_caisse')
-        fond_decimal = Decimal(fond) if fond else None
+        # Lève ValidationError (400) si non numérique, NaN/infini, négatif
+        # ou hors borne du DecimalField(12, 2) de PosteVente.fond_de_caisse.
+        fond_decimal = (
+            parse_decimal(fond, field='fond_de_caisse',
+                          min_value=Decimal(0), max_value=MAX_DECIMAL_12_2)
+            if fond else None
+        )
 
         # Fermer uniquement les anciens postes de caisse centrale (non-POS) de l'utilisateur
         PosteVente.objects.filter(
@@ -299,7 +319,12 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
         from api.models import PharmacySettings
         pharmacy_settings = PharmacySettings.objects.first()
         pharmacy_hide_setting = pharmacy_settings.hide_cash_totals if pharmacy_settings else False
-        hide_amounts = request.data.get('hide_amounts', pharmacy_hide_setting)
+        # parse_bool évite le piège bool("false") == True : le frontend envoie
+        # un vrai booléen. Paramètre absent ou chaîne exotique → on retombe sur
+        # le réglage pharmacie (comportement par défaut).
+        hide_amounts = parse_bool(
+            request.data.get('hide_amounts'), default=bool(pharmacy_hide_setting)
+        )
 
         # Détails par mode de paiement
         details_par_mode = {}
@@ -344,7 +369,11 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
         3. Tous les PosteVente actifs avec caisse physique (la caissière)
         4. Si superuser, tous les PosteVente actifs
         """
-        poste_caisse_id = request.query_params.get('poste_caisse')
+        # Id invalide ('abc') → 400 au lieu de ValueError → 500 dans le filtre ORM.
+        poste_caisse_id = parse_id(
+            request.query_params.get('poste_caisse'),
+            field='poste_caisse', required=False
+        )
 
         # 1. PosteVente actif du user courant
         poste = PosteVente.objects.filter(

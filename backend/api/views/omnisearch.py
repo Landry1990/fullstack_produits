@@ -14,6 +14,7 @@ from ..serializers_optimized import (
     FactureOmnisearchSerializer,
     ProduitListSerializer,
 )
+from ..utils.validation import parse_int
 
 
 class GlobalSearchView(APIView):
@@ -21,10 +22,7 @@ class GlobalSearchView(APIView):
 
     def get(self, request):
         query = request.query_params.get('q', '').strip()
-        try:
-            limit = max(1, min(int(request.query_params.get('limit', 5)), 20))
-        except (TypeError, ValueError):
-            limit = 5
+        limit = parse_int(request.query_params.get('limit', 5), field='limit', min_value=1, max_value=100)
 
         if not query:
             return Response({

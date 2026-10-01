@@ -198,6 +198,7 @@ export default function JournalCaisseClosingModal({ state }: Props) {
                 <div className="flex gap-2">
                   <input
                     type="number"
+                    min={0}
                     aria-label={t('closing.amount_placeholder')}
                     placeholder={t('closing.amount_placeholder')}
                     className="flex-1 h-8 px-3 rounded-md bg-slate-100 border border-slate-200 text-xs text-slate-700 text-right focus:outline-none focus:border-emerald-300"
@@ -306,6 +307,7 @@ export default function JournalCaisseClosingModal({ state }: Props) {
                       <input
                         id="closing-real-amount"
                         type="number"
+                        min={0}
                         placeholder={t('caisse:journal.closing.real_amount_placeholder', { defaultValue: 'Saisissez le montant réel' })}
                         className="w-full h-12 px-4 rounded-lg bg-slate-100 border border-slate-200 font-black text-2xl text-center text-slate-700 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all"
                         value={actualAmount}

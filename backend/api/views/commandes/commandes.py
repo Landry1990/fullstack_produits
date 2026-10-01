@@ -28,6 +28,7 @@ from ...serializers_optimized import (
     CommandeListSerializer,
     CommandeOmnisearchSerializer,
 )
+from ...utils.validation import parse_id
 from .bulk_actions_mixin import CommandeBulkActionsMixin
 from .cloture_mixin import CommandeClotureMixin
 
@@ -156,7 +157,7 @@ class CommandeViewSet(
             counts_qs = counts_qs.filter(type=type_param)
         fournisseur_param = request.query_params.get('fournisseur')
         if fournisseur_param:
-            counts_qs = counts_qs.filter(fournisseur=fournisseur_param)
+            counts_qs = counts_qs.filter(fournisseur=parse_id(fournisseur_param, field='fournisseur'))
         status_counts = dict(
             counts_qs.values('status').annotate(count=Count('id')).values_list('status', 'count')
         )

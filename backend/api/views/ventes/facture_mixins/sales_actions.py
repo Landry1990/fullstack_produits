@@ -37,7 +37,16 @@ class FactureSalesMixin:
         if 'multipart/form-data' in request.content_type:
             json_str = request.data.get('json_data')
             if json_str:
-                return json.loads(json_str), request.FILES.get('image_ordonnance')
+                try:
+                    parsed = json.loads(json_str)
+                except (ValueError, TypeError):
+                    parsed = None
+                if not isinstance(parsed, dict):
+                    return Response(
+                        {'detail': "Les données JSON de la requête sont malformées."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    ), None
+                return parsed, request.FILES.get('image_ordonnance')
             return request.data, request.FILES.get('image_ordonnance')
         return request.data, request.FILES.get('image_ordonnance')
 
@@ -59,14 +68,29 @@ class FactureSalesMixin:
                 q = Decimal(str(p.get('quantity', 0)))
                 pr = Decimal(str(p.get('selling_price', 0)))
                 rem = Decimal(str(p.get('discount', 0)))
+                # FactureProduit.quantity est un IntegerField : la quantité doit
+                # être un entier fini (sinon int() plus bas → 500). Les quantités
+                # négatives restent autorisées (avoirs/retours) — permission gérée
+                # dans _compute_required_permissions.
+                if not q.is_finite() or q != q.to_integral_value():
+                    return None, Response({'detail': "La quantité doit être un nombre entier valide."}, status=status.HTTP_400_BAD_REQUEST), None
+                if not pr.is_finite() or pr < 0:
+                    return None, Response({'detail': "Le prix de vente doit être un nombre positif ou nul valide."}, status=status.HTTP_400_BAD_REQUEST), None
+                if not rem.is_finite() or rem < 0:
+                    return None, Response({'detail': "La remise de ligne doit être un nombre positif ou nul valide."}, status=status.HTTP_400_BAD_REQUEST), None
                 temp_sum += (q * pr) - rem
         except (InvalidOperation, ValueError, TypeError):
             return None, Response({'detail': "Données de produit invalides (prix ou quantité non numérique)."}, status=status.HTTP_400_BAD_REQUEST), None
 
         try:
             remise_globale = Decimal(str(data.get('remise', 0) or 0))
-        except (InvalidOperation, ValueError):
-            remise_globale = Decimal(0)
+        except (InvalidOperation, ValueError, TypeError):
+            return None, Response({'detail': "La remise globale doit être un nombre valide."}, status=status.HTTP_400_BAD_REQUEST), None
+
+        # Une remise globale négative ou non finie (NaN/Inf) fausserait le total
+        # et contournerait le contrôle "remise > total" ci-dessous.
+        if not remise_globale.is_finite() or remise_globale < 0:
+            return None, Response({'detail': "La remise globale doit être un nombre positif ou nul valide."}, status=status.HTTP_400_BAD_REQUEST), None
 
         if remise_globale > temp_sum:
             return None, Response(
@@ -101,9 +125,17 @@ class FactureSalesMixin:
         requested_quantities = {}
         requires_discount = remise_globale > 0
         requires_price_override = False
+        requires_returns = False
         for product_data in produits_data:
             product_id = product_data.get('produit')
-            quantity = int(product_data.get('quantity', 0))
+            # Garanti entier par _validate_products ; protection minimale par
+            # robustesse si cette fonction est un jour appelée autrement.
+            try:
+                quantity = int(product_data.get('quantity', 0))
+            except (TypeError, ValueError):
+                quantity = 0
+            if quantity < 0:
+                requires_returns = True
             requested_quantities[product_id] = requested_quantities.get(product_id, 0) + quantity
             line_price = Decimal(str(product_data.get('selling_price', 0)))
             line_discount = Decimal(str(product_data.get('discount', 0) or 0))
@@ -125,8 +157,14 @@ class FactureSalesMixin:
         required_permissions = []
         if centralized or poste_vente_id:
             required_permissions.append('can_cash_out')
-        if total_ttc <= 0 and not is_avoir_client:
-            required_permissions.append('can_validate_zero_amount')
+        if total_ttc <= 0:
+            # Avoir client à montant nul/négatif → permission dédiée aux avoirs ;
+            # sinon vente à montant nul → can_validate_zero_amount.
+            required_permissions.append('can_create_client_credit' if is_avoir_client else 'can_validate_zero_amount')
+        if requires_returns and not is_avoir_client:
+            # Quantités négatives hors avoir client → retour produit.
+            # (Pour un avoir client, can_create_client_credit suffit.)
+            required_permissions.append('can_do_returns')
         if requires_discount:
             required_permissions.append('can_do_remise')
         if requires_price_override:
@@ -146,6 +184,8 @@ class FactureSalesMixin:
     def finaliser(self, request):
         """Action ATOMIQUE pour finaliser une vente complète via SalesService."""
         data, image_file = self._parse_finaliser_data(request)
+        if isinstance(data, Response):
+            return data  # JSON malformé dans json_data → 400
 
         user = request.user
         centralized = data.get('centralized_cash_register', True)
@@ -182,39 +222,43 @@ class FactureSalesMixin:
         )
 
         # --- Remise déjà validée séparément (sudo dédié au moment de la saisie) ---
-        # Si le frontend fournit remise_validated_by_id, la remise a déjà été
-        # validée par un autre user (user B) → on ne doit PAS re-vérifier
-        # can_do_remise à la finalisation.
+        # Si le frontend fournit remise_validated_by_id, la remise a été validée
+        # par un autre user (user B) → on vérifie ici ses credentials (mot de
+        # passe + permission can_do_remise) au lieu de re-demander le sudo à la
+        # finalisation. Écrit un AuditLog SUDO_VAL (traçabilité voulue).
         remise_validation_user = None
         remise_validated_by_id = data.get('remise_validated_by_id')
         if remise_validated_by_id:
-            try:
-                from django.contrib.auth.models import User
-                remise_validation_user = User.objects.get(id=remise_validated_by_id)
-            except User.DoesNotExist:
-                return Response(
-                    {'detail': f"L'utilisateur validateur de remise (id={remise_validated_by_id}) est introuvable."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            # La remise a déjà été validée → retirer can_do_remise
+            remise_validation_user, error_res = validate_sudo_mode(
+                request,
+                permission_attr='can_do_remise',
+                data_source={
+                    'validated_by_id': remise_validated_by_id,
+                    'sudo_password': data.get('remise_validated_password'),
+                }
+            )
+            if error_res:
+                return error_res
+            # La remise a été validée par un tiers autorisé → retirer can_do_remise
             required_permissions = [p for p in required_permissions if p != 'can_do_remise']
 
         # --- Modification de prix déjà validée séparément (sudo dédié au moment de la saisie) ---
-        # Si le frontend fournit prix_validated_by_id, la modification de prix a déjà été
-        # validée par un autre user (user B) → on ne doit PAS re-vérifier
-        # can_modify_price à la finalisation.
+        # Même logique : prix_validated_by_id + prix_validated_password doivent
+        # correspondre à un user actif ayant la permission can_modify_price.
         prix_validation_user = None
         prix_validated_by_id = data.get('prix_validated_by_id')
         if prix_validated_by_id:
-            try:
-                from django.contrib.auth.models import User
-                prix_validation_user = User.objects.get(id=prix_validated_by_id)
-            except User.DoesNotExist:
-                return Response(
-                    {'detail': f"L'utilisateur validateur de prix (id={prix_validated_by_id}) est introuvable."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            # La modification de prix a déjà été validée → retirer can_modify_price (idempotent)
+            prix_validation_user, error_res = validate_sudo_mode(
+                request,
+                permission_attr='can_modify_price',
+                data_source={
+                    'validated_by_id': prix_validated_by_id,
+                    'sudo_password': data.get('prix_validated_password'),
+                }
+            )
+            if error_res:
+                return error_res
+            # La modification de prix a été validée par un tiers autorisé → retirer can_modify_price (idempotent)
             required_permissions = [p for p in required_permissions if p != 'can_modify_price']
 
         validation_user = user
@@ -301,6 +345,13 @@ class FactureSalesMixin:
             # Enregistrer le paiement si un mode est fourni
             mode_paiement = request.data.get('mode_paiement')
             if mode_paiement and facture.total_ttc > 0:
+                # Caisse.mode_paiement est un CharField(50) : sans borne, une
+                # chaîne trop longue ou non-string → DataError → 500.
+                if not isinstance(mode_paiement, str) or len(mode_paiement) > 50:
+                    return Response(
+                        {'detail': "Le champ mode_paiement doit être une chaîne de 50 caractères maximum."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
                 Caisse.objects.create(
                     facture=facture,
                     mode_paiement=mode_paiement,
@@ -466,11 +517,13 @@ class FactureSalesMixin:
             return Response({'detail': "La facture mobile ne contient aucun article."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            # Transformation du payload mobile vers le format attendu par SalesService
+            # Transformation du payload mobile vers le format attendu par SalesService.
+            # SalesService lit la clé 'produit' ; le frontend mobile envoie
+            # historiquement 'product_id' → on accepte les deux.
             produits_data = []
             for item in items:
                 produits_data.append({
-                    'product_id': item.get('product_id'),
+                    'produit': item.get('produit') or item.get('product_id'),
                     'quantity': item.get('quantity', 1),
                     'selling_price': item.get('unit_price', 0),
                     'discount': 0

@@ -444,8 +444,10 @@ export function useCommandeProductLines(
 
         if (targetIndex !== -1) {
           const targetItem = updatedList[targetIndex];
-          const mergedQty = (targetItem.quantity || 0) + (currentItem.quantity || 0);
-          const mergedUG = (targetItem.unites_gratuites || 0) + (currentItem.unites_gratuites || 0);
+          // quantity / unites_gratuites peuvent être des strings (saisie) :
+          // convertir AVANT l'addition pour éviter '2' + '3' = '23'
+          const mergedQty = (Number(targetItem.quantity) || 0) + (Number(currentItem.quantity) || 0);
+          const mergedUG = (Number(targetItem.unites_gratuites) || 0) + (Number(currentItem.unites_gratuites) || 0);
 
           const newList = updatedList.filter((_, i) => i !== index);
           const finalIndex = targetIndex > index ? targetIndex - 1 : targetIndex;

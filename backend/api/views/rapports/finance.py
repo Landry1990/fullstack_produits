@@ -29,7 +29,8 @@ from api.models import (
     Produit,
     StockLot,
 )
-from api.utils_doclang import T, get_document_language
+from api.utils.validation import parse_id, parse_int
+from api.utils_doclang import T, format_doc_date, get_document_language
 from api.views.rapports.pdf_builders import build_rapport_pdf
 from api.views.rapports.tz_utils import parse_api_datetime
 
@@ -709,7 +710,7 @@ class RapportFinanceMixin:
         except Exception:
             logger.exception("Échec de l'audit livre_caisse_excel")
 
-        poste_caisse_id = request.query_params.get('poste_caisse_id')
+        poste_caisse_id = parse_id(request.query_params.get('poste_caisse_id'), field='poste_caisse_id', required=False)
 
         modes = ['especes', 'cheque', 'carte', 'virement', 'om', 'momo',
                  'coupon', 'en_compte', 'depot', 'recouvrement']
@@ -1330,10 +1331,10 @@ class RapportFinanceMixin:
         source         = request.query_params.get('source', 'ventes')
         db_s           = request.query_params.get('date_debut')
         df_s           = request.query_params.get('date_fin')
-        vendeur_id     = request.query_params.get('vendeur_id')
-        client_id      = request.query_params.get('client_id')
-        fournisseur_id = request.query_params.get('fournisseur_id')
-        famille_id     = request.query_params.get('famille_id')
+        vendeur_id     = parse_id(request.query_params.get('vendeur_id'), field='vendeur_id', required=False)
+        client_id      = parse_id(request.query_params.get('client_id'), field='client_id', required=False)
+        fournisseur_id = parse_id(request.query_params.get('fournisseur_id'), field='fournisseur_id', required=False)
+        famille_id     = parse_id(request.query_params.get('famille_id'), field='famille_id', required=False)
         requested_fields = request.query_params.get('fields', '').split(',')
         logic          = request.query_params.get('logic', 'AND').upper()
         sort_by        = request.query_params.get('sort_by')          # label de colonne, ex: 'Total HT'
@@ -1343,7 +1344,9 @@ class RapportFinanceMixin:
         try:
             conditions = json.loads(request.query_params.get('conditions', '[]'))
         except (ValueError, TypeError):
-            conditions = []
+            return Response({"error": "Paramètre 'conditions' invalide (liste JSON attendue)"}, status=400)
+        if not isinstance(conditions, list):
+            return Response({"error": "Paramètre 'conditions' invalide (liste JSON attendue)"}, status=400)
 
         if source != 'produits' and (not db_s or not df_s):
             return Response({"error": "Dates requises"}, status=400)
@@ -1584,11 +1587,7 @@ class RapportFinanceMixin:
                     pass
 
         # Limiter le volume renvoyé pour éviter les timeouts / OOM
-        try:
-            limit = int(request.query_params.get('limit', 5000))
-        except (ValueError, TypeError):
-            limit = 5000
-        limit = max(1, min(limit, 20000))
+        limit = parse_int(request.query_params.get('limit', 5000), field='limit', min_value=1, max_value=20000)
         results = results[:limit]
 
         return Response(results)

@@ -12,6 +12,7 @@ import unicodedata
 from django.db.models import Q
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -19,6 +20,7 @@ from rest_framework.response import Response
 from ..centralized_configs import StandardResultsSetPagination
 from ..models import DrugInteraction, Substance
 from ..serializers import DrugInteractionSerializer
+from ..utils.validation import parse_id
 
 
 def _normalize(text):
@@ -47,11 +49,11 @@ class DrugInteractionViewSet(viewsets.ModelViewSet):
             qs = qs.filter(gravity=gravity)
         substance = self.request.query_params.get('substance')
         if substance:
-            qs = qs.filter(Q(substance_a_id=substance) | Q(substance_b_id=substance))
+            substance_id = parse_id(substance, field='substance')
+            qs = qs.filter(Q(substance_a_id=substance_id) | Q(substance_b_id=substance_id))
         return qs
 
-    def get_search_fields(self):
-        return ['substance_a__nom', 'substance_b__nom', 'description']
+    search_fields = ['substance_a__nom', 'substance_b__nom', 'description']
 
     @action(detail=False, methods=['get'])
     def stats(self, request):
@@ -174,16 +176,25 @@ class DrugInteractionViewSet(viewsets.ModelViewSet):
         sub_a = serializer.validated_data['substance_a']
         sub_b = serializer.validated_data['substance_b']
         if sub_a.id == sub_b.id:
-            from rest_framework.exceptions import ValidationError
             raise ValidationError("Les deux substances doivent être différentes.")
         pair_a, pair_b = (sub_a, sub_b) if sub_a.id < sub_b.id else (sub_b, sub_a)
+        # Le validateur unique_together vérifie la paire dans l'ordre soumis :
+        # une paire inversée passerait puis lèverait un IntegrityError (500).
+        if DrugInteraction.objects.filter(
+            substance_a=pair_a, substance_b=pair_b
+        ).exists():
+            raise ValidationError("Cette paire de substances a déjà une interaction.")
         serializer.save(substance_a=pair_a, substance_b=pair_b)
 
     def perform_update(self, serializer):
         sub_a = serializer.validated_data.get('substance_a', serializer.instance.substance_a)
         sub_b = serializer.validated_data.get('substance_b', serializer.instance.substance_b)
         if sub_a.id == sub_b.id:
-            from rest_framework.exceptions import ValidationError
             raise ValidationError("Les deux substances doivent être différentes.")
         pair_a, pair_b = (sub_a, sub_b) if sub_a.id < sub_b.id else (sub_b, sub_a)
+        # Même garde-fou qu'en création : paire normalisée déjà existante.
+        if DrugInteraction.objects.filter(
+            substance_a=pair_a, substance_b=pair_b
+        ).exclude(pk=serializer.instance.pk).exists():
+            raise ValidationError("Cette paire de substances a déjà une interaction.")
         serializer.save(substance_a=pair_a, substance_b=pair_b)

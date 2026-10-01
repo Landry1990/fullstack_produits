@@ -118,8 +118,9 @@ export default function QuickCreateProductModal({
     try {
       const payload: Record<string, unknown> = {
         name: trimmedName,
-        cost_price: costPrice.trim(),
-        selling_price: sellingPrice.trim(),
+        // Envoyer les valeurs normalisées (virgule → point), pas les strings brutes ('1,5' → 400 backend)
+        cost_price: String(cost),
+        selling_price: String(sell),
         tva: tva || '19.25',
         rayon: rayon ? parseInt(rayon, 10) : null,
         cip1: cip1.trim() || null,

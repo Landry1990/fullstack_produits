@@ -19,6 +19,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from ..models import Caisse, Facture, FactureProduit
+from ..utils.validation import parse_date_param
 from .rapports.tz_utils import parse_api_datetime
 
 logger = logging.getLogger(__name__)
@@ -42,11 +43,12 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         )
         
-        # Apply date filters
+        # Apply date filters — parse_date_param → 400 si la date fournie est
+        # invalide (chaîne brute dans le filtre ORM → ValidationError → 500).
         if date_debut:
-            factures = factures.filter(date__date__gte=date_debut)
+            factures = factures.filter(date__date__gte=parse_date_param(date_debut, field='date_debut'))
         if date_fin:
-            factures = factures.filter(date__date__lte=date_fin)
+            factures = factures.filter(date__date__lte=parse_date_param(date_fin, field='date_fin'))
 
         # Group by date and aggregate
         daily_stats_query = factures.annotate(
@@ -263,9 +265,9 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         )
         if date_debut:
-            factures = factures.filter(date__date__gte=date_debut)
+            factures = factures.filter(date__date__gte=parse_date_param(date_debut, field='date_debut'))
         if date_fin:
-            factures = factures.filter(date__date__lte=date_fin)
+            factures = factures.filter(date__date__lte=parse_date_param(date_fin, field='date_fin'))
 
         daily_stats = factures.annotate(
             jour=TruncDate('date')
@@ -278,6 +280,7 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
 
         wb = openpyxl.Workbook()
         ws = wb.active
+        assert ws is not None  # un Workbook() neuf a toujours une feuille
         ws.title = "Historique Ventes"
         
         # Styles

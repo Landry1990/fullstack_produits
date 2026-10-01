@@ -274,6 +274,7 @@ export default function ClientSection({
         <input
           type="text"
           aria-label={t('facturation:client.label')}
+          maxLength={100}
           value={manualClientName}
           onChange={(e) => setManualClientName(e.target.value)}
           onKeyDown={(e) => {

@@ -10,6 +10,7 @@ from ..audit_helpers import log_audit
 from ..models import AuditLog, CouponMonnaie, Facture
 from ..pagination import StandardResultsSetPagination
 from ..serializers import CouponMonnaieSerializer
+from ..utils.validation import parse_int
 
 logger = logging.getLogger(__name__)
 business_logger = logging.getLogger('api.business')
@@ -22,6 +23,7 @@ class CouponMonnaieViewSet(viewsets.ModelViewSet):
     serializer_class = CouponMonnaieSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = StandardResultsSetPagination
+    http_method_names = ['get', 'post', 'head', 'options']
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['numero', 'cree_par__username', 'utilise_par__username']
     ordering_fields = ['date_creation', 'montant', 'status']
@@ -100,6 +102,9 @@ class CouponMonnaieViewSet(viewsets.ModelViewSet):
         facture_id = request.data.get('facture_id')
         facture = None
         if facture_id:
+            # parse_int lève ValidationError (400) si non entier —
+            # 'abc' dans le .get() ORM lèverait ValueError → 500.
+            facture_id = parse_int(facture_id, field='facture_id')
             try:
                 facture = Facture.objects.get(id=facture_id)
                 logger.info(f"Facture associée: {facture.id}")

@@ -15,6 +15,7 @@ from reportlab.lib.units import cm
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 
@@ -24,6 +25,12 @@ from ...pagination import StandardResultsSetPagination
 from ...security_utils import build_safe_content_disposition
 from ...serializers import CreanceSerializer
 from ...sudo_utils import validate_sudo_mode
+from ...utils.validation import (
+    MAX_DECIMAL_10_2,
+    parse_id,
+    parse_int,
+    parse_positive_decimal,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -57,29 +64,33 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
 
         queryset = queryset.distinct().select_related('client', 'ayant_droit').prefetch_related('paiements').order_by('-date')
         
+        # parse_id lève ValidationError (400) : 'abc' dans le filtre ORM
+        # lèverait ValueError → 500.
         client_id = self.request.query_params.get('client_id', None)
         if client_id:
-            queryset = queryset.filter(client_id=client_id)
+            queryset = queryset.filter(client_id=parse_id(client_id, field='client_id'))
         
         date_debut = self.request.query_params.get('date_debut', None)
         date_fin = self.request.query_params.get('date_fin', None)
         
+        # Dates invalides → 400 explicite : ignorer silencieusement renverrait
+        # des résultats non filtrés, trompeurs pour l'utilisateur.
         if date_debut:
             try:
                 start_date = datetime.strptime(date_debut, '%Y-%m-%d')
                 start_date = timezone.make_aware(start_date)
-                queryset = queryset.filter(date__gte=start_date)
             except ValueError:
-                pass
-        
+                raise ValidationError({'detail': "Le paramètre date_debut est invalide (format attendu : AAAA-MM-JJ)."})
+            queryset = queryset.filter(date__gte=start_date)
+
         if date_fin:
             try:
                 end_date = datetime.strptime(date_fin, '%Y-%m-%d') + timedelta(days=1)
                 end_date = timezone.make_aware(end_date)
-                queryset = queryset.filter(date__lt=end_date)
             except ValueError:
-                pass
-        
+                raise ValidationError({'detail': "Le paramètre date_fin est invalide (format attendu : AAAA-MM-JJ)."})
+            queryset = queryset.filter(date__lt=end_date)
+
         return queryset
     
     @action(detail=False, methods=['get'])
@@ -123,13 +134,22 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             remainder_val=F('total_ttc') - F('paid_amount')
         ).filter(remainder_val__gt=1)
 
-        # 3. Date filtering
+        # 3. Date filtering — dates invalides → 400 (une chaîne invalide passée
+        # au filtre ORM lèverait ValidationError Django → 500).
         date_debut = self.request.query_params.get('date_debut')
         date_fin = self.request.query_params.get('date_fin')
         if date_debut:
-            queryset = queryset.filter(date__gte=date_debut)
+            try:
+                start_date = timezone.make_aware(datetime.strptime(date_debut, '%Y-%m-%d'))
+            except ValueError:
+                raise ValidationError({'detail': "Le paramètre date_debut est invalide (format attendu : AAAA-MM-JJ)."})
+            queryset = queryset.filter(date__gte=start_date)
         if date_fin:
-            queryset = queryset.filter(date__lt=date_fin)
+            try:
+                end_date = timezone.make_aware(datetime.strptime(date_fin, '%Y-%m-%d'))
+            except ValueError:
+                raise ValidationError({'detail': "Le paramètre date_fin est invalide (format attendu : AAAA-MM-JJ)."})
+            queryset = queryset.filter(date__lt=end_date)
 
         # 4. Final aggregation by Client
         # Since we aggregate an already annotated 'remainder_val', 
@@ -166,7 +186,8 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         from openpyxl.utils import get_column_letter
 
         history = request.query_params.get('history', 'false').lower() == 'true'
-        client_id = request.query_params.get('client_id')
+        # Id invalide → 400 (utilisé ensuite dans le filtre ORM et le .get(pk=)).
+        client_id = parse_id(request.query_params.get('client_id'), field='client_id', required=False)
         date_debut = request.query_params.get('date_debut')
         date_fin = request.query_params.get('date_fin')
 
@@ -196,20 +217,21 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
 
         if client_id:
             queryset = queryset.filter(client_id=client_id)
+        # Dates invalides → 400 explicite (même règle que get_queryset).
         if date_debut:
             try:
                 start_date = datetime.strptime(date_debut, '%Y-%m-%d')
                 start_date = timezone.make_aware(start_date)
-                queryset = queryset.filter(date__gte=start_date)
             except ValueError:
-                pass
+                raise ValidationError({'detail': "Le paramètre date_debut est invalide (format attendu : AAAA-MM-JJ)."})
+            queryset = queryset.filter(date__gte=start_date)
         if date_fin:
             try:
                 end_date = datetime.strptime(date_fin, '%Y-%m-%d') + timedelta(days=1)
                 end_date = timezone.make_aware(end_date)
-                queryset = queryset.filter(date__lt=end_date)
             except ValueError:
-                pass
+                raise ValidationError({'detail': "Le paramètre date_fin est invalide (format attendu : AAAA-MM-JJ)."})
+            queryset = queryset.filter(date__lt=end_date)
 
         # ── En-tête pharmacie ──
         from ...models import PharmacySettings
@@ -231,6 +253,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         # ── Construction du classeur ──
         wb = openpyxl.Workbook()
         ws = wb.active
+        assert ws is not None  # un Workbook() neuf a toujours une feuille
         ws.title = T(lang, 'cre_sheet')
 
         thin = Side(style='thin', color='BFBFBF')
@@ -384,8 +407,10 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         
         paiement = None
         if paiement_id:
+            # parse_id lève ValidationError (400) — sans lui, id='abc' lèverait
+            # ValueError dans le .get() (non attrapé par DoesNotExist) → 500.
             try:
-                paiement = Caisse.objects.get(id=paiement_id, facture=facture)
+                paiement = Caisse.objects.get(id=parse_id(paiement_id, field='paiement_id'), facture=facture)
             except Caisse.DoesNotExist:
                 return Response({'detail': 'Paiement non trouvé.'}, status=404)
         else:
@@ -479,24 +504,34 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         
         # Validation des données
         mode_paiement = request.data.get('mode_paiement')
-        montant = request.data.get('montant')
         reference_base = request.data.get('reference', '')
         expected_version = request.data.get('expected_version') or request.data.get('version', 1)
-        
-        if not mode_paiement or not montant:
-            return Response({'detail': 'Les champs mode_paiement et montant sont requis.'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        try:
-            montant = Decimal(str(montant))
-        except (ValueError, TypeError):
-            return Response({'detail': 'Le montant doit être un nombre valide.'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
+        # isinstance(str) obligatoire AVANT .upper() : une liste/un dict
+        # provoquerait AttributeError → 500.
+        if not isinstance(mode_paiement, str) or not mode_paiement.strip():
+            return Response({'detail': 'Le champ mode_paiement est requis et doit être une chaîne de caractères.'}, status=status.HTTP_400_BAD_REQUEST)
+        # Caisse.mode_paiement est un CharField(50) : borne avant concaténation.
+        if len(mode_paiement) > 50:
+            return Response({'detail': 'Le champ mode_paiement ne doit pas dépasser 50 caractères.'}, status=status.HTTP_400_BAD_REQUEST)
+        # reference alimente Caisse.reference (CharField(100)) via concaténation.
+        if not isinstance(reference_base, str):
+            return Response({'detail': 'Le champ reference doit être une chaîne de caractères.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Lève ValidationError (400) si absent, non numérique, NaN/infini,
+        # négatif/nul ou hors borne du DecimalField(10, 2) de Caisse.montant.
+        montant = parse_positive_decimal(
+            request.data.get('montant'), field='montant', max_value=MAX_DECIMAL_10_2
+        )
+
         # Vérification mode SUDO
         validation_user, error_response = validate_sudo_mode(request, permission_attr='can_cash_out')
         if error_response:
             return error_response
-        
+
         reference = f"{reference_base} [{mode_paiement.upper()}] [RECOUV]".strip()
+        if len(reference) > 100:
+            return Response({'detail': 'La référence est trop longue (100 caractères maximum, suffixes inclus).'}, status=status.HTTP_400_BAD_REQUEST)
         mode_paiement = 'recouvrement'
         
         def process_payment_update(facture):
@@ -550,7 +585,13 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
                     'actual_version': error.actual,
                     'hint': 'Rechargez la facture et réessayez'
                 }, status=status.HTTP_409_CONFLICT)
-            
+
+            if facture is None:
+                return Response(
+                    {'detail': 'Facture introuvable.'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
             # Succès - tracer l'action métier
             try:
                 log_audit(
@@ -591,6 +632,8 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         client_id = request.query_params.get('client_id')
         if not client_id:
             return Response({'detail': 'Le paramètre client_id est requis.'}, status=status.HTTP_400_BAD_REQUEST)
+        # Id invalide → 400 (sinon ValueError dans filter()/get() → 500).
+        client_id = parse_id(client_id, field='client_id')
 
         include_products = request.query_params.get('include_products', 'false').lower() in ('true', '1', 'yes')
 
@@ -673,14 +716,26 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         mode_paiement = request.data.get('mode_paiement')
         reference_base = request.data.get('reference', '')
         montant_total = request.data.get('montant_total')  # NOUVEAU: montant global optionnel
-        
-        reference = f"{reference_base} [{mode_paiement.upper()}] [RECOUV]".strip()
-        mode_paiement = 'recouvrement'
 
         if not facture_ids or not isinstance(facture_ids, list):
              return Response({'detail': 'facture_ids must be a non-empty list.'}, status=status.HTTP_400_BAD_REQUEST)
-        if not mode_paiement:
-            return Response({'detail': 'mode_paiement is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        # Normalise les ids (str → int) et rejette les valeurs non entières
+        # AVANT la requête ORM (id__in=['abc'] → ValueError → 500).
+        facture_ids = [parse_int(fid, field='facture_ids') for fid in facture_ids]
+        # isinstance(str) obligatoire AVANT .upper() : None/liste → 500 sinon.
+        if not isinstance(mode_paiement, str) or not mode_paiement.strip():
+            return Response({'detail': 'mode_paiement is required and must be a string.'}, status=status.HTTP_400_BAD_REQUEST)
+        # Caisse.mode_paiement est un CharField(50) : borne avant concaténation.
+        if len(mode_paiement) > 50:
+            return Response({'detail': 'Le champ mode_paiement ne doit pas dépasser 50 caractères.'}, status=status.HTTP_400_BAD_REQUEST)
+        # reference alimente Caisse.reference (CharField(100)) via concaténation.
+        if not isinstance(reference_base, str):
+            return Response({'detail': 'Le champ reference doit être une chaîne de caractères.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        reference = f"{reference_base} [{mode_paiement.upper()}] [RECOUV]".strip()
+        if len(reference) > 100:
+            return Response({'detail': 'La référence est trop longue (100 caractères maximum, suffixes inclus).'}, status=status.HTTP_400_BAD_REQUEST)
+        mode_paiement = 'recouvrement'
             
         from django.db.models import OuterRef, Subquery, Sum
         from django.db.models.functions import Coalesce
@@ -698,7 +753,11 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         if len(client_ids) > 1:
              return Response({'detail': 'All invoices must belong to the same client.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        client = factures.first().client
+        premiere_facture = factures.first()
+        client = premiere_facture.client if premiere_facture else None
+        if client is None:
+            # Facture.client est nullable : client.id → AttributeError → 500.
+            return Response({'detail': 'Les factures sélectionnées ne sont pas rattachées à un client.'}, status=status.HTTP_400_BAD_REQUEST)
         timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
         releve_ref = f"REL-{timestamp}-{client.id}"
         
@@ -719,14 +778,13 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         
         # Déterminer le montant à répartir
         if montant_total is not None:
-            try:
-                montant_a_repartir = Decimal(str(montant_total))
-                if montant_a_repartir <= 0:
-                    return Response({'detail': 'Le montant total doit être positif.'}, status=status.HTTP_400_BAD_REQUEST)
-                if montant_a_repartir > total_dettes:
-                    return Response({'detail': f'Le montant ({montant_a_repartir}) dépasse le total des dettes ({total_dettes}).'}, status=status.HTTP_400_BAD_REQUEST)
-            except (ValueError, TypeError):
-                return Response({'detail': 'montant_total doit être un nombre valide.'}, status=status.HTTP_400_BAD_REQUEST)
+            # Lève ValidationError (400) si non numérique, NaN/infini, <= 0
+            # ou hors borne du DecimalField(10, 2) de Caisse.montant.
+            montant_a_repartir = parse_positive_decimal(
+                montant_total, field='montant_total', max_value=MAX_DECIMAL_10_2
+            )
+            if montant_a_repartir > total_dettes:
+                return Response({'detail': f'Le montant ({montant_a_repartir}) dépasse le total des dettes ({total_dettes}).'}, status=status.HTTP_400_BAD_REQUEST)
         else:
             # Comportement original: payer tout
             montant_a_repartir = total_dettes
@@ -818,7 +876,10 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         facture_id = request.data.get('facture')
         if not facture_id:
              return Response({'detail': 'ID facture requis.'}, status=status.HTTP_400_BAD_REQUEST)
-        
+        # parse_int lève ValidationError (400) si non entier — 'abc' dans le
+        # filtre ORM lèverait ValueError → 500.
+        facture_id = parse_int(facture_id, field='facture')
+
         FactureProduit.objects.filter(facture_id=facture_id).delete()
         
         try:

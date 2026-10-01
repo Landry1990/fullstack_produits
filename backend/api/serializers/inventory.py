@@ -32,8 +32,23 @@ class LigneInventaireSerializer(serializers.ModelSerializer):
         model = LigneInventaire
         fields = '__all__'
 
+    def validate_quantite_physique(self, value):
+        if value is None or value < 0:
+            raise serializers.ValidationError("La quantité physique ne peut pas être négative.")
+        return value
+
     def get_produit_nom(self, obj):
         return obj.produit.name if obj.produit else obj.produit_nom
+
+
+class LigneInventaireUpdateSerializer(LigneInventaireSerializer):
+    """Mise à jour d'une ligne d'inventaire : seule la quantité physique est modifiable."""
+
+    class Meta(LigneInventaireSerializer.Meta):
+        read_only_fields = [
+            'inventaire', 'produit', 'produit_nom', 'stock_lot',
+            'stock_theorique', 'ecart', 'pmp_snapshot'
+        ]
 
 
 class InventaireSerializer(serializers.ModelSerializer):
@@ -47,7 +62,10 @@ class InventaireSerializer(serializers.ModelSerializer):
     class Meta:
         model = Inventaire
         fields = '__all__'
-        read_only_fields = ['is_active', 'created_at', 'updated_at', 'reference']
+        read_only_fields = [
+            'is_active', 'created_at', 'updated_at', 'reference', 'status',
+            'validated_by', 'version', 'created_by', 'deleted_by', 'deleted_at'
+        ]
 
     def get_total_valeur_theorique(self, obj):
         return sum(
@@ -81,8 +99,23 @@ class LigneAvoirSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ['total']
 
+    def validate_quantity(self, value):
+        if value is None or value <= 0:
+            raise serializers.ValidationError("La quantité doit être un entier strictement positif.")
+        return value
+
     def get_produit_nom(self, obj):
         return obj.produit.name if obj.produit else obj.produit_nom
+
+
+class LigneAvoirUpdateSerializer(LigneAvoirSerializer):
+    """Mise à jour d'une ligne d'avoir : seule la clôture administrative est modifiable."""
+
+    class Meta(LigneAvoirSerializer.Meta):
+        read_only_fields = [
+            'avoir', 'produit', 'produit_nom', 'stock_lot', 'quantity',
+            'price', 'lot', 'date_expiration', 'motif', 'total'
+        ]
 
 
 class AvoirSerializer(serializers.ModelSerializer):
@@ -97,7 +130,12 @@ class AvoirSerializer(serializers.ModelSerializer):
     class Meta:
         model = Avoir
         fields = '__all__'
-        read_only_fields = ['numero', 'date', 'created_at', 'updated_at', 'total_ht']
+        read_only_fields = [
+            'numero', 'date', 'created_at', 'updated_at', 'total_ht',
+            'status', 'validated_by', 'created_by',
+            'stock_decharge', 'stock_decharge_at', 'stock_decharge_by',
+            'is_active', 'deleted_by', 'deleted_at'
+        ]
 
     def get_fournisseur_name(self, obj):
         return obj.fournisseur.name if obj.fournisseur else obj.fournisseur_nom
@@ -194,6 +232,11 @@ class RelationTransformationSerializer(serializers.ModelSerializer):
     class Meta:
         model = RelationTransformation
         fields = '__all__'
+
+    def validate_ratio(self, value):
+        if value is None or not value.is_finite() or value <= 0:
+            raise serializers.ValidationError("Le ratio de transformation doit être strictement positif.")
+        return value
 
 
 class HistoriqueTransformationSerializer(serializers.ModelSerializer):

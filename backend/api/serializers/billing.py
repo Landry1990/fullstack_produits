@@ -248,6 +248,30 @@ class FactureSerializer(serializers.ModelSerializer):
         )
 
 
+FACTURE_UPDATE_WRITABLE_FIELDS = frozenset({
+    'client_name_override', 'montant_verse', 'montant_rendu', 'notes',
+    'date_document', 'client', 'ayant_droit', 'status',
+})
+
+
+class FactureUpdateSerializer(FactureSerializer):
+    """
+    Serializer restreint pour PATCH/PUT : seuls les champs whitelistés
+    sont modifiables, la représentation en lecture reste complète.
+    """
+    # Borne explicite : le modèle impose déjà max_length=100 (héritée via le
+    # ModelSerializer), on la rend visible ici pour l'audit des entrées PATCH.
+    client_name_override = serializers.CharField(
+        max_length=100, required=False, allow_blank=True, allow_null=True
+    )
+
+    class Meta(FactureSerializer.Meta):
+        read_only_fields = [
+            name for name in FactureSerializer.Meta.fields
+            if name not in FACTURE_UPDATE_WRITABLE_FIELDS
+        ]
+
+
 class FacturePrintSerializer(serializers.ModelSerializer):
     """Serializer optimisé pour l'impression de facture."""
     client = serializers.SerializerMethodField()

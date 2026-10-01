@@ -6,6 +6,7 @@ from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from django.contrib.auth.models import User
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import DecimalField, F, Sum
 from django.utils import timezone
@@ -40,8 +41,14 @@ class Commande(models.Model):
         default=Type.LOCALE,
         help_text="Type de commande (Locale, Directe ou Divers)"
     )
-    taux_change = models.DecimalField(max_digits=10, decimal_places=3, default=655.957)
-    frais_coefficient = models.DecimalField(max_digits=5, decimal_places=2, default=1.00)
+    taux_change = models.DecimalField(
+        max_digits=10, decimal_places=3, default=655.957,
+        validators=[MinValueValidator(Decimal('0.001'))]
+    )
+    frais_coefficient = models.DecimalField(
+        max_digits=5, decimal_places=2, default=1.00,
+        validators=[MinValueValidator(Decimal('0.01'))]
+    )
     
     fournisseur = models.ForeignKey(
         'Fournisseur', on_delete=models.SET_NULL, null=True, blank=True, db_index=True
@@ -60,6 +67,7 @@ class Commande(models.Model):
     )
     delai_paiement_negocie_jours = models.IntegerField(
         null=True, blank=True,
+        validators=[MinValueValidator(0)],
         help_text="Délai de paiement négocié en jours pour cette commande (utilisé uniquement si is_mise_en_place=True, remplace le délai standard du fournisseur)."
     )
     paye_a_la_cloture = models.BooleanField(
@@ -254,15 +262,40 @@ class CommandeProduit(models.Model):
     produit = models.ForeignKey('Produit', on_delete=models.SET_NULL, null=True, blank=True, db_index=True)
     produit_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit sauvegardé")
     commande = models.ForeignKey(Commande, on_delete=models.CASCADE, related_name='produits', db_index=True)
-    quantity = models.IntegerField(help_text="Quantité commandée et payée")
-    unites_gratuites = models.IntegerField(default=0, help_text="Unités gratuites reçues (ex: promotion 3+1)")
-    prix_euro = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    price = models.DecimalField(max_digits=10, decimal_places=2)
-    price_cost = models.DecimalField(max_digits=10, decimal_places=2)
+    quantity = models.IntegerField(
+        validators=[MinValueValidator(1)],
+        help_text="Quantité commandée et payée"
+    )
+    unites_gratuites = models.IntegerField(
+        default=0, validators=[MinValueValidator(0)],
+        help_text="Unités gratuites reçues (ex: promotion 3+1)"
+    )
+    prix_euro = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, null=True,
+        validators=[MinValueValidator(Decimal('0'))]
+    )
+    price = models.DecimalField(
+        max_digits=10, decimal_places=2,
+        validators=[MinValueValidator(Decimal('0'))]
+    )
+    price_cost = models.DecimalField(
+        max_digits=10, decimal_places=2,
+        validators=[MinValueValidator(Decimal('0'))]
+    )
     lot = models.CharField(max_length=20, blank=True, null=True)
-    tva = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
-    selling_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    taux_marge = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True, help_text="Taux de marge appliqué (ex: 1.60)")
+    tva = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0.00,
+        validators=[MinValueValidator(Decimal('0')), MaxValueValidator(Decimal('100'))]
+    )
+    selling_price = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0.00,
+        validators=[MinValueValidator(Decimal('0'))]
+    )
+    taux_marge = models.DecimalField(
+        max_digits=5, decimal_places=2, blank=True, null=True,
+        validators=[MinValueValidator(Decimal('0'))],
+        help_text="Taux de marge appliqué (ex: 1.60)"
+    )
     date_expiration = models.DateField(blank=True, null=True)
     stock_apres_reception = models.IntegerField(default=0, help_text="Stock du produit après réception (capturé au moment de la clôture)")
     created_at = models.DateTimeField(default=timezone.now)
@@ -384,8 +417,12 @@ class LigneAvoir(models.Model):
         related_name='avoirs',
         help_text="Lot spécifique retourné (si applicable)"
     )
-    quantity = models.IntegerField(default=1)
-    price = models.DecimalField(max_digits=10, decimal_places=2, help_text="Prix de retour")
+    quantity = models.IntegerField(default=1, validators=[MinValueValidator(1)])
+    price = models.DecimalField(
+        max_digits=10, decimal_places=2,
+        validators=[MinValueValidator(Decimal('0'))],
+        help_text="Prix de retour"
+    )
     lot = models.CharField(max_length=100, blank=True)
     date_expiration = models.DateField(null=True, blank=True)
     motif = models.CharField(max_length=200, blank=True, help_text="Motif spécifique de retour pour cette ligne")
@@ -430,35 +467,45 @@ class OrderSchedule(models.Model):
     # Scheduling
     active_days = models.JSONField(default=list, help_text="List of active weekdays [0-6]")
     active_month_days = models.JSONField(default=list, help_text="List of active month days [1-31]")
-    frequency_weeks = models.IntegerField(default=1)
+    frequency_weeks = models.IntegerField(default=1, validators=[MinValueValidator(1)])
     start_date = models.DateField(default=date.today)
     time = models.TimeField(default="12:00")
     is_active = models.BooleanField(default=True)
-    
+
     # Options
     has_alert_sound = models.BooleanField(default=True)
     has_teletransmission = models.BooleanField(default=False)
     teletransmission_mode = models.CharField(max_length=20, choices=TeletransmissionMode.choices, default=TeletransmissionMode.IMMEDIATE)
     needs_financial_reception = models.BooleanField(default=True)
-    print_copies = models.IntegerField(default=1)
-    
+    print_copies = models.IntegerField(default=1, validators=[MinValueValidator(0)])
+
     # Delivery
     delivery_time = models.TimeField(null=True, blank=True)
-    auto_reception_delay = models.IntegerField(default=0, help_text="Minutes before auto-reception")
+    auto_reception_delay = models.IntegerField(
+        default=0, validators=[MinValueValidator(0)],
+        help_text="Minutes before auto-reception"
+    )
     notify_sms = models.BooleanField(default=False)
     notify_whatsapp = models.BooleanField(default=False)
     
     # Logic
     special_code = models.CharField(max_length=50, blank=True)
-    min_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    min_items = models.IntegerField(default=0)
+    min_amount = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0,
+        validators=[MinValueValidator(Decimal('0'))]
+    )
+    min_items = models.IntegerField(default=0, validators=[MinValueValidator(0)])
     condition_logic = models.CharField(max_length=3, choices=ConditionLogic.choices, default=ConditionLogic.AND)
-    
+
     # Automation Logic
     execution_mode = models.CharField(max_length=10, choices=ExecutionMode.choices, default=ExecutionMode.OPTIMISE)
-    analysis_period_days = models.IntegerField(default=30, help_text="Période d'analyse des ventes pour calculer la VMD (jours).")
+    analysis_period_days = models.IntegerField(
+        default=30, validators=[MinValueValidator(0)],
+        help_text="Période d'analyse des ventes pour calculer la VMD (jours)."
+    )
     delai_couverture_jours = models.IntegerField(
         default=30,
+        validators=[MinValueValidator(0)],
         help_text="Autonomie de stock souhaitée après réception (jours de vente à couvrir). Peut varier pour un même fournisseur."
     )
     comment = models.TextField(blank=True)

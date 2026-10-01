@@ -12,6 +12,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from ...models import Commande, CommandeProduit, Fournisseur, Produit, StockLot
+from ...utils.validation import parse_date_param, parse_id, parse_int
 
 
 class StatsUGViewSet(viewsets.GenericViewSet):
@@ -22,9 +23,12 @@ class StatsUGViewSet(viewsets.GenericViewSet):
     
     @action(detail=False, methods=['get'])
     def par_fournisseur(self, request):
-        fournisseur_id = request.query_params.get('fournisseur_id')
-        date_debut = request.query_params.get('date_debut')
-        date_fin = request.query_params.get('date_fin')
+        fournisseur_id = parse_id(
+            request.query_params.get('fournisseur_id'),
+            field='fournisseur_id', required=False
+        )
+        date_debut = parse_date_param(request.query_params.get('date_debut'), field='date_debut')
+        date_fin = parse_date_param(request.query_params.get('date_fin'), field='date_fin')
         
         lots_query = StockLot.objects.filter(quantity_free__gt=0)
         if fournisseur_id:
@@ -96,6 +100,7 @@ class StatsUGViewSet(viewsets.GenericViewSet):
         produit_id = request.query_params.get('produit_id')
         if not produit_id:
             return Response({'error': 'produit_id est requis'}, status=status.HTTP_400_BAD_REQUEST)
+        produit_id = parse_id(produit_id, field='produit_id')
         
         lots = StockLot.objects.filter(
             produit_id=produit_id,
@@ -158,17 +163,20 @@ class StockAnalysisUnsoldView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        fournisseur_id = request.query_params.get('fournisseur', None)
-        days_threshold = int(request.query_params.get('days', 30))  # Default: 30 jours après dernière entrée
-        
+        fournisseur_id = parse_id(
+            request.query_params.get('fournisseur'),
+            field='fournisseur', required=False
+        )
+        days_threshold = parse_int(
+            request.query_params.get('days', 30), field='days', min_value=1, max_value=3650
+        )  # Default: 30 jours après dernière entrée
+
         # Paramètres de pagination
-        try:
-            page = int(request.query_params.get('page', 1))
-            page = max(page, 1)
-        except ValueError:
-            page = 1
-            
+        page = parse_int(request.query_params.get('page', 1), field='page', min_value=1, max_value=500)
+
         from ...centralized_configs import PaginationDefaults, PaginationHelper
+        if 'page_size' in request.query_params:
+            parse_int(request.query_params.get('page_size'), field='page_size', min_value=1, max_value=500)
         page_size = PaginationHelper.get_page_size(request, PaginationDefaults.DEFAULT_ANALYSIS_PAGE_SIZE)
         
         today = timezone.now()
@@ -244,21 +252,15 @@ class StockAnalysisOverstockView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        fournisseur_id = request.query_params.get('fournisseur', None)
-        
+        fournisseur_id = parse_id(
+            request.query_params.get('fournisseur'),
+            field='fournisseur', required=False
+        )
+
         # Paramètres de pagination
-        try:
-            page = int(request.query_params.get('page', 1))
-            page = max(page, 1)
-        except ValueError:
-            page = 1
-            
-        try:
-            page_size = int(request.query_params.get('page_size', 50))
-            if page_size < 1: page_size = 50
-        except ValueError:
-            page_size = 50
-        
+        page = parse_int(request.query_params.get('page', 1), field='page', min_value=1, max_value=500)
+        page_size = parse_int(request.query_params.get('page_size', 50), field='page_size', min_value=1, max_value=500)
+
         produits = Produit.objects.filter(stock__gt=0, rotation_moyenne__gt=0).select_related('fournisseur')
         if fournisseur_id:
             produits = produits.filter(fournisseur_id=fournisseur_id)
@@ -328,22 +330,18 @@ class StockAnalysisShortageView(APIView):
     def get(self, request):
         from ...models import Facture, FactureProduit
 
-        fournisseur_id = request.query_params.get('fournisseur', None)
-        horizon_jours = int(request.query_params.get('horizon', 30))
-        
+        fournisseur_id = parse_id(
+            request.query_params.get('fournisseur'),
+            field='fournisseur', required=False
+        )
+        horizon_jours = parse_int(
+            request.query_params.get('horizon', 30), field='horizon', min_value=1, max_value=3650
+        )
+
         # Paramètres de pagination
-        try:
-            page = int(request.query_params.get('page', 1))
-            page = max(page, 1)
-        except ValueError:
-            page = 1
-            
-        try:
-            page_size = int(request.query_params.get('page_size', 50))
-            if page_size < 1: page_size = 50
-        except ValueError:
-            page_size = 50
-            
+        page = parse_int(request.query_params.get('page', 1), field='page', min_value=1, max_value=500)
+        page_size = parse_int(request.query_params.get('page_size', 50), field='page_size', min_value=1, max_value=500)
+
         today = timezone.localtime(timezone.now()).date()
         date_30_days_ago = today - timedelta(days=30)
         date_7_days_ago = today - timedelta(days=7)

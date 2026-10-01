@@ -10,6 +10,7 @@ from rest_framework.response import Response
 
 from ...centralized_configs import PaginationDefaults, PaginationHelper
 from ...models import Facture, Produit, StockLot
+from ...utils.validation import parse_decimal, parse_id, parse_int
 
 
 class CadencierViewSet(viewsets.ViewSet):
@@ -20,16 +21,22 @@ class CadencierViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
     def list(self, request):
-        coverage_days = int(request.query_params.get('coverage_days', 30))
-        coverage_days = max(coverage_days, 1)
-        coverage_days = min(coverage_days, 365)
+        coverage_days = parse_int(
+            request.query_params.get('coverage_days', 30),
+            field='coverage_days', min_value=1, max_value=365
+        )
 
-        rayon_id = request.query_params.get('rayon')
-        fournisseur_id = request.query_params.get('fournisseur')
+        rayon_id = parse_id(request.query_params.get('rayon'), field='rayon', required=False)
+        fournisseur_id = parse_id(request.query_params.get('fournisseur'), field='fournisseur', required=False)
         search = (request.query_params.get('search') or '').strip()
         request.query_params.get('type', 'grossiste')  # grossiste | divers
         only_below_target = request.query_params.get('only_below_target', 'true').lower() != 'false'
         min_rotation = request.query_params.get('min_rotation')
+        if min_rotation is not None and str(min_rotation).strip():
+            # Invalide → 400 au lieu d'être silencieusement ignoré
+            min_rotation = float(parse_decimal(min_rotation, field='min_rotation', min_value=Decimal(0)))
+        else:
+            min_rotation = None
 
         # Produits actifs
         queryset = Produit.objects.filter(is_active=True)
@@ -162,12 +169,8 @@ class CadencierViewSet(viewsets.ViewSet):
             if only_below_target and urgence == 'ok' and quantite_suggeree <= 0:
                 continue
 
-            if min_rotation:
-                try:
-                    if rotation_mensuelle < float(min_rotation):
-                        continue
-                except (ValueError, TypeError):
-                    pass
+            if min_rotation is not None and rotation_mensuelle < min_rotation:
+                continue
 
             all_results.append(item)
 
@@ -181,11 +184,7 @@ class CadencierViewSet(viewsets.ViewSet):
 
         # Pagination manuelle après filtrage
         page_size = PaginationHelper.get_page_size(request, PaginationDefaults.DEFAULT_LIST_PAGE_SIZE)
-        page_param = request.query_params.get('page', 1)
-        try:
-            page_num = max(1, int(page_param))
-        except (ValueError, TypeError):
-            page_num = 1
+        page_num = parse_int(request.query_params.get('page', 1), field='page', min_value=1, max_value=500)
 
         start = (page_num - 1) * page_size
         end = start + page_size

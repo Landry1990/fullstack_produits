@@ -79,17 +79,17 @@ class RecentFixesIntegrationTest(APITestCase):
         self.assertNotIn('No Alert Inactive', names)
         self.assertEqual(len(names), 3)
 
-    def test_omnisearch_caps_limit_and_handles_invalid_values(self):
+    def test_omnisearch_rejects_out_of_range_and_invalid_limit(self):
+        """limit hors bornes ou non numérique → 400 (P2) au lieu du
+        clamp/fallback silencieux."""
         Client.objects.bulk_create([Client(name=f'Omni Client {index}') for index in range(25)])
         url = reverse('global-search')
 
         response = self.client.get(url, {'q': 'Omni Client', 'limit': 999})
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['clients']), 20)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         response = self.client.get(url, {'q': 'Omni Client', 'limit': 'invalid'})
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['clients']), 5)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_omnisearch_client_serialization_has_constant_query_count(self):
         url = reverse('global-search')

@@ -1,20 +1,33 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Info } from 'lucide-react';
+import { Info, Users } from 'lucide-react';
 import { Checkbox } from '../../ui/Checkbox';
 import { Input } from '../../ui/Input';
 import { Label } from '../../ui/Label';
 import { Card } from '../../ui/Card';
+import { Button } from '../../ui/Button';
 import { PERMISSIONS_META, permissionClass, checkboxColor } from '../usersMeta';
 import type { UserForm } from '../../../hooks/useUserForm';
 
 interface Props {
   form: UserForm;
+  onApplyToRole?: () => void | Promise<void>;
 }
 
-export default function UserPermissionsTab({ form }: Props) {
+export default function UserPermissionsTab({ form, onApplyToRole }: Props) {
   const { t } = useTranslation(['users', 'sidebar', 'common']);
   const { formData, setFormData } = form;
+  const [isApplying, setIsApplying] = useState(false);
+
+  const handleApplyToRole = async () => {
+    if (!onApplyToRole) return;
+    setIsApplying(true);
+    try {
+      await onApplyToRole();
+    } finally {
+      setIsApplying(false);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -96,6 +109,32 @@ export default function UserPermissionsTab({ form }: Props) {
           </div>
         </Card>
       </div>
+
+      {onApplyToRole && !formData.is_superuser && (
+        <Card variant="default" padding="md" className="bg-warning/5 border-warning/20">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h4 className="font-bold text-xs uppercase tracking-wider text-warning flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                {t('form.apply_to_role')}
+              </h4>
+              <p className="text-xs text-base-content/60 mt-1 italic">
+                {t('form.apply_to_role_help')}
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="warning"
+              size="sm"
+              onClick={handleApplyToRole}
+              isLoading={isApplying}
+              leftIcon={<Users className="h-4 w-4" />}
+            >
+              {t('form.apply_to_role_btn')}
+            </Button>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

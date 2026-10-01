@@ -1,6 +1,8 @@
 import datetime
+from decimal import Decimal
 
 from django.contrib.auth.models import User
+from django.core.validators import MinValueValidator
 from django.db import models
 
 from .clients import Fournisseur
@@ -38,7 +40,10 @@ class PaiementFournisseur(models.Model):
         related_name='paiements_multiples',
         help_text="Les factures (commandes) réglées par ce paiement global (Pointage)"
     )
-    montant = models.DecimalField(max_digits=12, decimal_places=2)
+    montant = models.DecimalField(
+        max_digits=12, decimal_places=2,
+        validators=[MinValueValidator(Decimal('0.01'))]
+    )
     date_paiement = models.DateField(default=datetime.date.today)
     mode_paiement = models.CharField(
         max_length=10, 

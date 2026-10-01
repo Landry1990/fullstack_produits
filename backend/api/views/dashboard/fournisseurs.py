@@ -18,6 +18,7 @@ from rest_framework.response import Response
 from ...models import (
     Commande,
 )
+from ...utils.validation import parse_int
 
 
 class DashboardFournisseursMixin(viewsets.ViewSet):
@@ -135,7 +136,7 @@ class DashboardFournisseursMixin(viewsets.ViewSet):
                 # Achat au comptant : entièrement réglé à la clôture, pas de dette.
                 if order.paye_a_la_cloture:
                     continue
-                remaining = remainings.get(order.id, order.total_annotated)
+                remaining = remainings.get(order.id, order.total_annotated) or 0
 
                 if remaining > 0:
                     due_date = order.date_echeance
@@ -162,8 +163,8 @@ class DashboardFournisseursMixin(viewsets.ViewSet):
             if supplier.type_reglement == 'FACTURE':
                 # Individual invoices
                 for order in releve_orders:
-                    remaining = remainings.get(order.id, order.total_annotated)
-    
+                    remaining = remainings.get(order.id, order.total_annotated) or 0
+
                     if remaining > 0:
                         # Calculate due date
                         due_date = order.date_echeance
@@ -193,8 +194,8 @@ class DashboardFournisseursMixin(viewsets.ViewSet):
                 periods: dict[str, dict[str, Any]] = {}
     
                 for order in releve_orders:
-                    remaining = remainings.get(order.id, order.total_annotated)
-    
+                    remaining = remainings.get(order.id, order.total_annotated) or 0
+
                     if remaining > 0:
                         # Determine period based on order date
                         order_date = order.date.date()
@@ -266,10 +267,9 @@ class DashboardFournisseursMixin(viewsets.ViewSet):
         data.sort(key=lambda x: (-x['overdue_amount'], -x['debt_total']))
     
         # Pagination optionnelle pour éviter un payload énorme sur de gros volumes
-        limit = int(request.query_params.get('limit', 50))
-        offset = int(request.query_params.get('offset', 0))
-        limit = max(1, min(limit, 200))  # plafond 200 par page
-        offset = max(0, offset)
+        # (400 si les valeurs fournies sont hors bornes ou non entières)
+        limit = parse_int(request.query_params.get('limit', 50), field='limit', min_value=1, max_value=200)
+        offset = parse_int(request.query_params.get('offset', 0), field='offset', min_value=0)
         paginated = data[offset:offset + limit]
     
         response_data = {

@@ -14,6 +14,7 @@ from api.utils_licence import (
     get_licence_details,
     valider_licence_systeme,
 )
+from api.utils.validation import parse_bool
 
 
 def _validate_admin_sudo(request):
@@ -82,7 +83,9 @@ class LicenceStatusView(APIView):
     def post(self, request):
         """Le Frontend envoie une nouvelle clé pour l'activer ou la prévisualiser"""
         nouvelle_cle = request.data.get('cle')
-        preview_mode = request.data.get('preview', False)
+        # parse_bool évite le piège bool("false") == True : une chaîne "false"
+        # ne doit PAS déclencher le mode preview.
+        preview_mode = parse_bool(request.data.get('preview'), default=False)
 
         if not nouvelle_cle:
             return Response({"detail": "La clé de licence est requise."}, status=400)

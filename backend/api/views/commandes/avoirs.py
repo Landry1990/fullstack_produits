@@ -11,7 +11,7 @@ from ...audit_helpers import log_audit
 from ...idempotency import idempotent_action
 from ...models import Avoir, LigneAvoir, MouvementStock, Produit, StockLot
 from ...pagination import StandardResultsSetPagination
-from ...serializers import AvoirSerializer, LigneAvoirSerializer
+from ...serializers import AvoirSerializer, LigneAvoirSerializer, LigneAvoirUpdateSerializer
 from ...sudo_utils import validate_sudo_mode
 
 logger = logging.getLogger(__name__)
@@ -145,6 +145,13 @@ class AvoirViewSet(viewsets.ModelViewSet):
                 locked_lots = {l.id: l for l in StockLot.objects.filter(id__in=lot_ids).select_for_update().order_by('id')} if lot_ids else {}
 
                 for ligne in lignes:
+                    # Garde-fou : une quantité <= 0 inverse l'opération (créerait du stock)
+                    if ligne.quantity is None or ligne.quantity <= 0:
+                        raise ValueError(
+                            f'Ligne #{ligne.id} : quantité invalide ({ligne.quantity}). '
+                            'La quantité d\'une ligne d\'avoir doit être strictement positive.'
+                        )
+
                     produit = locked_products.get(ligne.produit_id) if ligne.produit_id else None
                     if not produit:
                         continue
@@ -273,6 +280,13 @@ class AvoirViewSet(viewsets.ModelViewSet):
                 locked_lots = {l.id: l for l in StockLot.objects.filter(id__in=lot_ids).select_for_update().order_by('id')} if lot_ids else {}
 
                 for ligne in lignes:
+                    # Garde-fou : une quantité <= 0 inverse l'opération (retirerait du stock)
+                    if ligne.quantity is None or ligne.quantity <= 0:
+                        raise ValueError(
+                            f'Ligne #{ligne.id} : quantité invalide ({ligne.quantity}). '
+                            'La quantité d\'une ligne d\'avoir doit être strictement positive.'
+                        )
+
                     produit = locked_products.get(ligne.produit_id) if ligne.produit_id else None
                     if not produit:
                         continue
@@ -357,6 +371,12 @@ class LigneAvoirViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['avoir']
     pagination_class = StandardResultsSetPagination
+
+    def get_serializer_class(self):
+        # En mise à jour, seule la clôture administrative (est_cloture) est modifiable
+        if self.action in ('update', 'partial_update'):
+            return LigneAvoirUpdateSerializer
+        return super().get_serializer_class()
 
     @action(detail=False, methods=['post'])
     @transaction.atomic

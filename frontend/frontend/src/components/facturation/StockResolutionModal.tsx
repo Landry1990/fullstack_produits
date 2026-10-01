@@ -231,6 +231,7 @@ export default function StockResolutionModal({
                         <input
                             id="promis-client-name"
                             type="text"
+                            maxLength={100}
                             className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none"
                             value={promisClientName}
                             onChange={(e) => setPromisClientName(e.target.value)}
@@ -244,6 +245,7 @@ export default function StockResolutionModal({
                         <input
                             id="promis-client-phone"
                             type="text"
+                            maxLength={20}
                             className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none"
                             value={promisPhone}
                             onChange={(e) => setPromisPhone(e.target.value)}

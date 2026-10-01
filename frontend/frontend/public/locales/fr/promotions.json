@@ -97,6 +97,8 @@
             "cancel": "Annuler",
             "save": "Enregistrer l'offre"
         },
-        "save_error": "Erreur lors de l'enregistrement de la promotion"
+        "save_error": "Erreur lors de l'enregistrement de la promotion",
+        "invalid_dates": "Les dates saisies sont invalides",
+        "end_before_start": "La date de fin doit être postérieure à la date de début"
     }
 }

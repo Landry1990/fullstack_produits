@@ -1,6 +1,6 @@
 import csv
 import io
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -35,7 +35,14 @@ class ProduitImportViewSet(viewsets.ViewSet):
             }, status=status.HTTP_400_BAD_REQUEST)
         
         uploaded_file = request.FILES['file']
-        
+
+        # Limite de taille côté serveur (protection contre les fichiers trop gros)
+        max_file_size = 20 * 1024 * 1024  # 20 Mo
+        if uploaded_file.size > max_file_size:
+            return Response({
+                'error': 'Fichier trop volumineux (maximum 20 Mo).'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         # Lire le fichier CSV
         from django.db import transaction
         
@@ -95,10 +102,37 @@ class ProduitImportViewSet(viewsets.ViewSet):
                             prix_vente_decimal = Decimal(prix_vente.replace(',', '.'))
                             tva_decimal = Decimal(tva.replace(',', '.'))
                             quantite_int = int(quantite)
-                        except (ValueError, TypeError) as e:
+                        except (ValueError, TypeError, InvalidOperation) as e:
                             errors.append(f"Ligne {row_num}: Erreur de conversion des prix/TVA/quantité - {e!s}")
                             continue
-                        
+
+                        # Rejet des valeurs corrompues : Decimal('NaN')/Decimal('Infinity')
+                        # ne lève PAS d'erreur au cast mais est persistable en numeric.
+                        # NB : is_finite() doit passer AVANT toute comparaison (NaN < 0 lève InvalidOperation).
+                        if not prix_achat_decimal.is_finite():
+                            errors.append(f"Ligne {row_num}: Prix d'achat invalide (NaN/infini) : '{prix_achat}'")
+                            continue
+                        if not prix_vente_decimal.is_finite():
+                            errors.append(f"Ligne {row_num}: Prix de vente invalide (NaN/infini) : '{prix_vente}'")
+                            continue
+                        if not tva_decimal.is_finite():
+                            errors.append(f"Ligne {row_num}: TVA invalide (NaN/infini) : '{tva}'")
+                            continue
+
+                        # Bornes métier : pas de prix/coûts négatifs, TVA dans 0-100, quantité >= 0
+                        if prix_achat_decimal < 0:
+                            errors.append(f"Ligne {row_num}: Prix d'achat négatif ({prix_achat_decimal})")
+                            continue
+                        if prix_vente_decimal < 0:
+                            errors.append(f"Ligne {row_num}: Prix de vente négatif ({prix_vente_decimal})")
+                            continue
+                        if tva_decimal < 0 or tva_decimal > 100:
+                            errors.append(f"Ligne {row_num}: TVA hors bornes 0-100 ({tva_decimal})")
+                            continue
+                        if quantite_int < 0:
+                            errors.append(f"Ligne {row_num}: Quantité négative ({quantite_int})")
+                            continue
+
                         # CIP optionnels
                         cip1 = row.get('cip1', '').strip() or None
                         cip2 = row.get('cip2', '').strip() or None

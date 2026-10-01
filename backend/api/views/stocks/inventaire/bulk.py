@@ -5,10 +5,12 @@ from typing import Any
 
 from django.utils import timezone
 from rest_framework import status
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.response import Response
 
 from api.audit_helpers import log_audit
 from api.models import AuditLog, Inventaire, LigneInventaire, Produit, StockLot
+from api.utils.validation import parse_id, validation_error_message
 
 
 def bulk_delete_lignes_inventaire(
@@ -32,6 +34,21 @@ def bulk_delete_lignes_inventaire(
     if not ids:
         return Response(
             {'error': 'Aucun ID fourni'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # Assainissement des IDs : liste obligatoire, chaque id → entier >= 1
+    # (sinon id__in=['abc'] lèverait ValueError → 500)
+    if not isinstance(ids, (list, tuple)):
+        return Response(
+            {'error': "Le paramètre 'ids' doit être une liste d'identifiants."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    try:
+        ids = [parse_id(value, field='ids') for value in ids]
+    except DRFValidationError as exc:
+        return Response(
+            {'error': validation_error_message(exc)},
             status=status.HTTP_400_BAD_REQUEST
         )
 
@@ -92,12 +109,29 @@ def bulk_lignes_inventaire(
     errors: list[str] = []
     imported_count = 0
 
+    def _safe_int_id(val: Any) -> int | None:
+        """Retourne un int ou None si la valeur n'est pas un ID convertible."""
+        try:
+            return int(val)
+        except (TypeError, ValueError, OverflowError):
+            return None
+
     # PRE-CHARGEMENT pour éviter le N+1
+    # (IDs non convertibles / lignes non-dict ignorés ici — la ligne produira
+    #  une erreur collectée plus bas dans _process_bulk_line)
     produit_ids: set[int] = {
-        d.get('produit') for d in lignes_data if d.get('produit')
+        pid for pid in (
+            _safe_int_id(d.get('produit') if isinstance(d, dict) else None)
+            for d in lignes_data
+        )
+        if pid is not None
     }
     lot_ids: set[int] = {
-        d.get('stock_lot') for d in lignes_data if d.get('stock_lot')
+        lid for lid in (
+            _safe_int_id(d.get('stock_lot') if isinstance(d, dict) else None)
+            for d in lignes_data
+        )
+        if lid is not None
     }
 
     produits_map = {p.id: p for p in Produit.objects.filter(id__in=produit_ids)}
@@ -105,9 +139,9 @@ def bulk_lignes_inventaire(
 
     # Pour les recherches par numéro de lot
     lot_tuples: set[tuple[int, str]] = {
-        (d.get('produit'), d.get('lot_numero'))
+        (_safe_int_id(d.get('produit')), d.get('lot_numero'))
         for d in lignes_data
-        if d.get('lot_numero') and d.get('produit')
+        if isinstance(d, dict) and d.get('lot_numero') and _safe_int_id(d.get('produit')) is not None
     }
     existing_lots_by_num: dict[tuple[int, str], StockLot] = {}
     if lot_tuples:
@@ -171,6 +205,12 @@ def _process_bulk_line(
     from django.core.exceptions import ValidationError
 
     p_id = data.get('produit')
+    try:
+        # Normalise les IDs numériques envoyés en string ('5' → 5)
+        p_id = int(p_id)
+    except (TypeError, ValueError, OverflowError):
+        raise ValueError(f"Produit {p_id!r} inconnu")
+
     produit = produits_map.get(p_id)
     if not produit:
         raise ValueError(f"Produit {p_id} inconnu")
@@ -207,6 +247,11 @@ def _process_bulk_line(
             except ValidationError:
                 raise ValueError(f"Date invalide pour le lot {data['lot_numero']}")
 
+    # Garde-fou : un produit géré par lot dont le lot n'a pas pu être résolu
+    # (ID invalide/inexistant) ne doit pas créer de ligne sans lot.
+    if produit.use_lot_management and target_lot is None:
+        raise ValueError(f"Lot introuvable pour le produit {produit.name}.")
+
     # Déterminer le stock théorique
     if target_lot:
         if inventaire.inventory_type == Inventaire.TypeStock.RESERVE:
@@ -217,7 +262,15 @@ def _process_bulk_line(
             stock_theorique = target_lot.quantity_remaining
     else:
         stock_theorique = produit.stock
-    qte_saisie = int(data.get('quantite_physique', data.get('quantite_comptee', stock_theorique)))
+    raw_qte = data.get('quantite_physique', data.get('quantite_comptee', stock_theorique))
+    try:
+        if isinstance(raw_qte, bool) or (isinstance(raw_qte, float) and not raw_qte.is_integer()):
+            raise ValueError
+        qte_saisie = int(raw_qte)
+    except (TypeError, ValueError, OverflowError):
+        raise ValueError("La quantité physique doit être un nombre entier.")
+    if qte_saisie < 0:
+        raise ValueError("La quantité physique ne peut pas être négative.")
     replace_quantity = data.get('mode') == 'replace'
 
     # --- MERGE IN BULK ---

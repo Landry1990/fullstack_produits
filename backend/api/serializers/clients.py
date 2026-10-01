@@ -44,6 +44,7 @@ class ClientSerializer(UppercaseSerializerMixin, serializers.ModelSerializer):
             'created_at',
             'ayants_droit', 'depot_count', 'solde_depot_display'
         ]
+        read_only_fields = ['solde_depot', 'points_fidelite', 'solde_factures', 'pending_discount']
 
     def get_depot_count(self, obj):
         return obj.depots_historique.count()

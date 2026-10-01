@@ -42,7 +42,8 @@
         "shift_error": "Erreur lors de la détection du shift",
         "close_success": "Clôture effectuée avec succès",
         "close_error": "Erreur lors de la clôture",
-        "no_cashier_selected": "Veuillez sélectionner un caissier pour clôturer"
+        "no_cashier_selected": "Veuillez sélectionner un caissier pour clôturer",
+        "invalid_date_range": "La date de début doit être antérieure à la date de fin"
     },
     "print": {
         "report_title": "RAPPORT DE CLÔTURE",

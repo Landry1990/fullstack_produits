@@ -15,6 +15,7 @@ from api.models import (
 )
 from api.services import SalesService
 from api.sudo_utils import validate_sudo_mode
+from api.utils.validation import parse_id, parse_int
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +36,13 @@ class FactureBulkMixin:
         ids = request.data.get('ids', [])
         if not ids:
             return Response({'detail': 'Aucun ID fourni.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Une non-liste (str/dict) serait itérée par l'ORM (id__in) → 400.
+        if not isinstance(ids, list):
+            return Response({'detail': "Le champ 'ids' doit être une liste d'identifiants."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # parse_id lève ValidationError (400) : id__in=['abc'] → ValueError → 500.
+        ids = [parse_id(i, field='ids') for i in ids]
 
         if len(ids) > self.MAX_BULK_DELETE:
             return Response(
@@ -120,12 +128,12 @@ class FactureBulkMixin:
         motif = request.data.get('motif', 'Vidange caisse centrale')
         batch_size = request.data.get('batch_size')
         if batch_size is not None:
-            try:
-                batch_size = int(batch_size)
-                if batch_size < 1:
-                    batch_size = None
-            except (ValueError, TypeError):
-                batch_size = None
+            # 400 si invalide : l'ancien fallback None lançait l'annulation de
+            # TOUTES les factures en attente au lieu de signaler l'erreur.
+            batch_size = parse_int(
+                batch_size, field='batch_size',
+                min_value=1, max_value=self.MAX_BULK_CANCEL
+            )
 
         if request.data.get('all_pending'):
             all_pending_qs = Facture.objects.filter(
@@ -146,6 +154,9 @@ class FactureBulkMixin:
             ids = request.data.get('facture_ids', [])
             if not ids:
                 return Response({'detail': 'Aucune facture sélectionnée.'}, status=status.HTTP_400_BAD_REQUEST)
+            if not isinstance(ids, list):
+                return Response({'detail': "Le champ 'facture_ids' doit être une liste d'identifiants."}, status=status.HTTP_400_BAD_REQUEST)
+            ids = [parse_id(i, field='facture_ids') for i in ids]
             if len(ids) > self.MAX_BULK_CANCEL:
                 return Response(
                     {'detail': f'Trop de factures à annuler en une fois (max {self.MAX_BULK_CANCEL}). Veuillez réduire la sélection.'},

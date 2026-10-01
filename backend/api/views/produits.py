@@ -27,8 +27,9 @@ from ..centralized_configs import (
 from ..models import CommandeProduit, Produit, Promis, StockLot
 from ..search_mixins import MultiTermSearchMixin
 from ..serializer_mixins import OptimizedSerializerMixin
-from ..serializers import ProduitSerializer
+from ..serializers import ProduitSerializer, ProduitUpdateSerializer
 from ..serializers_optimized import ProduitDetailSerializer, ProduitListSerializer
+from ..utils.validation import parse_decimal, parse_id
 
 # Imports des mixins modulaires
 from .produit_actions import (
@@ -67,6 +68,7 @@ class ProduitViewSet(
     serializer_class = ProduitSerializer
     list_serializer_class = ProduitListSerializer
     detail_serializer_class = ProduitDetailSerializer
+    update_serializer_class = ProduitUpdateSerializer
     filter_backends = [filters.OrderingFilter]
     ordering_fields = CommonOrderingFields.product_ordering()
     search_fields = CommonSearchFields.product_fields()
@@ -141,50 +143,49 @@ class ProduitViewSet(
                 stock_reserve__gt=0
             )
 
+        # Filtres numériques : valeur invalide → 400 au lieu d'être ignorée
+        # silencieusement (résultats non filtrés trompeurs).
         stock_lt = self.request.query_params.get('stock_lt')
         if stock_lt is not None:
-            try: queryset = queryset.filter(stock__lt=float(stock_lt))
-            except ValueError: pass
+            queryset = queryset.filter(stock__lt=float(parse_decimal(stock_lt, field='stock_lt')))
 
         stock_lte = self.request.query_params.get('stock__lte')
         if stock_lte is not None:
-            try: queryset = queryset.filter(stock__lte=float(stock_lte))
-            except ValueError: pass
+            queryset = queryset.filter(stock__lte=float(parse_decimal(stock_lte, field='stock__lte')))
 
         rotation_gte = self.request.query_params.get('rotation_moyenne__gte')
         if rotation_gte is not None:
-            try: queryset = queryset.filter(rotation_moyenne__gte=float(rotation_gte))
-            except ValueError: pass
+            queryset = queryset.filter(rotation_moyenne__gte=float(parse_decimal(rotation_gte, field='rotation_moyenne__gte')))
 
         rotation_gt = self.request.query_params.get('rotation_moyenne__gt')
         if rotation_gt is not None:
-            try: queryset = queryset.filter(rotation_moyenne__gt=float(rotation_gt))
-            except ValueError: pass
-            
+            queryset = queryset.filter(rotation_moyenne__gt=float(parse_decimal(rotation_gt, field='rotation_moyenne__gt')))
+
         rayon_id = self.request.query_params.get('rayon')
         if rayon_id is not None:
-             queryset = queryset.filter(rayon_id=rayon_id)
+             queryset = queryset.filter(rayon_id=parse_id(rayon_id, field='rayon'))
 
         forme_id = self.request.query_params.get('forme')
         if forme_id is not None:
-             queryset = queryset.filter(forme_id=forme_id)
+             queryset = queryset.filter(forme_id=parse_id(forme_id, field='forme'))
 
         # Filtrage par DCI / Substance
         substance_id = self.request.query_params.get('substances')
         if substance_id:
+            substance_id = parse_id(substance_id, field='substances')
             queryset = queryset.filter(Q(substances__id=substance_id) | Q(dci_reference_id=substance_id)).distinct()
 
         dci_id = self.request.query_params.get('dci_reference')
         if dci_id:
-            queryset = queryset.filter(dci_reference_id=dci_id)
+            queryset = queryset.filter(dci_reference_id=parse_id(dci_id, field='dci_reference'))
 
         fournisseur_id = self.request.query_params.get('fournisseur')
         if fournisseur_id is not None:
-             queryset = queryset.filter(fournisseur_id=fournisseur_id)
+             queryset = queryset.filter(fournisseur_id=parse_id(fournisseur_id, field='fournisseur'))
 
         groupe_id = self.request.query_params.get('groupe')
         if groupe_id is not None:
-             queryset = queryset.filter(groupe_id=groupe_id)
+             queryset = queryset.filter(groupe_id=parse_id(groupe_id, field='groupe'))
              
         for_inventory = self.request.query_params.get('for_inventory', 'false').lower() == 'true'
         if for_inventory:

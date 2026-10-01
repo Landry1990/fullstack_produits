@@ -90,6 +90,7 @@ export const ClientNameModal: React.FC<ClientNameModalProps> = ({
                             <input
                                 id="client-name-input"
                                 type="text"
+                                maxLength={100}
                                 value={clientNameInput}
                                 onChange={(e) => setClientNameInput(e.target.value.toUpperCase())}
                                 className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-white text-slate-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"

@@ -15,6 +15,7 @@ class StatsDiscrepancyTest(TestCase):
         self.user = User.objects.create_user(username='admin_test', first_name='Admin', last_name='System')
         # Profile is created by signal, just update it if needed
         self.user.profile.role = 'PHARMACIEN'
+        self.user.profile.allowed_menus = ['statistiques']
         self.user.profile.save()
         
         self.client.force_authenticate(user=self.user)

@@ -36,10 +36,27 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def transformer(self, request, pk=None):
         relation = self.get_object()
-        quantite = int(request.data.get('quantite', 1))
-        
+
+        # Cast protégé : 'abc'/'1.5'/None → 400 propre (au lieu de 500)
+        raw_quantite = request.data.get('quantite', 1)
+        try:
+            if isinstance(raw_quantite, bool) or (isinstance(raw_quantite, float) and not raw_quantite.is_integer()):
+                raise ValueError
+            quantite = int(raw_quantite)
+        except (TypeError, ValueError, OverflowError):
+            return Response({'error': 'La quantité doit être un nombre entier positif.'}, status=status.HTTP_400_BAD_REQUEST)
+
         if quantite <= 0:
             return Response({'error': 'La quantité doit être positive'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Garde-fou ratio : vérifié AVANT toute mutation (sinon la source est
+        # consommée puis la destination diminue → double destruction de stock)
+        ratio = Decimal(str(relation.ratio or 0))
+        if not ratio.is_finite() or ratio <= 0:
+            return Response(
+                {'error': 'Ratio de transformation invalide (doit être strictement positif).'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         with transaction.atomic():
             # Verrouillage coordonné des produits par ordre d'ID pour éviter les deadlocks (conditions de course croisées)
@@ -103,7 +120,10 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
                         lot = lot_map.get(lot_id)
                         if not lot:
                             continue
-                        requested_qty = int(item.get('quantity', 0))
+                        try:
+                            requested_qty = int(item.get('quantity', 0))
+                        except (TypeError, ValueError, OverflowError):
+                            continue
                         if requested_qty <= 0:
                             continue
                         taken = min(lot.quantity_remaining, requested_qty, qty_remaining_to_consume)
@@ -355,7 +375,15 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
         et la quantité destination calculée.
         """
         relation = self.get_object()
-        quantite = int(request.data.get('quantite', 1))
+
+        # Cast protégé : 'abc'/'1.5'/None → 400 propre (au lieu de 500)
+        raw_quantite = request.data.get('quantite', 1)
+        try:
+            if isinstance(raw_quantite, bool) or (isinstance(raw_quantite, float) and not raw_quantite.is_integer()):
+                raise ValueError
+            quantite = int(raw_quantite)
+        except (TypeError, ValueError, OverflowError):
+            return Response({'error': 'La quantité doit être un nombre entier positif.'}, status=status.HTTP_400_BAD_REQUEST)
 
         if quantite <= 0:
             return Response({'error': 'La quantité doit être positive'}, status=status.HTTP_400_BAD_REQUEST)
@@ -370,7 +398,12 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         from decimal import Decimal
-        ratio = Decimal(str(relation.ratio))
+        ratio = Decimal(str(relation.ratio or 0))
+        if not ratio.is_finite() or ratio <= 0:
+            return Response(
+                {'error': 'Ratio de transformation invalide (doit être strictement positif).'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         quantite_dest_total = int(Decimal(str(quantite)) * ratio)
 
         lots_preview = []

@@ -295,6 +295,7 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                                                             type="text"
                                                             size="sm"
                                                             className="text-xs"
+                                                            maxLength={200}
                                                             aria-label={t('stock:avoirs.form.table_motif')}
                                                             placeholder={t('stock:avoirs.form.motif_placeholder')}
                                                             value={ligne.motif || ''}

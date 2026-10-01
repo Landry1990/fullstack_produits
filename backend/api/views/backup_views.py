@@ -244,13 +244,21 @@ class RestoreBackupView(APIView):
             if backup_type == 'full':
                 backup_path = f"{FULL_BACKUP_DIR}/{filename}"
             else:
-                # Pour les backups groupés, on restaure tous les fichiers du timestamp
+                # Pour les backups groupés, on restaure tous les fichiers du
+                # timestamp. Le filename reçu est "group_YYYY-MM-DD HH:MM:SS"
+                # alors que les fichiers sont nommés "YYYYMMDD_HHMMSS_<table>.sql.gz".
                 if filename.startswith('group_'):
                     timestamp = filename.replace('group_', '')
-                    backup_files = glob.glob(f"{BACKUP_DIR}/{timestamp}_*.sql.gz")
+                    raw_ts = timestamp.replace('-', '').replace(' ', '_').replace(':', '')
+                    backup_files = glob.glob(f"{BACKUP_DIR}/{raw_ts}_*.sql.gz")
                 else:
                     backup_path = f"{BACKUP_DIR}/{filename}"
                     backup_files = [backup_path] if os.path.exists(backup_path) else []
+                if not backup_files:
+                    return Response(
+                        {'error': 'Backup non trouvé'},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
             
             if backup_type == 'full' and not os.path.exists(backup_path):
                 return Response(
@@ -382,10 +390,13 @@ class DeleteBackupView(APIView):
                 f"{FULL_BACKUP_DIR}/{filename}"
             ]
             
-            # Pour les backups groupés, supprimer tous les fichiers du timestamp
+            # Pour les backups groupés, supprimer tous les fichiers du timestamp.
+            # Même conversion que la restauration : "group_YYYY-MM-DD HH:MM:SS"
+            # → fichiers "YYYYMMDD_HHMMSS_<table>.sql.gz".
             if filename.startswith('group_'):
                 timestamp = filename.replace('group_', '')
-                files = glob.glob(f"{BACKUP_DIR}/{timestamp}_*.sql.gz")
+                raw_ts = timestamp.replace('-', '').replace(' ', '_').replace(':', '')
+                files = glob.glob(f"{BACKUP_DIR}/{raw_ts}_*.sql.gz")
                 for f in files:
                     os.remove(f)
                     logger.info(f"Backup supprimé: {f}")

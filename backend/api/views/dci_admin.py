@@ -12,6 +12,7 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 
 from ..models import MedicamentReference, Produit, Substance
+from ..utils.validation import parse_id, parse_int
 
 
 class DCIAdminViewSet(viewsets.ViewSet):
@@ -129,8 +130,8 @@ class DCIAdminViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
     def unlinked(self, request):
         """Liste des produits actifs sans DCI, avec suggestions de substances."""
-        page = int(request.query_params.get('page', 1))
-        page_size = int(request.query_params.get('page_size', 50))
+        page = parse_int(request.query_params.get('page', 1), field='page', min_value=1, max_value=100000)
+        page_size = parse_int(request.query_params.get('page_size', 50), field='page_size', min_value=1, max_value=500)
         search = request.query_params.get('search', '')
 
         qs = Produit.objects.filter(
@@ -189,15 +190,20 @@ class DCIAdminViewSet(viewsets.ViewSet):
         if not produit_id:
             return Response({'error': 'produit_id requis'}, status=status.HTTP_400_BAD_REQUEST)
 
+        # id non entier → 400 au lieu d'un ValueError → 500 dans get(pk=...)
+        produit_id = parse_id(produit_id, field='produit_id')
+
         try:
             produit = Produit.objects.get(pk=produit_id)
         except Produit.DoesNotExist:
             return Response({'error': 'Produit introuvable'}, status=status.HTTP_404_NOT_FOUND)
 
         if substance_ids:
-            produit.substances.set(substance_ids)
+            if not isinstance(substance_ids, list):
+                return Response({'error': 'substance_ids doit être une liste d\'identifiants'}, status=status.HTTP_400_BAD_REQUEST)
+            produit.substances.set([parse_id(sid, field='substance_ids') for sid in substance_ids])
         if dci_reference_id:
-            produit.dci_reference_id = dci_reference_id
+            produit.dci_reference_id = parse_id(dci_reference_id, field='dci_reference_id')
             produit.save(update_fields=['dci_reference'])
 
         return Response({

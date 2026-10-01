@@ -19,11 +19,14 @@ from django.core.management import call_command
 from django.db import transaction
 from django.http import HttpResponse
 from django.utils import timezone
+from django.utils.dateparse import parse_date, parse_datetime
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
+
+from ..utils.validation import parse_bool
 
 # ── Registry of purgeable tables ──────────────────────────────────────────
 # Each entry: key → (label_fr, Model import path, date_field, [child relations])
@@ -181,6 +184,22 @@ def _build_date_filter(date_field, date_from, date_to):
     return filters
 
 
+def _parse_date_param(value, field_name):
+    """
+    Valide un paramètre de date ISO (AAAA-MM-JJ ou datetime ISO).
+    Retourne (valeur_parsée_ou_None, message_erreur_ou_None).
+    Évite qu'une date invalide parte à l'ORM et remonte en ValidationError → 500.
+    """
+    if value in (None, ''):
+        return None, None
+    if not isinstance(value, str):
+        return None, f"Le paramètre '{field_name}' doit être une date au format AAAA-MM-JJ."
+    parsed = parse_date(value) or parse_datetime(value)
+    if parsed is None:
+        return None, f"Date invalide pour '{field_name}' : '{value}'. Format attendu : AAAA-MM-JJ."
+    return parsed, None
+
+
 def _queryset_to_csv(qs, model):
     """Convert a queryset into CSV string content."""
     output = io.StringIO()
@@ -218,8 +237,12 @@ class PurgeViewSet(ViewSet):
         Body: { tables: ["factures", "commandes"], date_from: "2024-01-01", date_to: "2024-12-31" }
         """
         tables = request.data.get('tables', [])
-        date_from = request.data.get('date_from')
-        date_to = request.data.get('date_to')
+        date_from, err = _parse_date_param(request.data.get('date_from'), 'date_from')
+        if err:
+            return Response({'detail': err}, status=status.HTTP_400_BAD_REQUEST)
+        date_to, err = _parse_date_param(request.data.get('date_to'), 'date_to')
+        if err:
+            return Response({'detail': err}, status=status.HTTP_400_BAD_REQUEST)
 
         if not tables:
             return Response({'detail': 'Veuillez sélectionner au moins une table.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -269,8 +292,12 @@ class PurgeViewSet(ViewSet):
         Body: { tables: [...], date_from: "...", date_to: "..." }
         """
         tables = request.data.get('tables', [])
-        date_from = request.data.get('date_from')
-        date_to = request.data.get('date_to')
+        date_from, err = _parse_date_param(request.data.get('date_from'), 'date_from')
+        if err:
+            return Response({'detail': err}, status=status.HTTP_400_BAD_REQUEST)
+        date_to, err = _parse_date_param(request.data.get('date_to'), 'date_to')
+        if err:
+            return Response({'detail': err}, status=status.HTTP_400_BAD_REQUEST)
 
         if not tables:
             return Response({'detail': 'Veuillez sélectionner au moins une table.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -319,8 +346,15 @@ class PurgeViewSet(ViewSet):
         Body: { tables: [...], date_from: "...", date_to: "...", password: "xxx" }
         """
         tables = request.data.get('tables', [])
-        date_from = request.data.get('date_from')
-        date_to = request.data.get('date_to')
+        # Chaînes brutes conservées pour le log d'audit (JSONField ne sérialise pas les objets date)
+        date_from_raw = request.data.get('date_from')
+        date_to_raw = request.data.get('date_to')
+        date_from, err = _parse_date_param(date_from_raw, 'date_from')
+        if err:
+            return Response({'detail': err}, status=status.HTTP_400_BAD_REQUEST)
+        date_to, err = _parse_date_param(date_to_raw, 'date_to')
+        if err:
+            return Response({'detail': err}, status=status.HTTP_400_BAD_REQUEST)
         password = request.data.get('password', '')
 
         if not tables:
@@ -368,8 +402,8 @@ class PurgeViewSet(ViewSet):
                 user=request.user,
                 action=AuditLog.Action.DELETE,
                 model_name='Purge',
-                description=f"Purge de données: {', '.join(tables)} du {date_from or 'début'} au {date_to or 'fin'}",
-                details={'tables': tables, 'date_from': date_from, 'date_to': date_to, 'results': results},
+                description=f"Purge de données: {', '.join(tables)} du {date_from_raw or 'début'} au {date_to_raw or 'fin'}",
+                details={'tables': tables, 'date_from': date_from_raw, 'date_to': date_to_raw, 'results': results},
             )
         except Exception:
             pass  # Don't fail the purge if audit logging fails
@@ -526,6 +560,11 @@ class PurgeViewSet(ViewSet):
         file_obj = request.FILES.get('file')
         if not file_obj:
             return Response({'detail': 'Aucun fichier fourni.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Limite de taille côté serveur (le fichier est copié sur disque puis lu en entier)
+        max_file_size = 20 * 1024 * 1024  # 20 Mo
+        if file_obj.size > max_file_size:
+            return Response({'detail': 'Fichier trop volumineux (maximum 20 Mo).'}, status=status.HTTP_400_BAD_REQUEST)
 
         suffix = os.path.splitext(file_obj.name)[1].lower()
         if suffix not in ['.xlsx', '.xls', '.csv']:
@@ -703,12 +742,14 @@ class PurgeViewSet(ViewSet):
         from api.models import Produit
 
         password = request.data.get('password', '')
-        sans_ventes = request.data.get('sans_ventes', False)
+        # parse_bool évite le piège bool("false") == True : une chaîne "false"
+        # ne doit PAS activer la purge restreinte aux produits sans ventes.
+        sans_ventes = parse_bool(request.data.get('sans_ventes'), default=False)
 
         if not password:
             return Response({'detail': 'Mot de passe requis.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        user = authenticate(username=request.user.username, password=password)
+        user = authenticate(request, username=request.user.username, password=password)
         if not user:
             return Response({'detail': 'Mot de passe incorrect.'}, status=status.HTTP_403_FORBIDDEN)
 
@@ -892,7 +933,7 @@ class PurgeViewSet(ViewSet):
     def run_update(self, request):
         """Déclenche une mise à jour manuelle (script nightly-update.sh)."""
         password = request.data.get('password', '')
-        user = authenticate(username=request.user.username, password=password)
+        user = authenticate(request, username=request.user.username, password=password)
         if not user or not user.is_superuser:
             return Response({'detail': 'Mot de passe admin requis.'}, status=status.HTTP_403_FORBIDDEN)
 
