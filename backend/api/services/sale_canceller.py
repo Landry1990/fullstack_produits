@@ -83,6 +83,9 @@ class SaleCanceller:
             facture.notes = f"{facture.notes or ''}\n[Annulation le {facture.date_annulation.strftime('%d/%m/%Y %H:%M')}] Motif: {motif}".strip()
         facture.save(update_fields=['status', 'notes', 'date_annulation', 'cancelled_by'])
 
+        # 5b. Notifier la caisse centralisée en temps réel (retrait immédiat de la file)
+        SaleCanceller._notify_caisse_cancelled(facture)
+
         # 6. Restore coupons used on this invoice
         SaleCanceller._restore_coupons(facture)
 
@@ -98,6 +101,36 @@ class SaleCanceller:
     # ──────────────────────────────────────────────
     #  Private helpers
     # ──────────────────────────────────────────────
+
+    @staticmethod
+    def _notify_caisse_cancelled(facture):
+        """Broadcast WebSocket 'cancelled' vers la caisse centralisée après commit.
+
+        Sans cela, une facture annulée (ex: rappel pour modification) reste
+        affichée/payable sur les écrans caisse jusqu'au polling de 30 s.
+        """
+        facture_id = facture.id
+        poste_caisse_id = getattr(facture, 'poste_caisse_id', None)
+
+        def _send():
+            try:
+                from asgiref.sync import async_to_sync
+                from channels.layers import get_channel_layer
+                channel_layer = get_channel_layer()
+                if channel_layer:
+                    async_to_sync(channel_layer.group_send)(
+                        'caisse_centralisee',
+                        {
+                            'type': 'facture_update',
+                            'action': 'cancelled',
+                            'facture_id': facture_id,
+                            'poste_caisse_id': poste_caisse_id,
+                        }
+                    )
+            except Exception as ws_err:
+                logger.warning(f"WebSocket broadcast caisse (annulation) échoué: {ws_err}")
+
+        transaction.on_commit(_send)
 
     @staticmethod
     def _create_cancellation_movements(facture, old_items, user):

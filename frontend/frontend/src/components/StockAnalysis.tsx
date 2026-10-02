@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import {
-    PackageSearch, ShoppingBag, X, ChevronLeft, ChevronRight,
+    PackageSearch, ShoppingBag, X,
     TrendingUp, AlertTriangle, Package, Clock, FileSpreadsheet
 } from 'lucide-react';
 import { formatCurrency } from '../utils/formatters';
@@ -18,6 +18,7 @@ import { Button } from './shadcn/button';
 import { Badge } from './shadcn/badge';
 import { Tabs, TabsList, TabsTrigger } from './shadcn/tabs';
 import { ErrorState } from './ui/ErrorState';
+import PaginationControls from './ui/PaginationControls';
 
 const tabs = [
     { id: 'pilotage' as const, icon: TrendingUp },
@@ -283,27 +284,15 @@ const StockAnalysis = () => {
                                         {t('common:pagination.page_info', { page: data.current_page, total: data.total_pages })}
                                     </p>
                                     <div className="flex items-center gap-2">
-                                        <Button
-                                            variant="outline"
-                                            size="icon"
-                                            aria-label={t('common:previous')}
-                                            onClick={() => setPage((p) => Math.max(1, p - 1))}
-                                            disabled={page === 1}
-                                        >
-                                            <ChevronLeft className="size-4" />
-                                        </Button>
+                                        <PaginationControls
+                                            page={page}
+                                            totalPages={data.total_pages || 1}
+                                            onPageChange={(p) => setPage(p)}
+                                            size="xs"
+                                        />
                                         <span className="min-w-[3rem] text-center text-sm font-semibold text-slate-900">
                                             {page}
                                         </span>
-                                        <Button
-                                            variant="outline"
-                                            size="icon"
-                                            aria-label={t('common:next')}
-                                            onClick={() => setPage((p) => Math.min(data.total_pages || 1, p + 1))}
-                                            disabled={page === data.total_pages}
-                                        >
-                                            <ChevronRight className="size-4" />
-                                        </Button>
                                     </div>
                                 </div>
                             )}

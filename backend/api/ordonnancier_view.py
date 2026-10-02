@@ -3,6 +3,7 @@ ViewSet pour le système d'ordonnancier de la pharmacie.
 Gère le registre des médicaments délivrés sur ordonnance.
 """
 import io
+from datetime import timedelta
 
 from django.db.models import Q
 from django.http import HttpResponse
@@ -19,6 +20,7 @@ from rest_framework.response import Response
 
 from .models import LigneOrdonnancier, Ordonnancier
 from .serializers import OrdonnancierCreateSerializer, OrdonnancierSerializer
+from .utils.dates import day_start
 from .utils.validation import parse_date_param, parse_int
 
 
@@ -54,10 +56,14 @@ class OrdonnancierViewSet(viewsets.ModelViewSet):
         date_fin = parse_date_param(
             self.request.query_params.get('date_fin'), field='date_fin')
 
+        # date_delivrance est un DateTimeField : bornes datetime plutôt que
+        # le cast __date (qui neutralise l'index). day_start() n'utilise que
+        # la partie date si la valeur parsée est un datetime.
         if date_debut:
-            queryset = queryset.filter(date_delivrance__date__gte=date_debut)
+            queryset = queryset.filter(date_delivrance__gte=day_start(date_debut))
         if date_fin:
-            queryset = queryset.filter(date_delivrance__date__lte=date_fin)
+            queryset = queryset.filter(
+                date_delivrance__lt=day_start(date_fin + timedelta(days=1)))
         
         # Filtre par patient
         patient = self.request.query_params.get('patient')

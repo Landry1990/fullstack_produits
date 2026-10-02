@@ -165,7 +165,7 @@ export function CommandeProductRow({
                 {/* Rotation moyenne / mois */}
                 <TableCell className="text-center py-0.5 bg-blue-50/20">
                     <span className={`text-xs font-bold px-1 rounded ${rotation > 0 ? 'text-blue-600' : 'text-slate-400'}`}>
-                        {rotation > 0 ? rotation.toFixed(0) : '-'}
+                        {rotation > 0 ? rotation.toFixed(1) : '-'}
                     </span>
                 </TableCell>
 

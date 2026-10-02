@@ -3,6 +3,7 @@ import os
 import tempfile
 import threading
 import time
+from datetime import timedelta
 
 try:
     import fcntl
@@ -70,6 +71,32 @@ def _run_monthly_tasks(now):
             logger.error(f"Scheduler - Telegram Report Error: {e}")
 
 
+def _run_retention_tasks(now):
+    """
+    Rétention des données — exécution quotidienne.
+
+    STRICTEMENT non-destructive par défaut : ne fait rien tant que
+    PharmacySettings.retention_enabled=False. Quand la rétention est activée,
+    on lance `run_retention --confirm` au plus une fois par 20h (garde
+    temporelle basée sur last_retention_run pour le rattrapage après arrêt).
+    """
+    try:
+        from .models import PharmacySettings
+
+        pharmacy_settings, _ = PharmacySettings.objects.get_or_create(pk=1)
+        if not pharmacy_settings.retention_enabled:
+            return
+
+        last_run = pharmacy_settings.last_retention_run
+        if last_run and (now - last_run) < timedelta(hours=20):
+            return
+
+        logger.info("Scheduler: exécution de la rétention des données (run_retention --confirm).")
+        call_command('run_retention', '--confirm')
+    except Exception as e:
+        logger.error(f"Scheduler - Retention Error: {e}")
+
+
 def run_scheduler_loop():
     """Loop that runs in a background thread."""
     # Delay to let the server start properly
@@ -90,6 +117,13 @@ def run_scheduler_loop():
             _run_monthly_tasks(timezone.localtime())
         except Exception as e:
             logger.error(f"Scheduler - Monthly Tasks Error: {e}")
+
+        # ── Rétention des données (quotidienne, désactivée par défaut) ────
+        try:
+            from django.utils import timezone
+            _run_retention_tasks(timezone.localtime())
+        except Exception as e:
+            logger.error(f"Scheduler - Retention Tasks Error: {e}")
 
         # Wait 10 minutes before next check
         time.sleep(600)

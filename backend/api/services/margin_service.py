@@ -28,6 +28,7 @@ from api.models import (
     Produit,
     StockLot,
 )
+from api.utils.dates import day_start
 
 
 def _to_aware_datetime(d):
@@ -323,8 +324,8 @@ class MarginService:
 
         # Requête de base : même filtrage que revenue_chart (status + paiement)
         factures_qs = Facture.objects.filter(
-            date__date__gte=date_debut,
-            date__date__lte=date_fin,
+            date__gte=day_start(date_debut),
+            date__lt=day_start(date_fin + timedelta(days=1)),
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         ).exclude(~Q(id__in=Caisse.objects.values('facture_id')), status='VAL')
 

@@ -2,32 +2,33 @@ import { useEffect, useMemo, useRef } from 'react';
 import { safeStorage } from '../utils/storage';
 import { useAuth } from '../context/AuthContext';
 import { logger } from '../utils/logger'
+import type { OrdonnanceData } from '../types';
 
 export interface ClientsHook {
-    setSelectedClient: (v: unknown) => void;
+    setSelectedClient: (v: number | null) => void;
     setUseManualClient: (v: boolean) => void;
     setManualClientName: (v: string) => void;
     selectedClient: number | null;
     useManualClient: boolean;
     manualClientName: string;
     clients: Array<{ id: number; name: string }>;
-    setSelectedAyantDroit: (v: unknown) => void;
+    setSelectedAyantDroit: (v: number | null) => void;
     setAyantDroitNom: (v: string) => void;
     setAyantDroitMatricule: (v: string) => void;
     setAyantDroitSociete: (v: string) => void;
-    selectedAyantDroit: unknown;
+    selectedAyantDroit: number | null;
     ayantDroitNom: string;
     ayantDroitMatricule: string;
     ayantDroitSociete: string;
 }
 
 export interface UIHook {
-    setRemiseGlobale: (v: unknown) => void;
-    setRemiseMode: (v: string) => void;
-    setTempOrdonnanceData: (v: unknown) => void;
-    remiseGlobale: unknown;
-    remiseMode: string;
-    tempOrdonnanceData: unknown;
+    setRemiseGlobale: (v: string) => void;
+    setRemiseMode: (v: 'montant' | 'taux') => void;
+    setTempOrdonnanceData: (v: OrdonnanceData | null) => void;
+    remiseGlobale: string;
+    remiseMode: 'montant' | 'taux';
+    tempOrdonnanceData: OrdonnanceData | null;
 }
 
 export interface UseFacturationSessionProps {

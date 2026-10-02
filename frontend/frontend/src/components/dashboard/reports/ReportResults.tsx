@@ -11,8 +11,10 @@ import {
 import type { QueryDefinition, PaginationData } from '../../../hooks/useCentreRapports';
 import { MonthlyReportView } from './MonthlyReportView';
 import { StockValuationReport } from './StockValuationReport';
-import { ChevronLeft, ChevronRight, Inbox, Eye, Download, AlertTriangle } from 'lucide-react';
+import { Inbox, Eye, Download, AlertTriangle } from 'lucide-react';
 import { Button } from '../../shadcn/button';
+import PaginationControls from '../../ui/PaginationControls';
+import { buildPageUrl, extractPageSize, pageCount } from '../../../utils/pagination';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../../shadcn/card';
 import { Badge } from '../../shadcn/badge';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../shadcn/table';
@@ -346,6 +348,30 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
         );
     };
 
+    // Déduit la page courante depuis les URLs DRF next/previous (page_next - 1 ou page_prev + 1)
+    const drfBaseUrl = pagination ? (pagination.next || pagination.previous) : null;
+    const drfPage = (() => {
+        if (!pagination) return 1;
+        const pageOf = (url: string | null): number | null => {
+            if (!url) return null;
+            try {
+                // DRF omet le param `page` quand le lien vise la page 1 → défaut 1
+                const p = Number(new URL(url, window.location.origin).searchParams.get('page'));
+                return Number.isFinite(p) && p > 0 ? p : 1;
+            } catch {
+                return null;
+            }
+        };
+        const nextP = pageOf(pagination.next);
+        if (nextP !== null) return Math.max(1, nextP - 1);
+        const prevP = pageOf(pagination.previous);
+        if (prevP !== null) return prevP + 1;
+        return 1;
+    })();
+    const drfTotalPages = drfBaseUrl && pagination
+        ? pageCount(pagination.count, extractPageSize(drfBaseUrl))
+        : undefined;
+
     return (
         <div className="flex-1 flex flex-col min-h-0">
             <div className="flex-1 overflow-y-auto custom-scrollbar pr-1">
@@ -358,26 +384,17 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                         <div className="text-caption font-black uppercase tracking-[0.2em] text-slate-400 text-center sm:text-left">
                             Total: <span className="text-slate-800">{pagination.count}</span> éléments
                         </div>
-                        <div className="flex gap-2 w-full sm:w-auto">
-                            <Button 
-                                variant="outline" size="sm"
-                                className="rounded-xl font-bold uppercase tracking-widest text-caption gap-2 flex-1 sm:flex-initial"
-                                disabled={!pagination.previous || loading}
-                                onClick={() => onPageChange(pagination.previous)}
-                            >
-                                <ChevronLeft className="size-4" />
-                                {t('common:previous', 'Précédent')}
-                            </Button>
-                            <Button 
-                                variant="outline" size="sm"
-                                className="rounded-xl font-bold uppercase tracking-widest text-caption gap-2 flex-1 sm:flex-initial"
-                                disabled={!pagination.next || loading}
-                                onClick={() => onPageChange(pagination.next)}
-                            >
-                                {t('common:next', 'Suivant')}
-                                <ChevronRight className="size-4" />
-                            </Button>
-                        </div>
+                        <PaginationControls
+                            page={drfPage}
+                            totalPages={drfTotalPages}
+                            hasNext={!!pagination.next}
+                            onPageChange={(p) => {
+                                const url = buildPageUrl(drfBaseUrl, p);
+                                if (url) onPageChange(url);
+                            }}
+                            isLoading={loading}
+                            className="w-full sm:w-auto"
+                        />
                     </CardFooter>
                 </Card>
             )}

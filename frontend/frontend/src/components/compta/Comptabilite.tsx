@@ -23,7 +23,7 @@ import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
 import { gooeyToast } from 'goey-toast';
-import Pagination from '../ui/Pagination';
+import PaginationControls from '../ui/PaginationControls';
 import { PageContainer } from '../ui/PageContainer';
 import { LocalizedDateInput } from '../LocalizedDateInput';
 import i18n from '../../i18n';
@@ -361,15 +361,22 @@ function AchatsTab({ ecritures, count, page, setPage, locale, t }: AchatsTabProp
             </div>
 
             {/* Pagination Controls */}
-            <Pagination 
-                currentPage={page}
-                totalPages={totalPages}
-                totalItems={count}
-                onPrev={() => setPage((p: number) => Math.max(1, p - 1))}
-                onNext={() => setPage((p: number) => Math.min(totalPages, p + 1))}
-                hasNext={page < totalPages}
-                label={t('ledger.items_label', { defaultValue: 'achats' })}
-            />
+            <div className="p-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between bg-white/50 dark:bg-slate-900/50">
+                <div className="text-sm text-slate-500 dark:text-slate-400">
+                    {t('common:pagination_info', {
+                        defaultValue: `Page ${page} sur ${totalPages} (${count} ${t('ledger.items_label', { defaultValue: 'achats' })})`,
+                        page,
+                        total: totalPages,
+                        count,
+                        label: t('ledger.items_label', { defaultValue: 'achats' })
+                    })}
+                </div>
+                <PaginationControls
+                    page={page}
+                    totalPages={totalPages}
+                    onPageChange={setPage}
+                />
+            </div>
         </div>
     );
 }
@@ -455,15 +462,22 @@ function GrandLivreTab({ ecritures, count, page, setPage, search, setSearch, loc
             </div>
             
             {/* Pagination Controls */}
-            <Pagination 
-                currentPage={page}
-                totalPages={totalPages}
-                totalItems={count}
-                onPrev={() => setPage((p: number) => Math.max(1, p - 1))}
-                onNext={() => setPage((p: number) => Math.min(totalPages, p + 1))}
-                hasNext={page < totalPages}
-                label={t('ledger.items_label', { defaultValue: 'écritures' })}
-            />
+            <div className="p-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between bg-white/50 dark:bg-slate-900/50">
+                <div className="text-sm text-slate-500 dark:text-slate-400">
+                    {t('common:pagination_info', {
+                        defaultValue: `Page ${page} sur ${totalPages} (${count} ${t('ledger.items_label', { defaultValue: 'écritures' })})`,
+                        page,
+                        total: totalPages,
+                        count,
+                        label: t('ledger.items_label', { defaultValue: 'écritures' })
+                    })}
+                </div>
+                <PaginationControls
+                    page={page}
+                    totalPages={totalPages}
+                    onPageChange={setPage}
+                />
+            </div>
         </div>
     );
 }

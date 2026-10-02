@@ -18,6 +18,10 @@ class ActivityLog(models.Model):
 
     class Meta:
         ordering = ['-timestamp']
+        indexes = [
+            # Perf (migration 0262) — index créé en CONCURRENTLY
+            models.Index(fields=['timestamp'], name='activitylog_ts_idx'),
+        ]
 
     def __str__(self):
         return f"{self.timestamp} - {self.user} - {self.action}"
@@ -56,6 +60,10 @@ class AuditLog(models.Model):
 
     class Meta:
         ordering = ['-timestamp']
+        indexes = [
+            # Perf (migration 0262) — index créé en CONCURRENTLY
+            models.Index(fields=['action', 'timestamp'], name='auditlog_action_ts_idx'),
+        ]
 
     def __str__(self):
         return f"{self.user} - {self.action} {self.model_name} at {self.timestamp}"

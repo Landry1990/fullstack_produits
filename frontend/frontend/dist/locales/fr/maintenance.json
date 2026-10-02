@@ -72,6 +72,8 @@
         "audit_logs": "Journal d'audit",
         "activity_logs": "Logs d'activité",
         "sms_logs": "Journal SMS",
+        "whatsapp_logs": "Journal WhatsApp",
+        "telegram_logs": "Journal Telegram",
         "children": {
             "lignes_facture": "Lignes facture",
             "allocations_lots": "Allocations lots",
@@ -184,5 +186,51 @@
     },
     "section_import": "IMPORT",
     "section_export": "EXPORT",
-    "section_purge": "PURGE"
+    "section_purge": "PURGE",
+    "retention": {
+        "title": "Rétention automatique",
+        "description": "Supprime automatiquement les données anciennes selon les durées de conservation ci-dessous.",
+        "enable": "Activer la rétention automatique",
+        "days_title": "Durées de conservation (jours)",
+        "days_labels": {
+            "retention_audit_days": "Journal d'audit",
+            "retention_activity_days": "Logs d'activité",
+            "retention_message_log_days": "Messages (SMS/WhatsApp/Telegram)",
+            "retention_session_days": "Sessions",
+            "retention_trash_days": "Corbeille",
+            "retention_draft_invoice_days": "Factures brouillon",
+            "retention_mouvement_stock_days": "Mouvements de stock"
+        },
+        "preview_title": "Données expirées",
+        "col_category": "Catégorie",
+        "col_cutoff": "Antérieures au",
+        "col_count": "Lignes",
+        "manual_only": "Manuel uniquement",
+        "run_now": "Purger maintenant",
+        "disabled_hint": "La rétention automatique est désactivée — les durées ne sont pas appliquées.",
+        "loading": "Chargement de l'aperçu...",
+        "empty": "Aucune donnée à purger",
+        "categories": {
+            "audit": "Journal d'audit",
+            "activity": "Logs d'activité",
+            "message_log": "Messages (SMS/WhatsApp/Telegram)",
+            "session": "Sessions",
+            "trash": "Corbeille",
+            "draft_invoice": "Factures brouillon",
+            "mouvement_stock": "Mouvements de stock"
+        },
+        "modal": {
+            "title": "Purger les données expirées",
+            "warn": "Toutes les données plus anciennes que les durées configurées seront supprimées définitivement.",
+            "confirm_password": "Confirmez votre mot de passe admin",
+            "confirm_btn": "Lancer la purge"
+        },
+        "toasts": {
+            "saved": "Paramètres de rétention enregistrés !",
+            "save_error": "Erreur lors de l'enregistrement",
+            "preview_error": "Erreur lors du chargement de l'aperçu",
+            "run_success": "Purge de rétention terminée",
+            "run_error": "Erreur lors de la purge de rétention"
+        }
+    }
 }

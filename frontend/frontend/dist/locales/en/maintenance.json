@@ -72,6 +72,8 @@
         "audit_logs": "Audit Log",
         "activity_logs": "Activity Logs",
         "sms_logs": "SMS Log",
+        "whatsapp_logs": "WhatsApp Log",
+        "telegram_logs": "Telegram Log",
         "children": {
             "lignes_facture": "Invoice lines",
             "allocations_lots": "Batch allocations",
@@ -184,5 +186,51 @@
     },
     "section_import": "IMPORT",
     "section_export": "EXPORT",
-    "section_purge": "PURGE"
+    "section_purge": "PURGE",
+    "retention": {
+        "title": "Automatic retention",
+        "description": "Automatically deletes old data according to the retention periods below.",
+        "enable": "Enable automatic retention",
+        "days_title": "Retention periods (days)",
+        "days_labels": {
+            "retention_audit_days": "Audit log",
+            "retention_activity_days": "Activity logs",
+            "retention_message_log_days": "Messages (SMS/WhatsApp/Telegram)",
+            "retention_session_days": "Sessions",
+            "retention_trash_days": "Trash",
+            "retention_draft_invoice_days": "Draft invoices",
+            "retention_mouvement_stock_days": "Stock movements"
+        },
+        "preview_title": "Expired data",
+        "col_category": "Category",
+        "col_cutoff": "Older than",
+        "col_count": "Rows",
+        "manual_only": "Manual only",
+        "run_now": "Purge now",
+        "disabled_hint": "Automatic retention is disabled — the periods are not applied.",
+        "loading": "Loading preview...",
+        "empty": "No data to purge",
+        "categories": {
+            "audit": "Audit log",
+            "activity": "Activity logs",
+            "message_log": "Messages (SMS/WhatsApp/Telegram)",
+            "session": "Sessions",
+            "trash": "Trash",
+            "draft_invoice": "Draft invoices",
+            "mouvement_stock": "Stock movements"
+        },
+        "modal": {
+            "title": "Purge expired data",
+            "warn": "All data older than the configured periods will be permanently deleted.",
+            "confirm_password": "Confirm your admin password",
+            "confirm_btn": "Run purge"
+        },
+        "toasts": {
+            "saved": "Retention settings saved!",
+            "save_error": "Error while saving",
+            "preview_error": "Error while loading the preview",
+            "run_success": "Retention purge completed",
+            "run_error": "Error during retention purge"
+        }
+    }
 }

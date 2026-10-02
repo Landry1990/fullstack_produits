@@ -9,6 +9,8 @@ import { Button } from './shadcn/button';
 import { Badge } from './ui/Badge';
 import { EmptyState } from './ui/EmptyState';
 import { Skeleton } from './ui/Skeleton';
+import PaginationControls from './ui/PaginationControls';
+import { pageCount } from '../utils/pagination';
 import { logger } from '../utils/logger'
 
 interface StatsData {
@@ -336,18 +338,14 @@ export default function ImportDCIPage() {
 
         {/* Pagination */}
         {unlinkedData && unlinkedData.count > unlinkedData.page_size && (
-          <div className="flex justify-center gap-2 p-4 border-t border-base-200">
-            <Button
-              variant="ghost" size="sm" className="h-6 px-2 text-xs"
-              disabled={unlinkedPage <= 1}
-              onClick={() => setUnlinkedPage(p => p - 1)}
-            >{t('common:pagination.prev')}</Button>
-            <span className="text-sm py-1 opacity-60 font-medium">{t('products:dci.page_x_of_y', { page: unlinkedPage, total: Math.ceil(unlinkedData.count / unlinkedData.page_size) })}</span>
-            <Button
-              variant="ghost" size="sm" className="h-6 px-2 text-xs"
-              disabled={unlinkedPage >= Math.ceil(unlinkedData.count / unlinkedData.page_size)}
-              onClick={() => setUnlinkedPage(p => p + 1)}
-            >{t('common:pagination.next')}</Button>
+          <div className="flex justify-center items-center gap-2 p-4 border-t border-base-200">
+            <span className="text-sm py-1 opacity-60 font-medium">{t('products:dci.page_x_of_y', { page: unlinkedPage, total: pageCount(unlinkedData.count, unlinkedData.page_size) })}</span>
+            <PaginationControls
+              page={unlinkedPage}
+              totalPages={pageCount(unlinkedData.count, unlinkedData.page_size)}
+              onPageChange={setUnlinkedPage}
+              size="xs"
+            />
           </div>
         )}
       </div>

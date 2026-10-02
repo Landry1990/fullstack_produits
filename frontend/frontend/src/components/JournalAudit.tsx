@@ -9,6 +9,7 @@ import { useAuditLogs, useAuditStats, useUsers } from '../hooks/useAudit';
 import { formatNumber } from '../utils/formatters';
 import type { AuditLog } from '../types/audit';
 import { PageContainer } from './ui/PageContainer';
+import PaginationControls from './ui/PaginationControls';
 import { Button } from './shadcn/button';
 import { Badge } from './shadcn/badge';
 import { Select } from './shadcn/select';
@@ -226,9 +227,8 @@ const JournalAudit: React.FC = () => {
     <div className="flex gap-2 items-center mb-2 text-xs font-black text-slate-500 uppercase"><Activity className="size-3.5" />{t('view.flux')}<span className="text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">{logsData?.count || 0} {t('view.items')}</span></div>
     {loading ? <div className="py-20 flex justify-center"><Loader2 className="size-7 animate-spin text-indigo-500" /><span className="sr-only">{t('view.loading')}</span></div> : !logs.length ? <div className="py-16 text-center border-2 border-dashed rounded-2xl text-slate-500"><p className="font-bold">{t('view.empty_title')}</p><p className="text-sm">{t('view.empty_subtitle')}</p></div> : <div className="space-y-4">{groups.map(group => <section key={group.dateKey}><div className="flex items-center gap-2 mb-1 text-caption lg:text-xs font-bold uppercase text-slate-500"><span>{group.label}</span><span>· {t('view.action_count', { count: group.dayLogs.length })}</span><div className="h-px bg-slate-200 flex-1" /></div><div className="border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-100">{group.dayLogs.map(log => <AuditRow key={log.id} log={log} expanded={expandedLog === log.id} onToggle={() => setExpandedLog(expandedLog === log.id ? null : log.id)} t={t} />)}</div></section>)}</div>}
     {!loading && totalPages > 1 && <div className="flex justify-center items-center gap-3 mt-6">
-      <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>{t('common:pagination.prev')}</Button>
       <span className="text-xs text-slate-500">{t('view.page', { page, total: totalPages })}</span>
-      <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>{t('common:pagination.next')}</Button>
+      <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} />
     </div>}
 
     <Dialog open={showPurgeModal} onOpenChange={v => { if (!v) resetPurgeModal(); setShowPurgeModal(v); }}>

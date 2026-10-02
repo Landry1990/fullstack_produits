@@ -3,6 +3,7 @@ from decimal import Decimal, InvalidOperation
 
 from django.db.models import Count, DecimalField, OuterRef, Q, Subquery, Sum, Value
 from django.db.models.functions import Coalesce
+from django_filters import rest_framework as django_filters
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
@@ -12,7 +13,7 @@ from rest_framework.response import Response
 
 from api.audit_helpers import log_audit
 from api.cache_mixins import SimpleListCacheMixin
-from api.centralized_configs import BaseViewSetConfig, CommonFilterFields
+from api.centralized_configs import BaseViewSetConfig
 from api.models import (
     AuditLog,
     Caisse,
@@ -26,6 +27,7 @@ from api.serializers_optimized import (
     FactureOmnisearchSerializer,
 )
 from api.services import SalesService
+from api.utils.dates import day_bounds
 
 from .facture_mixins import (
     FactureBulkMixin,
@@ -58,6 +60,33 @@ class FactureSearchFilter(filters.SearchFilter):
             queryset = queryset.filter(criteria)
 
         return queryset.distinct()
+
+
+class FactureFilter(django_filters.FilterSet):
+    """FilterSet des factures.
+
+    Le param ``date__date`` (jour exact) applique des bornes datetime
+    ``[jour 00:00, lendemain 00:00)`` au lieu du cast ``::date`` SQL
+    qui neutralise l'index btree sur la colonne ``date``.
+    """
+
+    date__date = django_filters.DateFilter(field_name='date', method='filter_date_day')
+
+    def filter_date_day(self, queryset, name, value):
+        lo, hi = day_bounds(value)
+        return queryset.filter(date__gte=lo, date__lt=hi)
+
+    class Meta:
+        model = Facture
+        fields = {
+            'status': ['exact', 'in'],
+            'client': ['exact'],
+            'date': ['gte', 'lte'],
+            'numero_facture': ['exact', 'icontains'],
+            'created_by': ['exact'],
+            'poste_caisse': ['exact'],
+            'produits__produit__name': ['icontains'],
+        }
 
 
 class FactureViewSet(
@@ -139,15 +168,7 @@ class FactureViewSet(
         return queryset
     serializer_class = FactureSerializer
     filter_backends = [DjangoFilterBackend, FactureSearchFilter, filters.OrderingFilter]
-    filterset_fields = {
-        **CommonFilterFields.status_filters(),
-        'client': ['exact'],
-        'date': ['gte', 'lte', 'date'],
-        'numero_facture': ['exact', 'icontains'],
-        'created_by': ['exact'],
-        'poste_caisse': ['exact'],
-        'produits__produit__name': ['icontains'],
-    }
+    filterset_class = FactureFilter
     search_fields = ['numero_facture', 'client__name', 'produits__produit__name']
     
     def get_serializer_class(self):

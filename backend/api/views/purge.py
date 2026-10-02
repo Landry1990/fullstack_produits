@@ -32,15 +32,16 @@ from ..utils.validation import parse_bool
 # Each entry: key → (label_fr, Model import path, date_field, [child relations])
 # Child relations are cascaded automatically by Django when using on_delete=CASCADE,
 # but we list them here for the CSV export and the preview count.
+# Optional 'base_filter' : dict de kwargs appliqué via .filter() sur le queryset
+# parent (et préfixé par la FK sur les enfants) — utilisé comme garde-fou
+# irréductible pour les données protégées (traçabilité comptable, etc.).
 
 def _get_purge_registry():
     """Lazy import to avoid circular imports."""
     from api.models.audit import (
         ActivityLog,
         AuditLog,
-        LigneOrdonnancier,
         MouvementCaisse,
-        Ordonnancier,
     )
     from api.models.billing import (
         Caisse,
@@ -52,7 +53,7 @@ def _get_purge_registry():
         Promis,
         RelevePaiement,
     )
-    from api.models.communication import SmsLog
+    from api.models.communication import SmsLog, TelegramLog, WhatsAppLog
     from api.models.objectif import ObjectifCommercial
     from api.models.orders import Avoir, Commande, CommandeProduit, LigneAvoir
     from api.models.paiements import PaiementFournisseur
@@ -63,6 +64,15 @@ def _get_purge_registry():
             'label': 'Factures (ventes)',
             'model': Facture,
             'date_field': 'date',
+            # Garde-fou traçabilité comptable : les factures VALIDEE/PAYEE/ANNULEE
+            # ne sont jamais purgeables en masse (signal anti-fraude + audit).
+            # Seuls les statuts non-finaux (brouillon, proforma) sont purgeables.
+            'base_filter': {
+                'status__in': [
+                    Facture.Status.BROUILLON,
+                    Facture.Status.PROFORMA,
+                ],
+            },
             'children': [
                 {'model': FactureProduit, 'fk': 'facture', 'label': 'Lignes facture'},
                 {'model': FactureProduitAllocation, 'fk': 'facture_produit__facture', 'label': 'Allocations lots'},
@@ -121,14 +131,7 @@ def _get_purge_registry():
             'date_field': 'date',
             'children': [],
         },
-        'ordonnancier': {
-            'label': 'Ordonnancier',
-            'model': Ordonnancier,
-            'date_field': 'date_delivrance',
-            'children': [
-                {'model': LigneOrdonnancier, 'fk': 'ordonnancier', 'label': 'Lignes ordonnancier'},
-            ],
-        },
+        # ordonnancier: registre réglementé — pas de purge (conservation légale).
         'objectifs': {
             'label': 'Objectifs commerciaux',
             'model': ObjectifCommercial,
@@ -171,6 +174,18 @@ def _get_purge_registry():
             'date_field': 'created_at',
             'children': [],
         },
+        'whatsapp_logs': {
+            'label': 'Journal WhatsApp',
+            'model': WhatsAppLog,
+            'date_field': 'created_at',
+            'children': [],
+        },
+        'telegram_logs': {
+            'label': 'Journal Telegram',
+            'model': TelegramLog,
+            'date_field': 'created_at',
+            'children': [],
+        },
     }
 
 
@@ -182,6 +197,28 @@ def _build_date_filter(date_field, date_from, date_to):
     if date_to:
         filters[f'{date_field}__lte'] = date_to
     return filters
+
+
+def _apply_base_filter(qs, info, prefix=''):
+    """
+    Applique le garde-fou 'base_filter' d'une entrée du registry.
+
+    - dict : appliqué via .filter(**base_filter). Si `prefix` est fourni
+      (queryset enfant), chaque clé est préfixée par la FK (ex: 'facture__status__in').
+    - callable : appelé comme base_filter(qs, prefix) et doit retourner un queryset.
+
+    Ce filtre est IRRÉDUCTIBLE : il s'applique aussi bien en preview qu'en
+    export et en purge, de sorte que les données protégées (ex: factures
+    VALIDEE/PAYEE) ne peuvent jamais sortir du périmètre de sécurité.
+    """
+    base = info.get('base_filter')
+    if not base:
+        return qs
+    if callable(base):
+        return base(qs, prefix)
+    if prefix:
+        base = {f'{prefix}__{key}': value for key, value in base.items()}
+    return qs.filter(**base)
 
 
 def _parse_date_param(value, field_name):
@@ -256,7 +293,7 @@ class PurgeViewSet(ViewSet):
                 continue
 
             date_filter = _build_date_filter(info['date_field'], date_from, date_to)
-            parent_qs = info['model'].objects.filter(**date_filter)
+            parent_qs = _apply_base_filter(info['model'].objects.filter(**date_filter), info)
             parent_count = parent_qs.count()
 
             children_counts = []
@@ -270,7 +307,10 @@ class PurgeViewSet(ViewSet):
                 if date_to:
                     child_filter[f'{child_date_key}__lte'] = date_to
 
-                child_count = child['model'].objects.filter(**child_filter).count()
+                child_qs = _apply_base_filter(
+                    child['model'].objects.filter(**child_filter), info, prefix=fk_path
+                )
+                child_count = child_qs.count()
                 children_counts.append({
                     'label': child['label'],
                     'count': child_count,
@@ -312,7 +352,7 @@ class PurgeViewSet(ViewSet):
                     continue
 
                 date_filter = _build_date_filter(info['date_field'], date_from, date_to)
-                parent_qs = info['model'].objects.filter(**date_filter)
+                parent_qs = _apply_base_filter(info['model'].objects.filter(**date_filter), info)
 
                 # Export parent
                 csv_content = _queryset_to_csv(parent_qs, info['model'])
@@ -328,7 +368,9 @@ class PurgeViewSet(ViewSet):
                     if date_to:
                         child_filter[f'{child_date_key}__lte'] = date_to
 
-                    child_qs = child['model'].objects.filter(**child_filter)
+                    child_qs = _apply_base_filter(
+                        child['model'].objects.filter(**child_filter), info, prefix=fk_path
+                    )
                     csv_content = _queryset_to_csv(child_qs, child['model'])
                     child_name = child['label'].lower().replace(' ', '_').replace("'", '')
                     zf.writestr(f'{table_key}_{child_name}.csv', csv_content)
@@ -385,7 +427,7 @@ class PurgeViewSet(ViewSet):
                     continue
 
                 date_filter = _build_date_filter(info['date_field'], date_from, date_to)
-                qs = info['model'].objects.filter(**date_filter)
+                qs = _apply_base_filter(info['model'].objects.filter(**date_filter), info)
                 count = qs.count()
                 qs.delete()  # CASCADE will handle children automatically
 
@@ -411,6 +453,75 @@ class PurgeViewSet(ViewSet):
         return Response({
             'message': 'Purge effectuée avec succès.',
             'results': results,
+        })
+
+    @action(detail=False, methods=['get'])
+    def retention_preview(self, request):
+        """
+        Prévisualise la politique de rétention : lignes concernées par
+        catégorie, sans aucune suppression.
+        """
+        from api.models.settings import PharmacySettings
+        from api.services.retention import build_retention_plan
+
+        pharmacy_settings, _ = PharmacySettings.objects.get_or_create(pk=1)
+        plan = build_retention_plan(pharmacy_settings, timezone.now())
+
+        categories = []
+        for entry in plan:
+            if entry['error'] is not None or entry['queryset'] is None:
+                continue
+            try:
+                count = entry['queryset'].count()
+            except Exception:
+                continue  # Catégorie optionnelle indisponible (ex: table sessions absente)
+            categories.append({
+                'key': entry['key'],
+                'label': entry['label'],
+                'count': count,
+                'cutoff_date': entry['cutoff'].date().isoformat(),
+                'deferred': entry['deferred'],
+            })
+
+        return Response({
+            'enabled': pharmacy_settings.retention_enabled,
+            'categories': categories,
+        })
+
+    @action(detail=False, methods=['post'])
+    def retention_run(self, request):
+        """
+        Exécute la rétention des données (run_retention --confirm --force).
+        Le mot de passe superadmin vaut consentement explicite (--force même
+        si retention_enabled=False).
+        Body: { password: "xxx" }
+        """
+        password = request.data.get('password', '')
+
+        if not password:
+            return Response({'detail': 'Le mot de passe est requis pour confirmer la purge.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Verify superadmin password
+        user = request.user
+        password_valid = (
+            user.check_password(password) or
+            user.check_password(password.lower()) or
+            user.check_password(password.upper()) or
+            user.check_password(password.capitalize())
+        )
+
+        if not password_valid or not user.is_superuser:
+            return Response({'detail': 'Mot de passe incorrect.'}, status=status.HTTP_403_FORBIDDEN)
+
+        out = StringIO()
+        try:
+            call_command('run_retention', '--confirm', '--force', stdout=out)
+        except Exception as e:
+            return Response({'detail': f'Erreur lors de la rétention: {e!s}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response({
+            'success': True,
+            'output': out.getvalue(),
         })
 
     @action(detail=False, methods=['post'])

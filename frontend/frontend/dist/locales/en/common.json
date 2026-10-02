@@ -212,6 +212,8 @@
     "pagination_info": "Page {{page}} of {{total}} ({{count}} {{label}})",
     "previous": "Previous",
     "next": "Next",
+    "first_page": "First page",
+    "last_page": "Last page",
     "all_rayons": "All shelves",
     "no_rayon": "No Shelf",
     "rayon": "Shelf",

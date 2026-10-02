@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.db.models import (
     Avg,
@@ -8,6 +8,7 @@ from django.db.models import (
     DecimalField,
     ExpressionWrapper,
     F,
+    Q,
     Sum,
     When,
 )
@@ -19,6 +20,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from ..models import Caisse, Facture, FactureProduit
+from ..utils.dates import day_bounds, day_start
 from ..utils.validation import parse_date_param
 from .rapports.tz_utils import parse_api_datetime
 
@@ -46,9 +48,9 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
         # Apply date filters — parse_date_param → 400 si la date fournie est
         # invalide (chaîne brute dans le filtre ORM → ValidationError → 500).
         if date_debut:
-            factures = factures.filter(date__date__gte=parse_date_param(date_debut, field='date_debut'))
+            factures = factures.filter(date__gte=day_start(parse_date_param(date_debut, field='date_debut')))
         if date_fin:
-            factures = factures.filter(date__date__lte=parse_date_param(date_fin, field='date_fin'))
+            factures = factures.filter(date__lt=day_start(parse_date_param(date_fin, field='date_fin') + timedelta(days=1)))
 
         # Group by date and aggregate
         daily_stats_query = factures.annotate(
@@ -97,7 +99,14 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
         # ── Pré-calculs par jour en UNE requête chacun (évite N+1) ──
         from collections import defaultdict
         jours = [day['jour'] for day in daily_stats]
-        factures_jour = factures.filter(date__date__in=jours) if jours else Facture.objects.none()
+        if jours:
+            jours_q = Q()
+            for jour in jours:
+                jour_lo, jour_hi = day_bounds(jour)
+                jours_q |= Q(date__gte=jour_lo, date__lt=jour_hi)
+            factures_jour = factures.filter(jours_q)
+        else:
+            factures_jour = Facture.objects.none()
 
         paiements_par_jour = defaultdict(lambda: {m: 0.0 for m in pay_modes})
         if jours:
@@ -265,9 +274,9 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         )
         if date_debut:
-            factures = factures.filter(date__date__gte=parse_date_param(date_debut, field='date_debut'))
+            factures = factures.filter(date__gte=day_start(parse_date_param(date_debut, field='date_debut')))
         if date_fin:
-            factures = factures.filter(date__date__lte=parse_date_param(date_fin, field='date_fin'))
+            factures = factures.filter(date__lt=day_start(parse_date_param(date_fin, field='date_fin') + timedelta(days=1)))
 
         daily_stats = factures.annotate(
             jour=TruncDate('date')
@@ -310,8 +319,10 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
             panier_moyen = ca_ttc / nb_ventes if nb_ventes > 0 else 0
             
             # NOTE: Filtrer aussi par statut facture pour cohérence avec ca_ttc
+            jour_lo, jour_hi = day_bounds(jour)
             paiements = Caisse.objects.filter(
-                facture__date__date=jour,
+                facture__date__gte=jour_lo,
+                facture__date__lt=jour_hi,
                 facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
                 statut='completee'
             ).exclude(mode_paiement='recouvrement').values('mode_paiement').annotate(

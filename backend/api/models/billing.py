@@ -72,6 +72,10 @@ class PosteVente(models.Model):
         verbose_name = "Poste de Vente"
         verbose_name_plural = "Postes de Vente"
         ordering = ['-date_ouverture']
+        indexes = [
+            # Perf (migration 0262) — index créé en CONCURRENTLY
+            models.Index(fields=['est_actif'], name='postevente_actif_idx'),
+        ]
 
     def __str__(self):
         vendeur_nom = self.vendeur.get_full_name() or self.vendeur.username if self.vendeur else 'Non assigné'
@@ -397,6 +401,12 @@ class Facture(models.Model):
             # P2: index composites pour les requêtes fréquentes
             models.Index(fields=['poste_caisse', 'status', '-date'], name='facture_poste_status_idx'),
             models.Index(fields=['created_by', '-date'], name='facture_creator_date_idx'),
+            # Perf (migration 0262) — index partiel créé en CONCURRENTLY
+            models.Index(
+                fields=['date_annulation'],
+                condition=models.Q(date_annulation__isnull=False),
+                name='facture_date_annul_idx',
+            ),
         ]
 
 
@@ -447,9 +457,11 @@ class FactureProduit(models.Model):
 
     class Meta:
         indexes = [
-            models.Index(fields=['produit']),
-            models.Index(fields=['facture']),
+            # (produit) et (facture) seuls : couverts par les index FK auto
+            # (api_factureproduit_produit_id_*, api_factureproduit_facture_id_*)
             models.Index(fields=['facture', 'produit']),
+            # Perf (migration 0262) — index créé en CONCURRENTLY
+            models.Index(fields=['created_at'], name='factureproduit_created_idx'),
         ]
 
 
@@ -483,6 +495,10 @@ class FactureProduitAllocation(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+        indexes = [
+            # Perf (migration 0262) — index créé en CONCURRENTLY
+            models.Index(fields=['created_at'], name='fpalloc_created_idx'),
+        ]
 
     def __str__(self):
         return f"Allocation {self.id} - {self.quantity} unités du lot {self.stock_lot.id}"
@@ -662,6 +678,10 @@ class ClotureCaisse(models.Model):
         ordering = ['-date']
         verbose_name = "Clôture de caisse"
         verbose_name_plural = "Clôtures de caisse"
+        indexes = [
+            # Perf (migration 0262) — index créé en CONCURRENTLY
+            models.Index(fields=['date'], name='cloturecaisse_date_idx'),
+        ]
     
     def __str__(self):
         return f"Clôture du {self.date.strftime('%d/%m/%Y %H:%M')} - Écart: {self.ecart_caisse} F"
@@ -761,6 +781,11 @@ class Promis(models.Model):
         ordering = ['-date_promis']
         verbose_name = 'Promis'
         verbose_name_plural = 'Promis'
+        indexes = [
+            # Perf (migration 0262) — index créés en CONCURRENTLY
+            models.Index(fields=['status', 'is_active'], name='promis_status_active_idx'),
+            models.Index(fields=['date_promis'], name='promis_date_idx'),
+        ]
 
     def __str__(self):
         client_display = self.client.name if self.client else self.client_name or 'Client inconnu'

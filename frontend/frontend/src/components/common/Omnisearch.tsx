@@ -34,18 +34,18 @@ export default function Omnisearch() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-5xl p-0 overflow-hidden border-slate-200 font-sans">
+      <DialogContent className="max-w-5xl p-0 overflow-hidden border-slate-200 rounded-2xl font-sans">
         <DialogTitle className="sr-only">{t('omnisearch.title', 'Recherche globale')}</DialogTitle>
         <Command
           label={t('common:command_palette')}
           shouldFilter={false}
           value={activeValue}
           onValueChange={setActiveValue}
-          className="flex flex-col h-full w-full rounded-none bg-white"
+          className="flex flex-col h-full w-full rounded-2xl bg-white"
         >
           <div className="px-4 pt-4 pb-3">
             <div
-              className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/60 px-4 transition-all focus-within:border-blue-400 focus-within:bg-white focus-within:ring-4 focus-within:ring-blue-500/10"
+              className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/60 px-4 transition-all focus-within:border-emerald-500 focus-within:bg-white focus-within:ring-4 focus-within:ring-emerald-500/10"
               cmdk-input-wrapper=""
             >
               <Search className="size-4.5 shrink-0 text-slate-400" />
@@ -82,7 +82,7 @@ export default function Omnisearch() {
               />
             </div>
 
-            <div className="hidden md:flex md:w-[40%] bg-gradient-to-b from-slate-50 to-indigo-50/40 flex-col overflow-y-auto">
+            <div className="hidden md:flex md:w-[40%] bg-gradient-to-b from-slate-50 to-emerald-50/40 flex-col overflow-y-auto">
               <OmnisearchPreview selectedItem={selectedItem} />
             </div>
           </div>

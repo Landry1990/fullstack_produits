@@ -5,6 +5,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from ..models import FactureProduit, PharmacySettings, WhatsAppLog
+from ..utils.dates import day_start
 from ..whatsapp_service import WhatsAppService
 
 logger = logging.getLogger(__name__)
@@ -49,7 +50,7 @@ class ChronicReminderService:
                 already_sent = WhatsAppLog.objects.filter(
                     client=line.facture.client,
                     message__icontains=line.produit.name,
-                    created_at__date__gte=purchase_date,
+                    created_at__gte=day_start(purchase_date),
                     type=WhatsAppLog.Type.RAPPEL
                 ).exists()
                 

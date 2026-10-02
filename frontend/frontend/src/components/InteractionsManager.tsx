@@ -5,6 +5,7 @@ import { gooeyToast } from 'goey-toast';
 import api from '../services/api';
 import { Button } from './shadcn/button';
 import { Badge } from './ui/Badge';
+import PaginationControls from './ui/PaginationControls';
 import { useConfirm } from '../hooks/useConfirm';
 import { getApiErrorDetail } from '../utils/errorHandling';
 import type { Substance } from '../hooks/useSubstances';
@@ -320,10 +321,9 @@ export default function InteractionsManager() {
         </div>
 
         {totalPages > 1 && (
-          <div className="flex justify-center gap-2 p-4 border-t border-base-200">
-            <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>{t('products:interactions.previous')}</Button>
+          <div className="flex justify-center items-center gap-2 p-4 border-t border-base-200">
             <span className="text-sm py-1 opacity-60 font-medium">{t('products:dci.page_x_of_y', { page, total: totalPages })}</span>
-            <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>{t('products:interactions.next')}</Button>
+            <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} size="xs" />
           </div>
         )}
       </div>

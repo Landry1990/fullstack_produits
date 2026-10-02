@@ -3,7 +3,7 @@ import api from '../services/api';
 import { formatDate, getLocalDateString } from '../utils/dateUtils';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
-import { Calendar, RefreshCw, Package, TrendingUp, ChevronLeft, ChevronRight, FileDown, Printer, Truck } from 'lucide-react';
+import { Calendar, RefreshCw, Package, TrendingUp, FileDown, Printer, Truck } from 'lucide-react';
 import { formatCurrency } from '../utils/formatters';
 import { usePharmacySettings } from '../hooks/usePharmacySettings';
 import { exportToExcel } from '../utils/excelExport';
@@ -11,6 +11,7 @@ import { logger } from '../utils/logger'
 import { LocalizedDateInput } from './LocalizedDateInput';
 import { EmptyState } from './ui/EmptyState';
 import SkeletonTable from './ui/SkeletonTable';
+import PaginationControls from './ui/PaginationControls';
 
 interface DailyPurchase {
   date: string;
@@ -505,24 +506,12 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                 <div className="text-caption font-bold text-slate-400 uppercase tracking-widest">
                   {t('history.pagination.page')} {page} <span className="mx-1 text-slate-300">/</span> {totalPages}
                 </div>
-                <div className="flex gap-2">
-                  <button 
-                    className="h-7 w-7 rounded-xl bg-white border border-slate-200 hover:border-blue-400 text-slate-600 flex items-center justify-center transition-all active:scale-90 disabled:opacity-40" 
-                    disabled={page === 1}
-                    onClick={() => handlePageChange(page - 1)}
-                    aria-label={t('divers.previous')}
-                  >
-                    <ChevronLeft className="size-4" />
-                  </button>
-                  <button 
-                    className="h-7 w-7 rounded-xl bg-white border border-slate-200 hover:border-blue-400 text-slate-600 flex items-center justify-center transition-all active:scale-90 disabled:opacity-40" 
-                    disabled={page === totalPages}
-                    onClick={() => handlePageChange(page + 1)}
-                    aria-label={t('divers.next')}
-                  >
-                    <ChevronRight className="size-4" />
-                  </button>
-                </div>
+                <PaginationControls
+                  page={page}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                  size="xs"
+                />
               </div>
             )}
           </div>

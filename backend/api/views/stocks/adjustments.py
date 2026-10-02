@@ -3,6 +3,7 @@ import io
 from django.db.models import Count, DecimalField, ExpressionWrapper, F, Q, Sum, Value
 from django.db.models.functions import Abs, Coalesce
 from django.http import HttpResponse
+from django_filters import rest_framework as django_filters
 from django_filters.rest_framework import DjangoFilterBackend
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font
@@ -15,6 +16,28 @@ from ...models import StockAdjustment
 from ...pagination import StandardResultsSetPagination
 from ...search_mixins import MultiTermSearchMixin
 from ...serializers import StockAdjustmentSerializer
+from ...utils.dates import day_bounds
+
+
+class StockAdjustmentFilter(django_filters.FilterSet):
+    """Le param ``created_at__date`` (jour exact) applique des bornes datetime
+    ``[jour 00:00, lendemain 00:00)`` au lieu du cast ``::date`` SQL qui
+    neutralise l'index btree sur ``created_at``."""
+
+    created_at__date = django_filters.DateFilter(field_name='created_at', method='filter_created_at_day')
+
+    def filter_created_at_day(self, queryset, name, value):
+        lo, hi = day_bounds(value)
+        return queryset.filter(created_at__gte=lo, created_at__lt=hi)
+
+    class Meta:
+        model = StockAdjustment
+        fields = {
+            'produit': ['exact'],
+            'user': ['exact'],
+            'reason_type': ['exact'],
+            'created_at': ['gte', 'lte'],
+        }
 
 
 class StockAdjustmentViewSet(MultiTermSearchMixin, viewsets.ReadOnlyModelViewSet):
@@ -27,12 +50,7 @@ class StockAdjustmentViewSet(MultiTermSearchMixin, viewsets.ReadOnlyModelViewSet
     pagination_class = StandardResultsSetPagination
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
-    filterset_fields = {
-        'produit': ['exact'],
-        'user': ['exact'],
-        'reason_type': ['exact'],
-        'created_at': ['gte', 'lte', 'date'],
-    }
+    filterset_class = StockAdjustmentFilter
     search_fields = ['produit__name', 'reason_detail', 'produit__cip1', 'produit__cip4']
     ordering_fields = ['created_at', 'quantity_change']
     ordering = ['-created_at']

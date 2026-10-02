@@ -1,6 +1,7 @@
 ﻿import React from 'react';
-import { Calendar, Package, Hash, User, ArrowLeftRight, ClipboardList, ChevronLeft, ChevronRight, Tag } from 'lucide-react';
+import { Calendar, Package, Hash, User, ArrowLeftRight, ClipboardList, Tag } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import PaginationControls from '../ui/PaginationControls';
 import type { StockAdjustment } from '../../types';
 import { formatDate, formatDateTime } from '../../utils/dateUtils';
 
@@ -136,25 +137,15 @@ export const AjustementsTable: React.FC<AjustementsTableProps> = ({
                     {t('ajustements.table.pagination', { current: currentPage, total: totalPages, count: totalCount })}
                 </div>
                 <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl">
-                    <button
-                        className="inline-flex items-center justify-center size-8 rounded-xl text-slate-500 hover:bg-white hover:text-emerald-600 transition-all disabled:opacity-30"
-                        aria-label={t('common:previous')}
-                        disabled={currentPage <= 1}
-                        onClick={() => onPageChange(currentPage - 1)}
-                    >
-                        <ChevronLeft className="size-4" />
-                    </button>
+                    <PaginationControls
+                        page={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={onPageChange}
+                        size="xs"
+                    />
                     <div className="px-4 text-sm font-black text-emerald-600">
                         {currentPage}
                     </div>
-                    <button
-                        className="inline-flex items-center justify-center size-8 rounded-xl text-slate-500 hover:bg-white hover:text-emerald-600 transition-all disabled:opacity-30"
-                        aria-label={t('common:next')}
-                        disabled={currentPage >= totalPages}
-                        onClick={() => onPageChange(currentPage + 1)}
-                    >
-                        <ChevronRight className="size-4" />
-                    </button>
                 </div>
             </div>
         </div>

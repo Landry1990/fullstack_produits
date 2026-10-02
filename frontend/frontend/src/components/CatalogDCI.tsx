@@ -10,6 +10,8 @@ import CatalogDCIAddModal from './CatalogDCIAddModal';
 import { Loader2 } from 'lucide-react';
 import { Button } from './shadcn/button';
 import { Badge } from './ui/Badge';
+import PaginationControls from './ui/PaginationControls';
+import { pageCount } from '../utils/pagination';
 import { logger } from '../utils/logger'
 
 // Lucide icons simulation (using SVG strings as per skill rules)
@@ -124,17 +126,14 @@ export default function CatalogDCI() {
 
         {substancesData && substancesData.count > 0 && (
           <div className="p-4 border-t border-base-200 bg-base-200/20 flex items-center justify-between">
-            <Button 
-              variant="ghost" size="sm" 
-              disabled={!substancesData.previous}
-              onClick={() => setPage(p => p - 1)}
-            >{t('products:dci.previous')}</Button>
+            <PaginationControls
+              page={page}
+              totalPages={pageCount(substancesData?.count, 50)}
+              hasNext={!!substancesData?.next}
+              onPageChange={(p) => setPage(p)}
+              isLoading={loadingSubstances}
+            />
             <span className="text-xs font-medium text-base-content/50">{t('products:dci.page', { page })}</span>
-            <Button 
-              variant="ghost" size="sm" 
-              disabled={!substancesData.next}
-              onClick={() => setPage(p => p + 1)}
-            >{t('products:dci.next')}</Button>
           </div>
         )}
       </div>

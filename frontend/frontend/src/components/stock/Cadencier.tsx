@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import {
   Package, TrendingUp, Calendar, Search, ShoppingCart, Truck, Boxes,
-  ChevronLeft, ChevronRight, RotateCcw, ChevronDown, ChevronUp, AlertTriangle
+  RotateCcw, ChevronDown, ChevronUp, AlertTriangle
 } from 'lucide-react';
 import api from '../../services/api';
 import { gooeyToast } from 'goey-toast';
@@ -19,6 +19,7 @@ import {
 } from '../shadcn/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../shadcn/table';
 import { EmptyState } from '../ui/EmptyState';
+import PaginationControls from '../ui/PaginationControls';
 import { logger } from '../../utils/logger'
 
 interface CadencierItem {
@@ -607,27 +608,14 @@ const Cadencier: React.FC = () => {
                 {t('common:pagination.page_info', { page, total: totalPages, defaultValue: `Page ${page} sur ${totalPages}` })}
               </p>
               <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  aria-label={t('common:previous')}
-                  onClick={() => fetchCadencier(Math.max(1, page - 1))}
-                  disabled={page <= 1}
-                >
-                  <ChevronLeft className="size-4" />
-                </Button>
+                <PaginationControls
+                  page={page}
+                  totalPages={totalPages}
+                  onPageChange={(p) => fetchCadencier(p)}
+                />
                 <span className="min-w-[3rem] text-center text-sm font-semibold text-slate-900">
                   {page}
                 </span>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  aria-label={t('common:next')}
-                  onClick={() => fetchCadencier(Math.min(totalPages, page + 1))}
-                  disabled={page >= totalPages}
-                >
-                  <ChevronRight className="size-4" />
-                </Button>
               </div>
             </div>
           )}

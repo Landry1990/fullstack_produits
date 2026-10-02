@@ -36,7 +36,7 @@ import LoyaltyConfigModal from './LoyaltyConfigModal';
 import ClientFormModal from './clients/ClientFormModal';
 import PurchaseHistoryDrawer from './clients/PurchaseHistoryDrawer';
 import SelectionHeader from './ui/SelectionHeader';
-import Pagination from './ui/Pagination';
+import PaginationControls from './ui/PaginationControls';
 import { EmptyState } from './ui/EmptyState';
 import { Skeleton } from './ui/Skeleton';
 import { logger } from '../utils/logger'
@@ -600,14 +600,22 @@ export default function Clients() {
           )}
         </div>
 
-        <Pagination
-          currentPage={currentPage}
-          totalPages={Math.ceil(totalCount / itemsPerPage)}
-          totalItems={totalCount}
-          onPrev={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-          onNext={() => setCurrentPage(prev => prev + 1)}
-          hasNext={currentPage < Math.ceil(totalCount / itemsPerPage)}
-        />
+        <div className="p-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between bg-white/50 dark:bg-slate-900/50">
+          <div className="text-sm text-slate-500 dark:text-slate-400">
+            {t('common:pagination_info', {
+              defaultValue: `Page ${currentPage} sur ${Math.ceil(totalCount / itemsPerPage)} (${totalCount} ${t('common:items', { defaultValue: 'éléments' })})`,
+              page: currentPage,
+              total: Math.ceil(totalCount / itemsPerPage),
+              count: totalCount,
+              label: t('common:items', { defaultValue: 'éléments', count: totalCount })
+            })}
+          </div>
+          <PaginationControls
+            page={currentPage}
+            totalPages={Math.ceil(totalCount / itemsPerPage)}
+            onPageChange={setCurrentPage}
+          />
+        </div>
       </div>
 
       {/* RIGHT PANEL */}

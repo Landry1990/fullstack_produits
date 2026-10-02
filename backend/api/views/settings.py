@@ -428,8 +428,10 @@ class TelegramRapportFlashView(APIView):
             # Si les stats ne sont pas passées, on les calcule côté backend
             if not stats:
                 from ..models import Facture, Produit
+                from ..utils.dates import day_bounds
                 today = timezone.localtime(timezone.now()).date()
-                factures_today = Facture.objects.filter(date__date=today, status=Facture.Status.VALIDEE)
+                day_lo, day_hi = day_bounds(today)
+                factures_today = Facture.objects.filter(date__gte=day_lo, date__lt=day_hi, status=Facture.Status.VALIDEE)
                 ca = sum(f.total_ttc for f in factures_today) or 0
                 nb_ventes = factures_today.count()
                 ruptures = Produit.objects.filter(stock__lte=0, is_active=True).count()
@@ -489,8 +491,11 @@ class TelegramRapportFlashDateView(APIView):
             except ValueError:
                 return Response({'status': 'error', 'message': 'Format de date invalide (attendu: YYYY-MM-DD)'}, status=status.HTTP_400_BAD_REQUEST)
 
+            from ..utils.dates import day_bounds
+            day_lo, day_hi = day_bounds(jour)
             factures = Facture.objects.filter(
-                date__date=jour,
+                date__gte=day_lo,
+                date__lt=day_hi,
                 status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
             )
             agg = factures.aggregate(
@@ -505,14 +510,16 @@ class TelegramRapportFlashDateView(APIView):
 
             # Remises lignes
             remises_lignes = FactureProduit.objects.filter(
-                facture__date__date=jour,
+                facture__date__gte=day_lo,
+                facture__date__lt=day_hi,
                 facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
             ).aggregate(total=Sum(ExpressionWrapper(F('discount') * F('quantity'), output_field=DecimalField())))
             remise = float(remises_lignes['total'] or 0) + remise_globale
 
             # Marge brute : coût = stock_lot.price_cost si dispo, sinon produit.pmp, sinon cost_price
             fps = FactureProduit.objects.filter(
-                facture__date__date=jour,
+                facture__date__gte=day_lo,
+                facture__date__lt=day_hi,
                 facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
             ).select_related('stock_lot', 'produit')
             marge = 0.0
@@ -531,7 +538,8 @@ class TelegramRapportFlashDateView(APIView):
             # Créances du jour (en_compte)
             from ..models import Caisse
             en_compte_agg = Caisse.objects.filter(
-                facture__date__date=jour,
+                facture__date__gte=day_lo,
+                facture__date__lt=day_hi,
                 mode_paiement='en_compte',
                 statut='completee'
             ).aggregate(total=Sum('montant'))

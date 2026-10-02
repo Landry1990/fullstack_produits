@@ -19,7 +19,7 @@ import {
 } from './useMessaging';
 import { Input } from '../../ui/Input';
 import { Checkbox } from '../../ui/Checkbox';
-import Pagination from '../../ui/Pagination';
+import PaginationControls from '../../ui/PaginationControls';
 import {
   composerReducer,
   initialComposerState,
@@ -248,17 +248,23 @@ export function MessagingCenter({ currentUser, isOpen, onMessageRead }: Messagin
 
               {totalPages > 1 && (
                 <div className="mt-3 pt-3 border-t border-slate-200">
-                  <Pagination
-                    currentPage={page}
-                    totalPages={totalPages}
-                    totalItems={totalCount}
-                    onPrev={() => setPage((p) => Math.max(1, p - 1))}
-                    onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
-                    hasNext={page < totalPages}
-                    isLoading={isFetching}
-                    label={t('messages_label')}
-                    className="border-0 p-0 bg-transparent"
-                  />
+                  <div className="p-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between bg-white/50 dark:bg-slate-900/50 border-0 p-0 bg-transparent">
+                    <div className="text-sm text-slate-500 dark:text-slate-400">
+                      {t('common:pagination_info', {
+                        defaultValue: `Page ${page} sur ${totalPages} (${totalCount} ${t('messages_label') || t('common:items', { defaultValue: 'éléments' })})`,
+                        page,
+                        total: totalPages,
+                        count: totalCount,
+                        label: t('messages_label') || t('common:items', { defaultValue: 'éléments', count: totalCount })
+                      })}
+                    </div>
+                    <PaginationControls
+                      page={page}
+                      totalPages={totalPages}
+                      onPageChange={setPage}
+                      isLoading={isFetching}
+                    />
+                  </div>
                 </div>
               )}
 

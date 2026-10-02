@@ -69,7 +69,9 @@ class PurgeTablesTest(PurgeBase):
         self.assertEqual(resp.status_code, 400)
 
     def test_preview_compte_parents_et_enfants(self):
-        facture = F.create_facture(status='VAL', total_ttc=Decimal('1000'))
+        # NB : statut BROU — les factures VAL/PAY sont protégées (traçabilité
+        # comptable) et exclues du périmètre de purge par le base_filter.
+        facture = F.create_facture(status='BROU', total_ttc=Decimal('1000'))
         produit = F.create_produit()
         F.create_facture_produit(facture, produit, quantity=1)
         F.create_caisse(facture, 1000)
@@ -86,11 +88,11 @@ class PurgeTablesTest(PurgeBase):
         self.assertEqual(child_labels['Paiements caisse'], 1)
 
     def test_preview_filtre_par_dates(self):
-        vieille = F.create_facture(status='VAL')
+        vieille = F.create_facture(status='BROU')
         Facture.objects.filter(id=vieille.id).update(
             date=timezone.now() - timedelta(days=400)
         )
-        F.create_facture(status='VAL')  # récente
+        F.create_facture(status='BROU')  # récente
 
         resp = self.client_api.post(reverse('maintenance-preview'), {
             'tables': ['factures'],
@@ -156,7 +158,7 @@ class PurgeExecuteTest(PurgeBase):
         self.assertEqual(Facture.objects.count(), 1)
 
     def test_purge_supprime_et_logue(self):
-        facture = F.create_facture(status='VAL')
+        facture = F.create_facture(status='BROU')
         F.create_facture_produit(facture, F.create_produit(), quantity=1)
         F.create_caisse(facture, 800)
 
@@ -176,11 +178,11 @@ class PurgeExecuteTest(PurgeBase):
         )
 
     def test_purge_respecte_la_plage_de_dates(self):
-        vieille = F.create_facture(status='VAL')
+        vieille = F.create_facture(status='BROU')
         Facture.objects.filter(id=vieille.id).update(
             date=timezone.now() - timedelta(days=400)
         )
-        recente = F.create_facture(status='VAL')
+        recente = F.create_facture(status='BROU')
 
         resp = self.client_api.post(reverse('maintenance-purge'), {
             'tables': ['factures'],
@@ -190,6 +192,28 @@ class PurgeExecuteTest(PurgeBase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.data['results'][0]['deleted'], 1)
         self.assertEqual(Facture.objects.filter(id=recente.id).count(), 1)
+
+    def test_purge_ne_supprime_jamais_facture_validee_ou_payee(self):
+        """
+        Garde-fou traçabilité comptable : les factures VALIDEE/PAYEE/ANNULEE
+        ne doivent JAMAIS être supprimées par la purge (comme FactureViewSet.destroy).
+        """
+        for statut in ('VAL', 'PAY', 'ANN'):
+            F.create_facture(status=statut)
+        brouillon = F.create_facture(status='BROU')
+        F.create_facture_produit(brouillon, F.create_produit(), quantity=1)
+
+        resp = self.client_api.post(reverse('maintenance-purge'), {
+            'tables': ['factures'],
+            'password': ADMIN_PWD,
+        }, format='json')
+        self.assertEqual(resp.status_code, 200)
+        # Seul le brouillon a été supprimé ; les statuts protégés sont intacts.
+        self.assertEqual(resp.data['results'][0]['deleted'], 1)
+        self.assertEqual(Facture.objects.count(), 3)
+        self.assertFalse(Facture.objects.filter(id=brouillon.id).exists())
+        for statut in ('VAL', 'PAY', 'ANN'):
+            self.assertEqual(Facture.objects.filter(status=statut).count(), 1)
 
 
 # ── Produits : count / import / export / purge ────────────────────────────────
