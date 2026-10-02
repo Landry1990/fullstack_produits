@@ -1,5 +1,192 @@
 # Changelog — Fullstack Produits
 
+## 2026-10-02 — 🎨 Omnisearch aligné sur le design system
+
+### Pourquoi
+
+La palette de recherche globale était stylée "à part" (accent bleu, chips
+multicolores, typographie font-black uppercase très espacée, rayons mixtes,
+placeholder "God Mode") — visuellement étrangère au reste de l'app dont la
+primary est le vert pharmacie (#059669).
+
+### Changements (`Omnisearch.tsx`, `OmnisearchResults.tsx`, `OmnisearchPreview.tsx`)
+
+- Accent emerald partout : sélection (`aria-selected`), focus de l'input,
+  spinner, badges prix, icônes, panneau aperçu (gradient `to-emerald-50/40`).
+- Chips actions rapides sobres : emerald pour "Nouvelle vente" (action
+  principale), slate pour le reste, rouge conservé pour "Périmés" (sémantique).
+- Typographie : `font-black`/`tracking-[0.15em]`/`tracking-widest` →
+  `font-semibold`/`font-bold`/`tracking-wider` — cohérent avec les autres
+  fenêtres (`tracking-tight` des DialogTitle).
+- Rayons unifiés : fenêtre `rounded-2xl`, tuiles `rounded-xl`, items
+  `rounded-lg`, icônes preview `rounded-2xl` (fini le mix
+  `rounded-none`/`xl`/`2xl`/`3xl`).
+- Placeholder aperçu : "God Mode Omnisearch" → "Aperçu" / "Preview" (fr/en).
+- Retouche UX : actions rapides en liste (chip + libellé + description inline,
+  comme "Navigation rapide") au lieu de la grille de tuiles ; focus de l'input
+  = bordure emerald + `ring-2` épousant le `rounded-xl` (fini le halo `ring-4`
+  débordant en cadre rectangulaire).
+
+## 2026-10-02 — 🔒 Rappel de vente : la facture disparaît vraiment de la caisse centrale
+
+### Bug
+
+Rappeler une vente en facturation ne la retirait pas de la file de la caisse
+centralisée : la caissière pouvait encaisser une vente en cours de modification
+(→ paiement `completee` sur facture ANNULEE = écart de caisse).
+
+### Causes corrigées (3 couches)
+
+- **Brouillons jamais annulés** (`useFacturationState.ts`) : le rappel sautait
+  `annuler/` pour les `BROU` → ils restaient payables et orphelins. Toute
+  facture rappelée est désormais annulée (statut `ANN`, audit log).
+- **Pas de notification temps réel** : `SaleCanceller.cancel_invoice` broadcast
+  `facture_update`/`'cancelled'` sur le groupe WS `caisse_centralisee` (via
+  `on_commit`) → disparition instantanée au lieu du polling 30 s. L'action
+  `modifier/` émet aussi `'updated'` (évite d'encaisser l'ancien montant).
+- **Backend sans garde-fou** (`caisse.py`) : `CaisseViewSet.create` et
+  `bulk_create` refusent (400) tout paiement sur facture `ANNULEE` ou
+  `is_active=False` — les `PAYEE` restent acceptées (recouvrement).
+
+### Tests
+
+`test_cash_payment_edges.py` + `CancelledInvoicePaymentGuardTests` (4 tests :
+annulée→400, inactive→400, bulk→400, en attente→201). 12/12 + 28/28 caisse.
+
+## 2026-10-02 — 🧩 Pagination centralisée : un seul composant `PaginationControls`
+
+### Pourquoi
+
+Chaque écran avait sa propre pagination (25 variantes inline + le composant
+`ui/Pagination` déprécié) — maintenance impossible et look hétérogène.
+
+### Changements
+
+- **Nouveau `components/ui/PaginationControls.tsx`** : cluster canonique
+  `⏮ ◀ ▶ ⏭` avec API unique `{page, totalPages?, hasNext?, onPageChange,
+  isLoading?, size}` ; `hasNext` pour les paginations sans total.
+- **`utils/pagination.ts`** : `buildPageUrl` / `extractPageSize` / `pageCount`
+  pour les paginations URL-DRF (Inventaires, ReportResults).
+- **~30 fichiers migrés** : sites inline + 6 consommateurs de `ui/Pagination`
+  (supprimé) — un seul composant de pagination dans toute l'app.
+- `size="xs"` pour les tables denses ; textes "Page X sur Y" conservés ;
+  la numérotation de FournisseursList est remplacée par le contrôle standard.
+
+## 2026-10-02 — ⏮ Pagination : boutons première/dernière page partout
+
+- `ui/Pagination` : nouvelles props `onFirst`/`onLast` + icônes
+  `ChevronsLeft`/`ChevronsRight` (tooltip "Première page"/"Dernière page",
+  i18n fr/en).
+- **31 sites de pagination** couverts (composant partagé + inline) :
+  historiques ventes/achats/clôtures, journal caisse/audit, factures caisse,
+  avoirs, produits, commandes, cadencier, fournisseurs, ajustements, analyses
+  stock, challenges, fidélité, interactions, Telegram, CatalogDCI, rapports.
+- Boutons désactivés aux bornes ; mécanisme adapté par site (`setPage`,
+  callback, URL DRF reconstruite, `count/page_size` pour CatalogDCI).
+
+## 2026-10-02 — 🔍 Audit paramètres ignorés : ~15 bugs filtres frontend↔backend
+
+### Pourquoi
+
+django-filter **ignore silencieusement** les paramètres inconnus — le bug
+`created_at__date__gte` de Périmés n'était pas isolé.
+
+### Backend
+
+- `avoirs-clients/exporter_excel/` : `filter_queryset()` jamais appelé →
+  l'export ignorait tous les filtres ; `search` implémenté (SearchFilter).
+- `produits/` : bug `include_inactive=false` évalué truthy → les produits
+  supprimés apparaissaient dans la recherche ; `is_public`, `stock_gt`,
+  `rotation_moyenne`, `tva_gt`, `ordering=-tva` implémentés (rapports vitrine /
+  non-vendus / TVA filtrent réellement).
+- `stock-lots/?expiring_within_days` implémenté (rapport périmés).
+- `historique-achats` : `no_pagination` honoré sur la liste.
+- `user-sessions` : `date_after`/`date_before` implémentés.
+- `creances/synthese_clients` : `date_fin` rendue inclusive.
+- `settings.py` : clés DRF fantômes `PAGE_SIZE_QUERY_PARAM`/`MAX_PAGE_SIZE`
+  retirées ; `ProduitFilter` (code mort) nettoyé.
+
+### Frontend
+
+- `Perimes.tsx` : `limit=100` → `page_size=100` (historique tronqué à 20).
+- `useCaisseSession` : routes mortes réparées — `postes-ventes/recap_session`
+  (récap session pollé en 404 toutes les 10 s) et `pharmacy-settings/`
+  (**`hide_cash_totals` fonctionne enfin**).
+- `venteService` : `supprimer_brouillons` (le bouton 404ait).
+- `EtatsInventaire` : `stock_display` correct + fallback `RAYON` pour
+  `group_by=fournisseur` (400).
+- `useCentreRapports` : dates en heure locale au lieu d'UTC (+1 h).
+
+## 2026-10-02 — 🗑️ Rétention des données : scaffold safe + UI Maintenance + garde-fous purge
+
+### Pourquoi
+
+`api_auditlog` = 110 MB en dev (plus grosse table) ; les tables de logs
+grossissent sans borne. La purge existante avait des failles.
+
+### Rétention (désactivée par défaut, `retention_enabled=False`)
+
+- **Migration 0264** : champs `retention_*_days` dans `PharmacySettings`
+  (audit 730 j, activity/messages 365 j, sessions/corbeille 90 j,
+  brouillons 30 j, mouvements stock 1095 j) + `last_retention_run`.
+- **`services/retention.py`** : plan de comptage/suppression partagé
+  (commande + API, comportement identique).
+- **`manage.py run_retention`** : `--dry-run` par défaut, `--confirm` requis,
+  `--force` si désactivé, suppression par lots de 5000, trace `AuditLog`.
+- **Scheduler** : hook quotidien (inerte tant que le flag est OFF).
+- **`MouvementStock` exclu** sauf `--include-stock-movements`
+  (`balance_stock_excel` reconstruit le stock en sommant les mouvements).
+- **Jamais touché** : factures VAL/PAY/ANN, ordonnancier, écritures
+  comptables, clôtures caisse, relevés, mouvements caisse.
+
+### UI Maintenance → "Rétention automatique" (admin/superuser)
+
+- Toggle activation + durées éditables (`PUT pharmacy-settings/`),
+  tableau preview (`GET maintenance/retention_preview/`),
+  bouton "Purger maintenant" protégé par mot de passe
+  (`POST maintenance/retention_run/` → `run_retention --confirm --force`).
+- i18n fr/en ; contexte `PharmacySettingsContext` aligné sur les defaults.
+
+### Garde-fous sur la purge existante (`purge.py`)
+
+- Whitelist `factures` limitée à `BROU`/`PROF` — la purge **bypassait** la
+  protection `destroy` (VAL/PAY/ANN supprimables en masse). Les ANNULEE sont
+  désormais conservées (traçabilité anti-fraude) ; test non-régression 37/37.
+- `ordonnancier` retiré du registry (registre réglementé).
+- `whatsapp_logs`/`telegram_logs` ajoutés ; `ProtectedError` respecté sur la
+  corbeille.
+- Bug bonus : `clean_draft_invoices` + `send_monthly_report` filtraient
+  `'BROUILLON'` au lieu de `'BROU'` → matchaient 0 ligne ; + accès invalide
+  `facture.client_name` corrigé.
+
+## 2026-10-02 — ⚡ Performance SQL : index réactivés + migrations 0262/0263 + filtres dates
+
+### Pourquoi
+
+Les casts `__date` neutralisaient les index btree PostgreSQL sur les colonnes
+datetime ; plusieurs filtres/joins manquaient d'index ; 3 index Meta étaient
+des doublons des index FK automatiques.
+
+### Changements backend
+
+- **~60 casts `__date` supprimés** → bornes datetime `[jour 00:00, lendemain
+  00:00)` via le nouveau `utils/dates.py` (`day_start`, `day_bounds`) —
+  les index `date` sont de nouveau utilisables.
+- **Bug `__lte=<date>` corrigé** sur 6 sites : le jour de fin était exclu
+  (borne à 00:00) → borne exclusive lendemain partout.
+- **Migration `0262`** : 26 index ajoutés via `CREATE INDEX CONCURRENTLY`
+  (`atomic=False` + `SeparateDatabaseAndState`) — déployable sans lock sur
+  une base en service.
+- **Migration `0263`** : 3 index redondants supprimés (`FactureProduit.produit`,
+  `FactureProduit.facture`, `Produit.fournisseur` — doublons des index FK auto).
+
+### Frontend
+
+- `CommandeProductRow` : Rotation affiche `toFixed(1)` (les valeurs < 0,5
+  s'affichaient `0`, confondues avec "pas de rotation" `-`).
+- `Perimes.tsx` : filtre date réparé (`created_at__gte/lte` au lieu de
+  `__date__gte/lte` silencieusement ignoré).
+
 ## 2026-10-01 — 🛡️ Remédiation P2 : validation des query params + robustesse frontend
 
 ### Pourquoi

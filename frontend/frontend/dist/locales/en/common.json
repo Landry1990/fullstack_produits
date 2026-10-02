@@ -212,8 +212,6 @@
     "pagination_info": "Page {{page}} of {{total}} ({{count}} {{label}})",
     "previous": "Previous",
     "next": "Next",
-    "first_page": "First page",
-    "last_page": "Last page",
     "all_rayons": "All shelves",
     "no_rayon": "No Shelf",
     "rayon": "Shelf",
@@ -443,8 +441,8 @@
             "open_cadencier_desc": "Due-date tracking"
         },
         "preview": {
-            "title": "God Mode Omnisearch",
-            "subtitle": "Navigate for instant preview.",
+            "title": "Preview",
+            "subtitle": "Browse results to see an instant preview.",
             "stock_rayon": "Shelf Stock",
             "stock_reserve": "Reserve Stock",
             "expiry": "Next Expiry",

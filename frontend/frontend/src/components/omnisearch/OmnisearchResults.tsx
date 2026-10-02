@@ -66,11 +66,8 @@ export default function OmnisearchResults({
     'flex items-center px-3 py-2.5 rounded-lg cursor-pointer hover:bg-slate-100 text-slate-800 aria-selected:bg-emerald-50 aria-selected:text-emerald-700 transition-all group';
   const itemClassNav =
     'flex items-center px-3 py-2.5 rounded-lg cursor-pointer hover:bg-slate-100 text-slate-800 aria-selected:bg-emerald-50/60 aria-selected:text-emerald-700 transition-all opacity-80 aria-selected:opacity-100';
-  const tileClass =
-    'flex flex-col items-start gap-2.5 p-3 rounded-xl border border-slate-200/80 bg-white cursor-pointer aria-selected:border-emerald-300 aria-selected:bg-emerald-50/70 aria-selected:shadow-sm transition-all';
   const groupHeadingClass =
     'text-caption font-semibold text-slate-400 pt-4 pb-1 px-3 uppercase tracking-wider';
-  const chipClass = 'size-8 rounded-lg flex items-center justify-center shrink-0';
   const navChip = 'size-7 rounded-lg flex items-center justify-center mr-3 shrink-0 transition-colors';
 
   const navChipSelected = 'bg-slate-100 text-slate-500 group-aria-selected:bg-emerald-100 group-aria-selected:text-emerald-600';
@@ -112,19 +109,15 @@ export default function OmnisearchResults({
           heading={t('omnisearch.groups.actions', 'Actions Rapides')}
           className={groupHeadingClass}
         >
-          <div className="grid grid-cols-2 gap-2 px-1 pb-1">
-            {quickActions.map(({ action, value, icon: Icon, chip, label, desc }) => (
-              <CommandItem key={value} value={value} onSelect={() => onSelectAction(action)} className={tileClass}>
-                <div className={`${chipClass} ${chip}`}>
-                  <Icon className="size-4" />
-                </div>
-                <div className="flex flex-col items-start gap-0.5">
-                  <span className="text-xs font-bold text-slate-700 leading-tight">{label}</span>
-                  <span className="text-caption font-medium text-slate-500 leading-tight">{desc}</span>
-                </div>
-              </CommandItem>
-            ))}
-          </div>
+          {quickActions.map(({ action, value, icon: Icon, chip, label, desc }) => (
+            <CommandItem key={value} value={value} onSelect={() => onSelectAction(action)} className={itemClassNav}>
+              <div className={`${navChip} ${chip}`}>
+                <Icon className="size-3.5" />
+              </div>
+              <span className="font-medium">{label}</span>
+              <span className="text-caption text-slate-400 truncate ml-2">{desc}</span>
+            </CommandItem>
+          ))}
         </CommandGroup>
         <CommandSeparator />
       </>)}

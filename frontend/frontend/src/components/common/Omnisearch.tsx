@@ -45,7 +45,7 @@ export default function Omnisearch() {
         >
           <div className="px-4 pt-4 pb-3">
             <div
-              className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/60 px-4 transition-all focus-within:border-emerald-500 focus-within:bg-white focus-within:ring-4 focus-within:ring-emerald-500/10"
+              className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/60 px-4 transition-colors focus-within:border-emerald-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-emerald-500/20"
               cmdk-input-wrapper=""
             >
               <Search className="size-4.5 shrink-0 text-slate-400" />

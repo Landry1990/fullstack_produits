@@ -198,7 +198,8 @@ class FactureSalesMixin:
         temp_sum = result_or_sum
 
         # --- Extraction du total TTC ---
-        totals_obj = data.get('totals') if isinstance(data.get('totals'), dict) else {}
+        totals_raw = data.get('totals')
+        totals_obj = totals_raw if isinstance(totals_raw, dict) else {}
         try:
             total_ttc = Decimal(str(totals_obj.get('totalTtc', 0)))
         except (ValueError, InvalidOperation):
