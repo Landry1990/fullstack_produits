@@ -4,6 +4,7 @@ import { gooeyToast } from 'goey-toast'
 import { useQueryClient } from '@tanstack/react-query'
 import type { ProduitModel, Facture, LigneFacture, PaginatedResponse } from '../types'
 import type { SaleCompletionResult } from '../types/finance'
+import { getProduitId } from '../types/inventory'
 import { useProductSearch } from './useProductSearch'
 import { useCart } from './useCart'
 import { useAuth } from '../context/AuthContext'
@@ -191,7 +192,7 @@ export function useFacturationState() {
     if (invoice.produits && invoice.produits.length > 0) {
       const missingIds = invoice.produits
         .filter((p) => !(typeof p.produit === 'object' && p.produit !== null && 'stock' in p.produit))
-        .map((p) => typeof p.produit === 'object' && p.produit !== null ? p.produit.id : (p.produit as number))
+        .map((p) => getProduitId(p.produit))
 
       const productMap = new Map<number, ProduitModel>()
       if (missingIds.length > 0) {
@@ -206,7 +207,7 @@ export function useFacturationState() {
         if (typeof p.produit === 'object' && p.produit !== null && 'stock' in p.produit) {
           produitData = p.produit as ProduitModel
         } else {
-          const produitId = typeof p.produit === 'object' && p.produit !== null ? p.produit.id : (p.produit as number)
+          const produitId = getProduitId(p.produit)
           produitData = productMap.get(produitId) || {
             id: produitId,
             name: p.produit_nom || t('facturation:messages.product_fallback_name', { id: produitId }),

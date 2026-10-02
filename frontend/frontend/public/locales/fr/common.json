@@ -475,8 +475,8 @@
             "open_cadencier_desc": "Suivi des échéances"
         },
         "preview": {
-            "title": "God Mode Omnisearch",
-            "subtitle": "Naviguez pour l'aperçu instantané.",
+            "title": "Aperçu",
+            "subtitle": "Naviguez dans les résultats pour afficher l'aperçu.",
             "stock_rayon": "Stock Rayon",
             "stock_reserve": "Stock Réserve",
             "expiry": "Prochaine Péremption",
