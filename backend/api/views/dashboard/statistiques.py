@@ -28,8 +28,9 @@ from ...models import (
     ObjectifCommercial,
     Produit,
 )
-from ..rapports.tz_utils import parse_api_datetime
+from ...utils.dates import day_bounds, day_start
 from ...utils.validation import parse_int
+from ..rapports.tz_utils import parse_api_datetime
 
 
 class StatistiquesViewSet(viewsets.ViewSet):
@@ -209,7 +210,7 @@ class StatistiquesViewSet(viewsets.ViewSet):
         dormant_qs = Produit.objects.filter(stock__gt=0, is_active=True).filter(
             Q(dernier_vente__lte=limit_date) | 
             (Q(dernier_vente__isnull=True) & Q(dernier_achat__lte=limit_date)) |
-            (Q(dernier_vente__isnull=True) & Q(dernier_achat__isnull=True) & Q(created_at__date__lte=limit_date))
+            (Q(dernier_vente__isnull=True) & Q(dernier_achat__isnull=True) & Q(created_at__lt=day_start(limit_date + timedelta(days=1))))
         )
     
         dead_stock_value = dormant_qs.aggregate(
@@ -238,7 +239,7 @@ class StatistiquesViewSet(viewsets.ViewSet):
             FactureProduit.objects
             .filter(
                 facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
-                facture__date__date__gte=date_7_days_ago,
+                facture__date__gte=day_start(date_7_days_ago),
                 produit__isnull=False
             )
             .values('produit_id')
@@ -250,8 +251,8 @@ class StatistiquesViewSet(viewsets.ViewSet):
             FactureProduit.objects
             .filter(
                 facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
-                facture__date__date__gte=date_30_days_ago,
-                facture__date__date__lt=date_7_days_ago,
+                facture__date__gte=day_start(date_30_days_ago),
+                facture__date__lt=day_start(date_7_days_ago),
                 produit__isnull=False
             )
             .values('produit_id')
@@ -466,19 +467,22 @@ class StatistiquesViewSet(viewsets.ViewSet):
         start_of_week = today - timedelta(days=today.weekday())
         start_of_month = today.replace(day=1)
         start_7d = today - timedelta(days=6)
-    
-    
+        today_lo, today_hi = day_bounds(today)
+        week_lo = day_start(start_of_week)
+        month_lo = day_start(start_of_month)
+
+
         # ── 1. CA & ventes personnels ─────────────────────────────────────
         user_qs = Facture.objects.filter(
             created_by=user,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
-            date__date__gte=start_of_month,
+            date__gte=month_lo,
         )
         personal = user_qs.aggregate(
-            ca_jour=Coalesce(Sum(Case(When(date__date=today, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
-            nb_jour=Count(Case(When(date__date=today, then=Value(1)))),
-            ca_sem=Coalesce(Sum(Case(When(date__date__gte=start_of_week, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
-            nb_sem=Count(Case(When(date__date__gte=start_of_week, then=Value(1)))),
+            ca_jour=Coalesce(Sum(Case(When(date__gte=today_lo, date__lt=today_hi, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
+            nb_jour=Count(Case(When(date__gte=today_lo, date__lt=today_hi, then=Value(1)))),
+            ca_sem=Coalesce(Sum(Case(When(date__gte=week_lo, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
+            nb_sem=Count(Case(When(date__gte=week_lo, then=Value(1)))),
             ca_mois=Coalesce(Sum(F('total_ttc')), Decimal(0)),
             nb_mois=Count('id'),
         )
@@ -495,8 +499,8 @@ class StatistiquesViewSet(viewsets.ViewSet):
         classement_mois = list(
             Facture.objects.filter(
                 status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
-                date__date__gte=start_of_month,
-                date__date__lte=today,
+                date__gte=month_lo,
+                date__lt=today_hi,
             )
             .values('created_by_id')
             .annotate(ca=Coalesce(Sum('total_ttc'), Value(0, output_field=DecimalField())))
@@ -522,8 +526,8 @@ class StatistiquesViewSet(viewsets.ViewSet):
             Facture.objects.filter(
                 created_by=user,
                 status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
-                date__date__gte=start_7d,
-                date__date__lte=today,
+                date__gte=day_start(start_7d),
+                date__lt=today_hi,
             )
             .annotate(day=TruncDay('date'))
             .values('day')
@@ -547,7 +551,7 @@ class StatistiquesViewSet(viewsets.ViewSet):
             FactureProduit.objects.filter(
                 facture__created_by=user,
                 facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
-                facture__date__date__gte=start_of_month,
+                facture__date__gte=month_lo,
             )
             .values('produit_id', 'produit__name')
             .annotate(

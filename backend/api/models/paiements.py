@@ -69,6 +69,10 @@ class PaiementFournisseur(models.Model):
         verbose_name = "Paiement Fournisseur"
         verbose_name_plural = "Paiements Fournisseurs"
         ordering = ['-date_paiement', '-created_at']
+        indexes = [
+            # Perf (migration 0262) — index créé en CONCURRENTLY
+            models.Index(fields=['date_paiement'], name='paiementfour_date_idx'),
+        ]
 
     def __str__(self):
         return f"Paiement {self.montant} F à {self.fournisseur.name} le {self.date_paiement}"

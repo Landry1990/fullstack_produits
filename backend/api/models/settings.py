@@ -273,6 +273,46 @@ class PharmacySettings(models.Model):
         help_text="Préfixe de chemin dans le bucket (ex: pharmacie-backups/)"
     )
 
+    # --- Paramètres de Rétention des Données ---
+    # STRICTEMENT non-destructif par défaut : retention_enabled=False et la
+    # commande run_retention exige --confirm pour supprimer réellement.
+    retention_enabled = models.BooleanField(
+        default=False,
+        help_text="Activer la purge automatique des données anciennes (commande run_retention)"
+    )
+    retention_audit_days = models.PositiveIntegerField(
+        default=730,
+        help_text="Durée de conservation du journal d'audit (AuditLog) en jours"
+    )
+    retention_activity_days = models.PositiveIntegerField(
+        default=365,
+        help_text="Durée de conservation des logs d'activité (ActivityLog) en jours"
+    )
+    retention_message_log_days = models.PositiveIntegerField(
+        default=365,
+        help_text="Durée de conservation des journaux SMS / WhatsApp / Telegram en jours"
+    )
+    retention_session_days = models.PositiveIntegerField(
+        default=90,
+        help_text="Durée de conservation des sessions Django et des logs axes en jours"
+    )
+    retention_trash_days = models.PositiveIntegerField(
+        default=90,
+        help_text="Durée de conservation des éléments dans la corbeille (is_active=False) en jours"
+    )
+    retention_draft_invoice_days = models.PositiveIntegerField(
+        default=30,
+        help_text="Durée de conservation des factures brouillon en jours"
+    )
+    retention_mouvement_stock_days = models.PositiveIntegerField(
+        default=1095,
+        help_text="Durée de conservation des mouvements de stock en jours (36 mois)"
+    )
+    last_retention_run = models.DateTimeField(
+        null=True, blank=True,
+        help_text="Date/heure de la dernière exécution de la rétention des données"
+    )
+
     # --- Paramètres Expert IA (Santé du Stock) ---
     availability_weight = models.IntegerField(
         default=60,

@@ -10,12 +10,11 @@ import { Button } from './shadcn/button';
 import { Badge } from './shadcn/badge';
 import { logger } from '../utils/logger'
 import { LocalizedDateInput } from './LocalizedDateInput';
+import PaginationControls from './ui/PaginationControls';
 import {
   FileSpreadsheet,
   CalendarDays,
   RefreshCw,
-  ChevronLeft,
-  ChevronRight,
   FileText,
   Send,
   Loader2
@@ -338,28 +337,16 @@ const HistoriqueVentes = () => {
               <span className="text-sm text-slate-500">
                 {t('pagination.showing')} <span className="font-bold text-slate-700">{data.length}</span> {t('pagination.days_of')} <span className="font-bold text-slate-700">{totalItems}</span> {t('pagination.total')}
               </span>
-              <div className="flex gap-1.5">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1 || loading}
-                >
-                  <ChevronLeft className="size-4" />
-                  {t('pagination.prev')}
-                </Button>
+              <div className="flex gap-1.5 items-center">
                 <span className="px-3 py-1.5 text-xs font-bold bg-slate-100 rounded-md flex items-center">
                   {t('pagination.page')} {currentPage} / {totalPages || 1}
                 </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages || totalPages === 0 || loading}
-                >
-                  {t('pagination.next')}
-                  <ChevronRight className="size-4" />
-                </Button>
+                <PaginationControls
+                  page={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  isLoading={loading}
+                />
               </div>
             </div>
           </>

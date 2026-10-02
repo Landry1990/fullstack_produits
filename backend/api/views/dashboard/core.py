@@ -21,6 +21,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from ...dashboard_cache import DashboardCache
+from ...utils.dates import day_bounds, day_start
 from ...models import (
     Caisse,
     Client,
@@ -79,24 +80,28 @@ class DashboardCoreMixin(viewsets.ViewSet):
     
         # 1. Combined Global & User Metrics (Factures)
         global_stats = {}
-    
+
+        today_lo, today_hi = day_bounds(today)
+        yesterday_lo = day_start(yesterday)
+
         facture_qs = Facture.objects.filter(
-            date__date__in=[today, yesterday],
+            date__gte=yesterday_lo,
+            date__lt=today_hi,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         ).annotate(num_p=Count('paiements')).exclude(status=Facture.Status.VALIDEE, num_p=0)
-    
-    
+
+
         # Aggregate everything related to Facture in one pass for [today, yesterday]
         facture_metrics = facture_qs.aggregate(
-            ca_today=Coalesce(Sum(Case(When(date__date=today, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
-            sales_today=Count(Case(When(date__date=today, then=Value(1)))),
-            discount_today=Coalesce(Sum(Case(When(date__date=today, then=F('remise')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
-    
-            ca_yesterday=Coalesce(Sum(Case(When(date__date=yesterday, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
-            sales_yesterday=Count(Case(When(date__date=yesterday, then=Value(1)))),
-    
-            user_ca_today=Coalesce(Sum(Case(When(Q(date__date=today) & Q(created_by=request.user), then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
-            user_sales_today=Count(Case(When(Q(date__date=today) & Q(created_by=request.user), then=Value(1))))
+            ca_today=Coalesce(Sum(Case(When(date__gte=today_lo, date__lt=today_hi, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
+            sales_today=Count(Case(When(date__gte=today_lo, date__lt=today_hi, then=Value(1)))),
+            discount_today=Coalesce(Sum(Case(When(date__gte=today_lo, date__lt=today_hi, then=F('remise')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
+
+            ca_yesterday=Coalesce(Sum(Case(When(date__gte=yesterday_lo, date__lt=today_lo, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
+            sales_yesterday=Count(Case(When(date__gte=yesterday_lo, date__lt=today_lo, then=Value(1)))),
+
+            user_ca_today=Coalesce(Sum(Case(When(Q(date__gte=today_lo, date__lt=today_hi) & Q(created_by=request.user), then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
+            user_sales_today=Count(Case(When(Q(date__gte=today_lo, date__lt=today_hi) & Q(created_by=request.user), then=Value(1))))
         )
     
         global_stats['ca_today'] = facture_metrics['ca_today']
@@ -163,7 +168,8 @@ class DashboardCoreMixin(viewsets.ViewSet):
     
             # 4. Payment Mix (Today)
             payment_mix = Caisse.objects.filter(
-                date_paiement__date=today,
+                date_paiement__gte=today_lo,
+                date_paiement__lt=today_hi,
                 statut='completee'
             ).values('mode_paiement').annotate(
                 value=Sum('montant')
@@ -177,7 +183,8 @@ class DashboardCoreMixin(viewsets.ViewSet):
             # 5. Top Products Today
             from ...models import FactureProduit
             top_products = FactureProduit.objects.filter(
-                facture__date__date=today,
+                facture__date__gte=today_lo,
+                facture__date__lt=today_hi,
                 facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
             ).exclude(facture__status=Facture.Status.VALIDEE, facture__paiements__isnull=True).distinct().values('produit_id', 'produit__name').annotate(
                 qty=Sum('quantity'),
@@ -260,7 +267,7 @@ class DashboardCoreMixin(viewsets.ViewSet):
         dormant_qs = Produit.objects.filter(stock__gt=0).filter(
             Q(dernier_vente__lte=dormant_threshold) |
             (Q(dernier_vente__isnull=True) & Q(dernier_achat__lte=dormant_threshold)) |
-            (Q(dernier_vente__isnull=True) & Q(dernier_achat__isnull=True) & Q(created_at__date__lte=dormant_threshold))
+            (Q(dernier_vente__isnull=True) & Q(dernier_achat__isnull=True) & Q(created_at__lt=day_start(dormant_threshold + timedelta(days=1))))
         ).annotate(
             dormant_value=ExpressionWrapper(F('stock') * F('pmp'), output_field=DecimalField())
         )
@@ -317,6 +324,9 @@ class DashboardCoreMixin(viewsets.ViewSet):
         today = now.date()
         start_of_week = today - timedelta(days=today.weekday())
         start_of_month = today.replace(day=1)
+        today_lo, today_hi = day_bounds(today)
+        week_lo = day_start(start_of_week)
+        month_lo = day_start(start_of_month)
     
         # 2. Performance Metrics (Hybrid: Turnover for Targets, Margin for Info)
         # Primary KPI is Turnover (CA) to align with Goals and Caisse
@@ -327,11 +337,11 @@ class DashboardCoreMixin(viewsets.ViewSet):
     
         # --- Chiffre d'Affaires (Grouped) ---
         ca_stats = Facture.objects.filter(
-            date__date__gte=start_of_month,
+            date__gte=month_lo,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         ).aggregate(
-            ca_jour=Coalesce(Sum(Case(When(date__date=today, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
-            ca_sem=Coalesce(Sum(Case(When(date__date__gte=start_of_week, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
+            ca_jour=Coalesce(Sum(Case(When(date__gte=today_lo, date__lt=today_hi, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
+            ca_sem=Coalesce(Sum(Case(When(date__gte=week_lo, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
             ca_mois=Coalesce(Sum(F('total_ttc')), Decimal(0))
         )
         ca_jour = ca_stats['ca_jour']
@@ -340,21 +350,21 @@ class DashboardCoreMixin(viewsets.ViewSet):
     
         # --- Marge (Grouped & Improved) ---
         factures_mois_qs = Facture.objects.filter(
-            date__date__gte=start_of_month,
+            date__gte=month_lo,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         )
-    
+
         # Aggregate total global discounts
         factures_mois_qs.aggregate(
-            remise_jour=Coalesce(Sum(Case(When(date__date=today, then=F('remise')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
-            remise_sem=Coalesce(Sum(Case(When(date__date__gte=start_of_week, then=F('remise')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
+            remise_jour=Coalesce(Sum(Case(When(date__gte=today_lo, date__lt=today_hi, then=F('remise')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
+            remise_sem=Coalesce(Sum(Case(When(date__gte=week_lo, then=F('remise')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
             remise_mois=Coalesce(Sum(F('remise')), Decimal(0))
         )
-    
+
         # 1. Somme du CA TTC sur les périodes
         factures_mois_qs.aggregate(
-            ttc_jour=Coalesce(Sum(Case(When(date__date=today, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
-            ttc_sem=Coalesce(Sum(Case(When(date__date__gte=start_of_week, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
+            ttc_jour=Coalesce(Sum(Case(When(date__gte=today_lo, date__lt=today_hi, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
+            ttc_sem=Coalesce(Sum(Case(When(date__gte=week_lo, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
             ttc_mois=Coalesce(Sum(F('total_ttc')), Decimal(0))
         )
     
@@ -450,7 +460,8 @@ class DashboardCoreMixin(viewsets.ViewSet):
             hours_since_open = now.hour - 8
             last_sale = Facture.objects.filter(
                 status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
-                date__date=today
+                date__gte=today_lo,
+                date__lt=today_hi
             ).order_by('-date').first()
             if last_sale is None and hours_since_open >= 2:
                 alerts.append({
@@ -557,7 +568,7 @@ class DashboardCoreMixin(viewsets.ViewSet):
         ).filter(
             Q(dernier_vente__lte=limit_date) |
             (Q(dernier_vente__isnull=True) & Q(dernier_achat__lte=limit_date)) |
-            (Q(dernier_vente__isnull=True) & Q(dernier_achat__isnull=True) & Q(created_at__date__lte=limit_date))
+            (Q(dernier_vente__isnull=True) & Q(dernier_achat__isnull=True) & Q(created_at__lt=day_start(limit_date + timedelta(days=1))))
         ).count()
     
         if dormant_count > 0:
@@ -584,14 +595,14 @@ class DashboardCoreMixin(viewsets.ViewSet):
         last_week_limit = last_week_start + timedelta(days=days_passed + 1)
     
         last_week_partial_ca = Facture.objects.filter(
-            date__date__gte=last_week_start,
-            date__date__lt=last_week_limit,
+            date__gte=day_start(last_week_start),
+            date__lt=day_start(last_week_limit),
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         ).exclude(~Q(id__in=Caisse.objects.values('facture_id')), status='VAL').aggregate(ca=Coalesce(Sum('total_ttc'), Decimal(0)))['ca']
-    
+
         current_week_ca = Facture.objects.filter(
-            date__date__gte=current_week_start,
-            date__date__lte=today, # Include today explicitly
+            date__gte=day_start(current_week_start),
+            date__lt=today_hi, # Include today explicitly
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         ).exclude(~Q(id__in=Caisse.objects.values('facture_id')), status='VAL').aggregate(ca=Coalesce(Sum('total_ttc'), Decimal(0)))['ca']
     
@@ -670,11 +681,12 @@ class DashboardCoreMixin(viewsets.ViewSet):
     
         today = timezone.localtime(timezone.now()).date()
         date_ago = today - timedelta(days=days_count)
-    
+        today_lo, today_hi = day_bounds(today)
+
         # Get sales for last N days grouped by hour
         sales_by_hour = Facture.objects.filter(
-            date__date__gte=date_ago,
-            date__date__lte=today,
+            date__gte=day_start(date_ago),
+            date__lt=today_hi,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         ).exclude(~Q(id__in=Caisse.objects.values('facture_id')), status='VAL').annotate(
             hour=ExtractHour('date')
@@ -682,10 +694,11 @@ class DashboardCoreMixin(viewsets.ViewSet):
             count=Count('id'),
             total=Sum('total_ttc')
         ).order_by('hour')
-    
+
         # Get today's sales grouped by hour for comparison
         today_sales_by_hour = Facture.objects.filter(
-            date__date=today,
+            date__gte=today_lo,
+            date__lt=today_hi,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         ).exclude(~Q(id__in=Caisse.objects.values('facture_id')), status='VAL').annotate(
             hour=ExtractHour('date')
@@ -734,8 +747,8 @@ class DashboardCoreMixin(viewsets.ViewSet):
         start_date = end_date - timedelta(days=6)  # 7 days including today
 
         daily_revenue = Facture.objects.filter(
-            date__date__gte=start_date.date(),
-            date__date__lte=end_date.date(),
+            date__gte=day_start(start_date.date()),
+            date__lt=day_start(end_date.date() + timedelta(days=1)),
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         ).exclude(~Q(id__in=Caisse.objects.values('facture_id')), status='VAL').annotate(
             day=TruncDay('date')
@@ -875,7 +888,7 @@ class DashboardCoreMixin(viewsets.ViewSet):
         stockouts = MouvementStock.objects.filter(
             type_mouvement='SORTIE',
             stock_apres=0,
-            date__date__gte=date_ago,
+            date__gte=day_start(date_ago),
             produit__isnull=False
         ).values(
             'produit_id', 'produit__name', 'produit__stock', 'produit__stock_minimum',

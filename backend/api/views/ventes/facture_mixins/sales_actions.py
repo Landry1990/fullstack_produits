@@ -451,6 +451,31 @@ class FactureSalesMixin:
         try:
             facture, old_total, difference, old_quantities, new_quantities = SalesService.modify_sale(facture, validation_user, request.data)
 
+            # Notifier la caisse centralisée : la facture reste payable mais
+            # son contenu/montant a changé (évite d'encaisser l'ancien total).
+            facture_id = facture.id
+            poste_caisse_id = getattr(facture, 'poste_caisse_id', None)
+
+            def _notify_caisse_updated():
+                try:
+                    from asgiref.sync import async_to_sync
+                    from channels.layers import get_channel_layer
+                    channel_layer = get_channel_layer()
+                    if channel_layer:
+                        async_to_sync(channel_layer.group_send)(
+                            'caisse_centralisee',
+                            {
+                                'type': 'facture_update',
+                                'action': 'updated',
+                                'facture_id': facture_id,
+                                'poste_caisse_id': poste_caisse_id,
+                            }
+                        )
+                except Exception as ws_err:
+                    logger.warning(f"WebSocket broadcast caisse (modification) échoué: {ws_err}")
+
+            transaction.on_commit(_notify_caisse_updated)
+
             # Audit log - une seule ligne par modification de vente
             log_audit(
                 user=request.user,

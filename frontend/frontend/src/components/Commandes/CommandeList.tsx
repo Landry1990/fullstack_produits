@@ -18,6 +18,7 @@ import {
 import CommandeSelectionHeader from './CommandeSelectionHeader';
 import { cn } from '../../lib/utils';
 import { EmptyState } from '../ui/EmptyState';
+import PaginationControls from '../ui/PaginationControls';
 
 
 
@@ -634,28 +635,16 @@ export default function CommandeList({
           <div className="text-xs font-medium text-slate-400">
             {t('orders:list.pagination.showing', { count: sortedCommandes.length, total: totalCount })}
           </div>
-          <div className="flex gap-1">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 px-3 text-xs"
-              disabled={page === 1}
-              onClick={() => onPageChange(page - 1)}
-            >
-              «
-            </Button>
+          <div className="flex items-center gap-1">
+            <PaginationControls
+              page={page}
+              totalPages={totalPages}
+              onPageChange={onPageChange}
+              size="xs"
+            />
             <span className="inline-flex items-center px-3 h-7 text-xs font-semibold rounded-md bg-slate-100 text-slate-600">
               {page} / {totalPages}
             </span>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 px-3 text-xs"
-              disabled={page >= totalPages}
-              onClick={() => onPageChange(page + 1)}
-            >
-              »
-            </Button>
           </div>
         </div>
 

@@ -1,7 +1,10 @@
+from datetime import datetime
+
 from django.db.models import Count, Sum
 from django.utils import timezone
 
 from api.models import Facture, FactureProduit
+from api.utils.dates import day_bounds, day_end
 
 
 def build_sales_statistics(queryset, date_gte=None, date_lte=None):
@@ -16,14 +19,20 @@ def build_sales_statistics(queryset, date_gte=None, date_lte=None):
         sellers = sellers.filter(date__gte=date_gte)
         products = products.filter(facture__date__gte=date_gte)
     elif not date_lte:
-        invoices = invoices.filter(date__date=today)
-        sellers = sellers.filter(date__date=today)
-        products = products.filter(facture__date__date=today)
+        day_lo, day_hi = day_bounds(today)
+        invoices = invoices.filter(date__gte=day_lo, date__lt=day_hi)
+        sellers = sellers.filter(date__gte=day_lo, date__lt=day_hi)
+        products = products.filter(facture__date__gte=day_lo, facture__date__lt=day_hi)
 
     if date_lte:
-        invoices = invoices.filter(date__lte=date_lte)
-        sellers = sellers.filter(date__lte=date_lte)
-        products = products.filter(facture__date__lte=date_lte)
+        # Facture.date est un DateTimeField : un « date » (parse_date_param sur
+        # une entrée YYYY-MM-DD) à droite de __lte bornerait à 00:00 et
+        # exclurait tout le jour de fin → on borne à la fin du jour.
+        # Un datetime est une borne exacte, conservée telle quelle.
+        fin = date_lte if isinstance(date_lte, datetime) else day_end(date_lte)
+        invoices = invoices.filter(date__lte=fin)
+        sellers = sellers.filter(date__lte=fin)
+        products = products.filter(facture__date__lte=fin)
 
     top_seller = sellers.values('created_by__username', 'created_by__first_name', 'created_by__last_name').annotate(total_vente=Sum('montant_regle'), count=Count('id')).order_by('-total_vente').first()
     seller_data = None

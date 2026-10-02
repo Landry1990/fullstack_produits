@@ -53,6 +53,7 @@ from ..services.finance_predictions import (
     linear_regression,
     moving_average,
 )
+from ..utils.dates import day_start
 from ..utils.validation import parse_date_param, parse_int
 
 
@@ -76,14 +77,14 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         start_date_n1 = start_date - relativedelta(years=1)
 
         current_map = get_validated_invoices_queryset().filter(
-            date__date__gte=start_date, date__date__lte=today
+            date__gte=day_start(start_date), date__lt=day_start(today + timedelta(days=1))
         ).annotate(month=TruncMonth('date')).values('month').annotate(
             total=Coalesce(Sum('total_ttc'), Decimal(0))
         )
         current_map = {item['month'].strftime('%Y-%m'): float(item['total']) for item in current_map}
 
         n1_map = get_validated_invoices_queryset().filter(
-            date__date__gte=start_date_n1, date__date__lt=start_date
+            date__gte=day_start(start_date_n1), date__lt=day_start(start_date)
         ).annotate(month=TruncMonth('date')).values('month').annotate(
             total=Coalesce(Sum('total_ttc'), Decimal(0))
         )
@@ -140,7 +141,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         start_date = (today - relativedelta(months=11)).replace(day=1)
 
         ca_data = get_validated_invoices_queryset().filter(
-            date__date__gte=start_date, date__date__lte=today
+            date__gte=day_start(start_date), date__lt=day_start(today + timedelta(days=1))
         ).annotate(month=TruncMonth('date')).values('month').annotate(
             total=Coalesce(Sum('total_ttc'), Decimal(0))
         ).order_by('month')
@@ -175,7 +176,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         start_of_year = today.replace(month=1, day=1)
 
         monthly_invoices = get_validated_invoices_queryset().filter(
-            date__date__gte=start_of_month, date__date__lte=today
+            date__gte=day_start(start_of_month), date__lt=day_start(today + timedelta(days=1))
         )
         monthly_stats = monthly_invoices.aggregate(
             ca=Coalesce(Sum('total_ttc'), Decimal(0)), count=Count('id')
@@ -183,7 +184,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         panier_moyen_mois = float(monthly_stats['ca']) / monthly_stats['count'] if monthly_stats['count'] else 0
 
         yearly_invoices = get_validated_invoices_queryset().filter(
-            date__date__gte=start_of_year, date__date__lte=today
+            date__gte=day_start(start_of_year), date__lt=day_start(today + timedelta(days=1))
         )
         yearly_stats = yearly_invoices.aggregate(
             ca=Coalesce(Sum('total_ttc'), Decimal(0)), count=Count('id')
@@ -199,7 +200,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
 
         last_30_days = today - timedelta(days=30)
         invoices_30d = get_validated_invoices_queryset().filter(
-            date__date__gte=last_30_days, date__date__lte=today
+            date__gte=day_start(last_30_days), date__lt=day_start(today + timedelta(days=1))
         )
         cogs_alloc = FactureProduitAllocation.objects.filter(
             facture_produit__facture__in=invoices_30d
@@ -215,7 +216,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         prev_month_start = start_of_month - relativedelta(months=1)
         prev_month_end = start_of_month - timedelta(days=1)
         prev_month_ca = get_validated_invoices_queryset().filter(
-            date__date__gte=prev_month_start, date__date__lte=prev_month_end
+            date__gte=day_start(prev_month_start), date__lt=day_start(prev_month_end + timedelta(days=1))
         ).aggregate(ca=Coalesce(Sum('total_ttc'), Decimal(0)))['ca'] or 0
         croissance = round(((float(monthly_stats['ca']) - float(prev_month_ca)) / float(prev_month_ca)) * 100, 1) if prev_month_ca else 0
 
@@ -244,7 +245,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
             start_date = today.replace(day=1)
 
         base_qs = get_validated_invoices_queryset().filter(
-            date__date__gte=start_date, date__date__lte=today
+            date__gte=day_start(start_date), date__lt=day_start(today + timedelta(days=1))
         )
 
         stats = FactureProduitAllocation.objects.filter(
@@ -296,7 +297,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
             start_date = today.replace(day=1)
 
         base_qs = get_validated_invoices_queryset().filter(
-            date__date__gte=start_date, date__date__lte=today
+            date__gte=day_start(start_date), date__lt=day_start(today + timedelta(days=1))
         )
         alloc_qs = FactureProduitAllocation.objects.filter(facture_produit__facture__in=base_qs)
 
@@ -375,7 +376,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
             start_date = today.replace(day=1)
 
         base_qs = get_validated_invoices_queryset().filter(
-            date__date__gte=start_date, date__date__lte=today
+            date__gte=day_start(start_date), date__lt=day_start(today + timedelta(days=1))
         )
         alloc_qs = FactureProduitAllocation.objects.filter(facture_produit__facture__in=base_qs)
 
@@ -445,7 +446,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
 
         top_categories = FactureProduitAllocation.objects.filter(
             facture_produit__facture__in=get_validated_invoices_queryset().filter(
-                date__date__gte=start_date, date__date__lte=today
+                date__gte=day_start(start_date), date__lt=day_start(today + timedelta(days=1))
             )
         ).values(id_field, name_field).annotate(
             total_ca=Coalesce(Sum(F('quantity') * F('selling_price'), output_field=DecimalField()), Decimal(0))
@@ -456,7 +457,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
 
         monthly_data = FactureProduitAllocation.objects.filter(
             facture_produit__facture__in=get_validated_invoices_queryset().filter(
-                date__date__gte=start_date, date__date__lte=today
+                date__gte=day_start(start_date), date__lt=day_start(today + timedelta(days=1))
             ),
             **{f'{id_field}__in': top_ids}
         ).annotate(
@@ -491,7 +492,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
 
         base_qs = FactureProduit.objects.filter(
             produit__isnull=False,
-            facture__date__date__gte=start_date,
+            facture__date__gte=day_start(start_date),
             facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         ).annotate(
             num_p=Count('facture__paiements')
@@ -568,8 +569,8 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         end_date = self._parse_iso_date(request.query_params.get('date_fin'), 'date_fin') or today
 
         fournisseurs = list(Fournisseur.objects.filter(
-            stocklot__date_reception__date__gte=start_date,
-            stocklot__date_reception__date__lte=end_date
+            stocklot__date_reception__gte=day_start(start_date),
+            stocklot__date_reception__lt=day_start(end_date + timedelta(days=1))
         ).distinct())
 
         if not fournisseurs:
@@ -580,8 +581,8 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         # 1. Récupérer TOUS les lots de ces fournisseurs en UNE SEULE requête
         all_lots = StockLot.objects.filter(
             fournisseur_id__in=fournisseur_ids,
-            date_reception__date__gte=start_date,
-            date_reception__date__lte=end_date
+            date_reception__gte=day_start(start_date),
+            date_reception__lt=day_start(end_date + timedelta(days=1))
         ).order_by('date_reception')
 
         # Grouper les lots par fournisseur en mémoire
@@ -593,8 +594,8 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         all_adjustments = StockAdjustment.objects.filter(
             stock_lot__fournisseur_id__in=fournisseur_ids,
             reason_type__in=['AVARIE', 'CASSE', 'ERR_ENTREE', 'PERIME'],
-            created_at__date__gte=start_date,
-            created_at__date__lte=end_date
+            created_at__gte=day_start(start_date),
+            created_at__lt=day_start(end_date + timedelta(days=1))
         ).values('stock_lot__fournisseur_id').annotate(
             count=Count('id')
         )
@@ -654,8 +655,8 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         end_date = self._parse_iso_date(request.query_params.get('date_fin'), 'date_fin') or today
 
         produits_multi_source = StockLot.objects.filter(
-            date_reception__date__gte=start_date,
-            date_reception__date__lte=end_date
+            date_reception__gte=day_start(start_date),
+            date_reception__lt=day_start(end_date + timedelta(days=1))
         ).exclude(
             Q(fournisseur__isnull=True) | Q(fournisseur__name__iexact='Inconnu')
         ).values('produit').annotate(
@@ -670,8 +671,8 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         # Une seule requête d'agrégation pour tous les produits d'intérêt
         all_lots = StockLot.objects.filter(
             produit_id__in=product_ids,
-            date_reception__date__gte=start_date,
-            date_reception__date__lte=end_date
+            date_reception__gte=day_start(start_date),
+            date_reception__lt=day_start(end_date + timedelta(days=1))
         ).values('produit_id', 'produit__name', 'fournisseur__name').annotate(
             avg_price=Avg('price_cost')
         )
@@ -709,8 +710,8 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         end_date = self._parse_iso_date(request.query_params.get('date_fin'), 'date_fin') or today
 
         achats = StockLot.objects.filter(
-            date_reception__date__gte=start_date,
-            date_reception__date__lte=end_date
+            date_reception__gte=day_start(start_date),
+            date_reception__lt=day_start(end_date + timedelta(days=1))
         ).exclude(
             Q(fournisseur__isnull=True) | Q(fournisseur__name__iexact='Inconnu')
         ).values('fournisseur__id', 'fournisseur__name').annotate(
@@ -754,7 +755,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
 
         def get_period_stats(start, end):
             factures = get_validated_invoices_queryset().filter(
-                date__date__gte=start, date__date__lte=end
+                date__gte=day_start(start), date__lt=day_start(end + timedelta(days=1))
             )
             global_remise = factures.aggregate(s=Coalesce(Sum('remise'), Decimal(0)))['s']
             total_ca = factures.aggregate(s=Coalesce(Sum('total_ttc'), Decimal(0)))['s']
@@ -794,8 +795,8 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         variance_pct = stats1['margin_pct'] - stats2['margin_pct']
 
         suspicious_products = FactureProduit.objects.filter(
-            facture__date__date__gte=p1_start,
-            facture__date__date__lte=p1_end,
+            facture__date__gte=day_start(p1_start),
+            facture__date__lt=day_start(p1_end + timedelta(days=1)),
             facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         ).annotate(
             unit_margin=F('selling_price') - F('discount') - Coalesce(F('produit__pmp'), Value(0, output_field=DecimalField())),
@@ -859,7 +860,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
             start_date = today.replace(day=1)
 
         base_qs = get_validated_invoices_queryset().filter(
-            date__date__gte=start_date, date__date__lte=today
+            date__gte=day_start(start_date), date__lt=day_start(today + timedelta(days=1))
         )
 
         # Produits avec allocation de stock (marge précise basée sur cost_price)
@@ -971,7 +972,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
             start_date = today.replace(day=1)
 
         base_qs = get_validated_invoices_queryset().filter(
-            date__date__gte=start_date, date__date__lte=today
+            date__gte=day_start(start_date), date__lt=day_start(today + timedelta(days=1))
         )
 
         # Ventes avec remise (au niveau facture produit)

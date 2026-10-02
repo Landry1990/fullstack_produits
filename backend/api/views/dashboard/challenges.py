@@ -1,10 +1,11 @@
-from datetime import date
+from datetime import date, timedelta
 
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from ...models import Challenge, Facture, FactureProduit, FactureProduitAllocation
+from ...utils.dates import day_start
 
 
 class DashboardChallengesMixin(viewsets.ViewSet):
@@ -67,8 +68,8 @@ class DashboardChallengesMixin(viewsets.ViewSet):
         factures_qs = Facture.objects.filter(
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
             is_active=True,
-            date__date__gte=date_debut,
-            date__date__lte=date_fin,
+            date__gte=day_start(date_debut),
+            date__lt=day_start(date_fin + timedelta(days=1)),
         )
         if participant_ids is not None:
             factures_qs = factures_qs.filter(created_by_id__in=participant_ids)

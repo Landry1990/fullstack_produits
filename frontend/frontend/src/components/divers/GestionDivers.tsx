@@ -9,8 +9,6 @@ import {
   CalendarDays,
   Package,
   ClipboardList,
-  ChevronLeft,
-  ChevronRight,
   Warehouse,
   ArrowLeft,
   Eye,
@@ -31,6 +29,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '../shadcn/table';
 import { Skeleton } from '../ui/Skeleton';
+import PaginationControls from '../ui/PaginationControls';
 import { logger } from '../../utils/logger'
 import { usePharmacySettings } from '../../hooks/usePharmacySettings';
 import { exportToExcel } from '../../utils/excelExport';
@@ -527,14 +526,7 @@ const GestionDivers: React.FC<{ defaultTab?: DiversTab }> = ({ defaultTab = 'ca'
             {viewMode === 'detail' && totalPages > 1 && (
               <div className="px-4 py-3 border-t flex items-center justify-between bg-muted/30">
                 <span className="text-sm text-muted-foreground">{t('divers.page_label')} {page} {t('divers.of_label')} {totalPages} · {totalCount} {t('divers.results')}</span>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}>
-                    <ChevronLeft className="h-4 w-4 mr-1" /> {t('divers.previous')}
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>
-                    {t('divers.next')} <ChevronRight className="h-4 w-4 ml-1" />
-                  </Button>
-                </div>
+                <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} />
               </div>
             )}
           </Card>
@@ -717,14 +709,7 @@ const GestionDivers: React.FC<{ defaultTab?: DiversTab }> = ({ defaultTab = 'ca'
                   {detailsTotalPages > 1 && (
                     <div className="px-4 py-3 border-t bg-muted/30 flex items-center justify-between gap-3 flex-wrap">
                       <span className="text-xs text-muted-foreground">{t('divers.page_label')} {safeDetailsPage} {t('divers.of_label')} {detailsTotalPages} · {stockData.details.length} {t('divers.results')}</span>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={() => setDetailsPage(p => Math.max(1, p - 1))} disabled={safeDetailsPage <= 1}>
-                          <ChevronLeft className="h-4 w-4 mr-1" /> {t('divers.previous')}
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => setDetailsPage(p => Math.min(detailsTotalPages, p + 1))} disabled={safeDetailsPage >= detailsTotalPages}>
-                          {t('divers.next')} <ChevronRight className="h-4 w-4 ml-1" />
-                        </Button>
-                      </div>
+                      <PaginationControls page={safeDetailsPage} totalPages={detailsTotalPages} onPageChange={setDetailsPage} />
                     </div>
                   )}
                 </Card>

@@ -18,8 +18,8 @@ import {
 import type { useJournalCaisse } from '../../hooks/useJournalCaisse';
 import type { CaisseTransaction, MouvementCaisse } from '../../types';
 import { normalizeNumberInput } from '../../utils/formatters';
-import { Button } from '../shadcn/button';
 import { EmptyState } from '../ui/EmptyState';
+import PaginationControls from '../ui/PaginationControls';
 import { ErrorState } from '../ui/ErrorState';
 import SkeletonTable from '../ui/SkeletonTable';
 import { cn } from '../../lib/utils';
@@ -329,26 +329,7 @@ export default function JournalCaisseTable({ state }: Props) {
         {!loading && totalCount > 0 && (
           <div className="flex items-center gap-3">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t('caisse:closing_history.pagination.page', { current: page, total: totalPages, defaultValue: 'Page {{current}} / {{total}}' })}</span>
-            <div className="flex gap-1.5">
-              <Button
-                variant="outline"
-                size="sm"
-                className="px-4"
-                disabled={page === 1}
-                onClick={() => setPage(prev => prev - 1)}
-              >
-                {t('common:pagination.prev')}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="px-4"
-                disabled={page >= totalPages}
-                onClick={() => setPage(prev => prev + 1)}
-              >
-                {t('common:pagination.next')}
-              </Button>
-            </div>
+            <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} size="xs" />
           </div>
         )}
       </div>

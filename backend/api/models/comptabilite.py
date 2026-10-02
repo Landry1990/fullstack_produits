@@ -89,6 +89,10 @@ class EcritureComptable(models.Model):
         verbose_name_plural = "Écritures Comptables"
         ordering = ['exercice', 'journal', 'numero_piece']
         unique_together = [['exercice', 'journal', 'numero_piece']]
+        indexes = [
+            # Perf (migration 0262) — index créé en CONCURRENTLY
+            models.Index(fields=['date'], name='ecriture_date_idx'),
+        ]
 
     def save(self, *args, **kwargs):
         # Validation OHADA: Exercice obligatoire et non cloturé
@@ -169,6 +173,10 @@ class LigneEcriture(models.Model):
     class Meta:
         verbose_name = "Ligne d'Écriture"
         verbose_name_plural = "Lignes d'Écritures"
+        indexes = [
+            # Perf (migration 0262) — index créé en CONCURRENTLY
+            models.Index(fields=['compte', 'ecriture'], name='ligneecriture_compte_ecr_idx'),
+        ]
 
     def __str__(self):
         return f"{self.compte.numero} | D:{self.debit} | C:{self.credit}"

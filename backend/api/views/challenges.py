@@ -18,6 +18,7 @@ from ..audit_helpers import log_audit
 from ..models import AuditLog, Challenge, ChallengeEquipe, ChallengePointTier, Facture, FactureProduit, FactureProduitAllocation, StockLot
 from ..serializers.challenges import ChallengeSerializer
 from ..pagination import StandardResultsSetPagination
+from ..utils.dates import day_start
 from ..utils.validation import parse_int
 
 logger = logging.getLogger(__name__)
@@ -168,8 +169,8 @@ class ChallengeViewSet(viewsets.ModelViewSet):
         factures_qs = Facture.objects.filter(
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
             is_active=True,
-            date__date__gte=date_debut,
-            date__date__lte=date_fin,
+            date__gte=day_start(date_debut),
+            date__lt=day_start(date_fin + timedelta(days=1)),
         )
         if participant_ids is not None:
             factures_qs = factures_qs.filter(created_by_id__in=participant_ids)

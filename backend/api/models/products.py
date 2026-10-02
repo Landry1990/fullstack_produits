@@ -398,7 +398,8 @@ class Produit(models.Model):
         indexes = [
             models.Index(fields=['stock']),
             models.Index(fields=['rayon', 'stock']),
-            models.Index(fields=['fournisseur']),
+            # (fournisseur) seul : couvert par l'index FK auto
+            # (api_produit_fournisseur_id_*)
             models.Index(fields=['stock', 'stock_minimum']),
             # Index Postgres pour recherche textuelle rapide (GIN + Trigramme)
             GinIndex(fields=['name'], name='produit_name_trgm_idx', opclasses=['gin_trgm_ops']),
@@ -406,4 +407,8 @@ class Produit(models.Model):
             GinIndex(fields=['cip2'], name='produit_cip2_trgm_idx', opclasses=['gin_trgm_ops']),
             GinIndex(fields=['cip3'], name='produit_cip3_trgm_idx', opclasses=['gin_trgm_ops']),
             GinIndex(fields=['cip4'], name='produit_cip4_trgm_idx', opclasses=['gin_trgm_ops']),
+            # Perf (migration 0262) — index créés en CONCURRENTLY
+            models.Index(fields=['rotation_moyenne'], name='produit_rotation_idx'),
+            models.Index(fields=['dernier_vente'], name='produit_dernier_vente_idx'),
+            models.Index(fields=['dernier_achat'], name='produit_dernier_achat_idx'),
         ]

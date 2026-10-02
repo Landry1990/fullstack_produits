@@ -5,6 +5,7 @@ from django.db import IntegrityError, models
 from django.db.models import Sum
 from django.utils import timezone
 
+from ..utils.dates import day_bounds, day_start
 from .configuration_objectifs import ConfigurationObjectifs
 
 User = get_user_model()
@@ -157,8 +158,10 @@ class ObjectifCommercial(models.Model):
             if periode == cls.Periode.JOUR:
                 # N-1 : Same day last week
                 ref_date = date_debut - timezone.timedelta(days=7)
+                ref_lo, ref_hi = day_bounds(ref_date)
                 ca_ref = Facture.objects.filter(
-                    date__date=ref_date,
+                    date__gte=ref_lo,
+                    date__lt=ref_hi,
                     status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
                 ).aggregate(total=Sum('total_ttc'))['total'] or Decimal('0.00')
                 ca_objectif = ca_ref * (Decimal(1) + config.pourcentage_croissance / Decimal(100))
@@ -168,8 +171,8 @@ class ObjectifCommercial(models.Model):
                 ref_start = date_debut - timezone.timedelta(days=7)
                 ref_end = date_debut - timezone.timedelta(days=1)
                 ca_ref = Facture.objects.filter(
-                    date__date__gte=ref_start,
-                    date__date__lte=ref_end,
+                    date__gte=day_start(ref_start),
+                    date__lt=day_start(ref_end + timezone.timedelta(days=1)),
                     status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
                 ).aggregate(total=Sum('total_ttc'))['total'] or Decimal('0.00')
                 ca_objectif = ca_ref * (Decimal(1) + config.pourcentage_croissance / Decimal(100))
@@ -179,8 +182,8 @@ class ObjectifCommercial(models.Model):
                 first_of_prev_month = (date_debut - timezone.timedelta(days=1)).replace(day=1)
                 last_of_prev_month = date_debut - timezone.timedelta(days=1)
                 ca_ref = Facture.objects.filter(
-                    date__date__gte=first_of_prev_month,
-                    date__date__lte=last_of_prev_month,
+                    date__gte=day_start(first_of_prev_month),
+                    date__lt=day_start(last_of_prev_month + timezone.timedelta(days=1)),
                     status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
                 ).aggregate(total=Sum('total_ttc'))['total'] or Decimal('0.00')
                 ca_objectif = ca_ref * (Decimal(1) + config.pourcentage_croissance / Decimal(100))

@@ -127,8 +127,14 @@ class ProduitViewSet(
         )
         
         # Par défaut, ne montrer que les produits actifs (sauf si include_inactive=true)
-        if not self.request.query_params.get('include_inactive'):
+        # Comparaison explicite : la chaîne 'false' est truthy et désactiverait le filtre.
+        include_inactive = self.request.query_params.get('include_inactive', '').lower() == 'true'
+        if not include_inactive:
             queryset = queryset.filter(is_active=True)
+
+        # Vitrine en ligne : produits actifs et publiés uniquement
+        if self.request.query_params.get('is_public', '').lower() == 'true':
+            queryset = queryset.filter(is_active=True, is_public=True)
             
         # Filtrage manuel (ex: rapports, alertes)
         has_reserve = self.request.query_params.get('has_reserve_storage')
@@ -153,6 +159,10 @@ class ProduitViewSet(
         if stock_lte is not None:
             queryset = queryset.filter(stock__lte=float(parse_decimal(stock_lte, field='stock__lte')))
 
+        stock_gt = self.request.query_params.get('stock_gt')
+        if stock_gt is not None:
+            queryset = queryset.filter(stock__gt=float(parse_decimal(stock_gt, field='stock_gt')))
+
         rotation_gte = self.request.query_params.get('rotation_moyenne__gte')
         if rotation_gte is not None:
             queryset = queryset.filter(rotation_moyenne__gte=float(parse_decimal(rotation_gte, field='rotation_moyenne__gte')))
@@ -160,6 +170,15 @@ class ProduitViewSet(
         rotation_gt = self.request.query_params.get('rotation_moyenne__gt')
         if rotation_gt is not None:
             queryset = queryset.filter(rotation_moyenne__gt=float(parse_decimal(rotation_gt, field='rotation_moyenne__gt')))
+
+        # Rapport "produits non vendus" : rotation_moyenne <= seuil envoyé (défaut 0)
+        rotation_lte = self.request.query_params.get('rotation_moyenne')
+        if rotation_lte is not None:
+            queryset = queryset.filter(rotation_moyenne__lte=float(parse_decimal(rotation_lte, field='rotation_moyenne')))
+
+        tva_gt = self.request.query_params.get('tva_gt')
+        if tva_gt is not None:
+            queryset = queryset.filter(tva__gt=float(parse_decimal(tva_gt, field='tva_gt')))
 
         rayon_id = self.request.query_params.get('rayon')
         if rayon_id is not None:

@@ -36,6 +36,7 @@ import {
 import { Button } from '../ui/Button';
 import { Skeleton } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
+import PaginationControls from '../ui/PaginationControls';
 import { logger } from '../../utils/logger'
 
 export default function ReapproRayon() {
@@ -510,21 +511,14 @@ export default function ReapproRayon() {
                     {t('common:pagination.page_info', { page, total: totalPages })} ({products.length} {t('common:products')})
                 </span>
                 <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
-                    <button
-                        className="inline-flex items-center justify-center h-7 px-3 rounded-lg text-caption font-black uppercase tracking-widest text-slate-500 hover:bg-white disabled:opacity-30 transition-colors"
-                        disabled={page === 1}
-                        onClick={() => setPage(page - 1)}
-                    >
-                        {t('common:previous')}
-                    </button>
+                    <PaginationControls
+                        page={page}
+                        totalPages={totalPages}
+                        onPageChange={(p) => setPage(p)}
+                        isLoading={loading}
+                        size="xs"
+                    />
                     <div className="px-3 text-caption font-black text-slate-700">{page}</div>
-                    <button
-                        className="inline-flex items-center justify-center h-7 px-3 rounded-lg text-caption font-black uppercase tracking-widest text-slate-500 hover:bg-white disabled:opacity-30 transition-colors"
-                        disabled={page === totalPages}
-                        onClick={() => setPage(page + 1)}
-                    >
-                        {t('common:next')}
-                    </button>
                 </div>
             </div>
         )}

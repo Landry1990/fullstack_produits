@@ -12,6 +12,7 @@ from django.utils import timezone
 
 from api.models import Produit
 from api.models.settings import PharmacySettings
+from api.utils.dates import day_start
 
 
 class Command(BaseCommand):
@@ -36,7 +37,7 @@ class Command(BaseCommand):
         dormant_qs = Produit.objects.filter(stock__gt=0, is_active=True).filter(
             Q(dernier_vente__lte=limit_date) | 
             (Q(dernier_vente__isnull=True) & Q(dernier_achat__lte=limit_date)) |
-            (Q(dernier_vente__isnull=True) & Q(dernier_achat__isnull=True) & Q(created_at__date__lte=limit_date))
+            (Q(dernier_vente__isnull=True) & Q(dernier_achat__isnull=True) & Q(created_at__lt=day_start(limit_date + timedelta(days=1))))
         )
         
         dead_stock_value = dormant_qs.aggregate(

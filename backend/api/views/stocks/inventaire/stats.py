@@ -1,7 +1,7 @@
 """
 Statistiques et audit pour les inventaires.
 """
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 
 from django.db.models import (
@@ -18,6 +18,7 @@ from django.db.models.functions import Cast, Coalesce
 from rest_framework.response import Response
 
 from api.models import Inventaire, LigneInventaire
+from api.utils.dates import day_start
 from api.utils.validation import parse_date_param
 
 
@@ -125,9 +126,9 @@ def audit_discrepancies(
     queryset = LigneInventaire.objects.filter(inventaire__status=Inventaire.Status.VALIDEE)
 
     if start_date:
-        queryset = queryset.filter(inventaire__date__date__gte=start_date)
+        queryset = queryset.filter(inventaire__date__gte=day_start(start_date))
     if end_date:
-        queryset = queryset.filter(inventaire__date__date__lte=end_date)
+        queryset = queryset.filter(inventaire__date__lt=day_start(end_date + timedelta(days=1)))
 
     # Annotation de la valeur de l'écart (ecart * pmp)
     queryset = queryset.annotate(

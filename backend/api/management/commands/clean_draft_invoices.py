@@ -22,7 +22,9 @@ class Command(BaseCommand):
         from datetime import datetime, timedelta
         
         # Construire le queryset
-        factures_brouillon = Facture.objects.filter(status='BROUILLON')
+        # NB : le code DB du statut brouillon est 'BROU' (Facture.Status.BROUILLON),
+        # pas 'BROUILLON' — utiliser la constante pour éviter une queryset vide.
+        factures_brouillon = Facture.objects.filter(status=Facture.Status.BROUILLON)
         
         # Filtrer par date si spécifié
         if options['older_than']:
@@ -47,8 +49,12 @@ class Command(BaseCommand):
         # Afficher les factures à supprimer
         self.stdout.write(f'\nFactures BROUILLON trouvées : {count}')
         for facture in factures_brouillon[:10]:  # Afficher les 10 premières
+            client_display = (
+                facture.client.name if facture.client
+                else facture.client_name_override or 'Client'
+            )
             self.stdout.write(
-                f'  - #{facture.numero_facture} - {facture.date} - {facture.client_name or "Client"} - {facture.total_ttc} F'
+                f'  - #{facture.numero_facture} - {facture.date} - {client_display} - {facture.total_ttc} F'
             )
         
         if count > 10:

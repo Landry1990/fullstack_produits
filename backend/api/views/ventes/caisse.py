@@ -1,4 +1,5 @@
 import logging
+from datetime import timedelta
 from decimal import Decimal, InvalidOperation
 
 from django.db import transaction
@@ -20,6 +21,7 @@ from ...serializers import (
     ClotureCaisseSerializer,
 )
 from ...sudo_utils import validate_sudo_mode
+from ...utils.dates import day_start
 from ...utils.validation import parse_date_param, parse_id
 from ..rapports.tz_utils import parse_api_datetime as _parse_iso_datetime
 from .caisse_mixins.cloture_mixin import CaisseClotureMixin
@@ -70,7 +72,9 @@ class CaisseViewSet(CaisseReportingMixin, CaisseClotureMixin, BaseViewSetConfig,
             queryset = queryset.filter(date_paiement__gte=dt)
 
         if date_fin:
-            dt = _parse_iso_datetime(date_fin)
+            # end_of_day=True : une date seule (YYYY-MM-DD) borne à 23:59:59,
+            # sinon le jour de fin serait exclu par __lte (borne à 00:00).
+            dt = _parse_iso_datetime(date_fin, end_of_day=True)
             if dt is None:
                 raise ValidationError({'detail': f"Le paramètre 'date_fin' est invalide : '{date_fin}'. Format attendu : AAAA-MM-JJ."})
             queryset = queryset.filter(date_paiement__lte=dt)
@@ -87,6 +91,36 @@ class CaisseViewSet(CaisseReportingMixin, CaisseClotureMixin, BaseViewSetConfig,
             return Response(
                 {'detail': "Vous n'avez aucun point de vente actif. Veuillez ouvrir un point de vente avant d'encaisser."},
                 status=status.HTTP_403_FORBIDDEN
+            )
+        return None
+
+    def _check_facture_encaissable(self, data):
+        """Refuse l'encaissement d'une facture annulée ou supprimée.
+
+        Filet de sécurité contre la course entre un rappel/annulation de vente
+        et la file d'attente caisse (rafraîchie par polling/WebSocket) : sans
+        cette vérif, un paiement 'completee' pouvait être créé sur une facture
+        ANNULEE → écart de caisse et traçabilité corrompue.
+        NB: les factures PAYEE restent acceptées (paiements 'recouvrement').
+        """
+        facture_id = data.get('facture') or data.get('facture_id')
+        if not facture_id:
+            return None
+        from ...models import Facture as FactureModel
+        try:
+            facture_obj = FactureModel.objects.get(pk=facture_id)
+        except (FactureModel.DoesNotExist, ValueError, TypeError):
+            return Response(
+                {'detail': "La facture associée à ce paiement est introuvable."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        if not facture_obj.is_active or facture_obj.status == FactureModel.Status.ANNULEE:
+            return Response(
+                {'detail': (
+                    f"La facture {facture_obj.numero_facture or facture_id} a été annulée "
+                    "et ne peut plus être encaissée. Actualisez la liste des ventes en attente."
+                )},
+                status=status.HTTP_400_BAD_REQUEST
             )
         return None
 
@@ -165,6 +199,10 @@ class CaisseViewSet(CaisseReportingMixin, CaisseClotureMixin, BaseViewSetConfig,
         if error_res:
             return error_res
 
+        error_res = self._check_facture_encaissable(request.data)
+        if error_res:
+            return error_res
+
         error_res = self._check_depot_solde(request.data)
         if error_res:
             return error_res
@@ -213,6 +251,9 @@ class CaisseViewSet(CaisseReportingMixin, CaisseClotureMixin, BaseViewSetConfig,
 
         created = []
         for item in items:
+            error_res = self._check_facture_encaissable(item)
+            if error_res:
+                return error_res
             error_res = self._check_depot_solde(item)
             if error_res:
                 return error_res
@@ -275,9 +316,9 @@ class ClotureCaisseViewSet(BaseViewSetConfig, viewsets.ReadOnlyModelViewSet):
         # Dates/ids invalides → 400 (chaîne brute dans le filtre ORM → 500,
         # ou filtre silencieusement ignoré → résultats trompeurs).
         if date_debut:
-            queryset = queryset.filter(date__date__gte=parse_date_param(date_debut, field='date_debut'))
+            queryset = queryset.filter(date__gte=day_start(parse_date_param(date_debut, field='date_debut')))
         if date_fin:
-            queryset = queryset.filter(date__date__lte=parse_date_param(date_fin, field='date_fin'))
+            queryset = queryset.filter(date__lt=day_start(parse_date_param(date_fin, field='date_fin') + timedelta(days=1)))
         if user_id:
             queryset = queryset.filter(user_id=parse_id(user_id, field='user_id'))
         if poste_caisse_id:

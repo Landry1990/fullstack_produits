@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next'
 import { gooeyToast } from 'goey-toast'
 import {
   Package, Upload, RefreshCw, Search, X,
-  ChevronLeft, ChevronRight,
   BarChart3, Tags, Eye, EyeOff, Truck
 } from 'lucide-react'
 
@@ -39,6 +38,7 @@ import { StockAdjustmentModal } from './products/modals/StockAdjustmentModal'
 import ImportProductsModal from './products/ImportProductsModal'
 import { ProductDetailsModal as SalesDetailsModal } from './sales/modals/ProductDetailsModal'
 import { AvoirDetailsModal } from './products/modals/AvoirDetailsModal'
+import PaginationControls from './ui/PaginationControls'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                               */
@@ -568,12 +568,12 @@ export default function ProduitShadcn() {
                 <div className="shrink-0 px-4 py-2 border-t border-slate-100 flex items-center justify-between">
                   <span className="text-xs text-slate-400">{t('common:pagination.page_info', { page, total: totalPages })}</span>
                   <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="sm" disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))} leftIcon={<ChevronLeft className="size-4" />}>
-                      {t('common:pagination.prev')}
-                    </Button>
-                    <Button variant="ghost" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))} rightIcon={<ChevronRight className="size-4" />}>
-                      {t('common:pagination.next')}
-                    </Button>
+                    <PaginationControls
+                      page={page}
+                      totalPages={totalPages}
+                      onPageChange={(p) => setPage(p)}
+                      isLoading={isLoading}
+                    />
                   </div>
                 </div>
               )}

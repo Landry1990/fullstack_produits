@@ -66,6 +66,15 @@ export interface PharmacySettings {
   // Sécurité Caisse
   hide_cash_totals?: boolean;
   billetage_obligatoire?: boolean;
+  // Rétention automatique (purge planifiée des données anciennes)
+  retention_enabled?: boolean;
+  retention_audit_days?: number;
+  retention_activity_days?: number;
+  retention_message_log_days?: number;
+  retention_session_days?: number;
+  retention_trash_days?: number;
+  retention_draft_invoice_days?: number;
+  retention_mouvement_stock_days?: number;
   // Modes de paiement
   disabled_payment_modes?: string[];
   custom_payment_modes?: { value: string; label: string }[];
@@ -134,6 +143,15 @@ const DEFAULT_SETTINGS: PharmacySettings = {
   report_recipients_email: '',
   report_send_whatsapp: false,
   report_send_telegram: false,
+  // Rétention automatique - valeurs par défaut
+  retention_enabled: false,
+  retention_audit_days: 730,
+  retention_activity_days: 365,
+  retention_message_log_days: 365,
+  retention_session_days: 90,
+  retention_trash_days: 90,
+  retention_draft_invoice_days: 30,
+  retention_mouvement_stock_days: 1095,
 };
 
 interface PharmacySettingsContextType {

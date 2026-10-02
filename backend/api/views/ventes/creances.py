@@ -146,7 +146,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(date__gte=start_date)
         if date_fin:
             try:
-                end_date = timezone.make_aware(datetime.strptime(date_fin, '%Y-%m-%d'))
+                end_date = timezone.make_aware(datetime.strptime(date_fin, '%Y-%m-%d') + timedelta(days=1))
             except ValueError:
                 raise ValidationError({'detail': "Le paramètre date_fin est invalide (format attendu : AAAA-MM-JJ)."})
             queryset = queryset.filter(date__lt=end_date)

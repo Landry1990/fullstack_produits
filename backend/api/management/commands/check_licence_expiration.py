@@ -21,6 +21,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from api.models.licence import LicenceNotification
+from api.utils.dates import day_bounds
 from api.utils_licence import get_licence_details, should_send_alert
 
 
@@ -148,8 +149,10 @@ class Command(BaseCommand):
         try:
             # Vérifier si une notification identique existe déjà (même jour, même gravité)
             today = timezone.now().date()
+            day_lo, day_hi = day_bounds(today)
             existing = LicenceNotification.objects.filter(
-                created_at__date=today,
+                created_at__gte=day_lo,
+                created_at__lt=day_hi,
                 severity=severity,
                 days_remaining=days_remaining,
                 status=LicenceNotification.Status.ACTIVE

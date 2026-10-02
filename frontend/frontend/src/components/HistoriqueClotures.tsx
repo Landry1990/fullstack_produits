@@ -15,6 +15,7 @@ import { useAuth } from '../context/AuthContext'
 import { Button } from './shadcn/button'
 import { Badge } from './shadcn/badge'
 import { cn } from '../lib/utils'
+import PaginationControls from './ui/PaginationControls'
 
 registerLocale('fr', fr)
 
@@ -736,10 +737,9 @@ export default function HistoriqueClotures() {
                 <span className="text-sm text-slate-500">
                   {t('sessions.pagination.showing', { start: (sessionPage - 1) * SESSION_PAGE_SIZE + 1, end: Math.min(sessionPage * SESSION_PAGE_SIZE, sessions.length), total: sessions.length })}
                 </span>
-                <div className="flex gap-1.5">
-                  <Button variant="outline" size="sm" onClick={() => setSessionPage(p => Math.max(1, p - 1))} disabled={sessionPage === 1}>{t('pagination.prev')}</Button>
+                <div className="flex gap-1.5 items-center">
                   <span className="px-3 py-1.5 text-xs font-bold bg-slate-100 rounded-md flex items-center">{t('pagination.page', { current: sessionPage, total: sessionsTotalPages })}</span>
-                  <Button variant="outline" size="sm" onClick={() => setSessionPage(p => Math.min(sessionsTotalPages, p + 1))} disabled={sessionPage === sessionsTotalPages}>{t('pagination.next')}</Button>
+                  <PaginationControls page={sessionPage} totalPages={sessionsTotalPages} onPageChange={setSessionPage} />
                 </div>
               </div>
             )}
@@ -1156,26 +1156,16 @@ export default function HistoriqueClotures() {
                 })}
                 <Badge variant="outline" className="ml-2 text-xs border-slate-200 text-slate-500">{pageSize} {t('pagination.per_page')}</Badge>
               </span>
-              <div className="flex gap-1.5">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1 || loading}
-                >
-                  {t('pagination.prev')}
-                </Button>
+              <div className="flex gap-1.5 items-center">
                 <span className="px-3 py-1.5 text-xs font-bold bg-slate-100 rounded-md flex items-center">
                   {totalPages > 0 ? t('pagination.page', { current: currentPage, total: totalPages }) : '-'}
                 </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages || totalPages === 0 || loading}
-                >
-                  {t('pagination.next')}
-                </Button>
+                <PaginationControls
+                  page={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  isLoading={loading}
+                />
               </div>
             </div>
           )}

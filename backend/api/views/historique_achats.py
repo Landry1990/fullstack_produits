@@ -1,4 +1,6 @@
 
+from datetime import timedelta
+
 from django.contrib.postgres.aggregates import StringAgg
 from django.db.models import Count, DecimalField, F, Sum, Value
 from django.db.models.functions import Coalesce, TruncDate
@@ -9,6 +11,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from ..models import Commande, CommandeProduit
+from ..utils.dates import day_start
 from ..utils.validation import parse_date_param, parse_id
 
 
@@ -34,11 +37,11 @@ class HistoriqueAchatsViewSet(viewsets.ViewSet):
         # Date filtering — parse_date_param → 400 si la date fournie est
         # invalide (chaîne brute dans le filtre ORM → ValidationError → 500).
         if date_debut:
-            queryset = queryset.filter(date__date__gte=parse_date_param(date_debut, field='date_debut'))
+            queryset = queryset.filter(date__gte=day_start(parse_date_param(date_debut, field='date_debut')))
 
         if date_fin:
             # Inclusive end date filtering
-            queryset = queryset.filter(date__date__lte=parse_date_param(date_fin, field='date_fin'))
+            queryset = queryset.filter(date__lt=day_start(parse_date_param(date_fin, field='date_fin') + timedelta(days=1)))
 
         # Supplier filtering — id invalide → 400 (ValueError ORM → 500 sinon).
         if fournisseur_id:
@@ -70,9 +73,12 @@ class HistoriqueAchatsViewSet(viewsets.ViewSet):
         )
 
         # Pagination
-        paginator = self.pagination_class()
-        page = paginator.paginate_queryset(daily_stats, request)
-        
+        if request.query_params.get('no_pagination') == 'true':
+            page = None
+        else:
+            paginator = self.pagination_class()
+            page = paginator.paginate_queryset(daily_stats, request)
+
         if page is not None:
             results = []
             for stat in page:
@@ -119,9 +125,9 @@ class HistoriqueAchatsViewSet(viewsets.ViewSet):
 
         # Date filtering (on the parent Commande) — idem : invalide → 400.
         if date_debut:
-            queryset = queryset.filter(commande__date__date__gte=parse_date_param(date_debut, field='date_debut'))
+            queryset = queryset.filter(commande__date__gte=day_start(parse_date_param(date_debut, field='date_debut')))
         if date_fin:
-            queryset = queryset.filter(commande__date__date__lte=parse_date_param(date_fin, field='date_fin'))
+            queryset = queryset.filter(commande__date__lt=day_start(parse_date_param(date_fin, field='date_fin') + timedelta(days=1)))
 
         # Supplier filtering
         if fournisseur_id:

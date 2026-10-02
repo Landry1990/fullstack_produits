@@ -106,6 +106,13 @@ class Commande(models.Model):
     # Tracking
     closed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='commandes_cloturees')
 
+    class Meta:
+        indexes = [
+            # Perf (migration 0262) — index créés en CONCURRENTLY
+            models.Index(fields=['is_active', '-date'], name='commande_active_date_idx'),
+            models.Index(fields=['date_cloture'], name='commande_date_cloture_idx'),
+        ]
+
     def save(self, *args, **kwargs):
         if self.numero_facture:
             self.numero_facture = self.numero_facture.upper().strip()
@@ -300,6 +307,12 @@ class CommandeProduit(models.Model):
     stock_apres_reception = models.IntegerField(default=0, help_text="Stock du produit après réception (capturé au moment de la clôture)")
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            # Perf (migration 0262) — index créé en CONCURRENTLY
+            models.Index(fields=['created_at'], name='commandeproduit_created_idx'),
+        ]
 
     def __str__(self):
         return f"Ligne de commande {self.id}"

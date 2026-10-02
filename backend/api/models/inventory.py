@@ -45,6 +45,13 @@ class Inventaire(models.Model):
         help_text="Version pour optimistic locking — incrémentée à chaque modification de lignes"
     )
 
+    class Meta:
+        indexes = [
+            # Perf (migration 0262) — index créés en CONCURRENTLY
+            models.Index(fields=['date'], name='inventaire_date_idx'),
+            models.Index(fields=['status'], name='inventaire_status_idx'),
+        ]
+
     def save(self, *args, **kwargs):
         if not self.reference:
             # Generate INV-YYYYMM-XXXX

@@ -15,6 +15,7 @@ import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from './shadcn/table';
 import { PageContainer } from './ui/PageContainer';
+import PaginationControls from './ui/PaginationControls';
 import { logger } from '../utils/logger'
 
 interface TelegramLog {
@@ -249,9 +250,8 @@ const TelegramHistory: React.FC = () => {
 
             {!loading && totalPages > 1 && (
                 <div className="flex justify-center items-center gap-3 mt-6">
-                    <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>{t('common:pagination.prev')}</Button>
                     <span className="text-xs text-slate-500">{t('view.page', { page, total: totalPages })}</span>
-                    <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>{t('common:pagination.next')}</Button>
+                    <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} />
                 </div>
             )}
         </PageContainer>

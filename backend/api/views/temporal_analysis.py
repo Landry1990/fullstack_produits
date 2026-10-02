@@ -18,6 +18,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from ..models import Facture, FactureProduit
+from ..utils.dates import day_start
 from ..utils.validation import parse_int
 
 
@@ -43,8 +44,8 @@ class TemporalAnalysisViewSet(viewsets.ViewSet):
         
         # Get sales grouped by hour
         sales_by_hour = Facture.objects.filter(
-            date__date__gte=date_start,
-            date__date__lte=today,
+            date__gte=day_start(date_start),
+            date__lt=day_start(today + timedelta(days=1)),
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         ).annotate(
             hour=ExtractHour('date')
@@ -112,8 +113,8 @@ class TemporalAnalysisViewSet(viewsets.ViewSet):
         # Django uses 1=Sunday, 2=Monday... we need to adjust
         # ExtractWeekDay: 1=Sunday, 2=Monday, 3=Tuesday... 7=Saturday
         sales_by_day = Facture.objects.filter(
-            date__date__gte=date_start,
-            date__date__lte=today,
+            date__gte=day_start(date_start),
+            date__lt=day_start(today + timedelta(days=1)),
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         ).annotate(
             weekday=ExtractWeekDay('date')  # 1=Sunday, 2=Monday...
@@ -189,8 +190,8 @@ class TemporalAnalysisViewSet(viewsets.ViewSet):
         
         # Monthly revenue trends
         monthly_trends = Facture.objects.filter(
-            date__date__gte=date_start,
-            date__date__lte=today,
+            date__gte=day_start(date_start),
+            date__lt=day_start(today + timedelta(days=1)),
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         ).annotate(
             month=TruncMonth('date')
@@ -218,8 +219,8 @@ class TemporalAnalysisViewSet(viewsets.ViewSet):
         # Find seasonal products (high variance in monthly sales)
         # Get products sold in this period with monthly breakdown
         product_monthly = FactureProduit.objects.filter(
-            facture__date__date__gte=date_start,
-            facture__date__date__lte=today,
+            facture__date__gte=day_start(date_start),
+            facture__date__lt=day_start(today + timedelta(days=1)),
             facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
             produit__isnull=False
         ).annotate(
