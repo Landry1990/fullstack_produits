@@ -441,8 +441,8 @@
             "open_cadencier_desc": "Due-date tracking"
         },
         "preview": {
-            "title": "God Mode Omnisearch",
-            "subtitle": "Navigate for instant preview.",
+            "title": "Preview",
+            "subtitle": "Browse results to see an instant preview.",
             "stock_rayon": "Shelf Stock",
             "stock_reserve": "Reserve Stock",
             "expiry": "Next Expiry",

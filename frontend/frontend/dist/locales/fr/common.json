@@ -229,8 +229,6 @@
     "pagination_info": "Page {{page}} sur {{total}} ({{count}} {{label}})",
     "previous": "Précédent",
     "next": "Suivant",
-    "first_page": "Première page",
-    "last_page": "Dernière page",
     "all_rayons": "Tous les rayons",
     "no_rayon": "Sans Rayon",
     "rayon": "Rayon",
@@ -477,8 +475,8 @@
             "open_cadencier_desc": "Suivi des échéances"
         },
         "preview": {
-            "title": "God Mode Omnisearch",
-            "subtitle": "Naviguez pour l'aperçu instantané.",
+            "title": "Aperçu",
+            "subtitle": "Naviguez dans les résultats pour afficher l'aperçu.",
             "stock_rayon": "Stock Rayon",
             "stock_reserve": "Stock Réserve",
             "expiry": "Prochaine Péremption",
