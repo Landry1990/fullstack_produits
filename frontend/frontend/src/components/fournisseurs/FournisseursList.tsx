@@ -5,6 +5,7 @@ import { formatCurrency } from '../../utils/formatters';
 import { Button } from '../shadcn/button';
 import { Badge } from '../shadcn/badge';
 import { EmptyState } from '../ui/EmptyState';
+import PaginationControls from '../ui/PaginationControls';
 import { cn } from '../../lib/utils';
 
 interface Props {
@@ -255,44 +256,13 @@ export default function FournisseursList({ hook }: Props) {
       {/* Pagination Controls */}
       {totalPages > 1 && (
         <div className="px-3 py-2 border-t border-slate-200 bg-slate-50 flex items-center justify-between shrink-0">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 text-xs"
-            disabled={currentPage <= 1}
-            onClick={() => state.setCurrentPage((p: number) => p - 1)}
-          >
-            {t('common:pagination.prev', { defaultValue: 'Préc.' })}
-          </Button>
-
-          <div className="flex gap-1">
-            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-              let page: number;
-              if (totalPages <= 5) { page = i + 1; }
-              else if (currentPage <= 3) { page = i + 1; }
-              else if (currentPage >= totalPages - 2) { page = totalPages - 4 + i; }
-              else { page = currentPage - 2 + i; }
-              return (
-                <Button
-                  key={page}
-                  variant={currentPage === page ? 'default' : 'ghost'}
-                  size="sm"
-                  className={cn("size-7 p-0 text-xs", currentPage === page ? 'bg-emerald-600 hover:bg-emerald-700' : 'text-slate-500')}
-                  onClick={() => state.setCurrentPage(page)}
-                >{page}</Button>
-              );
-            })}
-          </div>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 text-xs"
-            disabled={currentPage >= totalPages}
-            onClick={() => state.setCurrentPage((p: number) => p + 1)}
-          >
-             {t('common:pagination.next', { defaultValue: 'Suiv.' })}
-          </Button>
+          <PaginationControls
+            page={currentPage}
+            totalPages={totalPages}
+            onPageChange={(p) => state.setCurrentPage(p)}
+            size="xs"
+            className="mx-auto"
+          />
         </div>
       )}
     </div>

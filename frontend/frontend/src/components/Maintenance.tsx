@@ -9,7 +9,7 @@ import {
 import { gooeyToast } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
 import { formatNumber } from '../utils/formatters';
-import { getLocale } from '../utils/dateUtils';
+import { getLocale, formatDate } from '../utils/dateUtils';
 import { getApiErrorDetail } from '../utils/errorHandling';
 import { Button } from './shadcn/button';
 import { Input } from './shadcn/input';
@@ -70,7 +70,38 @@ interface PharmacySettings {
   backup_enabled?: boolean;
   backup_time?: string;
   secondary_backup_path?: string;
+  retention_enabled?: boolean;
+  retention_audit_days?: number;
+  retention_activity_days?: number;
+  retention_message_log_days?: number;
+  retention_session_days?: number;
+  retention_trash_days?: number;
+  retention_draft_invoice_days?: number;
+  retention_mouvement_stock_days?: number;
 }
+
+interface RetentionCategory {
+  key: string;
+  label: string;
+  count: number;
+  cutoff_date: string | null;
+  deferred?: boolean;
+}
+
+interface RetentionPreview {
+  enabled: boolean;
+  categories: RetentionCategory[];
+}
+
+const RETENTION_DAY_FIELDS = [
+  'retention_audit_days',
+  'retention_activity_days',
+  'retention_message_log_days',
+  'retention_session_days',
+  'retention_trash_days',
+  'retention_draft_invoice_days',
+  'retention_mouvement_stock_days',
+] as const;
 
 // Group tables by category for display
 const getTableCategories = (t: (key: string) => string) => ({
@@ -97,7 +128,8 @@ const getTableCategories = (t: (key: string) => string) => ({
   audit: {
     label: t('categories.audit'),
     icon: '📋',
-    keys: ['ordonnancier', 'audit_logs', 'activity_logs', 'sms_logs'],
+    // ordonnancier retiré : registre réglementé, non purgeable côté API.
+    keys: ['audit_logs', 'activity_logs', 'sms_logs', 'whatsapp_logs', 'telegram_logs'],
   },
   objectifs: {
     label: t('categories.objectifs'),
@@ -176,6 +208,15 @@ export default function Maintenance() {
   const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
   const [updateError, setUpdateError] = useState('');
 
+  // Rétention automatique States
+  const [retentionPreview, setRetentionPreview] = useState<RetentionPreview | null>(null);
+  const [retentionPreviewLoading, setRetentionPreviewLoading] = useState(false);
+  const [savingRetention, setSavingRetention] = useState(false);
+  const [showRetentionModal, setShowRetentionModal] = useState(false);
+  const [retentionPassword, setRetentionPassword] = useState('');
+  const [retentionRunning, setRetentionRunning] = useState(false);
+  const [retentionOutput, setRetentionOutput] = useState<string | null>(null);
+
   // Fetch available tables and pharmacy settings
   useEffect(() => {
     api.get('maintenance/tables/')
@@ -185,6 +226,8 @@ export default function Maintenance() {
     api.get('pharmacy-settings/')
       .then(res => setPharmacySettings(res.data))
       .catch(() => logger.error('Error loading pharmacy settings'));
+
+    fetchRetentionPreview(true);
 
     api.get('maintenance/produits_count/')
       .then(res => setProduitsCount(res.data.count))
@@ -475,6 +518,72 @@ export default function Maintenance() {
       gooeyToast.error(getApiErrorDetail(err, t('toasts.purge_error')));
     } finally {
       setPurging(false);
+    }
+  };
+
+  // --- Rétention automatique ---
+
+  const fetchRetentionPreview = async (silent = false) => {
+    setRetentionPreviewLoading(true);
+    try {
+      const res = await api.get('maintenance/retention_preview/');
+      setRetentionPreview(res.data);
+    } catch (err) {
+      if (silent) {
+        logger.error('Error loading retention preview:', err);
+      } else {
+        gooeyToast.error(getApiErrorDetail(err, t('retention.toasts.preview_error')));
+      }
+    } finally {
+      setRetentionPreviewLoading(false);
+    }
+  };
+
+  const patchRetentionSettings = async (patch: Partial<PharmacySettings>) => {
+    setSavingRetention(true);
+    try {
+      const res = await api.put('pharmacy-settings/', patch);
+      setPharmacySettings(prev => ({ ...prev, ...res.data }));
+      gooeyToast.success(t('retention.toasts.saved'));
+    } catch {
+      gooeyToast.error(t('retention.toasts.save_error'));
+    } finally {
+      setSavingRetention(false);
+    }
+  };
+
+  const handleRetentionToggle = (checked: boolean) => {
+    setPharmacySettings(prev => ({ ...prev, retention_enabled: checked }));
+    patchRetentionSettings({ retention_enabled: checked });
+  };
+
+  const saveRetentionDays = () => {
+    if (!pharmacySettings) return;
+    const patch: Partial<PharmacySettings> = {};
+    RETENTION_DAY_FIELDS.forEach(field => {
+      const value = pharmacySettings[field];
+      if (typeof value === 'number') patch[field] = value;
+    });
+    patchRetentionSettings(patch);
+  };
+
+  const handleRetentionRun = async () => {
+    if (!retentionPassword) {
+      gooeyToast.error(t('toasts.password_required'));
+      return;
+    }
+    setRetentionRunning(true);
+    try {
+      const res = await api.post('maintenance/retention_run/', { password: retentionPassword });
+      setRetentionOutput(res.data.output || '');
+      setShowRetentionModal(false);
+      setRetentionPassword('');
+      gooeyToast.success(t('retention.toasts.run_success'));
+      fetchRetentionPreview(true);
+    } catch (err) {
+      gooeyToast.error(getApiErrorDetail(err, t('retention.toasts.run_error')));
+    } finally {
+      setRetentionRunning(false);
     }
   };
 
@@ -1006,6 +1115,149 @@ export default function Maintenance() {
                   {t('purge_products_btn')}
                 </Button>
               </div>
+            </div>
+          </div>
+
+          {/* Rétention automatique */}
+          <div className="bg-white shadow-xl rounded-2xl border border-amber-500/20">
+            <div className="p-6 space-y-4">
+              <h2 className="text-lg font-bold flex items-center gap-2">
+                <Clock className="size-5 text-amber-600" />
+                {t('retention.title')}
+              </h2>
+              <p className="text-xs text-slate-500">{t('retention.description')}</p>
+
+              {/* Toggle */}
+              <label className="flex items-center gap-3 cursor-pointer p-0">
+                <Checkbox
+                  checked={pharmacySettings?.retention_enabled || false}
+                  onCheckedChange={(checked) => handleRetentionToggle(!!checked)}
+                  disabled={!pharmacySettings || savingRetention}
+                />
+                <span className="text-sm text-slate-700">{t('retention.enable')}</span>
+                {savingRetention && <Loader2 className="size-3 animate-spin text-slate-400" />}
+              </label>
+
+              {/* Durées de conservation */}
+              <div>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                  {t('retention.days_title')}
+                </h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {RETENTION_DAY_FIELDS.map(field => (
+                    <div key={field}>
+                      <label htmlFor={`retention-${field}`} className="block">
+                        <span className="text-xs text-slate-600">{t(`retention.days_labels.${field}`)}</span>
+                      </label>
+                      <Input
+                        id={`retention-${field}`}
+                        type="number"
+                        min={0}
+                        className="h-8 text-sm"
+                        value={pharmacySettings?.[field] ?? ''}
+                        onChange={e => {
+                          const n = parseInt(e.target.value, 10);
+                          setPharmacySettings(prev => ({
+                            ...prev,
+                            [field]: e.target.value === '' || isNaN(n) ? undefined : n,
+                          }));
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full gap-2 mt-2"
+                  onClick={saveRetentionDays}
+                  disabled={savingRetention || !pharmacySettings}
+                >
+                  {savingRetention ? <Loader2 className="size-3 animate-spin" /> : <Save className="size-3" />}
+                  {t('save_settings')}
+                </Button>
+              </div>
+
+              <div className="border-t border-slate-200 my-0"></div>
+
+              {/* Aperçu des données expirées */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                    <Eye className="size-4" />
+                    {t('retention.preview_title')}
+                  </h3>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto p-1"
+                    onClick={() => fetchRetentionPreview()}
+                    disabled={retentionPreviewLoading}
+                  >
+                    {retentionPreviewLoading ? <Loader2 className="size-3 animate-spin" /> : <RefreshCw className="size-3" />}
+                  </Button>
+                </div>
+
+                {retentionPreview && !retentionPreview.enabled && (
+                  <p className="text-xs text-amber-600 mb-2">{t('retention.disabled_hint')}</p>
+                )}
+
+                {retentionPreview ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-xs">{t('retention.col_category')}</TableHead>
+                        <TableHead className="text-xs">{t('retention.col_cutoff')}</TableHead>
+                        <TableHead className="text-xs text-right">{t('retention.col_count')}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {(retentionPreview.categories || []).map(c => (
+                        <TableRow key={c.key}>
+                          <TableCell className="text-xs font-medium">
+                            {t('retention.categories.' + c.key, c.label)}
+                            {c.deferred && (
+                              <Badge variant="outline" className="text-xs ml-1">
+                                {t('retention.manual_only')}
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-xs text-slate-500">
+                            {c.deferred ? '-' : formatDate(c.cutoff_date)}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Badge variant={c.count > 0 ? 'destructive' : 'secondary'} className="text-xs">
+                              {formatNumber(c.count)}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : retentionPreviewLoading ? (
+                  <p className="text-xs text-slate-400 italic">{t('retention.loading')}</p>
+                ) : (
+                  <p className="text-xs text-slate-400">{t('retention.empty')}</p>
+                )}
+              </div>
+
+              {/* Résultat de la purge */}
+              {retentionOutput && (
+                <div className="max-h-32 overflow-y-auto rounded-lg bg-slate-900 p-2 text-caption font-mono text-emerald-400 whitespace-pre-wrap">
+                  {retentionOutput}
+                </div>
+              )}
+
+              <Button
+                variant="destructive"
+                size="sm"
+                className="w-full gap-2 !whitespace-normal"
+                onClick={() => { setRetentionOutput(null); setShowRetentionModal(true); }}
+                disabled={retentionRunning}
+              >
+                {retentionRunning ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+                {t('retention.run_now')}
+              </Button>
             </div>
           </div>
 
@@ -1604,6 +1856,59 @@ export default function Maintenance() {
             >
               <Rocket className="size-4" />
               {t('update_modal.confirm_btn')}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Purge Rétention */}
+      <Dialog open={showRetentionModal} onOpenChange={(open) => { if (!open) { setShowRetentionModal(false); setRetentionPassword(''); } }}>
+        <DialogContent className="max-w-full sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-amber-100">
+                <Clock className="size-6 text-amber-600" />
+              </div>
+              {t('retention.modal.title')}
+            </DialogTitle>
+            <DialogDescription>
+              <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-lg p-3 mt-2">
+                <AlertTriangle className="size-5 text-red-600 shrink-0" />
+                <div>
+                  <p className="font-bold text-red-800">{t('purge_modal.irreversible')}</p>
+                  <p className="text-sm text-red-700">{t('retention.modal.warn')}</p>
+                </div>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="mb-4">
+            <label htmlFor="retention-password" className="block">
+              <span className="text-sm font-semibold text-slate-700">{t('retention.modal.confirm_password')}</span>
+            </label>
+            <Input
+              id="retention-password"
+              type="password"
+              placeholder={t('maintenance:admin_password_placeholder')}
+              value={retentionPassword}
+              onChange={e => setRetentionPassword(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleRetentionRun(); }}
+              autoFocus
+            />
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => { setShowRetentionModal(false); setRetentionPassword(''); }}>
+              {t('cancel')}
+            </Button>
+            <Button
+              variant="destructive"
+              className="gap-2"
+              onClick={handleRetentionRun}
+              disabled={retentionRunning || !retentionPassword}
+            >
+              {retentionRunning ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+              {t('retention.modal.confirm_btn')}
             </Button>
           </div>
         </DialogContent>

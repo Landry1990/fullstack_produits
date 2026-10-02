@@ -173,9 +173,10 @@ export function useFacturationState() {
 
   // --- Recall invoice ---
   const onInvoiceLoaded = useCallback(async (invoice: Facture) => {
-    // 1. Annuler la facture originale pour réintégrer le stock
-    //    (comme le fait handleFullModification de la caisse centrale)
-    if (invoice.id && invoice.status && invoice.status !== 'BROU') {
+    // 1. Annuler la facture originale pour la retirer de la caisse centrale
+    //    et réintégrer le stock (brouillons inclus : sinon ils restent payables
+    //    en caisse pendant la modification et deviennent orphelins).
+    if (invoice.id && invoice.status && invoice.status !== 'ANN') {
       try {
         await api.post(`factures/${invoice.id}/annuler/`, {
           motif: `Rappel pour modification (depuis Facturation)`

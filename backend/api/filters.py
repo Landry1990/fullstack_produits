@@ -7,6 +7,7 @@ from django.utils.dateparse import parse_date, parse_datetime
 from django_filters import rest_framework as filters
 
 from .models import AuditLog, EcritureComptable, Produit
+from .utils.dates import day_start
 
 
 class CharInFilter(filters.BaseInFilter, filters.CharFilter):
@@ -45,7 +46,7 @@ class ProduitFilter(filters.FilterSet):
         ).filter(
             Q(dernier_vente__lte=date_threshold) |
             (Q(dernier_vente__isnull=True) & Q(dernier_achat__lte=date_threshold)) |
-            (Q(dernier_vente__isnull=True) & Q(dernier_achat__isnull=True) & Q(created_at__date__lte=date_threshold))
+            (Q(dernier_vente__isnull=True) & Q(dernier_achat__isnull=True) & Q(created_at__lt=day_start(date_threshold + timedelta(days=1))))
         )
 
     class Meta:

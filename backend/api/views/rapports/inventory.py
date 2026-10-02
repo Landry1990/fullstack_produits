@@ -30,6 +30,7 @@ from api.models import (
     Produit,
     StockLot,
 )
+from api.utils.dates import day_start
 from api.utils.validation import parse_date_param, parse_decimal, parse_int
 from api.views.rapports.tz_utils import local_trunc_date
 
@@ -67,10 +68,11 @@ class RapportInventoryMixin:
         current_stock_cost = stock_totals['total_cost']
         current_stock_ttc = stock_totals['total_ttc']
 
-        # NB : pas de borne `date__date__lte=date_fin` volontairement — la reconstruction
+        # NB : pas de borne `date__lt=day_start(date_fin + 1j)` volontairement — la reconstruction
         # part du stock courant et remonte le temps : les mouvements postérieurs à
         # date_fin sont nécessaires pour reconstituer la valeur du stock à date_fin.
-        ventes_ca = Facture.objects.filter(is_active=True, date__date__gte=date_debut, status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]).annotate(jour=local_trunc_date('date')).values('jour').annotate(ca_net=Sum('total_ttc')).order_by('-jour')
+        date_debut_dt = day_start(date_debut)
+        ventes_ca = Facture.objects.filter(is_active=True, date__gte=date_debut_dt, status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]).annotate(jour=local_trunc_date('date')).values('jour').annotate(ca_net=Sum('total_ttc')).order_by('-jour')
         # Coût historique des ventes : on préfère le coût réel des allocations de lots
         # (cost_price figé au moment de la vente) ; repli sur le PMP actuel pour les
         # lignes sans allocation (ventes anciennes ou manuelles).
@@ -79,8 +81,8 @@ class RapportInventoryMixin:
         ).values('facture_produit').annotate(
             c=Sum(F('quantity') * F('cost_price'), output_field=DecimalField())
         ).values('c')
-        ventes_details = FactureProduit.objects.filter(facture__is_active=True, facture__date__date__gte=date_debut, facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]).annotate(jour=local_trunc_date('facture__date')).values('jour').annotate(ventes_ttc_brut=Sum(F('quantity') * F('selling_price'), output_field=DecimalField()), cout_ventes=Sum(Coalesce(Subquery(alloc_cost_sq, output_field=DecimalField()), ExpressionWrapper(F('quantity') * F('produit__pmp'), output_field=DecimalField()), output_field=DecimalField()))).order_by('-jour')
-        achats = CommandeProduit.objects.filter(commande__is_active=True, commande__date_cloture__date__gte=date_debut, commande__status='CLOT').annotate(jour=local_trunc_date('commande__date_cloture')).values('jour').annotate(achats_cout=Sum((F('quantity') + F('unites_gratuites')) * F('price_cost'), output_field=DecimalField()), achats_ttc_virtuel=Sum((F('quantity') + F('unites_gratuites')) * F('produit__selling_price'), output_field=DecimalField())).order_by('-jour')
+        ventes_details = FactureProduit.objects.filter(facture__is_active=True, facture__date__gte=date_debut_dt, facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]).annotate(jour=local_trunc_date('facture__date')).values('jour').annotate(ventes_ttc_brut=Sum(F('quantity') * F('selling_price'), output_field=DecimalField()), cout_ventes=Sum(Coalesce(Subquery(alloc_cost_sq, output_field=DecimalField()), ExpressionWrapper(F('quantity') * F('produit__pmp'), output_field=DecimalField()), output_field=DecimalField()))).order_by('-jour')
+        achats = CommandeProduit.objects.filter(commande__is_active=True, commande__date_cloture__gte=date_debut_dt, commande__status='CLOT').annotate(jour=local_trunc_date('commande__date_cloture')).values('jour').annotate(achats_cout=Sum((F('quantity') + F('unites_gratuites')) * F('price_cost'), output_field=DecimalField()), achats_ttc_virtuel=Sum((F('quantity') + F('unites_gratuites')) * F('produit__selling_price'), output_field=DecimalField())).order_by('-jour')
 
         mouvements_map = {}
         for v in ventes_ca:

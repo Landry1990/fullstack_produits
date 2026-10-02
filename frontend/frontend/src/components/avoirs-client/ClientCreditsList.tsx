@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatDate } from '../../utils/dateUtils';
 import { formatCurrency as formatCurrencyValue } from '../../utils/formatters';
-import { Check, ChevronLeft, ChevronRight, Download, Eye, FileText, Loader2, Plus, RotateCcw } from 'lucide-react';
+import { Check, Download, Eye, FileText, Loader2, Plus, RotateCcw } from 'lucide-react';
 import type { ClientCredit } from '../../types';
 import { Button } from '../shadcn/button';
 import { Input } from '../shadcn/input';
@@ -18,6 +18,7 @@ import {
 import { cn } from '../../lib/utils';
 import { EmptyState } from '../ui/EmptyState';
 import { Skeleton } from '../ui/Skeleton';
+import PaginationControls from '../ui/PaginationControls';
 
 interface ClientCreditsListProps {
     credits: ClientCredit[];
@@ -247,29 +248,15 @@ export const ClientCreditsList: React.FC<ClientCreditsListProps> = ({
                         {t('list.pagination.showing', { start, end, total })}
                     </span>
                     <div className="flex items-center gap-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => onPageChange(page - 1)}
-                            disabled={page <= 1 || loading}
-                            className="gap-1"
-                        >
-                            <ChevronLeft className="size-4" />
-                            {t('list.pagination.prev')}
-                        </Button>
+                        <PaginationControls
+                            page={page}
+                            totalPages={totalPages}
+                            onPageChange={onPageChange}
+                            isLoading={loading}
+                        />
                         <span className="text-sm font-medium text-slate-700 px-2">
                             {t('list.pagination.page', { page, total: totalPages })}
                         </span>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => onPageChange(page + 1)}
-                            disabled={page >= totalPages || loading}
-                            className="gap-1"
-                        >
-                            {t('list.pagination.next')}
-                            <ChevronRight className="size-4" />
-                        </Button>
                     </div>
                 </div>
             </div>

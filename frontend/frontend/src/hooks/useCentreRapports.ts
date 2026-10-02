@@ -72,14 +72,17 @@ export function useCentreRapports() {
         return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     }, []);
 
+    // Heure locale (pas UTC) : les champs datetime-local/date sont interprétés
+    // en heure locale par le backend — toISOString() décalait les valeurs.
     const getCurrentDateTime = useCallback(() => {
         const now = new Date();
-        return now.toISOString().slice(0, 16);
+        const pad = (n: number) => String(n).padStart(2, '0');
+        return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
     }, []);
 
     const getTodayDate = useCallback(() => {
-        return new Date().toISOString().slice(0, 10);
-    }, []);
+        return getCurrentDateTime().slice(0, 10);
+    }, [getCurrentDateTime]);
 
     const safeDate = useCallback((dateStr: unknown): Date | null => {
         if (!dateStr || typeof dateStr !== 'string') return null;
@@ -449,7 +452,7 @@ export function useCentreRapports() {
             return;
         }
 
-        const today = new Date().toISOString().slice(0, 10);
+        const today = getTodayDate();
         const filename = `${selectedQuery.id}_${today}.xlsx`;
         exportToExcel(data, pharmacySettings, {
             sheetName: 'Rapport',
@@ -457,7 +460,7 @@ export function useCentreRapports() {
             title: selectedQuery.name,
         });
         gooeyToast.success(t('results.export_success', { filename }));
-    }, [results, selectedQuery, t, params, pharmacySettings]);
+    }, [results, selectedQuery, t, params, pharmacySettings, getTodayDate]);
 
     useEffect(() => {
         const reportId = searchParams.get('report');

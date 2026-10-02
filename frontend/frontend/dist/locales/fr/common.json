@@ -229,6 +229,8 @@
     "pagination_info": "Page {{page}} sur {{total}} ({{count}} {{label}})",
     "previous": "Précédent",
     "next": "Suivant",
+    "first_page": "Première page",
+    "last_page": "Dernière page",
     "all_rayons": "Tous les rayons",
     "no_rayon": "Sans Rayon",
     "rayon": "Rayon",

@@ -34,4 +34,13 @@ export interface PharmacySettings {
     auto_logout_timeout?: number
     hide_cash_totals?: boolean
     billetage_obligatoire?: boolean
+    // Rétention automatique (purge planifiée des données anciennes)
+    retention_enabled?: boolean
+    retention_audit_days?: number
+    retention_activity_days?: number
+    retention_message_log_days?: number
+    retention_session_days?: number
+    retention_trash_days?: number
+    retention_draft_invoice_days?: number
+    retention_mouvement_stock_days?: number
 }

@@ -121,8 +121,8 @@ class Command(BaseCommand):
                 date__gte=start_date,
                 date__lte=end_date,
                 is_active=True
-            ).exclude(status='BROUILLON')
-            
+            ).exclude(status=Facture.Status.BROUILLON)
+
             agg = invoices.aggregate(
                 ca_ttc=Sum('total_ttc'),
                 ca_ht=Sum('total_ht'),
@@ -146,7 +146,7 @@ class Command(BaseCommand):
                 date__gte=start_date,
                 date__lte=end_date,
                 is_active=True
-            ).exclude(status='BROUILLON')
+            ).exclude(status=Facture.Status.BROUILLON)
             ca_ht, marge_brute = calculate_margin_for_invoices(invoices)
             data['margin'] = {
                 'marge_brute': int(marge_brute),
@@ -267,7 +267,7 @@ class Command(BaseCommand):
                 date__gte=prev_start,
                 date__lte=prev_end,
                 is_active=True
-            ).exclude(status='BROUILLON').aggregate(
+            ).exclude(status=Facture.Status.BROUILLON).aggregate(
                 total=Coalesce(Sum('total_ttc'), Decimal(0))
             )['total']
             

@@ -14,7 +14,7 @@ import TicketPreviewModal from './facturation/TicketPreviewModal';
 import { usePharmacySettings } from '../hooks/usePharmacySettings';
 
 import { TrancheHoraireStats } from './sales/TrancheHoraireStats';
-import Pagination from './ui/Pagination';
+import PaginationControls from './ui/PaginationControls';
 import { Receipt, Plus, ChevronUp, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from './shadcn/button';
@@ -171,15 +171,23 @@ const Ventes: React.FC = () => {
                     />
 
                     <div className="border-t border-slate-100">
-                        <Pagination
-                            currentPage={pagination?.currentPage || 1}
-                            totalPages={pagination?.totalPages || 1}
-                            totalItems={pagination?.totalItems || 0}
-                            onPrev={() => pagination?.prevPage && pagination.prevPage()}
-                            onNext={() => pagination?.nextPage && pagination.nextPage()}
-                            hasNext={pagination?.hasNext}
-                            isLoading={loading}
-                        />
+                        <div className="p-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between bg-white/50 dark:bg-slate-900/50">
+                            <div className="text-sm text-slate-500 dark:text-slate-400">
+                                {t('common:pagination_info', {
+                                    defaultValue: `Page ${pagination?.currentPage || 1} sur ${pagination?.totalPages || 1} (${pagination?.totalItems || 0} ${t('common:items', { defaultValue: 'éléments' })})`,
+                                    page: pagination?.currentPage || 1,
+                                    total: pagination?.totalPages || 1,
+                                    count: pagination?.totalItems || 0,
+                                    label: t('common:items', { defaultValue: 'éléments', count: pagination?.totalItems || 0 })
+                                })}
+                            </div>
+                            <PaginationControls
+                                page={pagination?.currentPage || 1}
+                                totalPages={pagination?.totalPages || 1}
+                                onPageChange={(p) => pagination?.goToPage(p)}
+                                isLoading={loading}
+                            />
+                        </div>
                     </div>
                 </div>
 

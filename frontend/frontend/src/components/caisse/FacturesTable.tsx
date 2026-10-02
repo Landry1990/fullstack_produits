@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Package, Minus, Plus, Trash2, Pencil, XCircle, Ticket, Banknote, ChevronLeft, ChevronRight, Inbox } from 'lucide-react'
+import { Package, Minus, Plus, Trash2, Pencil, XCircle, Ticket, Banknote, Inbox } from 'lucide-react'
 import type { Facture, FactureProduit, CouponMonnaie } from '../../types'
 import {
   Dialog,
@@ -22,6 +22,7 @@ import {
   TableRow,
 } from '../shadcn/table'
 import { EmptyState } from '../ui/EmptyState'
+import PaginationControls from '../ui/PaginationControls'
 import SkeletonTable from '../ui/SkeletonTable'
 import { useConfirm } from '../../hooks/useConfirm'
 
@@ -417,15 +418,8 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
             </span>
           </div>
           <div className="flex items-center gap-1">
-            <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
-              <ChevronLeft className="size-4" />
-              {t('common:pagination.prev', 'Précédent')}
-            </Button>
             <span className="px-3 py-1.5 text-sm font-medium text-slate-600 bg-slate-100 rounded-md">{page}/{totalPages}</span>
-            <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
-              {t('common:pagination.next', 'Suivant')}
-              <ChevronRight className="size-4" />
-            </Button>
+            <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} />
           </div>
         </div>
       )}

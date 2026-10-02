@@ -148,8 +148,18 @@ export default function EtatsInventaire() {
   };
 
   // ── Impression ─────────────────────────────────────────────────────────────
+  // Le endpoint PDF (produits/etat-inventaire/pdf/) a un contrat différent de
+  // listing-excel : group_by ∈ FORME|RAYON|GROUPE (fournisseur non supporté →
+  // repli silencieux sur RAYON) et stock_display ∈ MACHINE|ZERO|NON_ZERO.
   const handlePrint = () => {
-    const params = buildParams();
+    const pdfGroupBy = groupBy === 'fournisseur' ? 'RAYON' : groupBy.toUpperCase();
+    const stockDisplay =
+      source === 'blind' || stockFilter === 'zero' ? 'ZERO' :
+      stockFilter === 'non_zero' ? 'NON_ZERO' :
+      'MACHINE';
+    const params: Record<string, string> = { group_by: pdfGroupBy, stock_display: stockDisplay };
+    // filter_id désigne une entité du groupement : invalide si repli fournisseur → RAYON
+    if (selectedEntity && groupBy !== 'fournisseur') params.filter_id = String(selectedEntity);
     const qs = new URLSearchParams(params).toString();
     window.open(`/app/printing/0?type=INVENTAIRE&${qs}`, '_blank');
   };

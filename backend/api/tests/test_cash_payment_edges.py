@@ -77,6 +77,89 @@ class DirectPaymentEdgeTests(APITestCase):
         self.assertEqual(self.facture.status, Facture.Status.ANNULEE)
 
 
+class CancelledInvoicePaymentGuardTests(APITestCase):
+    """L'API caisse refuse d'encaisser une facture annulée/supprimée.
+
+    Régression : un rappel de vente annule la facture, mais la file caisse
+    pouvait rester affichée (polling 30 s) — un clic « encaisser » créait un
+    paiement 'completee' sur une facture ANNULEE (écart de caisse).
+    """
+
+    def setUp(self):
+        from api.models import PosteVente
+        self.user = TestDataFactory.create_superuser()
+        self.client.force_authenticate(user=self.user)
+        PosteVente.objects.create(vendeur=self.user, est_actif=True)
+
+    def test_payment_on_cancelled_invoice_is_rejected(self):
+        facture = TestDataFactory.create_facture(
+            status=Facture.Status.ANNULEE,
+            total_ttc=Decimal('1000.00'),
+        )
+
+        response = self.client.post(reverse('caisse-list'), {
+            'facture': facture.id,
+            'mode_paiement': 'especes',
+            'montant': '1000',
+            'statut': 'completee',
+        }, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(Caisse.objects.filter(facture=facture).exists())
+
+    def test_payment_on_inactive_invoice_is_rejected(self):
+        facture = TestDataFactory.create_facture(
+            status=Facture.Status.VALIDEE,
+            total_ttc=Decimal('1000.00'),
+        )
+        facture.is_active = False
+        facture.save(update_fields=['is_active'])
+
+        response = self.client.post(reverse('caisse-list'), {
+            'facture': facture.id,
+            'mode_paiement': 'especes',
+            'montant': '1000',
+            'statut': 'completee',
+        }, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(Caisse.objects.filter(facture=facture).exists())
+
+    def test_bulk_payment_on_cancelled_invoice_is_rejected(self):
+        facture = TestDataFactory.create_facture(
+            status=Facture.Status.ANNULEE,
+            total_ttc=Decimal('1000.00'),
+        )
+
+        response = self.client.post(reverse('caisse-bulk-create'), {
+            'items': [{
+                'facture': facture.id,
+                'mode_paiement': 'especes',
+                'montant': '1000',
+                'statut': 'completee',
+            }],
+        }, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(Caisse.objects.filter(facture=facture).exists())
+
+    def test_payment_on_pending_invoice_still_accepted(self):
+        facture = TestDataFactory.create_facture(
+            status=Facture.Status.VALIDEE,
+            total_ttc=Decimal('1000.00'),
+        )
+
+        response = self.client.post(reverse('caisse-list'), {
+            'facture': facture.id,
+            'mode_paiement': 'especes',
+            'montant': '1000',
+            'statut': 'completee',
+        }, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(Caisse.objects.filter(facture=facture).exists())
+
+
 class SplitBillingIdempotencyTests(APITestCase):
     def test_auto_credit_is_created_only_once(self):
         user = TestDataFactory.create_user(username='split-billing-user')

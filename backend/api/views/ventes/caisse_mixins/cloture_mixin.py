@@ -70,7 +70,9 @@ class CaisseClotureMixin:
                 return Response({'detail': 'Date de début invalide.'}, status=status.HTTP_400_BAD_REQUEST)
 
         if date_fin:
-            end_date = _parse_iso_datetime(date_fin)
+            # end_of_day=True : une date seule (YYYY-MM-DD) borne à 23:59:59 —
+            # une borne à 00:00 exclurait tout le jour de fin des filtres __lte.
+            end_date = _parse_iso_datetime(date_fin, end_of_day=True)
             if end_date is None:
                 logger.error(f"Error parsing date_fin {date_fin}")
                 return Response({'detail': 'Date de fin invalide.'}, status=status.HTTP_400_BAD_REQUEST)

@@ -3,8 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { useDebounce } from 'use-debounce';
 import {
     Trophy,
-    ChevronLeft,
-    ChevronRight,
     Loader2,
     FileText,
     Search,
@@ -49,6 +47,7 @@ import type { Challenge, ChallengeListParams } from '../../types';
 import ChallengeFormModal from './ChallengeFormModal';
 import ChallengeClassement from './ChallengeClassement';
 import SudoValidationModal from '../common/SudoValidationModal';
+import PaginationControls from '../ui/PaginationControls';
 
 const PAGE_SIZE = 25;
 
@@ -422,29 +421,15 @@ const ChallengesPage: React.FC = () => {
                             {t('challenges:pagination.showing', { start, end, total })}
                         </p>
                         <div className="flex items-center gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-8 gap-1.5"
-                                disabled={page <= 1}
-                                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                            >
-                                <ChevronLeft className="size-4" />
-                                {t('common:previous')}
-                            </Button>
+                            <PaginationControls
+                                page={page}
+                                totalPages={totalPages}
+                                onPageChange={(p) => setPage(p)}
+                                isLoading={isLoading}
+                            />
                             <span className="text-xs font-bold text-slate-600 px-2">
                                 {page} / {totalPages}
                             </span>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-8 gap-1.5"
-                                disabled={page >= totalPages}
-                                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                            >
-                                {t('common:next')}
-                                <ChevronRight className="size-4" />
-                            </Button>
                         </div>
                     </div>
                 )}

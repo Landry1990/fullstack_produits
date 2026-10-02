@@ -6,6 +6,7 @@ from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.filters import SearchFilter
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -36,8 +37,9 @@ class AvoirClientViewSet(viewsets.ModelViewSet):
     serializer_class = AvoirClientSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = StandardResultsSetPagination
-    filter_backends = [DjangoFilterBackend]
+    filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_fields = ['statut', 'client', 'facture_origine', 'type_motif']
+    search_fields = ['numero', 'client__name', 'facture_origine__numero_facture']
 
     def get_serializer_class(self):
         # En mise à jour, le montant et les lignes d'un avoir client sont figés
@@ -279,7 +281,7 @@ class AvoirClientViewSet(viewsets.ModelViewSet):
         from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
         from openpyxl.utils import get_column_letter
 
-        queryset = self.get_queryset()
+        queryset = self.filter_queryset(self.get_queryset())
         avoirs = list(queryset.select_related('client', 'facture_origine'))
 
         wb = openpyxl.Workbook()

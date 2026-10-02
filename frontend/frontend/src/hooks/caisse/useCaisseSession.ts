@@ -33,7 +33,7 @@ export function useCaisseSession() {
     try {
       const params: Record<string, string> = {}
       if (selectedPosteCaisseId !== 'all') params.poste_caisse = selectedPosteCaisseId
-      const res = await api.get('postes-caisses/recap_session/', { params })
+      const res = await api.get('postes-ventes/recap_session/', { params })
       setSessionRecap(res.data)
     } catch {
       // silencieux si pas de session
@@ -52,7 +52,7 @@ export function useCaisseSession() {
     const initPage = async () => {
       try {
         const [settingsRes, postesRes, myActive, allActivePostes] = await Promise.all([
-          api.get('parametres/').catch(() => ({ data: {} })),
+          api.get('pharmacy-settings/').catch(() => ({ data: {} })),
           api.get('postes-caisses/').catch(() => ({ data: { results: [] } })),
           cashSessionService.getMyActivePostesVente().catch(() => []),
           cashSessionService.getActivePostesVente().catch(() => [])

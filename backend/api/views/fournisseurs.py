@@ -29,6 +29,7 @@ from ..services.supplier_finance import (
     build_supplier_statement,
 )
 from ..sudo_utils import validate_sudo_mode
+from ..utils.dates import day_start
 from ..utils.validation import parse_id
 
 logger = logging.getLogger(__name__)
@@ -312,7 +313,7 @@ class FournisseurViewSet(viewsets.ModelViewSet):
                 total_commandes = CommandeProduit.objects.filter(
                     commande__status=Commande.Status.CLOTUREE,
                     commande__is_active=True,
-                    commande__date_cloture__date__lte=last_day
+                    commande__date_cloture__lt=day_start(last_day + timedelta(days=1))
                 ).aggregate(
                     total=Sum(F('quantity') * F('price_cost'), output_field=DecimalField())
                 )['total'] or Decimal('0.00')

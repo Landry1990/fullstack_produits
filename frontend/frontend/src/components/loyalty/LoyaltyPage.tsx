@@ -2,8 +2,9 @@ import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
-import { Award, ChevronLeft, ChevronRight, Loader2, Settings, FileText, Search, X, User as UserIcon } from 'lucide-react';
+import { Award, Loader2, Settings, FileText, Search, X, User as UserIcon } from 'lucide-react';
 import { Button } from '../shadcn/button';
+import PaginationControls from '../ui/PaginationControls';
 import { Badge } from '../shadcn/badge';
 import { Select } from '../shadcn/select';
 import {
@@ -392,29 +393,15 @@ const LoyaltyPage: React.FC = () => {
                         {t('common:pagination.showing', { defaultValue: '{{start}}–{{end}} sur {{total}}', start, end, total })}
                     </span>
                     <div className="flex items-center gap-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setPage(page - 1)}
-                            disabled={page <= 1 || isLoading}
-                            className="gap-1"
-                        >
-                            <ChevronLeft className="size-4" />
-                            {t('common:pagination.prev', { defaultValue: 'Précédent' })}
-                        </Button>
+                        <PaginationControls
+                            page={page}
+                            totalPages={totalPages}
+                            onPageChange={(p) => setPage(p)}
+                            isLoading={isLoading}
+                        />
                         <span className="text-sm font-medium text-slate-700 px-2">
                             {t('common:pagination.page', { defaultValue: 'Page {{page}}/{{total}}', page, total: totalPages })}
                         </span>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setPage(page + 1)}
-                            disabled={page >= totalPages || isLoading}
-                            className="gap-1"
-                        >
-                            {t('common:pagination.next', { defaultValue: 'Suivant' })}
-                            <ChevronRight className="size-4" />
-                        </Button>
                     </div>
                 </div>
             </div>

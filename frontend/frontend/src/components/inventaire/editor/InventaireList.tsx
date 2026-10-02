@@ -7,7 +7,8 @@ import {
 import { InventaireFilters } from '../InventaireFilters';
 import { InventaireQuickStats } from '../InventaireQuickStats';
 import { InventaireListTable } from '../InventaireListTable';
-import Pagination from '../../ui/Pagination';
+import PaginationControls from '../../ui/PaginationControls';
+import { buildPageUrl } from '../../../utils/pagination';
 import { useInventaireList } from '../../../hooks/inventaire/useInventaireList';
 import { useInventaireEditor } from '../../../hooks/inventaire/useInventaireEditor';
 import { gooeyToast } from 'goey-toast';
@@ -178,16 +179,30 @@ export const InventaireList: React.FC<InventaireListProps> = ({
                 </div>
 
                 {/* Pagination Controls */}
-                <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    totalItems={totalCount}
-                    onPrev={() => prevPage && fetchInventaires(prevPage)}
-                    onNext={() => nextPage && fetchInventaires(nextPage)}
-                    hasNext={!!nextPage}
-                    isLoading={loading}
-                    label={t('inventaire.list.title_short')}
-                />
+                <div className="p-4 border-t border-slate-200 flex items-center justify-between bg-white/50 shrink-0">
+                    <div className="text-sm text-slate-500">
+                        {t('common:pagination_info', {
+                            defaultValue: `Page ${currentPage} sur ${totalPages} (${totalCount} ${t('inventaire.list.title_short')})`,
+                            page: currentPage,
+                            total: totalPages,
+                            count: totalCount,
+                            label: t('inventaire.list.title_short'),
+                        })}
+                    </div>
+                    <PaginationControls
+                        page={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={(p) => {
+                            if (p === 1) {
+                                fetchInventaires();
+                                return;
+                            }
+                            const url = buildPageUrl(nextPage || prevPage, p);
+                            if (url) fetchInventaires(url);
+                        }}
+                        isLoading={loading}
+                    />
+                </div>
             </div>
         </div>
     );

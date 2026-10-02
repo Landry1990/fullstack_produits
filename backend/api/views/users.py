@@ -31,7 +31,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from ..audit_helpers import log_audit
 from ..centralized_configs import BaseViewSetConfig, StandardResultsSetPagination
 from ..models import AuditLog, Facture, FactureProduit, Profile, Team, UserDailySession
-from ..utils.validation import parse_int
+from ..utils.dates import day_start
+from ..utils.validation import parse_date_param, parse_int
 from ..serializers import ProfileSerializer as UserProfileSerializer
 from ..serializers import TeamSerializer, UserSerializer
 
@@ -492,10 +493,19 @@ class UserDailySessionViewSet(viewsets.ReadOnlyModelViewSet):
         # If superuser, close ALL old sessions. If regular user, only close their own.
         if getattr(user, 'is_superuser', False):
             auto_close_old_sessions()
-            return UserDailySession.objects.all().order_by('-date', '-first_login')
-        
-        auto_close_old_sessions(user=user)
-        return UserDailySession.objects.filter(user=user).order_by('-date', '-first_login')
+            queryset = UserDailySession.objects.all().order_by('-date', '-first_login')
+        else:
+            auto_close_old_sessions(user=user)
+            queryset = UserDailySession.objects.filter(user=user).order_by('-date', '-first_login')
+
+        # Filtres de plage envoyés par le frontend — parse_date_param → 400 si invalide.
+        date_after = self.request.query_params.get('date_after')
+        date_before = self.request.query_params.get('date_before')
+        if date_after:
+            queryset = queryset.filter(date__gte=parse_date_param(date_after, field='date_after'))
+        if date_before:
+            queryset = queryset.filter(date__lte=parse_date_param(date_before, field='date_before'))
+        return queryset
 
     def get_serializer_class(self):
         from ..serializers_sessions import UserDailySessionSerializer
@@ -672,8 +682,8 @@ class TeamViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
                 created_by_id__in=membre_ids,
                 status__in=statuts_valides,
                 is_active=True,
-                date__date__gte=date_debut,
-                date__date__lte=date_fin,
+                date__gte=day_start(date_debut),
+                date__lt=day_start(date_fin + timedelta(days=1)),
             )
 
             # Agrégations au niveau de l'équipe

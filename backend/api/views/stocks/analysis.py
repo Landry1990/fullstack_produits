@@ -1,5 +1,5 @@
 import math
-from datetime import timedelta
+from datetime import datetime, timedelta
 from decimal import Decimal
 
 from django.db.models import DecimalField, F, Q, Sum
@@ -12,6 +12,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from ...models import Commande, CommandeProduit, Fournisseur, Produit, StockLot
+from ...utils.dates import day_start
 from ...utils.validation import parse_date_param, parse_id, parse_int
 
 
@@ -33,10 +34,21 @@ class StatsUGViewSet(viewsets.GenericViewSet):
         lots_query = StockLot.objects.filter(quantity_free__gt=0)
         if fournisseur_id:
             lots_query = lots_query.filter(fournisseur_id=fournisseur_id)
+        # date_reception est un DateTimeField : un « date » à droite de __lte
+        # borne à 00:00 et exclurait tout le jour de fin → borne exclusive au
+        # lendemain ; un datetime reste une borne exacte (__lte conservé).
         if date_debut:
-            lots_query = lots_query.filter(date_reception__gte=date_debut)
+            lots_query = lots_query.filter(
+                date_reception__gte=date_debut if isinstance(date_debut, datetime)
+                else day_start(date_debut)
+            )
         if date_fin:
-            lots_query = lots_query.filter(date_reception__lte=date_fin)
+            if isinstance(date_fin, datetime):
+                lots_query = lots_query.filter(date_reception__lte=date_fin)
+            else:
+                lots_query = lots_query.filter(
+                    date_reception__lt=day_start(date_fin + timedelta(days=1))
+                )
         
         # Coalesce: use Command Supplier if available, else Lot Supplier
         stats = lots_query.annotate(
@@ -362,7 +374,7 @@ class StockAnalysisShortageView(APIView):
             FactureProduit.objects
             .filter(
                 facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
-                facture__date__date__gte=date_7_days_ago,
+                facture__date__gte=day_start(date_7_days_ago),
                 produit__isnull=False
             )
             .values('produit_id')
@@ -375,8 +387,8 @@ class StockAnalysisShortageView(APIView):
             FactureProduit.objects
             .filter(
                 facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
-                facture__date__date__gte=date_30_days_ago,
-                facture__date__date__lt=date_7_days_ago,
+                facture__date__gte=day_start(date_30_days_ago),
+                facture__date__lt=day_start(date_7_days_ago),
                 produit__isnull=False
             )
             .values('produit_id')

@@ -72,7 +72,7 @@ const venteService = {
     },
 
     deleteBrouillons: async (): Promise<void> => {
-        await api.delete('factures/delete_brouillons/');
+        await api.delete('factures/supprimer_brouillons/');
     },
 
     bulkDelete: async (ids: number[]): Promise<{ deleted: number }> => {

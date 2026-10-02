@@ -191,6 +191,23 @@ class StockLot(models.Model):
             models.Index(fields=['produit', 'quantity_remaining']),
             models.Index(fields=['produit', 'quantity_remaining', 'date_expiration']),
             models.Index(fields=['date_expiration']),
+            # Perf (migration 0262) — index créés en CONCURRENTLY
+            models.Index(fields=['date_reception'], name='stocklot_date_reception_idx'),
+            models.Index(
+                fields=['date_reception'],
+                condition=models.Q(quantity_free__gt=0),
+                name='stocklot_qtyfree_reception_idx',
+            ),
+            models.Index(
+                fields=['produit'],
+                condition=models.Q(quantity_free_remaining__gt=0),
+                name='stocklot_qtyfreerem_idx',
+            ),
+            models.Index(
+                fields=['produit'],
+                condition=~models.Q(quantity_reserved=0),
+                name='stocklot_qtyreserved_idx',
+            ),
         ]
         constraints = [
             models.UniqueConstraint(
@@ -341,6 +358,9 @@ class MouvementStock(models.Model):
         ordering = ['-date']
         indexes = [
             models.Index(fields=['produit', 'date']),
+            # Perf (migration 0262) — index créés en CONCURRENTLY
+            models.Index(fields=['type_mouvement', 'date'], name='mvt_stock_type_date_idx'),
+            models.Index(fields=['date'], name='mvt_stock_date_idx'),
         ]
 
     def __str__(self):

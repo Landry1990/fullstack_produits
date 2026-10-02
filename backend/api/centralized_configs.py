@@ -193,7 +193,7 @@ class CommonOrderingFields:
     @staticmethod
     def product_ordering():
         """Tri pour produits"""
-        return ['name', 'stock', 'selling_price', 'updated_at']
+        return ['name', 'stock', 'selling_price', 'updated_at', 'tva']
 
 
 # ============================================================================

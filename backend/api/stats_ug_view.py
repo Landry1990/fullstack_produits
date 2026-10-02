@@ -1,10 +1,14 @@
 
+from datetime import datetime, timedelta
+
 from django.db.models import DecimalField, F, Sum
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from .models import CommandeProduit, StockLot
+from .utils.dates import day_start
+from .utils.validation import parse_date_param
 
 
 class StatsUGViewSet(viewsets.GenericViewSet):
@@ -35,14 +39,27 @@ class StatsUGViewSet(viewsets.GenericViewSet):
         lots_query = StockLot.objects.filter(quantity_free__gt=0)
         
         # Apply filters
+        # parse_date_param → 400 si invalide. date_reception est un
+        # DateTimeField : une date seule à droite de __lte bornerait à 00:00
+        # et exclurait tout le jour de fin → borne exclusive au lendemain.
         if fournisseur_id:
             lots_query = lots_query.filter(fournisseur_id=fournisseur_id)
-        
+
         if date_debut:
-            lots_query = lots_query.filter(date_reception__gte=date_debut)
-        
+            debut = parse_date_param(date_debut, field='date_debut')
+            lots_query = lots_query.filter(
+                date_reception__gte=debut if isinstance(debut, datetime)
+                else day_start(debut)
+            )
+
         if date_fin:
-            lots_query = lots_query.filter(date_reception__lte=date_fin)
+            fin = parse_date_param(date_fin, field='date_fin')
+            if isinstance(fin, datetime):
+                lots_query = lots_query.filter(date_reception__lte=fin)
+            else:
+                lots_query = lots_query.filter(
+                    date_reception__lt=day_start(fin + timedelta(days=1))
+                )
         
         # Aggregate by supplier
         stats = lots_query.values(

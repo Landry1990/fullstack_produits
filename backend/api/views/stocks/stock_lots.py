@@ -45,7 +45,17 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
         )
         if date_expiration_lte:
             qs = qs.filter(date_expiration__lte=date_expiration_lte)
-        
+
+        # Filter lots expiring within the next N days (relative date shortcut)
+        expiring_within_days = self.request.query_params.get('expiring_within_days')
+        if expiring_within_days is not None:
+            days = parse_int(
+                expiring_within_days, field='expiring_within_days',
+                min_value=0, max_value=3650
+            )
+            today = timezone.localtime(timezone.now()).date()
+            qs = qs.filter(date_expiration__lte=today + timedelta(days=days))
+
         # Filter only positive remaining quantity by default, unless specified
         include_empty = self.request.query_params.get('include_empty', 'false')
         if include_empty.lower() != 'true':

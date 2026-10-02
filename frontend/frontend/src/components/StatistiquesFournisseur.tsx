@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Loader2, ChevronLeft, ChevronRight, Download, AlertTriangle, Building2 } from 'lucide-react';
+import { Loader2, Download, AlertTriangle, Building2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import api from '../services/api';
 import { formatCurrency } from '../utils/formatters';
@@ -25,6 +25,7 @@ import { EmptyState } from './ui/EmptyState';
 import { Skeleton } from './ui/Skeleton';
 import SkeletonTable from './ui/SkeletonTable';
 import { PageContainer } from './ui/PageContainer';
+import PaginationControls from './ui/PaginationControls';
 import { logger } from '../utils/logger'
 import financeService from '../services/financeService';
 import fournisseurService from '../services/fournisseurService';
@@ -835,23 +836,15 @@ export default function StatistiquesFournisseur() {
               {/* Pagination */}
               {paiementsCount > PAIEMENT_PAGE_SIZE && (
                 <div className="flex items-center justify-between p-3 border-t border-slate-200">
-                  <Button
-                    variant="outline" size="sm"
-                    disabled={paiementPage <= 1 || loadingPaiements}
-                    onClick={() => setPaiementPage((p) => Math.max(1, p - 1))}
-                  >
-                    <ChevronLeft className="size-4" /> {t('payments_tab.pagination.previous')}
-                  </Button>
+                  <PaginationControls
+                    page={paiementPage}
+                    totalPages={paiementTotalPages}
+                    onPageChange={(p) => setPaiementPage(p)}
+                    isLoading={loadingPaiements}
+                  />
                   <span className="text-xs font-medium text-slate-600">
                     {t('payments_tab.pagination.page', { page: paiementPage, total: paiementTotalPages })}
                   </span>
-                  <Button
-                    variant="outline" size="sm"
-                    disabled={paiementPage >= paiementTotalPages || loadingPaiements}
-                    onClick={() => setPaiementPage((p) => Math.min(paiementTotalPages, p + 1))}
-                  >
-                    {t('payments_tab.pagination.next')} <ChevronRight className="size-4" />
-                  </Button>
                 </div>
               )}
             </CardContent>

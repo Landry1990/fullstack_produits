@@ -20,7 +20,7 @@ import {
 } from 'lucide-react'
 import type { StockLot } from '../types'
 import { formatCurrency } from '../utils/formatters'
-import { formatDate } from '../utils/dateUtils'
+import { formatDate, toApiDateEnd } from '../utils/dateUtils'
 import SudoValidationModal from './common/SudoValidationModal'
 import { useSudo } from '../hooks/useSudo'
 import usePrint from '../hooks/usePrint'
@@ -189,9 +189,9 @@ export default function Perimes() {
       const response = await api.get('stock-adjustments/', {
         params: {
           reason_type: 'PERIME',
-          created_at__date__gte: dateDebut,
-          created_at__date__lte: dateFin,
-          limit: 100
+          created_at__gte: dateDebut,
+          created_at__lte: toApiDateEnd(new Date(dateFin + 'T00:00:00')),
+          page_size: 100
         }
       })
       const data: unknown = response.data
@@ -377,7 +377,7 @@ export default function Perimes() {
 
   const handleExportExcel = () => {
     const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
-    window.open(`${baseUrl}/api/stock-adjustments/export_excel/?reason_type=PERIME&created_at__date__gte=${dateDebut}&created_at__date__lte=${dateFin}`, '_blank', 'noopener,noreferrer')
+    window.open(`${baseUrl}/api/stock-adjustments/export_excel/?reason_type=PERIME&created_at__gte=${dateDebut}&created_at__lte=${toApiDateEnd(new Date(dateFin + 'T00:00:00'))}`, '_blank', 'noopener,noreferrer')
   }
 
   return (
