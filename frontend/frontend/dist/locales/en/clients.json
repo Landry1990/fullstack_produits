@@ -4,13 +4,18 @@
         "create": "New Customer",
         "edit": "Edit Customer",
         "delete": "Delete Customer",
-        "bulk_delete": "Delete {{count}} customer(s)"
+        "bulk_delete": "Delete {{count}} customer(s)",
+        "mask_client": "Mask customer",
+        "reactivate_client": "Reactivate customer"
     },
     "filters": {
         "search_placeholder": "Search by name, phone, ID...",
         "show_inactive": "Show inactive",
         "hide_inactive": "Hide inactive",
-        "type_all": "All"
+        "type_all": "All",
+        "status_active": "Active",
+        "status_masked": "Masked",
+        "status_all": "All"
     },
     "fields": {
         "name": "Full Name",

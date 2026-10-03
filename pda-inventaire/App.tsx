@@ -60,15 +60,15 @@ export default function App() {
   if (currentScreen === 'loading') {
     return (
       <View style={styles.loading}>
-        <ActivityIndicator size="large" color="#4f46e5" />
-        <StatusBar style="light" />
+        <ActivityIndicator size="large" color="#059669" />
+        <StatusBar style="dark" />
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       
       {currentScreen === 'login' && (
         <LoginScreen onLoginSuccess={handleLoginSuccess} />
@@ -94,12 +94,12 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f0f1a',
+    backgroundColor: '#f8fafc',
   },
   loading: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#0f0f1a',
+    backgroundColor: '#f8fafc',
   },
 });

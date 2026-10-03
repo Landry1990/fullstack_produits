@@ -82,16 +82,16 @@ const styles = StyleSheet.create({
   modeBtn: {
     paddingVertical: 8,
     paddingHorizontal: 14,
-    backgroundColor: '#2d2d44',
+    backgroundColor: '#f1f5f9',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#4b4b6a',
+    borderColor: '#e2e8f0',
     minWidth: 90,
     alignItems: 'center',
   },
   modeBtnActive: {
-    backgroundColor: '#22c55e',
-    borderColor: '#22c55e',
+    backgroundColor: '#059669',
+    borderColor: '#059669',
   },
   modeBtnDisabled: {
     opacity: 0.5,
@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
   modeBtnText: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#1e293b',
   },
   modeBtnTextActive: {
     color: '#fff',

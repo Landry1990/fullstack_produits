@@ -781,3 +781,71 @@ class CaisseCappingTests(APITestCase):
         payment = Caisse.objects.get(id=response.data['id'])
         self.assertEqual(payment.montant, Decimal('400.00'))
 
+
+class FinaliserCentralizedPermissionTests(APITestCase):
+    """Vente centralisée (tablette/POS mobile) : pas de can_cash_out requis.
+
+    Envoyer une facture impayée en caisse n'est pas un encaissement — le compte
+    connecté suffit comme validateur (validated_by). can_cash_out reste exigé
+    pour l'encaissement direct et pour les paiements en caisse.
+    """
+
+    def setUp(self):
+        # Utilisateur sans can_cash_out (profil créé par signal → on le retire)
+        self.user = TestDataFactory.create_user()
+        if hasattr(self.user, 'profile'):
+            self.user.profile.can_cash_out = False
+            self.user.profile.save()
+        self.client.force_authenticate(user=self.user)
+        self.rayon = TestDataFactory.create_rayon(name='Rayon Perm')
+        self.fournisseur = TestDataFactory.create_fournisseur(name='Fourn Perm')
+        self.produit = TestDataFactory.create_produit(
+            name='Paracétamol 500mg', stock=20,
+            cost_price=100, selling_price=250,
+            rayon=self.rayon, fournisseur=self.fournisseur
+        )
+        self.client_obj = TestDataFactory.create_client(name='Client Perm')
+        # Poste de vente actif + caisse ouverte (requis même en centralisé)
+        self.poste = TestDataFactory.create_session_caisse(user=self.user)
+
+    def _payload(self, **overrides):
+        payload = {
+            'client': self.client_obj.id,
+            'produits': [{
+                'produit': self.produit.id,
+                'quantity': 2,
+                'selling_price': '250',
+                'discount': '0',
+                'tva': '0',
+            }],
+            'paiements': [{'mode': 'especes', 'montant': '500'}],
+            'totals': {'totalTtc': 500},
+            'remise': '0',
+            'type': 'STD',
+            'centralized_cash_register': True,
+            'poste_vente_id': self.poste.id,
+        }
+        payload.update(overrides)
+        return payload
+
+    def test_centralized_finaliser_sans_can_cash_out(self):
+        """Un vendeur sans can_cash_out envoie la vente en caisse : 201, validated_by = user."""
+        url = reverse('facture-finaliser')
+        response = self.client.post(url, self._payload(), format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        facture = Facture.objects.order_by('-id').first()
+        self.assertEqual(facture.status, Facture.Status.VALIDEE)
+        self.assertEqual(facture.validated_by, self.user)
+        # Aucun paiement enregistré — l'encaissement se fera en caisse centrale
+        self.assertEqual(Caisse.objects.filter(facture=facture).count(), 0)
+
+    def test_non_centralized_exige_can_cash_out(self):
+        """Encaissement direct (centralized=False) sans can_cash_out → 403."""
+        url = reverse('facture-finaliser')
+        response = self.client.post(
+            url, self._payload(centralized_cash_register=False), format='json'
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(Facture.objects.count(), 0)
+

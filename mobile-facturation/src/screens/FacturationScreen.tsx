@@ -2,11 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, Alert, ActivityIndicator,
 } from 'react-native';
-import { Search, Send, Trash2, User, Wifi, WifiOff, ArrowLeft } from 'lucide-react-native';
+import { Search, Send, Trash2, User, ArrowLeft } from 'lucide-react-native';
 import { useCartStore } from '../stores/useCartStore';
 import { useAuthStore } from '../stores/useAuthStore';
-import { pdaWS } from '../services/websocket';
-import { searchProducts, getProductByBarcode, searchClients } from '../services/api';
+import { searchProducts, searchClients, sendSaleToCaisse } from '../services/api';
 import { ProductRow } from '../components/ProductRow';
 import { CartItemRow } from '../components/CartItemRow';
 import { LotModal } from '../components/LotModal';
@@ -29,18 +28,7 @@ export function FacturationScreen({ onLogout }: { onLogout: () => void }) {
   const [clientResults, setClientResults] = useState<Client[]>([]);
   const [clientSearching, setClientSearching] = useState(false);
 
-  const [wsStatus, setWsStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected');
   const [sending, setSending] = useState(false);
-
-  // WebSocket
-  useEffect(() => {
-    const unsub = pdaWS.onStatus(setWsStatus);
-    pdaWS.connect();
-    return () => {
-      unsub();
-      pdaWS.disconnect();
-    };
-  }, []);
 
   // Recherche produits
   useEffect(() => {
@@ -110,44 +98,14 @@ export function FacturationScreen({ onLogout }: { onLogout: () => void }) {
       return;
     }
 
-    if (wsStatus !== 'connected') {
-      Alert.alert('Non connecté', 'Vérifiez la connexion WebSocket');
-      return;
-    }
-
     setSending(true);
     try {
-      const payload = {
-        type: 'cashier_item_new' as const,
-        pda_id: pdaWS.id,
-        item_id: `item-${Date.now()}`,
-        articles: cart.lines.map((l) => ({
-          produit_id: l.product.id,
-          code_barre: l.product.code_barre,
-          designation: l.product.designation,
-          quantite: l.quantite,
-          prix_unitaire: l.prix_unitaire,
-          remise: l.remise,
-          lot_id: l.lotId,
-          lot_text: l.lotText,
-          total_ttc: l.total_ttc,
-        })),
-        client: cart.client,
-        ayant_droit: cart.ayantDroit,
-        total_estime: cart.totalTTC(),
-        articles_count: cart.totalArticles(),
-        timestamp: new Date().toISOString(),
-      };
-
-      const sent = pdaWS.send(payload);
-      if (sent) {
-        Alert.alert('Envoyé', 'Panier envoyé à la caisse');
-        cart.clear();
-      } else {
-        Alert.alert('Erreur', 'Impossible d\'envoyer');
-      }
-    } catch (err) {
-      Alert.alert('Erreur', 'Échec de l\'envoi');
+      const facture = await sendSaleToCaisse(cart);
+      Alert.alert('Envoyé', `Facture ${facture?.numero_facture ?? ''} envoyée en caisse`);
+      cart.clear();
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { detail?: string } }; message?: string };
+      Alert.alert('Erreur', axiosErr.response?.data?.detail || 'Échec de l\'envoi');
     } finally {
       setSending(false);
     }
@@ -166,9 +124,6 @@ export function FacturationScreen({ onLogout }: { onLogout: () => void }) {
           <View style={styles.userBadge}>
             <User size={16} color="#94a3b8" />
             <Text style={styles.userText}>{username}</Text>
-          </View>
-          <View style={[styles.wsBadge, wsStatus === 'connected' ? styles.wsOk : styles.wsErr]}>
-            {wsStatus === 'connected' ? <Wifi size={14} color="#10b981" /> : <WifiOff size={14} color="#ef4444" />}
           </View>
         </View>
         <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
@@ -332,8 +287,6 @@ const styles = StyleSheet.create({
   userBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.06)', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20 },
   userText: { fontSize: 13, color: '#f1f5f9', fontWeight: '600' },
   wsBadge: { padding: 6, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.06)' },
-  wsOk: { backgroundColor: 'rgba(16,185,129,0.12)' },
-  wsErr: { backgroundColor: 'rgba(239,68,68,0.12)' },
   logoutBtn: { padding: 6 },
   split: { flex: 1, flexDirection: 'row' },
   leftPanel: { flex: 1, borderRightWidth: 1, borderRightColor: 'rgba(255,255,255,0.06)', padding: 12 },

@@ -334,8 +334,14 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
                 image_ordonnance: params.prescriptionImage,
                 idempotency_key: idempotencyKey,
                 is_avoir_client: params.is_avoir_client || false,
-                montant_verse: (paiementsList.reduce((acc: number, p) => acc + p.montant, 0)).toString(),
-                montant_rendu: (paiementsList.reduce((acc: number, p) => acc + p.montant, 0) - Number(params.totals.totalTtc)).toString(),
+                // En caisse centralisée aucun paiement n'est enregistré → versé/rendu à 0,
+                // sinon la facture arriverait en caisse comme "déjà versée" (trompeur).
+                montant_verse: params.centralizedCashRegister
+                    ? '0'
+                    : (paiementsList.reduce((acc: number, p) => acc + p.montant, 0)).toString(),
+                montant_rendu: params.centralizedCashRegister
+                    ? '0'
+                    : (paiementsList.reduce((acc: number, p) => acc + p.montant, 0) - Number(params.totals.totalTtc)).toString(),
             };
 
             const finalFacture = await venteService.finaliser(finalPayload, idempotencyKey);

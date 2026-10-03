@@ -77,7 +77,8 @@ class GlobalSearchView(APIView):
 
         clients = Client.objects.filter(
             Q(name__icontains=query) |
-            Q(phone__icontains=query)
+            Q(phone__icontains=query),
+            is_active=True
         ).annotate(
             current_debt_annotated=Coalesce(
                 Subquery(current_debt_subquery, output_field=DecimalField()),

@@ -1,5 +1,300 @@
 # Changelog — Fullstack Produits
 
+## 2026-10-03 — 🧾 Mobile-facturation : envoi réel vers la caisse centrale + SDK 57
+
+### Pourquoi
+
+L'app `mobile-facturation/` (POS mobile, distincte du PDA inventaire) n'avait
+aucun backend derrière son bouton « Envoyer à la caisse » : elle expédiait le
+panier via WebSocket `ws/pda/` (protocole `cashier_item_new`) — un consumer qui
+n'existe pas dans le backend. L'envoi ne pouvait jamais fonctionner.
+
+### Changements
+
+- `src/services/api.ts` : nouvelle fonction `sendSaleToCaisse()` — POST
+  `/factures/finaliser/` avec le même contrat que la vente tablette web :
+  `centralized_cash_register: true`, `paiements: []`, `montant_verse`/`montant_rendu`
+  `= '0'`, remise ligne convertie % → montant par unité (`discount`), `lot_id`,
+  en-tête `Idempotency-Key` + champ `idempotency_key`. Le poste de vente actif
+  du vendeur est résolu côté backend.
+- `src/services/api.ts` : login corrigé `/api-token-auth/` → `/api/auth/token/`
+  (seul path proxyfié par nginx).
+- `src/screens/LoginScreen.tsx` + `src/stores/useAuthStore.ts` : suppression
+  du forçage du port `:8000` sur l'URL serveur — Django n'est pas exposé
+  directement sur l'hôte, seul nginx (:80) l'est. L'URL saisie est utilisée
+  telle quelle (schéma `http://` ajouté si absent).
+- `src/screens/FacturationScreen.tsx` : `handleSendToCashier` utilise l'API REST ;
+  le badge WebSocket (canal inexistant) est retiré. Les erreurs backend
+  (`detail` : point de vente non ouvert, permissions, stock) sont affichées dans
+  l'alerte.
+- SDK aligné sur Expo 57 : expo `^57`, RN `0.86.3`, React `19.2.3`, modules
+  expo (`camera`, `sqlite`, `secure-store`, `device`, `status-bar`, `netinfo`)
+  en versions `~57`.
+- `App.tsx` : écran `Historique` rendu via fonction (prop `onBack` requise).
+
+### Vérifications
+
+- `tsc --noEmit` propre ; bundle Android OK (HTTP 200) sur Metro `:8083`.
+
+## 2026-10-03 — 📱 PDA Inventaire : thème clair/emerald + compatibilité web
+
+### Pourquoi
+
+L'app PDA (`pda-inventaire/`, Expo/React Native) utilisait un thème sombre
+bleu nuit (`#0f0f1a`, accent indigo) totalement déconnecté de l'app web
+(slate clair + emerald). Et en preview web, le login échouait silencieusement
+(`expo-secure-store` et `Alert.alert` n'existent pas sur web).
+
+### Changements
+
+- `pda-inventaire/src/config/theme.ts` : nouvelle palette centralisée
+  (fond slate-50, cartes blanches, primary emerald `#059669`, accents
+  sémantiques adoucis).
+- Restyle : `HomeScreen` (fond bleu nuit → clair/emerald), `EditLineModal`
+  (bordure ambre vif → emerald), `SyncBanner` (bloc orange → outline ambre),
+  `Header` (badge offline), `RecentScans` (bouton suppression discret).
+- `src/utils/secureStore.ts` : shim cross-platform — `localStorage` sur web
+  (preview/dev), SecureStore natif sur device.
+- `src/utils/alert.ts` : `showAlert()` — `window.alert`/`confirm` sur web,
+  `Alert.alert` natif ailleurs.
+- `src/services/api.ts`, `src/services/auth.ts`, `src/screens/LoginScreen.tsx`,
+  `src/screens/HomeScreen.tsx`, `src/components/scanner/useScannerController.ts`
+  branchés sur les shims (tous les `Alert.alert` migrés vers `showAlert`).
+
+### Vérifications
+
+- `tsc --noEmit` propre ; login fonctionnel en preview web
+  (`expo start --web`).
+
+## 2026-10-03 — ⬆️ PDA Inventaire : upgrade Expo SDK 54 → 57
+
+### Pourquoi
+
+L'app Expo Go installée sur les appareils est SDK 57 — le projet en SDK 54
+refusait de charger (« incompatible »).
+
+### Changements
+
+- `pda-inventaire/package.json` : `expo ^57.0.0`, `react-native 0.86.3`,
+  `react 19.2.3`, `typescript ~6.0.3`, tous les modules Expo alignés
+  (`expo-camera ~57`, `expo-file-system ~57`, `expo-secure-store ~57`,
+  `expo-sharing ~57`, `expo-status-bar ~57`, `safe-area-context ~5.7`,
+  `screens ~4.26`, `netinfo 12`).
+- `src/services/productCache.ts` : `expo-file-system` indisponible sur web →
+  fallback `localStorage` pour la preview (natif inchangé).
+- **`expo-av` supprimé → `expo-audio ~57.0.5`** : `ExponentAV` n'existe plus
+  dans Expo Go SDK 57 (écran rouge « Cannot find native module »).
+  `useScannerController.playSound` migré vers `createAudioPlayer()`.
+
+### Vérifications
+
+- `tsc --noEmit` propre (TS 6), bundle web OK sous SDK 57, app chargée et
+  testée dans Expo Go SDK 57 sur le PDA réel.
+
+### À faire plus tard
+
+- `expo-sharing` / sons : comportement dégradé sur web (export CSV, beeps)
+  — try/catch en place, erreurs visibles via `showAlert`.
+
+## 2026-10-03 — 💰 Vente tablette : prix modifiable + remise globale avec validation Sudo
+
+### Pourquoi
+
+Le vendeur mobile doit pouvoir ajuster un prix de ligne ou appliquer une remise
+globale sur tablette, mais sans contourner le contrôle de permissions : les
+actions sensibles passent par la validation d'un superviseur (Sudo), comme sur le web.
+
+### Changements
+
+- `frontend/frontend/src/components/VenteTablette.tsx` :
+  - **Prix de ligne modifiable** : tap sur le prix d'une ligne → champ numérique
+    inline (Enter/blur pour valider, Échap pour annuler).
+  - **Remise globale** : champ dans le footer avec bascule % / F, montant de
+    remise affiché en temps réel.
+  - **Sudo** : réutilise `useSudo` + `useSecureCartOperations` +
+    `SudoValidationModal` (le même chemin que la facturation web). Le mot de passe
+    d'un compte autorisé (`can_modify_price` / `can_do_remise`) est exigé à la
+    saisie ; les credentials sont envoyés à `finaliser` via
+    `remise_validated_by_id`/`prix_validated_by_id` (audit préservé).
+  - Plafond de remise `max_discount_rate` du profil respecté (même logique web).
+  - **Fix latent** : `gooeyToast` était utilisé sans import → crash au premier
+    toast ; import ajouté.
+  - Réinitialisation de la remise et des credentials sudo après chaque vente.
+
+### Sécurité préservée
+
+- Aucun bypass : les edits sont bloqués côté backend sans permission ni sudo
+  valide (`sales_actions.py` vérifie `can_modify_price`/`can_do_remise`).
+- La tablette reste sans encaissement — envoi en caisse centrale uniquement.
+
+### Vérifications
+
+- Build frontend OK (4805 modules), `tsc --noEmit` propre, déployé nginx.
+
+## 2026-10-03 — 🔐 Vente centralisée sans sudo : `can_cash_out` non requis
+
+### Pourquoi
+
+Sur la tablette/POS mobile, un vendeur sans permission `can_cash_out` ne pouvait pas
+envoyer une vente en caisse (`finaliser` exigeait le sudo). Or envoyer une facture
+**impayée** à la caisse centrale n'est pas un encaissement — le compte connecté
+suffit comme validateur (`validated_by = user`).
+
+### Changements
+
+- `backend/api/views/ventes/facture_mixins/sales_actions.py` :
+  `_compute_required_permissions` n'exige `can_cash_out` que si
+  `centralized=False` (encaissement direct). Bonus : corrige un trou — un encaissement
+  direct sans `poste_vente_id` dans le payload contournait la permission.
+- `backend/api/tests/test_facturation.py` : nouvelle classe
+  `FinaliserCentralizedPermissionTests` — vendeur sans `can_cash_out` envoie en
+  caisse (201, `validated_by = user`, aucun paiement enregistré) / encaissement
+  direct refusé (403).
+- `frontend/frontend/src/hooks/useSaleCompletion.ts` : en mode centralisé,
+  `montant_verse`/`montant_rendu` envoyés à 0 — sinon la facture impayée
+  arrivait en caisse avec `montant_verse = total` (trompeur pour la caissière).
+
+### Sécurité préservée
+
+- `can_cash_out` reste requis dans `CaisseViewSet` (encaissement réel).
+- `can_do_remise`, `can_modify_price`, `can_sell_negative_stock`, `can_do_returns`,
+  `can_validate_zero_amount` inchangés.
+
+### Vérifications
+
+- 44 tests facturation/robustesse/caisse verts, `check` 0 issue.
+
+## 2026-10-03 — 📱 Vente tablette : route `/app/vente-tablette` POS mobile
+
+### Pourquoi
+
+L'utilisateur se déplace entre les clients pour accélérer la facturation. La caisse
+tablette ne fait qu'encaisser des factures existantes — il fallait un écran de création
+de vente optimisé tablette, sans paiement (envoi à la caisse centrale).
+
+### Changements
+
+- `frontend/frontend/src/components/VenteTablette.tsx` : nouvel écran de vente mobile :
+  - recherche produit tactile (nom / CIP / code-barres via `useProductSearch`),
+  - panier avec +/- quantité, suppression, total par ligne (`useCart`),
+  - FEFO automatique (prix de lot si configuré, sinon allocation backend),
+  - sélection client rapide (passage par défaut, recherche nom/téléphone,
+    ayant droit pour clients PRO via `useFacturationClients`),
+  - bouton "Envoyer en caisse" → `useSaleCompletion.completeSale` avec
+    `centralizedCashRegister: true` + `poste_vente_id` du poste actif
+    → facture `VAL` visible instantanément dans la caisse centralisée.
+- `frontend/frontend/src/routes.tsx` : lazy import + route protégée
+  `/app/vente-tablette` (permissions `ventes` + `facturation`).
+- `frontend/frontend/src/components/Sidebar.tsx` : entrée "Vente tablette"
+  dans le sous-menu Ventes + prefetch.
+- `frontend/frontend/public/locales/fr/sidebar.json` et `en/sidebar.json` :
+  clé `ventes.vente_tablette`.
+
+### Vérifications
+
+- `npm run build` : OK (4805 modules, 0 erreur).
+- Frontend déployé (docker cp → nginx).
+
+## 2026-10-02 — 📱 Caisse tablette : route `/app/caisse-tablette` POS tactile
+
+### Pourquoi
+
+Besoin d'un écran de caisse optimisé pour tablette / POS mobile : gros boutons,
+affichage plein écran, connexion directe à la caisse centrale sans logique locale.
+
+### Changements
+
+- `frontend/frontend/src/components/CaisseTablette.tsx` : nouvel écran POS
+  tablette avec :
+  - grille de cartes tactiles pour les factures en attente (BROU/VAL/PROF),
+  - affichage client + total TTC en grand,
+  - filtrage par poste de caisse actif,
+  - mise à jour temps réel via WebSocket `caisse_centralisee`,
+  - modale de paiement réutilisant `PaymentModal` + `useCaissePayment`,
+  - message bloquant si aucune session caisse active.
+- `frontend/frontend/src/routes.tsx` : lazy import + route protégée
+  `/app/caisse-tablette` (permissions `ventes` + `caisse`).
+- `frontend/frontend/src/components/Sidebar.tsx` : entrée "Caisse tablette"
+  dans le sous-menu Ventes + prefetch.
+- `frontend/frontend/public/locales/fr/sidebar.json` et `en/sidebar.json` :
+  clé `ventes.caisse_tablette`.
+
+### Vérifications
+
+- `npm run build` : OK (4804 modules, 0 erreur).
+- Frontend déployé (docker cp → nginx).
+
+## 2026-10-02 — 📱 PDA inventaire : design épuré (clair + emerald)
+
+### Pourquoi
+
+L'écran d'accueil PDA était en thème sombre bleu nuit / accent indigo, tandis que
+le reste de l'app était déjà passé en clair/slate/emerald. Le "fond bleu" et les
+couleurs vives (ambre massif, rouge flashy, indigo) détonnaient et fatiguaient en
+usage PDA prolongé.
+
+### Changements
+
+- `pda-inventaire/src/config/theme.ts` : nouvelle palette centralisée
+  (fond slate-50, surfaces blanches, emerald primary, accents sémantiques
+  adoucis).
+- `pda-inventaire/src/screens/HomeScreen.tsx` : fond clair, cartes blanches,
+  accents emerald, pastilles de statut discrètes.
+- `pda-inventaire/src/components/scanner/Header.tsx` : badge offline en
+  ambre-outline au lieu du bloc ambre plein.
+- `pda-inventaire/src/components/scanner/SyncBanner.tsx` : bannière en
+  outline ambre/blanc (plus de rectangle orange massif) ; état désactivé en
+  gris clair.
+- `pda-inventaire/src/components/scanner/EditLineModal.tsx` : bordure/titre
+  emerald au lieu de l'ambre/orange vif.
+- `pda-inventaire/src/components/scanner/RecentScans.tsx` : bouton × en gris
+  neutre avec icône rouge discrète au lieu du carré rouge plein.
+
+### Vérifications
+
+- `npx tsc --noEmit` : OK (0 erreur) dans `pda-inventaire/`.
+
+## 2026-10-02 — 👤 Masquage clients : corrigé + filtre Actifs/Masqués/Tous
+
+### Pourquoi
+
+- Le bouton "masquer" (œil) basculait bien `is_active` mais `toggle_active`
+  n'invalidait **pas** le cache de liste (`SimpleListCacheMixin`, TTL 5 min) →
+  le client masqué restait affiché : fonction jugée "cassée".
+- `include_inactive=true` affichait actifs + inactifs mélangés — impossible
+  de voir uniquement les masqués pour les réactiver.
+- L'omnisearch ne filtrait pas `is_active` : un client masqué restait
+  trouvable et sélectionnable via la recherche globale.
+
+### Changements
+
+- `backend/api/views/clients.py` :
+  - `toggle_active` → `self._invalidate_cache()` après save (liste fraîche
+    immédiate).
+  - `filterset_fields` += `is_active` ; `get_queryset` n'applique plus le
+    filtre actifs par défaut quand `?is_active=` est explicite →
+    `?is_active=false` renvoie **uniquement** les masqués.
+- `backend/api/views/omnisearch.py` : recherche clients limitée à
+  `is_active=True` (un client masqué n'est plus sélectionnable nulle part —
+  facturation filtrait déjà via `clients/`).
+- `frontend/frontend/src/components/Clients.tsx` :
+  - Filtre statut 3 états **Actifs / Masqués / Tous** (groupe segmenté sous
+    le filtre type) remplaçant le bouton œil ambigu de la toolbar.
+  - Bouton œil du panneau détail : libellés corrects "Masquer le client" /
+    "Réactiver le client" (tooltip + aria-label).
+- `locales/fr|en/clients.json` : `filters.status_active|status_masked|status_all`,
+  `actions.mask_client|reactivate_client`.
+- Retouche UX : filtres type + statut regroupés en **deux menus déroulants**
+  (`shadcn/select`) sur une seule ligne — fini les deux rangées de boutons.
+- Bug restauration F5 : quand le client sélectionné était hors page courante,
+  l'ID (ex. "2016") était injecté dans le champ recherche → remplacé par un
+  chargement direct `getById` (champ recherche jamais pollué).
+
+### Vérifications
+
+- `manage.py check` : 0 issue · tests `test_client_merge` + `test_client_financials` : 31/31 OK.
+- Build frontend OK · backend redémarré · frontend déployé (docker cp → nginx).
+
 ## 2026-10-02 — 🎨 Omnisearch aligné sur le design system
 
 ### Pourquoi

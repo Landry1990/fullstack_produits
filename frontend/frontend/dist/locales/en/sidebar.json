@@ -12,7 +12,9 @@
         "clotures": "Closing History",
         "ordonnancier": "Prescription Book",
         "promotions": "Promotions",
-        "caisse_centralisee": "Centralized Register"
+        "caisse_centralisee": "Centralized Register",
+        "caisse_tablette": "Tablet cash register",
+        "vente_tablette": "Tablet sale"
     },
     "facturation": "Invoicing",
     "produits": "Products",

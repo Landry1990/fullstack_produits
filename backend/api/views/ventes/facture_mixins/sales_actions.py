@@ -155,7 +155,11 @@ class FactureSalesMixin:
         )
 
         required_permissions = []
-        if centralized or poste_vente_id:
+        if not centralized:
+            # Encaissement direct → permission caisse. En mode centralisé, la
+            # facture part impayée à la caisse : le compte connecté suffit comme
+            # validateur (validated_by = user), l'encaissement reste protégé par
+            # can_cash_out dans CaisseViewSet.
             required_permissions.append('can_cash_out')
         if total_ttc <= 0:
             # Avoir client à montant nul/négatif → permission dédiée aux avoirs ;

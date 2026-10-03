@@ -27,7 +27,9 @@ export default function App() {
             <Stack.Screen name="Facturation">
               {(props) => <FacturationScreen {...props} onLogout={handleLogout} />}
             </Stack.Screen>
-            <Stack.Screen name="Historique" component={HistoriqueScreen} />
+            <Stack.Screen name="Historique">
+              {(props) => <HistoriqueScreen {...props} onBack={props.navigation.goBack} />}
+            </Stack.Screen>
           </>
         )}
       </Stack.Navigator>

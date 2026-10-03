@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import api from '../services/api';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -11,6 +11,7 @@ import { Button } from './shadcn/button';
 import { Badge } from './shadcn/badge';
 import { Checkbox } from './shadcn/checkbox';
 import { Input } from './shadcn/input';
+import { Select } from './shadcn/select';
 import {
   Table,
   TableBody,
@@ -63,7 +64,7 @@ export default function Clients() {
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [showInactive, setShowInactive] = useState<boolean>(false);
+  const [statusFilter, setStatusFilter] = useState<'actifs' | 'masques' | 'tous'>('actifs');
   const [clientTypeFilter, setClientTypeFilter] = useState<'all' | 'PARTICULIER' | 'PROFESSIONNEL'>('all');
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -112,6 +113,7 @@ export default function Clients() {
     totalDue: number;
   } | null>(null);
   const [loyaltyThreshold, setLoyaltyThreshold] = useState<number>(0);
+  const restoringIdRef = useRef<number | null>(null);
 
   // Purchase History State
   const [purchaseHistory, setPurchaseHistory] = useState<unknown | null>(null);
@@ -133,8 +135,9 @@ export default function Clients() {
         search: debouncedSearch,
         page: currentPage,
         page_size: itemsPerPage,
-        // @ts-expect-error - Backend supports include_inactive
-        include_inactive: showInactive,
+        // @ts-expect-error - Backend supports include_inactive / is_active
+        ...(statusFilter === 'masques' ? { is_active: false } : {}),
+        ...(statusFilter === 'tous' ? { include_inactive: true } : {}),
         ...(clientTypeFilter !== 'all' ? { client_type: clientTypeFilter } : {})
       }, skipCache) as Client[] | { results: Client[]; count: number };
       
@@ -156,7 +159,7 @@ export default function Clients() {
     fetchClients();
     fetchLoyaltyThreshold();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showInactive, clientTypeFilter, currentPage, debouncedSearch]);
+  }, [statusFilter, clientTypeFilter, currentPage, debouncedSearch]);
 
   const fetchLoyaltyThreshold = async () => {
     try {
@@ -188,10 +191,10 @@ export default function Clients() {
       if (found) {
         // handleSelectClient se charge lui-même de maintenir location.state à jour
         handleSelectClient(found);
-      } else {
-        if (searchTerm !== String(cid)) {
-          setSearchTerm(String(cid));
-        }
+      } else if (restoringIdRef.current !== cid) {
+        // Client hors page courante : le charger par ID (au lieu de polluer la recherche avec l'ID)
+        restoringIdRef.current = cid;
+        clientService.getById(cid).then(handleSelectClient).catch(() => {});
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -478,16 +481,6 @@ export default function Clients() {
                  <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => setShowInactive(!showInactive)}
-                    className={cn("size-9", showInactive ? 'bg-emerald-50 text-emerald-600' : 'text-slate-500')}
-                    title={showInactive ? t('clients:filters.hide_inactive') : t('clients:filters.show_inactive')}
-                    aria-label={showInactive ? t('clients:filters.hide_inactive') : t('clients:filters.show_inactive')}
-                 >
-                    {showInactive ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
-                 </Button>
-                 <Button
-                    variant="ghost"
-                    size="icon"
                     onClick={() => setIsLoyaltyConfigOpen(true)}
                     className="size-9 text-slate-500"
                     aria-label={t('common:settings')}
@@ -513,34 +506,27 @@ export default function Clients() {
               />
            </div>
 
-           <div className="flex gap-2" role="group" aria-label={t('clients:fields.type')}>
-              <Button
-                type="button"
-                size="sm"
-                variant={clientTypeFilter === 'all' ? 'default' : 'outline'}
-                className={cn('flex-1', clientTypeFilter === 'all' ? 'bg-emerald-600 hover:bg-emerald-700' : 'text-slate-600')}
-                onClick={() => { setClientTypeFilter('all'); setCurrentPage(1); }}
+           <div className="flex gap-2">
+              <Select
+                value={clientTypeFilter}
+                aria-label={t('clients:fields.type')}
+                className="h-9 text-xs flex-1"
+                onChange={e => { setClientTypeFilter(e.target.value as 'all' | 'PARTICULIER' | 'PROFESSIONNEL'); setCurrentPage(1); }}
               >
-                {t('clients:filters.type_all')}
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant={clientTypeFilter === 'PARTICULIER' ? 'default' : 'outline'}
-                className={cn('flex-1', clientTypeFilter === 'PARTICULIER' ? 'bg-slate-700 hover:bg-slate-800' : 'text-slate-600')}
-                onClick={() => { setClientTypeFilter('PARTICULIER'); setCurrentPage(1); }}
+                <option value="all">{t('clients:filters.type_all')}</option>
+                <option value="PARTICULIER">{t('clients:types.individual')}</option>
+                <option value="PROFESSIONNEL">{t('clients:types.professional')}</option>
+              </Select>
+              <Select
+                value={statusFilter}
+                aria-label={t('clients:fields.status')}
+                className="h-9 text-xs flex-1"
+                onChange={e => { setStatusFilter(e.target.value as 'actifs' | 'masques' | 'tous'); setCurrentPage(1); }}
               >
-                {t('clients:types.individual')}
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant={clientTypeFilter === 'PROFESSIONNEL' ? 'default' : 'outline'}
-                className={cn('flex-1', clientTypeFilter === 'PROFESSIONNEL' ? 'bg-amber-600 hover:bg-amber-700' : 'text-slate-600')}
-                onClick={() => { setClientTypeFilter('PROFESSIONNEL'); setCurrentPage(1); }}
-              >
-                {t('clients:types.professional')}
-              </Button>
+                <option value="actifs">{t('clients:filters.status_active')}</option>
+                <option value="masques">{t('clients:filters.status_masked')}</option>
+                <option value="tous">{t('clients:filters.status_all')}</option>
+              </Select>
            </div>
         </div>
 
@@ -681,7 +667,8 @@ export default function Clients() {
                     size="icon"
                     onClick={handleToggleActive}
                     className="text-slate-500"
-                    aria-label={selectedClient.is_active ? t('clients:filters.hide_inactive') : t('clients:filters.show_inactive')}
+                    title={selectedClient.is_active ? t('clients:actions.mask_client') : t('clients:actions.reactivate_client')}
+                    aria-label={selectedClient.is_active ? t('clients:actions.mask_client') : t('clients:actions.reactivate_client')}
                   >
                     {selectedClient.is_active ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                   </Button>
