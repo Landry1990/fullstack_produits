@@ -4,13 +4,18 @@
         "create": "Nouveau Client",
         "edit": "Modifier Client",
         "delete": "Supprimer Client",
-        "bulk_delete": "Supprimer {{count}} client(s)"
+        "bulk_delete": "Supprimer {{count}} client(s)",
+        "mask_client": "Masquer le client",
+        "reactivate_client": "Réactiver le client"
     },
     "filters": {
         "search_placeholder": "Rechercher par nom, téléphone, matricule...",
         "show_inactive": "Afficher inactifs",
         "hide_inactive": "Masquer inactifs",
-        "type_all": "Tous"
+        "type_all": "Tous",
+        "status_active": "Actifs",
+        "status_masked": "Masqués",
+        "status_all": "Tous"
     },
     "fields": {
         "name": "Nom Complet",

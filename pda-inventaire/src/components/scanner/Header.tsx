@@ -7,6 +7,7 @@ import {
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { theme } from '../../config/theme';
 
 interface HeaderProps {
   reference: string;
@@ -75,9 +76,11 @@ export default function Header({
 
 const styles = StyleSheet.create({
   header: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#ffffff',
     paddingHorizontal: 16,
     paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
   },
   topRow: {
     minHeight: 48,
@@ -96,13 +99,13 @@ const styles = StyleSheet.create({
     paddingRight: 12,
   },
   backBtnText: {
-    color: '#818cf8',
+    color: '#059669',
     fontSize: 15,
     fontWeight: '700',
   },
   headerTitle: {
     flex: 1,
-    color: '#fff',
+    color: '#0f172a',
     fontSize: 16,
     fontWeight: '700',
     textAlign: 'center',
@@ -116,10 +119,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statusOnline: {
-    backgroundColor: '#15803d',
+    backgroundColor: '#059669',
   },
   statusOffline: {
-    backgroundColor: '#b91c1c',
+    backgroundColor: '#dc2626',
   },
   statusText: {
     fontSize: 10,
@@ -137,28 +140,30 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#2d2d44',
+    backgroundColor: '#f1f5f9',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#4b4b6a',
+    borderColor: '#e2e8f0',
   },
   actionBtnActive: {
-    backgroundColor: '#4f46e5',
-    borderColor: '#818cf8',
+    backgroundColor: '#059669',
+    borderColor: '#047857',
   },
   actionBtnText: {
     fontSize: 12,
-    color: '#fff',
+    color: '#1e293b',
     fontWeight: '700',
   },
   offlineBadge: {
-    backgroundColor: '#b45309',
+    backgroundColor: theme.warningWash,
+    borderColor: theme.warning,
+    borderWidth: 1,
     paddingHorizontal: 10,
     paddingVertical: 7,
     borderRadius: 12,
   },
   offlineBadgeText: {
-    color: '#fff',
+    color: theme.warning,
     fontWeight: '700',
     fontSize: 11,
   },
@@ -167,7 +172,7 @@ const styles = StyleSheet.create({
     height: 36,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#4f46e5',
+    backgroundColor: '#059669',
     borderRadius: 18,
   },
   counterText: {

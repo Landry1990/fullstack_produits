@@ -20,16 +20,11 @@ export function LoginScreen({ onLoginSuccess }: { onLoginSuccess: () => void }) 
 
     setLoading(true);
     try {
-      let cleanUrl = url.trim().replace(/\/$/, '');
-      // Auto-correction : si le port est 80 (nginx), corriger en 8000 (Django)
-      if (cleanUrl.match(/:80$/)) {
-        cleanUrl = cleanUrl.replace(/:80$/, ':8000');
-        console.log('[Login] Port corrigé:', cleanUrl);
-      }
-      // Si aucun port spécifié, ajouter :8000 par défaut
-      if (!cleanUrl.match(/:\d+$/)) {
-        cleanUrl = `${cleanUrl}:8000`;
-        console.log('[Login] Port ajouté:', cleanUrl);
+      let cleanUrl = url.trim().replace(/\/+$/, '');
+      // Nginx écoute sur le port 80 (par défaut HTTP) et proxyfie /api/ vers
+      // Django — l'URL doit rester telle quelle, seul le schéma est ajouté.
+      if (!/^https?:\/\//i.test(cleanUrl)) {
+        cleanUrl = `http://${cleanUrl}`;
       }
       console.log('[Login] Tentative connexion vers:', cleanUrl);
       setServerUrl(cleanUrl);
@@ -54,7 +49,7 @@ export function LoginScreen({ onLoginSuccess }: { onLoginSuccess: () => void }) 
 
         <TextInput
           style={styles.input}
-          placeholder="http://192.168.1.181:8000"
+          placeholder="http://192.168.1.181"
           placeholderTextColor="#64748b"
           value={url}
           onChangeText={setUrl}

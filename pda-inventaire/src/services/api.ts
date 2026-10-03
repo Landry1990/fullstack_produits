@@ -1,5 +1,5 @@
 import axios from 'axios';
-import * as SecureStore from 'expo-secure-store';
+import secureStore from '../utils/secureStore';
 import { API_BASE_URL, REQUEST_TIMEOUT, STORAGE_KEYS } from '../config';
 
 // Instance Axios configurée
@@ -22,7 +22,7 @@ export const setUnauthorizedCallback = (callback: () => void) => {
 api.interceptors.request.use(
     async (config) => {
         try {
-            const token = await SecureStore.getItemAsync(STORAGE_KEYS.AUTH_TOKEN);
+            const token = await secureStore.getItemAsync(STORAGE_KEYS.AUTH_TOKEN);
             if (token) {
                 config.headers.Authorization = `Token ${token}`;
             }
@@ -41,8 +41,8 @@ api.interceptors.response.use(
         if (error.response?.status === 401) {
             // Token expiré ou invalide
             try {
-                await SecureStore.deleteItemAsync(STORAGE_KEYS.AUTH_TOKEN);
-                await SecureStore.deleteItemAsync(STORAGE_KEYS.USER_INFO);
+                await secureStore.deleteItemAsync(STORAGE_KEYS.AUTH_TOKEN);
+                await secureStore.deleteItemAsync(STORAGE_KEYS.USER_INFO);
             } catch (e) {}
 
             // Déclencher le callback de déconnexion si disponible

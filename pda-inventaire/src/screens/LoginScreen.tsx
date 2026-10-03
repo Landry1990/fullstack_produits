@@ -5,12 +5,12 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import { authService } from '../services/auth';
+import { showAlert } from '../utils/alert';
 
 interface LoginScreenProps {
   onLoginSuccess: () => void;
@@ -23,7 +23,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
 
   const handleLogin = async () => {
     if (!username.trim() || !password.trim()) {
-      Alert.alert('Erreur', 'Veuillez remplir tous les champs');
+      showAlert('Erreur', 'Veuillez remplir tous les champs');
       return;
     }
 
@@ -34,10 +34,10 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
     } catch (error: unknown) {
       console.error('Login error:', error);
       const axiosError = error as { response?: { data?: { detail?: string; non_field_errors?: string[] } } };
-      const message = axiosError.response?.data?.detail || 
+      const message = axiosError.response?.data?.detail ||
                       axiosError.response?.data?.non_field_errors?.[0] ||
                       'Identifiants incorrects';
-      Alert.alert('Erreur de connexion', message);
+      showAlert('Erreur de connexion', message);
     } finally {
       setLoading(false);
     }
@@ -57,7 +57,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
         <TextInput
           style={styles.input}
           placeholder="Nom d'utilisateur"
-          placeholderTextColor="#666"
+          placeholderTextColor="#94a3b8"
           value={username}
           onChangeText={setUsername}
           autoCapitalize="none"
@@ -68,7 +68,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
         <TextInput
           style={styles.input}
           placeholder="Mot de passe"
-          placeholderTextColor="#666"
+          placeholderTextColor="#94a3b8"
           value={password}
           onChangeText={setPassword}
           secureTextEntry
@@ -94,7 +94,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f0f1a',
+    backgroundColor: '#f8fafc',
     justifyContent: 'center',
     padding: 28,
   },
@@ -105,27 +105,27 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 26,
     fontWeight: '700',
-    color: '#fff',
+    color: '#0f172a',
     marginBottom: 6,
   },
   subtitle: {
     fontSize: 15,
-    color: '#666',
+    color: '#64748b',
   },
   form: {
     gap: 14,
   },
   input: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#ffffff',
     borderRadius: 10,
     padding: 16,
     fontSize: 17,
-    color: '#fff',
+    color: '#0f172a',
     borderWidth: 1,
-    borderColor: '#2d2d44',
+    borderColor: '#e2e8f0',
   },
   button: {
-    backgroundColor: '#4f46e5',
+    backgroundColor: '#059669',
     borderRadius: 10,
     padding: 17,
     alignItems: 'center',

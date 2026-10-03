@@ -89,7 +89,7 @@ export default function ScannerInput({
         onSubmitEditing={handleManualSubmit}
         onFocus={onFocus}
         placeholder="Code-barres..."
-        placeholderTextColor="#666"
+        placeholderTextColor="#94a3b8"
         autoFocus
         blurOnSubmit={false}
         returnKeyType="search"
@@ -101,7 +101,7 @@ export default function ScannerInput({
 
       {searching && (
         <View style={styles.searchingIndicator}>
-          <ActivityIndicator color="#4f46e5" size="large" />
+          <ActivityIndicator color="#059669" size="large" />
           <Text style={styles.searchingText}>Recherche...</Text>
         </View>
       )}
@@ -126,27 +126,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   scanTitle: {
-    color: '#fff',
+    color: '#0f172a',
     fontSize: 22,
     fontWeight: '700',
     marginBottom: 6,
   },
   scanSubtitle: {
-    color: '#666',
+    color: '#64748b',
     fontSize: 15,
     marginBottom: 32,
     textAlign: 'center',
   },
   scanInput: {
     width: '100%',
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#ffffff',
     borderRadius: 12,
     padding: 16,
-    color: '#fff',
+    color: '#0f172a',
     fontSize: 20,
     textAlign: 'center',
     borderWidth: 2,
-    borderColor: '#4f46e5',
+    borderColor: '#059669',
     marginBottom: 16,
   },
   searchingIndicator: {
@@ -155,12 +155,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   searchingText: {
-    color: '#4f46e5',
+    color: '#059669',
     fontSize: 16,
     marginLeft: 12,
   },
   searchBtn: {
-    backgroundColor: '#4f46e5',
+    backgroundColor: '#059669',
     paddingVertical: 16,
     paddingHorizontal: 32,
     borderRadius: 12,

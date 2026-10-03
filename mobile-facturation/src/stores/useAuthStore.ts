@@ -14,7 +14,7 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set) => ({
   token: null,
   username: null,
-  serverUrl: 'http://192.168.1.181:8000',
+  serverUrl: 'http://192.168.1.181',
   isAuthenticated: false,
 
   setAuth: (token, username) =>

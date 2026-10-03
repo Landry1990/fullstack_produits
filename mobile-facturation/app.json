@@ -34,7 +34,9 @@
           "cameraPermission": "L'application a besoin de la caméra pour scanner les codes-barres et configurer le réseau."
         }
       ],
-      "expo-sqlite"
+      "expo-sqlite",
+      "expo-secure-store",
+      "expo-status-bar"
     ]
   }
 }

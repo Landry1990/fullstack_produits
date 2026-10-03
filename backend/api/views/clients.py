@@ -81,7 +81,7 @@ class ClientViewSet(SimpleListCacheMixin, OptimizedSerializerMixin, viewsets.Mod
     pagination_class = StandardResultsSetPagination
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     search_fields = ['name', 'email', 'phone', 'address']
-    filterset_fields = ['client_type']
+    filterset_fields = ['client_type', 'is_active']
     
     # Serializers optimisés
     list_serializer_class = ClientListSerializer
@@ -100,7 +100,8 @@ class ClientViewSet(SimpleListCacheMixin, OptimizedSerializerMixin, viewsets.Mod
         # Par défaut, ne montrer que les clients actifs SEULEMENT pour la liste
         # Pour le détail/update/actions, on veut pouvoir accéder même aux inactifs
         include_inactive = self.request.query_params.get('include_inactive', '').lower() in ['true', '1', 'yes']
-        if self.action == 'list' and not include_inactive:
+        explicit_is_active = 'is_active' in self.request.query_params
+        if self.action == 'list' and not include_inactive and not explicit_is_active:
             qs = qs.filter(is_active=True)
         return qs
 
@@ -110,6 +111,7 @@ class ClientViewSet(SimpleListCacheMixin, OptimizedSerializerMixin, viewsets.Mod
         client = self.get_object()
         client.is_active = not client.is_active
         client.save(update_fields=['is_active'])
+        self._invalidate_cache()
         return Response({
             'status': 'success',
             'is_active': client.is_active,

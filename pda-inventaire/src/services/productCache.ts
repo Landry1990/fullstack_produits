@@ -1,11 +1,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system/legacy';
+import { Platform } from 'react-native';
 import { Produit } from './inventaire';
 
 const PRODUCTS_CACHE_DATE_KEY = 'pda_cached_products_date';
 // Ancien stockage AsyncStorage — trop volumineux (> 2 Mo, erreur CursorWindow Android)
 const LEGACY_PRODUCTS_CACHE_KEY = 'pda_cached_products';
 const CACHE_FILE = `${FileSystem.documentDirectory}pda_products_cache.json`;
+// expo-file-system n'existe pas sur web → fallback localStorage (preview uniquement)
+const IS_WEB = Platform.OS === 'web';
+const WEB_CACHE_KEY = 'pda_products_cache_web';
 
 export interface CachedProduct {
     id: number;
@@ -25,10 +29,15 @@ export interface CachedProduct {
 class ProductCacheService {
     async getAll(): Promise<CachedProduct[]> {
         try {
-            const info = await FileSystem.getInfoAsync(CACHE_FILE);
-            if (info.exists) {
-                const data = await FileSystem.readAsStringAsync(CACHE_FILE);
-                return JSON.parse(data);
+            if (IS_WEB) {
+                const cached = localStorage.getItem(WEB_CACHE_KEY);
+                if (cached) return JSON.parse(cached);
+            } else {
+                const info = await FileSystem.getInfoAsync(CACHE_FILE);
+                if (info.exists) {
+                    const data = await FileSystem.readAsStringAsync(CACHE_FILE);
+                    return JSON.parse(data);
+                }
             }
             // Migration : ancien stockage AsyncStorage (échoue silencieusement si > 2 Mo)
             const legacy = await AsyncStorage.getItem(LEGACY_PRODUCTS_CACHE_KEY);
@@ -41,7 +50,11 @@ class ProductCacheService {
 
     async saveAll(produits: CachedProduct[]): Promise<void> {
         try {
-            await FileSystem.writeAsStringAsync(CACHE_FILE, JSON.stringify(produits));
+            if (IS_WEB) {
+                localStorage.setItem(WEB_CACHE_KEY, JSON.stringify(produits));
+            } else {
+                await FileSystem.writeAsStringAsync(CACHE_FILE, JSON.stringify(produits));
+            }
             await AsyncStorage.setItem(PRODUCTS_CACHE_DATE_KEY, new Date().toISOString());
             await AsyncStorage.removeItem(LEGACY_PRODUCTS_CACHE_KEY).catch(() => {});
         } catch (error) {
@@ -52,7 +65,11 @@ class ProductCacheService {
 
     async clear(): Promise<void> {
         try {
-            await FileSystem.deleteAsync(CACHE_FILE, { idempotent: true });
+            if (IS_WEB) {
+                localStorage.removeItem(WEB_CACHE_KEY);
+            } else {
+                await FileSystem.deleteAsync(CACHE_FILE, { idempotent: true });
+            }
             await AsyncStorage.removeItem(PRODUCTS_CACHE_DATE_KEY);
             await AsyncStorage.removeItem(LEGACY_PRODUCTS_CACHE_KEY).catch(() => {});
         } catch (error) {
