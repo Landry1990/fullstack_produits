@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Alert, Vibration, Keyboard, TextInput } from 'react-native';
-import { Audio } from 'expo-av';
+import { Vibration, Keyboard, TextInput } from 'react-native';
+import { createAudioPlayer } from 'expo-audio';
+import { showAlert } from '../../utils/alert';
 import type { Inventaire, LigneInventaire, Produit } from '../../services/inventaire';
 import { inventaireService, produitService } from '../../services/inventaire';
 import { exportService } from '../../services/export';
@@ -39,7 +40,7 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
   } = useOfflineSync({
     inventaireId: inventaire.id,
     onSyncComplete: (count) => {
-      Alert.alert('Synchronisation', `${count} ligne(s) synchronisée(s)`);
+      showAlert('Synchronisation', `${count} ligne(s) synchronisée(s)`);
       loadLignes();
     }
   });
@@ -181,9 +182,9 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
 
       const uri = `data:audio/wav;base64,${base64}`;
 
-      const { sound } = await Audio.Sound.createAsync({ uri });
-      await sound.playAsync();
-      setTimeout(() => sound.unloadAsync(), 500);
+      const player = createAudioPlayer({ uri });
+      player.play();
+      setTimeout(() => player.remove(), 800);
     } catch (e) {
       if (type === 'success') Vibration.vibrate(50);
       else if (type === 'error') Vibration.vibrate([0, 100, 50, 100]);
@@ -212,7 +213,7 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
       setTimeout(() => scanInputRef.current?.focus(), 200);
     } catch (error) {
       await playSound('error');
-      Alert.alert('Erreur', 'Impossible de sauvegarder');
+      showAlert('Erreur', 'Impossible de sauvegarder');
     }
   };
 
@@ -278,7 +279,7 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
       } else {
         await playSound('error');
         Vibration.vibrate([0, 100, 50, 100]);
-        Alert.alert('Produit non trouvé', `Code: ${trimmedCode}`);
+        showAlert('Produit non trouvé', `Code: ${trimmedCode}`);
         setScanInput('');
         setTimeout(() => scanInputRef.current?.focus(), 300);
       }
@@ -286,11 +287,11 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
       console.error('Erreur recherche produit:', error);
       await playSound('error');
       if (error instanceof Error && error.message === 'OFFLINE_NOT_CACHED') {
-        Alert.alert('Produit hors ligne', `Ce produit n'est pas dans le catalogue téléchargé. Téléchargez le catalogue depuis l'accueil.`);
+        showAlert('Produit hors ligne', `Ce produit n'est pas dans le catalogue téléchargé. Téléchargez le catalogue depuis l'accueil.`);
       } else if (!isOnline) {
-        Alert.alert('Hors connexion', 'La recherche de nouveaux produits nécessite internet ou un catalogue téléchargé.');
+        showAlert('Hors connexion', 'La recherche de nouveaux produits nécessite internet ou un catalogue téléchargé.');
       } else {
-        Alert.alert('Erreur', 'Impossible de rechercher le produit');
+        showAlert('Erreur', 'Impossible de rechercher le produit');
       }
       setScanInput('');
       setTimeout(() => scanInputRef.current?.focus(), 300);
@@ -354,7 +355,7 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
       } else if (scannedProduct.use_lot_management && !isNaN(newQty) && newQty >= 0 && newLotNumber.trim()) {
         const expirationISO = newLotExpiration ? expiryMMYYToISO(newLotExpiration) : undefined;
         if (newLotExpiration && !expirationISO) {
-          Alert.alert('Date invalide', 'Veuillez utiliser le format MM/YY avec un mois valide (ex. 12/27).');
+          showAlert('Date invalide', 'Veuillez utiliser le format MM/YY avec un mois valide (ex. 12/27).');
           setLoading(false);
           return;
         }
@@ -374,7 +375,7 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
 
       if (savedCount === 0) {
         await playSound('warning');
-        Alert.alert('Attention', 'Veuillez saisir au moins une quantité positive.');
+        showAlert('Attention', 'Veuillez saisir au moins une quantité positive.');
         setLoading(false);
         return;
       }
@@ -393,7 +394,7 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
     } catch (error: unknown) {
       console.error('Erreur ajout ligne:', error);
       await playSound('error');
-      Alert.alert('Erreur', 'Impossible de sauvegarder localement');
+      showAlert('Erreur', 'Impossible de sauvegarder localement');
     } finally {
       setLoading(false);
     }
@@ -423,10 +424,10 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
         await removeOffline(id);
         Vibration.vibrate([0, 50, 50, 50]);
       } catch (error) {
-        Alert.alert('Erreur', 'Impossible de supprimer la ligne');
+        showAlert('Erreur', 'Impossible de supprimer la ligne');
       }
     } else {
-      Alert.alert('Information', 'La suppression des lignes synchronisées n\'est pas disponible.');
+      showAlert('Information', 'La suppression des lignes synchronisées n\'est pas disponible.');
     }
   };
 
@@ -434,7 +435,7 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
     if (!editingLine) return;
     const qty = parseInt(editQuantity, 10);
     if (isNaN(qty) || qty < 0) {
-      Alert.alert('Erreur', 'Quantité invalide');
+      showAlert('Erreur', 'Quantité invalide');
       return;
     }
 
@@ -444,7 +445,7 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
 
       if (isOffline) {
         if (!editingLine.tempId) {
-          Alert.alert('Erreur', 'Ligne locale non trouvée');
+          showAlert('Erreur', 'Ligne locale non trouvée');
           return;
         }
         await updateOffline(editingLine.tempId, qty);
@@ -467,7 +468,7 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
       Vibration.vibrate([0, 50, 50, 50]);
       setTimeout(() => scanInputRef.current?.focus(), 200);
     } catch (error) {
-      Alert.alert('Erreur', 'Impossible de modifier');
+      showAlert('Erreur', 'Impossible de modifier');
     } finally {
       setLoading(false);
     }
@@ -475,7 +476,7 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
 
   const handleExport = async () => {
     if (offlineCount > 0) {
-      Alert.alert('Attention', 'Vous avez des lignes non synchronisées. Synchronisez d\'abord avant d\'exporter.');
+      showAlert('Attention', 'Vous avez des lignes non synchronisées. Synchronisez d\'abord avant d\'exporter.');
       return;
     }
     try {
@@ -483,7 +484,7 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
       await exportService.exportInventaireToCsv(inventaire);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Impossible d'exporter le fichier";
-      Alert.alert("Erreur Export", message);
+      showAlert("Erreur Export", message);
     } finally {
       setLoading(false);
       setTimeout(() => scanInputRef.current?.focus(), 500);
@@ -501,14 +502,14 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
       return;
     }
     if (!isOnline) {
-      Alert.alert(
+      showAlert(
         'Hors ligne',
         'Vous êtes hors ligne. Les scans seront conservés localement et synchronisés ultérieurement.',
         [{ text: 'OK', onPress: onBack }]
       );
       return;
     }
-    Alert.alert(
+    showAlert(
       'Terminer la session',
       `Envoyer ${offlineCount} ligne(s) vers le serveur ?`,
       [
@@ -518,7 +519,7 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
           onPress: async () => {
             const count = await syncAll();
             if (count !== undefined && count > 0) {
-              Alert.alert('Succès', `${count} ligne(s) envoyée(s)`, [
+              showAlert('Succès', `${count} ligne(s) envoyée(s)`, [
                 { text: 'OK', onPress: onBack }
               ]);
             } else {
@@ -532,7 +533,7 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
 
   const handleBack = () => {
     if (offlineCount > 0) {
-      Alert.alert(
+      showAlert(
         'Lignes non envoyées',
         `Vous avez ${offlineCount} ligne(s) non synchronisée(s). Que voulez-vous faire ?`,
         [

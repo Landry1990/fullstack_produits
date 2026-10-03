@@ -6,11 +6,11 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Alert,
   RefreshControl,
   TextInput,
   Modal,
 } from 'react-native';
+import { showAlert } from '../utils/alert';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { inventaireService } from '../services/inventaire';
 import { produitService } from '../services/inventaire';
@@ -58,7 +58,7 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
       const status = (error as { response?: { status?: number } }).response?.status;
       if (status !== 401) {
         console.error('Erreur chargement:', error);
-        Alert.alert('Erreur', 'Impossible de charger les inventaires');
+        showAlert('Erreur', 'Impossible de charger les inventaires');
       }
     } finally {
       setLoading(false);
@@ -81,10 +81,10 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
     try {
       const produits = await produitService.downloadCatalog();
       setCatalogCount(produits.length);
-      Alert.alert('Catalogue téléchargé', `${produits.length} produit(s) mis en cache. Le scan est maintenant utilisable hors ligne.`);
+      showAlert('Catalogue téléchargé', `${produits.length} produit(s) mis en cache. Le scan est maintenant utilisable hors ligne.`);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Impossible de télécharger le catalogue';
-      Alert.alert('Erreur', message);
+      showAlert('Erreur', message);
     } finally {
       setCatalogLoading(false);
     }
@@ -96,7 +96,7 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
   };
 
   const handleLogout = () => {
-    Alert.alert(
+    showAlert(
       'Déconnexion',
       'Voulez-vous vraiment vous déconnecter ?',
       [
@@ -117,7 +117,7 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
   const handleCreateInventaire = async () => {
     const reference = newReference.trim();
     if (!reference) {
-      Alert.alert('Erreur', 'Veuillez entrer une référence');
+      showAlert('Erreur', 'Veuillez entrer une référence');
       return;
     }
 
@@ -131,7 +131,7 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
     } catch (error: unknown) {
       console.error('Erreur création:', error);
       const axiosError = error as { response?: { data?: { detail?: string } } };
-      Alert.alert('Erreur', axiosError.response?.data?.detail || 'Impossible de créer l\'inventaire');
+      showAlert('Erreur', axiosError.response?.data?.detail || 'Impossible de créer l\'inventaire');
     } finally {
       setCreating(false);
     }
@@ -188,7 +188,7 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
   if (loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#4f46e5" />
+        <ActivityIndicator size="large" color="#059669" />
         <Text style={styles.loadingText}>Chargement...</Text>
       </View>
     );
@@ -287,7 +287,7 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
               value={newReference}
               onChangeText={setNewReference}
               placeholder="Référence de l'inventaire"
-              placeholderTextColor="#666"
+              placeholderTextColor="#94a3b8"
               autoFocus
             />
 
@@ -321,16 +321,16 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f0f1a',
+    backgroundColor: '#f8fafc',
   },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#0f0f1a',
+    backgroundColor: '#f8fafc',
   },
   loadingText: {
-    color: '#666',
+    color: '#64748b',
     marginTop: 16,
     fontSize: 15,
   },
@@ -340,14 +340,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingBottom: 20,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#ffffff',
   },
   greeting: {
-    color: '#666',
+    color: '#64748b',
     fontSize: 14,
   },
   username: {
-    color: '#fff',
+    color: '#0f172a',
     fontSize: 22,
     fontWeight: '700',
   },
@@ -355,7 +355,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#1e1e35',
+    backgroundColor: '#f1f5f9',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -368,11 +368,11 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   card: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#ffffff',
     borderRadius: 12,
     padding: 18,
     borderWidth: 1,
-    borderColor: '#2d2d44',
+    borderColor: '#e2e8f0',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -382,24 +382,24 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     flex: 1,
-    color: '#fff',
+    color: '#0f172a',
     fontSize: 17,
     fontWeight: '700',
     marginRight: 12,
   },
   statusPill: {
-    backgroundColor: 'rgba(59, 130, 246, 0.18)',
+    backgroundColor: 'rgba(5, 150, 105, 0.12)',
     borderRadius: 8,
     paddingHorizontal: 9,
     paddingVertical: 5,
   },
   statusPillText: {
-    color: '#93c5fd',
+    color: '#047857',
     fontSize: 10,
     fontWeight: '800',
   },
   cardDescription: {
-    color: '#cbd5e1',
+    color: '#64748b',
     fontSize: 13,
     marginBottom: 12,
   },
@@ -418,7 +418,7 @@ const styles = StyleSheet.create({
     marginBottom: 3,
   },
   metricValue: {
-    color: '#e2e8f0',
+    color: '#1e293b',
     fontSize: 13,
     fontWeight: '600',
   },
@@ -430,10 +430,10 @@ const styles = StyleSheet.create({
     color: '#94a3b8',
   },
   ecartPositive: {
-    color: '#22c55e',
+    color: '#059669',
   },
   ecartNegative: {
-    color: '#f87171',
+    color: '#dc2626',
   },
   empty: {
     flex: 1,
@@ -442,12 +442,12 @@ const styles = StyleSheet.create({
     padding: 48,
   },
   emptyText: {
-    color: '#888',
+    color: '#64748b',
     fontSize: 16,
     marginBottom: 20,
   },
   createBtn: {
-    backgroundColor: '#4f46e5',
+    backgroundColor: '#059669',
     paddingVertical: 14,
     paddingHorizontal: 28,
     borderRadius: 10,
@@ -464,13 +464,13 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#4f46e5',
+    backgroundColor: '#059669',
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 6,
-    shadowColor: '#000',
+    shadowColor: '#0f172a',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.15,
     shadowRadius: 6,
   },
   fabText: {
@@ -480,34 +480,34 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: 'rgba(15, 23, 42, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
   },
   modalContent: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#ffffff',
     borderRadius: 14,
     padding: 24,
     width: '100%',
     maxWidth: 400,
   },
   modalTitle: {
-    color: '#fff',
+    color: '#0f172a',
     fontSize: 18,
     fontWeight: '700',
     marginBottom: 20,
     textAlign: 'center',
   },
   modalInput: {
-    backgroundColor: '#0f0f1a',
+    backgroundColor: '#f1f5f9',
     borderRadius: 10,
     padding: 14,
-    color: '#fff',
+    color: '#0f172a',
     fontSize: 15,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#2d2d44',
+    borderColor: '#e2e8f0',
   },
   modalActions: {
     flexDirection: 'row',
@@ -517,11 +517,11 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 14,
     borderRadius: 10,
-    backgroundColor: '#2d2d44',
+    backgroundColor: '#f1f5f9',
     alignItems: 'center',
   },
   modalCancelText: {
-    color: '#888',
+    color: '#64748b',
     fontSize: 15,
     fontWeight: '600',
   },
@@ -529,7 +529,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 14,
     borderRadius: 10,
-    backgroundColor: '#4f46e5',
+    backgroundColor: '#059669',
     alignItems: 'center',
   },
   modalCreateText: {
@@ -554,43 +554,43 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   tabActive: {
-    borderBottomColor: '#4f46e5',
+    borderBottomColor: '#059669',
   },
   tabText: {
-    color: '#666',
+    color: '#94a3b8',
     fontSize: 15,
     fontWeight: '600',
   },
   tabTextActive: {
-    color: '#fff',
+    color: '#059669',
   },
   catalogBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#ffffff',
     marginHorizontal: 16,
     marginBottom: 16,
     padding: 14,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#2d2d44',
+    borderColor: '#e2e8f0',
   },
   catalogInfo: {
     flex: 1,
   },
   catalogLabel: {
-    color: '#888',
+    color: '#64748b',
     fontSize: 13,
     marginBottom: 2,
   },
   catalogCount: {
-    color: '#fff',
+    color: '#0f172a',
     fontSize: 15,
     fontWeight: '600',
   },
   catalogBtn: {
-    backgroundColor: '#4f46e5',
+    backgroundColor: '#059669',
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 10,

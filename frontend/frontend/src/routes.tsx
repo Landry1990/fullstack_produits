@@ -61,6 +61,8 @@ const Fournisseurs = lazyWithRetry(() => import('./components/Fournisseurs'));
 const Clients = lazyWithRetry(() => import('./components/Clients'));
 const BMICalculator = lazyWithRetry(() => import('./components/clinical/BMICalculator'));
 const CaisseCentralisee = lazyWithRetry(() => import('./components/CaisseCentralisee'));
+const CaisseTablette = lazyWithRetry(() => import('./components/CaisseTablette'));
+const VenteTablette = lazyWithRetry(() => import('./components/VenteTablette'));
 const Inventaire = lazyWithRetry(() => import('./components/Inventaire'));
 const EtatsInventaire = lazyWithRetry(() => import('./components/EtatsInventaire'));
 const Organisation = lazyWithRetry(() => import('./components/Organisation'));
@@ -166,6 +168,8 @@ export const router = createBrowserRouter([
           { path: 'ventes', ...perm(['ventes', 'ventes_consultation'], Ventes) },
           { path: 'facturation', ...perm('facturation', Facturation) },
           { path: 'caisse-centralisee', ...perm(['ventes', 'caisse'], CaisseCentralisee) },
+          { path: 'caisse-tablette', ...perm(['ventes', 'caisse'], CaisseTablette) },
+          { path: 'vente-tablette', ...perm(['ventes', 'facturation'], VenteTablette) },
           { path: 'promotions', ...perm(['ventes', 'ventes_promotions'], PromotionList) },
           { path: 'historique-ventes', ...perm(['ventes', 'ventes_historique'], HistoriqueVentes) },
           { path: 'avoirs-clients', ...perm(['ventes', 'ventes_avoirs_clients'], ClientCredits) },

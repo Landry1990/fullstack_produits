@@ -54,7 +54,7 @@ export default function Omnisearch() {
                 onValueChange={setSearch}
                 autoFocus
                 placeholder={t('omnisearch.placeholder', 'Rechercher (produits, clients, navigation) …')}
-                className="h-12 w-full bg-transparent text-base text-slate-800 outline-none placeholder:text-slate-500"
+                className="h-12 w-full bg-transparent text-base text-slate-800 outline-none focus-visible:outline-none! placeholder:text-slate-500"
               />
               <Badge variant="outline" className="shrink-0 text-caption font-bold tracking-wider text-slate-500">
                 ESC

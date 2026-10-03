@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import { theme } from '../../config/theme';
 
 interface RecentLine {
   id: number;
@@ -76,15 +77,15 @@ export default function RecentScans({
 
 const styles = StyleSheet.create({
   recentContainer: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#ffffff',
     padding: 16,
     borderTopWidth: 1,
-    borderTopColor: '#2d2d44',
+    borderTopColor: '#e2e8f0',
     flex: 1,
     minHeight: 160,
   },
   recentTitle: {
-    color: '#ccc',
+    color: '#64748b',
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 16,
@@ -95,19 +96,19 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 4,
     borderBottomWidth: 1,
-    borderBottomColor: '#2d2d44',
+    borderBottomColor: '#e2e8f0',
     borderRadius: 12,
     marginBottom: 4,
   },
   recentItemActive: {
-    backgroundColor: 'rgba(79, 70, 229, 0.2)',
-    borderColor: '#4f46e5',
+    backgroundColor: 'rgba(5, 150, 105, 0.12)',
+    borderColor: '#059669',
     borderWidth: 1,
   },
   recentItemOffline: {
     borderLeftWidth: 4,
-    borderLeftColor: '#f59e0b',
-    backgroundColor: '#222',
+    borderLeftColor: theme.warning,
+    backgroundColor: '#fffbeb',
   },
   recentContent: {
     flex: 1,
@@ -118,13 +119,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   recentName: {
-    color: '#fff',
+    color: '#0f172a',
     fontSize: 15,
     flex: 1,
     marginRight: 12,
   },
   recentQty: {
-    color: '#818cf8',
+    color: '#059669',
     fontSize: 18,
     fontWeight: 'bold',
     minWidth: 40,
@@ -136,19 +137,21 @@ const styles = StyleSheet.create({
     minHeight: 36,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    backgroundColor: '#ef4444',
+    backgroundColor: theme.bgMuted,
+    borderWidth: 1,
+    borderColor: theme.border,
     borderRadius: 6,
     justifyContent: 'center',
     alignItems: 'center',
   },
   removeBtnText: {
-    color: '#fff',
+    color: theme.danger,
     fontSize: 18,
     fontWeight: 'bold',
     lineHeight: 20,
   },
   emptyText: {
-    color: '#bbb',
+    color: '#94a3b8',
     fontSize: 16,
     fontStyle: 'italic',
     textAlign: 'center',

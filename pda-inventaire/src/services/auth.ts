@@ -1,4 +1,4 @@
-import * as SecureStore from 'expo-secure-store';
+import secureStore from '../utils/secureStore';
 import api from './api';
 import { STORAGE_KEYS } from '../config';
 
@@ -54,8 +54,8 @@ class AuthService {
         };
 
         // Stocker le token de manière sécurisée
-        await SecureStore.setItemAsync(STORAGE_KEYS.AUTH_TOKEN, data.token);
-        await SecureStore.setItemAsync(STORAGE_KEYS.USER_INFO, JSON.stringify(user));
+        await secureStore.setItemAsync(STORAGE_KEYS.AUTH_TOKEN, data.token);
+        await secureStore.setItemAsync(STORAGE_KEYS.USER_INFO, JSON.stringify(user));
 
         return { token: data.token, user };
     }
@@ -65,8 +65,8 @@ class AuthService {
      */
     async logout(): Promise<void> {
         try {
-            await SecureStore.deleteItemAsync(STORAGE_KEYS.AUTH_TOKEN);
-            await SecureStore.deleteItemAsync(STORAGE_KEYS.USER_INFO);
+            await secureStore.deleteItemAsync(STORAGE_KEYS.AUTH_TOKEN);
+            await secureStore.deleteItemAsync(STORAGE_KEYS.USER_INFO);
         } catch (error) {
             console.warn('Logout error (ignored):', error);
         }
@@ -77,8 +77,8 @@ class AuthService {
      */
     async checkAuth(): Promise<AuthState> {
         try {
-            const token = await SecureStore.getItemAsync(STORAGE_KEYS.AUTH_TOKEN);
-            const userJson = await SecureStore.getItemAsync(STORAGE_KEYS.USER_INFO);
+            const token = await secureStore.getItemAsync(STORAGE_KEYS.AUTH_TOKEN);
+            const userJson = await secureStore.getItemAsync(STORAGE_KEYS.USER_INFO);
 
             if (!token || !userJson) {
                 return { isAuthenticated: false, user: null, token: null };
@@ -97,7 +97,7 @@ class AuthService {
      * Récupérer le token stocké
      */
     async getToken(): Promise<string | null> {
-        return SecureStore.getItemAsync(STORAGE_KEYS.AUTH_TOKEN);
+        return secureStore.getItemAsync(STORAGE_KEYS.AUTH_TOKEN);
     }
 
     /**
@@ -105,7 +105,7 @@ class AuthService {
      */
     async getUser(): Promise<User | null> {
         try {
-            const userJson = await SecureStore.getItemAsync(STORAGE_KEYS.USER_INFO);
+            const userJson = await secureStore.getItemAsync(STORAGE_KEYS.USER_INFO);
             return userJson ? JSON.parse(userJson) : null;
         } catch {
             return null;
