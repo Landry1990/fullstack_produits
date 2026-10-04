@@ -1,5 +1,258 @@
 # Changelog — Fullstack Produits
 
+## 2026-10-04 — 💾 Mobile-facturation : session persistée + brouillon panier (P2)
+
+### Pourquoi
+
+- Kill de l'app = perte de la session (re-login complet, poste à réactiver)
+  et du panier en cours — inacceptable sur un terminal de vente en rayon.
+
+### Changements (`mobile-facturation/`)
+
+- `src/utils/secureStore.ts` (nouveau) : shim `expo-secure-store` +
+  fallback `localStorage` sur web (identique à `pda-inventaire`).
+- `stores/useAuthStore.ts` : `setAuth` persiste `session.token` /
+  `session.username` / `session.serverUrl` ; `restoreSession()` au boot ;
+  `logout` purge les 3 clés.
+- `services/api.ts` : intercepteur réponse — **401 → `logout()`** immédiat
+  (token révoqué par un autre login, session unique côté backend).
+- `App.tsx` : réécrit — `isAuthenticated` du store (plus de `useState`),
+  spinner de restauration, boot = `settings.load()` → `restoreSession()` →
+  `hydrateDraft` → `getMe()` (plafond remise + `ensurePosteVente`
+  silencieux ; réseau KO → session conservée + alerte).
+- `stores/useCartStore.ts` : brouillon `draft.cart.<username>` dans
+  `expo-sqlite/kv-store`, sauvegarde débouncée (400 ms) à chaque mutation,
+  `hydrate()` qui recalcule `total_ttc`. **Creds Sudo jamais persistés.**
+- `screens/FacturationScreen.tsx` : `ensureSudoCreds()` avant l'envoi —
+  si le brouillon restauré contient remise ou prix modifié sans creds
+  (perdus au kill), validation superviseur redemandée.
+
+### Vérifications
+
+- `npx tsc --noEmit` propre. Reste à tester sur appareil : kill + restore,
+  token révoqué → login, brouillon avec remise → Sudo à l'envoi.
+
+## 2026-10-04 — 🔁 Mobile-facturation : scan — anti-doublon « sortie de champ »
+
+### Pourquoi
+
+Un code-barre maintenu dans le champ était ré-ajouté toutes les 1,5 s, et
+deux codes visibles ensemble s'ajoutaient en ping-pong (A, B, A, B…).
+
+### Changement
+
+- `components/ScanBarcodeModal.tsx` : `lastSeenRef` = `Map<code, instant>`
+  — chaque détection rafraîchit l'horodatage **du code** ; un code visé en
+  continu n'est jamais ré-ajouté, il faut le retirer >1,5 s puis le
+  re-scanner pour +1. Purge des entrées >5 s. Comportement identique en
+  modes confirmation et automatique.
+
+### Vérifications
+
+- `npx tsc --noEmit` propre.
+
+## 2026-10-04 — 🔑 Mobile-facturation : login par mot de passe seul
+
+### Pourquoi
+
+Demande client : connexion avec adresse serveur + mot de passe uniquement.
+Le backend le supportait déjà (`CustomAuthToken` : sans `username`, il
+identifie l'utilisateur actif dont le mot de passe correspond — unicité des
+mots de passe garantie par `UserSerializer.validate_password`, throttle
+5/min/IP). **Aucun changement backend.**
+
+### Changements (`mobile-facturation/src/`)
+
+- `services/api.ts` : `login(serverUrl, password)` → body
+  `{ password, workstation: 'Mobile facturation' }`, retourne
+  `{ token, username }`.
+- `screens/LoginScreen.tsx` : champ nom d'utilisateur supprimé ; `username`
+  pris dans la réponse serveur ; erreurs explicites (400 « Mot de passe
+  incorrect », 429 « Trop de tentatives… », sinon « Serveur injoignable… »).
+
+### Vérifications
+
+- `npx tsc --noEmit` propre.
+
+## 2026-10-04 — 🏪 Mobile-facturation : point de vente assigné automatiquement
+
+### Pourquoi
+
+`finaliser` refusait l'envoi (« Vous n'avez aucun point de vente actif ») :
+le mobile envoyait `poste_vente_id: null` et le vendeur n'avait pas de
+`PosteVente` actif. Choix : reprendre le flux web côté mobile, **sans
+changement backend** (traçabilité identique, poste visible en caisse).
+
+### Changements (`mobile-facturation/src/`)
+
+- `services/api.ts` : `getMesPostesActifs`, `getPostesDisponibles`,
+  `activerPosteVente`, et `ensurePosteVente()` — réutilise un poste déjà actif
+  du vendeur (préfère `mode_pos`), sinon active la 1re définition
+  disponible ; `NO_POSTE_DISPONIBLE` si aucune ; course inter-terminaux
+  (400 « déjà actif ») → relecture. `sendSaleToCaisse(cart, posteVenteId)`.
+- `stores/useAuthStore.ts` : `posteVente` (reset au logout).
+- `screens/LoginScreen.tsx` : `ensurePosteVente()` après login ; alertes
+  explicites (« Demandez à l'administrateur d'en créer un dans Paramètres →
+  Points de vente ») mais le login n'est jamais bloqué.
+- `screens/FacturationScreen.tsx` : badge « point de vente » dans l'en-tête
+  (vert/gris, tap = réessayer avec spinner) ; à l'envoi, tentative
+  silencieuse si aucun poste ; si 400 « point de vente » (poste fermé depuis
+  le web) → réouverture + **un seul** renvoi.
+- `types/index.ts` : `PosteVente`.
+
+### Vérifications
+
+- `npx tsc --noEmit` propre. Contrat vérifié dans `caisse_poste.py`
+  (`mes_actives`, `disponibles`, `activer`) et `sale_finalizer.py`.
+
+## 2026-10-04 — 📷 Mobile-facturation : scan en mode confirmation / automatique
+
+### Pourquoi
+
+Retour terrain : le scan ajoutait bien au panier mais le vendeur ne le voyait
+pas (modal plein écran, feedback 1,8 s). Décision : deux modes, réglage
+mémorisé sur l'appareil, **défaut = confirmation**.
+
+### Changements (`mobile-facturation/`)
+
+- **Nouveau** `src/stores/useSettingsStore.ts` : `autoAddScan` persisté via
+  `expo-sqlite/kv-store` (déjà installé, pas de nouvelle dépendance), chargé
+  au boot dans `App.tsx`.
+- `src/components/ScanBarcodeModal.tsx` : interrupteur « Ajout automatique »
+  dans l'en-tête. **Confirmation** : la caméra se fige, carte produit (nom,
+  prix, stock, lot + péremption si datamatrix), quantité 1–99, « Annuler » /
+  « Ajouter au panier ». **Automatique** : comportement précédent + footer
+  live (dernier ajout, nb articles, total, « Terminer »).
+- `FacturationScreen.tsx` : `handleBarcode` scindé en `resolveBarcode`
+  (résolution pure) + `addScanResult` (ajout, lot, prix de lot sans Sudo).
+  Douchette clavier : toujours ajout direct ×1.
+- `src/utils/format.ts` : `expiryInfo` extrait de `LotModal` (partagé).
+- `src/types/index.ts` : `ScanResult`.
+
+### Vérifications
+
+- `npx tsc --noEmit` propre.
+
+## 2026-10-04 — 🧾 Mobile-facturation : parité vente tablette (P1)
+
+### Pourquoi
+
+P1 du suivi `mobile-facturation/SUIVI.md` : le mobile ne savait ni remiser,
+ni modifier un prix, ni désigner un ayant droit, ni créer un client — et toute
+remise saisie aurait été rejetée par le backend (`sudo` toujours `null`).
+Contrat strictement aligné sur `VenteTablette.tsx` / `useSecureCartOperations`
+/ `useSaleCompletion` côté web et `finaliser` / `validate_sudo_mode` /
+`verify_password` côté backend. **Aucun changement backend ni web.**
+
+### Changements (`mobile-facturation/src/`)
+
+- **Nouveau** `hooks/useSudo.ts` + `components/SudoModal.tsx` : port du flux
+  web — mot de passe d'un compte ayant la permission →
+  `POST /users/verify_password/ {password, permission}` → creds
+  `{validatorId, password}` conservés dans le panier. `requestId` pour
+  enchaîner deux validations (prix puis remise) sans fermer la seconde.
+- **Nouveau** `components/LineEditModal.tsx` : prix unitaire + remise % par
+  ligne (prix tappable dans `CartItemRow`, icône crayon). Sudo
+  `can_modify_price` si prix ≠ actuel, `can_do_remise` si remise > 0.
+- `stores/useCartStore.ts` : `remiseGlobale`/`remiseMode` (%/F),
+  `remiseSudoCreds`/`prixSudoCreds`, `sousTotal()`, `remiseGlobaleMontant()`
+  (arrondi au F), `totalTTC()` net ; `setClient` réinitialise l'ayant droit ;
+  `clear()` remet tout à zéro.
+- `screens/FacturationScreen.tsx` : remise globale dans le footer (commit au
+  blur, plafond `max_discount_rate` avec alerte « Remise plafonnée »), badge
+  « Validé par superviseur », bouton « Client de passage » + désélection,
+  modal client avec « + Nouveau client » (nom ≥ 2, téléphone validé comme le
+  web) → `POST /clients/` ; bloc **Ayant droit** pour client `PROFESSIONNEL`
+  (chips existants + « + Nouveau », matching matricule anti-doublon, création
+  `POST /ayants-droit/` avant l'envoi, blocage si absent).
+- `services/api.ts` : `verifySudoPassword`, `getMe`, `createClient`,
+  `createAyantDroit` ; payload `finaliser` : `remise` (montant F),
+  `totals.totalTtc` net, `remise_validated_by_id/password`,
+  `prix_validated_by_id/password` (top-level).
+- `stores/useAuthStore.ts` + `LoginScreen.tsx` : `maxDiscountRate` chargé via
+  `GET /users/me/` après login (superuser → 100).
+- `types/index.ts` : `Client.client_type`, `SudoCreds`, `CurrentUser`.
+
+### Vérifications
+
+- `npx tsc --noEmit` propre. Revue : enchaînement Sudo prix→remise,
+  resynchronisation du champ remise après annulation, cohérence
+  `remise`/`totalTtc` au F près.
+
+## 2026-10-04 — 📉 AGENTS.md condensé (22 Ko → 5 Ko) + docs/agent/
+
+### Pourquoi
+
+`AGENTS.md` (502 lignes, ~22 Ko) est injecté à chaque message de l'agent — coût
+en tokens à chaque requête. L'essentiel tient en 96 lignes ; le reste est de la
+procédure consultée rarement.
+
+### Changements
+
+- `AGENTS.md` : réécrit — mémoire/CHANGELOG, règle d'avertissement, stack
+  (apps mobiles ajoutées), conventions, commandes clés, tableau conteneurs
+  dev/prod, règles rouges, index des références.
+- **Nouveau** `docs/agent/` (contenu déplacé verbatim) : `deploiement.md`,
+  `migrations-prod.md`, `securite-licence.md` (mots de passe, Cython, keyday),
+  `import-produits.md`, `operations.md` (backup/restore, erreurs fréquentes),
+  `parallelisation.md`. À lire à la demande.
+
+## 2026-10-04 — 📷 Mobile-facturation : scan code-barres + fix contrat API
+
+### Pourquoi
+
+P0 du suivi : le scan était le plus gros gap de création rapide. En creusant,
+les types mobile (`designation`, `code_barre`, `prix_vente`, `nom`/`prenom`/
+`telephone`) ne correspondaient **pas du tout** au contrat API réel
+(`name`, `cip1-4`, `selling_price`, `tva` ; `name`/`phone` pour Client) :
+recherche produit affichait des lignes vides/NaN, et `getProductByBarcode`
+appelait `?code_barre=` (param inexistant → ignoré → renvoyait le 1er
+produit de la liste).
+
+### Changements
+
+- **Nouveau** `src/components/ScanBarcodeModal.tsx` : caméra expo-camera en
+  scan continu, permission gérée, anti-doublon 1,5 s (re-scanner = +1 unité),
+  vibration + feedback inline, cadre de visée.
+- **Nouveau** `src/utils/gs1Parser.ts` : porté tel quel du frontend web —
+  parse les datamatrix GS1 (AI 01 GTIN → CIP13, 17 exp, 10 lot, 21 série).
+- `src/services/api.ts` : `getProductByBarcode` → `GET /produits/by-cip/<c>/`
+  (endpoint réel, 404→null) ; nouvelles `getProductById` et
+  `getLotByDatamatrix` (`GET /stock-lots/by-datamatrix/`, même flux que le
+  scan datamatrix de la facturation web) ; `limit` → `page_size`.
+- `src/types/index.ts` : types réalignés sur les serializers réels
+  (`Product.name/cip1-4/selling_price/tva`, `Client.name/phone`,
+  `AyantDroit.nom/matricule/societe`).
+- `src/screens/FacturationScreen.tsx` : bouton scan dans la barre de
+  recherche (natif uniquement) ; `onSubmitEditing` → même traitement que la
+  caméra (couvre les douchettes clavier qui envoient Enter) ; scan
+  datamatrix → produit + **lot exact** + prix du lot.
+- `ProductRow`, `CartItemRow`, `LotModal`, `useCartStore` : champs renommés.
+
+### Vérifications
+
+- `tsc --noEmit` propre. Contrat vérifié contre `ProduitSerializer`,
+  `ProduitListSerializer`, `ClientSerializer`, `by_cip` et `by_datamatrix`
+  côté backend.
+
+## 2026-10-04 — 📋 Mobile-facturation : périmètre acté + fichier de suivi
+
+### Pourquoi
+
+Tri d'une checklist générique « app de facturation » (venue d'un autre modèle)
+adaptée au contexte réel de `mobile-facturation/`. Périmètre acté avec le
+client : **pas de mode hors ligne, pas d'encaissement mobile** — tout part en
+caisse centralisée.
+
+### Changements
+
+- `mobile-facturation/SUIVI.md` : fichier de suivi des chantiers créé
+  (déjà en place, à faire priorisé P0→P3, hors périmètre, tableau d'avancement).
+- Prochaines priorités identifiées : scan code-barres (deps déjà présentes,
+  UI absente), parité vente tablette (ayant droit, remise/prix + Sudo,
+  création client), session persistée + brouillon panier, historique SQLite
+  + thème emerald + code mort WebSocket.
+
 ## 2026-10-03 — 🧾 Mobile-facturation : envoi réel vers la caisse centrale + SDK 57
 
 ### Pourquoi

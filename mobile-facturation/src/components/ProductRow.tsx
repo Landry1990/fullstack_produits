@@ -8,17 +8,18 @@ interface Props {
 }
 
 export function ProductRow({ product, onPress }: Props) {
-  const prix = parseFloat(product.prix_vente).toLocaleString('fr-FR', {
+  const prix = parseFloat(product.selling_price).toLocaleString('fr-FR', {
     minimumFractionDigits: 0,
   });
+  const cip = product.cip1 || product.cip2 || product.cip3 || product.cip4 || '';
 
   return (
     <TouchableOpacity style={styles.row} onPress={() => onPress(product)} activeOpacity={0.7}>
       <View style={styles.left}>
         <Text style={styles.designation} numberOfLines={1}>
-          {product.designation}
+          {product.name}
         </Text>
-        <Text style={styles.code}>{product.code_barre}</Text>
+        {cip ? <Text style={styles.code}>{cip}</Text> : null}
       </View>
       <View style={styles.right}>
         <Text style={styles.prix}>{prix} F</Text>
