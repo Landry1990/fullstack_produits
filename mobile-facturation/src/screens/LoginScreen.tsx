@@ -3,18 +3,17 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator,
 } from 'react-native';
 import { useAuthStore } from '../stores/useAuthStore';
-import { login } from '../services/api';
+import { login, getMe, ensurePosteVente } from '../services/api';
 
 export function LoginScreen({ onLoginSuccess }: { onLoginSuccess: () => void }) {
-  const { serverUrl, setServerUrl, setAuth } = useAuthStore();
+  const { serverUrl, setServerUrl, setAuth, setMaxDiscountRate, setPosteVente } = useAuthStore();
   const [url, setUrl] = useState(serverUrl);
-  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!url || !username || !password) {
-      Alert.alert('Erreur', 'Tous les champs sont requis');
+    if (!url || !password) {
+      Alert.alert('Erreur', "L'adresse du serveur et le mot de passe sont requis");
       return;
     }
 
@@ -28,13 +27,41 @@ export function LoginScreen({ onLoginSuccess }: { onLoginSuccess: () => void }) 
       }
       console.log('[Login] Tentative connexion vers:', cleanUrl);
       setServerUrl(cleanUrl);
-      const token = await login(cleanUrl, username, password);
+      const { token, username } = await login(cleanUrl, password);
       console.log('[Login] Connexion réussie');
       setAuth(token, username);
+      // Plafond de remise de l'utilisateur (échec silencieux → 0 = pas de plafond connu)
+      try {
+        const me = await getMe();
+        setMaxDiscountRate(me.is_superuser ? 100 : Number(me.profile?.max_discount_rate) || 0);
+      } catch {
+        setMaxDiscountRate(0);
+      }
+      // Point de vente : réutilise un poste actif ou active la 1re
+      // définition disponible. Jamais bloquant pour le login.
+      try {
+        setPosteVente(await ensurePosteVente());
+      } catch (err: unknown) {
+        if ((err as Error)?.message === 'NO_POSTE_DISPONIBLE') {
+          Alert.alert('Aucun point de vente', "Aucun point de vente n'est disponible. Demandez à l'administrateur d'en créer un dans Paramètres → Points de vente.");
+        } else {
+          const detail = (err as { response?: { data?: { detail?: string } }; message?: string })?.response?.data?.detail
+            || (err as Error)?.message || '';
+          Alert.alert('Point de vente', `Impossible d'ouvrir un point de vente : ${detail}`);
+        }
+      }
       onLoginSuccess();
     } catch (err: any) {
       console.error('[Login] Erreur:', err);
-      const msg = err?.response?.data?.detail || err?.message || 'Impossible de se connecter';
+      const status = err?.response?.status;
+      let msg: string;
+      if (status === 400) {
+        msg = 'Mot de passe incorrect';
+      } else if (status === 429) {
+        msg = err?.response?.data?.detail || 'Trop de tentatives — réessayez dans une minute';
+      } else {
+        msg = "Serveur injoignable — vérifiez l'adresse et le réseau";
+      }
       Alert.alert('Erreur de connexion', msg);
     } finally {
       setLoading(false);
@@ -46,6 +73,7 @@ export function LoginScreen({ onLoginSuccess }: { onLoginSuccess: () => void }) 
       <View style={styles.card}>
         <Text style={styles.title}>Connexion</Text>
         <Text style={styles.subtitle}>Tablette Facturation</Text>
+        <Text style={styles.hint}>Saisissez votre mot de passe — votre compte est reconnu automatiquement</Text>
 
         <TextInput
           style={styles.input}
@@ -59,20 +87,13 @@ export function LoginScreen({ onLoginSuccess }: { onLoginSuccess: () => void }) 
 
         <TextInput
           style={styles.input}
-          placeholder="Nom d'utilisateur"
-          placeholderTextColor="#64748b"
-          value={username}
-          onChangeText={setUsername}
-          autoCapitalize="none"
-        />
-
-        <TextInput
-          style={styles.input}
           placeholder="Mot de passe"
           placeholderTextColor="#64748b"
           value={password}
           onChangeText={setPassword}
           secureTextEntry
+          onSubmitEditing={handleLogin}
+          returnKeyType="go"
         />
 
         <TouchableOpacity
@@ -107,7 +128,8 @@ const styles = StyleSheet.create({
     maxWidth: 400,
   },
   title: { fontSize: 24, fontWeight: '700', color: '#f1f5f9', marginBottom: 4 },
-  subtitle: { fontSize: 14, color: '#64748b', marginBottom: 24 },
+  subtitle: { fontSize: 14, color: '#64748b', marginBottom: 8 },
+  hint: { fontSize: 12, color: '#94a3b8', marginBottom: 20 },
   input: {
     backgroundColor: '#0f172a',
     borderRadius: 8,

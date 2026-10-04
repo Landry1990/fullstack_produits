@@ -1,12 +1,16 @@
-// ─── Produit ──────────────────────────────────────────────
+// ─── Produit (contrat réel API : ProduitSerializer/ListSerializer) ──
 export interface Product {
   id: number;
-  code_barre: string;
-  designation: string;
-  prix_vente: string;
+  name: string;
+  cip1: string | null;
+  cip2?: string | null;
+  cip3?: string | null;
+  cip4?: string | null;
+  selling_price: string;
   stock: number;
   tva: string;
-  is_deleted?: boolean;
+  use_lot_management?: boolean;
+  is_active?: boolean;
 }
 
 // ─── Stock Lot ────────────────────────────────────────────
@@ -16,25 +20,43 @@ export interface StockLot {
   lot: string | null;
   quantity_remaining: number;
   date_expiration: string | null;
-  date_reception: string;
+  date_reception?: string;
   selling_price?: string;
 }
 
-// ─── Client / Ayant droit ─────────────────────────────────
+// ─── Client / Ayant droit (contrat ClientSerializer) ──────
 export interface Client {
   id: number;
-  nom: string;
-  prenom?: string;
-  telephone?: string;
+  name: string;
+  phone?: string | null;
+  client_type?: 'PARTICULIER' | 'PROFESSIONNEL';
+  taux_couverture?: string;
   ayants_droit?: AyantDroit[];
 }
 
 export interface AyantDroit {
   id: number;
+  matricule: string;
   nom: string;
-  prenom?: string;
-  taux_couverture: number;
-  assurance?: string;
+  societe?: string | null;
+}
+
+// ─── Validation Sudo (superviseur) ────────────────────────
+export interface SudoCreds {
+  validatorId: number;
+  password: string;
+}
+
+// ─── Utilisateur connecté (GET /users/me/) ────────────────
+export interface CurrentUser {
+  id: number;
+  username: string;
+  is_superuser?: boolean;
+  profile?: {
+    max_discount_rate?: number | string;
+    can_do_remise?: boolean;
+    can_modify_price?: boolean;
+  };
 }
 
 // ─── Ligne du panier ──────────────────────────────────────
@@ -46,6 +68,25 @@ export interface CartLine {
   lotId: number | null;
   lotText: string | null;
   total_ttc: number;
+}
+
+// ─── Point de vente (contrat /postes-ventes/) ─────────────
+export interface PosteVente {
+  id: number;
+  nom: string;
+  est_actif: boolean;
+  mode_pos?: boolean;
+  caisse?: number | null;
+  caisse_nom?: string | null;
+  vendeur_name?: string | null;
+}
+
+// ─── Résultat d'un scan (résolution sans ajout au panier) ─
+export interface ScanResult {
+  product: Product;
+  lot: StockLot | null;
+  prix: number;
+  label: string;
 }
 
 // ─── Payload envoyé au WebSocket caisse ───────────────────
@@ -63,8 +104,8 @@ export interface CashierPayload {
 
 export interface CashierArticle {
   produit_id: number;
-  code_barre: string;
-  designation: string;
+  cip: string | null;
+  name: string;
   quantite: number;
   prix_unitaire: number;
   remise: number;

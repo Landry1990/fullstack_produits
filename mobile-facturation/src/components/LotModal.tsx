@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import type { Product, StockLot } from '../types';
 import { getLots } from '../services/api';
+import { expiryInfo } from '../utils/format';
 
 interface Props {
   visible: boolean;
@@ -12,16 +13,6 @@ interface Props {
   currentLotId: number | null;
   onSelect: (lot: StockLot | null) => void;
   onClose: () => void;
-}
-
-function expiryInfo(dateStr: string | null): { label: string; color: string } {
-  if (!dateStr) return { label: 'N/A', color: '#94a3b8' };
-  const days = Math.ceil((new Date(dateStr).getTime() - Date.now()) / 86400000);
-  const d = new Date(dateStr);
-  const label = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`;
-  if (days < 0) return { label, color: '#ef4444' };
-  if (days < 30) return { label, color: '#f59e0b' };
-  return { label, color: '#22c55e' };
 }
 
 export function LotModal({ visible, product, currentLotId, onSelect, onClose }: Props) {
@@ -50,7 +41,7 @@ export function LotModal({ visible, product, currentLotId, onSelect, onClose }: 
           <View style={styles.header}>
             <View>
               <Text style={styles.title}>Sélection du lot</Text>
-              <Text style={styles.subtitle} numberOfLines={1}>{product.designation}</Text>
+              <Text style={styles.subtitle} numberOfLines={1}>{product.name}</Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
               <Text style={styles.closeBtnText}>✕</Text>
