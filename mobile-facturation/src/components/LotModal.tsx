@@ -6,6 +6,7 @@ import {
 import type { Product, StockLot } from '../types';
 import { getLots } from '../services/api';
 import { expiryInfo } from '../utils/format';
+import { theme } from '../config/theme';
 
 interface Props {
   visible: boolean;
@@ -59,7 +60,7 @@ export function LotModal({ visible, product, currentLotId, onSelect, onClose }: 
           </TouchableOpacity>
 
           {loading ? (
-            <ActivityIndicator color="#10b981" style={{ marginVertical: 30 }} />
+            <ActivityIndicator color={theme.primary} style={{ marginVertical: 30 }} />
           ) : lots.length === 0 ? (
             <Text style={styles.empty}>Aucun lot spécifique disponible</Text>
           ) : (
@@ -105,13 +106,13 @@ export function LotModal({ visible, product, currentLotId, onSelect, onClose }: 
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: theme.bgOverlay,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
   },
   sheet: {
-    backgroundColor: '#1e293b',
+    backgroundColor: theme.bgElevated,
     borderRadius: 16,
     width: '100%',
     maxHeight: '80%',
@@ -124,56 +125,56 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
+    borderBottomColor: theme.border,
   },
-  title: { fontSize: 17, fontWeight: '700', color: '#f1f5f9' },
-  subtitle: { fontSize: 12, color: '#94a3b8', marginTop: 2, maxWidth: 240 },
+  title: { fontSize: 17, fontWeight: '700', color: theme.text },
+  subtitle: { fontSize: 12, color: theme.textMuted, marginTop: 2, maxWidth: 240 },
   closeBtn: { padding: 4 },
-  closeBtnText: { color: '#64748b', fontSize: 18 },
+  closeBtnText: { color: theme.textMuted, fontSize: 18 },
   option: {
-    backgroundColor: 'rgba(16,185,129,0.08)',
+    backgroundColor: theme.primaryWash,
     borderRadius: 10,
     padding: 14,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: 'rgba(16,185,129,0.2)',
+    borderColor: theme.primaryLight,
   },
   optionSelected: {
-    backgroundColor: 'rgba(16,185,129,0.18)',
-    borderColor: '#10b981',
+    backgroundColor: theme.primaryLight,
+    borderColor: theme.primary,
   },
-  optionTitle: { fontSize: 13, fontWeight: '700', color: '#10b981' },
-  optionSub: { fontSize: 11, color: '#94a3b8', marginTop: 2 },
-  checkmark: { position: 'absolute', right: 14, top: 14, color: '#10b981', fontSize: 16, fontWeight: '700' },
-  empty: { textAlign: 'center', color: '#64748b', fontSize: 13, marginVertical: 24 },
+  optionTitle: { fontSize: 13, fontWeight: '700', color: theme.primary },
+  optionSub: { fontSize: 11, color: theme.textSecondary, marginTop: 2 },
+  checkmark: { position: 'absolute', right: 14, top: 14, color: theme.primary, fontSize: 16, fontWeight: '700' },
+  empty: { textAlign: 'center', color: theme.textMuted, fontSize: 13, marginVertical: 24 },
   list: { maxHeight: 240 },
   lotRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: theme.bgMuted,
     borderRadius: 8,
     padding: 12,
     marginBottom: 4,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
+    borderColor: theme.border,
   },
   lotRowSelected: {
-    backgroundColor: 'rgba(16,185,129,0.12)',
-    borderColor: '#10b981',
+    backgroundColor: theme.primaryWash,
+    borderColor: theme.primary,
   },
   lotLeft: { gap: 2 },
-  lotNum: { fontSize: 13, fontWeight: '600', color: '#f1f5f9' },
-  lotNumSelected: { color: '#10b981' },
+  lotNum: { fontSize: 13, fontWeight: '600', color: theme.text },
+  lotNumSelected: { color: theme.primary },
   lotExp: { fontSize: 11, fontWeight: '500' },
   lotRight: { alignItems: 'flex-end', gap: 2 },
-  lotStock: { fontSize: 11, color: '#64748b' },
+  lotStock: { fontSize: 11, color: theme.textMuted },
   cancelBtn: {
     marginTop: 12,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: theme.bgMuted,
     borderRadius: 10,
     paddingVertical: 12,
     alignItems: 'center',
   },
-  cancelBtnText: { color: '#f1f5f9', fontWeight: '600', fontSize: 14 },
+  cancelBtnText: { color: theme.text, fontWeight: '600', fontSize: 14 },
 });

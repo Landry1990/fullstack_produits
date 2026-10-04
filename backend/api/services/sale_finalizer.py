@@ -110,7 +110,11 @@ class SaleFinalizer:
                     "Veuillez ouvrir un point de caisse avant de réaliser une vente."
                 )
 
-        poste_caisse_id = poste_vente.caisse_id if poste_vente else None
+        # Mode centralisé : la facture est rattachée à la caisse ouverte qui
+        # l'encaissera — pas au poste du vendeur (un poste POS n'a pas de
+        # caisse → poste_caisse null serait filtré hors de la file caisse,
+        # la notif WS ignorée, et le paiement exclu des totaux/clôture).
+        poste_caisse_id = caisse_ouverte.caisse_id if centralized else (poste_vente.caisse_id if poste_vente else None)
         poste_vente_id = poste_vente.id if poste_vente else None
 
         # 3. Validate product entries
@@ -128,7 +132,7 @@ class SaleFinalizer:
                 raise _as_value_error(exc) from exc
         if poste_vente_id and poste_vente:
             poste_vente_id = poste_vente.id
-            poste_caisse_id = poste_vente.caisse_id
+            poste_caisse_id = caisse_ouverte.caisse_id if centralized else poste_vente.caisse_id
 
         if existing_id:
             facture = SaleFinalizer._update_existing_facture(

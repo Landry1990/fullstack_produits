@@ -1,5 +1,127 @@
 # Changelog — Fullstack Produits
 
+## 2026-10-04 — 🏷️ Mobile-facturation : badge lot = aperçu FEFO
+
+### Pourquoi
+
+Le badge lot du panier affichait juste « AUTO » quand aucun lot n'était
+choisi manuellement — le vendeur ne voyait pas quel lot partirait.
+
+### Changements (`mobile-facturation/`)
+
+- `src/utils/fefo.ts` (nouveau) : `getFEFOPreview` porté du web —
+  répartition de la quantité sur les lots triés par expiration
+  croissante (indicatif ; l'allocation réelle reste faite par le backend
+  à la finalisation).
+- `CartItemRow` : badge lot = lot choisi (`LOT-X · 12/26`) ou aperçu
+  FEFO (`AUTO · LOT-A · 12/26`, `AUTO · LOT-A +2` si plusieurs lots),
+  comme la facturation web. `product.stock_lots` est déjà renvoyé par le
+  `ProduitSerializer` (5 premiers lots non vides) — aucun appel en plus.
+- `CartLine.lotExp` + `setLot` : l'expiration du lot choisi est
+  mémorisée pour l'affichage (scan datamatrix inclus).
+
+### Vérifications
+
+- `npx tsc --noEmit` propre.
+
+## 2026-10-04 — ⏸️ Mobile-facturation : mise en attente des ventes
+
+### Pourquoi
+
+Parité avec la vente web : le vendeur doit pouvoir suspendre un panier
+(client qui cherche sa monnaie, interruption) et le reprendre plus tard.
+Comme le web (`usePendingSales` / `ventesEnAttente` en localStorage),
+c'est **100 % local** — aucun appel backend.
+
+### Changements (`mobile-facturation/`)
+
+- `src/stores/usePendingStore.ts` (nouveau) : ventes en attente dans
+  kv-store `pending.<username>` (par vendeur, cap 50) — chargées au boot
+  en même temps que le brouillon (`App.tsx`).
+- `src/components/PendingSalesModal.tsx` (nouveau) : liste des ventes
+  (client, heure, nb articles/lignes, aperçu produits, total net) avec
+  actions **Reprendre** / **Fusionner** (si panier non vide) /
+  **Supprimer**.
+- `FacturationScreen` : bouton pause dans le footer (met le panier en
+  attente et le vide), icône horloge + badge compteur en en-tête.
+- `useCartStore` : action `addLine` (fusion d'une ligne existante).
+- Reprendre = `cart.hydrate()` (remplace le panier après confirmation si
+  non vide) ; fusionner = quantités cumulées par produit, client/remise
+  du panier actuel conservés. Creds Sudo jamais persistés → une vente
+  restaurée avec remise/prix modifié repasse par la revalidation à
+  l'envoi (`ensureSudoCreds`).
+
+### Vérifications
+
+- `npx tsc --noEmit` propre. Reste à tester sur appareil : mise en
+  attente → kill app → reprise, fusion avec panier non vide.
+
+## 2026-10-04 — 🎨 Mobile-facturation : historique local + thème clair + finition (P3)
+
+### Pourquoi
+
+P3 du suivi `mobile-facturation/SUIVI.md` : historique des envois,
+alignement visuel sur l'app web / pda-inventaire, code mort, et
+robustesse d'envoi.
+
+### Changements (`mobile-facturation/`)
+
+- **Historique local** : `src/services/historique.ts` (nouveau) —
+  kv-store `historique.<username>` (par vendeur, cap 200 entrées).
+  Chaque envoi réussi enregistre n° facture, heure, nb articles, total,
+  client. `HistoriqueScreen` réécrit : liste + pull-to-refresh, entrée
+  par l'icône horloge en en-tête de `FacturationScreen`.
+- **Thème clair/emerald** : `src/config/theme.ts` (nouveau, palette
+  identique à `pda-inventaire`) ; tous les écrans/composants re-stylés
+  (fini le dark indigo) ; `app.json` → `userInterfaceStyle: light`,
+  splash + icône adaptative fond clair.
+- **Ménage** : `src/services/websocket.ts` supprimé (code mort depuis le
+  passage en REST) + types `CashierPayload`/`CashierArticle` ; deps
+  inutilisées retirées (`@react-native-community/netinfo`,
+  `expo-device`, `uuid`, `@types/uuid`).
+- **Retry d'envoi** : `sendSaleToCaisse` réessaie **une fois** avec la
+  même `Idempotency-Key` sur timeout/erreur réseau (pas de réponse
+  HTTP) — dédoublonnage côté backend, pas une file offline.
+
+### Vérifications
+
+- `npx tsc --noEmit` propre. Reste à tester sur appareil : historique
+  après envois, lisibilité du thème clair, retry sur coupure réseau.
+
+## 2026-10-04 — 🐛 Backend : ventes POS rattachées à la caisse ouverte
+
+### Pourquoi
+
+Les ventes envoyées depuis un poste **POS** (mobile-facturation, ou poste POS
+web) étaient créées avec `poste_caisse = poste_vente.caisse` = **NULL** (un
+poste POS n'a pas de caisse). Conséquences :
+
+- la notif WS `caisse_centralisee` (`poste_caisse_id: null`) ne passait pas
+  le filtre de la caisse sélectionnée → la vente n'apparaissait pas en
+  temps réel (uniquement au polling 30 s, ou jamais si une caisse précise
+  était sélectionnée) ;
+- l'encaissement de ces factures était **exclu des totaux par caisse et de
+  la clôture** (`poste_caisse` n'est jamais réécrit à l'encaissement).
+
+### Changement
+
+- `api/services/sale_finalizer.py` : en mode `centralized`,
+  `poste_caisse_id = caisse_ouverte.caisse_id` (le poste actif rattaché à
+  une caisse — déjà récupéré pour le contrôle « aucun point de caisse
+  ouvert »). Mode non centralisé inchangé. Multi-caisse : la vente est
+  routée vers la **première** caisse ouverte trouvée.
+- `api/tests/test_sale_finalizer.py` : 2 tests — vente centralisée POS →
+  `poste_caisse` = caisse ouverte ; vente directe → `poste_caisse` du poste
+  vendeur inchangé.
+
+### Vérifications
+
+- `test_sale_finalizer` : 21/21 OK ; `test_facturation` +
+  `test_sales_robustness` : 32/32 OK.
+- ⚠️ Données historiques : les anciennes factures `poste_caisse=NULL`
+  restent exclues des totaux par caisse (à corriger en prod si besoin via
+  requête de rattachement sur la caisse qui a encaissé).
+
 ## 2026-10-04 — 💾 Mobile-facturation : session persistée + brouillon panier (P2)
 
 ### Pourquoi

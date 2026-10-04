@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   Modal, View, Text, TextInput, TouchableOpacity, StyleSheet,
 } from 'react-native';
+import { theme } from '../config/theme';
 import type { CartLine } from '../types';
 
 interface Props {
@@ -73,44 +74,44 @@ export function LineEditModal({ visible, line, onApply, onClose }: Props) {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: theme.bgOverlay,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
   },
   sheet: {
-    backgroundColor: '#1e293b',
+    backgroundColor: theme.bgElevated,
     borderRadius: 16,
     width: '100%',
     maxWidth: 400,
     padding: 20,
   },
-  title: { fontSize: 17, fontWeight: '700', color: '#f1f5f9' },
-  subtitle: { fontSize: 12, color: '#94a3b8', marginTop: 4, marginBottom: 14 },
-  label: { fontSize: 11, fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', marginBottom: 6, marginTop: 10 },
+  title: { fontSize: 17, fontWeight: '700', color: theme.text },
+  subtitle: { fontSize: 12, color: theme.textMuted, marginTop: 4, marginBottom: 14 },
+  label: { fontSize: 11, fontWeight: '700', color: theme.textMuted, textTransform: 'uppercase', marginBottom: 6, marginTop: 10 },
   input: {
-    backgroundColor: '#0f172a',
+    backgroundColor: theme.bg,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    color: '#f1f5f9',
+    color: theme.text,
     fontSize: 14,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: theme.border,
   },
   actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 20 },
   cancelBtn: {
     paddingHorizontal: 18,
     paddingVertical: 10,
     borderRadius: 8,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: theme.bgMuted,
   },
-  cancelText: { color: '#f1f5f9', fontWeight: '600', fontSize: 14 },
+  cancelText: { color: theme.text, fontWeight: '600', fontSize: 14 },
   applyBtn: {
     paddingHorizontal: 22,
     paddingVertical: 10,
     borderRadius: 8,
-    backgroundColor: '#10b981',
+    backgroundColor: theme.primary,
   },
   applyText: { color: '#fff', fontWeight: '700', fontSize: 14 },
 });

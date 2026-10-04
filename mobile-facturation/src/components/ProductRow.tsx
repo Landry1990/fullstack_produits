@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { theme } from '../config/theme';
 import type { Product } from '../types';
 
 interface Props {
@@ -35,19 +36,19 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1e293b',
+    backgroundColor: theme.bgElevated,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
     marginBottom: 4,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
+    borderColor: theme.border,
   },
   left: { flex: 1, gap: 2 },
-  designation: { fontSize: 14, fontWeight: '600', color: '#f1f5f9' },
-  code: { fontSize: 11, color: '#64748b' },
+  designation: { fontSize: 14, fontWeight: '600', color: theme.text },
+  code: { fontSize: 11, color: theme.textMuted },
   right: { alignItems: 'flex-end', gap: 2 },
-  prix: { fontSize: 14, fontWeight: '700', color: '#10b981' },
-  stock: { fontSize: 11, color: '#64748b' },
-  stockZero: { color: '#ef4444' },
+  prix: { fontSize: 14, fontWeight: '700', color: theme.primary },
+  stock: { fontSize: 11, color: theme.textMuted },
+  stockZero: { color: theme.danger },
 });

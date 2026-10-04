@@ -302,6 +302,98 @@ class TestSaleFinalizerFinalizeSale(TestCase):
         with self.assertRaisesRegex(ValueError, "point de caisse"):
             SaleFinalizer.finalize_sale(user, data, centralized=True)
 
+    def test_finalize_sale_centralized_rattache_facture_a_la_caisse_ouverte(self):
+        """Vente centralisée depuis un poste POS (caisse=None) : la facture
+        doit porter poste_caisse de la caisse ouverte — sinon elle est filtrée
+        hors de la file caisse, la notif WS est ignorée et le paiement est
+        exclu des totaux/clôture par caisse."""
+        user = User.objects.create_user(username="seller-pos", password="testpass123")
+        caissier = User.objects.create_user(username="caissier", password="testpass123")
+        produit = Produit.objects.create(
+            name="Test Product",
+            selling_price=Decimal("500"),
+            stock=10,
+        )
+        from datetime import date, datetime, timedelta
+        StockLot.objects.create(
+            produit=produit,
+            lot="LOT-CENT-TEST",
+            quantity_initial=50,
+            quantity_remaining=50,
+            price_cost=Decimal("200"),
+            selling_price=Decimal("500"),
+            date_reception=datetime(2026, 1, 1),
+            date_expiration=date.today() + timedelta(days=365),
+        )
+        # Poste POS du vendeur mobile : pas de caisse rattachée.
+        poste_pos = PosteVente.objects.create(
+            vendeur=user,
+            nom="POS Mobile",
+            est_actif=True,
+            mode_pos=True,
+            caisse=None,
+        )
+        # Caisse ouverte par le caissier.
+        caisse = PosteCaisse.objects.create(nom="Caisse Test", code="C-CENT-01")
+        PosteVente.objects.create(
+            vendeur=caissier,
+            nom="Poste Caisse Test",
+            est_actif=True,
+            mode_pos=False,
+            caisse=caisse,
+        )
+        data = {
+            "client": None,
+            "client_name_override": "Client Test",
+            "remise": "0",
+            "produits": [{"produit": produit.id, "quantity": 1, "selling_price": "500", "discount": "0", "tva": "0"}],
+            "paiements": [],
+            "poste_vente_id": poste_pos.id,
+        }
+        facture = SaleFinalizer.finalize_sale(user, data, centralized=True)
+        assert facture is not None
+        assert facture.poste_caisse_id == caisse.id
+        assert facture.poste_vente_id == poste_pos.id
+
+    def test_finalize_sale_non_centralized_garde_poste_caisse_du_poste(self):
+        """Vente directe (non centralisée) : poste_caisse reste celui du poste
+        du vendeur — le fix centralisé ne doit pas le perturber."""
+        user = User.objects.create_user(username="seller-direct", password="testpass123")
+        produit = Produit.objects.create(
+            name="Test Product",
+            selling_price=Decimal("500"),
+            stock=10,
+        )
+        from datetime import date, datetime, timedelta
+        StockLot.objects.create(
+            produit=produit,
+            lot="LOT-DIRECT-TEST",
+            quantity_initial=50,
+            quantity_remaining=50,
+            price_cost=Decimal("200"),
+            selling_price=Decimal("500"),
+            date_reception=datetime(2026, 1, 1),
+            date_expiration=date.today() + timedelta(days=365),
+        )
+        caisse = PosteCaisse.objects.create(nom="Caisse Direct", code="C-DIR-01")
+        poste = PosteVente.objects.create(
+            vendeur=user,
+            nom="Poste Direct",
+            est_actif=True,
+            mode_pos=False,
+            caisse=caisse,
+        )
+        data = {
+            "client": None,
+            "client_name_override": "Client Direct",
+            "remise": "0",
+            "produits": [{"produit": produit.id, "quantity": 1, "selling_price": "500", "discount": "0", "tva": "0"}],
+            "paiements": [{"mode": "especes", "montant": "500"}],
+            "poste_vente_id": poste.id,
+        }
+        facture = SaleFinalizer.finalize_sale(user, data, centralized=False)
+        assert facture.poste_caisse_id == caisse.id
+
 
 class TestSaleFinalizerMultiLotPayload(TestCase):
     """Tests pour la finalisation d'une vente multi-lots."""
