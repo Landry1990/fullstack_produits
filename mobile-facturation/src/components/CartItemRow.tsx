@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Pencil } from 'lucide-react-native';
 import type { CartLine } from '../types';
 
 interface Props {
@@ -8,9 +9,10 @@ interface Props {
   onDecrement: () => void;
   onRemove: () => void;
   onOpenLot: () => void;
+  onEditLine: () => void;
 }
 
-export function CartItemRow({ line, onIncrement, onDecrement, onRemove, onOpenLot }: Props) {
+export function CartItemRow({ line, onIncrement, onDecrement, onRemove, onOpenLot, onEditLine }: Props) {
   const prix = line.prix_unitaire.toLocaleString('fr-FR', { minimumFractionDigits: 0 });
   const total = line.total_ttc.toLocaleString('fr-FR', { minimumFractionDigits: 0 });
 
@@ -19,10 +21,13 @@ export function CartItemRow({ line, onIncrement, onDecrement, onRemove, onOpenLo
       {/* Infos produit */}
       <View style={styles.info}>
         <Text style={styles.designation} numberOfLines={1}>
-          {line.product.designation}
+          {line.product.name}
         </Text>
         <View style={styles.subRow}>
-          <Text style={styles.prix}>{prix} F</Text>
+          <TouchableOpacity style={styles.prixBtn} onPress={onEditLine} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
+            <Text style={styles.prix}>{prix} F</Text>
+            <Pencil size={12} color="#64748b" />
+          </TouchableOpacity>
           {line.remise > 0 && (
             <Text style={styles.remise}>-{line.remise}%</Text>
           )}
@@ -71,6 +76,7 @@ const styles = StyleSheet.create({
   info: { flex: 1, gap: 4 },
   designation: { fontSize: 13, fontWeight: '600', color: '#f1f5f9' },
   subRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  prixBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   prix: { fontSize: 11, color: '#94a3b8' },
   remise: { fontSize: 11, color: '#f59e0b', fontWeight: '700' },
   lotBadge: {
