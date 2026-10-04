@@ -221,34 +221,44 @@ export const sendSaleToCaisse = async (cart: {
   }));
 
   const idempotencyKey = generateUUID();
-  const res = await api.post(
-    '/factures/finaliser/',
-    {
-      client: cart.client?.id ?? null,
-      client_name_override: null,
-      ayant_droit: cart.ayantDroit?.id ?? null,
-      // remise globale = montant en F (pas un taux), déjà arrondi par le store
-      remise: String(cart.remiseGlobaleMontant()),
-      produits,
-      paiements: [],
-      loyalty: { use_pending_discount: false, points_to_use: 0 },
-      // totals.totalTtc = total NET après remise globale
-      totals: { totalTtc: cart.totalTTC(), totalHt: 0, totalTva: 0 },
-      sudo: { validated_by_id: null, sudo_password: null },
-      // Validations superviseur exigées par le backend dès qu'une remise ou
-      // un prix modifié est présent (champs top-level, pas dans `sudo`).
-      remise_validated_by_id: cart.remiseSudoCreds?.validatorId ?? null,
-      remise_validated_password: cart.remiseSudoCreds?.password ?? undefined,
-      prix_validated_by_id: cart.prixSudoCreds?.validatorId ?? null,
-      prix_validated_password: cart.prixSudoCreds?.password ?? undefined,
-      type: 'STD',
-      centralized_cash_register: true,
-      poste_vente_id: posteVenteId,
-      montant_verse: '0',
-      montant_rendu: '0',
-      idempotency_key: idempotencyKey,
-    },
-    { headers: { 'Idempotency-Key': idempotencyKey } }
-  );
-  return res.data as { numero_facture?: string };
+  const payload = {
+    client: cart.client?.id ?? null,
+    client_name_override: null,
+    ayant_droit: cart.ayantDroit?.id ?? null,
+    // remise globale = montant en F (pas un taux), déjà arrondi par le store
+    remise: String(cart.remiseGlobaleMontant()),
+    produits,
+    paiements: [],
+    loyalty: { use_pending_discount: false, points_to_use: 0 },
+    // totals.totalTtc = total NET après remise globale
+    totals: { totalTtc: cart.totalTTC(), totalHt: 0, totalTva: 0 },
+    sudo: { validated_by_id: null, sudo_password: null },
+    // Validations superviseur exigées par le backend dès qu'une remise ou
+    // un prix modifié est présent (champs top-level, pas dans `sudo`).
+    remise_validated_by_id: cart.remiseSudoCreds?.validatorId ?? null,
+    remise_validated_password: cart.remiseSudoCreds?.password ?? undefined,
+    prix_validated_by_id: cart.prixSudoCreds?.validatorId ?? null,
+    prix_validated_password: cart.prixSudoCreds?.password ?? undefined,
+    type: 'STD',
+    centralized_cash_register: true,
+    poste_vente_id: posteVenteId,
+    montant_verse: '0',
+    montant_rendu: '0',
+    idempotency_key: idempotencyKey,
+  };
+  const config = { headers: { 'Idempotency-Key': idempotencyKey } };
+
+  try {
+    const res = await api.post('/factures/finaliser/', payload, config);
+    return res.data as { numero_facture?: string };
+  } catch (err: unknown) {
+    // Erreur transitoire (timeout / coupure réseau, pas de réponse HTTP) :
+    // la requête a pu aboutir côté serveur → on réessaie UNE fois avec la
+    // MÊME Idempotency-Key, le backend dédoublonne. Pas une file offline.
+    const hasResponse = !!(err as { response?: unknown })?.response;
+    if (hasResponse) throw err;
+    await new Promise((r) => setTimeout(r, 800));
+    const res = await api.post('/factures/finaliser/', payload, config);
+    return res.data as { numero_facture?: string };
+  }
 };

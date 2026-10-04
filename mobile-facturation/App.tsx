@@ -9,7 +9,9 @@ import { HistoriqueScreen } from './src/screens/HistoriqueScreen';
 import { useAuthStore } from './src/stores/useAuthStore';
 import { useSettingsStore } from './src/stores/useSettingsStore';
 import { useCartStore, type CartDraft } from './src/stores/useCartStore';
+import { usePendingStore } from './src/stores/usePendingStore';
 import { getMe, ensurePosteVente } from './src/services/api';
+import { theme } from './src/config/theme';
 
 const Stack = createNativeStackNavigator();
 
@@ -40,6 +42,8 @@ export default function App() {
           useCartStore.getState().clear();
         }
       } catch {}
+      // Ventes en attente du vendeur (stockage local, comme le web).
+      await usePendingStore.getState().load();
     })();
     return hydratePromise.current;
   }, []);
@@ -93,7 +97,7 @@ export default function App() {
   if (restoring) {
     return (
       <View style={styles.restoring}>
-        <ActivityIndicator size="large" color="#6366f1" />
+        <ActivityIndicator size="large" color={theme.primary} />
       </View>
     );
   }
@@ -123,7 +127,7 @@ export default function App() {
 const styles = StyleSheet.create({
   restoring: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: theme.bg,
     justifyContent: 'center',
     alignItems: 'center',
   },
