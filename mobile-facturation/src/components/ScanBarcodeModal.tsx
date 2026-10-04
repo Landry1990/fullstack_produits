@@ -8,6 +8,7 @@ import { ScanBarcode, X } from 'lucide-react-native';
 import { useSettingsStore } from '../stores/useSettingsStore';
 import { useCartStore } from '../stores/useCartStore';
 import { expiryInfo } from '../utils/format';
+import { theme } from '../config/theme';
 import type { ScanResult } from '../types';
 
 interface Props {
@@ -118,12 +119,12 @@ export function ScanBarcodeModal({ visible, onResolve, onAdd, onClose }: Props) 
 
   const renderBody = () => {
     if (!permission) {
-      return <ActivityIndicator color="#10b981" size="large" />;
+      return <ActivityIndicator color={theme.primary} size="large" />;
     }
     if (!permission.granted) {
       return (
         <View style={styles.permissionBox}>
-          <ScanBarcode size={48} color="#64748b" />
+          <ScanBarcode size={48} color={theme.textMuted} />
           <Text style={styles.permissionText}>
             L'accès à la caméra est nécessaire pour scanner les codes-barres.
           </Text>
@@ -248,11 +249,11 @@ export function ScanBarcodeModal({ visible, onResolve, onAdd, onClose }: Props) 
             <Switch
               value={autoAddScan}
               onValueChange={setAutoAddScan}
-              trackColor={{ false: 'rgba(255,255,255,0.15)', true: '#10b981' }}
-              thumbColor="#f1f5f9"
+              trackColor={{ false: theme.borderStrong, true: theme.primary }}
+              thumbColor="#fff"
             />
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-              <X size={22} color="#f1f5f9" />
+              <X size={22} color={theme.text} />
             </TouchableOpacity>
           </View>
         </View>
@@ -266,20 +267,20 @@ export function ScanBarcodeModal({ visible, onResolve, onAdd, onClose }: Props) 
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f172a' },
+  container: { flex: 1, backgroundColor: theme.bg },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 14,
-    backgroundColor: '#1e293b',
+    backgroundColor: theme.bgElevated,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.06)',
+    borderBottomColor: theme.border,
   },
-  title: { fontSize: 17, fontWeight: '700', color: '#f1f5f9' },
+  title: { fontSize: 17, fontWeight: '700', color: theme.text },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  switchLabel: { fontSize: 12, color: '#94a3b8' },
+  switchLabel: { fontSize: 12, color: theme.textMuted },
   closeBtn: { padding: 6 },
   body: { flex: 1, justifyContent: 'center' },
   cameraWrap: { flex: 1 },
@@ -291,7 +292,7 @@ const styles = StyleSheet.create({
     right: '12%',
     height: '28%',
     borderWidth: 2,
-    borderColor: '#10b981',
+    borderColor: theme.primary,
     borderRadius: 12,
   },
   frozenOverlay: {
@@ -300,10 +301,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(15,23,42,0.55)',
   },
   permissionBox: { alignItems: 'center', gap: 16, paddingHorizontal: 32 },
-  permissionText: { color: '#f1f5f9', fontSize: 15, textAlign: 'center' },
-  permissionHint: { color: '#64748b', fontSize: 13, textAlign: 'center' },
+  permissionText: { color: theme.text, fontSize: 15, textAlign: 'center' },
+  permissionHint: { color: theme.textMuted, fontSize: 13, textAlign: 'center' },
   permissionBtn: {
-    backgroundColor: '#10b981',
+    backgroundColor: theme.primary,
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 24,
@@ -312,35 +313,35 @@ const styles = StyleSheet.create({
   footer: {
     paddingVertical: 14,
     paddingHorizontal: 20,
-    backgroundColor: '#1e293b',
+    backgroundColor: theme.bgElevated,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.06)',
+    borderTopColor: theme.border,
     alignItems: 'center',
   },
-  hint: { color: '#64748b', fontSize: 13 },
+  hint: { color: theme.textMuted, fontSize: 13 },
   feedback: {
     borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 14,
     maxWidth: '100%',
   },
-  feedbackOk: { backgroundColor: 'rgba(16,185,129,0.15)' },
-  feedbackKo: { backgroundColor: 'rgba(239,68,68,0.15)' },
-  feedbackText: { color: '#f1f5f9', fontSize: 14, fontWeight: '600' },
+  feedbackOk: { backgroundColor: theme.primaryWash },
+  feedbackKo: { backgroundColor: theme.dangerWash },
+  feedbackText: { color: theme.text, fontSize: 14, fontWeight: '600' },
   autoFooter: { width: '100%', alignItems: 'center', gap: 10 },
-  lastAdded: { color: '#10b981', fontSize: 13, fontWeight: '600', maxWidth: '100%' },
-  lastAddedStale: { color: '#64748b', fontWeight: '400' },
+  lastAdded: { color: theme.primary, fontSize: 13, fontWeight: '600', maxWidth: '100%' },
+  lastAddedStale: { color: theme.textMuted, fontWeight: '400' },
   autoRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     width: '100%',
   },
-  autoTotals: { color: '#f1f5f9', fontSize: 14, fontWeight: '700' },
+  autoTotals: { color: theme.text, fontSize: 14, fontWeight: '700' },
   doneBtn: {
     flex: 1,
     marginLeft: 16,
-    backgroundColor: '#10b981',
+    backgroundColor: theme.primary,
     borderRadius: 8,
     paddingVertical: 10,
     alignItems: 'center',
@@ -348,16 +349,16 @@ const styles = StyleSheet.create({
   doneText: { color: '#fff', fontSize: 15, fontWeight: '700' },
   card: {
     width: '100%',
-    backgroundColor: '#0f172a',
+    backgroundColor: theme.bg,
     borderRadius: 12,
     padding: 14,
     borderWidth: 1,
-    borderColor: 'rgba(16,185,129,0.35)',
+    borderColor: theme.primary,
   },
-  cardName: { fontSize: 15, fontWeight: '700', color: '#f1f5f9' },
+  cardName: { fontSize: 15, fontWeight: '700', color: theme.text },
   cardMeta: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 4, flexWrap: 'wrap' },
-  cardPrice: { fontSize: 14, fontWeight: '700', color: '#10b981' },
-  cardStock: { fontSize: 12, color: '#94a3b8' },
+  cardPrice: { fontSize: 14, fontWeight: '700', color: theme.primary },
+  cardStock: { fontSize: 12, color: theme.textSecondary },
   cardLot: { fontSize: 12, fontWeight: '600' },
   cardActions: { marginTop: 12, gap: 10 },
   qtyRow: { flexDirection: 'row', alignItems: 'center', gap: 12, alignSelf: 'center' },
@@ -365,26 +366,26 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 8,
-    backgroundColor: 'rgba(99,102,241,0.2)',
+    backgroundColor: theme.primaryWash,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  qtyBtnText: { fontSize: 18, color: '#818cf8', fontWeight: '700' },
-  qtyVal: { fontSize: 17, fontWeight: '700', color: '#f1f5f9', minWidth: 28, textAlign: 'center' },
+  qtyBtnText: { fontSize: 18, color: theme.primary, fontWeight: '700' },
+  qtyVal: { fontSize: 17, fontWeight: '700', color: theme.text, minWidth: 28, textAlign: 'center' },
   cardBtns: { flexDirection: 'row', gap: 10 },
   cancelBtn: {
     flex: 1,
     paddingVertical: 11,
     borderRadius: 8,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: theme.bgMuted,
     alignItems: 'center',
   },
-  cancelText: { color: '#f1f5f9', fontWeight: '600', fontSize: 14 },
+  cancelText: { color: theme.text, fontWeight: '600', fontSize: 14 },
   addBtn: {
     flex: 2,
     paddingVertical: 11,
     borderRadius: 8,
-    backgroundColor: '#10b981',
+    backgroundColor: theme.primary,
     alignItems: 'center',
   },
   addText: { color: '#fff', fontWeight: '700', fontSize: 14 },

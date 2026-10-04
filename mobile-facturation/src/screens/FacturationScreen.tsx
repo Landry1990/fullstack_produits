@@ -3,15 +3,18 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, Alert, ActivityIndicator,
   Platform, ScrollView,
 } from 'react-native';
-import { Search, Send, Trash2, User, ArrowLeft, ScanBarcode, ShieldCheck, Store } from 'lucide-react-native';
+import { Search, Send, Trash2, User, ArrowLeft, ScanBarcode, ShieldCheck, Store, History, Pause, Clock } from 'lucide-react-native';
 import { useCartStore } from '../stores/useCartStore';
 import { useAuthStore } from '../stores/useAuthStore';
+import { usePendingStore } from '../stores/usePendingStore';
 import {
   searchProducts, searchClients, sendSaleToCaisse, getProductByBarcode,
   getProductById, getLotByDatamatrix, createClient, createAyantDroit,
   ensurePosteVente,
 } from '../services/api';
+import { addHistoriqueItem } from '../services/historique';
 import { parseGS1Datamatrix } from '../utils/gs1Parser';
+import { theme } from '../config/theme';
 import { useSudo } from '../hooks/useSudo';
 import { ProductRow } from '../components/ProductRow';
 import { CartItemRow } from '../components/CartItemRow';
@@ -19,7 +22,8 @@ import { LotModal } from '../components/LotModal';
 import { ScanBarcodeModal } from '../components/ScanBarcodeModal';
 import { SudoModal } from '../components/SudoModal';
 import { LineEditModal } from '../components/LineEditModal';
-import type { Product, StockLot, Client, CartLine, AyantDroit, ScanResult } from '../types';
+import { PendingSalesModal } from '../components/PendingSalesModal';
+import type { Product, StockLot, Client, CartLine, AyantDroit, ScanResult, PendingSale } from '../types';
 
 const PHONE_REGEX = /^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s./0-9]*$/;
 
@@ -36,8 +40,9 @@ function drfError(data: unknown, fallback: string): string {
   return fallback;
 }
 
-export function FacturationScreen({ onLogout }: { onLogout: () => void }) {
+export function FacturationScreen({ onLogout, navigation }: { onLogout: () => void; navigation?: { navigate: (screen: string) => void } }) {
   const cart = useCartStore();
+  const pendingCount = usePendingStore((s) => s.sales.length);
   const { username, logout, maxDiscountRate, posteVente, setPosteVente } = useAuthStore();
   const { sudoState, requireSudo, closeSudo } = useSudo();
 
@@ -70,6 +75,7 @@ export function FacturationScreen({ onLogout }: { onLogout: () => void }) {
 
   const [sending, setSending] = useState(false);
   const [scanModalVisible, setScanModalVisible] = useState(false);
+  const [pendingModalVisible, setPendingModalVisible] = useState(false);
   const [ensuringPoste, setEnsuringPoste] = useState(false);
 
   // Recherche produits
@@ -438,6 +444,65 @@ export function FacturationScreen({ onLogout }: { onLogout: () => void }) {
     });
   };
 
+  // ─── Mise en attente (stockage local, comme le web) ─────
+  // Une vente en attente garde lignes/client/AD/remise — jamais les creds
+  // Sudo → la revalidation à l'envoi (ensureSudoCreds) couvre la reprise.
+
+  const handlePark = () => {
+    if (cart.lines.length === 0) {
+      Alert.alert('Panier vide', 'Rien à mettre en attente');
+      return;
+    }
+    usePendingStore.getState().park({
+      lines: cart.lines,
+      client: cart.client,
+      ayantDroit: cart.ayantDroit,
+      remiseGlobale: cart.remiseGlobale,
+      remiseMode: cart.remiseMode,
+    });
+    cart.clear();
+  };
+
+  const restorePending = (sale: PendingSale) => {
+    // PendingSale ⊃ CartDraft → hydrate recalcule les totaux et remet les
+    // creds Sudo à null.
+    cart.hydrate(sale);
+    usePendingStore.getState().remove(sale.id);
+    setPendingModalVisible(false);
+  };
+
+  const mergePending = (sale: PendingSale) => {
+    // Fusion simple par produit : quantité ajoutée si le produit est déjà
+    // dans le panier (prix/remise/lot du panier conservés), sinon ligne
+    // ajoutée telle quelle. Client/AD/remise du panier actuel conservés.
+    for (const l of sale.lines) {
+      const existing = useCartStore.getState().lines.find((x) => x.product.id === l.product.id);
+      if (existing) {
+        cart.updateQty(l.product.id, existing.quantite + l.quantite);
+      } else {
+        cart.addLine(l);
+      }
+    }
+    usePendingStore.getState().remove(sale.id);
+    setPendingModalVisible(false);
+  };
+
+  const handleRestorePress = (sale: PendingSale) => {
+    if (cart.lines.length === 0) {
+      restorePending(sale);
+      return;
+    }
+    Alert.alert(
+      'Panier non vide',
+      'Le panier actuel contient déjà des articles.',
+      [
+        { text: 'Remplacer', onPress: () => restorePending(sale) },
+        { text: 'Fusionner', onPress: () => mergePending(sale) },
+        { text: 'Annuler', style: 'cancel' },
+      ]
+    );
+  };
+
   const handleSendToCashier = () => {
     if (cart.lines.length === 0) {
       Alert.alert('Panier vide', 'Ajoutez des produits avant d\'envoyer');
@@ -479,6 +544,13 @@ export function FacturationScreen({ onLogout }: { onLogout: () => void }) {
           throw err;
         }
       }
+      // Historique local AVANT le clear (totaux + client du panier).
+      void addHistoriqueItem({
+        numero_facture: facture?.numero_facture ?? null,
+        articles_count: cart.totalArticles(),
+        total_estime: cart.totalTTC(),
+        client: cart.client?.name ?? null,
+      });
       Alert.alert('Envoyé', `Facture ${facture?.numero_facture ?? ''} envoyée en caisse`);
       cart.clear();
     } catch (err: unknown) {
@@ -507,23 +579,36 @@ export function FacturationScreen({ onLogout }: { onLogout: () => void }) {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <View style={styles.userBadge}>
-            <User size={16} color="#94a3b8" />
+            <User size={16} color={theme.textMuted} />
             <Text style={styles.userText}>{username}</Text>
           </View>
           <TouchableOpacity style={styles.userBadge} onPress={() => retryEnsurePoste()} disabled={ensuringPoste}>
             {ensuringPoste ? (
-              <ActivityIndicator size="small" color="#94a3b8" />
+              <ActivityIndicator size="small" color={theme.textMuted} />
             ) : (
-              <Store size={16} color={posteVente ? '#10b981' : '#64748b'} />
+              <Store size={16} color={posteVente ? theme.primary : theme.textMuted} />
             )}
-            <Text style={[styles.userText, !posteVente && { color: '#64748b' }]}>
+            <Text style={[styles.userText, !posteVente && { color: theme.textMuted }]}>
               {posteVente?.nom ?? 'Aucun point de vente'}
             </Text>
           </TouchableOpacity>
         </View>
-        <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
-          <ArrowLeft size={20} color="#ef4444" />
-        </TouchableOpacity>
+        <View style={styles.headerRight}>
+          <TouchableOpacity onPress={() => setPendingModalVisible(true)} style={styles.logoutBtn}>
+            <Clock size={20} color={theme.textMuted} />
+            {pendingCount > 0 && (
+              <View style={styles.pendingBadge}>
+                <Text style={styles.pendingBadgeText}>{pendingCount}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation?.navigate('Historique')} style={styles.logoutBtn}>
+            <History size={20} color={theme.textMuted} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
+            <ArrowLeft size={20} color={theme.danger} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Split vertical */}
@@ -531,11 +616,11 @@ export function FacturationScreen({ onLogout }: { onLogout: () => void }) {
         {/* Gauche : Recherche + Produits */}
         <View style={styles.leftPanel}>
           <View style={styles.searchBar}>
-            <Search size={18} color="#64748b" />
+            <Search size={18} color={theme.textMuted} />
             <TextInput
               style={styles.searchInput}
               placeholder="Rechercher produit..."
-              placeholderTextColor="#64748b"
+              placeholderTextColor={theme.textMuted}
               value={searchQuery}
               onChangeText={setSearchQuery}
               onSubmitEditing={handleSearchSubmit}
@@ -549,13 +634,13 @@ export function FacturationScreen({ onLogout }: { onLogout: () => void }) {
                 style={styles.scanBtn}
                 onPress={() => setScanModalVisible(true)}
               >
-                <ScanBarcode size={20} color="#10b981" />
+                <ScanBarcode size={20} color={theme.primary} />
               </TouchableOpacity>
             )}
           </View>
 
           {searching ? (
-            <ActivityIndicator color="#6366f1" style={{ marginVertical: 20 }} />
+            <ActivityIndicator color={theme.primary} style={{ marginVertical: 20 }} />
           ) : results.length === 0 && searchQuery.length >= 2 ? (
             <Text style={styles.empty}>Aucun résultat</Text>
           ) : (
@@ -576,7 +661,7 @@ export function FacturationScreen({ onLogout }: { onLogout: () => void }) {
               style={styles.clientBtnMain}
               onPress={() => setClientModalVisible(true)}
             >
-              <User size={16} color="#64748b" />
+              <User size={16} color={theme.textMuted} />
               <Text style={styles.clientText}>
                 {cart.client ? cart.client.name : 'Client de passage'}
               </Text>
@@ -629,7 +714,7 @@ export function FacturationScreen({ onLogout }: { onLogout: () => void }) {
                   <TextInput
                     style={styles.adInput}
                     placeholder="Nom"
-                    placeholderTextColor="#64748b"
+                    placeholderTextColor={theme.textMuted}
                     value={adNom}
                     onChangeText={setAdNom}
                     autoCapitalize="characters"
@@ -637,7 +722,7 @@ export function FacturationScreen({ onLogout }: { onLogout: () => void }) {
                   <TextInput
                     style={styles.adInput}
                     placeholder="Matricule"
-                    placeholderTextColor="#64748b"
+                    placeholderTextColor={theme.textMuted}
                     value={adMatricule}
                     onChangeText={setAdMatricule}
                     autoCapitalize="characters"
@@ -677,7 +762,7 @@ export function FacturationScreen({ onLogout }: { onLogout: () => void }) {
                   onChangeText={setRemiseInput}
                   keyboardType="decimal-pad"
                   placeholder="0"
-                  placeholderTextColor="#64748b"
+                  placeholderTextColor={theme.textMuted}
                   onBlur={commitRemiseInput}
                   onSubmitEditing={commitRemiseInput}
                 />
@@ -709,7 +794,7 @@ export function FacturationScreen({ onLogout }: { onLogout: () => void }) {
                 )}
                 {(cart.remiseSudoCreds || cart.prixSudoCreds) && (
                   <View style={styles.sudoBadge}>
-                    <ShieldCheck size={12} color="#10b981" />
+                    <ShieldCheck size={12} color={theme.primary} />
                     <Text style={styles.sudoBadgeText}>Validé par superviseur</Text>
                   </View>
                 )}
@@ -718,7 +803,14 @@ export function FacturationScreen({ onLogout }: { onLogout: () => void }) {
             </View>
             <View style={styles.footerActions}>
               <TouchableOpacity onPress={cart.clear} style={styles.clearBtn}>
-                <Trash2 size={18} color="#ef4444" />
+                <Trash2 size={18} color={theme.danger} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handlePark}
+                style={[styles.parkBtn, cart.lines.length === 0 && { opacity: 0.4 }]}
+                disabled={cart.lines.length === 0}
+              >
+                <Pause size={18} color={theme.warning} />
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.sendBtn, sending && styles.sendBtnDisabled]}
@@ -754,6 +846,16 @@ export function FacturationScreen({ onLogout }: { onLogout: () => void }) {
         currentLotId={lotModalCurrentId}
         onSelect={handleSelectLot}
         onClose={() => setLotModalVisible(false)}
+      />
+
+      {/* Modal ventes en attente */}
+      <PendingSalesModal
+        visible={pendingModalVisible}
+        cartEmpty={cart.lines.length === 0}
+        onRestore={handleRestorePress}
+        onMerge={mergePending}
+        onDelete={(id) => usePendingStore.getState().remove(id)}
+        onClose={() => setPendingModalVisible(false)}
       />
 
       {/* Modal édition ligne (prix + remise) */}
@@ -793,7 +895,7 @@ export function FacturationScreen({ onLogout }: { onLogout: () => void }) {
                 <TextInput
                   style={styles.modalInput}
                   placeholder="Nom du client"
-                  placeholderTextColor="#64748b"
+                  placeholderTextColor={theme.textMuted}
                   value={newClientName}
                   onChangeText={(t) => { setNewClientName(t); setClientFormError(null); }}
                   autoFocus
@@ -802,7 +904,7 @@ export function FacturationScreen({ onLogout }: { onLogout: () => void }) {
                 <TextInput
                   style={styles.modalInput}
                   placeholder="Optionnel"
-                  placeholderTextColor="#64748b"
+                  placeholderTextColor={theme.textMuted}
                   value={newClientPhone}
                   onChangeText={(t) => { setNewClientPhone(t); setClientFormError(null); }}
                   keyboardType="phone-pad"
@@ -834,7 +936,7 @@ export function FacturationScreen({ onLogout }: { onLogout: () => void }) {
                 <TextInput
                   style={styles.modalInput}
                   placeholder="Rechercher client..."
-                  placeholderTextColor="#64748b"
+                  placeholderTextColor={theme.textMuted}
                   value={clientSearch}
                   onChangeText={setClientSearch}
                   autoFocus
@@ -846,7 +948,7 @@ export function FacturationScreen({ onLogout }: { onLogout: () => void }) {
                   <Text style={styles.newClientText}>+ Nouveau client</Text>
                 </TouchableOpacity>
                 {clientSearching ? (
-                  <ActivityIndicator color="#6366f1" style={{ marginVertical: 20 }} />
+                  <ActivityIndicator color={theme.primary} style={{ marginVertical: 20 }} />
                 ) : (
                   <FlatList
                     data={[{ id: 0, name: 'Client de passage' } as Client, ...clientResults]}
@@ -882,111 +984,126 @@ export function FacturationScreen({ onLogout }: { onLogout: () => void }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f172a' },
+  container: { flex: 1, backgroundColor: theme.bg },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#1e293b',
+    backgroundColor: theme.bgElevated,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.06)',
+    borderBottomColor: theme.border,
   },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  userBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.06)', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20 },
-  userText: { fontSize: 13, color: '#f1f5f9', fontWeight: '600' },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  userBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: theme.bgMuted, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20 },
+  userText: { fontSize: 13, color: theme.text, fontWeight: '600' },
   logoutBtn: { padding: 6 },
   split: { flex: 1, flexDirection: 'row' },
-  leftPanel: { flex: 1, borderRightWidth: 1, borderRightColor: 'rgba(255,255,255,0.06)', padding: 12 },
+  leftPanel: { flex: 1, borderRightWidth: 1, borderRightColor: theme.border, padding: 12 },
   rightPanel: { flex: 1, padding: 12 },
-  searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1e293b', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
-  searchInput: { flex: 1, marginLeft: 8, color: '#f1f5f9', fontSize: 14 },
+  searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.bgElevated, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 12, borderWidth: 1, borderColor: theme.border },
+  searchInput: { flex: 1, marginLeft: 8, color: theme.text, fontSize: 14 },
   scanBtn: { padding: 6, marginLeft: 4 },
   list: { paddingBottom: 12 },
-  empty: { textAlign: 'center', color: '#64748b', marginTop: 24, fontSize: 13 },
-  clientBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1e293b', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
+  empty: { textAlign: 'center', color: theme.textMuted, marginTop: 24, fontSize: 13 },
+  clientBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.bgElevated, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 12, borderWidth: 1, borderColor: theme.border },
   clientBtnMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  clientText: { fontSize: 13, color: '#f1f5f9' },
-  clientClear: { fontSize: 14, color: '#64748b', paddingLeft: 8 },
+  clientText: { fontSize: 13, color: theme.text },
+  clientClear: { fontSize: 14, color: theme.textMuted, paddingLeft: 8 },
   adBlock: { marginBottom: 12 },
-  adLabel: { fontSize: 11, fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', marginBottom: 6 },
+  adLabel: { fontSize: 11, fontWeight: '700', color: theme.textMuted, textTransform: 'uppercase', marginBottom: 6 },
   adChips: { flexDirection: 'row', gap: 6 },
   adChip: {
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: theme.bgMuted,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
+    borderColor: theme.borderStrong,
   },
-  adChipSelected: { backgroundColor: 'rgba(16,185,129,0.15)', borderColor: '#10b981' },
-  adChipText: { fontSize: 12, color: '#94a3b8', fontWeight: '600' },
-  adChipTextSelected: { color: '#10b981' },
+  adChipSelected: { backgroundColor: theme.primaryWash, borderColor: theme.primary },
+  adChipText: { fontSize: 12, color: theme.textSecondary, fontWeight: '600' },
+  adChipTextSelected: { color: theme.primary },
   adForm: { flexDirection: 'row', gap: 8, marginTop: 8 },
   adInput: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: theme.bgElevated,
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 8,
-    color: '#f1f5f9',
+    color: theme.text,
     fontSize: 13,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: theme.border,
   },
   cartList: { flex: 1, paddingBottom: 12 },
-  emptyCart: { textAlign: 'center', color: '#64748b', marginTop: 24, fontSize: 13 },
-  cartFooter: { backgroundColor: '#1e293b', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' },
+  emptyCart: { textAlign: 'center', color: theme.textMuted, marginTop: 24, fontSize: 13 },
+  cartFooter: { backgroundColor: theme.bgElevated, borderRadius: 12, padding: 12, borderWidth: 1, borderColor: theme.border },
   remiseRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, gap: 10 },
-  remiseLabel: { fontSize: 12, color: '#94a3b8', flex: 1 },
+  remiseLabel: { fontSize: 12, color: theme.textSecondary, flex: 1 },
   remiseControls: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   remiseInput: {
     width: 64,
-    backgroundColor: '#0f172a',
+    backgroundColor: theme.bg,
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 6,
-    color: '#f1f5f9',
+    color: theme.text,
     fontSize: 13,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: theme.border,
     textAlign: 'right',
   },
-  remiseToggle: { flexDirection: 'row', borderRadius: 6, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)' },
-  remiseModeBtn: { paddingHorizontal: 10, paddingVertical: 6, backgroundColor: '#0f172a' },
-  remiseModeBtnActive: { backgroundColor: '#6366f1' },
-  remiseModeText: { fontSize: 12, fontWeight: '700', color: '#64748b' },
+  remiseToggle: { flexDirection: 'row', borderRadius: 6, overflow: 'hidden', borderWidth: 1, borderColor: theme.borderStrong },
+  remiseModeBtn: { paddingHorizontal: 10, paddingVertical: 6, backgroundColor: theme.bg },
+  remiseModeBtnActive: { backgroundColor: theme.primary },
+  remiseModeText: { fontSize: 12, fontWeight: '700', color: theme.textMuted },
   remiseModeTextActive: { color: '#fff' },
-  remiseAmount: { fontSize: 12, fontWeight: '700', color: '#10b981', minWidth: 60, textAlign: 'right' },
+  remiseAmount: { fontSize: 12, fontWeight: '700', color: theme.primary, minWidth: 60, textAlign: 'right' },
   totals: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  articles: { fontSize: 12, color: '#64748b' },
-  sousTotal: { fontSize: 11, color: '#94a3b8', marginTop: 2 },
+  articles: { fontSize: 12, color: theme.textMuted },
+  sousTotal: { fontSize: 11, color: theme.textSecondary, marginTop: 2 },
   sudoBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
-  sudoBadgeText: { fontSize: 10, color: '#10b981', fontWeight: '600' },
-  total: { fontSize: 18, fontWeight: '700', color: '#10b981' },
+  sudoBadgeText: { fontSize: 10, color: theme.primary, fontWeight: '600' },
+  total: { fontSize: 18, fontWeight: '700', color: theme.primary },
   footerActions: { flexDirection: 'row', gap: 8 },
-  clearBtn: { padding: 10, backgroundColor: 'rgba(239,68,68,0.12)', borderRadius: 8 },
-  sendBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#6366f1', borderRadius: 8, paddingVertical: 12 },
+  clearBtn: { padding: 10, backgroundColor: theme.dangerWash, borderRadius: 8 },
+  parkBtn: { padding: 10, backgroundColor: theme.warningWash, borderRadius: 8 },
+  pendingBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: theme.warning,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 3,
+  },
+  pendingBadgeText: { fontSize: 9, fontWeight: '800', color: '#fff' },
+  sendBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: theme.primary, borderRadius: 8, paddingVertical: 12 },
   sendBtnDisabled: { opacity: 0.6 },
   sendBtnText: { color: '#fff', fontSize: 15, fontWeight: '600' },
-  modalOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', padding: 24 },
-  modalSheet: { backgroundColor: '#1e293b', borderRadius: 16, width: '100%', maxWidth: 400, maxHeight: '80%', padding: 20 },
+  modalOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: theme.bgOverlay, justifyContent: 'center', alignItems: 'center', padding: 24 },
+  modalSheet: { backgroundColor: theme.bgElevated, borderRadius: 16, width: '100%', maxWidth: 400, maxHeight: '80%', padding: 20 },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  modalTitle: { fontSize: 17, fontWeight: '700', color: '#f1f5f9' },
-  modalClose: { fontSize: 18, color: '#64748b' },
-  modalInput: { backgroundColor: '#0f172a', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, color: '#f1f5f9', fontSize: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', marginBottom: 12 },
+  modalTitle: { fontSize: 17, fontWeight: '700', color: theme.text },
+  modalClose: { fontSize: 18, color: theme.textMuted },
+  modalInput: { backgroundColor: theme.bg, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, color: theme.text, fontSize: 14, borderWidth: 1, borderColor: theme.border, marginBottom: 12 },
   modalList: { maxHeight: 300 },
-  clientItem: { padding: 12, backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 8, marginBottom: 4 },
-  clientItemName: { fontSize: 14, fontWeight: '600', color: '#f1f5f9' },
-  clientItemPhone: { fontSize: 12, color: '#64748b', marginTop: 2 },
+  clientItem: { padding: 12, backgroundColor: theme.bgMuted, borderRadius: 8, marginBottom: 4 },
+  clientItemName: { fontSize: 14, fontWeight: '600', color: theme.text },
+  clientItemPhone: { fontSize: 12, color: theme.textMuted, marginTop: 2 },
   newClientBtn: { marginBottom: 10 },
-  newClientText: { fontSize: 13, color: '#10b981', fontWeight: '700' },
-  formLabel: { fontSize: 11, fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', marginBottom: 6 },
-  formError: { color: '#ef4444', fontSize: 12, marginBottom: 8 },
+  newClientText: { fontSize: 13, color: theme.primary, fontWeight: '700' },
+  formLabel: { fontSize: 11, fontWeight: '700', color: theme.textMuted, textTransform: 'uppercase', marginBottom: 6 },
+  formError: { color: theme.danger, fontSize: 12, marginBottom: 8 },
   formActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 4 },
-  formBackBtn: { paddingHorizontal: 18, paddingVertical: 10, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.08)' },
-  formBackText: { color: '#f1f5f9', fontWeight: '600', fontSize: 14 },
-  formCreateBtn: { paddingHorizontal: 22, paddingVertical: 10, borderRadius: 8, backgroundColor: '#10b981', minWidth: 90, alignItems: 'center' },
+  formBackBtn: { paddingHorizontal: 18, paddingVertical: 10, borderRadius: 8, backgroundColor: theme.bgMuted },
+  formBackText: { color: theme.text, fontWeight: '600', fontSize: 14 },
+  formCreateBtn: { paddingHorizontal: 22, paddingVertical: 10, borderRadius: 8, backgroundColor: theme.primary, minWidth: 90, alignItems: 'center' },
   formCreateText: { color: '#fff', fontWeight: '700', fontSize: 14 },
 });

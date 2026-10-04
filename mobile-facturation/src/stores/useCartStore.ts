@@ -31,6 +31,7 @@ interface CartState {
 
   // Actions lignes
   addProduct: (product: Product, qty?: number) => void;
+  addLine: (line: CartLine) => void;
   removeLine: (productId: number) => void;
   updateQty: (productId: number, qty: number) => void;
   updatePrix: (productId: number, prix: number) => void;
@@ -104,6 +105,11 @@ export const useCartStore = create<CartState>((set, get) => ({
     }
   },
 
+  // Ajoute une ligne telle quelle (fusion d'une vente en attente) —
+  // l'appelant garantit que product.id n'existe pas déjà dans le panier.
+  addLine: (line) =>
+    set((s) => ({ lines: [...s.lines, calcLine(line)] })),
+
   removeLine: (productId) =>
     set((s) => ({ lines: s.lines.filter((l) => l.product.id !== productId) })),
 
@@ -134,7 +140,7 @@ export const useCartStore = create<CartState>((set, get) => ({
     set((s) => ({
       lines: s.lines.map((l) =>
         l.product.id === productId
-          ? { ...l, lotId: lot?.id ?? null, lotText: lot?.lot ?? null }
+          ? { ...l, lotId: lot?.id ?? null, lotText: lot?.lot ?? null, lotExp: lot?.date_expiration ?? null }
           : l
       ),
     })),

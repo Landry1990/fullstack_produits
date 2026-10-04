@@ -63,6 +63,17 @@
 - [x] **Création client rapide** (2026-10-04) : « + Nouveau client » dans le
   modal → `POST /clients/` (PARTICULIER, plafond -1).
 
+### Backend — Fix routage caisse (2026-10-04)
+
+- [x] Les ventes envoyées depuis un poste POS (mobile ou web) étaient créées
+  avec `poste_caisse=NULL` → notif WS ignorée par la caisse sélectionnée
+  (affichage retardé jusqu'au polling 30 s) et **paiements exclus des
+  totaux/clôture par caisse**. `sale_finalizer.py` rattache désormais toute
+  vente `centralized` à `caisse_ouverte.caisse_id`. Tests backend ajoutés
+  (`test_sale_finalizer`, 21/21 + régression 32/32). Les anciennes factures
+  `poste_caisse=NULL` restent à corriger en prod si le client en demande
+  l'historique.
+
 ### P2 — Résilience de session et de saisie
 
 - [x] **Session persistée** (2026-10-04) : `session.token` /
@@ -84,17 +95,33 @@
 
 ### P3 — Historique et finition
 
-- [ ] **Historique local** : `HistoriqueScreen.tsx` est un placeholder,
-  `expo-sqlite` installé → enregistrer chaque envoi (n° facture, heure,
-  nb articles, total, client, statut).
-- [ ] **Thème clair/emerald** : aligner sur `pda-inventaire`
-  (`src/config/theme.ts`) et l'app web — aujourd'hui dark indigo.
-- [ ] **Ménage** : supprimer `src/services/websocket.ts` et les types
-  `CashierPayload`/`CashierArticle` (code mort depuis le passage en REST) ;
-  vérifier les deps réellement utilisées.
-- [ ] **Erreurs** : réessayer l'envoi une fois avec la même `Idempotency-Key`
-  sur timeout/erreur réseau transitoire (pas une file offline, juste de la
-  robustesse).
+- [x] **Historique local** (2026-10-04) : `services/historique.ts`
+  (kv-store `historique.<username>`, cap 200) enregistre chaque envoi
+  réussi (n° facture, heure, nb articles, total, client) ;
+  `HistoriqueScreen` liste les ventes (pull-to-refresh), entrée via
+  l'icône horloge en en-tête de la facturation.
+- [x] **Thème clair/emerald** (2026-10-04) : `src/config/theme.ts`
+  (palette identique à `pda-inventaire`) appliqué à tous les écrans,
+  composants et `app.json` (`userInterfaceStyle: light`, splash/icône).
+- [x] **Ménage** (2026-10-04) : `src/services/websocket.ts` et les types
+  `CashierPayload`/`CashierArticle` supprimés ; deps inutilisées retirées
+  (`@react-native-community/netinfo`, `expo-device`, `uuid`,
+  `@types/uuid`).
+- [x] **Erreurs** (2026-10-04) : `sendSaleToCaisse` réessaie **une fois**
+  avec la même `Idempotency-Key` sur timeout/erreur réseau (pas de
+  réponse HTTP) — le backend dédoublonne.
+- [x] **Badge lot = aperçu FEFO** (2026-10-04) : `CartItemRow` affiche le
+  lot réel — lot choisi (`lot · exp MM/AA`) ou, sans choix, l'aperçu FEFO
+  calculé sur `product.stock_lots` (`AUTO · LOT-A · 12/26` ou
+  `AUTO · LOT-A +2`), porté du web (`utils/fefo.ts`). `stock_lots` est
+  déjà renvoyé par le serializer produit (5 premiers lots non vides).
+- [x] **Mise en attente** (2026-10-04) : comme le web (`ventesEnAttente`
+  localStorage), 100 % locale — `stores/usePendingStore.ts` (kv-store
+  `pending.<username>`, cap 50), bouton pause dans le footer, icône
+  horloge + badge en en-tête → `PendingSalesModal` (reprendre /
+  fusionner / supprimer). Reprendre = `cart.hydrate()` (creds Sudo
+  jamais persistés → revalidation à l'envoi) ; fusionner = quantités
+  cumulées par produit, client/remise du panier actuel conservés.
 
 ## ❌ Hors périmètre (décision actée)
 
@@ -116,4 +143,4 @@
 | Scan code-barres + douchette + fix contrat API | ✅ | 2026-10-04 |
 | Parité vente (AD, remise, prix, Sudo, création client) | ✅ | 2026-10-04 |
 | Session persistée + brouillon | ✅ | 2026-10-04 |
-| Historique + thème + ménage | ⬜ | — |
+| Historique + thème + ménage | ✅ | 2026-10-04 |

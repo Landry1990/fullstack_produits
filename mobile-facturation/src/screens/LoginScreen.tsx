@@ -4,6 +4,7 @@ import {
 } from 'react-native';
 import { useAuthStore } from '../stores/useAuthStore';
 import { login, getMe, ensurePosteVente } from '../services/api';
+import { theme } from '../config/theme';
 
 export function LoginScreen({ onLoginSuccess }: { onLoginSuccess: () => void }) {
   const { serverUrl, setServerUrl, setAuth, setMaxDiscountRate, setPosteVente } = useAuthStore();
@@ -78,7 +79,7 @@ export function LoginScreen({ onLoginSuccess }: { onLoginSuccess: () => void }) 
         <TextInput
           style={styles.input}
           placeholder="http://192.168.1.181"
-          placeholderTextColor="#64748b"
+          placeholderTextColor={theme.textMuted}
           value={url}
           onChangeText={setUrl}
           autoCapitalize="none"
@@ -88,7 +89,7 @@ export function LoginScreen({ onLoginSuccess }: { onLoginSuccess: () => void }) 
         <TextInput
           style={styles.input}
           placeholder="Mot de passe"
-          placeholderTextColor="#64748b"
+          placeholderTextColor={theme.textMuted}
           value={password}
           onChangeText={setPassword}
           secureTextEntry
@@ -115,34 +116,36 @@ export function LoginScreen({ onLoginSuccess }: { onLoginSuccess: () => void }) 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: theme.bg,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
   },
   card: {
-    backgroundColor: '#1e293b',
+    backgroundColor: theme.bgElevated,
     borderRadius: 16,
     padding: 24,
     width: '100%',
     maxWidth: 400,
+    borderWidth: 1,
+    borderColor: theme.border,
   },
-  title: { fontSize: 24, fontWeight: '700', color: '#f1f5f9', marginBottom: 4 },
-  subtitle: { fontSize: 14, color: '#64748b', marginBottom: 8 },
-  hint: { fontSize: 12, color: '#94a3b8', marginBottom: 20 },
+  title: { fontSize: 24, fontWeight: '700', color: theme.text, marginBottom: 4 },
+  subtitle: { fontSize: 14, color: theme.textMuted, marginBottom: 8 },
+  hint: { fontSize: 12, color: theme.textSecondary, marginBottom: 20 },
   input: {
-    backgroundColor: '#0f172a',
+    backgroundColor: theme.bg,
     borderRadius: 8,
     paddingHorizontal: 14,
     paddingVertical: 12,
     marginBottom: 12,
-    color: '#f1f5f9',
+    color: theme.text,
     fontSize: 15,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: theme.border,
   },
   button: {
-    backgroundColor: '#6366f1',
+    backgroundColor: theme.primary,
     borderRadius: 8,
     paddingVertical: 14,
     alignItems: 'center',

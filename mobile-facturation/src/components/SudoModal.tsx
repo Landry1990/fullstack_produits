@@ -4,6 +4,7 @@ import {
   ActivityIndicator, StyleSheet,
 } from 'react-native';
 import { verifySudoPassword } from '../services/api';
+import { theme } from '../config/theme';
 
 interface Props {
   visible: boolean;
@@ -61,7 +62,7 @@ export function SudoModal({ visible, title, message, permission, onValidate, onC
           <TextInput
             style={[styles.input, error ? styles.inputError : null]}
             placeholder="Mot de passe"
-            placeholderTextColor="#64748b"
+            placeholderTextColor={theme.textMuted}
             value={password}
             onChangeText={(t) => { setPassword(t); setError(null); }}
             secureTextEntry
@@ -95,47 +96,47 @@ export function SudoModal({ visible, title, message, permission, onValidate, onC
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: theme.bgOverlay,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
   },
   sheet: {
-    backgroundColor: '#1e293b',
+    backgroundColor: theme.bgElevated,
     borderRadius: 16,
     width: '100%',
     maxWidth: 400,
     padding: 20,
   },
-  title: { fontSize: 17, fontWeight: '700', color: '#f1f5f9' },
-  subtitle: { fontSize: 12, color: '#94a3b8', marginTop: 4 },
-  message: { fontSize: 13, color: '#cbd5e1', marginTop: 12 },
+  title: { fontSize: 17, fontWeight: '700', color: theme.text },
+  subtitle: { fontSize: 12, color: theme.textMuted, marginTop: 4 },
+  message: { fontSize: 13, color: theme.textSecondary, marginTop: 12 },
   input: {
-    backgroundColor: '#0f172a',
+    backgroundColor: theme.bg,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    color: '#f1f5f9',
+    color: theme.text,
     fontSize: 14,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: theme.border,
     marginTop: 14,
   },
-  inputError: { borderColor: '#ef4444' },
-  error: { color: '#ef4444', fontSize: 12, marginTop: 6 },
+  inputError: { borderColor: theme.danger },
+  error: { color: theme.danger, fontSize: 12, marginTop: 6 },
   actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 18 },
   cancelBtn: {
     paddingHorizontal: 18,
     paddingVertical: 10,
     borderRadius: 8,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: theme.bgMuted,
   },
-  cancelText: { color: '#f1f5f9', fontWeight: '600', fontSize: 14 },
+  cancelText: { color: theme.text, fontWeight: '600', fontSize: 14 },
   validateBtn: {
     paddingHorizontal: 22,
     paddingVertical: 10,
     borderRadius: 8,
-    backgroundColor: '#10b981',
+    backgroundColor: theme.primary,
     minWidth: 90,
     alignItems: 'center',
   },

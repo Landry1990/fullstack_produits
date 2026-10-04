@@ -11,6 +11,9 @@ export interface Product {
   tva: string;
   use_lot_management?: boolean;
   is_active?: boolean;
+  // 5 premiers lots non vides triés FEFO (SerializerMethodField du
+  // ProduitSerializer — présent sur list/retrieve/by-cip).
+  stock_lots?: StockLot[];
 }
 
 // ─── Stock Lot ────────────────────────────────────────────
@@ -67,6 +70,7 @@ export interface CartLine {
   remise: number;       // % remise
   lotId: number | null;
   lotText: string | null;
+  lotExp?: string | null;   // expiration du lot choisi (affichage)
   total_ttc: number;
 }
 
@@ -89,35 +93,22 @@ export interface ScanResult {
   label: string;
 }
 
-// ─── Payload envoyé au WebSocket caisse ───────────────────
-export interface CashierPayload {
-  type: 'cashier_item_new';
-  pda_id: string;
-  item_id: string;
-  articles: CashierArticle[];
-  client: Client | null;
-  ayant_droit: AyantDroit | null;
-  total_estime: number;
-  articles_count: number;
+// ─── Vente mise en attente (local, comme le web) ──────────
+export interface PendingSale {
+  id: string;
   timestamp: string;
-}
-
-export interface CashierArticle {
-  produit_id: number;
-  cip: string | null;
-  name: string;
-  quantite: number;
-  prix_unitaire: number;
-  remise: number;
-  lot_id: number | null;
-  lot_text: string | null;
-  total_ttc: number;
+  lines: CartLine[];
+  client: Client | null;
+  ayantDroit: AyantDroit | null;
+  remiseGlobale: number;
+  remiseMode: 'taux' | 'montant';
 }
 
 // ─── Historique local ─────────────────────────────────────
 export interface HistoriqueItem {
   id: string;
   timestamp: string;
+  numero_facture: string | null;
   articles_count: number;
   total_estime: number;
   client: string | null;
