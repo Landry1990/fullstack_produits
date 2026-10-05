@@ -3,8 +3,10 @@ import {
   Modal, View, Text, TextInput, TouchableOpacity,
   ActivityIndicator, StyleSheet,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { verifySudoPassword } from '../services/api';
 import { theme } from '../config/theme';
+import { moderateScale as ms } from '../utils/scale';
 
 interface Props {
   visible: boolean;
@@ -16,6 +18,7 @@ interface Props {
 }
 
 export function SudoModal({ visible, title, message, permission, onValidate, onClose }: Props) {
+  const insets = useSafeAreaInsets();
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -51,7 +54,10 @@ export function SudoModal({ visible, title, message, permission, onValidate, onC
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.overlay}>
+      <View style={[styles.overlay, {
+        paddingTop: Math.max(insets.top, 24),
+        paddingBottom: Math.max(insets.bottom, 24),
+      }]}>
         <View style={styles.sheet}>
           <Text style={styles.title}>{title || 'Validation requise'}</Text>
           <Text style={styles.subtitle}>
@@ -99,47 +105,47 @@ const styles = StyleSheet.create({
     backgroundColor: theme.bgOverlay,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: ms(24),
   },
   sheet: {
     backgroundColor: theme.bgElevated,
-    borderRadius: 16,
+    borderRadius: ms(16),
     width: '100%',
-    maxWidth: 400,
-    padding: 20,
+    maxWidth: ms(400),
+    padding: ms(20),
   },
-  title: { fontSize: 17, fontWeight: '700', color: theme.text },
-  subtitle: { fontSize: 12, color: theme.textMuted, marginTop: 4 },
-  message: { fontSize: 13, color: theme.textSecondary, marginTop: 12 },
+  title: { fontSize: ms(17), fontWeight: '700', color: theme.text },
+  subtitle: { fontSize: ms(12), color: theme.textMuted, marginTop: ms(4) },
+  message: { fontSize: ms(13), color: theme.textSecondary, marginTop: ms(12) },
   input: {
     backgroundColor: theme.bg,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderRadius: ms(8),
+    paddingHorizontal: ms(12),
+    paddingVertical: ms(10),
     color: theme.text,
-    fontSize: 14,
+    fontSize: ms(14),
     borderWidth: 1,
     borderColor: theme.border,
-    marginTop: 14,
+    marginTop: ms(14),
   },
   inputError: { borderColor: theme.danger },
-  error: { color: theme.danger, fontSize: 12, marginTop: 6 },
-  actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 18 },
+  error: { color: theme.danger, fontSize: ms(12), marginTop: ms(6) },
+  actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: ms(10), marginTop: ms(18) },
   cancelBtn: {
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 8,
+    paddingHorizontal: ms(18),
+    paddingVertical: ms(10),
+    borderRadius: ms(8),
     backgroundColor: theme.bgMuted,
   },
-  cancelText: { color: theme.text, fontWeight: '600', fontSize: 14 },
+  cancelText: { color: theme.text, fontWeight: '600', fontSize: ms(14) },
   validateBtn: {
-    paddingHorizontal: 22,
-    paddingVertical: 10,
-    borderRadius: 8,
+    paddingHorizontal: ms(22),
+    paddingVertical: ms(10),
+    borderRadius: ms(8),
     backgroundColor: theme.primary,
-    minWidth: 90,
+    minWidth: ms(90),
     alignItems: 'center',
   },
   validateBtnDisabled: { opacity: 0.5 },
-  validateText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  validateText: { color: '#fff', fontWeight: '700', fontSize: ms(14) },
 });

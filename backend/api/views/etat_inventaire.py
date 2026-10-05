@@ -28,7 +28,7 @@ class EtatInventairePDFView(APIView):
     GET /api/produits/etat-inventaire/pdf/
     Paramètres:
         - group_by: FORME | RAYON | GROUPE (requis)
-        - stock_display: MACHINE | ZERO | NON_ZERO (défaut: MACHINE)
+        - stock_display: MACHINE | ZERO | NON_ZERO | NEGATIF (défaut: MACHINE)
     
     Colonnes: ID | CIP1 | Libellé | Stock | Prix Vente | Qté Physique
     Si multi-lots: une ligne par lot avec le numéro de lot
@@ -52,6 +52,7 @@ class EtatInventairePDFView(APIView):
             'MACHINE': T(lang, 'einv_stock_machine'),
             'NON_ZERO': T(lang, 'einv_stock_nonzero'),
             'ZERO': T(lang, 'einv_stock_zero'),
+            'NEGATIF': T(lang, 'einv_stock_negatif'),
         }
 
         if group_by not in ['FORME', 'RAYON', 'GROUPE']:
@@ -64,6 +65,8 @@ class EtatInventairePDFView(APIView):
         base_filter = {'is_active': True}
         if stock_display == 'NON_ZERO':
             base_filter['stock__gt'] = 0
+        elif stock_display == 'NEGATIF':
+            base_filter['stock__lt'] = 0
 
         # Récupérer les produits actifs avec leurs lots (Prefetch filtré évite N+1)
         active_lots_prefetch = Prefetch(
@@ -134,7 +137,7 @@ class EtatInventairePDFView(APIView):
                         'cip1': produit.cip1 or '-',
                         'name': produit.name,
                         'lot_numero': lot.lot or '-',
-                        'stock': float(lot.quantity_remaining) if stock_display in ('MACHINE', 'NON_ZERO') else 0,
+                        'stock': float(lot.quantity_remaining) if stock_display in ('MACHINE', 'NON_ZERO', 'NEGATIF') else 0,
                         'selling_price': float(produit.selling_price) if produit.selling_price else 0,
                         'is_lot_line': True,
                     })
@@ -145,7 +148,7 @@ class EtatInventairePDFView(APIView):
                     'cip1': produit.cip1 or '-',
                     'name': produit.name,
                     'lot_numero': lots[0].lot if lots else '-',
-                    'stock': float(produit.stock) if stock_display in ('MACHINE', 'NON_ZERO') else 0,
+                    'stock': float(produit.stock) if stock_display in ('MACHINE', 'NON_ZERO', 'NEGATIF') else 0,
                     'selling_price': float(produit.selling_price) if produit.selling_price else 0,
                     'is_lot_line': False,
                 })

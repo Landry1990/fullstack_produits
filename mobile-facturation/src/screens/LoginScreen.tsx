@@ -3,11 +3,14 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator,
 } from 'react-native';
 import { useAuthStore } from '../stores/useAuthStore';
-import { login, getMe, ensurePosteVente } from '../services/api';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { login, getMe, ensurePosteVente, PosteChoiceRequired } from '../services/api';
 import { theme } from '../config/theme';
+import { moderateScale as ms } from '../utils/scale';
 
 export function LoginScreen({ onLoginSuccess }: { onLoginSuccess: () => void }) {
   const { serverUrl, setServerUrl, setAuth, setMaxDiscountRate, setPosteVente } = useAuthStore();
+  const insets = useSafeAreaInsets();
   const [url, setUrl] = useState(serverUrl);
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -43,8 +46,10 @@ export function LoginScreen({ onLoginSuccess }: { onLoginSuccess: () => void }) 
       try {
         setPosteVente(await ensurePosteVente());
       } catch (err: unknown) {
-        if ((err as Error)?.message === 'NO_POSTE_DISPONIBLE') {
-          Alert.alert('Aucun point de vente', "Aucun point de vente n'est disponible. Demandez à l'administrateur d'en créer un dans Paramètres → Points de vente.");
+        if (err instanceof PosteChoiceRequired) {
+          // Choix différé : le sélecteur s'ouvre sur l'écran de facturation.
+        } else if ((err as Error)?.message === 'NO_POSTE_DISPONIBLE') {
+          Alert.alert('Aucun point de vente', "Aucun poste « Mobile » n'est disponible. Demandez à l'administrateur d'en créer un (nom commençant par « Mobile ») dans Paramètres → Points de vente.");
         } else {
           const detail = (err as { response?: { data?: { detail?: string } }; message?: string })?.response?.data?.detail
             || (err as Error)?.message || '';
@@ -70,7 +75,12 @@ export function LoginScreen({ onLoginSuccess }: { onLoginSuccess: () => void }) 
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {
+      paddingTop: insets.top,
+      paddingBottom: insets.bottom,
+      paddingLeft: insets.left,
+      paddingRight: insets.right,
+    }]}>
       <View style={styles.card}>
         <Text style={styles.title}>Connexion</Text>
         <Text style={styles.subtitle}>Tablette Facturation</Text>
@@ -119,38 +129,38 @@ const styles = StyleSheet.create({
     backgroundColor: theme.bg,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: ms(24),
   },
   card: {
     backgroundColor: theme.bgElevated,
-    borderRadius: 16,
-    padding: 24,
+    borderRadius: ms(16),
+    padding: ms(24),
     width: '100%',
-    maxWidth: 400,
+    maxWidth: ms(400),
     borderWidth: 1,
     borderColor: theme.border,
   },
-  title: { fontSize: 24, fontWeight: '700', color: theme.text, marginBottom: 4 },
-  subtitle: { fontSize: 14, color: theme.textMuted, marginBottom: 8 },
-  hint: { fontSize: 12, color: theme.textSecondary, marginBottom: 20 },
+  title: { fontSize: ms(24), fontWeight: '700', color: theme.text, marginBottom: ms(4) },
+  subtitle: { fontSize: ms(14), color: theme.textMuted, marginBottom: ms(8) },
+  hint: { fontSize: ms(12), color: theme.textSecondary, marginBottom: ms(20) },
   input: {
     backgroundColor: theme.bg,
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    marginBottom: 12,
+    borderRadius: ms(8),
+    paddingHorizontal: ms(14),
+    paddingVertical: ms(12),
+    marginBottom: ms(12),
     color: theme.text,
-    fontSize: 15,
+    fontSize: ms(15),
     borderWidth: 1,
     borderColor: theme.border,
   },
   button: {
     backgroundColor: theme.primary,
-    borderRadius: 8,
-    paddingVertical: 14,
+    borderRadius: ms(8),
+    paddingVertical: ms(14),
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: ms(8),
   },
   buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  buttonText: { color: '#fff', fontSize: ms(16), fontWeight: '600' },
 });

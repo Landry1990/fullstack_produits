@@ -1,5 +1,304 @@
 # Changelog — Fullstack Produits
 
+## 2026-10-05 — 📱 Mobile : retours test terrain (recherche, clavier, densité, historique)
+
+Correctifs issus des tests sur appareil réel après la transposition
+« Vente tablette » (détail complet dans `mobile-facturation/SUIVI.md`) :
+
+- **Aperçu FEFO après ajout manuel** : le serializer liste ne renvoie
+  pas `stock_lots` → badge lot vide. Lots chargés à la demande
+  (`getLots`) + action store `setProductLots` → lot + expiration
+  affichés comme après un scan.
+- **Tailles proportionnelles à l'écran** : nouvel utilitaire
+  `utils/scale.ts` (`moderateScale`, réf. 375dp, borné ×1→×1.5) appliqué
+  aux 11 fichiers avec styles — tablettes agrandies, jamais de
+  rétrécissement sur petits écrans.
+- **Clavier & recherche** : résultats affichés dans un overlay flottant
+  ancré au-dessus du clavier (hauteur mesurée, compatible
+  pan/resize/nothing) ; sections basses masquées en mode recherche ;
+  `Keyboard.dismiss()` à l'ajout ; `softwareKeyboardLayoutMode: "pan"`.
+- **Densité compacte** (< 720dp de hauteur) : sections fixes resserrées,
+  ~60dp gagnés pour la liste panier.
+- **Confirmation « Annuler »** : vider le panier exige une confirmation ;
+  bouton grisé à vide.
+- **`ProductRow`** : nom gras si stock > 0, normal si 0, rouge si < 0.
+- **Historique** : détail produits (nom, qté, prix, remise, total ligne)
+  stocké à l'envoi et affiché au toucher sur l'entrée.
+
+## 2026-10-04 — 📉 États/Inventaires : filtre « Stocks négatifs » + négatifs masqués à 0
+
+### Pourquoi
+
+Le listing ne proposait pas de filtre dédié aux stocks négatifs : les lots
+négatifs étaient mélangés aux « Stocks nuls » (`quantity_remaining__lte=0`)
+et, pire, un produit dont `Produit.stock` est négatif sans lot négatif
+(vente forcée sans écriture lot, divergence produit/lots) s'affichait à
+**0** en « Tous les produits » — anomalie invisible.
+
+### Changements backend
+
+- `api/views/stocks/inventaire/listing_excel.py` :
+  - `stock_filter='negatif'` : lots `quantity_remaining < 0` (ou
+    `quantity_reserved < 0` en emplacement Réserve) **+** produits
+    `stock < 0` sans lot négatif → ligne synthétique avec la vraie valeur
+    négative (et `valeur_stock` négative).
+  - `'tous'` : la ligne synthétique des produits sans lot visible affiche
+    désormais `Produit.stock` réel (au lieu de 0 en dur) — le négatif
+    apparaît.
+  - `'zero'` : strictement `= 0` (les négatifs ont leur filtre) ; même
+    alignement dans `_get_rows_from_inventaire` (`quantite_physique`).
+  - Libellé `lx_flt_negatif` (fr/en) ajouté.
+- `api/views/etat_inventaire.py` : `stock_display=NEGATIF` supporté
+  (`stock__lt=0`, valeur affichée) pour le bouton « Imprimer » ;
+  libellé `einv_stock_negatif` (fr/en).
+- `inventaire_main.py` : docstring `stock_filter` mise à jour.
+
+### Changements frontend
+
+- `EtatsInventaire.tsx` : option « Stocks négatifs (< 0) » (pilule rose,
+  icône `TrendingDown`) ; `handlePrint` mappe `negatif` → `NEGATIF`.
+- `locales/{fr,en}/stock.json` : `filter_negative` + `filter_negative_desc`.
+
+### Vérifications
+
+- `test_stock_inventory` + `test_inventory_consistency` : 8/8 OK.
+- `tsc --noEmit` : aucune erreur sur `EtatsInventaire.tsx`.
+
+## 2026-10-04 — 📱 Mobile : disposition « Vente tablette » sur l'écran de vente
+
+### Pourquoi
+
+L'ancienne page web « Vente tablette » (supprimée) avait une disposition
+appréciée : recherche en haut, grande zone panier centrale, client +
+remise + total/envoi en bas. Transposée sur `mobile-facturation` qui la
+remplace — sans retirer aucune fonction mobile.
+
+### Changements (`mobile-facturation/`)
+
+- `src/screens/FacturationScreen.tsx` : split recherche|panier remplacé
+  par une colonne verticale unique — en-tête « Vente » + sous-titre
+  « {poste} • N article(s) » (poste touchable = retry `ensurePosteVente`,
+  ex-badge), recherche pleine largeur (scan conservé), zone centrale à
+  bordure pointillée affichant les résultats de recherche pendant la
+  saisie puis les lignes du panier (état vide : icône panier +
+  « Ajoutez des produits pour commencer »), carte client compacte avec
+  « Modifier », bloc ayant droit inchangé, remise globale %/F inchangée,
+  footer « TOTAL » (sous-total + badge superviseur) + « Envoyer en
+  caisse » (désactivé quand le panier est vide, style grisé).
+- Fonctions déplacées, pas supprimées : ventes en attente, historique,
+  mise en attente et déconnexion en icônes d'en-tête ; « Annuler » vide
+  le panier (icône seule < 560 px de large) ; la déselection du client
+  reste possible via « Client de passage » dans le modal.
+- `SUIVI.md` : entrée ajoutée en section P1.
+
+### Vérifications
+
+- `tsc --noEmit` (mobile-facturation) : OK.
+
+## 2026-10-04 — 🗑️ Suppression des écrans « Caisse tablette » et « Vente tablette » web
+
+### Pourquoi
+
+Redondants avec l'app **mobile-facturation**, désormais plus complète
+(scan caméra/douchette, brouillon persisté, mise en attente, historique,
+poste épinglé par appareil) pour le même cas d'usage : prise de vente
+mobile → caisse centralisée.
+
+### Changements frontend (`frontend/frontend/`)
+
+- `src/components/VenteTablette.tsx` et `src/components/CaisseTablette.tsx`
+  supprimés.
+- `src/routes.tsx` : routes `/app/vente-tablette` et `/app/caisse-tablette`
+  retirées (+ imports lazy).
+- `src/components/Sidebar.tsx` : entrées de menu et prefetch retirés.
+- `src/hooks/caisse/useCaisseSession.ts` : option `autoActivatePoste`
+  supprimée (n'avait plus d'appelant).
+- `src/services/cashSessionService.ts` : `ensurePosPoste`,
+  `getPostesVenteDisponibles`, `isPosteComptoir`, `DEVICE_POSTE_KEY`
+  supprimés — la convention « Comptoir » n'a plus de consommateur web ;
+  seuls les postes « Mobile… » restent utilisés (par l'app).
+- `src/components/settings/PosteVenteSettingsSection.tsx` : placeholder
+  « Comptoir 1 » → « Mobile 1 ».
+- `public/locales/{fr,en}/` : clés `ventes.caisse_tablette` /
+  `ventes.vente_tablette` (sidebar.json) et section `tablet`
+  (sales.json) retirées.
+
+### Backend — inchangé
+
+Aucun endpoint supprimé : `postes-ventes/*` (`mes_actives/`,
+`disponibles/`, `activer/`, …) et `factures/finaliser/` centralisé sont
+partagés avec mobile-facturation et la caisse centralisée.
+
+### Vérifications
+
+- `npm run build` : OK (4803 modules, 0 erreur).
+- `npm run lint` : aucune erreur nouvelle (35 erreurs préexistantes
+  hors périmètre).
+
+## 2026-10-04 — 📛 Postes de vente : convention de nommage Mobile/Comptoir
+
+Chaque canal ne voit désormais que ses postes, par préfixe de nom
+(insensible à la casse et aux espaces) :
+- **Mobile-facturation** : postes « Mobile… » uniquement —
+  `isPosteMobile` filtre la réutilisation, le poste épinglé et la liste
+  du sélecteur ; les alertes « aucun poste » précisent la convention.
+- **Vente web** (`ensurePosPoste`) : postes « Comptoir… » uniquement —
+  `useCaisseSession` délègue toute la résolution à `ensurePosPoste`
+  (réutilisation + épinglage + activation).
+
+Un poste épinglé à un appareil qui ne respecte plus la convention est
+simplement ignoré → re-choix dans le bon pool. Pas de migration : la
+séparation repose sur les noms existants des définitions.
+
+## 2026-10-04 — 🏷️ Postes de vente : épinglage par appareil + gardes anti-mélange
+
+### Pourquoi
+
+Le pool de définitions de postes était partagé et aveugle : mobile et
+tablette web activaient chacun le 1er poste libre (`disponibles[0]`) →
+un poste web pouvait prendre le poste mobile et inversement. Pire, le
+fallback `actifs[0]`/`myActive[0]` pouvait réutiliser un poste de
+**caisse centrale** (`mode_pos=false`) du même compte → ventes vendeur
+mélangées avec les encaissements dans les stats/journal par poste.
+
+### Changements backend (`backend/api/`)
+
+- `caisse_poste.py` : `disponibles/` inclut désormais les postes fermés
+  du user courant (`Q(vendeur__isnull) | Q(vendeur=request.user)`) —
+  nécessaire pour qu'un appareil épinglé retrouve son poste après
+  fermeture. `activer/` refuse un poste rattaché à une caisse physique
+  (réservé à `ouvrir/`).
+- `sale_finalizer.py` : en mode centralisé, un `poste_vente_id` rattaché
+  à une caisse n'appartenant pas au vendeur est refusé ; les postes POS
+  purs restent partageables entre vendeurs (comptoir partagé, test
+  existant préservé).
+
+### Changements mobile (`mobile-facturation/`)
+
+- `useSettingsStore` : `posteVenteId` persisté (`pos.posteVenteId`,
+  par appareil — pas par vendeur).
+- `api.ts` : `ensurePosteVente` ne réutilise que les postes `mode_pos`,
+  réactive le poste épinglé directement via `activer/`, sinon lève
+  `PosteChoiceRequired` avec la liste des disponibles.
+- `PostePickerModal` (nouveau) : sélecteur affiché au 1er démarrage ou
+  quand le poste épinglé est pris — choix mémorisé sur l'appareil.
+- `FacturationScreen` : résolution auto au montage + badge existant.
+- `LoginScreen` : `PosteChoiceRequired` toléré en silence (le sélecteur
+  s'ouvre sur l'écran de facturation).
+
+### Changements web (`frontend/frontend/`)
+
+- `cashSessionService.ensurePosPoste()` (nouveau) : poste POS épinglé
+  par appareil (`pos_device_poste_vente_id` en localStorage) — même
+  logique que le mobile.
+- `useCaisseSession` : la branche `autoActivatePoste` (VenteTablette)
+  ne retient que les postes `mode_pos` et passe par `ensurePosPoste` ;
+  `setSelectedPosteCaisseId` ne s'applique que si le poste a une caisse.
+- `VenteTablette.retryPosteVente` : même logique via `ensurePosPoste`.
+
+### Vérifications
+
+- `npx tsc --noEmit` propre (mobile + web).
+- Backend : `test_sale_finalizer` + `test_sensitive_permissions` 43/43
+  (4 nouveaux tests : activation poste-caisse refusée, disponibles,
+  finaliser centralisé sur caisse d'autrui / propre).
+- À tester : 2 appareils gardent chacun leur poste ; mobile ne prend
+  jamais le poste de la caisse centrale ; fermeture → réactivation du
+  même poste.
+
+## 2026-10-04 — 📱 Mobile-facturation : safe area edge-to-edge
+
+### Pourquoi
+
+`edgeToEdgeEnabled: true` (app.json Android) sans aucune gestion des
+insets : l'en-tête de l'app dessinait sous la barre de statut de la
+tablette, et le footer sous la barre de navigation gestuelle.
+
+### Changements (`mobile-facturation/`)
+
+- `index.ts` : racine wrappée dans `SafeAreaProvider` (pattern repris
+  de `pda-inventaire/index.ts`).
+- `App.tsx` : `<StatusBar style="dark" />` (thème clair).
+- `useSafeAreaInsets` appliqué : en-têtes `paddingTop` (Facturation,
+  Historique, ScanBarcodeModal), conteneurs `paddingBottom`
+  (cap 24) + `paddingLeft/Right` (découpes latérales en landscape),
+  overlays des modals centrées (`Math.max(insets, 24)` : Sudo, Lot,
+  LineEdit, PendingSales), écran Login.
+
+### Vérifications
+
+- `npx tsc --noEmit` propre. À vérifier sur appareil : en-tête nette
+  sous la barre de statut, boutons du footer hors barre de nav.
+
+## 2026-10-04 — 🔐 Mobile-facturation : forçage stock supervisé + client divers
+
+### Pourquoi
+
+Deux écarts de parité relevés à la revue des droits : le mobile ne
+demandait jamais de validation pour vendre au-delà du stock (403 brut,
+aucun moyen de faire valider par un superviseur), et une vente sans
+client partait en « Client de passage » non rattachée au lieu du client
+« Clients divers » auto-sélectionné sur le web.
+
+### Changements (`mobile-facturation/`)
+
+- `src/services/clientDivers.ts` (nouveau) : `ensureClientDivers` résout
+  « CLIENTS DIVERS »/« CLIENT DIVERS » via `searchClients('divers')` une
+  fois par session (cache `useAuthStore.clientDivers`, reset au logout)
+  et le sélectionne si le panier n'a pas de client.
+- `App.tsx` : après hydratation du brouillon (session restaurée ou
+  login frais) → `ensureClientDivers()`.
+- `FacturationScreen` : après chaque envoi réussi, `cart.clear()` puis
+  re-sélection du client divers (comme `_resetSaleDataOnly` du web).
+- Forçage de stock : `ensureStockSudo` avant l'envoi — une ligne dont la
+  quantité dépasse le stock connu déclenche `SudoModal`
+  `can_sell_negative_stock` ; les creds (`stockSudoCreds`, mémoire
+  seule, reset à clear/hydrate) partent dans le bloc `sudo` du payload
+  `finaliser`. Retry sur 403 `can_sell_negative_stock` si le stock
+  local était périmé.
+- Rappel : l'autorité reste `_compute_required_permissions` côté
+  backend (`can_sell_negative_stock`, `can_do_remise`,
+  `can_modify_price`, `can_validate_zero_amount`…) et chaque validation
+  superviseur écrit un `AuditLog` SUDO_VAL.
+
+### Vérifications
+
+- `npx tsc --noEmit` propre. À tester sur appareil : vente qté > stock
+  (modal + retry 403), vente sans client → facture rattachée « Clients
+  divers ».
+
+## 2026-10-04 — 🔁 Web : transpositions du mobile (retry idempotent + poste auto)
+
+### Pourquoi
+
+Deux patterns fiabilisés sur `mobile-facturation` manquaient au web :
+un POST `finaliser` interrompu (WiFi coupé, timeout) renvoyait une erreur
+alors que la facture avait pu être créée côté backend, et la vente
+tablette se bloquait sur « Point de vente fermé » sans tenter
+d'activation.
+
+### Changements (`frontend/frontend/`)
+
+- `src/services/api.ts` : l'intercepteur retry réseau (MAX 3, backoff
+  1 s→3 s) n'exclut plus que les POST **sans** `Idempotency-Key` —
+  `venteService.finaliser` (et tout POST idempotent) retombe donc en
+  retry automatique, la même clé permettant au backend de dédoublonner.
+- `src/hooks/caisse/useCaisseSession.ts` : option
+  `{ autoActivatePoste: true }` — si aucun poste actif au chargement,
+  active le 1er poste disponible (`disponibles/` → `activer/`), port
+  du `ensurePosteVente` mobile. Désactivée par défaut : CaisseTablette /
+  CaisseCentralisee inchangés.
+- `src/components/VenteTablette.tsx` : `autoActivatePoste` activé ;
+  écran « Point de vente fermé » gagne un bouton **Réessayer**
+  (spinner) relançant `mes_actives` → `disponibles` → `activer`.
+- Locales `sales` fr/en : nouvelle section `tablet` (title, items,
+  no_session, open_session_first, retry, no_poste_available,
+  poste_retry_failed) — jusque-là portées par les `defaultValue`.
+
+### Vérifications
+
+- `npx tsc --noEmit` propre, JSON locales valides.
+
 ## 2026-10-04 — 🏷️ Mobile-facturation : badge lot = aperçu FEFO
 
 ### Pourquoi

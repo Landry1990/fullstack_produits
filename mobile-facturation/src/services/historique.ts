@@ -23,7 +23,7 @@ export const getHistorique = async (): Promise<HistoriqueItem[]> => {
 };
 
 export const addHistoriqueItem = async (
-  item: Pick<HistoriqueItem, 'numero_facture' | 'articles_count' | 'total_estime' | 'client'>
+  item: Pick<HistoriqueItem, 'numero_facture' | 'articles_count' | 'total_estime' | 'client' | 'lignes'>
 ): Promise<void> => {
   if (Platform.OS === 'web') return;
   try {

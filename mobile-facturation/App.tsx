@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Platform, StyleSheet, View } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Storage from 'expo-sqlite/kv-store';
@@ -11,6 +12,7 @@ import { useSettingsStore } from './src/stores/useSettingsStore';
 import { useCartStore, type CartDraft } from './src/stores/useCartStore';
 import { usePendingStore } from './src/stores/usePendingStore';
 import { getMe, ensurePosteVente } from './src/services/api';
+import { ensureClientDivers } from './src/services/clientDivers';
 import { theme } from './src/config/theme';
 
 const Stack = createNativeStackNavigator();
@@ -91,12 +93,18 @@ export default function App() {
   useEffect(() => {
     if (!isAuthenticated) return;
     const user = useAuthStore.getState().username;
-    if (user) void hydrateDraft(user);
+    if (user) {
+      // Client « comptoir » (CLIENTS DIVERS) auto-sélectionné après
+      // restauration du brouillon — même convention que le web ; ignoré
+      // si le brouillon avait déjà un client.
+      void hydrateDraft(user).then(() => ensureClientDivers());
+    }
   }, [isAuthenticated, hydrateDraft]);
 
   if (restoring) {
     return (
       <View style={styles.restoring}>
+        <StatusBar style="dark" />
         <ActivityIndicator size="large" color={theme.primary} />
       </View>
     );
@@ -104,6 +112,7 @@ export default function App() {
 
   return (
     <NavigationContainer>
+      <StatusBar style="dark" />
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {!isAuthenticated ? (
           <Stack.Screen name="Login">

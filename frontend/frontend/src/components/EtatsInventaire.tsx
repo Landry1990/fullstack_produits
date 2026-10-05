@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './sha
 import { Select } from './ui/Select';
 import {
   FileSpreadsheet, Printer, Layers,
-  Package, TrendingUp, AlertCircle, CheckCircle2, BarChart3,
+  Package, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, BarChart3,
   SlidersHorizontal, Eye, Building2, Tag, FlaskConical,
   Grid3X3, Info
 } from 'lucide-react';
@@ -17,7 +17,7 @@ import { downloadBlob } from '../utils/excelExport';
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type GroupByOption = 'rayon' | 'forme' | 'groupe' | 'fournisseur';
-type StockFilterOption = 'tous' | 'zero' | 'non_zero';
+type StockFilterOption = 'tous' | 'zero' | 'non_zero' | 'negatif';
 type SourceOption = 'stock' | 'blind';
 type StockLocationOption = 'tous' | 'rayon' | 'reserve';
 
@@ -42,6 +42,7 @@ const pillActive = {
   emerald: 'bg-emerald-100 text-emerald-700 border-emerald-300',
   amber:   'bg-amber-100 text-amber-700 border-amber-300',
   violet:  'bg-violet-100 text-violet-700 border-violet-300',
+  rose:    'bg-rose-100 text-rose-700 border-rose-300',
 };
 
 const summaryLineColors: Record<string, string> = {
@@ -86,10 +87,11 @@ export default function EtatsInventaire() {
     { value: 'blind', label: t('stock:etats.source_blind'), desc: t('stock:etats.source_blind_desc'), icon: <BarChart3 className="size-4" />, accent: 'blue' },
   ], [t]);
 
-  const stockFilterOptions: { value: StockFilterOption; label: string; desc: string; icon: React.ReactNode; accent: 'emerald' | 'blue' | 'amber' }[] = useMemo(() => [
+  const stockFilterOptions: { value: StockFilterOption; label: string; desc: string; icon: React.ReactNode; accent: 'emerald' | 'blue' | 'amber' | 'rose' }[] = useMemo(() => [
     { value: 'tous',     label: t('stock:etats.filter_all'),      desc: t('stock:etats.filter_all_desc'),      icon: <Package className="size-4" />,      accent: 'blue' },
     { value: 'non_zero', label: t('stock:etats.filter_positive'), desc: t('stock:etats.filter_positive_desc'), icon: <CheckCircle2 className="size-4" />, accent: 'emerald' },
     { value: 'zero',     label: t('stock:etats.filter_zero'),     desc: t('stock:etats.filter_zero_desc'),     icon: <AlertCircle className="size-4" />,  accent: 'amber' },
+    { value: 'negatif',  label: t('stock:etats.filter_negative'), desc: t('stock:etats.filter_negative_desc'), icon: <TrendingDown className="size-4" />, accent: 'rose' },
   ], [t]);
 
   const stockLocationOptions: { value: StockLocationOption; label: string; desc: string; icon: React.ReactNode; accent: 'emerald' | 'blue' | 'amber' }[] = useMemo(() => [
@@ -156,6 +158,7 @@ export default function EtatsInventaire() {
     const stockDisplay =
       source === 'blind' || stockFilter === 'zero' ? 'ZERO' :
       stockFilter === 'non_zero' ? 'NON_ZERO' :
+      stockFilter === 'negatif' ? 'NEGATIF' :
       'MACHINE';
     const params: Record<string, string> = { group_by: pdfGroupBy, stock_display: stockDisplay };
     // filter_id désigne une entité du groupement : invalide si repli fournisseur → RAYON

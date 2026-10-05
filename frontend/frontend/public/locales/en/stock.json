@@ -1521,6 +1521,8 @@
         "filter_positive_desc": "Only products in stock",
         "filter_zero": "Zero stock (= 0)",
         "filter_zero_desc": "Stockouts / products to count",
+        "filter_negative": "Negative stock (< 0)",
+        "filter_negative_desc": "Anomalies: forced out-of-stock sales",
         "location_all": "All (Shelf + Reserve)",
         "location_all_desc": "All locations",
         "location_rayon": "Shelf Stock",

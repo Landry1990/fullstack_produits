@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import secureStore from '../utils/secureStore';
-import type { PosteVente } from '../types';
+import type { Client, PosteVente } from '../types';
 
 // Clés de session persistées (SecureStore natif / localStorage web)
 const KEY_TOKEN = 'session.token';
@@ -14,11 +14,16 @@ interface AuthState {
   isAuthenticated: boolean;
   maxDiscountRate: number;
   posteVente: PosteVente | null;
+  // Client « comptoir » (CLIENTS DIVERS) résolu une fois par session —
+  // même convention que la facturation web.
+  clientDivers: Client | null;
+  clientDiversLoaded: boolean;
 
   setAuth: (token: string, username: string) => void;
   setServerUrl: (url: string) => void;
   setMaxDiscountRate: (rate: number) => void;
   setPosteVente: (p: PosteVente | null) => void;
+  setClientDivers: (c: Client | null, loaded?: boolean) => void;
   restoreSession: () => Promise<boolean>;
   logout: () => void;
 }
@@ -30,6 +35,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isAuthenticated: false,
   maxDiscountRate: 0,
   posteVente: null,
+  clientDivers: null,
+  clientDiversLoaded: false,
 
   setAuth: (token, username) => {
     set({ token, username, isAuthenticated: true });
@@ -52,6 +59,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   setPosteVente: (posteVente) =>
     set({ posteVente }),
 
+  setClientDivers: (clientDivers, loaded = true) =>
+    set({ clientDivers, clientDiversLoaded: loaded }),
+
   // Restaure la session au boot : les 3 clés doivent être présentes.
   restoreSession: async () => {
     try {
@@ -69,7 +79,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: () => {
-    set({ token: null, username: null, isAuthenticated: false, maxDiscountRate: 0, posteVente: null });
+    set({ token: null, username: null, isAuthenticated: false, maxDiscountRate: 0, posteVente: null, clientDivers: null, clientDiversLoaded: false });
     [KEY_TOKEN, KEY_USERNAME, KEY_SERVER_URL].forEach((k) => {
       secureStore.deleteItemAsync(k).catch(() => {});
     });

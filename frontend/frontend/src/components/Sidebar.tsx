@@ -16,8 +16,6 @@ const routePrefetchMap: Record<string, () => Promise<unknown>> = {
   '/app/clients': () => import('./Clients'),
   '/app/outils/imc': () => import('./clinical/BMICalculator'),
   '/app/caisse-centralisee': () => import('./CaisseCentralisee'),
-  '/app/caisse-tablette': () => import('./CaisseTablette'),
-  '/app/vente-tablette': () => import('./VenteTablette'),
   '/app/inventaire': () => import('./Inventaire'),
   '/app/etats-inventaire': () => import('./EtatsInventaire'),
   '/app/organisation': () => import('./Organisation'),
@@ -130,9 +128,7 @@ export default function Sidebar() {
         { path: '/app/historique-clotures', label: t('ventes.clotures'), key: 'ventes_clotures' },
         { path: '/app/ordonnancier', label: t('ventes.ordonnancier'), key: 'ventes_ordonnancier' },
         { path: '/app/promotions', label: t('ventes.promotions'), key: 'ventes_promotions' },
-        { path: '/app/caisse-centralisee', label: t('ventes.caisse_centralisee'), key: 'caisse' },
-        { path: '/app/caisse-tablette', label: t('ventes.caisse_tablette'), key: 'caisse' },
-        { path: '/app/vente-tablette', label: t('ventes.vente_tablette'), key: 'facturation' }
+        { path: '/app/caisse-centralisee', label: t('ventes.caisse_centralisee'), key: 'caisse' }
       ]
     },
     { path: '/app/facturation', label: t('facturation'), key: 'facturation', category: 'ventes', icon: (

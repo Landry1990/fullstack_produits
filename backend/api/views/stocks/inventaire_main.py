@@ -582,7 +582,7 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         Génère un fichier Excel configurable du listing de stock.
         Paramètres :
           - group_by       : rayon | forme | groupe | fournisseur
-          - stock_filter   : tous | zero | non_zero
+          - stock_filter   : tous | zero | non_zero | negatif
           - filter_id      : id de l'entité de regroupement (optionnel)
           - inventaire_id  : id d'un inventaire précis (optionnel)
           - blind          : true pour un listing à l'aveugle (sans stock théorique)
