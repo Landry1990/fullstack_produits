@@ -12,9 +12,7 @@
         "clotures": "Historique Clôtures",
         "ordonnancier": "Ordonnancier",
         "promotions": "Promotions",
-        "caisse_centralisee": "Caisse Centralisée",
-        "caisse_tablette": "Caisse tablette",
-        "vente_tablette": "Vente tablette"
+        "caisse_centralisee": "Caisse Centralisée"
     },
     "facturation": "Facturation",
     "produits": "Produits",

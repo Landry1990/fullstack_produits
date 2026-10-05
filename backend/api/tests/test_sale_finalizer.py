@@ -132,16 +132,48 @@ class TestSaleFinalizerValidatePosteVente(TestCase):
         assert result.id == poste.id
 
     def test_validate_poste_vente_centralized_mode(self):
-        """En mode centralisé, n'importe quel vendeur peut utiliser le poste."""
+        """En mode centralisé, n'importe quel vendeur peut utiliser un poste POS
+        pur (poste de comptoir partagé entre vendeurs)."""
         owner = User.objects.create_user(username="owner", password="testpass123")
         other = User.objects.create_user(username="other", password="testpass123")
         poste = PosteVente.objects.create(
             vendeur=owner,
             nom="Test",
             est_actif=True,
-            mode_pos=False,
+            mode_pos=True,
         )
         result = SaleFinalizer._validate_poste_vente(other, poste.id, centralized=True)
+        assert result is not None
+        assert result.id == poste.id
+
+    def test_validate_poste_vente_centralized_foreign_caisse_poste(self):
+        """Centralisé : un POS ne peut pas se greffer sur le poste de la
+        caisse centrale d'un autre vendeur (mélange des totaux)."""
+        caissiere = User.objects.create_user(username="caissiere", password="testpass123")
+        vendeur = User.objects.create_user(username="vendeur", password="testpass123")
+        caisse = PosteCaisse.objects.create(nom="Caisse 1", code="C1")
+        poste = PosteVente.objects.create(
+            vendeur=caissiere,
+            nom="Caisse 1",
+            est_actif=True,
+            mode_pos=False,
+            caisse=caisse,
+        )
+        with self.assertRaisesRegex(ValueError, "rattaché à la caisse"):
+            SaleFinalizer._validate_poste_vente(vendeur, poste.id, centralized=True)
+
+    def test_validate_poste_vente_centralized_own_caisse_poste(self):
+        """Centralisé : la caissière peut vendre sur son propre poste de caisse."""
+        caissiere = User.objects.create_user(username="caissiere", password="testpass123")
+        caisse = PosteCaisse.objects.create(nom="Caisse 1", code="C1")
+        poste = PosteVente.objects.create(
+            vendeur=caissiere,
+            nom="Caisse 1",
+            est_actif=True,
+            mode_pos=False,
+            caisse=caisse,
+        )
+        result = SaleFinalizer._validate_poste_vente(caissiere, poste.id, centralized=True)
         assert result is not None
         assert result.id == poste.id
 

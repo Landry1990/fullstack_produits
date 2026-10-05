@@ -22,6 +22,7 @@ interface CartState {
   remiseMode: 'taux' | 'montant';
   remiseSudoCreds: SudoCreds | null;
   prixSudoCreds: SudoCreds | null;
+  stockSudoCreds: SudoCreds | null;
 
   // Totaux calculés
   sousTotal: () => number;
@@ -37,11 +38,13 @@ interface CartState {
   updatePrix: (productId: number, prix: number) => void;
   updateRemise: (productId: number, remise: number) => void;
   setLot: (productId: number, lot: StockLot | null) => void;
+  setProductLots: (productId: number, lots: StockLot[]) => void;
 
   // Remise globale + validations superviseur
   setRemiseGlobale: (value: number, mode: 'taux' | 'montant') => void;
   setRemiseSudoCreds: (creds: SudoCreds | null) => void;
   setPrixSudoCreds: (creds: SudoCreds | null) => void;
+  setStockSudoCreds: (creds: SudoCreds | null) => void;
 
   // Actions client
   setClient: (client: Client | null) => void;
@@ -70,6 +73,7 @@ export const useCartStore = create<CartState>((set, get) => ({
   remiseMode: 'taux',
   remiseSudoCreds: null,
   prixSudoCreds: null,
+  stockSudoCreds: null,
 
   sousTotal: () => get().lines.reduce((sum, l) => sum + l.total_ttc, 0),
   remiseGlobaleMontant: () => {
@@ -145,9 +149,21 @@ export const useCartStore = create<CartState>((set, get) => ({
       ),
     })),
 
+  // Recherche manuelle : le serializer liste ne renvoie pas stock_lots →
+  // chargés à la demande pour l'aperçu FEFO du badge lot (parité scan).
+  setProductLots: (productId, lots) =>
+    set((s) => ({
+      lines: s.lines.map((l) =>
+        l.product.id === productId
+          ? { ...l, product: { ...l.product, stock_lots: lots } }
+          : l
+      ),
+    })),
+
   setRemiseGlobale: (value, mode) => set({ remiseGlobale: value, remiseMode: mode }),
   setRemiseSudoCreds: (remiseSudoCreds) => set({ remiseSudoCreds }),
   setPrixSudoCreds: (prixSudoCreds) => set({ prixSudoCreds }),
+  setStockSudoCreds: (stockSudoCreds) => set({ stockSudoCreds }),
 
   // Changement de client = ayant droit précédent invalide
   setClient: (client) => set({ client, ayantDroit: null }),
@@ -163,6 +179,7 @@ export const useCartStore = create<CartState>((set, get) => ({
     remiseMode: draft.remiseMode ?? 'taux',
     remiseSudoCreds: null,
     prixSudoCreds: null,
+    stockSudoCreds: null,
   }),
 
   clear: () => set({
@@ -173,6 +190,7 @@ export const useCartStore = create<CartState>((set, get) => ({
     remiseMode: 'taux',
     remiseSudoCreds: null,
     prixSudoCreds: null,
+    stockSudoCreds: null,
   }),
 }));
 

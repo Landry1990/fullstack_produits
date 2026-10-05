@@ -145,7 +145,11 @@ api.interceptors.response.use(
         const config = err.config;
 
         // Retry automatique sur les GET en cas de coupure réseau (jamais sur POST pour éviter double envoi)
-        if (isRetryableRequest(error) && config && config.method?.toLowerCase() !== 'post') {
+        // sauf POST idempotents : la présence d'un header Idempotency-Key permet au backend de dédoublonner.
+        const isPost = config?.method?.toLowerCase() === 'post';
+        const headers = config?.headers as { get?: (k: string) => unknown; [k: string]: unknown } | undefined;
+        const hasIdempotencyKey = Boolean(headers?.get?.('Idempotency-Key') ?? headers?.['Idempotency-Key']);
+        if (isRetryableRequest(error) && config && (!isPost || hasIdempotencyKey)) {
             config._retryCount = (config._retryCount || 0) + 1;
             if (config._retryCount <= MAX_RETRIES) {
                 await sleep(RETRY_DELAY_MS * config._retryCount);

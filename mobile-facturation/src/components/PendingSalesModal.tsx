@@ -3,8 +3,10 @@ import {
   Modal, View, Text, TouchableOpacity, FlatList, StyleSheet,
 } from 'react-native';
 import { Clock, RefreshCcw, GitMerge, Trash2 } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePendingStore } from '../stores/usePendingStore';
 import { theme } from '../config/theme';
+import { moderateScale as ms } from '../utils/scale';
 import type { PendingSale } from '../types';
 
 interface Props {
@@ -36,15 +38,19 @@ const saleArticles = (s: PendingSale) =>
   s.lines.reduce((a, l) => a + l.quantite, 0);
 
 export function PendingSalesModal({ visible, cartEmpty, onRestore, onMerge, onDelete, onClose }: Props) {
+  const insets = useSafeAreaInsets();
   const sales = usePendingStore((s) => s.sales);
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.overlay}>
+      <View style={[styles.overlay, {
+        paddingTop: Math.max(insets.top, 24),
+        paddingBottom: Math.max(insets.bottom, 24),
+      }]}>
         <View style={styles.sheet}>
           <View style={styles.header}>
             <View style={styles.headerLeft}>
-              <Clock size={18} color={theme.warning} />
+              <Clock size={ms(18)} color={theme.warning} />
               <Text style={styles.title}>Ventes en attente</Text>
               {sales.length > 0 && (
                 <View style={styles.countBadge}>
@@ -90,16 +96,16 @@ export function PendingSalesModal({ visible, cartEmpty, onRestore, onMerge, onDe
                 <View style={styles.actions}>
                   {!cartEmpty && (
                     <TouchableOpacity style={styles.mergeBtn} onPress={() => onMerge(item)}>
-                      <GitMerge size={14} color={theme.textSecondary} />
+                      <GitMerge size={ms(14)} color={theme.textSecondary} />
                       <Text style={styles.mergeText}>Fusionner</Text>
                     </TouchableOpacity>
                   )}
                   <TouchableOpacity style={styles.restoreBtn} onPress={() => onRestore(item)}>
-                    <RefreshCcw size={14} color="#fff" />
+                    <RefreshCcw size={ms(14)} color="#fff" />
                     <Text style={styles.restoreText}>Reprendre</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.deleteBtn} onPress={() => onDelete(item.id)}>
-                    <Trash2 size={14} color={theme.danger} />
+                    <Trash2 size={ms(14)} color={theme.danger} />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -117,82 +123,82 @@ const styles = StyleSheet.create({
     backgroundColor: theme.bgOverlay,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: ms(24),
   },
   sheet: {
     backgroundColor: theme.bgElevated,
-    borderRadius: 16,
+    borderRadius: ms(16),
     width: '100%',
-    maxWidth: 480,
+    maxWidth: ms(480),
     maxHeight: '85%',
-    padding: 20,
+    padding: ms(20),
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 14,
-    paddingBottom: 12,
+    marginBottom: ms(14),
+    paddingBottom: ms(12),
     borderBottomWidth: 1,
     borderBottomColor: theme.border,
   },
-  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  title: { fontSize: 17, fontWeight: '700', color: theme.text },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: ms(8) },
+  title: { fontSize: ms(17), fontWeight: '700', color: theme.text },
   countBadge: {
     backgroundColor: theme.warningWash,
-    borderRadius: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+    borderRadius: ms(10),
+    paddingHorizontal: ms(8),
+    paddingVertical: ms(2),
     borderWidth: 1,
     borderColor: theme.warning,
   },
-  countText: { fontSize: 11, fontWeight: '800', color: theme.warning },
-  closeBtn: { padding: 4 },
-  closeBtnText: { color: theme.textMuted, fontSize: 18 },
+  countText: { fontSize: ms(11), fontWeight: '800', color: theme.warning },
+  closeBtn: { padding: ms(4) },
+  closeBtnText: { color: theme.textMuted, fontSize: ms(18) },
   list: { flexGrow: 0 },
-  empty: { textAlign: 'center', color: theme.textMuted, fontSize: 13, marginVertical: 28 },
+  empty: { textAlign: 'center', color: theme.textMuted, fontSize: ms(13), marginVertical: ms(28) },
   row: {
     backgroundColor: theme.bgMuted,
-    borderRadius: 10,
+    borderRadius: ms(10),
     borderWidth: 1,
     borderColor: theme.border,
-    padding: 12,
-    marginBottom: 8,
+    padding: ms(12),
+    marginBottom: ms(8),
   },
-  rowTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 },
-  rowLeft: { flex: 1, gap: 2 },
-  client: { fontSize: 14, fontWeight: '700', color: theme.text },
-  meta: { fontSize: 11, color: theme.textMuted },
-  total: { fontSize: 15, fontWeight: '800', color: theme.primary },
-  preview: { marginTop: 8, gap: 2 },
-  previewLine: { fontSize: 12, color: theme.textSecondary },
-  previewMore: { fontSize: 11, color: theme.textMuted, fontStyle: 'italic' },
-  actions: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: 8, marginTop: 10 },
+  rowTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: ms(8) },
+  rowLeft: { flex: 1, gap: ms(2) },
+  client: { fontSize: ms(14), fontWeight: '700', color: theme.text },
+  meta: { fontSize: ms(11), color: theme.textMuted },
+  total: { fontSize: ms(15), fontWeight: '800', color: theme.primary },
+  preview: { marginTop: ms(8), gap: ms(2) },
+  previewLine: { fontSize: ms(12), color: theme.textSecondary },
+  previewMore: { fontSize: ms(11), color: theme.textMuted, fontStyle: 'italic' },
+  actions: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: ms(8), marginTop: ms(10) },
   mergeBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 8,
+    gap: ms(5),
+    paddingHorizontal: ms(10),
+    paddingVertical: ms(8),
+    borderRadius: ms(8),
     backgroundColor: theme.bgElevated,
     borderWidth: 1,
     borderColor: theme.borderStrong,
   },
-  mergeText: { fontSize: 12, fontWeight: '700', color: theme.textSecondary },
+  mergeText: { fontSize: ms(12), fontWeight: '700', color: theme.textSecondary },
   restoreBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
+    gap: ms(6),
+    paddingHorizontal: ms(14),
+    paddingVertical: ms(8),
+    borderRadius: ms(8),
     backgroundColor: theme.primary,
   },
-  restoreText: { fontSize: 12, fontWeight: '700', color: '#fff' },
+  restoreText: { fontSize: ms(12), fontWeight: '700', color: '#fff' },
   deleteBtn: {
-    padding: 8,
-    borderRadius: 8,
+    padding: ms(8),
+    borderRadius: ms(8),
     backgroundColor: theme.dangerWash,
   },
 });

@@ -1521,6 +1521,8 @@
         "filter_positive_desc": "Produits en stock uniquement",
         "filter_zero": "Stocks nuls (= 0)",
         "filter_zero_desc": "Ruptures / produits à saisir",
+        "filter_negative": "Stocks négatifs (< 0)",
+        "filter_negative_desc": "Anomalies : ventes forcées hors stock",
         "location_all": "Tous (Rayon + Réserve)",
         "location_all_desc": "Tous les emplacements",
         "location_rayon": "Stock Rayon",

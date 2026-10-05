@@ -94,11 +94,6 @@ export const cashSessionService = {
     return data
   },
 
-  async getPostesVenteDisponibles(): Promise<PosteVente[]> {
-    const { data } = await api.get('postes-ventes/disponibles/')
-    return data
-  },
-
   async getAllPostesVente(): Promise<PosteVente[]> {
     const { data } = await api.get('postes-ventes/tous_postes/')
     return data

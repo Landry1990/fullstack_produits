@@ -1,20 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, Alert, ActivityIndicator,
-  Platform, ScrollView,
+  Platform, ScrollView, useWindowDimensions, Keyboard,
 } from 'react-native';
-import { Search, Send, Trash2, User, ArrowLeft, ScanBarcode, ShieldCheck, Store, History, Pause, Clock } from 'lucide-react-native';
+import { Search, Send, Trash2, User, ArrowLeft, ScanBarcode, ShieldCheck, Store, History, Pause, Clock, ShoppingCart } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCartStore } from '../stores/useCartStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import { usePendingStore } from '../stores/usePendingStore';
+import { useSettingsStore } from '../stores/useSettingsStore';
 import {
   searchProducts, searchClients, sendSaleToCaisse, getProductByBarcode,
-  getProductById, getLotByDatamatrix, createClient, createAyantDroit,
-  ensurePosteVente,
+  getProductById, getLotByDatamatrix, getLots, createClient, createAyantDroit,
+  ensurePosteVente, activerPosteVente, getPostesDisponibles, PosteChoiceRequired, isPosteMobile,
 } from '../services/api';
 import { addHistoriqueItem } from '../services/historique';
+import { ensureClientDivers } from '../services/clientDivers';
 import { parseGS1Datamatrix } from '../utils/gs1Parser';
 import { theme } from '../config/theme';
+import { moderateScale as ms } from '../utils/scale';
 import { useSudo } from '../hooks/useSudo';
 import { ProductRow } from '../components/ProductRow';
 import { CartItemRow } from '../components/CartItemRow';
@@ -23,7 +27,8 @@ import { ScanBarcodeModal } from '../components/ScanBarcodeModal';
 import { SudoModal } from '../components/SudoModal';
 import { LineEditModal } from '../components/LineEditModal';
 import { PendingSalesModal } from '../components/PendingSalesModal';
-import type { Product, StockLot, Client, CartLine, AyantDroit, ScanResult, PendingSale } from '../types';
+import { PostePickerModal } from '../components/PostePickerModal';
+import type { Product, StockLot, Client, CartLine, AyantDroit, ScanResult, PendingSale, PosteVente } from '../types';
 
 const PHONE_REGEX = /^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s./0-9]*$/;
 
@@ -45,6 +50,7 @@ export function FacturationScreen({ onLogout, navigation }: { onLogout: () => vo
   const pendingCount = usePendingStore((s) => s.sales.length);
   const { username, logout, maxDiscountRate, posteVente, setPosteVente } = useAuthStore();
   const { sudoState, requireSudo, closeSudo } = useSudo();
+  const insets = useSafeAreaInsets();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [results, setResults] = useState<Product[]>([]);
@@ -77,6 +83,10 @@ export function FacturationScreen({ onLogout, navigation }: { onLogout: () => vo
   const [scanModalVisible, setScanModalVisible] = useState(false);
   const [pendingModalVisible, setPendingModalVisible] = useState(false);
   const [ensuringPoste, setEnsuringPoste] = useState(false);
+  // Sélecteur de poste : rempli quand ensurePosteVente lève
+  // PosteChoiceRequired (1er démarrage ou poste pris par un autre vendeur).
+  const [posteChoices, setPosteChoices] = useState<PosteVente[] | null>(null);
+  const [activatingPoste, setActivatingPoste] = useState(false);
 
   // Recherche produits
   useEffect(() => {
@@ -94,6 +104,18 @@ export function FacturationScreen({ onLogout, navigation }: { onLogout: () => vo
     }, 300);
     return () => clearTimeout(timer);
   }, [searchQuery]);
+
+  // Hauteur du clavier logiciel : le panneau de résultats flotte juste
+  // au-dessus (le clavier ne redimensionne pas la fenêtre — adjustPan).
+  const [kbHeight, setKbHeight] = useState(0);
+  const [mainBoxY, setMainBoxY] = useState(0);
+  const fullHeightRef = useRef(0);
+
+  useEffect(() => {
+    const show = Keyboard.addListener('keyboardDidShow', (e) => setKbHeight(e.endCoordinates.height));
+    const hide = Keyboard.addListener('keyboardDidHide', () => setKbHeight(0));
+    return () => { show.remove(); hide.remove(); };
+  }, []);
 
   // Recherche clients
   useEffect(() => {
@@ -118,10 +140,29 @@ export function FacturationScreen({ onLogout, navigation }: { onLogout: () => vo
     setRemiseInput(cart.remiseGlobale > 0 ? String(cart.remiseGlobale) : '');
   }, [cart.remiseGlobale, cart.remiseMode]);
 
+  // Au premier accès sans poste actif : résolution silencieuse — ouvre le
+  // sélecteur si aucun poste n'est déterminable automatiquement.
+  useEffect(() => {
+    if (!useAuthStore.getState().posteVente) {
+      void retryEnsurePoste(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleAddProduct = (product: Product) => {
     cart.addProduct(product);
     setSearchQuery('');
     setResults([]);
+    // Referme le clavier : le panier complet réapparaît (les sections
+    // basses étaient masquées pendant la recherche).
+    Keyboard.dismiss();
+    // Le serializer liste (recherche) ne renvoie pas stock_lots → chargés
+    // à la demande pour l'aperçu FEFO du badge lot (parité avec le scan).
+    if (!product.stock_lots) {
+      getLots(product.id)
+        .then((lots) => useCartStore.getState().setProductLots(product.id, lots))
+        .catch(() => {});
+    }
   };
 
   const handleOpenLot = (productId: number) => {
@@ -387,17 +428,22 @@ export function FacturationScreen({ onLogout, navigation }: { onLogout: () => vo
   };
 
   // (Ré)ouvre un point de vente : badge en-tête + envoi. Retourne le poste
-  // ou null — les alertes sont les mêmes qu'au login.
+  // ou null — les alertes sont les mêmes qu'au login. Si aucun poste n'est
+  // déterminable automatiquement → sélecteur (PostePickerModal), même en
+  // mode silencieux (c'est un choix utilisateur, pas une erreur).
   const retryEnsurePoste = async (silent = false) => {
     setEnsuringPoste(true);
     try {
       const p = await ensurePosteVente();
       setPosteVente(p);
+      setPosteChoices(null);
       return p;
     } catch (err: unknown) {
-      if (!silent) {
+      if (err instanceof PosteChoiceRequired) {
+        setPosteChoices(err.disponibles);
+      } else if (!silent) {
         if ((err as Error)?.message === 'NO_POSTE_DISPONIBLE') {
-          Alert.alert('Aucun point de vente', "Aucun point de vente n'est disponible. Demandez à l'administrateur d'en créer un dans Paramètres → Points de vente.");
+          Alert.alert('Aucun point de vente', "Aucun poste « Mobile » n'est disponible. Demandez à l'administrateur d'en créer un (nom commençant par « Mobile ») dans Paramètres → Points de vente.");
         } else {
           const detail = (err as { response?: { data?: { detail?: string } }; message?: string })?.response?.data?.detail
             || (err as Error)?.message || '';
@@ -407,6 +453,40 @@ export function FacturationScreen({ onLogout, navigation }: { onLogout: () => vo
       return null;
     } finally {
       setEnsuringPoste(false);
+    }
+  };
+
+  // Poste choisi dans le sélecteur → épinglé à l'appareil puis activé.
+  const handlePickPoste = async (poste: PosteVente) => {
+    setActivatingPoste(true);
+    try {
+      const actif = await activerPosteVente(poste.id);
+      useSettingsStore.getState().setPosteVenteId(actif.id);
+      setPosteVente(actif);
+      setPosteChoices(null);
+    } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      if (status === 400) {
+        // Pris par un autre vendeur entre-temps → rafraîchir la liste
+        // (postes « Mobile » uniquement, comme le sélecteur initial).
+        try {
+          const dispo = (await getPostesDisponibles()).filter(isPosteMobile);
+          if (dispo.length === 0) {
+            setPosteChoices(null);
+            Alert.alert('Aucun point de vente', "Aucun poste « Mobile » n'est disponible. Demandez à l'administrateur d'en créer un (nom commençant par « Mobile ») dans Paramètres → Points de vente.");
+          } else {
+            setPosteChoices(dispo);
+          }
+        } catch {
+          setPosteChoices(null);
+        }
+        Alert.alert('Point de vente', 'Ce point de vente vient d\u2019être pris — choisissez-en un autre.');
+      } else {
+        const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+        Alert.alert('Point de vente', detail || "Impossible d'activer ce point de vente");
+      }
+    } finally {
+      setActivatingPoste(false);
     }
   };
 
@@ -503,12 +583,35 @@ export function FacturationScreen({ onLogout, navigation }: { onLogout: () => vo
     );
   };
 
+  // Forçage de stock : une ligne dépasse le stock connu (récupéré à
+  // l'ajout) → validation superviseur avant l'envoi, comme l'ajout
+  // « hors stock » du web (can_sell_negative_stock). Le backend reste
+  // source de vérité : un stock devenu insuffisant entre-temps est
+  // rattrapé par le retry 403 dans sendToCashier.
+  const ensureStockSudo = (after: () => void) => {
+    if (cart.stockSudoCreds) { after(); return; }
+    const over = cart.lines.filter((l) => l.quantite > 0 && l.quantite > l.product.stock);
+    if (over.length === 0) { after(); return; }
+    const names = over
+      .slice(0, 3)
+      .map((l) => `${l.product.name} (stock : ${l.product.stock})`)
+      .join(', ');
+    requireSudo(async (validatorId, password) => {
+      cart.setStockSudoCreds({ validatorId, password });
+      after();
+    }, {
+      title: 'Vente hors stock',
+      message: `Stock insuffisant : ${names}${over.length > 3 ? `, +${over.length - 3} autre(s)` : ''}. Confirmez l'identité d'un superviseur pour forcer la vente.`,
+      permission: 'can_sell_negative_stock',
+    });
+  };
+
   const handleSendToCashier = () => {
     if (cart.lines.length === 0) {
       Alert.alert('Panier vide', 'Ajoutez des produits avant d\'envoyer');
       return;
     }
-    ensureSudoCreds(() => { void sendToCashier(); });
+    ensureSudoCreds(() => ensureStockSudo(() => { void sendToCashier(); }));
   };
 
   const sendToCashier = async () => {
@@ -520,7 +623,7 @@ export function FacturationScreen({ onLogout, navigation }: { onLogout: () => vo
 
       let poste = posteVente ?? (await retryEnsurePoste(true));
       if (!poste) {
-        Alert.alert('Point de vente requis', "Aucun point de vente actif. Touchez le badge en haut pour réessayer ou demandez à l'administrateur d'en créer un.");
+        Alert.alert('Point de vente requis', "Aucun point de vente actif. Touchez le nom du poste affiché en haut pour réessayer ou demandez à l'administrateur d'en créer un.");
         return;
       }
 
@@ -536,23 +639,46 @@ export function FacturationScreen({ onLogout, navigation }: { onLogout: () => vo
           setPosteVente(null);
           poste = await retryEnsurePoste(true);
           if (!poste) {
-            Alert.alert('Point de vente requis', "Aucun point de vente actif. Touchez le badge en haut pour réessayer ou demandez à l'administrateur d'en créer un.");
+            Alert.alert('Point de vente requis', "Aucun point de vente actif. Touchez le nom du poste affiché en haut pour réessayer ou demandez à l'administrateur d'en créer un.");
             return;
           }
           facture = await sendSaleToCaisse(cart, poste.id);
+        } else if (status === 403 && detail?.includes('can_sell_negative_stock') && !cart.stockSudoCreds) {
+          // Stock insuffisant non anticipé (stock local périmé) →
+          // validation superviseur puis ré-envoi complet avec les creds
+          // dans le bloc sudo du payload.
+          requireSudo(async (validatorId, password) => {
+            cart.setStockSudoCreds({ validatorId, password });
+            void sendToCashier();
+          }, {
+            title: 'Vente hors stock',
+            message: "Stock insuffisant sur au moins un produit. Confirmez l'identité d'un superviseur pour forcer la vente.",
+            permission: 'can_sell_negative_stock',
+          });
+          return;
         } else {
           throw err;
         }
       }
-      // Historique local AVANT le clear (totaux + client du panier).
+      // Historique local AVANT le clear (totaux + client + lignes du panier).
       void addHistoriqueItem({
         numero_facture: facture?.numero_facture ?? null,
         articles_count: cart.totalArticles(),
         total_estime: cart.totalTTC(),
         client: cart.client?.name ?? null,
+        lignes: cart.lines.map((l) => ({
+          name: l.product.name,
+          quantite: l.quantite,
+          prix_unitaire: l.prix_unitaire,
+          remise: l.remise,
+          total_ttc: l.total_ttc,
+        })),
       });
       Alert.alert('Envoyé', `Facture ${facture?.numero_facture ?? ''} envoyée en caisse`);
       cart.clear();
+      // Comme le web (_resetSaleDataOnly) : le client « comptoir » est
+      // re-sélectionné pour la vente suivante (cache session).
+      void ensureClientDivers();
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { detail?: string } }; message?: string };
       const detail = axiosErr.response?.data?.detail;
@@ -569,267 +695,325 @@ export function FacturationScreen({ onLogout, navigation }: { onLogout: () => vo
     onLogout();
   };
 
+  // « Annuler » = vider le panier — confirmation demandée (un tap
+  // accidentel ne doit pas perdre toute la vente en cours).
+  const handleClearCart = () => {
+    if (cart.lines.length === 0) return;
+    Alert.alert(
+      'Vider le panier ?',
+      `${cart.totalArticles()} article(s) seront retirés de la vente en cours.`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Vider', style: 'destructive', onPress: () => cart.clear() },
+      ]
+    );
+  };
+
   const remiseMontant = cart.remiseGlobaleMontant();
   const isPro = cart.client?.client_type === 'PROFESSIONNEL';
   const ayantsDroit = cart.client?.ayants_droit ?? [];
+  // En-tête compact : sur petits écrans le bouton « Annuler » devient icône seule.
+  const compactHeader = useWindowDimensions().width < 560;
+  // Densité verticale compacte : sous ~720dp de hauteur, les sections
+  // fixes (header, recherche, client, remise, footer) sont resserrées
+  // pour laisser un maximum de hauteur à la liste du panier.
+  const winHeight = useWindowDimensions().height;
+  const compactVert = winHeight < 720;
+  const isSearching = searchQuery.length >= 2;
+
+  // Offset bas du panneau résultats = hauteur clavier, corrigée de ce
+  // que le système a déjà retiré à la fenêtre (adjustResize) — sinon le
+  // panneau flotterait trop haut. Sous adjustPan/nothing : correction 0.
+  useEffect(() => {
+    fullHeightRef.current = Math.max(fullHeightRef.current, winHeight);
+  }, [winHeight]);
+  const kbOffset = Math.max(0, kbHeight - Math.max(0, fullHeightRef.current - winHeight));
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
+    <View style={[styles.container, {
+      paddingBottom: Math.min(insets.bottom, 24),
+      paddingLeft: insets.left,
+      paddingRight: insets.right,
+    }]}>
+      {/* Header — disposition « Vente tablette » : titre + sous-titre
+          (poste touchable = retry ensurePosteVente, ex-badge) à gauche,
+          actions à droite dont « Annuler » = vider le panier. */}
+      <View style={[styles.header, compactVert && styles.headerCompact, { paddingTop: (compactVert ? ms(8) : ms(12)) + (Platform.OS === 'web' ? 0 : insets.top) }]}>
         <View style={styles.headerLeft}>
-          <View style={styles.userBadge}>
-            <User size={16} color={theme.textMuted} />
-            <Text style={styles.userText}>{username}</Text>
+          <View style={styles.headerTitleRow}>
+            <Text style={styles.headerTitle}>Vente</Text>
+            <Text style={styles.headerUser} numberOfLines={1}> · {username}</Text>
           </View>
-          <TouchableOpacity style={styles.userBadge} onPress={() => retryEnsurePoste()} disabled={ensuringPoste}>
+          <TouchableOpacity style={styles.headerSubtitle} onPress={() => retryEnsurePoste()} disabled={ensuringPoste}>
             {ensuringPoste ? (
               <ActivityIndicator size="small" color={theme.textMuted} />
             ) : (
-              <Store size={16} color={posteVente ? theme.primary : theme.textMuted} />
+              <Store size={ms(13)} color={posteVente ? theme.primary : theme.textMuted} />
             )}
-            <Text style={[styles.userText, !posteVente && { color: theme.textMuted }]}>
-              {posteVente?.nom ?? 'Aucun point de vente'}
+            <Text style={[styles.headerSubtitleText, !posteVente && { color: theme.textMuted }]} numberOfLines={1}>
+              {posteVente?.nom ?? 'Aucun point de vente'} • {cart.totalArticles()} article(s)
             </Text>
           </TouchableOpacity>
         </View>
         <View style={styles.headerRight}>
-          <TouchableOpacity onPress={() => setPendingModalVisible(true)} style={styles.logoutBtn}>
-            <Clock size={20} color={theme.textMuted} />
+          <TouchableOpacity onPress={() => setPendingModalVisible(true)} style={styles.iconBtn}>
+            <Clock size={ms(20)} color={theme.textMuted} />
             {pendingCount > 0 && (
               <View style={styles.pendingBadge}>
                 <Text style={styles.pendingBadgeText}>{pendingCount}</Text>
               </View>
             )}
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation?.navigate('Historique')} style={styles.logoutBtn}>
-            <History size={20} color={theme.textMuted} />
+          <TouchableOpacity onPress={() => navigation?.navigate('Historique')} style={styles.iconBtn}>
+            <History size={ms(20)} color={theme.textMuted} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
-            <ArrowLeft size={20} color={theme.danger} />
+          <TouchableOpacity
+            onPress={handlePark}
+            style={[styles.iconBtn, cart.lines.length === 0 && { opacity: 0.4 }]}
+            disabled={cart.lines.length === 0}
+          >
+            <Pause size={ms(20)} color={theme.warning} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleClearCart}
+            style={[styles.cancelBtn, cart.lines.length === 0 && { opacity: 0.4 }]}
+            disabled={cart.lines.length === 0}
+          >
+            <Trash2 size={ms(15)} color={theme.danger} />
+            {!compactHeader && <Text style={styles.cancelBtnText}>Annuler</Text>}
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleLogout} style={styles.iconBtn}>
+            <ArrowLeft size={ms(20)} color={theme.danger} />
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Split vertical */}
-      <View style={styles.split}>
-        {/* Gauche : Recherche + Produits */}
-        <View style={styles.leftPanel}>
-          <View style={styles.searchBar}>
-            <Search size={18} color={theme.textMuted} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Rechercher produit..."
-              placeholderTextColor={theme.textMuted}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              onSubmitEditing={handleSearchSubmit}
-              blurOnSubmit={false}
-              autoCorrect={false}
-              autoCapitalize="none"
-              autoFocus
-            />
-            {Platform.OS !== 'web' && (
-              <TouchableOpacity
-                style={styles.scanBtn}
-                onPress={() => setScanModalVisible(true)}
-              >
-                <ScanBarcode size={20} color={theme.primary} />
-              </TouchableOpacity>
-            )}
-          </View>
+      {/* Recherche produit — pleine largeur, scan conservé */}
+      <View style={[styles.searchBar, compactVert && styles.searchBarCompact]}>
+        <Search size={ms(18)} color={theme.textMuted} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Rechercher un produit..."
+          placeholderTextColor={theme.textMuted}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          onSubmitEditing={handleSearchSubmit}
+          blurOnSubmit={false}
+          autoCorrect={false}
+          autoCapitalize="none"
+          autoFocus
+        />
+        {Platform.OS !== 'web' && (
+          <TouchableOpacity
+            style={styles.scanBtn}
+            onPress={() => setScanModalVisible(true)}
+          >
+            <ScanBarcode size={ms(20)} color={theme.primary} />
+          </TouchableOpacity>
+        )}
+      </View>
 
+      {/* Zone principale : lignes du panier (cadre pointillé façon
+          « Vente tablette »). Les résultats de recherche s'affichent en
+          overlay flottant ancré au-dessus du clavier (voir plus bas). */}
+      <View
+        style={styles.mainBox}
+        onLayout={(e) => setMainBoxY(e.nativeEvent.layout.y)}
+      >
+        <FlatList
+          data={cart.lines}
+          keyExtractor={(l) => String(l.product.id)}
+          renderItem={({ item }) => (
+            <CartItemRow
+              line={item}
+              onIncrement={() => cart.updateQty(item.product.id, item.quantite + 1)}
+              onDecrement={() => cart.updateQty(item.product.id, item.quantite - 1)}
+              onRemove={() => cart.removeLine(item.product.id)}
+              onOpenLot={() => handleOpenLot(item.product.id)}
+              onEditLine={() => { setLineEdit(item); setLineEditModalVisible(true); }}
+            />
+          )}
+          contentContainerStyle={styles.mainList}
+          keyboardShouldPersistTaps="handled"
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <ShoppingCart size={ms(40)} color={theme.borderStrong} />
+              <Text style={styles.emptyStateText}>Ajoutez des produits pour commencer</Text>
+            </View>
+          }
+        />
+      </View>
+
+      {/* Sections basses masquées pendant la recherche : l'overlay des
+          résultats les recouvre et flotte au-dessus du clavier */}
+      {!isSearching && (<>
+      {/* Client — carte compacte façon « Vente tablette » ; « Modifier »
+          ouvre le même modal (déselection via « Client de passage »). */}
+      <View style={[styles.clientCard, compactVert && styles.clientCardCompact]}>
+        <View style={styles.clientCardLeft}>
+          <User size={ms(16)} color={theme.textMuted} />
+          <View style={styles.clientCardText}>
+            <Text style={styles.clientLabel}>Client</Text>
+            <Text style={styles.clientName} numberOfLines={1}>
+              {cart.client ? cart.client.name : 'Client de passage'}
+            </Text>
+          </View>
+        </View>
+        <TouchableOpacity
+          onPress={() => setClientModalVisible(true)}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Text style={styles.clientEdit}>Modifier</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Ayant droit (client professionnel uniquement) */}
+      {isPro && (
+        <View style={[styles.adBlock, compactVert && styles.adBlockCompact]}>
+          <Text style={styles.adLabel}>Ayant droit</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View style={styles.adChips}>
+              {ayantsDroit.map((ad: AyantDroit) => {
+                const selected = cart.ayantDroit?.id === ad.id;
+                return (
+                  <TouchableOpacity
+                    key={ad.id}
+                    style={[styles.adChip, selected && styles.adChipSelected]}
+                    onPress={() => {
+                      cart.setAyantDroit(ad);
+                      setAdFormVisible(false);
+                      setAdNom('');
+                      setAdMatricule('');
+                    }}
+                  >
+                    <Text style={[styles.adChipText, selected && styles.adChipTextSelected]}>
+                      {ad.nom} — {ad.matricule}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+              <TouchableOpacity
+                style={[styles.adChip, adFormVisible && styles.adChipSelected]}
+                onPress={() => {
+                  setAdFormVisible(true);
+                  cart.setAyantDroit(null);
+                }}
+              >
+                <Text style={[styles.adChipText, adFormVisible && styles.adChipTextSelected]}>+ Nouveau</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+          {adFormVisible && (
+            <View style={styles.adForm}>
+              <TextInput
+                style={styles.adInput}
+                placeholder="Nom"
+                placeholderTextColor={theme.textMuted}
+                value={adNom}
+                onChangeText={setAdNom}
+                autoCapitalize="characters"
+              />
+              <TextInput
+                style={styles.adInput}
+                placeholder="Matricule"
+                placeholderTextColor={theme.textMuted}
+                value={adMatricule}
+                onChangeText={setAdMatricule}
+                autoCapitalize="characters"
+              />
+            </View>
+          )}
+        </View>
+      )}
+
+      {/* Remise globale */}
+      <View style={[styles.remiseRow, compactVert && styles.remiseRowCompact]}>
+        <Text style={styles.remiseLabel}>Remise globale</Text>
+        <View style={styles.remiseControls}>
+          <TextInput
+            style={styles.remiseInput}
+            value={remiseInput}
+            onChangeText={setRemiseInput}
+            keyboardType="decimal-pad"
+            placeholder="0"
+            placeholderTextColor={theme.textMuted}
+            onBlur={commitRemiseInput}
+            onSubmitEditing={commitRemiseInput}
+          />
+          <View style={styles.remiseToggle}>
+            <TouchableOpacity
+              style={[styles.remiseModeBtn, cart.remiseMode === 'taux' && styles.remiseModeBtnActive]}
+              onPress={() => toggleRemiseMode('taux')}
+            >
+              <Text style={[styles.remiseModeText, cart.remiseMode === 'taux' && styles.remiseModeTextActive]}>%</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.remiseModeBtn, cart.remiseMode === 'montant' && styles.remiseModeBtnActive]}
+              onPress={() => toggleRemiseMode('montant')}
+            >
+              <Text style={[styles.remiseModeText, cart.remiseMode === 'montant' && styles.remiseModeTextActive]}>F</Text>
+            </TouchableOpacity>
+          </View>
+          {remiseMontant > 0 && (
+            <Text style={styles.remiseAmount}>−{remiseMontant.toLocaleString('fr-FR')} F</Text>
+          )}
+        </View>
+      </View>
+
+      {/* Footer : total + envoi en caisse */}
+      <View style={[styles.footerRow, compactVert && styles.footerRowCompact]}>
+        <View style={[styles.totalBox, compactVert && styles.totalBoxCompact]}>
+          <Text style={styles.totalLabel}>Total</Text>
+          <Text style={styles.totalValue}>{cart.totalTTC().toLocaleString('fr-FR')} F</Text>
+          {remiseMontant > 0 && (
+            <Text style={styles.sousTotal}>Sous-total : {cart.sousTotal().toLocaleString('fr-FR')} F</Text>
+          )}
+          {(cart.remiseSudoCreds || cart.prixSudoCreds) && (
+            <View style={styles.sudoBadge}>
+              <ShieldCheck size={ms(12)} color={theme.primary} />
+              <Text style={styles.sudoBadgeText}>Validé par superviseur</Text>
+            </View>
+          )}
+        </View>
+        <TouchableOpacity
+          style={[styles.sendBtn, compactVert && styles.sendBtnCompact, (sending || cart.lines.length === 0) && styles.sendBtnDisabled]}
+          onPress={handleSendToCashier}
+          disabled={sending || cart.lines.length === 0}
+        >
+          {sending ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <>
+              <Send size={ms(18)} color="#fff" />
+              <Text style={styles.sendBtnText}>Envoyer en caisse</Text>
+            </>
+          )}
+        </TouchableOpacity>
+      </View>
+      </>)}
+
+      {/* Résultats de recherche : panneau flottant qui occupe tout
+          l'espace entre la barre de recherche et le haut du clavier —
+          visible que le clavier soit ouvert ou non. */}
+      {isSearching && (
+        <View style={[styles.resultsOverlay, { top: mainBoxY, bottom: kbOffset }]}>
           {searching ? (
-            <ActivityIndicator color={theme.primary} style={{ marginVertical: 20 }} />
-          ) : results.length === 0 && searchQuery.length >= 2 ? (
-            <Text style={styles.empty}>Aucun résultat</Text>
+            <ActivityIndicator color={theme.primary} style={{ marginVertical: ms(20) }} />
+          ) : results.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateText}>Aucun résultat</Text>
+            </View>
           ) : (
             <FlatList
               data={results}
               keyExtractor={(i) => String(i.id)}
               renderItem={({ item }) => <ProductRow product={item} onPress={handleAddProduct} />}
-              contentContainerStyle={styles.list}
+              contentContainerStyle={styles.mainList}
+              keyboardShouldPersistTaps="handled"
             />
           )}
         </View>
-
-        {/* Droite : Panier */}
-        <View style={styles.rightPanel}>
-          {/* Client */}
-          <View style={styles.clientBtn}>
-            <TouchableOpacity
-              style={styles.clientBtnMain}
-              onPress={() => setClientModalVisible(true)}
-            >
-              <User size={16} color={theme.textMuted} />
-              <Text style={styles.clientText}>
-                {cart.client ? cart.client.name : 'Client de passage'}
-              </Text>
-            </TouchableOpacity>
-            {cart.client && (
-              <TouchableOpacity onPress={() => handleSelectClient(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                <Text style={styles.clientClear}>✕</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-
-          {/* Ayant droit (client professionnel uniquement) */}
-          {isPro && (
-            <View style={styles.adBlock}>
-              <Text style={styles.adLabel}>Ayant droit</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <View style={styles.adChips}>
-                  {ayantsDroit.map((ad: AyantDroit) => {
-                    const selected = cart.ayantDroit?.id === ad.id;
-                    return (
-                      <TouchableOpacity
-                        key={ad.id}
-                        style={[styles.adChip, selected && styles.adChipSelected]}
-                        onPress={() => {
-                          cart.setAyantDroit(ad);
-                          setAdFormVisible(false);
-                          setAdNom('');
-                          setAdMatricule('');
-                        }}
-                      >
-                        <Text style={[styles.adChipText, selected && styles.adChipTextSelected]}>
-                          {ad.nom} — {ad.matricule}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                  <TouchableOpacity
-                    style={[styles.adChip, adFormVisible && styles.adChipSelected]}
-                    onPress={() => {
-                      setAdFormVisible(true);
-                      cart.setAyantDroit(null);
-                    }}
-                  >
-                    <Text style={[styles.adChipText, adFormVisible && styles.adChipTextSelected]}>+ Nouveau</Text>
-                  </TouchableOpacity>
-                </View>
-              </ScrollView>
-              {adFormVisible && (
-                <View style={styles.adForm}>
-                  <TextInput
-                    style={styles.adInput}
-                    placeholder="Nom"
-                    placeholderTextColor={theme.textMuted}
-                    value={adNom}
-                    onChangeText={setAdNom}
-                    autoCapitalize="characters"
-                  />
-                  <TextInput
-                    style={styles.adInput}
-                    placeholder="Matricule"
-                    placeholderTextColor={theme.textMuted}
-                    value={adMatricule}
-                    onChangeText={setAdMatricule}
-                    autoCapitalize="characters"
-                  />
-                </View>
-              )}
-            </View>
-          )}
-
-          {/* Lignes panier */}
-          <FlatList
-            data={cart.lines}
-            keyExtractor={(l) => String(l.product.id)}
-            renderItem={({ item }) => (
-              <CartItemRow
-                line={item}
-                onIncrement={() => cart.updateQty(item.product.id, item.quantite + 1)}
-                onDecrement={() => cart.updateQty(item.product.id, item.quantite - 1)}
-                onRemove={() => cart.removeLine(item.product.id)}
-                onOpenLot={() => handleOpenLot(item.product.id)}
-                onEditLine={() => { setLineEdit(item); setLineEditModalVisible(true); }}
-              />
-            )}
-            contentContainerStyle={styles.cartList}
-            ListEmptyComponent={<Text style={styles.emptyCart}>Panier vide</Text>}
-          />
-
-          {/* Footer panier */}
-          <View style={styles.cartFooter}>
-            {/* Remise globale */}
-            <View style={styles.remiseRow}>
-              <Text style={styles.remiseLabel}>Remise globale</Text>
-              <View style={styles.remiseControls}>
-                <TextInput
-                  style={styles.remiseInput}
-                  value={remiseInput}
-                  onChangeText={setRemiseInput}
-                  keyboardType="decimal-pad"
-                  placeholder="0"
-                  placeholderTextColor={theme.textMuted}
-                  onBlur={commitRemiseInput}
-                  onSubmitEditing={commitRemiseInput}
-                />
-                <View style={styles.remiseToggle}>
-                  <TouchableOpacity
-                    style={[styles.remiseModeBtn, cart.remiseMode === 'taux' && styles.remiseModeBtnActive]}
-                    onPress={() => toggleRemiseMode('taux')}
-                  >
-                    <Text style={[styles.remiseModeText, cart.remiseMode === 'taux' && styles.remiseModeTextActive]}>%</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.remiseModeBtn, cart.remiseMode === 'montant' && styles.remiseModeBtnActive]}
-                    onPress={() => toggleRemiseMode('montant')}
-                  >
-                    <Text style={[styles.remiseModeText, cart.remiseMode === 'montant' && styles.remiseModeTextActive]}>F</Text>
-                  </TouchableOpacity>
-                </View>
-                {remiseMontant > 0 && (
-                  <Text style={styles.remiseAmount}>−{remiseMontant.toLocaleString('fr-FR')} F</Text>
-                )}
-              </View>
-            </View>
-
-            <View style={styles.totals}>
-              <View>
-                <Text style={styles.articles}>{cart.totalArticles()} article(s)</Text>
-                {remiseMontant > 0 && (
-                  <Text style={styles.sousTotal}>Sous-total : {cart.sousTotal().toLocaleString('fr-FR')} F</Text>
-                )}
-                {(cart.remiseSudoCreds || cart.prixSudoCreds) && (
-                  <View style={styles.sudoBadge}>
-                    <ShieldCheck size={12} color={theme.primary} />
-                    <Text style={styles.sudoBadgeText}>Validé par superviseur</Text>
-                  </View>
-                )}
-              </View>
-              <Text style={styles.total}>{cart.totalTTC().toLocaleString('fr-FR')} F</Text>
-            </View>
-            <View style={styles.footerActions}>
-              <TouchableOpacity onPress={cart.clear} style={styles.clearBtn}>
-                <Trash2 size={18} color={theme.danger} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={handlePark}
-                style={[styles.parkBtn, cart.lines.length === 0 && { opacity: 0.4 }]}
-                disabled={cart.lines.length === 0}
-              >
-                <Pause size={18} color={theme.warning} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.sendBtn, sending && styles.sendBtnDisabled]}
-                onPress={handleSendToCashier}
-                disabled={sending}
-              >
-                {sending ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <>
-                    <Send size={18} color="#fff" />
-                    <Text style={styles.sendBtnText}>Envoyer</Text>
-                  </>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </View>
+      )}
 
       {/* Modal scan caméra */}
       <ScanBarcodeModal
@@ -856,6 +1040,15 @@ export function FacturationScreen({ onLogout, navigation }: { onLogout: () => vo
         onMerge={mergePending}
         onDelete={(id) => usePendingStore.getState().remove(id)}
         onClose={() => setPendingModalVisible(false)}
+      />
+
+      {/* Sélecteur de point de vente (poste épinglé à l'appareil) */}
+      <PostePickerModal
+        visible={posteChoices !== null}
+        postes={posteChoices ?? []}
+        busy={activatingPoste}
+        onPick={handlePickPoste}
+        onClose={() => setPosteChoices(null)}
       />
 
       {/* Modal édition ligne (prix + remise) */}
@@ -989,121 +1182,185 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: ms(16),
+    paddingVertical: ms(12),
     backgroundColor: theme.bgElevated,
     borderBottomWidth: 1,
     borderBottomColor: theme.border,
   },
-  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  userBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: theme.bgMuted, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20 },
-  userText: { fontSize: 13, color: theme.text, fontWeight: '600' },
-  logoutBtn: { padding: 6 },
-  split: { flex: 1, flexDirection: 'row' },
-  leftPanel: { flex: 1, borderRightWidth: 1, borderRightColor: theme.border, padding: 12 },
-  rightPanel: { flex: 1, padding: 12 },
-  searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.bgElevated, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 12, borderWidth: 1, borderColor: theme.border },
-  searchInput: { flex: 1, marginLeft: 8, color: theme.text, fontSize: 14 },
-  scanBtn: { padding: 6, marginLeft: 4 },
-  list: { paddingBottom: 12 },
-  empty: { textAlign: 'center', color: theme.textMuted, marginTop: 24, fontSize: 13 },
-  clientBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.bgElevated, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 12, borderWidth: 1, borderColor: theme.border },
-  clientBtnMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  clientText: { fontSize: 13, color: theme.text },
-  clientClear: { fontSize: 14, color: theme.textMuted, paddingLeft: 8 },
-  adBlock: { marginBottom: 12 },
-  adLabel: { fontSize: 11, fontWeight: '700', color: theme.textMuted, textTransform: 'uppercase', marginBottom: 6 },
-  adChips: { flexDirection: 'row', gap: 6 },
+  headerLeft: { flex: 1, minWidth: 0 },
+  headerTitleRow: { flexDirection: 'row', alignItems: 'center', minWidth: 0 },
+  headerTitle: { fontSize: ms(18), fontWeight: '800', color: theme.text },
+  headerUser: { fontSize: ms(12), color: theme.textMuted, flexShrink: 1 },
+  headerSubtitle: { flexDirection: 'row', alignItems: 'center', gap: ms(5), marginTop: ms(2), alignSelf: 'flex-start', maxWidth: '100%' },
+  headerSubtitleText: { fontSize: ms(12), fontWeight: '500', color: theme.textSecondary, flexShrink: 1 },
+  headerRight: { flexDirection: 'row', alignItems: 'center' },
+  iconBtn: { padding: ms(7) },
+  cancelBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: ms(5),
+    backgroundColor: theme.dangerWash,
+    borderWidth: 1,
+    borderColor: 'rgba(220, 38, 38, 0.25)',
+    borderRadius: ms(20),
+    paddingHorizontal: ms(12),
+    paddingVertical: ms(6),
+    marginLeft: ms(4),
+    marginRight: ms(2),
+  },
+  cancelBtnText: { fontSize: ms(13), fontWeight: '600', color: theme.danger },
+  searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.bgElevated, borderRadius: ms(12), paddingHorizontal: ms(12), paddingVertical: ms(10), marginHorizontal: ms(12), marginTop: ms(12), marginBottom: ms(10), borderWidth: 1, borderColor: theme.border },
+  searchInput: { flex: 1, marginLeft: ms(8), color: theme.text, fontSize: ms(14) },
+  scanBtn: { padding: ms(6), marginLeft: ms(4) },
+  mainBox: {
+    flex: 1,
+    marginHorizontal: ms(12),
+    borderRadius: ms(16),
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: theme.borderStrong,
+    backgroundColor: theme.bgElevated,
+    overflow: 'hidden',
+  },
+  resultsOverlay: {
+    position: 'absolute',
+    left: ms(12),
+    right: ms(12),
+    borderRadius: ms(16),
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: theme.borderStrong,
+    backgroundColor: theme.bgElevated,
+    overflow: 'hidden',
+    zIndex: 20,
+    elevation: 8,
+  },
+  mainList: { flexGrow: 1, padding: ms(8) },
+  emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: ms(12), paddingVertical: ms(40) },
+  emptyStateText: { fontSize: ms(13), color: theme.textMuted },
+  clientCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginHorizontal: ms(12),
+    marginTop: ms(10),
+    backgroundColor: theme.bgElevated,
+    borderRadius: ms(12),
+    borderWidth: 1,
+    borderColor: theme.border,
+    paddingHorizontal: ms(14),
+    paddingVertical: ms(10),
+  },
+  clientCardLeft: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: ms(10), minWidth: 0 },
+  clientCardText: { flex: 1, minWidth: 0 },
+  clientLabel: { fontSize: ms(10), fontWeight: '700', color: theme.textMuted, textTransform: 'uppercase', letterSpacing: 0.5 },
+  clientName: { fontSize: ms(14), fontWeight: '700', color: theme.text },
+  clientEdit: { fontSize: ms(13), fontWeight: '700', color: theme.primary, paddingLeft: ms(10) },
+  adBlock: { marginHorizontal: ms(12), marginTop: ms(10) },
+  adLabel: { fontSize: ms(11), fontWeight: '700', color: theme.textMuted, textTransform: 'uppercase', marginBottom: ms(6) },
+  adChips: { flexDirection: 'row', gap: ms(6) },
   adChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingHorizontal: ms(10),
+    paddingVertical: ms(6),
+    borderRadius: ms(16),
     backgroundColor: theme.bgMuted,
     borderWidth: 1,
     borderColor: theme.borderStrong,
   },
   adChipSelected: { backgroundColor: theme.primaryWash, borderColor: theme.primary },
-  adChipText: { fontSize: 12, color: theme.textSecondary, fontWeight: '600' },
+  adChipText: { fontSize: ms(12), color: theme.textSecondary, fontWeight: '600' },
   adChipTextSelected: { color: theme.primary },
-  adForm: { flexDirection: 'row', gap: 8, marginTop: 8 },
+  adForm: { flexDirection: 'row', gap: ms(8), marginTop: ms(8) },
   adInput: {
     flex: 1,
     backgroundColor: theme.bgElevated,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    borderRadius: ms(8),
+    paddingHorizontal: ms(10),
+    paddingVertical: ms(8),
     color: theme.text,
-    fontSize: 13,
+    fontSize: ms(13),
     borderWidth: 1,
     borderColor: theme.border,
   },
-  cartList: { flex: 1, paddingBottom: 12 },
-  emptyCart: { textAlign: 'center', color: theme.textMuted, marginTop: 24, fontSize: 13 },
-  cartFooter: { backgroundColor: theme.bgElevated, borderRadius: 12, padding: 12, borderWidth: 1, borderColor: theme.border },
-  remiseRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, gap: 10 },
-  remiseLabel: { fontSize: 12, color: theme.textSecondary, flex: 1 },
-  remiseControls: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  remiseRow: { flexDirection: 'row', alignItems: 'center', marginHorizontal: ms(12), marginTop: ms(10), gap: ms(10) },
+  remiseLabel: { fontSize: ms(12), color: theme.textSecondary, flex: 1 },
+  remiseControls: { flexDirection: 'row', alignItems: 'center', gap: ms(6) },
   remiseInput: {
-    width: 64,
+    width: ms(64),
     backgroundColor: theme.bg,
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
+    borderRadius: ms(6),
+    paddingHorizontal: ms(8),
+    paddingVertical: ms(6),
     color: theme.text,
-    fontSize: 13,
+    fontSize: ms(13),
     borderWidth: 1,
     borderColor: theme.border,
     textAlign: 'right',
   },
-  remiseToggle: { flexDirection: 'row', borderRadius: 6, overflow: 'hidden', borderWidth: 1, borderColor: theme.borderStrong },
-  remiseModeBtn: { paddingHorizontal: 10, paddingVertical: 6, backgroundColor: theme.bg },
+  remiseToggle: { flexDirection: 'row', borderRadius: ms(6), overflow: 'hidden', borderWidth: 1, borderColor: theme.borderStrong },
+  remiseModeBtn: { paddingHorizontal: ms(10), paddingVertical: ms(6), backgroundColor: theme.bg },
   remiseModeBtnActive: { backgroundColor: theme.primary },
-  remiseModeText: { fontSize: 12, fontWeight: '700', color: theme.textMuted },
+  remiseModeText: { fontSize: ms(12), fontWeight: '700', color: theme.textMuted },
   remiseModeTextActive: { color: '#fff' },
-  remiseAmount: { fontSize: 12, fontWeight: '700', color: theme.primary, minWidth: 60, textAlign: 'right' },
-  totals: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  articles: { fontSize: 12, color: theme.textMuted },
-  sousTotal: { fontSize: 11, color: theme.textSecondary, marginTop: 2 },
-  sudoBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
-  sudoBadgeText: { fontSize: 10, color: theme.primary, fontWeight: '600' },
-  total: { fontSize: 18, fontWeight: '700', color: theme.primary },
-  footerActions: { flexDirection: 'row', gap: 8 },
-  clearBtn: { padding: 10, backgroundColor: theme.dangerWash, borderRadius: 8 },
-  parkBtn: { padding: 10, backgroundColor: theme.warningWash, borderRadius: 8 },
+  remiseAmount: { fontSize: ms(12), fontWeight: '700', color: theme.primary, minWidth: ms(60), textAlign: 'right' },
+  footerRow: { flexDirection: 'row', alignItems: 'stretch', gap: ms(10), marginHorizontal: ms(12), marginTop: ms(10), marginBottom: ms(4) },
+  totalBox: {
+    flex: 1,
+    backgroundColor: theme.bgMuted,
+    borderRadius: ms(12),
+    paddingHorizontal: ms(14),
+    paddingVertical: ms(10),
+    justifyContent: 'center',
+  },
+  totalLabel: { fontSize: ms(10), fontWeight: '700', color: theme.textMuted, textTransform: 'uppercase', letterSpacing: 0.5 },
+  totalValue: { fontSize: ms(20), fontWeight: '800', color: theme.primary },
+  sousTotal: { fontSize: ms(11), color: theme.textSecondary, marginTop: ms(2) },
+  sudoBadge: { flexDirection: 'row', alignItems: 'center', gap: ms(4), marginTop: ms(4) },
+  sudoBadgeText: { fontSize: ms(10), color: theme.primary, fontWeight: '600' },
   pendingBadge: {
     position: 'absolute',
-    top: -4,
-    right: -4,
-    minWidth: 16,
-    height: 16,
-    borderRadius: 8,
+    top: ms(-4),
+    right: ms(-4),
+    minWidth: ms(16),
+    height: ms(16),
+    borderRadius: ms(8),
     backgroundColor: theme.warning,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 3,
+    paddingHorizontal: ms(3),
   },
-  pendingBadgeText: { fontSize: 9, fontWeight: '800', color: '#fff' },
-  sendBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: theme.primary, borderRadius: 8, paddingVertical: 12 },
-  sendBtnDisabled: { opacity: 0.6 },
-  sendBtnText: { color: '#fff', fontSize: 15, fontWeight: '600' },
-  modalOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: theme.bgOverlay, justifyContent: 'center', alignItems: 'center', padding: 24 },
-  modalSheet: { backgroundColor: theme.bgElevated, borderRadius: 16, width: '100%', maxWidth: 400, maxHeight: '80%', padding: 20 },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  modalTitle: { fontSize: 17, fontWeight: '700', color: theme.text },
-  modalClose: { fontSize: 18, color: theme.textMuted },
-  modalInput: { backgroundColor: theme.bg, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, color: theme.text, fontSize: 14, borderWidth: 1, borderColor: theme.border, marginBottom: 12 },
-  modalList: { maxHeight: 300 },
-  clientItem: { padding: 12, backgroundColor: theme.bgMuted, borderRadius: 8, marginBottom: 4 },
-  clientItemName: { fontSize: 14, fontWeight: '600', color: theme.text },
-  clientItemPhone: { fontSize: 12, color: theme.textMuted, marginTop: 2 },
-  newClientBtn: { marginBottom: 10 },
-  newClientText: { fontSize: 13, color: theme.primary, fontWeight: '700' },
-  formLabel: { fontSize: 11, fontWeight: '700', color: theme.textMuted, textTransform: 'uppercase', marginBottom: 6 },
-  formError: { color: theme.danger, fontSize: 12, marginBottom: 8 },
-  formActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 4 },
-  formBackBtn: { paddingHorizontal: 18, paddingVertical: 10, borderRadius: 8, backgroundColor: theme.bgMuted },
-  formBackText: { color: theme.text, fontWeight: '600', fontSize: 14 },
-  formCreateBtn: { paddingHorizontal: 22, paddingVertical: 10, borderRadius: 8, backgroundColor: theme.primary, minWidth: 90, alignItems: 'center' },
-  formCreateText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  pendingBadgeText: { fontSize: ms(9), fontWeight: '800', color: '#fff' },
+  sendBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: ms(8), backgroundColor: theme.primary, borderRadius: ms(12), paddingVertical: ms(14) },
+  sendBtnDisabled: { backgroundColor: theme.borderStrong },
+  sendBtnText: { color: '#fff', fontSize: ms(15), fontWeight: '700' },
+  modalOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: theme.bgOverlay, justifyContent: 'center', alignItems: 'center', padding: ms(24) },
+  modalSheet: { backgroundColor: theme.bgElevated, borderRadius: ms(16), width: '100%', maxWidth: ms(400), maxHeight: '80%', padding: ms(20) },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: ms(16) },
+  modalTitle: { fontSize: ms(17), fontWeight: '700', color: theme.text },
+  modalClose: { fontSize: ms(18), color: theme.textMuted },
+  modalInput: { backgroundColor: theme.bg, borderRadius: ms(8), paddingHorizontal: ms(12), paddingVertical: ms(10), color: theme.text, fontSize: ms(14), borderWidth: 1, borderColor: theme.border, marginBottom: ms(12) },
+  modalList: { maxHeight: ms(300) },
+  clientItem: { padding: ms(12), backgroundColor: theme.bgMuted, borderRadius: ms(8), marginBottom: ms(4) },
+  clientItemName: { fontSize: ms(14), fontWeight: '600', color: theme.text },
+  clientItemPhone: { fontSize: ms(12), color: theme.textMuted, marginTop: ms(2) },
+  newClientBtn: { marginBottom: ms(10) },
+  newClientText: { fontSize: ms(13), color: theme.primary, fontWeight: '700' },
+  formLabel: { fontSize: ms(11), fontWeight: '700', color: theme.textMuted, textTransform: 'uppercase', marginBottom: ms(6) },
+  formError: { color: theme.danger, fontSize: ms(12), marginBottom: ms(8) },
+  formActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: ms(10), marginTop: ms(4) },
+  formBackBtn: { paddingHorizontal: ms(18), paddingVertical: ms(10), borderRadius: ms(8), backgroundColor: theme.bgMuted },
+  formBackText: { color: theme.text, fontWeight: '600', fontSize: ms(14) },
+  formCreateBtn: { paddingHorizontal: ms(22), paddingVertical: ms(10), borderRadius: ms(8), backgroundColor: theme.primary, minWidth: ms(90), alignItems: 'center' },
+  formCreateText: { color: '#fff', fontWeight: '700', fontSize: ms(14) },
+  // ── Densité compacte (petite hauteur < 720dp) : resserre les sections
+  // fixes pour agrandir la zone liste du panier.
+  headerCompact: { paddingVertical: ms(8) },
+  searchBarCompact: { marginTop: ms(6), marginBottom: ms(6), paddingVertical: ms(6) },
+  clientCardCompact: { marginTop: ms(6), paddingVertical: ms(6) },
+  adBlockCompact: { marginTop: ms(6) },
+  remiseRowCompact: { marginTop: ms(6) },
+  footerRowCompact: { marginTop: ms(6), marginBottom: ms(2) },
+  totalBoxCompact: { paddingVertical: ms(6) },
+  sendBtnCompact: { paddingVertical: ms(8) },
 });

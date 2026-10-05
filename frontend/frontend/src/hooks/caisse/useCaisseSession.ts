@@ -66,9 +66,10 @@ export function useCaisseSession() {
 
         const postesList = postesRes.data.results || postesRes.data || []
         const activePoste = myActive.length > 0 ? myActive[0] : null
+
         setPostesCaisses(postesList)
         setMyActivePoste(activePoste)
-        if (activePoste) {
+        if (activePoste?.caisse) {
           setSelectedPosteCaisseId(String(activePoste.caisse))
         }
 
