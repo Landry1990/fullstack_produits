@@ -109,8 +109,21 @@ function Deploy-Frontend {
         if ($LASTEXITCODE -ne 0) { throw "Build frontend échoué (code $LASTEXITCODE)" }
         Write-Host "  ✅ Build OK" -ForegroundColor Green
 
-        Write-Host "  docker cp dist/ -> nginx..." -ForegroundColor Yellow
-        docker cp dist/. "${FRONTEND_CONTAINER}:/usr/share/nginx/html/"
+        # Si /usr/share/nginx/html est bind-monté (docker-compose.yml), le dist/
+        # de l'hôte est déjà servi : pas de cp (il échouerait sur un mount :ro).
+        $htmlMounted = docker inspect -f '{{ range .Mounts }}{{ if eq .Destination "/usr/share/nginx/html" }}yes{{ end }}{{ end }}' $FRONTEND_CONTAINER 2>$null
+        if ($htmlMounted -match 'yes') {
+            Write-Host "  dist/ bind-monté — sync instantanée, pas de docker cp" -ForegroundColor Gray
+        } else {
+            Write-Host "  docker cp dist/ -> nginx..." -ForegroundColor Yellow
+            docker cp dist/. "${FRONTEND_CONTAINER}:/usr/share/nginx/html/"
+        }
+        # Sync des confs nginx (sans effet si bind-montées, utile sinon)
+        $confMounted = docker inspect -f '{{ range .Mounts }}{{ if eq .Destination "/etc/nginx/conf.d/default.conf" }}yes{{ end }}{{ end }}' $FRONTEND_CONTAINER 2>$null
+        if ($confMounted -notmatch 'yes') {
+            if (Test-Path "nginx.conf") { docker cp "nginx.conf" "${FRONTEND_CONTAINER}:/etc/nginx/conf.d/default.conf" }
+            if (Test-Path "security-headers.conf") { docker cp "security-headers.conf" "${FRONTEND_CONTAINER}:/etc/nginx/security-headers.conf" }
+        }
         # nginx -s reload écrit son notice sur stderr ("signal process started"),
         # ce qui déclenche une exception avec ErrorActionPreference=Stop.
         $prevEAP = $ErrorActionPreference

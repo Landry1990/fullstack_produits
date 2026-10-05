@@ -123,6 +123,15 @@ services:
         GIT_COMMIT: ${GIT_COMMIT:-unknown}
     ports:
       - "80:80"
+    volumes:
+      # Bind mounts : le conteneur sert toujours les fichiers de l'hôte —
+      # un recreate ne peut plus resservir une vieille version bakée dans l'image.
+      # `npm run build` sur l'hôte = déployé instantanément (reload nginx suffit).
+      - ./frontend/frontend/dist:/usr/share/nginx/html:ro
+      - ./frontend/frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./frontend/frontend/security-headers.conf:/etc/nginx/security-headers.conf:ro
+      # Nginx sert /media/pharmacy_logos/ directement (logo sur tickets/factures)
+      - media_volume:/app/media:ro
     depends_on:
       - backend
     restart: unless-stopped
