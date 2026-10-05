@@ -105,6 +105,14 @@ export interface PendingSale {
 }
 
 // ─── Historique local ─────────────────────────────────────
+export interface HistoriqueLine {
+  name: string;
+  quantite: number;
+  prix_unitaire: number;
+  remise: number;
+  total_ttc: number;
+}
+
 export interface HistoriqueItem {
   id: string;
   timestamp: string;
@@ -113,4 +121,6 @@ export interface HistoriqueItem {
   total_estime: number;
   client: string | null;
   status: 'sent' | 'confirmed' | 'cancelled';
+  // Optionnel : les entrées antérieures à cette fonctionnalité n'en ont pas.
+  lignes?: HistoriqueLine[];
 }

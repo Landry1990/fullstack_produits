@@ -1,14 +1,16 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Modal, View, Text, TouchableOpacity, ActivityIndicator,
-  StyleSheet, Vibration, Switch,
+  StyleSheet, Vibration, Switch, Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { ScanBarcode, X } from 'lucide-react-native';
 import { useSettingsStore } from '../stores/useSettingsStore';
 import { useCartStore } from '../stores/useCartStore';
 import { expiryInfo } from '../utils/format';
 import { theme } from '../config/theme';
+import { moderateScale as ms } from '../utils/scale';
 import type { ScanResult } from '../types';
 
 interface Props {
@@ -22,6 +24,7 @@ interface Props {
 }
 
 export function ScanBarcodeModal({ visible, onResolve, onAdd, onClose }: Props) {
+  const insets = useSafeAreaInsets();
   const [permission, requestPermission] = useCameraPermissions();
   const { autoAddScan, setAutoAddScan } = useSettingsStore();
   const totalArticles = useCartStore((s) => s.totalArticles());
@@ -46,6 +49,13 @@ export function ScanBarcodeModal({ visible, onResolve, onAdd, onClose }: Props) 
       lastSeenRef.current.clear();
     }
   }, [visible]);
+
+  // Timers feedback/dernier-ajout annulés au démontage — évite un
+  // setState tardif et un réveil inutile du thread JS.
+  useEffect(() => () => {
+    if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
+    if (lastAddedTimer.current) clearTimeout(lastAddedTimer.current);
+  }, []);
 
   const showFeedback = (text: string, ok: boolean) => {
     setFeedback({ text, ok });
@@ -145,6 +155,13 @@ export function ScanBarcodeModal({ visible, onResolve, onAdd, onClose }: Props) 
         <CameraView
           style={styles.camera}
           facing="back"
+          // Aperçu en FIT (lettrebox) plutôt que FILL : sans ça, sur grand
+          // écran paysage la vue très large rogne le flux 4:3 du capteur
+          // → effet « zoom excessif ». iOS ignore cette prop.
+          ratio="16:9"
+          // Capteur arrêté hors affichage et pendant la carte de
+          // confirmation — principale source de chauffe/batterie sinon.
+          active={visible && !pending}
           barcodeScannerSettings={{
             barcodeTypes: [
               'ean13', 'ean8', 'upc_a', 'upc_e',
@@ -241,8 +258,12 @@ export function ScanBarcodeModal({ visible, onResolve, onAdd, onClose }: Props) 
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <View style={styles.container}>
-        <View style={styles.header}>
+      <View style={[styles.container, {
+        paddingBottom: Math.min(insets.bottom, 24),
+        paddingLeft: insets.left,
+        paddingRight: insets.right,
+      }]}>
+        <View style={[styles.header, { paddingTop: 14 + (Platform.OS === 'web' ? 0 : insets.top) }]}>
           <Text style={styles.title}>Scanner un produit</Text>
           <View style={styles.headerRight}>
             <Text style={styles.switchLabel}>Ajout automatique</Text>
@@ -253,7 +274,7 @@ export function ScanBarcodeModal({ visible, onResolve, onAdd, onClose }: Props) 
               thumbColor="#fff"
             />
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-              <X size={22} color={theme.text} />
+              <X size={ms(22)} color={theme.text} />
             </TouchableOpacity>
           </View>
         </View>
@@ -272,18 +293,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: ms(16),
+    paddingVertical: ms(14),
     backgroundColor: theme.bgElevated,
     borderBottomWidth: 1,
     borderBottomColor: theme.border,
   },
-  title: { fontSize: 17, fontWeight: '700', color: theme.text },
-  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  switchLabel: { fontSize: 12, color: theme.textMuted },
-  closeBtn: { padding: 6 },
+  title: { fontSize: ms(17), fontWeight: '700', color: theme.text },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: ms(10) },
+  switchLabel: { fontSize: ms(12), color: theme.textMuted },
+  closeBtn: { padding: ms(6) },
   body: { flex: 1, justifyContent: 'center' },
-  cameraWrap: { flex: 1 },
+  cameraWrap: { flex: 1, backgroundColor: '#000' },
   camera: { flex: 1 },
   frame: {
     position: 'absolute',
@@ -293,43 +314,43 @@ const styles = StyleSheet.create({
     height: '28%',
     borderWidth: 2,
     borderColor: theme.primary,
-    borderRadius: 12,
+    borderRadius: ms(12),
   },
   frozenOverlay: {
     position: 'absolute',
     top: 0, left: 0, right: 0, bottom: 0,
     backgroundColor: 'rgba(15,23,42,0.55)',
   },
-  permissionBox: { alignItems: 'center', gap: 16, paddingHorizontal: 32 },
-  permissionText: { color: theme.text, fontSize: 15, textAlign: 'center' },
-  permissionHint: { color: theme.textMuted, fontSize: 13, textAlign: 'center' },
+  permissionBox: { alignItems: 'center', gap: ms(16), paddingHorizontal: ms(32) },
+  permissionText: { color: theme.text, fontSize: ms(15), textAlign: 'center' },
+  permissionHint: { color: theme.textMuted, fontSize: ms(13), textAlign: 'center' },
   permissionBtn: {
     backgroundColor: theme.primary,
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
+    borderRadius: ms(8),
+    paddingVertical: ms(12),
+    paddingHorizontal: ms(24),
   },
-  permissionBtnText: { color: '#fff', fontSize: 15, fontWeight: '600' },
+  permissionBtnText: { color: '#fff', fontSize: ms(15), fontWeight: '600' },
   footer: {
-    paddingVertical: 14,
-    paddingHorizontal: 20,
+    paddingVertical: ms(14),
+    paddingHorizontal: ms(20),
     backgroundColor: theme.bgElevated,
     borderTopWidth: 1,
     borderTopColor: theme.border,
     alignItems: 'center',
   },
-  hint: { color: theme.textMuted, fontSize: 13 },
+  hint: { color: theme.textMuted, fontSize: ms(13) },
   feedback: {
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
+    borderRadius: ms(8),
+    paddingVertical: ms(8),
+    paddingHorizontal: ms(14),
     maxWidth: '100%',
   },
   feedbackOk: { backgroundColor: theme.primaryWash },
   feedbackKo: { backgroundColor: theme.dangerWash },
-  feedbackText: { color: theme.text, fontSize: 14, fontWeight: '600' },
-  autoFooter: { width: '100%', alignItems: 'center', gap: 10 },
-  lastAdded: { color: theme.primary, fontSize: 13, fontWeight: '600', maxWidth: '100%' },
+  feedbackText: { color: theme.text, fontSize: ms(14), fontWeight: '600' },
+  autoFooter: { width: '100%', alignItems: 'center', gap: ms(10) },
+  lastAdded: { color: theme.primary, fontSize: ms(13), fontWeight: '600', maxWidth: '100%' },
   lastAddedStale: { color: theme.textMuted, fontWeight: '400' },
   autoRow: {
     flexDirection: 'row',
@@ -337,56 +358,56 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: '100%',
   },
-  autoTotals: { color: theme.text, fontSize: 14, fontWeight: '700' },
+  autoTotals: { color: theme.text, fontSize: ms(14), fontWeight: '700' },
   doneBtn: {
     flex: 1,
-    marginLeft: 16,
+    marginLeft: ms(16),
     backgroundColor: theme.primary,
-    borderRadius: 8,
-    paddingVertical: 10,
+    borderRadius: ms(8),
+    paddingVertical: ms(10),
     alignItems: 'center',
   },
-  doneText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  doneText: { color: '#fff', fontSize: ms(15), fontWeight: '700' },
   card: {
     width: '100%',
     backgroundColor: theme.bg,
-    borderRadius: 12,
-    padding: 14,
+    borderRadius: ms(12),
+    padding: ms(14),
     borderWidth: 1,
     borderColor: theme.primary,
   },
-  cardName: { fontSize: 15, fontWeight: '700', color: theme.text },
-  cardMeta: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 4, flexWrap: 'wrap' },
-  cardPrice: { fontSize: 14, fontWeight: '700', color: theme.primary },
-  cardStock: { fontSize: 12, color: theme.textSecondary },
-  cardLot: { fontSize: 12, fontWeight: '600' },
-  cardActions: { marginTop: 12, gap: 10 },
-  qtyRow: { flexDirection: 'row', alignItems: 'center', gap: 12, alignSelf: 'center' },
+  cardName: { fontSize: ms(15), fontWeight: '700', color: theme.text },
+  cardMeta: { flexDirection: 'row', alignItems: 'center', gap: ms(12), marginTop: ms(4), flexWrap: 'wrap' },
+  cardPrice: { fontSize: ms(14), fontWeight: '700', color: theme.primary },
+  cardStock: { fontSize: ms(12), color: theme.textSecondary },
+  cardLot: { fontSize: ms(12), fontWeight: '600' },
+  cardActions: { marginTop: ms(12), gap: ms(10) },
+  qtyRow: { flexDirection: 'row', alignItems: 'center', gap: ms(12), alignSelf: 'center' },
   qtyBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 8,
+    width: ms(34),
+    height: ms(34),
+    borderRadius: ms(8),
     backgroundColor: theme.primaryWash,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  qtyBtnText: { fontSize: 18, color: theme.primary, fontWeight: '700' },
-  qtyVal: { fontSize: 17, fontWeight: '700', color: theme.text, minWidth: 28, textAlign: 'center' },
-  cardBtns: { flexDirection: 'row', gap: 10 },
+  qtyBtnText: { fontSize: ms(18), color: theme.primary, fontWeight: '700' },
+  qtyVal: { fontSize: ms(17), fontWeight: '700', color: theme.text, minWidth: ms(28), textAlign: 'center' },
+  cardBtns: { flexDirection: 'row', gap: ms(10) },
   cancelBtn: {
     flex: 1,
-    paddingVertical: 11,
-    borderRadius: 8,
+    paddingVertical: ms(11),
+    borderRadius: ms(8),
     backgroundColor: theme.bgMuted,
     alignItems: 'center',
   },
-  cancelText: { color: theme.text, fontWeight: '600', fontSize: 14 },
+  cancelText: { color: theme.text, fontWeight: '600', fontSize: ms(14) },
   addBtn: {
     flex: 2,
-    paddingVertical: 11,
-    borderRadius: 8,
+    paddingVertical: ms(11),
+    borderRadius: ms(8),
     backgroundColor: theme.primary,
     alignItems: 'center',
   },
-  addText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  addText: { color: '#fff', fontWeight: '700', fontSize: ms(14) },
 });

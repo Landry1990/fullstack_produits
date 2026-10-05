@@ -188,7 +188,7 @@ export default function PosteVenteSettingsSection() {
                   handleCreate()
                 }
               }}
-              placeholder={t('postes_vente.name_placeholder', { defaultValue: 'Ex: Comptoir 1, Comptoir 2...' })}
+              placeholder={t('postes_vente.name_placeholder', { defaultValue: 'Ex: Mobile 1, Mobile 2...' })}
               className="flex-1 h-12 rounded-xl"
             />
             <Button

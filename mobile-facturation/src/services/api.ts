@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { useAuthStore } from '../stores/useAuthStore';
 import type { CartLine, Client, AyantDroit, Product, CurrentUser, SudoCreds, PosteVente } from '../types';
+import { useSettingsStore } from '../stores/useSettingsStore';
 
 const api = axios.create({ timeout: 10000 });
 
@@ -171,26 +172,58 @@ export const activerPosteVente = async (id: number) => {
   return res.data as PosteVente;
 };
 
-export const ensurePosteVente = async (): Promise<PosteVente> => {
-  const actifs = await getMesPostesActifs();
-  if (actifs.length > 0) {
-    return actifs.find((p) => p.mode_pos === true) ?? actifs[0];
+// Levé quand aucun poste n'est réutilisable automatiquement : l'appareil
+// doit afficher le sélecteur de poste (FacturationScreen → PostePickerModal).
+// Levé quand aucun poste n'est réutilisable automatiquement : l'appareil
+// doit afficher le sélecteur de poste (FacturationScreen → PostePickerModal).
+export class PosteChoiceRequired extends Error {
+  disponibles: PosteVente[];
+  constructor(disponibles: PosteVente[]) {
+    super('POSTE_CHOIX_REQUIS');
+    this.name = 'PosteChoiceRequired';
+    this.disponibles = disponibles;
   }
-  const dispo = await getPostesDisponibles();
+}
+
+// Convention de nommage : les postes « Mobile… » sont réservés à l'app,
+// les « Comptoir… » à la vente web — chaque canal ne voit que les siens.
+export const isPosteMobile = (p: PosteVente) =>
+  p.nom.trim().toUpperCase().startsWith('MOBILE');
+
+export const ensurePosteVente = async (): Promise<PosteVente> => {
+  // Ne réutiliser qu'un poste POS « Mobile » : un poste mode_pos=false est
+  // une caisse centrale ouverte par ce compte, et un poste « Comptoir »
+  // appartient au canal web — s'y greffer mélangerait les ventes.
+  const actifs = await getMesPostesActifs();
+  const pos = actifs.find((p) => p.mode_pos === true && isPosteMobile(p));
+  if (pos) {
+    // L'appareil suit le poste effectivement utilisé (poste partagé entre
+    // terminaux : on épingle celui réellement actif).
+    useSettingsStore.getState().setPosteVenteId(pos.id);
+    return pos;
+  }
+
+  // Pool mobile : définitions libres (ou fermées par ce vendeur) dont le
+  // nom commence par « Mobile ». Le poste épinglé s'il y figure est
+  // réactivé ; sinon → sélecteur.
+  const dispo = (await getPostesDisponibles()).filter(isPosteMobile);
+  const rememberedId = useSettingsStore.getState().posteVenteId;
+  const remembered = rememberedId ? dispo.find((d) => d.id === rememberedId) : undefined;
+  if (remembered) {
+    try {
+      return await activerPosteVente(remembered.id);
+    } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      // 400 = pris par un autre vendeur entre-temps, 404 = supprimé →
+      // on tombera sur le sélecteur. Autre erreur (réseau) → remonter.
+      if (status !== 400 && status !== 404) throw err;
+    }
+  }
+
   if (dispo.length === 0) {
     throw new Error('NO_POSTE_DISPONIBLE');
   }
-  try {
-    return await activerPosteVente(dispo[0].id);
-  } catch (err: unknown) {
-    // Course avec un autre terminal qui l'a activé entre-temps → relire.
-    const e = err as { response?: { status?: number; data?: { detail?: string } } };
-    if (e?.response?.status === 400) {
-      const actifs2 = await getMesPostesActifs();
-      if (actifs2.length > 0) return actifs2.find((p) => p.mode_pos === true) ?? actifs2[0];
-    }
-    throw err;
-  }
+  throw new PosteChoiceRequired(dispo);
 };
 
 // ─── Vente → caisse centralisée ───────────────────────────
@@ -207,6 +240,7 @@ export const sendSaleToCaisse = async (cart: {
   remiseMode: 'taux' | 'montant';
   remiseSudoCreds: SudoCreds | null;
   prixSudoCreds: SudoCreds | null;
+  stockSudoCreds: SudoCreds | null;
   remiseGlobaleMontant: () => number;
   totalTTC: () => number;
 }, posteVenteId: number | null) => {
@@ -232,7 +266,13 @@ export const sendSaleToCaisse = async (cart: {
     loyalty: { use_pending_discount: false, points_to_use: 0 },
     // totals.totalTtc = total NET après remise globale
     totals: { totalTtc: cart.totalTTC(), totalHt: 0, totalTva: 0 },
-    sudo: { validated_by_id: null, sudo_password: null },
+    // Forçage de stock (qté > stock) : creds superviseur validés dans
+    // FacturationScreen — validate_sudo_mode exige alors
+    // can_sell_negative_stock sur le compte validateur.
+    sudo: {
+      validated_by_id: cart.stockSudoCreds?.validatorId ?? null,
+      sudo_password: cart.stockSudoCreds?.password ?? null,
+    },
     // Validations superviseur exigées par le backend dès qu'une remise ou
     // un prix modifié est présent (champs top-level, pas dans `sudo`).
     remise_validated_by_id: cart.remiseSudoCreds?.validatorId ?? null,

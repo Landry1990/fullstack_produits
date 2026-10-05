@@ -145,9 +145,14 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], url_path='disponibles')
     def disponibles(self, request):
         """Retourne les points de vente non actifs (disponibles à l'ouverture).
-        Un point de vente POS n'a pas de caisse physique assignée."""
+        Un point de vente POS n'a pas de caisse physique assignée.
+        Inclut aussi les postes fermés du user courant : un appareil épinglé
+        (mobile/tablette) doit pouvoir réactiver SON poste après fermeture
+        sans le confondre avec les définitions des autres vendeurs."""
         postes = self.get_queryset().filter(
-            est_actif=False, vendeur__isnull=True, caisse__isnull=True
+            Q(vendeur__isnull=True) | Q(vendeur=request.user),
+            est_actif=False,
+            caisse__isnull=True,
         )
         serializer = self.get_serializer(postes, many=True)
         return Response(serializer.data)
@@ -170,6 +175,14 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
         if poste.est_actif:
             return Response(
                 {"detail": f"Le point de vente {poste.nom} est déjà actif."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        # Un poste rattaché à une caisse physique est ouvert via `ouvrir`
+        # (fond de caisse, clôture). L'activer en mode POS détacherait la
+        # caisse et mélangerait les ventes avec les encaissements.
+        if poste.caisse_id is not None:
+            return Response(
+                {"detail": f"Le point de vente {poste.nom} est rattaché à une caisse physique. Ouvrez-le depuis la caisse centrale."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 

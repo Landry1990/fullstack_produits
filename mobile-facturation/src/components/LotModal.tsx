@@ -3,10 +3,12 @@ import {
   Modal, View, Text, TouchableOpacity, FlatList,
   ActivityIndicator, StyleSheet,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Product, StockLot } from '../types';
 import { getLots } from '../services/api';
 import { expiryInfo } from '../utils/format';
 import { theme } from '../config/theme';
+import { moderateScale as ms } from '../utils/scale';
 
 interface Props {
   visible: boolean;
@@ -17,6 +19,7 @@ interface Props {
 }
 
 export function LotModal({ visible, product, currentLotId, onSelect, onClose }: Props) {
+  const insets = useSafeAreaInsets();
   const [lots, setLots] = useState<StockLot[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -36,7 +39,10 @@ export function LotModal({ visible, product, currentLotId, onSelect, onClose }: 
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.overlay}>
+      <View style={[styles.overlay, {
+        paddingTop: Math.max(insets.top, 24),
+        paddingBottom: Math.max(insets.bottom, 24),
+      }]}>
         <View style={styles.sheet}>
 
           <View style={styles.header}>
@@ -60,7 +66,7 @@ export function LotModal({ visible, product, currentLotId, onSelect, onClose }: 
           </TouchableOpacity>
 
           {loading ? (
-            <ActivityIndicator color={theme.primary} style={{ marginVertical: 30 }} />
+            <ActivityIndicator color={theme.primary} style={{ marginVertical: ms(30) }} />
           ) : lots.length === 0 ? (
             <Text style={styles.empty}>Aucun lot spécifique disponible</Text>
           ) : (
@@ -109,33 +115,33 @@ const styles = StyleSheet.create({
     backgroundColor: theme.bgOverlay,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: ms(24),
   },
   sheet: {
     backgroundColor: theme.bgElevated,
-    borderRadius: 16,
+    borderRadius: ms(16),
     width: '100%',
     maxHeight: '80%',
-    padding: 20,
+    padding: ms(20),
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 16,
-    paddingBottom: 12,
+    marginBottom: ms(16),
+    paddingBottom: ms(12),
     borderBottomWidth: 1,
     borderBottomColor: theme.border,
   },
-  title: { fontSize: 17, fontWeight: '700', color: theme.text },
-  subtitle: { fontSize: 12, color: theme.textMuted, marginTop: 2, maxWidth: 240 },
-  closeBtn: { padding: 4 },
-  closeBtnText: { color: theme.textMuted, fontSize: 18 },
+  title: { fontSize: ms(17), fontWeight: '700', color: theme.text },
+  subtitle: { fontSize: ms(12), color: theme.textMuted, marginTop: ms(2), maxWidth: ms(240) },
+  closeBtn: { padding: ms(4) },
+  closeBtnText: { color: theme.textMuted, fontSize: ms(18) },
   option: {
     backgroundColor: theme.primaryWash,
-    borderRadius: 10,
-    padding: 14,
-    marginBottom: 12,
+    borderRadius: ms(10),
+    padding: ms(14),
+    marginBottom: ms(12),
     borderWidth: 1,
     borderColor: theme.primaryLight,
   },
@@ -143,19 +149,19 @@ const styles = StyleSheet.create({
     backgroundColor: theme.primaryLight,
     borderColor: theme.primary,
   },
-  optionTitle: { fontSize: 13, fontWeight: '700', color: theme.primary },
-  optionSub: { fontSize: 11, color: theme.textSecondary, marginTop: 2 },
-  checkmark: { position: 'absolute', right: 14, top: 14, color: theme.primary, fontSize: 16, fontWeight: '700' },
-  empty: { textAlign: 'center', color: theme.textMuted, fontSize: 13, marginVertical: 24 },
-  list: { maxHeight: 240 },
+  optionTitle: { fontSize: ms(13), fontWeight: '700', color: theme.primary },
+  optionSub: { fontSize: ms(11), color: theme.textSecondary, marginTop: ms(2) },
+  checkmark: { position: 'absolute', right: ms(14), top: ms(14), color: theme.primary, fontSize: ms(16), fontWeight: '700' },
+  empty: { textAlign: 'center', color: theme.textMuted, fontSize: ms(13), marginVertical: ms(24) },
+  list: { maxHeight: ms(240) },
   lotRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: theme.bgMuted,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 4,
+    borderRadius: ms(8),
+    padding: ms(12),
+    marginBottom: ms(4),
     borderWidth: 1,
     borderColor: theme.border,
   },
@@ -163,18 +169,18 @@ const styles = StyleSheet.create({
     backgroundColor: theme.primaryWash,
     borderColor: theme.primary,
   },
-  lotLeft: { gap: 2 },
-  lotNum: { fontSize: 13, fontWeight: '600', color: theme.text },
+  lotLeft: { gap: ms(2) },
+  lotNum: { fontSize: ms(13), fontWeight: '600', color: theme.text },
   lotNumSelected: { color: theme.primary },
-  lotExp: { fontSize: 11, fontWeight: '500' },
-  lotRight: { alignItems: 'flex-end', gap: 2 },
-  lotStock: { fontSize: 11, color: theme.textMuted },
+  lotExp: { fontSize: ms(11), fontWeight: '500' },
+  lotRight: { alignItems: 'flex-end', gap: ms(2) },
+  lotStock: { fontSize: ms(11), color: theme.textMuted },
   cancelBtn: {
-    marginTop: 12,
+    marginTop: ms(12),
     backgroundColor: theme.bgMuted,
-    borderRadius: 10,
-    paddingVertical: 12,
+    borderRadius: ms(10),
+    paddingVertical: ms(12),
     alignItems: 'center',
   },
-  cancelBtnText: { color: theme.text, fontWeight: '600', fontSize: 14 },
+  cancelBtnText: { color: theme.text, fontWeight: '600', fontSize: ms(14) },
 });

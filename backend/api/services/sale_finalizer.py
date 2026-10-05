@@ -271,7 +271,18 @@ class SaleFinalizer:
                     "Veuillez ouvrir un point de vente avant de réaliser une vente."
                 )
 
-            if not centralized and poste_vente.vendeur != user and not user.is_superuser:
+            if poste_vente.caisse_id is not None:
+                # Poste rattaché à une caisse physique : en centralisé, seul
+                # son propriétaire (la caissière) peut y vendre — sinon un POS
+                # se grefferait sur le poste de la caisse et mélangerait les
+                # totaux. Les postes POS purs restent partageables entre
+                # vendeurs (comptoir partagé).
+                if poste_vente.vendeur_id != user.id and not user.is_superuser:
+                    raise ValueError(
+                        f"Le point de vente {poste_vente.nom} est rattaché à la caisse "
+                        f"de {poste_vente.vendeur.username}. Ouvrez votre propre point de vente."
+                    )
+            elif not centralized and poste_vente.vendeur != user and not user.is_superuser:
                 raise ValueError(
                     f"Seul {poste_vente.vendeur.username} (qui a ouvert ce point de vente) "
                     f"peut encaisser ici. Veuillez ouvrir votre propre point de vente."

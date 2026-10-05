@@ -158,6 +158,37 @@ class CashRegisterAdministrationPermissionTests(APITestCase):
         poste.refresh_from_db()
         self.assertFalse(poste.est_actif)
 
+    def test_cannot_activate_poste_linked_to_physical_caisse(self):
+        """Un poste rattaché à une caisse s'ouvre via `ouvrir`, jamais via `activer` (POS)."""
+        caisse = PosteCaisse.objects.create(nom='Caisse A', code='CA-A')
+        poste = PosteVente.objects.create(nom='Poste caisse A', caisse=caisse, est_actif=False)
+        self.client.force_authenticate(user=self.owner)
+
+        response = self.client.post(reverse('postevente-activer', kwargs={'pk': poste.pk}), {}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        poste.refresh_from_db()
+        self.assertFalse(poste.est_actif)
+        self.assertIsNotNone(poste.caisse_id)
+
+    def test_disponibles_includes_own_closed_poste_excludes_others(self):
+        """Les postes fermés du user restent réactivables (épinglage appareil) ;
+        ceux des autres vendeurs et les postes liés à une caisse sont exclus."""
+        own_closed = PosteVente.objects.create(nom='Mon poste fermé', vendeur=self.owner, est_actif=False)
+        other_closed = PosteVente.objects.create(nom='Poste autre vendeur', vendeur=self.other, est_actif=False)
+        libre = PosteVente.objects.create(nom='Définition libre', est_actif=False)
+        caisse = PosteCaisse.objects.create(nom='Caisse B', code='CA-B')
+        PosteVente.objects.create(nom='Poste caisse B', caisse=caisse, est_actif=False)
+        self.client.force_authenticate(user=self.owner)
+
+        response = self.client.get(reverse('postevente-disponibles'))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ids = {p['id'] for p in response.data}
+        self.assertIn(own_closed.id, ids)
+        self.assertIn(libre.id, ids)
+        self.assertNotIn(other_closed.id, ids)
+
 
 class AdministrativeEndpointPermissionTests(APITestCase):
     def setUp(self):

@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react';
 import {
   Modal, View, Text, TextInput, TouchableOpacity, StyleSheet,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../config/theme';
+import { moderateScale as ms } from '../utils/scale';
 import type { CartLine } from '../types';
 
 interface Props {
@@ -13,6 +15,7 @@ interface Props {
 }
 
 export function LineEditModal({ visible, line, onApply, onClose }: Props) {
+  const insets = useSafeAreaInsets();
   const [prix, setPrix] = useState('');
   const [remise, setRemise] = useState('');
 
@@ -36,7 +39,10 @@ export function LineEditModal({ visible, line, onApply, onClose }: Props) {
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.overlay}>
+      <View style={[styles.overlay, {
+        paddingTop: Math.max(insets.top, 24),
+        paddingBottom: Math.max(insets.bottom, 24),
+      }]}>
         <View style={styles.sheet}>
           <Text style={styles.title} numberOfLines={1}>{line.product.name}</Text>
           <Text style={styles.subtitle}>Modifier la ligne</Text>
@@ -77,41 +83,41 @@ const styles = StyleSheet.create({
     backgroundColor: theme.bgOverlay,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: ms(24),
   },
   sheet: {
     backgroundColor: theme.bgElevated,
-    borderRadius: 16,
+    borderRadius: ms(16),
     width: '100%',
-    maxWidth: 400,
-    padding: 20,
+    maxWidth: ms(400),
+    padding: ms(20),
   },
-  title: { fontSize: 17, fontWeight: '700', color: theme.text },
-  subtitle: { fontSize: 12, color: theme.textMuted, marginTop: 4, marginBottom: 14 },
-  label: { fontSize: 11, fontWeight: '700', color: theme.textMuted, textTransform: 'uppercase', marginBottom: 6, marginTop: 10 },
+  title: { fontSize: ms(17), fontWeight: '700', color: theme.text },
+  subtitle: { fontSize: ms(12), color: theme.textMuted, marginTop: ms(4), marginBottom: ms(14) },
+  label: { fontSize: ms(11), fontWeight: '700', color: theme.textMuted, textTransform: 'uppercase', marginBottom: ms(6), marginTop: ms(10) },
   input: {
     backgroundColor: theme.bg,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderRadius: ms(8),
+    paddingHorizontal: ms(12),
+    paddingVertical: ms(10),
     color: theme.text,
-    fontSize: 14,
+    fontSize: ms(14),
     borderWidth: 1,
     borderColor: theme.border,
   },
-  actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 20 },
+  actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: ms(10), marginTop: ms(20) },
   cancelBtn: {
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 8,
+    paddingHorizontal: ms(18),
+    paddingVertical: ms(10),
+    borderRadius: ms(8),
     backgroundColor: theme.bgMuted,
   },
-  cancelText: { color: theme.text, fontWeight: '600', fontSize: 14 },
+  cancelText: { color: theme.text, fontWeight: '600', fontSize: ms(14) },
   applyBtn: {
-    paddingHorizontal: 22,
-    paddingVertical: 10,
-    borderRadius: 8,
+    paddingHorizontal: ms(22),
+    paddingVertical: ms(10),
+    borderRadius: ms(8),
     backgroundColor: theme.primary,
   },
-  applyText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  applyText: { color: '#fff', fontWeight: '700', fontSize: ms(14) },
 });
