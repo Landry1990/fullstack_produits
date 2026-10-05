@@ -123,6 +123,15 @@
   stocké à l'envoi en caisse ; tap sur une entrée de
   `HistoriqueScreen` déplie le détail (chevron). Les anciennes entrées
   sans `lignes` affichent « Détail non enregistré ».
+- [x] **Refonte FacturationScreen** (2026-10-05) : découpage sans
+  changement de comportement — `ClientModal` (recherche + création
+  client autonomes, reset à la fermeture), `AyantDroitSection` (chips +
+  form contrôlé — état nom/matricule gardé dans l'écran pour le flux
+  d'envoi), `hooks/useProductSearch` (debounce, ajout + lots FEFO,
+  `resolveBarcode`/`addScanResult`, douchette), `hooks/useSendSale`
+  (revalidation sudo, forçage stock, résolution AD, poste, retries
+  400/403, historique, clear), `FacturationScreen.styles.ts` +
+  `utils/drfError.ts` (partagé). 1366 → 737 lignes ; `tsc` propre.
 - [x] **Aperçu FEFO après ajout manuel** (2026-10-04) : le serializer
   liste (`GET /produits/?search=`) ne renvoie pas `stock_lots` → le badge
   lot affichait « AUTO » seul pour les produits ajoutés par recherche
@@ -231,6 +240,46 @@ le client, pas à implémenter sans décision) :
   à la caisse).
 - Encaissement mobile et états « Payée » côté mobile.
 - Fuzzy search (tolérance aux fautes) : chantier backend si demandé.
+
+## 💡 En réflexion — idées notées, pas encore actées
+
+### Fusion `mobile-facturation` + `pda-inventaire` (2026-10-05, en attente de tests terrain)
+
+Idée : un seul APK « terminal de terrain » faisant vente **et** inventaire,
+au lieu de deux apps à installer/configurer. À évaluer après retour
+d'expérience réel sur `mobile-facturation`.
+
+**Pour** : 1 seul APK/config serveur/login ; un appareil fait les deux
+métiers ; les deux apps partagent déjà backend `/api/`, login par mot de
+passe, `expo-camera` (scan), `expo-secure-store`, `safe-area-context`,
+même Expo 57, même palette de thème.
+
+**Divergences à résoudre** : `pda-inventaire` = react-query + AsyncStorage +
+FileSystem + NetInfo + sessions d'inventaire **offline + sync** ;
+`mobile-facturation` = zustand + kv-store (sqlite) + panier/caisse +
+postes + sudo. Deux `LoginScreen` différents, deux services `api.ts`.
+
+**Architecture proposée** (intégrer l'inventaire, plus petit ~2 000 lignes,
+dans cette app) :
+
+```
+src/
+  modules/
+    vente/        ← écrans + stores actuels (inchangés)
+    inventaire/   ← HomeScreen, ScannerScreen + composants/services pda
+  shared/         ← theme, scale.ts, api.ts fusionné, auth, ScanModal
+App.tsx           ← après login : menu « Vente » | « Inventaire »
+```
+
+**Questions à trancher avant tout démarrage** :
+- Les deux métiers accessibles à tout utilisateur, ou filtrés par
+  permission/profil backend (ex : compte « inventaire seul ») ?
+- L'inventaire offline/sync (NetInfo, file d'attente) doit-il rester
+  fonctionnel hors réseau ? (Sa logique est plus lourde que le brouillon
+  kv-store de la vente.)
+- Un appareil peut-il basculer de module sans re-login ? Persistance du
+  module courant ?
+- Un seul `package` Expo → l'icône/nom de l'app unifiée ?
 
 ## ❌ Hors périmètre (décision actée)
 
