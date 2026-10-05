@@ -1,5 +1,62 @@
 # Changelog — Fullstack Produits
 
+## 2026-10-05 — 🔧 Nginx : correction de 6 bugs de configuration
+
+- **Headers de sécurité absents sur HTML/assets** : `add_header` dans
+  `location /` et `/assets/` écrasait tous les `add_header` du server
+  (piège classique nginx) → CSP, X-Frame-Options, nosniff jamais envoyés
+  sur le HTML. Headers extraits dans `security-headers.conf`, inclus via
+  `include` partout où nécessaire. CSP enrichie (`worker-src`/`frame-src
+  blob:`).
+- **`location /django_static/` remplacée par `/static/`** proxifié vers le
+  backend (Whitenoise) : le chemin ne correspondait pas à `STATIC_URL` et
+  l'alias pointait vers un volume non monté → admin non stylé via :80.
+- **`/media/` en whitelist stricte** : seul `/media/pharmacy_logos/` est
+  servi (logo sur tickets/factures, `alias` vers `media_volume` désormais
+  monté `:ro` dans le service frontend des deux compose). Le reste
+  (`ordonnances/`, `internal_messages/`, `feedback/` = données sensibles)
+  → 404, reste servi via API authentifiée.
+- **`client_max_body_size 25m`** : fin des 413 sur imports Excel/uploads
+  > 1 Mo.
+- **`X-Forwarded-Proto` transmis** (fallback `$scheme`) : Django voit enfin
+  HTTPS via Tailscale Funnel → `is_secure()` correct, URLs absolues en
+  `https://`. ⚠️ Exige `CSRF_TRUSTED_ORIGINS=https://<domaine>.ts.net`
+  en prod pour les POST session-auth via funnel.
+- **`proxy_read_timeout 300s` sur `/api/`** : fin des 504 sur exports/
+  rapports lourds (le backend continuait de traiter → doubles retries).
+- **Divers** : `server_tokens off`, `Cache-Control` HTML `no-store` →
+  `no-cache` (revalidation ETag → 304), `gzip_types` + `text/csv`,
+  `resolver_timeout`.
+- **`deployment/nginx_staging.conf` synchronisé** (version bare-metal,
+  socket Unix) : mêmes correctifs + ajout du bloc `/ws/` WebSocket qui
+  manquait + `error_page` maintenance.
+- **CSP `<meta>` dans `index.html` alignée** sur `security-headers.conf`
+  (avait dérivé : `object-src 'none'`, pas de `worker-src`/`frame-src`) —
+  commentaire ajouté pour garder les deux synchronisées.
+- **Bind mounts dev (anti-régression de version)** : `dist/`, `nginx.conf`
+  et `security-headers.conf` montés `:ro` dans le conteneur frontend —
+  un recreate ne peut plus resservir le code baké dans une vieille image.
+  `npm run build` hôte = déployé instantanément. `deploy.ps1` adapté :
+  skip `docker cp` si bind-monté (un cp sur mount `:ro` échouerait).
+- **Testé en dev** : `nginx -t` OK (docker + staging), headers vérifiés
+  par curl, logo media servi (200), chemins sensibles 404, admin
+  `/static/` 200, POST 2 Mo OK.
+
+## 2026-10-05 — 📱 Mobile : refonte FacturationScreen + caméra scan
+
+- **Refonte `FacturationScreen` (1366 → 737 lignes, sans changement de
+  comportement)** : extractions — `components/ClientModal.tsx`
+  (sélection/création client autonomes), `components/AyantDroitSection.tsx`
+  (chips + formulaire), `hooks/useProductSearch.ts` (recherche + scan +
+  FEFO à la demande), `hooks/useSendSale.ts` (flux envoi caisse complet :
+  sudo, stock, ayant droit, poste, retries), `screens/
+  FacturationScreen.styles.ts`, `utils/drfError.ts` partagé.
+- **Caméra scan** : `ratio="16:9"` → aperçu FIT (lettrebox) au lieu de
+  FILL — supprime l'effet zoom excessif sur tablettes paysage.
+- **Notes** : `softwareKeyboardLayoutMode: "pan"` dans app.json (clavier
+  flottant, effet au prochain build natif) ; compat Android 7 → 16
+  (Expo SDK 57).
+
 ## 2026-10-05 — 📱 Mobile : retours test terrain (recherche, clavier, densité, historique)
 
 Correctifs issus des tests sur appareil réel après la transposition
