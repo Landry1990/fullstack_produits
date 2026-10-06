@@ -33,8 +33,17 @@ export interface Client {
   name: string;
   phone?: string | null;
   client_type?: 'PARTICULIER' | 'PROFESSIONNEL';
-  taux_couverture?: string;
-  ayants_droit?: AyantDroit[];
+  taux_couverture?: string;          // % couverture mutuelle (tiers payant)
+  ayants_droit?: AyantDroit[];       // détail seulement (getClient), pas la liste
+  ayants_droit_count?: number;       // liste seulement (searchClients)
+  // Conditions financières « client pro » (liste + détail sauf mention)
+  plafond?: string;                  // -1 = crédit illimité, 0 = interdit
+  current_debt?: string;             // dette « en compte » — liste seulement
+  remise_automatique?: string;       // % remise globale auto à la sélection
+  majoration_pro_pourcentage?: string; // % majoration des prix (pro)
+  solde_depot?: string;
+  pending_discount?: string;
+  message_alerte?: string | null;    // détail seulement
 }
 
 export interface AyantDroit {
@@ -123,4 +132,6 @@ export interface HistoriqueItem {
   status: 'sent' | 'confirmed' | 'cancelled';
   // Optionnel : les entrées antérieures à cette fonctionnalité n'en ont pas.
   lignes?: HistoriqueLine[];
+  // Remise globale en montant F (0 = absente des anciennes entrées).
+  remise_globale?: number;
 }

@@ -65,6 +65,19 @@ function calcLine(line: Omit<CartLine, 'total_ttc'>): CartLine {
   return { ...line, total_ttc };
 }
 
+// ─── Majoration « client pro » ────────────────────────────
+// Taux de majoration des prix du client sélectionné
+// (majoration_pro_pourcentage, clients PROFESSIONNEL uniquement) —
+// même logique que le web (markupPercentage / applyMarkupToCart).
+export const markupRateFor = (client: Client | null): number =>
+  client?.client_type === 'PROFESSIONNEL'
+    ? (parseFloat(client.majoration_pro_pourcentage ?? '0') || 0)
+    : 0;
+
+// Prix catalogue × (1 + taux/100), arrondi à l'entier F CFA.
+const markedPrice = (base: number, markup: number) =>
+  Math.round(base * (1 + markup / 100));
+
 export const useCartStore = create<CartState>((set, get) => ({
   lines: [],
   client: null,
@@ -100,7 +113,12 @@ export const useCartStore = create<CartState>((set, get) => ({
       const newLine = calcLine({
         product,
         quantite: qty,
-        prix_unitaire: parseFloat(product.selling_price),
+        // Majoration pro appliquée au prix catalogue (comme le web) ;
+        // les scans datamatrix sur-écrivent ensuite avec le prix du lot.
+        prix_unitaire: markedPrice(
+          parseFloat(product.selling_price) || 0,
+          markupRateFor(get().client)
+        ),
         remise: 0,
         lotId: null,
         lotText: null,
@@ -165,8 +183,23 @@ export const useCartStore = create<CartState>((set, get) => ({
   setPrixSudoCreds: (prixSudoCreds) => set({ prixSudoCreds }),
   setStockSudoCreds: (stockSudoCreds) => set({ stockSudoCreds }),
 
-  // Changement de client = ayant droit précédent invalide
-  setClient: (client) => set({ client, ayantDroit: null }),
+  // Changement de client = ayant droit précédent invalide + recalcul de
+  // tous les prix depuis le catalogue avec la majoration du nouveau
+  // client — même comportement que applyMarkupToCart du web : les prix
+  // saisis manuellement sont écrasés (choix acté, parité web).
+  setClient: (client) => set((s) => {
+    const markup = markupRateFor(client);
+    return {
+      client,
+      ayantDroit: null,
+      lines: s.lines.map((l) =>
+        calcLine({
+          ...l,
+          prix_unitaire: markedPrice(parseFloat(l.product.selling_price) || 0, markup),
+        })
+      ),
+    };
+  }),
   setAyantDroit: (ayantDroit) => set({ ayantDroit }),
 
   // Recalcule total_ttc de chaque ligne via calcLine ; les creds Sudo

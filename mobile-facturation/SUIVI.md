@@ -10,6 +10,26 @@
 
 ## ✅ Déjà en place
 
+- [x] **Écran d'accueil avec menu** (2026-10-06) : `HomeScreen` = point
+  d'entrée après login — bascule FR/EN, déconnexion, cartes Vente /
+  Ajustement de stock / Tableau de bord. L'en-tête de `FacturationScreen`
+  est allégé (retirés : langue, ajustement, dashboard, déconnexion — tous
+  déplacés sur l'accueil) ; il ne garde que les actions de vente :
+  en attente, historique, PIN, panier, annuler, retour accueil.
+- [x] **Ajustement de stock par lot** (2026-10-06) : écran `AjustementScreen`
+  (bouton 📦 en-tête) — recherche/scan produit, sélection du lot
+  **obligatoire** pour les produits `use_lot_management` (le stock global
+  est reconstitué depuis le delta du lot, jamais corrigé globalement) ou
+  création d'un nouveau lot (n° + expiration MM/AA), motif standards +
+  personnalisés (`configuration-options?type=STOCK_ADJ`), détail libre.
+  `POST /produits/{id}/adjust_stock/` avec re-lecture du stock ET du lot
+  juste avant envoi (quantités cibles, pas deltas), `Idempotency-Key`,
+  fallback Sudo `can_adjust_stock` sur 403.
+- [x] **Dashboard poche** (2026-10-06) : écran `DashboardScreen` (bouton
+  📊 en-tête) consommant `GET /dashboard/stats/` — CA du jour + variation
+  vs veille, nb ventes, top 5 produits, stats perso (ventes, panier
+  moyen). Rôles VENDEUR/CAISSIER : stats personnelles uniquement (limite
+  backend, conservée volontairement).
 - [x] Envoi panier → caisse centralisée via REST (`sendSaleToCaisse` dans
   `src/services/api.ts`), même contrat que la vente tablette web.
 - [x] Anti-doublon : `Idempotency-Key` (header + champ body).
@@ -177,8 +197,19 @@
   prix modifié sans creds (`ensureSudoCreds` dans `FacturationScreen`).
   ⚠️ Ce n'est PAS du mode hors ligne : la vente exige toujours le réseau
   au moment de l'envoi.
-- [ ] Option : verrouillage rapide PIN / biométrie pour session longue sur
-  appareil partagé.
+- [x] **Verrouillage PIN** (2026-10-05) — PIN seul, sans biométrie
+  (décision du demandeur) : code 4-6 chiffres **par vendeur** dans
+  SecureStore (`lock.pin.<username>` — sa présence = PIN activé) ; délai
+  par appareil dans kv-store `lock.delaySec` (0/60/300 s, défaut 60).
+  `stores/useLockStore` + `components/LockScreen` (overlay dans `App.tsx`)
+  + `components/PinLockModal` (réglage). Déclencheurs : session restaurée
+  au boot (verrou immédiat), retour au premier plan après délai
+  (`AppState`, horodatage au passage background/inactive), cadenas de
+  l'en-tête Facturation (tap = verrouille si PIN défini, sinon ouvre le
+  réglage ; appui long = réglage). « Se déconnecter » depuis l'écran
+  verrouillé efface le PIN — porte de sortie « code oublié », le login
+  suivant exige le mot de passe. Le PIN survit au logout normal (rattaché
+  au compte, pas à la session).
 
 ### P3 — Historique et finition
 
@@ -215,14 +246,123 @@
   fusionner / supprimer). Reprendre = `cart.hydrate()` (creds Sudo
   jamais persistés → revalidation à l'envoi) ; fusionner = quantités
   cumulées par produit, client/remise du panier actuel conservés.
+- [x] **Statut d'encaissement dans l'historique** (2026-10-05) :
+  `HistoriqueScreen` remonte le statut backend de chaque vente —
+  `getFactureStatuses` (`api.ts`) = `GET /factures/?include_pending=true
+  &created_by=<id>&page_size=100`, une requête pour tout l'historique,
+  match local par `numero_facture`. `include_pending` est indispensable :
+  la liste masque par défaut les VALIDEE sans paiement (ventes en caisse)
+  et le paramètre court-circuite le cache liste 60 s → statut temps réel.
+  Badges : « En caisse » (VAL, amber), « Encaissée » (PAY, vert),
+  « Annulée » (ANN, rouge), « Brouillon » ; fallback « Envoyée » si non
+  remonté (hors ligne, entrée ancienne). Refresh au montage + pull-to-
+  refresh. `useAuthStore.userId` ajouté (rempli par `getMe` au login et
+  au boot) pour le filtre `created_by`.
+- [x] **Remise globale dans le détail historique** (2026-10-05) :
+  `HistoriqueItem.remise_globale` (montant F, optionnel — absent des
+  anciennes entrées) stockée à l'envoi (`useSendSale`) et affichée en
+  pied du détail déplié (« Remise globale −X F »). Rappel : l'historique
+  est **par vendeur** (clé `historique.<username>`), pas par appareil.
+- [x] **Distinction stock renforcée dans les résultats** (2026-10-05) :
+  le gras seul ('700') passait inaperçu sur tablette → double signal
+  poids + couleur : en stock = nom '800' + « Stock: X » vert ; nul = nom
+  atténué `textMuted` ; négatif = rouge (inchangé). `ProductRow`.
+- [x] **Résultats : infos regroupées à gauche** (2026-10-05) : la
+  colonne droite (prix + stock) obligeait à balayer l'écran du regard —
+  CIP, « Stock: X » et prix sont désormais sur une seule ligne sous le
+  nom. `ProductRow`.
+- [x] **Badge lot lisible** (2026-10-05) : « AUTO » était cryptique →
+  **« SANS LOT »** quand aucun lot n'est prélevable, **« FEFO · … »**
+  (au lieu de « AUTO · … ») quand le backend prélèvera le lot expirant
+  le plus tôt. `CartItemRow`.
+- [x] **i18n fr/en complet** (2026-10-05) : `i18next` + `react-i18next`
+  + `expo-localization`. `src/i18n/{index,fr,en}.ts` — langue = locale
+  de l'appareil (`en` → anglais, sinon français), fallback fr. Toutes
+  les chaînes visibles migrées vers `t()` : écrans (Login, Facturation,
+  Historique), 12 composants/modals, hooks (`useSendSale`,
+  `useProductSearch` via `i18n.t` hors JSX) et `App.tsx`. Convention :
+  toute nouvelle chaîne visible → clé dans `fr.ts` **et** `en.ts`.
+  **Bascule manuelle** : chip « FR/EN » dans l'en-tête de vente +
+  segmenté sur l'écran de connexion ; choix persisté par appareil
+  (`settings.language` kv-store, lu synchrone à l'init — priorité :
+  choix stocké > locale appareil > fr).
+
+### P5 — Facturation clients professionnels (parité web)
+
+- [x] **Détail client fetché à la sélection** (2026-10-06) : la liste
+  `/clients/?search=` (ClientListSerializer) ne renvoie ni
+  `ayants_droit` ni `message_alerte` → les chips AD n'apparaissaient
+  jamais et le matching matricule de `useSendSale` ne trouvait rien
+  (doublons AD possibles). `getClient(id)` (GET `/clients/<id>/`) une
+  fois à la sélection (`applySelectedClient`) ; fusion liste+détail —
+  `current_debt` n'existe que sur la liste, `ayants_droit`/
+  `message_alerte`/`solde_depot`/`pending_discount` que sur le détail.
+  Optimiste : `ayants_droit_count` (liste) décide l'affichage du
+  formulaire AD sans attendre le détail.
+- [x] **Majoration pro** (`majoration_pro_pourcentage`) :
+  `prix_unitaire = selling_price × (1+p/100)` arrondi F — à l'ajout
+  (`addProduct` lit le client courant, scan datamatrix garde le prix
+  du lot comme le web) et recalcul de tout le panier depuis le
+  catalogue au changement de client (`setClient` = `applyMarkupToCart`
+  web ; écrase les prix manuels, choix acté). ⚠️ Prix majoré ≠
+  catalogue → `can_modify_price` exigé par le backend à l'envoi —
+  couvert par `ensureSudoCreds` existant (prix ≠ selling_price).
+- [x] **Remise automatique** (`remise_automatique`) : remise globale
+  en % appliquée à la sélection, sans Sudo (comme le web) —
+  `can_do_remise` reste exigé à l'envoi via `ensureSudoCreds`.
+- [x] **Tiers payant** (`taux_couverture`) : `tiersPayantSplit` (même
+  formule que `Facture.calculate_totals` : part patient = TTC ×
+  (100−taux)/100 arrondi 0,01) — ligne « Part Assurance X F · Part
+  Patient Y F » dans le footer (libellés repris du web) ; `paiements`
+  envoyés comme le web
+  (`buildPaymentsList` : `especes` part patient + `en_compte` part
+  mutuelle) → `paiement_immediat` couvre le TTC. ⚠️ Corrige un bug :
+  `paiements: []` comptait tout le TTC comme nouvelle dette dans le
+  contrôle plafond backend → vente pro bloquée à tort. La vraie
+  créance `en_compte` reste créée par `_handle_professional_debt`.
+- [x] **Plafond crédit** : blocage avant envoi si `current_debt +
+  part mutuelle > plafond` (seule la part mutuelle devient dette —
+  la part patient sera encaissée à la caisse ; `plafond = -1` =
+  illimité) + alertes à la sélection (atteint / >80 %).
+- [x] **Alertes de sélection regroupées** : `message_alerte` + dépôt
+  disponible + remise fidélité en attente + plafond → une seule
+  `Alert` (remplace les toasts du web). `blocking_alerte` n'est pas
+  sérialisé par l'API → informatif seulement, comme le web.
+- [x] **Badge « PRO »** : carte client de l'écran de vente + résultats
+  du `ClientModal`.
+
+- [x] **Choix de la caisse destinataire (multi-caisses)** (2026-10-06) :
+  à l'envoi, si ≥2 postes de caisse sont ouverts
+  (`GET /postes-ventes/actives/` filtré `caisse != null` →
+  `getCaissesOuvertes`), `CaissePickerModal` laisse le vendeur choisir
+  la caisse (nom + caissière) ; le choix est envoyé via
+  `poste_caisse_id` et gardé en ref pour les ré-envois (retry poste,
+  sudo stock) du même envoi. 1 seule caisse → direct, 0 → alerte claire
+  `send.no_caisse_open`. **Backend** : `SaleFinalizer._resolve_poste_caisse`
+  — `poste_caisse_id` explicite validé (poste ouvert rattaché), sinon
+  caisse du `poste_vente` envoyé (le web envoie le poste de la
+  caissière), sinon dernière caisse ouverte (historique). Tests :
+  `test_sale_finalizer.py` (choix honoré + caisse fermée refusée).
+
+### iOS — compatibilité préparée (2026-10-06)
+
+Aucune dépendance Android-only, gardes `Platform.OS` = `web` seulement,
+tous les types de codes-barres supportés par AVFoundation. Ajoutés :
+`ios.bundleIdentifier` (`com.zenithpharma.mobilefacturation`) et
+`NSAppTransportSecurity` (`NSAllowsLocalNetworking` +
+`NSAllowsArbitraryLoads` — l'app parle en HTTP clair au backend local,
+bloqué par l'ATS iOS par défaut ; équivalent du
+`usesCleartextTraffic` Android) + `eas.json` minimal (profils
+`preview`/`simulator`/`production`). Testable dès maintenant via
+**Expo Go** sur iPad ; build réel = `eas build --platform ios` (compte
+développeur Apple requis pour appareil/TestFlight).
 
 ### P4 — Retour cahier QA client (propositions, à valider)
 
 Exigences du cahier client **compatibles** avec le périmètre acté :
 
-- [ ] **Verrouillage PIN / biométrie** : promouvoir l'option P2
-  (`expo-local-authentication`, délai configurable) — session longue sur
-  appareil partagé.
+- [x] **Verrouillage PIN** (2026-10-05) : implémenté sans biométrie —
+  voir P2.
 - [ ] **Bannière connectivité** : `@react-native-community/netinfo` (à
   réinstaller — retirée au ménage P3) → bandeau « Hors ligne » + indicateur
   « dernier envoi hh:mm » dans l'en-tête ou l'historique.
@@ -306,3 +446,7 @@ App.tsx           ← après login : menu « Vente » | « Inventaire »
 | Convention nommage : Mobile ↔ app, Comptoir ↔ web | ✅ | 2026-10-04 |
 | Session persistée + brouillon | ✅ | 2026-10-04 |
 | Historique + thème + ménage | ✅ | 2026-10-04 |
+| Suivi encaissement dans l'historique (badges statut caisse) | ✅ | 2026-10-05 |
+| Verrouillage PIN (sans biométrie) | ✅ | 2026-10-05 |
+| Facturation clients pro (AD fix, majoration, remise auto, tiers payant, plafond) | ✅ | 2026-10-06 |
+| Choix de la caisse destinataire en multi-caisses (picker + `poste_caisse_id`) | ✅ | 2026-10-06 |

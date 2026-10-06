@@ -10,6 +10,9 @@ const KEY_SERVER_URL = 'session.serverUrl';
 interface AuthState {
   token: string | null;
   username: string | null;
+  // id Django de l'utilisateur — rempli par getMe() (login + boot), sert à
+  // filtrer les factures par created_by dans l'historique. Non persisté.
+  userId: number | null;
   serverUrl: string;
   isAuthenticated: boolean;
   maxDiscountRate: number;
@@ -21,6 +24,7 @@ interface AuthState {
 
   setAuth: (token: string, username: string) => void;
   setServerUrl: (url: string) => void;
+  setUserId: (id: number | null) => void;
   setMaxDiscountRate: (rate: number) => void;
   setPosteVente: (p: PosteVente | null) => void;
   setClientDivers: (c: Client | null, loaded?: boolean) => void;
@@ -31,6 +35,7 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set, get) => ({
   token: null,
   username: null,
+  userId: null,
   serverUrl: 'http://192.168.1.181',
   isAuthenticated: false,
   maxDiscountRate: 0,
@@ -52,6 +57,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ serverUrl: clean });
     secureStore.setItemAsync(KEY_SERVER_URL, clean).catch(() => {});
   },
+
+  setUserId: (userId) => set({ userId }),
 
   setMaxDiscountRate: (rate) =>
     set({ maxDiscountRate: rate }),
@@ -79,7 +86,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: () => {
-    set({ token: null, username: null, isAuthenticated: false, maxDiscountRate: 0, posteVente: null, clientDivers: null, clientDiversLoaded: false });
+    set({ token: null, username: null, userId: null, isAuthenticated: false, maxDiscountRate: 0, posteVente: null, clientDivers: null, clientDiversLoaded: false });
     [KEY_TOKEN, KEY_USERNAME, KEY_SERVER_URL].forEach((k) => {
       secureStore.deleteItemAsync(k).catch(() => {});
     });

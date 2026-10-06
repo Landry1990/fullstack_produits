@@ -98,6 +98,15 @@ export const searchClients = async (query: string) => {
   return Array.isArray(data) ? data : (data.results ?? []);
 };
 
+// Détail complet d'un client (ClientSerializer, GET /clients/<id>/) :
+// ayants droit réels, message_alerte, conditions financières — la liste
+// ne renvoie pas ces champs. Fetché une fois à la sélection du client
+// (comme getAyantsDroit côté web).
+export const getClient = async (id: number) => {
+  const res = await api.get(`/clients/${id}/`);
+  return res.data as Client;
+};
+
 // Création rapide depuis le mobile : toujours un particulier, sans plafond.
 export const createClient = async ({ name, phone }: { name: string; phone?: string | null }) => {
   const res = await api.post('/clients/', {
@@ -172,6 +181,17 @@ export const activerPosteVente = async (id: number) => {
   return res.data as PosteVente;
 };
 
+// Postes actifs rattachés à une caisse physique = les caisses ouvertes.
+// Utilisé pour le choix de la caisse destinataire en multi-caisses :
+// le backend route la vente sur poste_caisse (= facture.poste_caisse,
+// visible dans la file de la caissière + notif WS + clôture).
+export const getCaissesOuvertes = async () => {
+  const res = await api.get('/postes-ventes/actives/');
+  const data = res.data;
+  const postes = (Array.isArray(data) ? data : (data.results ?? [])) as PosteVente[];
+  return postes.filter((p) => p.caisse != null);
+};
+
 // Levé quand aucun poste n'est réutilisable automatiquement : l'appareil
 // doit afficher le sélecteur de poste (FacturationScreen → PostePickerModal).
 // Levé quand aucun poste n'est réutilisable automatiquement : l'appareil
@@ -226,13 +246,132 @@ export const ensurePosteVente = async (): Promise<PosteVente> => {
   throw new PosteChoiceRequired(dispo);
 };
 
+// ─── Statut d'encaissement (historique) ───────────────────
+// GET /factures/?include_pending=true : la liste masque par défaut les
+// ventes VALIDEE sans paiement (envoyées en caisse) — include_pending les
+// réaffiche et court-circuite le cache liste (60 s) → statut temps réel.
+// Filtré par created_by → une seule requête couvre tout l'historique
+// local du vendeur (match par numero_facture).
+export const getFactureStatuses = async (userId: number): Promise<Record<string, string>> => {
+  const res = await api.get('/factures/', {
+    params: { include_pending: 'true', created_by: userId, page_size: 100 },
+  });
+  const data = res.data;
+  const rows = Array.isArray(data) ? data : (data.results ?? []);
+  const map: Record<string, string> = {};
+  for (const f of rows as { numero_facture?: string; status?: string }[]) {
+    if (f.numero_facture && f.status) map[f.numero_facture] = f.status;
+  }
+  return map;
+};
+
+// ─── Tiers payant (clients pro) ───────────────────────────
+// Répartition mutuelle/patient identique au backend
+// (Facture.calculate_totals : part_client = TTC × (100 − taux)/100 à
+// 0,01 près) et au web (finance.ts). Seule la part mutuelle devient une
+// créance « en compte » du client pro ; la part patient est encaissée
+// à la caisse par le bénéficiaire.
+export const tiersPayantSplit = (totalTtc: number, tauxCouverture: number) => {
+  if (tauxCouverture <= 0) return { partAssurance: 0, partPatient: totalTtc };
+  const partPatient = Math.round(((totalTtc * (100 - tauxCouverture)) / 100) * 100) / 100;
+  return { partAssurance: totalTtc - partPatient, partPatient };
+};
+
+// ─── Ajustement de stock ──────────────────────────────────
+// Motifs personnalisés (ConfigurationOption type STOCK_ADJ) — s'ajoutent
+// aux motifs standards (StockAdjustment.ReasonType côté backend).
+export interface AdjustmentReason {
+  code: string;
+  label: string;
+}
+export const getStockAdjustmentReasons = async () => {
+  const res = await api.get('/configuration-options/', {
+    params: { type: 'STOCK_ADJ', is_active: 'true' },
+  });
+  const data = res.data?.results ?? res.data;
+  return (Array.isArray(data) ? data : []) as AdjustmentReason[];
+};
+
+// POST /produits/<id>/adjust_stock/ : le backend attend la quantité CIBLE
+// (pas un delta). Re-lire le produit juste avant l'envoi pour calculer la
+// cible depuis un stock frais. Permission can_adjust_stock : si le compte
+// connecté ne l'a pas → 403, rejouer avec validated_by_id + sudo_password
+// (validate_sudo_mode).
+export interface AdjustStockPayload {
+  new_quantity: number;
+  reason_type: string;
+  reason_detail?: string;
+  stock_lot_id?: number | null;
+  // Création d'un lot (stock retrouvé sans lot existant) : le backend crée
+  // un StockLot et lui affecte le delta (new_quantity - stock actuel).
+  new_lot_number?: string;
+  new_lot_expiration?: string; // 'YYYY-MM-DD'
+  validated_by_id?: number;
+  sudo_password?: string;
+}
+export const adjustStock = async (produitId: number, payload: AdjustStockPayload) => {
+  const key = generateUUID();
+  const res = await api.post(`/produits/${produitId}/adjust_stock/`, payload, {
+    headers: { 'Idempotency-Key': key },
+  });
+  return res.data as Product;
+};
+
+// ─── Signalements de besoin (ruptures terrain) ────────────
+// « Produit manquant / demandé par un client » → alimente les suggestions
+// de commande web. Distinct de ruptures-fournisseurs (indispo grossiste).
+export interface SignalementBesoin {
+  id: number;
+  produit: number;
+  produit_nom?: string;
+  produit_stock?: number;
+  quantite: number | null;
+  note: string;
+  utilisateur_nom?: string;
+  statut: 'NOUVEAU' | 'INTEGRE' | 'IGNORE';
+  created_at: string;
+}
+
+export const createSignalementBesoin = async (produitId: number, quantite: number | null, note: string) => {
+  const res = await api.post('/signalements-besoins/', {
+    produit: produitId,
+    quantite,
+    note: note.trim(),
+  });
+  return res.data as SignalementBesoin;
+};
+
+export const getMesSignalements = async () => {
+  const res = await api.get('/signalements-besoins/', { params: { page_size: 20 } });
+  const data = res.data;
+  return (Array.isArray(data) ? data : (data.results ?? [])) as SignalementBesoin[];
+};
+
+// ─── Dashboard ────────────────────────────────────────────
+// GET /dashboard/stats/ : pour VENDEUR/CAISSIER le backend ne renvoie que
+// { role, user_stats } (stats personnelles) ; les autres rôles reçoivent
+// en plus le CA global, le nombre de ventes et le top produits du jour.
+export interface DashboardStats {
+  role: string;
+  user_stats: { sales: number; count: number; avg_basket: number };
+  revenue?: { value: number; change: number };
+  sales?: { value: number; change: number };
+  top_products?: { id: number; name: string; qty: number; revenue: number }[];
+}
+
+export const getDashboardStats = async () => {
+  const res = await api.get('/dashboard/stats/');
+  return res.data as DashboardStats;
+};
+
 // ─── Vente → caisse centralisée ───────────────────────────
 // Envoie le panier via POST /factures/finaliser/ (même contrat que la vente
 // tablette web). La facture arrive impayée dans la caisse centralisée ;
 // l'encaissement reste réservé à la caissière (can_cash_out).
 // Le point de vente actif est passé explicitement (résolu par
 // ensurePosteVente au login / au besoin depuis l'écran).
-export const sendSaleToCaisse = async (cart: {
+export const sendSaleToCaisse = async (
+  cart: {
   lines: CartLine[];
   client: Client | null;
   ayantDroit: AyantDroit | null;
@@ -243,7 +382,7 @@ export const sendSaleToCaisse = async (cart: {
   stockSudoCreds: SudoCreds | null;
   remiseGlobaleMontant: () => number;
   totalTTC: () => number;
-}, posteVenteId: number | null) => {
+}, posteVenteId: number | null, posteCaisseId: number | null = null) => {
   const produits = cart.lines.map((l) => ({
     produit: l.product.id,
     quantity: l.quantite,
@@ -255,6 +394,21 @@ export const sendSaleToCaisse = async (cart: {
   }));
 
   const idempotencyKey = generateUUID();
+  // Mêmes paiements déclarés que la vente tablette web
+  // (buildPaymentsList) : ils ne sont PAS enregistrés en centralisé —
+  // ils alimentent seulement `paiement_immediat` pour le contrôle du
+  // plafond de crédit. Sans eux, tout le TTC serait compté comme
+  // nouvelle dette → blocage 400 d'un client pro sous plafond alors
+  // que seule la part mutuelle devient réellement une créance.
+  const totalTtc = cart.totalTTC();
+  const tauxCouverture = parseFloat(cart.client?.taux_couverture ?? '0') || 0;
+  const { partAssurance, partPatient } = tiersPayantSplit(totalTtc, tauxCouverture);
+  const paiements = partAssurance > 0
+    ? [
+        { mode: 'especes', montant: partPatient, part_patient: partPatient, part_assurance: null },
+        { mode: 'en_compte', montant: partAssurance, part_patient: null, part_assurance: partAssurance },
+      ]
+    : [{ mode: 'especes', montant: totalTtc, part_patient: null, part_assurance: null }];
   const payload = {
     client: cart.client?.id ?? null,
     client_name_override: null,
@@ -262,7 +416,7 @@ export const sendSaleToCaisse = async (cart: {
     // remise globale = montant en F (pas un taux), déjà arrondi par le store
     remise: String(cart.remiseGlobaleMontant()),
     produits,
-    paiements: [],
+    paiements,
     loyalty: { use_pending_discount: false, points_to_use: 0 },
     // totals.totalTtc = total NET après remise globale
     totals: { totalTtc: cart.totalTTC(), totalHt: 0, totalTva: 0 },
@@ -282,6 +436,9 @@ export const sendSaleToCaisse = async (cart: {
     type: 'STD',
     centralized_cash_register: true,
     poste_vente_id: posteVenteId,
+    // Caisse destinataire choisie (multi-caisses) ; null → le backend
+    // route vers la dernière caisse ouverte (comportement historique).
+    poste_caisse_id: posteCaisseId,
     montant_verse: '0',
     montant_rendu: '0',
     idempotency_key: idempotencyKey,

@@ -387,6 +387,83 @@ class TestSaleFinalizerFinalizeSale(TestCase):
         assert facture.poste_caisse_id == caisse.id
         assert facture.poste_vente_id == poste_pos.id
 
+    def test_finalize_sale_centralized_poste_caisse_id_choisit_la_caisse(self):
+        """Multi-caisses : poste_caisse_id explicite route la facture vers
+        la caisse choisie, pas vers la caisse ouverte le plus récemment."""
+        user = User.objects.create_user(username="seller-choice", password="testpass123")
+        caissier = User.objects.create_user(username="caissier-choice", password="testpass123")
+        produit = Produit.objects.create(
+            name="Test Product", selling_price=Decimal("500"), stock=10,
+        )
+        from datetime import date, datetime, timedelta
+        StockLot.objects.create(
+            produit=produit, lot="LOT-CHOIX-TEST", quantity_initial=50,
+            quantity_remaining=50, price_cost=Decimal("200"),
+            selling_price=Decimal("500"), date_reception=datetime(2026, 1, 1),
+            date_expiration=date.today() + timedelta(days=365),
+        )
+        poste_pos = PosteVente.objects.create(
+            vendeur=user, nom="POS Mobile Choix", est_actif=True,
+            mode_pos=True, caisse=None,
+        )
+        from django.utils import timezone
+        # Caisse A ouverte en premier, caisse B ensuite — sans choix, le
+        # fallback historique (ordering -date_ouverture) prendrait B.
+        caisse_a = PosteCaisse.objects.create(nom="Caisse A", code="C-CHOIX-A")
+        PosteVente.objects.create(
+            vendeur=caissier, nom="Poste Caisse A", est_actif=True,
+            mode_pos=False, caisse=caisse_a,
+            date_ouverture=timezone.now() - timedelta(hours=1),
+        )
+        caisse_b = PosteCaisse.objects.create(nom="Caisse B", code="C-CHOIX-B")
+        PosteVente.objects.create(
+            vendeur=caissier, nom="Poste Caisse B", est_actif=True,
+            mode_pos=False, caisse=caisse_b,
+            date_ouverture=timezone.now(),
+        )
+        data = {
+            "client": None, "client_name_override": "Client Choix", "remise": "0",
+            "produits": [{"produit": produit.id, "quantity": 1, "selling_price": "500", "discount": "0", "tva": "0"}],
+            "paiements": [], "poste_vente_id": poste_pos.id,
+            "poste_caisse_id": caisse_a.id,
+        }
+        facture = SaleFinalizer.finalize_sale(user, data, centralized=True)
+        assert facture.poste_caisse_id == caisse_a.id
+        assert facture.poste_vente_id == poste_pos.id
+
+    def test_finalize_sale_centralized_poste_caisse_id_fermee_refuse(self):
+        """poste_caisse_id pointant vers une caisse sans poste ouvert → 400."""
+        user = User.objects.create_user(username="seller-closed", password="testpass123")
+        caissier = User.objects.create_user(username="caissier-closed", password="testpass123")
+        produit = Produit.objects.create(
+            name="Test Product", selling_price=Decimal("500"), stock=10,
+        )
+        from datetime import date, datetime, timedelta
+        StockLot.objects.create(
+            produit=produit, lot="LOT-CLOSED-TEST", quantity_initial=50,
+            quantity_remaining=50, price_cost=Decimal("200"),
+            selling_price=Decimal("500"), date_reception=datetime(2026, 1, 1),
+            date_expiration=date.today() + timedelta(days=365),
+        )
+        poste_pos = PosteVente.objects.create(
+            vendeur=user, nom="POS Mobile Closed", est_actif=True,
+            mode_pos=True, caisse=None,
+        )
+        caisse_ouverte = PosteCaisse.objects.create(nom="Caisse Ouverte", code="C-OPEN-01")
+        PosteVente.objects.create(
+            vendeur=caissier, nom="Poste Caisse Open", est_actif=True,
+            mode_pos=False, caisse=caisse_ouverte,
+        )
+        caisse_fermee = PosteCaisse.objects.create(nom="Caisse Fermée", code="C-CLOSED-01")
+        data = {
+            "client": None, "remise": "0",
+            "produits": [{"produit": produit.id, "quantity": 1, "selling_price": "500", "discount": "0", "tva": "0"}],
+            "paiements": [], "poste_vente_id": poste_pos.id,
+            "poste_caisse_id": caisse_fermee.id,
+        }
+        with self.assertRaisesRegex(ValueError, "point de caisse"):
+            SaleFinalizer.finalize_sale(user, data, centralized=True)
+
     def test_finalize_sale_non_centralized_garde_poste_caisse_du_poste(self):
         """Vente directe (non centralisée) : poste_caisse reste celui du poste
         du vendeur — le fix centralisé ne doit pas le perturber."""

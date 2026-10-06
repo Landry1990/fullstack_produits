@@ -102,19 +102,15 @@ class SaleFinalizer:
                 raise _as_value_error(exc) from exc
         poste_vente = SaleFinalizer._validate_poste_vente(user, poste_vente_id, centralized)
 
-        if centralized:
-            caisse_ouverte = PosteVente.objects.filter(est_actif=True, caisse__isnull=False).first()
-            if not caisse_ouverte:
-                raise ValueError(
-                    "Aucun point de caisse n'est ouvert. "
-                    "Veuillez ouvrir un point de caisse avant de réaliser une vente."
-                )
-
-        # Mode centralisé : la facture est rattachée à la caisse ouverte qui
+        # Mode centralisé : la facture est rattachée à la caisse qui
         # l'encaissera — pas au poste du vendeur (un poste POS n'a pas de
         # caisse → poste_caisse null serait filtré hors de la file caisse,
         # la notif WS ignorée, et le paiement exclu des totaux/clôture).
-        poste_caisse_id = caisse_ouverte.caisse_id if centralized else (poste_vente.caisse_id if poste_vente else None)
+        poste_caisse_id = (
+            SaleFinalizer._resolve_poste_caisse(data, poste_vente)
+            if centralized
+            else (poste_vente.caisse_id if poste_vente else None)
+        )
         poste_vente_id = poste_vente.id if poste_vente else None
 
         # 3. Validate product entries
@@ -132,7 +128,6 @@ class SaleFinalizer:
                 raise _as_value_error(exc) from exc
         if poste_vente_id and poste_vente:
             poste_vente_id = poste_vente.id
-            poste_caisse_id = caisse_ouverte.caisse_id if centralized else poste_vente.caisse_id
 
         if existing_id:
             facture = SaleFinalizer._update_existing_facture(
@@ -256,6 +251,48 @@ class SaleFinalizer:
     # ──────────────────────────────────────────────
     #  Private helpers
     # ──────────────────────────────────────────────
+
+    @staticmethod
+    def _resolve_poste_caisse(data, poste_vente):
+        """Caisse destinataire d'une vente centralisée (multi-caisses).
+
+        Priorité :
+        1. ``poste_caisse_id`` explicite — choix du vendeur sur l'appareil
+           (mobile/tablette) ; doit correspondre à un PosteVente ouvert
+           rattaché à cette caisse ;
+        2. la caisse du poste_vente transmis — le web envoie le poste de
+           la caissière choisie comme ``poste_vente_id`` ;
+        3. la caisse ouverte le plus récemment (comportement historique,
+           couvre le cas mono-caisse).
+        """
+        open_caisse_postes = PosteVente.objects.filter(
+            est_actif=True, caisse__isnull=False
+        )
+        requested = data.get('poste_caisse_id')
+        if requested:
+            try:
+                requested_id = parse_int(
+                    requested, field='poste_caisse_id',
+                    min_value=1, max_value=MAX_INT32
+                )
+            except ValidationError as exc:
+                raise _as_value_error(exc) from exc
+            target = open_caisse_postes.filter(caisse_id=requested_id).first()
+            if not target:
+                raise ValueError(
+                    "Le point de caisse choisi n'est pas ouvert. "
+                    "Veuillez choisir une caisse actuellement ouverte."
+                )
+            return target.caisse_id
+        if poste_vente and poste_vente.caisse_id:
+            return poste_vente.caisse_id
+        caisse_ouverte = open_caisse_postes.first()
+        if not caisse_ouverte:
+            raise ValueError(
+                "Aucun point de caisse n'est ouvert. "
+                "Veuillez ouvrir un point de caisse avant de réaliser une vente."
+            )
+        return caisse_ouverte.caisse_id
 
     @staticmethod
     def _validate_poste_vente(user, poste_vente_id, centralized):

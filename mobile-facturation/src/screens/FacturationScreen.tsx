@@ -3,14 +3,17 @@ import {
   View, Text, TextInput, TouchableOpacity, FlatList, Alert, ActivityIndicator,
   Platform, useWindowDimensions, Keyboard,
 } from 'react-native';
-import { Search, Send, Trash2, User, ArrowLeft, ScanBarcode, ShieldCheck, Store, History, Pause, Clock, ShoppingCart } from 'lucide-react-native';
+import { Search, Send, Trash2, User, ArrowLeft, ScanBarcode, ShieldCheck, Store, History, Pause, Clock, ShoppingCart, Lock } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { useCartStore } from '../stores/useCartStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import { usePendingStore } from '../stores/usePendingStore';
 import { useSettingsStore } from '../stores/useSettingsStore';
+import { useLockStore } from '../stores/useLockStore';
 import {
   ensurePosteVente, activerPosteVente, getPostesDisponibles, PosteChoiceRequired, isPosteMobile,
+  getClient, tiersPayantSplit,
 } from '../services/api';
 import { theme } from '../config/theme';
 import { moderateScale as ms } from '../utils/scale';
@@ -24,17 +27,20 @@ import { ScanBarcodeModal } from '../components/ScanBarcodeModal';
 import { SudoModal } from '../components/SudoModal';
 import { LineEditModal } from '../components/LineEditModal';
 import { PendingSalesModal } from '../components/PendingSalesModal';
+import { PinLockModal } from '../components/PinLockModal';
 import { PostePickerModal } from '../components/PostePickerModal';
+import { CaissePickerModal } from '../components/CaissePickerModal';
 import { ClientModal } from '../components/ClientModal';
 import { AyantDroitSection } from '../components/AyantDroitSection';
 import { styles } from './FacturationScreen.styles';
 import type { Product, StockLot, Client, CartLine, AyantDroit, PendingSale, PosteVente } from '../types';
 
-export function FacturationScreen({ onLogout, navigation }: { onLogout: () => void; navigation?: { navigate: (screen: string) => void } }) {
+export function FacturationScreen({ navigation }: { navigation?: { navigate: (screen: string) => void } }) {
   const cart = useCartStore();
   const pendingCount = usePendingStore((s) => s.sales.length);
-  const { username, logout, maxDiscountRate, posteVente, setPosteVente } = useAuthStore();
+  const { username, maxDiscountRate, posteVente, setPosteVente } = useAuthStore();
   const { sudoState, requireSudo, closeSudo } = useSudo();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
   // Recherche produit + scan caméra/douchette (hook extrait).
@@ -60,6 +66,10 @@ export function FacturationScreen({ onLogout, navigation }: { onLogout: () => vo
 
   const [scanModalVisible, setScanModalVisible] = useState(false);
   const [pendingModalVisible, setPendingModalVisible] = useState(false);
+  const [pinModalVisible, setPinModalVisible] = useState(false);
+  // Verrouillage PIN : tap = verrouille si un PIN est défini, sinon ouvre
+  // le réglage ; appui long = toujours le réglage (changer/désactiver).
+  const pinSet = useLockStore((s) => s.pinSet);
   const [ensuringPoste, setEnsuringPoste] = useState(false);
   // Sélecteur de poste : rempli quand ensurePosteVente lève
   // PosteChoiceRequired (1er démarrage ou poste pris par un autre vendeur).
@@ -111,11 +121,11 @@ export function FacturationScreen({ onLogout, navigation }: { onLogout: () => vo
         setPosteChoices(err.disponibles);
       } else if (!silent) {
         if ((err as Error)?.message === 'NO_POSTE_DISPONIBLE') {
-          Alert.alert('Aucun point de vente', "Aucun poste « Mobile » n'est disponible. Demandez à l'administrateur d'en créer un (nom commençant par « Mobile ») dans Paramètres → Points de vente.");
+          Alert.alert(t('poste.none'), t('poste.none_alert'));
         } else {
           const detail = (err as { response?: { data?: { detail?: string } }; message?: string })?.response?.data?.detail
             || (err as Error)?.message || '';
-          Alert.alert('Point de vente', `Impossible d'ouvrir un point de vente : ${detail}`);
+          Alert.alert(t('poste.none'), t('poste.open_error', { detail }));
         }
       }
       return null;
@@ -141,17 +151,17 @@ export function FacturationScreen({ onLogout, navigation }: { onLogout: () => vo
           const dispo = (await getPostesDisponibles()).filter(isPosteMobile);
           if (dispo.length === 0) {
             setPosteChoices(null);
-            Alert.alert('Aucun point de vente', "Aucun poste « Mobile » n'est disponible. Demandez à l'administrateur d'en créer un (nom commençant par « Mobile ») dans Paramètres → Points de vente.");
+            Alert.alert(t('poste.none'), t('poste.none_alert'));
           } else {
             setPosteChoices(dispo);
           }
         } catch {
           setPosteChoices(null);
         }
-        Alert.alert('Point de vente', 'Ce point de vente vient d\u2019être pris — choisissez-en un autre.');
+        Alert.alert(t('poste.none'), t('poste.taken'));
       } else {
         const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-        Alert.alert('Point de vente', detail || "Impossible d'activer ce point de vente");
+        Alert.alert(t('poste.none'), detail || t('poste.activate_error'));
       }
     } finally {
       setActivatingPoste(false);
@@ -174,8 +184,12 @@ export function FacturationScreen({ onLogout, navigation }: { onLogout: () => vo
       cart.updatePrix(productId, newPrice);
       after?.();
     }, {
-      title: 'Validation requise',
-      message: `Modifier le prix de ${line.product.name} : ${line.prix_unitaire.toLocaleString('fr-FR')} F → ${newPrice.toLocaleString('fr-FR')} F ?`,
+      title: t('sudo.title_default'),
+      message: t('sudo.price_msg', {
+        name: line.product.name,
+        old: line.prix_unitaire.toLocaleString('fr-FR'),
+        new: newPrice.toLocaleString('fr-FR'),
+      }),
       permission: 'can_modify_price',
     });
   };
@@ -193,8 +207,8 @@ export function FacturationScreen({ onLogout, navigation }: { onLogout: () => vo
       cart.setRemiseSudoCreds({ validatorId, password });
       cart.updateRemise(productId, value);
     }, {
-      title: 'Validation requise',
-      message: `Appliquer une remise de ${value}% sur ${line.product.name} ?`,
+      title: t('sudo.title_default'),
+      message: t('sudo.discount_msg', { value, name: line.product.name }),
       permission: 'can_do_remise',
     });
   };
@@ -208,7 +222,7 @@ export function FacturationScreen({ onLogout, navigation }: { onLogout: () => vo
     const tauxEffectif = mode === 'taux' ? value : (sousTotal > 0 ? (value / sousTotal) * 100 : 0);
     let applied = value;
     if (maxDiscountRate > 0 && tauxEffectif > maxDiscountRate) {
-      Alert.alert('Remise plafonnée', `Remise maximale autorisée : ${maxDiscountRate}%`);
+      Alert.alert(t('facturation.capped_title'), t('facturation.capped_msg', { rate: maxDiscountRate }));
       applied = mode === 'taux' ? maxDiscountRate : Math.round((sousTotal * maxDiscountRate) / 100);
     }
     if (cart.remiseSudoCreds) {
@@ -219,8 +233,10 @@ export function FacturationScreen({ onLogout, navigation }: { onLogout: () => vo
       cart.setRemiseSudoCreds({ validatorId, password });
       cart.setRemiseGlobale(applied, mode);
     }, {
-      title: 'Validation requise',
-      message: `Appliquer une remise globale de ${mode === 'taux' ? `${applied}%` : `${applied.toLocaleString('fr-FR')} F`} ?`,
+      title: t('sudo.title_default'),
+      message: t('sudo.global_discount_msg', {
+        value: mode === 'taux' ? `${applied}%` : `${applied.toLocaleString('fr-FR')} F`,
+      }),
       permission: 'can_do_remise',
       onCancel: () => {
         cart.setRemiseGlobale(0, mode);
@@ -275,8 +291,8 @@ export function FacturationScreen({ onLogout, navigation }: { onLogout: () => vo
         cart.setRemiseSudoCreds({ validatorId, password });
         after();
       }, {
-        title: 'Validation requise',
-        message: "Confirmez la remise pour l'envoi",
+        title: t('sudo.title_default'),
+        message: t('sudo.send_discount'),
         permission: 'can_do_remise',
       });
     };
@@ -286,26 +302,85 @@ export function FacturationScreen({ onLogout, navigation }: { onLogout: () => vo
       cart.setPrixSudoCreds({ validatorId, password });
       askRemise();
     }, {
-      title: 'Validation requise',
-      message: "Confirmez la modification de prix pour l'envoi",
+      title: t('sudo.title_default'),
+      message: t('sudo.send_price'),
       permission: 'can_modify_price',
     });
   };
 
   // ─── Envoi en caisse (hook extrait : forçage stock, AD, poste,
   //     sendSaleToCaisse + retries, historique, clear) ─────
-  const { sending, handleSendToCashier } = useSendSale({
+  const { sending, handleSendToCashier, caisseChoices, pickCaisse, closeCaissePicker } = useSendSale({
     requireSudo, ensureSudoCreds, retryEnsurePoste, adNom, adMatricule,
   });
 
   // ─── Client / lot ───────────────────────────────────────
 
   const handleSelectClient = (client: Client | null) => {
-    cart.setClient(client);
     setClientModalVisible(false);
-    setAdFormVisible(client?.client_type === 'PROFESSIONNEL' && (client.ayants_droit ?? []).length === 0);
     setAdNom('');
     setAdMatricule('');
+    if (!client) {
+      cart.setClient(null);
+      setAdFormVisible(false);
+      return;
+    }
+    // Sélection immédiate (la liste porte déjà majoration/remise/plafond)
+    // puis enrichissement : détail complet via GET /clients/<id>/ car la
+    // liste ne renvoie ni ayants_droit ni message_alerte — sans ça les
+    // chips AD étaient vides et le matching matricule créait des doublons.
+    cart.setClient(client);
+    // Optimiste : le serializer liste renvoie ayants_droit_count —
+    // le formulaire AD s'affiche sans attendre le détail.
+    setAdFormVisible(client.client_type === 'PROFESSIONNEL' && (client.ayants_droit_count ?? 0) === 0);
+    void applySelectedClient(client);
+  };
+
+  // Enrichissement post-sélection : ayants droit réels (chips + matching
+  // matricule), remise auto, alertes de sélection — parité avec la
+  // facturation web (getAyantsDroit + toasts de rappel).
+  const applySelectedClient = async (client: Client) => {
+    let full = client;
+    try {
+      full = { ...client, ...(await getClient(client.id)) };
+    } catch { /* détail indisponible : on garde l'objet liste */ }
+    // Le client a pu être désélectionné/remplacé entre-temps.
+    if (useCartStore.getState().client?.id !== client.id) return;
+    // setState direct : la majoration a déjà été appliquée par le 1er
+    // setClient — ne pas recalculer les prix (un prix de lot scanné
+    // entre-temps serait sinon écrasé par le prix catalogue).
+    useCartStore.setState({ client: full });
+    if (full.client_type === 'PROFESSIONNEL') {
+      setAdFormVisible((full.ayants_droit ?? []).length === 0);
+    }
+    // Remise automatique (tous types) — sans Sudo à la sélection, comme
+    // le web ; can_do_remise reste exigé à l'envoi via ensureSudoCreds.
+    const remiseAuto = parseFloat(full.remise_automatique ?? '0') || 0;
+    if (remiseAuto > 0) {
+      cart.setRemiseGlobale(remiseAuto, 'taux');
+      setRemiseInput(String(remiseAuto));
+    }
+    // Rappels de sélection regroupés en une alerte (les toasts du web) :
+    // message_alerte, dépôt disponible, récompense fidélité, plafond pro.
+    const fmt = (n: number) => Math.round(n).toLocaleString('fr-FR');
+    const alerts: string[] = [];
+    if (full.message_alerte?.trim()) alerts.push(full.message_alerte.trim());
+    const soldeDepot = parseFloat(full.solde_depot ?? '0') || 0;
+    if (soldeDepot > 0) alerts.push(t('facturation.alert_deposit', { amount: fmt(soldeDepot) }));
+    const reward = parseFloat(full.pending_discount ?? '0') || 0;
+    if (reward > 0) alerts.push(t('facturation.alert_reward', { rate: reward }));
+    if (full.client_type === 'PROFESSIONNEL') {
+      const plafond = Number(full.plafond ?? -1);
+      const debt = Number(full.current_debt ?? 0);
+      if (plafond !== -1 && debt > 0) {
+        if (debt >= plafond) {
+          alerts.push(t('facturation.alert_debt_full', { debt: fmt(debt), plafond: fmt(plafond) }));
+        } else if (debt > plafond * 0.8) {
+          alerts.push(t('facturation.alert_debt_warn', { debt: fmt(debt), plafond: fmt(plafond) }));
+        }
+      }
+    }
+    if (alerts.length > 0) Alert.alert(full.name, alerts.join('\n'));
   };
 
   const handleOpenLot = (productId: number) => {
@@ -329,7 +404,7 @@ export function FacturationScreen({ onLogout, navigation }: { onLogout: () => vo
 
   const handlePark = () => {
     if (cart.lines.length === 0) {
-      Alert.alert('Panier vide', 'Rien à mettre en attente');
+      Alert.alert(t('facturation.empty_title'), t('facturation.empty_park'));
       return;
     }
     usePendingStore.getState().park({
@@ -372,37 +447,38 @@ export function FacturationScreen({ onLogout, navigation }: { onLogout: () => vo
       return;
     }
     Alert.alert(
-      'Panier non vide',
-      'Le panier actuel contient déjà des articles.',
+      t('facturation.pending_title'),
+      t('facturation.pending_msg'),
       [
-        { text: 'Remplacer', onPress: () => restorePending(sale) },
-        { text: 'Fusionner', onPress: () => mergePending(sale) },
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('facturation.pending_replace'), onPress: () => restorePending(sale) },
+        { text: t('facturation.pending_merge'), onPress: () => mergePending(sale) },
+        { text: t('common.cancel'), style: 'cancel' },
       ]
     );
   };
 
-  const handleLogout = () => {
-    logout();
-    onLogout();
-  };
 
   // « Annuler » = vider le panier — confirmation demandée (un tap
   // accidentel ne doit pas perdre toute la vente en cours).
   const handleClearCart = () => {
     if (cart.lines.length === 0) return;
     Alert.alert(
-      'Vider le panier ?',
-      `${cart.totalArticles()} article(s) seront retirés de la vente en cours.`,
+      t('facturation.clear_title'),
+      t('facturation.clear_msg', { count: cart.totalArticles() }),
       [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Vider', style: 'destructive', onPress: () => cart.clear() },
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('facturation.clear_confirm'), style: 'destructive', onPress: () => cart.clear() },
       ]
     );
   };
 
   const remiseMontant = cart.remiseGlobaleMontant();
   const isPro = cart.client?.client_type === 'PROFESSIONNEL';
+  // Tiers payant (pro avec taux_couverture) : même répartition que le
+  // backend/web — la part mutuelle partira « en compte », la part
+  // patient sera encaissée à la caisse.
+  const tauxCouverture = isPro ? (parseFloat(cart.client?.taux_couverture ?? '0') || 0) : 0;
+  const { partAssurance, partPatient } = tiersPayantSplit(cart.totalTTC(), tauxCouverture);
   // En-tête compact : sur petits écrans le bouton « Annuler » devient icône seule.
   const compactHeader = useWindowDimensions().width < 560;
   // Densité verticale compacte : sous ~720dp de hauteur, les sections
@@ -431,7 +507,7 @@ export function FacturationScreen({ onLogout, navigation }: { onLogout: () => vo
       <View style={[styles.header, compactVert && styles.headerCompact, { paddingTop: (compactVert ? ms(8) : ms(12)) + (Platform.OS === 'web' ? 0 : insets.top) }]}>
         <View style={styles.headerLeft}>
           <View style={styles.headerTitleRow}>
-            <Text style={styles.headerTitle}>Vente</Text>
+            <Text style={styles.headerTitle}>{t('facturation.title')}</Text>
             <Text style={styles.headerUser} numberOfLines={1}> · {username}</Text>
           </View>
           <TouchableOpacity style={styles.headerSubtitle} onPress={() => retryEnsurePoste()} disabled={ensuringPoste}>
@@ -441,7 +517,7 @@ export function FacturationScreen({ onLogout, navigation }: { onLogout: () => vo
               <Store size={ms(13)} color={posteVente ? theme.primary : theme.textMuted} />
             )}
             <Text style={[styles.headerSubtitleText, !posteVente && { color: theme.textMuted }]} numberOfLines={1}>
-              {posteVente?.nom ?? 'Aucun point de vente'} • {cart.totalArticles()} article(s)
+              {posteVente?.nom ?? t('poste.none')} • {t('common.articles_count', { count: cart.totalArticles() })}
             </Text>
           </TouchableOpacity>
         </View>
@@ -458,6 +534,13 @@ export function FacturationScreen({ onLogout, navigation }: { onLogout: () => vo
             <History size={ms(20)} color={theme.textMuted} />
           </TouchableOpacity>
           <TouchableOpacity
+            onPress={() => pinSet ? useLockStore.getState().lock() : setPinModalVisible(true)}
+            onLongPress={() => setPinModalVisible(true)}
+            style={styles.iconBtn}
+          >
+            <Lock size={ms(20)} color={pinSet ? theme.primary : theme.textMuted} />
+          </TouchableOpacity>
+          <TouchableOpacity
             onPress={handlePark}
             style={[styles.iconBtn, cart.lines.length === 0 && { opacity: 0.4 }]}
             disabled={cart.lines.length === 0}
@@ -470,10 +553,11 @@ export function FacturationScreen({ onLogout, navigation }: { onLogout: () => vo
             disabled={cart.lines.length === 0}
           >
             <Trash2 size={ms(15)} color={theme.danger} />
-            {!compactHeader && <Text style={styles.cancelBtnText}>Annuler</Text>}
+            {!compactHeader && <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>}
           </TouchableOpacity>
-          <TouchableOpacity onPress={handleLogout} style={styles.iconBtn}>
-            <ArrowLeft size={ms(20)} color={theme.danger} />
+          {/* Retour au menu — la déconnexion vit sur l'écran d'accueil. */}
+          <TouchableOpacity onPress={() => navigation?.navigate('Home')} style={styles.iconBtn}>
+            <ArrowLeft size={ms(20)} color={theme.textMuted} />
           </TouchableOpacity>
         </View>
       </View>
@@ -483,7 +567,7 @@ export function FacturationScreen({ onLogout, navigation }: { onLogout: () => vo
         <Search size={ms(18)} color={theme.textMuted} />
         <TextInput
           style={styles.searchInput}
-          placeholder="Rechercher un produit..."
+          placeholder={t('facturation.search_placeholder')}
           placeholderTextColor={theme.textMuted}
           value={searchQuery}
           onChangeText={setSearchQuery}
@@ -528,7 +612,7 @@ export function FacturationScreen({ onLogout, navigation }: { onLogout: () => vo
           ListEmptyComponent={
             <View style={styles.emptyState}>
               <ShoppingCart size={ms(40)} color={theme.borderStrong} />
-              <Text style={styles.emptyStateText}>Ajoutez des produits pour commencer</Text>
+              <Text style={styles.emptyStateText}>{t('facturation.empty_cart')}</Text>
             </View>
           }
         />
@@ -543,17 +627,20 @@ export function FacturationScreen({ onLogout, navigation }: { onLogout: () => vo
         <View style={styles.clientCardLeft}>
           <User size={ms(16)} color={theme.textMuted} />
           <View style={styles.clientCardText}>
-            <Text style={styles.clientLabel}>Client</Text>
-            <Text style={styles.clientName} numberOfLines={1}>
-              {cart.client ? cart.client.name : 'Client de passage'}
-            </Text>
+            <Text style={styles.clientLabel}>{t('facturation.client')}</Text>
+            <View style={styles.clientNameRow}>
+              <Text style={styles.clientName} numberOfLines={1}>
+                {cart.client ? cart.client.name : t('common.walk_in')}
+              </Text>
+              {isPro && <Text style={styles.proBadge}>{t('facturation.pro_badge')}</Text>}
+            </View>
           </View>
         </View>
         <TouchableOpacity
           onPress={() => setClientModalVisible(true)}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Text style={styles.clientEdit}>Modifier</Text>
+          <Text style={styles.clientEdit}>{t('facturation.edit')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -583,7 +670,7 @@ export function FacturationScreen({ onLogout, navigation }: { onLogout: () => vo
 
       {/* Remise globale */}
       <View style={[styles.remiseRow, compactVert && styles.remiseRowCompact]}>
-        <Text style={styles.remiseLabel}>Remise globale</Text>
+        <Text style={styles.remiseLabel}>{t('facturation.global_discount')}</Text>
         <View style={styles.remiseControls}>
           <TextInput
             style={styles.remiseInput}
@@ -618,15 +705,23 @@ export function FacturationScreen({ onLogout, navigation }: { onLogout: () => vo
       {/* Footer : total + envoi en caisse */}
       <View style={[styles.footerRow, compactVert && styles.footerRowCompact]}>
         <View style={[styles.totalBox, compactVert && styles.totalBoxCompact]}>
-          <Text style={styles.totalLabel}>Total</Text>
+          <Text style={styles.totalLabel}>{t('facturation.total')}</Text>
           <Text style={styles.totalValue}>{cart.totalTTC().toLocaleString('fr-FR')} F</Text>
           {remiseMontant > 0 && (
-            <Text style={styles.sousTotal}>Sous-total : {cart.sousTotal().toLocaleString('fr-FR')} F</Text>
+            <Text style={styles.sousTotal}>{t('facturation.subtotal', { amount: cart.sousTotal().toLocaleString('fr-FR') })}</Text>
+          )}
+          {partAssurance > 0 && (
+            <Text style={styles.tiersPayant}>
+              {t('facturation.tiers_payant', {
+                assurance: Math.round(partAssurance).toLocaleString('fr-FR'),
+                patient: Math.round(partPatient).toLocaleString('fr-FR'),
+              })}
+            </Text>
           )}
           {(cart.remiseSudoCreds || cart.prixSudoCreds) && (
             <View style={styles.sudoBadge}>
               <ShieldCheck size={ms(12)} color={theme.primary} />
-              <Text style={styles.sudoBadgeText}>Validé par superviseur</Text>
+              <Text style={styles.sudoBadgeText}>{t('facturation.sudo_validated')}</Text>
             </View>
           )}
         </View>
@@ -640,7 +735,7 @@ export function FacturationScreen({ onLogout, navigation }: { onLogout: () => vo
           ) : (
             <>
               <Send size={ms(18)} color="#fff" />
-              <Text style={styles.sendBtnText}>Envoyer en caisse</Text>
+              <Text style={styles.sendBtnText}>{t('facturation.send')}</Text>
             </>
           )}
         </TouchableOpacity>
@@ -656,7 +751,7 @@ export function FacturationScreen({ onLogout, navigation }: { onLogout: () => vo
             <ActivityIndicator color={theme.primary} style={{ marginVertical: ms(20) }} />
           ) : results.length === 0 ? (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyStateText}>Aucun résultat</Text>
+              <Text style={styles.emptyStateText}>{t('facturation.no_results')}</Text>
             </View>
           ) : (
             <FlatList
@@ -706,6 +801,15 @@ export function FacturationScreen({ onLogout, navigation }: { onLogout: () => vo
         onClose={() => setPosteChoices(null)}
       />
 
+      {/* Choix de la caisse destinataire quand plusieurs caisses sont
+          ouvertes (sinon le backend route vers la dernière ouverte) */}
+      <CaissePickerModal
+        visible={caisseChoices !== null}
+        caisses={caisseChoices ?? []}
+        onPick={pickCaisse}
+        onClose={closeCaissePicker}
+      />
+
       {/* Modal édition ligne (prix + remise) */}
       <LineEditModal
         visible={lineEditModalVisible}
@@ -731,6 +835,12 @@ export function FacturationScreen({ onLogout, navigation }: { onLogout: () => vo
         visible={clientModalVisible}
         onClose={() => setClientModalVisible(false)}
         onSelect={handleSelectClient}
+      />
+
+      {/* Réglage du verrouillage PIN (définir / changer / désactiver) */}
+      <PinLockModal
+        visible={pinModalVisible}
+        onClose={() => setPinModalVisible(false)}
       />
     </View>
   );

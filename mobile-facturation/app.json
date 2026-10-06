@@ -13,7 +13,14 @@
       "backgroundColor": "#f8fafc"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.zenithpharma.mobilefacturation",
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsLocalNetworking": true,
+          "NSAllowsArbitraryLoads": true
+        }
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -37,7 +44,8 @@
       ],
       "expo-sqlite",
       "expo-secure-store",
-      "expo-status-bar"
+      "expo-status-bar",
+      "expo-localization"
     ]
   }
 }

@@ -4,12 +4,15 @@ import {
 } from 'react-native';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
+import { useSettingsStore } from '../stores/useSettingsStore';
 import { login, getMe, ensurePosteVente, PosteChoiceRequired } from '../services/api';
 import { theme } from '../config/theme';
 import { moderateScale as ms } from '../utils/scale';
 
 export function LoginScreen({ onLoginSuccess }: { onLoginSuccess: () => void }) {
-  const { serverUrl, setServerUrl, setAuth, setMaxDiscountRate, setPosteVente } = useAuthStore();
+  const { serverUrl, setServerUrl, setAuth, setMaxDiscountRate, setPosteVente, setUserId } = useAuthStore();
+  const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const [url, setUrl] = useState(serverUrl);
   const [password, setPassword] = useState('');
@@ -17,7 +20,7 @@ export function LoginScreen({ onLoginSuccess }: { onLoginSuccess: () => void }) 
 
   const handleLogin = async () => {
     if (!url || !password) {
-      Alert.alert('Erreur', "L'adresse du serveur et le mot de passe sont requis");
+      Alert.alert(t('common.error'), t('login.error_required'));
       return;
     }
 
@@ -37,6 +40,7 @@ export function LoginScreen({ onLoginSuccess }: { onLoginSuccess: () => void }) 
       // Plafond de remise de l'utilisateur (échec silencieux → 0 = pas de plafond connu)
       try {
         const me = await getMe();
+        setUserId(me.id);
         setMaxDiscountRate(me.is_superuser ? 100 : Number(me.profile?.max_discount_rate) || 0);
       } catch {
         setMaxDiscountRate(0);
@@ -49,11 +53,11 @@ export function LoginScreen({ onLoginSuccess }: { onLoginSuccess: () => void }) 
         if (err instanceof PosteChoiceRequired) {
           // Choix différé : le sélecteur s'ouvre sur l'écran de facturation.
         } else if ((err as Error)?.message === 'NO_POSTE_DISPONIBLE') {
-          Alert.alert('Aucun point de vente', "Aucun poste « Mobile » n'est disponible. Demandez à l'administrateur d'en créer un (nom commençant par « Mobile ») dans Paramètres → Points de vente.");
+          Alert.alert(t('poste.none'), t('poste.none_alert'));
         } else {
           const detail = (err as { response?: { data?: { detail?: string } }; message?: string })?.response?.data?.detail
             || (err as Error)?.message || '';
-          Alert.alert('Point de vente', `Impossible d'ouvrir un point de vente : ${detail}`);
+          Alert.alert(t('poste.none'), t('poste.open_error', { detail }));
         }
       }
       onLoginSuccess();
@@ -62,13 +66,13 @@ export function LoginScreen({ onLoginSuccess }: { onLoginSuccess: () => void }) 
       const status = err?.response?.status;
       let msg: string;
       if (status === 400) {
-        msg = 'Mot de passe incorrect';
+        msg = t('login.error_bad_password');
       } else if (status === 429) {
-        msg = err?.response?.data?.detail || 'Trop de tentatives — réessayez dans une minute';
+        msg = err?.response?.data?.detail || t('login.error_bad_password');
       } else {
-        msg = "Serveur injoignable — vérifiez l'adresse et le réseau";
+        msg = t('login.error_server');
       }
-      Alert.alert('Erreur de connexion', msg);
+      Alert.alert(t('login.error_title'), msg);
     } finally {
       setLoading(false);
     }
@@ -82,13 +86,13 @@ export function LoginScreen({ onLoginSuccess }: { onLoginSuccess: () => void }) 
       paddingRight: insets.right,
     }]}>
       <View style={styles.card}>
-        <Text style={styles.title}>Connexion</Text>
-        <Text style={styles.subtitle}>Tablette Facturation</Text>
-        <Text style={styles.hint}>Saisissez votre mot de passe — votre compte est reconnu automatiquement</Text>
+        <Text style={styles.title}>{t('login.title')}</Text>
+        <Text style={styles.subtitle}>{t('login.subtitle')}</Text>
+        <Text style={styles.hint}>{t('login.hint')}</Text>
 
         <TextInput
           style={styles.input}
-          placeholder="http://192.168.1.181"
+          placeholder={t('login.url_placeholder')}
           placeholderTextColor={theme.textMuted}
           value={url}
           onChangeText={setUrl}
@@ -98,7 +102,7 @@ export function LoginScreen({ onLoginSuccess }: { onLoginSuccess: () => void }) 
 
         <TextInput
           style={styles.input}
-          placeholder="Mot de passe"
+          placeholder={t('login.password')}
           placeholderTextColor={theme.textMuted}
           value={password}
           onChangeText={setPassword}
@@ -115,9 +119,24 @@ export function LoginScreen({ onLoginSuccess }: { onLoginSuccess: () => void }) 
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.buttonText}>Se connecter</Text>
+            <Text style={styles.buttonText}>{t('login.submit')}</Text>
           )}
         </TouchableOpacity>
+
+        {/* Bascule FR/EN — choix persisté par appareil (kv-store). */}
+        <View style={styles.langRow}>
+          {(['fr', 'en'] as const).map((lng) => (
+            <TouchableOpacity
+              key={lng}
+              style={[styles.langBtn, i18n.language === lng && styles.langBtnActive]}
+              onPress={() => useSettingsStore.getState().setLanguage(lng)}
+            >
+              <Text style={[styles.langBtnText, i18n.language === lng && styles.langBtnTextActive]}>
+                {lng.toUpperCase()}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
     </View>
   );
@@ -163,4 +182,21 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.6 },
   buttonText: { color: '#fff', fontSize: ms(16), fontWeight: '600' },
+  langRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: ms(8),
+    marginTop: ms(18),
+  },
+  langBtn: {
+    paddingHorizontal: ms(14),
+    paddingVertical: ms(6),
+    borderRadius: ms(14),
+    backgroundColor: theme.bgMuted,
+    borderWidth: 1,
+    borderColor: theme.border,
+  },
+  langBtnActive: { backgroundColor: theme.primaryWash, borderColor: theme.primary },
+  langBtnText: { fontSize: ms(12), fontWeight: '700', color: theme.textSecondary },
+  langBtnTextActive: { color: theme.primaryDark },
 });

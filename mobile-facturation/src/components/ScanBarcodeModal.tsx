@@ -6,6 +6,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { ScanBarcode, X } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { useSettingsStore } from '../stores/useSettingsStore';
 import { useCartStore } from '../stores/useCartStore';
 import { expiryInfo } from '../utils/format';
@@ -24,6 +25,7 @@ interface Props {
 }
 
 export function ScanBarcodeModal({ visible, onResolve, onAdd, onClose }: Props) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [permission, requestPermission] = useCameraPermissions();
   const { autoAddScan, setAutoAddScan } = useSettingsStore();
@@ -87,7 +89,7 @@ export function ScanBarcodeModal({ visible, onResolve, onAdd, onClose }: Props) 
       const result = await onResolve(code);
       if (!result) {
         Vibration.vibrate([0, 80, 60, 80]);
-        showFeedback(`Code inconnu : ${code}`, false);
+        showFeedback(t('scan.code_unknown', { code }), false);
         return;
       }
       if (autoAddScan) {
@@ -117,7 +119,7 @@ export function ScanBarcodeModal({ visible, onResolve, onAdd, onClose }: Props) 
     // les détections rafraîchissent l'horodatage et la carte ne se rouvre pas.
     onAdd(pending, qty);
     Vibration.vibrate(50);
-    showFeedback(`Ajouté : ${pending.label} ×${qty}`, true);
+    showFeedback(t('scan.added', { label: pending.label, qty }), true);
     pendingRef.current = null;
     setPending(null);
   };
@@ -136,15 +138,15 @@ export function ScanBarcodeModal({ visible, onResolve, onAdd, onClose }: Props) 
         <View style={styles.permissionBox}>
           <ScanBarcode size={48} color={theme.textMuted} />
           <Text style={styles.permissionText}>
-            L'accès à la caméra est nécessaire pour scanner les codes-barres.
+            {t('scan.permission_text')}
           </Text>
           {permission.canAskAgain ? (
             <TouchableOpacity style={styles.permissionBtn} onPress={requestPermission}>
-              <Text style={styles.permissionBtnText}>Autoriser la caméra</Text>
+              <Text style={styles.permissionBtnText}>{t('scan.permission_btn')}</Text>
             </TouchableOpacity>
           ) : (
             <Text style={styles.permissionHint}>
-              Autorisez la caméra dans les paramètres de l'appareil.
+              {t('scan.permission_hint')}
             </Text>
           )}
         </View>
@@ -186,10 +188,10 @@ export function ScanBarcodeModal({ visible, onResolve, onAdd, onClose }: Props) 
           <Text style={styles.cardName} numberOfLines={2}>{pending.product.name}</Text>
           <View style={styles.cardMeta}>
             <Text style={styles.cardPrice}>{pending.prix.toLocaleString('fr-FR')} F</Text>
-            <Text style={styles.cardStock}>Stock : {pending.product.stock}</Text>
+            <Text style={styles.cardStock}>{t('scan.stock_label', { count: pending.product.stock })}</Text>
             {pending.lot && (
               <Text style={[styles.cardLot, exp && { color: exp.color }]}>
-                Lot {pending.lot.lot} · exp {exp?.label}
+                {t('scan.lot_exp', { lot: pending.lot.lot, exp: exp?.label })}
               </Text>
             )}
           </View>
@@ -205,10 +207,10 @@ export function ScanBarcodeModal({ visible, onResolve, onAdd, onClose }: Props) 
             </View>
             <View style={styles.cardBtns}>
               <TouchableOpacity style={styles.cancelBtn} onPress={handleCancelPending}>
-                <Text style={styles.cancelText}>Annuler</Text>
+                <Text style={styles.cancelText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.addBtn} onPress={handleConfirmAdd}>
-                <Text style={styles.addText}>Ajouter au panier</Text>
+                <Text style={styles.addText}>{t('scan.add_to_cart')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -229,17 +231,17 @@ export function ScanBarcodeModal({ visible, onResolve, onAdd, onClose }: Props) 
               style={[styles.lastAdded, !lastAdded.fresh && styles.lastAddedStale]}
               numberOfLines={1}
             >
-              Dernier ajout : {lastAdded.label}
+              {t('scan.last_added', { label: lastAdded.label })}
             </Text>
           ) : (
-            <Text style={styles.hint}>Visez un code-barres — l'ajout est automatique</Text>
+            <Text style={styles.hint}>{t('scan.hint_auto')}</Text>
           )}
           <View style={styles.autoRow}>
             <Text style={styles.autoTotals}>
-              {totalArticles} article(s) · {totalTTC.toLocaleString('fr-FR')} F
+              {t('common.articles_count', { count: totalArticles })} · {totalTTC.toLocaleString('fr-FR')} F
             </Text>
             <TouchableOpacity style={styles.doneBtn} onPress={onClose}>
-              <Text style={styles.doneText}>Terminer</Text>
+              <Text style={styles.doneText}>{t('scan.done')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -252,7 +254,7 @@ export function ScanBarcodeModal({ visible, onResolve, onAdd, onClose }: Props) 
         <Text style={styles.feedbackText} numberOfLines={1}>{feedback.text}</Text>
       </View>
     ) : (
-      <Text style={styles.hint}>Visez un code-barres — confirmez l'ajout</Text>
+      <Text style={styles.hint}>{t('scan.hint_confirm')}</Text>
     );
   };
 
@@ -264,9 +266,9 @@ export function ScanBarcodeModal({ visible, onResolve, onAdd, onClose }: Props) 
         paddingRight: insets.right,
       }]}>
         <View style={[styles.header, { paddingTop: 14 + (Platform.OS === 'web' ? 0 : insets.top) }]}>
-          <Text style={styles.title}>Scanner un produit</Text>
+          <Text style={styles.title}>{t('scan.title')}</Text>
           <View style={styles.headerRight}>
-            <Text style={styles.switchLabel}>Ajout automatique</Text>
+            <Text style={styles.switchLabel}>{t('scan.auto_add')}</Text>
             <Switch
               value={autoAddScan}
               onValueChange={setAutoAddScan}

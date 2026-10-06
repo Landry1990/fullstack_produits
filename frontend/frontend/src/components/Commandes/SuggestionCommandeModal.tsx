@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { gooeyToast } from 'goey-toast'
@@ -63,6 +63,20 @@ interface SuggestionItem {
   is_supplier_exclusive?: boolean
   promis_count?: number
   en_rupture_fournisseur?: boolean
+  // Signalement terrain (mobile « produit manquant ») rattaché à cette ligne
+  signalement_id?: number
+  signalement_note?: string
+  signalement_user?: string
+}
+
+interface SignalementItem {
+  id: number
+  produit: number
+  produit_nom?: string
+  produit_stock?: number
+  quantite: number | null
+  note: string
+  utilisateur_nom?: string
 }
 
 interface SuggestionParams {
@@ -108,6 +122,17 @@ export default function SuggestionCommandeModal({
   const [loadingSuggestions, setLoadingSuggestions] = useState(false)
   const [stepSuggestion, setStepSuggestion] = useState<1 | 2>(1)
   const [selectedSuggestions, setSelectedSuggestions] = useState<Set<number>>(new Set())
+  // Demandes terrain (mobile « produit manquant ») en attente de traitement
+  const [signalements, setSignalements] = useState<SignalementItem[]>([])
+
+  useEffect(() => {
+    api.get('signalements-besoins/', { params: { statut: 'NOUVEAU', page_size: 100 } })
+      .then(res => {
+        const data = res.data?.results ?? res.data
+        setSignalements(Array.isArray(data) ? data : [])
+      })
+      .catch(() => setSignalements([]))
+  }, [])
 
   async function fetchSuggestions() {
     setLoadingSuggestions(true)
@@ -124,6 +149,39 @@ export default function SuggestionCommandeModal({
 
       const response = await api.post('generer-suggestions/', payload)
       const items: SuggestionItem[] = response.data.suggestions || []
+
+      // Rattache les signalements terrain : badge si le produit est déjà
+      // suggéré, ligne ajoutée en fin de liste sinon (demande terrain à
+      // ne pas perdre même si l'analyse ne la recommande pas).
+      const suggestedIds = new Set(items.map(i => i.produit_id))
+      for (const s of signalements) {
+        if (suggestedIds.has(s.produit)) {
+          const item = items.find(i => i.produit_id === s.produit)!
+          item.signalement_id = s.id
+          item.signalement_note = s.note
+          item.signalement_user = s.utilisateur_nom
+        } else {
+          const realProduct = produitsList.find(p => p.id === s.produit)
+          items.push({
+            produit_id: s.produit,
+            produit_nom: s.produit_nom ?? realProduct?.name ?? `#${s.produit}`,
+            produit_ref: realProduct?.cip1 ?? '',
+            stock_actuel: s.produit_stock ?? realProduct?.stock ?? 0,
+            ventes_periode: 0,
+            quantite_suggeree: s.quantite || 1,
+            prix_achat: Number(realProduct?.cost_price ?? 0),
+            prix_vente: Number(realProduct?.selling_price ?? 0),
+            tva: realProduct?.tva ?? '0',
+            taux_marge: realProduct?.taux_marge,
+            score_urgence: 60,
+            raison: s.note || t('orders:suggestion_modal.signalement_reason'),
+            signalement_id: s.id,
+            signalement_note: s.note,
+            signalement_user: s.utilisateur_nom,
+          })
+        }
+      }
+
       setSuggestions(items)
       setTotalHt(response.data.total_ht || 0)
       setSelectedSuggestions(new Set(items.map((_, i) => i)))
@@ -172,6 +230,14 @@ export default function SuggestionCommandeModal({
 
     const supplierId = suggestionParams.fournisseurId || (selectedItems[0]?.fournisseur_id ? String(selectedItems[0].fournisseur_id) : '')
     onApply(newLines, supplierId)
+
+    // Les signalements dont le produit part en commande → INTEGRE.
+    const toIntegrate = selectedItems
+      .map(i => i.signalement_id)
+      .filter((id): id is number => id != null)
+    void Promise.allSettled(
+      toIntegrate.map(id => api.post(`signalements-besoins/${id}/integrer/`))
+    )
   }
 
   function toggleSuggestionSelection(index: number) {
@@ -550,6 +616,17 @@ export default function SuggestionCommandeModal({
                                 )}
                                 {item.en_rupture_fournisseur && (
                                   <span className="px-1.5 py-0.5 rounded text-micro font-bold bg-red-100 text-red-600 animate-pulse">{t('orders:suggestion_modal.rupture_badge')}</span>
+                                )}
+                                {item.signalement_id != null && (
+                                  <span
+                                    className="px-1.5 py-0.5 rounded text-micro font-bold bg-violet-100 text-violet-700"
+                                    title={[
+                                      item.signalement_user,
+                                      item.signalement_note,
+                                    ].filter(Boolean).join(' — ') || undefined}
+                                  >
+                                    {t('orders:suggestion_modal.signalement_badge')}
+                                  </span>
                                 )}
                               </div>
                               <span className="text-label text-slate-400 font-mono">{t('orders:suggestion_modal.ref_prefix')} {item.produit_ref}</span>

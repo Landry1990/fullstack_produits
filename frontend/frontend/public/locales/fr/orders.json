@@ -577,6 +577,8 @@
         "exclusive_badge": "EXCLUSIF",
         "promis_badge": "PROMIS ×{{count}}",
         "rupture_badge": "RUPTURE FOURNISSEUR",
+        "signalement_badge": "DEMANDÉ TERRAIN",
+        "signalement_reason": "Signalement terrain (produit manquant)",
         "mode_hourly_title": "Ventes sur tranche horaire",
         "mode_hourly_desc": "Commander les produits vendus sur une plage date/heure précise",
         "hourly_range_label": "Plage horaire des ventes",
