@@ -184,6 +184,7 @@ from .views.purge import PurgeViewSet
 from .views.rapports import RapportViewSet
 from .views.stocks.reappro_history import ReapproSessionViewSet
 from .views.stocks.ruptures import RuptureFournisseurViewSet
+from .views.stocks.besoins import SignalementBesoinViewSet
 from .views.substances import SubstanceViewSet
 from .views.system_admin import SystemAdminViewSet
 from .views.temporal_analysis import TemporalAnalysisViewSet
@@ -250,6 +251,7 @@ router.register(r'system-admin', SystemAdminViewSet, basename='system-admin')
 router.register(r'code-backup', CodeBackupViewSet, basename='code-backup')
 router.register(r'user-sessions', UserDailySessionViewSet, basename='user-session')
 router.register(r'ruptures-fournisseurs', RuptureFournisseurViewSet, basename='rupture-fournisseur')
+router.register(r'signalements-besoins', SignalementBesoinViewSet, basename='signalement-besoin')
 router.register(r'depots-clients', DepotClientViewSet, basename='depotclient')
 router.register(r'internal-messages', InternalMessageViewSet, basename='internalmessage')
 router.register(r'message-templates', MessageTemplateViewSet, basename='messagetemplate')

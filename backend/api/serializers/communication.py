@@ -12,6 +12,7 @@ from ..models import (
     InternalMessage,
     MessageTemplate,
     RuptureFournisseur,
+    SignalementBesoin,
     SmsLog,
     SmsTemplate,
     TelegramLog,
@@ -75,6 +76,17 @@ class RuptureFournisseurSerializer(serializers.ModelSerializer):
     class Meta:
         model = RuptureFournisseur
         fields = '__all__'
+
+
+class SignalementBesoinSerializer(serializers.ModelSerializer):
+    produit_nom = serializers.CharField(source='produit.name', read_only=True)
+    produit_stock = serializers.IntegerField(source='produit.stock', read_only=True)
+    utilisateur_nom = serializers.CharField(source='utilisateur.username', read_only=True)
+
+    class Meta:
+        model = SignalementBesoin
+        fields = '__all__'
+        read_only_fields = ['utilisateur', 'statut']
 
 
 class InternalMessageSerializer(serializers.ModelSerializer):

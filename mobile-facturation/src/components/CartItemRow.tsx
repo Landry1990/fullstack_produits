@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Pencil } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { theme } from '../config/theme';
 import { moderateScale as ms } from '../utils/scale';
 import { getFEFOPreview } from '../utils/fefo';
@@ -17,24 +18,26 @@ interface Props {
 }
 
 export function CartItemRow({ line, onIncrement, onDecrement, onRemove, onOpenLot, onEditLine }: Props) {
+  const { t } = useTranslation();
   const prix = line.prix_unitaire.toLocaleString('fr-FR', { minimumFractionDigits: 0 });
   const total = line.total_ttc.toLocaleString('fr-FR', { minimumFractionDigits: 0 });
 
-  // Badge lot : lot choisi manuellement, sinon aperçu FEFO calculé sur
-  // les lots du produit (même affichage que la facturation web).
+  // Badge lot : lot choisi manuellement, sinon « SANS LOT » quand aucun
+  // lot n'est prélevable, ou aperçu FEFO (« FEFO · LOT-X · exp ») quand
+  // le backend prélèvera le lot qui expire le plus tôt.
   const lotLabel = (() => {
     if (line.lotId) {
       const exp = line.lotExp ? expiryInfo(line.lotExp).label : null;
-      return [line.lotText || 'LOT', exp].filter(Boolean).join(' · ');
+      return [line.lotText || t('cart.lot_fallback'), exp].filter(Boolean).join(' · ');
     }
     const preview = getFEFOPreview(line.product.stock_lots, line.quantite);
-    if (preview.length === 0) return 'AUTO';
+    if (preview.length === 0) return t('cart.no_lot');
     if (preview.length === 1) {
       const p = preview[0];
       const exp = p.expiration ? expiryInfo(p.expiration).label : null;
-      return ['AUTO', p.lot, exp].filter(Boolean).join(' · ');
+      return [t('cart.fefo'), p.lot, exp].filter(Boolean).join(' · ');
     }
-    return `AUTO · ${preview[0].lot} +${preview.length - 1}`;
+    return `${t('cart.fefo')} · ${preview[0].lot} +${preview.length - 1}`;
   })();
 
   return (

@@ -48,6 +48,7 @@ from .communication import (
     InternalMessageSerializer,
     MessageTemplateSerializer,
     RuptureFournisseurSerializer,
+    SignalementBesoinSerializer,
     SmsLogSerializer,
     SmsTemplateSerializer,
     TelegramLogSerializer,
@@ -216,6 +217,7 @@ __all__ = [
     'ReapproSessionSerializer',
     'RelationTransformationSerializer',
     'RuptureFournisseurSerializer',
+    'SignalementBesoinSerializer',
     'SessionCaisseSerializer',
     'ShiftAssignmentSerializer',
     # Planning

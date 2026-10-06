@@ -3,6 +3,7 @@ import {
   Modal, View, Text, TouchableOpacity, FlatList, ActivityIndicator, StyleSheet,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { Store } from 'lucide-react-native';
 import { theme } from '../config/theme';
 import { moderateScale as ms } from '../utils/scale';
@@ -20,6 +21,7 @@ interface Props {
 // poste n'est réutilisable automatiquement (1er démarrage ou poste pris
 // par un autre vendeur). Le choix est mémorisé sur l'appareil.
 export function PostePickerModal({ visible, postes, busy, onPick, onClose }: Props) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
   return (
@@ -29,9 +31,9 @@ export function PostePickerModal({ visible, postes, busy, onPick, onClose }: Pro
         paddingBottom: Math.max(insets.bottom, 24),
       }]}>
         <View style={styles.sheet}>
-          <Text style={styles.title}>Choisir le point de vente</Text>
+          <Text style={styles.title}>{t('poste.picker_title')}</Text>
           <Text style={styles.subtitle}>
-            Cet appareil utilisera toujours ce poste — choix mémorisé.
+            {t('poste.picker_subtitle')}
           </Text>
 
           {busy ? (
@@ -46,18 +48,18 @@ export function PostePickerModal({ visible, postes, busy, onPick, onClose }: Pro
                   <Store size={ms(18)} color={theme.primary} />
                   <Text style={styles.rowText} numberOfLines={1}>{item.nom}</Text>
                   {item.vendeur_name ? (
-                    <Text style={styles.rowMeta} numberOfLines={1}>ex-{item.vendeur_name}</Text>
+                    <Text style={styles.rowMeta} numberOfLines={1}>{t('poste.picker_ex', { name: item.vendeur_name })}</Text>
                   ) : null}
                 </TouchableOpacity>
               )}
               ListEmptyComponent={
-                <Text style={styles.empty}>Aucun point de vente disponible</Text>
+                <Text style={styles.empty}>{t('poste.picker_empty')}</Text>
               }
             />
           )}
 
           <TouchableOpacity style={styles.cancelBtn} onPress={onClose} disabled={busy}>
-            <Text style={styles.cancelText}>Plus tard</Text>
+            <Text style={styles.cancelText}>{t('common.later')}</Text>
           </TouchableOpacity>
         </View>
       </View>

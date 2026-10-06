@@ -1,0 +1,20 @@
+{
+  "cli": {
+    "version": ">= 16.0.0"
+  },
+  "build": {
+    "preview": {
+      "distribution": "internal",
+      "ios": {
+        "simulator": false
+      }
+    },
+    "simulator": {
+      "distribution": "simulator",
+      "ios": {
+        "simulator": true
+      }
+    },
+    "production": {}
+  }
+}

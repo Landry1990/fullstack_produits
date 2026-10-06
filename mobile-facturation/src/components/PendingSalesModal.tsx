@@ -4,6 +4,7 @@ import {
 } from 'react-native';
 import { Clock, RefreshCcw, GitMerge, Trash2 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { usePendingStore } from '../stores/usePendingStore';
 import { theme } from '../config/theme';
 import { moderateScale as ms } from '../utils/scale';
@@ -38,6 +39,7 @@ const saleArticles = (s: PendingSale) =>
   s.lines.reduce((a, l) => a + l.quantite, 0);
 
 export function PendingSalesModal({ visible, cartEmpty, onRestore, onMerge, onDelete, onClose }: Props) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const sales = usePendingStore((s) => s.sales);
 
@@ -51,7 +53,7 @@ export function PendingSalesModal({ visible, cartEmpty, onRestore, onMerge, onDe
           <View style={styles.header}>
             <View style={styles.headerLeft}>
               <Clock size={ms(18)} color={theme.warning} />
-              <Text style={styles.title}>Ventes en attente</Text>
+              <Text style={styles.title}>{t('pending.title')}</Text>
               {sales.length > 0 && (
                 <View style={styles.countBadge}>
                   <Text style={styles.countText}>{sales.length}</Text>
@@ -68,17 +70,17 @@ export function PendingSalesModal({ visible, cartEmpty, onRestore, onMerge, onDe
             keyExtractor={(s) => s.id}
             style={styles.list}
             ListEmptyComponent={
-              <Text style={styles.empty}>Aucune vente en attente</Text>
+              <Text style={styles.empty}>{t('pending.empty')}</Text>
             }
             renderItem={({ item }) => (
               <View style={styles.row}>
                 <View style={styles.rowTop}>
                   <View style={styles.rowLeft}>
                     <Text style={styles.client} numberOfLines={1}>
-                      {item.client?.name ?? 'Client de passage'}
+                      {item.client?.name ?? t('common.walk_in')}
                     </Text>
                     <Text style={styles.meta}>
-                      {formatHeure(item.timestamp)} · {saleArticles(item)} article(s) · {item.lines.length} ligne(s)
+                      {t('pending.meta', { time: formatHeure(item.timestamp), articles: saleArticles(item), lines: item.lines.length })}
                     </Text>
                   </View>
                   <Text style={styles.total}>{saleTotal(item).toLocaleString('fr-FR')} F</Text>
@@ -90,19 +92,19 @@ export function PendingSalesModal({ visible, cartEmpty, onRestore, onMerge, onDe
                     </Text>
                   ))}
                   {item.lines.length > 3 && (
-                    <Text style={styles.previewMore}>+ {item.lines.length - 3} autre(s)</Text>
+                    <Text style={styles.previewMore}>{t('pending.more_lines', { count: item.lines.length - 3 })}</Text>
                   )}
                 </View>
                 <View style={styles.actions}>
                   {!cartEmpty && (
                     <TouchableOpacity style={styles.mergeBtn} onPress={() => onMerge(item)}>
                       <GitMerge size={ms(14)} color={theme.textSecondary} />
-                      <Text style={styles.mergeText}>Fusionner</Text>
+                      <Text style={styles.mergeText}>{t('pending.merge')}</Text>
                     </TouchableOpacity>
                   )}
                   <TouchableOpacity style={styles.restoreBtn} onPress={() => onRestore(item)}>
                     <RefreshCcw size={ms(14)} color="#fff" />
-                    <Text style={styles.restoreText}>Reprendre</Text>
+                    <Text style={styles.restoreText}>{t('pending.restore')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.deleteBtn} onPress={() => onDelete(item.id)}>
                     <Trash2 size={ms(14)} color={theme.danger} />

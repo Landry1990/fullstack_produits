@@ -1,5 +1,149 @@
 # Changelog — Fullstack Produits
 
+## 2026-10-06 — 📱 Mobile : écran d'accueil avec menu
+
+- Nouveau `HomeScreen` = point d'entrée post-login : bascule FR/EN,
+  déconnexion (avec confirmation), nom du vendeur + poste actif, et
+  menu en cartes : **Vente** / **Ajustement de stock** / **Tableau de
+  bord**.
+- `FacturationScreen` allégé : langue, ajustement, dashboard et
+  déconnexion déplacés vers l'accueil ; l'en-tête ne garde que les
+  actions de vente (en attente, historique, PIN, mise en attente,
+  annuler) + retour accueil.
+
+## 2026-10-06 — 📱 Mobile : ajustement de stock par lot
+
+- Nouvel écran `AjustementScreen` : recherche ou scan (caméra/datamatrix,
+  `resolveBarcode` réutilisé), retrait/ajout avec motif (standards +
+  personnalisés `configuration-options?type=STOCK_ADJ`), détail libre.
+- **Ajustement par lot** : pour les produits `use_lot_management`, la
+  sélection du lot est **obligatoire** — le stock global est reconstitué
+  depuis le delta du lot (parité backend : produit et lot bougent de la
+  même quantité), jamais corrigé globalement. Création d'un nouveau lot
+  possible (n° + expiration MM/AA → `new_lot_number`/`new_lot_expiration`).
+  Produits non gérés par lot : ajustement global classique.
+- `api.ts` : `getStockAdjustmentReasons()`, `adjustStock()` →
+  `POST /produits/{id}/adjust_stock/` (endpoint existant, aucun
+  changement backend). Stock **et** lot relus juste avant l'envoi pour
+  calculer les quantités cibles + `Idempotency-Key`.
+- Permission `can_adjust_stock` : si le vendeur ne l'a pas → `SudoModal`
+  existant puis rejeu avec `validated_by_id` + `sudo_password`
+  (`validate_sudo_mode`).
+- Traductions FR/EN (`ajustement.*`).
+
+## 2026-10-06 — 📱 Mobile : tableau de bord de poche
+
+- Nouvel écran `DashboardScreen` (`mobile-facturation/src/screens/`) :
+  CA du jour + variation vs veille, nombre de ventes, top 5 produits,
+  stats personnelles (mes ventes, panier moyen). Accès via bouton
+  graphique dans l'en-tête de `FacturationScreen`, pull-to-refresh.
+- `getDashboardStats()` ajouté dans `src/services/api.ts` — consomme
+  `GET /dashboard/stats/` (endpoint backend existant, aucun changement
+  backend). Rôles VENDEUR/CAISSIER : stats personnelles uniquement
+  (restriction backend conservée volontairement — pas de CA global
+  pour les vendeurs).
+- Traductions FR/EN (`dashboard.*`).
+
+## 2026-10-06 — Documentation : évaluation terrain des suggestions de commandes
+
+- Formalisation du mode d’observation automatique (« shadow mode ») pour comparer les suggestions, les décisions du pharmacien et la consommation réelle sans déclencher de commande automatique.
+- Définition des instantanés, événements perturbateurs, indicateurs, niveaux de déploiement et critères préalables à une automatisation encadrée.
+- Consolidation des failles identifiées et de la formule cible de réapprovisionnement.
+- Fichier : `docs/evaluation-terrain-suggestions-commandes.md`.
+
+## 2026-10-06 — 📱🖥️ Multi-caisses : choix de la caisse destinataire
+
+- **Backend** (`sale_finalizer.py`) : nouveau `_resolve_poste_caisse` —
+  `poste_caisse_id` explicite dans le payload `/factures/finaliser/`
+  route la vente vers la caisse choisie (validée ouverte), sinon la
+  caisse du `poste_vente` transmis (le web envoie le poste de la
+  caissière — son sélecteur de caisse influence désormais réellement
+  `poste_caisse`), sinon la dernière caisse ouverte (comportement
+  historique inchangé). Avant : tout partait sur la caisse ouverte le
+  plus récemment, sans choix possible.
+- **Mobile** : `CaissePickerModal` à l'envoi quand ≥2 caisses sont
+  ouvertes (`/postes-ventes/actives/` filtré `caisse != null`) — nom de
+  la caisse + caissière ; choix conservé pour les ré-envois internes.
+- **Caisse web** : le sélecteur de caisse (filtre de vue) est masqué
+  pour une caissière dont le poste de caisse est ouvert — vue verrouillée
+  sur sa propre caisse (`useCaisseSession` recale `selectedPosteCaisseId`
+  à l'ouverture). Le sélecteur reste disponible sans poste ouvert et
+  pour les superusers (supervision).
+- **Tests** : `test_sale_finalizer.py` — choix honoré + caisse fermée
+  refusée (25 tests OK).
+- **iOS** : `app.json` reçoit `bundleIdentifier` + exception ATS
+  (HTTP local) ; `eas.json` ajouté — l'app est prête pour un build iOS.
+
+## 2026-10-06 — 📱 Mobile : facturation des clients professionnels (parité web)
+
+- **Parité complète de la vente « client pro »** sur mobile-facturation :
+  - **Fix ayant droit** : `GET /clients/<id>/` fetché à la sélection
+    (`getClient`) — la liste `/clients/` ne renvoie ni `ayants_droit`
+    ni `message_alerte`, les chips AD n'apparaissaient jamais et le
+    matching matricule pouvait créer des doublons.
+  - **Majoration pro** (`majoration_pro_pourcentage`) : prix =
+    `selling_price × (1+p/100)` à l'ajout et recalcul de tout le panier
+    au changement de client (`applyMarkupToCart` web ; écrase les prix
+    manuels). Le backend exige `can_modify_price` à l'envoi — couvert
+    par le flux Sudo existant.
+  - **Remise automatique** (`remise_automatique`) appliquée en remise
+    globale % à la sélection (sans Sudo, comme le web).
+  - **Tiers payant** (`taux_couverture`) : ligne « Part Assurance X F ·
+    Part Patient Y F » au footer + `paiements` envoyés comme le web
+    (`especes` part patient + `en_compte` part mutuelle). Corrige un
+    bug : `paiements: []` faisait compter tout le TTC comme nouvelle
+    dette dans le contrôle plafond backend → vente pro bloquée à tort.
+  - **Plafond crédit** : blocage avant envoi si `dette + part mutuelle
+    > plafond` (-1 = illimité) + alertes à la sélection (atteint/>80 %).
+  - **Alertes de sélection regroupées** : message_alerte + dépôt +
+    remise fidélité + plafond en une `Alert` ; badge « PRO » sur la
+    carte client et dans les résultats de recherche client.
+- Fichiers : `types/index.ts`, `services/api.ts` (getClient,
+  tiersPayantSplit, paiements), `stores/useCartStore.ts` (majoration),
+  `screens/FacturationScreen.tsx` (+ styles), `components/ClientModal.tsx`,
+  `hooks/useSendSale.ts`, `i18n/{fr,en}.ts`.
+- Détails : `mobile-facturation/SUIVI.md` (P5).
+
+## 2026-10-05 — 📱 Mobile : suivi encaissement en caisse + verrouillage PIN
+
+- **Statut d'encaissement dans l'historique mobile** : chaque vente
+  envoyée affiche un badge remonté du backend — « En caisse » (VALIDEE),
+  « Encaissée » (PAYEE), « Annulée » — via
+  `GET /factures/?include_pending=true&created_by=<id>&page_size=100`
+  (`getFactureStatuses`, une requête pour tout l'historique, match par
+  `numero_facture`). `include_pending` réaffiche les ventes en attente
+  masquées par la liste par défaut et court-circuite le cache 60 s →
+  statut temps réel. Le vendeur terrain voit si la caissière a encaissé
+  sans l'appeler. `useAuthStore.userId` ajouté (rempli par `getMe` au
+  login et au boot) pour le filtre `created_by`.
+- **Verrouillage PIN (sans biométrie, décision demandeur)** : code 4-6
+  chiffres par vendeur en SecureStore (`lock.pin.<username>`), délai par
+  appareil (immédiat/1 min/5 min). Verrou au boot sur session restaurée,
+  au retour de veille après délai, ou via le cadenas de l'en-tête
+  (appui long = réglage PIN/délai/désactivation). Porte de sortie « PIN
+  oublié » : déconnexion + suppression du PIN depuis l'écran verrouillé.
+- **Remise globale dans le détail historique** : `remise_globale`
+  (montant F) stockée à l'envoi et affichée dans le détail déplié
+  (la remise par ligne était déjà visible en %). Rappel : historique
+  par vendeur (`historique.<username>`), pas par appareil.
+- **Résultats de recherche : distinction stock renforcée** — le gras
+  seul passait inaperçu → en stock = nom extra-gras + compteur vert ;
+  stock nul = nom atténué gris ; négatif = rouge (inchangé).
+- **Résultats : infos regroupées** — CIP, « Stock: X » et prix sur une
+  seule ligne sous le nom (plus de balayage gauche↔droite).
+- **Badge lot lisible** — « AUTO » remplacé par « SANS LOT » (aucun lot
+  prélevable) et « FEFO · … » quand un lot sera prélevé auto.
+- **i18n fr/en** — `i18next`/`react-i18next`/`expo-localization`,
+  ressources `src/i18n/fr.ts`+`en.ts`, langue = locale de l'appareil
+  (fallback fr). Toutes les chaînes visibles migrées (écrans, modals,
+  hooks, alertes). Bascule manuelle FR/EN persistée par appareil
+  (chip dans l'en-tête de vente + segmenté au login).
+- Fichiers : `stores/useLockStore.ts`, `components/LockScreen.tsx`,
+  `components/PinLockModal.tsx`, `services/api.ts` (getFactureStatuses),
+  `stores/useAuthStore.ts` (userId), `screens/HistoriqueScreen.tsx`,
+  `FacturationScreen.tsx`, `LoginScreen.tsx`, `App.tsx`.
+- Détails complets : `mobile-facturation/SUIVI.md` (P2, P3, P4).
+
 ## 2026-10-05 — 🔧 Nginx : correction de 6 bugs de configuration
 
 - **Headers de sécurité absents sur HTML/assets** : `add_header` dans

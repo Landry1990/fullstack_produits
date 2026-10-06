@@ -88,6 +88,16 @@ export function useCaisseSession() {
     initPage()
   }, [])
 
+  // Une caissière dont le poste de caisse est ouvert reste calée sur SA
+  // caisse : le sélecteur multi-caisses est masqué pour elle — recalage
+  // ici si la vue était sur 'all' ou une autre caisse avant l'ouverture
+  // (ouverture de caisse en cours de session).
+  useEffect(() => {
+    if (myActivePoste?.caisse) {
+      setSelectedPosteCaisseId(String(myActivePoste.caisse))
+    }
+  }, [myActivePoste])
+
   return {
     postesCaisses,
     setPostesCaisses,

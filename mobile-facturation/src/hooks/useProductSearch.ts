@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Alert, Keyboard } from 'react-native';
+import i18n from '../i18n';
 import { useCartStore } from '../stores/useCartStore';
 import {
   searchProducts, getProductByBarcode, getProductById, getLotByDatamatrix, getLots,
@@ -96,7 +97,7 @@ export function useProductSearch() {
       // Tout le reste (réseau, 401, 5xx) mérite une alerte explicite.
       const status = (err as { response?: { status?: number } })?.response?.status;
       if (status !== 404) {
-        Alert.alert('Erreur', 'Impossible de joindre le serveur');
+        Alert.alert(i18n.t('common.error'), i18n.t('common.server_unreachable'));
       }
       return null;
     }

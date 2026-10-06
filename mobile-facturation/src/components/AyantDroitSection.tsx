@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { theme } from '../config/theme';
 import { moderateScale as ms } from '../utils/scale';
 import type { AyantDroit, Client } from '../types';
@@ -24,10 +25,11 @@ export function AyantDroitSection({
   client, compact, selected, formVisible, nom, matricule,
   onSelectExisting, onToggleNew, onNomChange, onMatriculeChange,
 }: Props) {
+  const { t } = useTranslation();
   const ayantsDroit = client.ayants_droit ?? [];
   return (
     <View style={[styles.block, compact && styles.blockCompact]}>
-      <Text style={styles.label}>Ayant droit</Text>
+      <Text style={styles.label}>{t('ayantDroit.label')}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         <View style={styles.chips}>
           {ayantsDroit.map((ad) => {
@@ -48,7 +50,7 @@ export function AyantDroitSection({
             style={[styles.chip, formVisible && styles.chipSelected]}
             onPress={onToggleNew}
           >
-            <Text style={[styles.chipText, formVisible && styles.chipTextSelected]}>+ Nouveau</Text>
+            <Text style={[styles.chipText, formVisible && styles.chipTextSelected]}>{t('ayantDroit.new')}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -56,7 +58,7 @@ export function AyantDroitSection({
         <View style={styles.form}>
           <TextInput
             style={styles.input}
-            placeholder="Nom"
+            placeholder={t('ayantDroit.name')}
             placeholderTextColor={theme.textMuted}
             value={nom}
             onChangeText={onNomChange}
@@ -64,7 +66,7 @@ export function AyantDroitSection({
           />
           <TextInput
             style={styles.input}
-            placeholder="Matricule"
+            placeholder={t('ayantDroit.matricule')}
             placeholderTextColor={theme.textMuted}
             value={matricule}
             onChangeText={onMatriculeChange}
