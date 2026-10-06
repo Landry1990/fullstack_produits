@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { theme } from '../config/theme';
 import { moderateScale as ms } from '../utils/scale';
 import { searchClients, createClient } from '../services/api';
@@ -21,6 +22,7 @@ interface Props {
 // débouncée, formulaire « + Nouveau client », état réinitialisé à la
 // fermeture. L'écran ne reçoit que le client choisi (ou null).
 export function ClientModal({ visible, onClose, onSelect }: Props) {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [results, setResults] = useState<Client[]>([]);
   const [searching, setSearching] = useState(false);
@@ -61,11 +63,11 @@ export function ClientModal({ visible, onClose, onSelect }: Props) {
     const n = name.trim();
     const p = phone.trim();
     if (n.length < 2) {
-      setFormError('Le nom doit contenir au moins 2 caractères');
+      setFormError(t('clientModal.error_name'));
       return;
     }
     if (p && (!PHONE_REGEX.test(p) || p.replace(/\D/g, '').length < 8)) {
-      setFormError('Numéro de téléphone invalide');
+      setFormError(t('clientModal.error_phone'));
       return;
     }
     setCreating(true);
@@ -73,7 +75,7 @@ export function ClientModal({ visible, onClose, onSelect }: Props) {
     try {
       onSelect(await createClient({ name: n, phone: p || null }));
     } catch (err: unknown) {
-      setFormError(drfError((err as { response?: { data?: unknown } })?.response?.data, 'Impossible de créer le client'));
+      setFormError(drfError((err as { response?: { data?: unknown } })?.response?.data, t('clientModal.create_error')));
     } finally {
       setCreating(false);
     }
@@ -85,7 +87,7 @@ export function ClientModal({ visible, onClose, onSelect }: Props) {
     <View style={styles.overlay}>
       <View style={styles.sheet}>
         <View style={styles.header}>
-          <Text style={styles.title}>Sélectionner client</Text>
+          <Text style={styles.title}>{t('clientModal.title')}</Text>
           <TouchableOpacity onPress={onClose}>
             <Text style={styles.close}>✕</Text>
           </TouchableOpacity>
@@ -93,19 +95,19 @@ export function ClientModal({ visible, onClose, onSelect }: Props) {
 
         {formVisible ? (
           <View>
-            <Text style={styles.formLabel}>Nom *</Text>
+            <Text style={styles.formLabel}>{t('clientModal.name_label')}</Text>
             <TextInput
               style={styles.input}
-              placeholder="Nom du client"
+              placeholder={t('clientModal.name_placeholder')}
               placeholderTextColor={theme.textMuted}
               value={name}
               onChangeText={(t) => { setName(t); setFormError(null); }}
               autoFocus
             />
-            <Text style={styles.formLabel}>Téléphone</Text>
+            <Text style={styles.formLabel}>{t('clientModal.phone_label')}</Text>
             <TextInput
               style={styles.input}
-              placeholder="Optionnel"
+              placeholder={t('clientModal.phone_placeholder')}
               placeholderTextColor={theme.textMuted}
               value={phone}
               onChangeText={(t) => { setPhone(t); setFormError(null); }}
@@ -118,7 +120,7 @@ export function ClientModal({ visible, onClose, onSelect }: Props) {
                 onPress={() => { setFormVisible(false); setFormError(null); }}
                 disabled={creating}
               >
-                <Text style={styles.formBackText}>Retour</Text>
+                <Text style={styles.formBackText}>{t('common.back')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.formCreateBtn, creating && { opacity: 0.6 }]}
@@ -128,7 +130,7 @@ export function ClientModal({ visible, onClose, onSelect }: Props) {
                 {creating ? (
                   <ActivityIndicator color="#fff" size="small" />
                 ) : (
-                  <Text style={styles.formCreateText}>Créer</Text>
+                  <Text style={styles.formCreateText}>{t('common.create')}</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -137,7 +139,7 @@ export function ClientModal({ visible, onClose, onSelect }: Props) {
           <View>
             <TextInput
               style={styles.input}
-              placeholder="Rechercher client..."
+              placeholder={t('clientModal.search_placeholder')}
               placeholderTextColor={theme.textMuted}
               value={search}
               onChangeText={setSearch}
@@ -147,13 +149,13 @@ export function ClientModal({ visible, onClose, onSelect }: Props) {
               style={styles.newClientBtn}
               onPress={() => setFormVisible(true)}
             >
-              <Text style={styles.newClientText}>+ Nouveau client</Text>
+              <Text style={styles.newClientText}>{t('clientModal.new_client')}</Text>
             </TouchableOpacity>
             {searching ? (
               <ActivityIndicator color={theme.primary} style={{ marginVertical: ms(20) }} />
             ) : (
               <FlatList
-                data={[{ id: 0, name: 'Client de passage' } as Client, ...results]}
+                data={[{ id: 0, name: t('common.walk_in') } as Client, ...results]}
                 keyExtractor={(c) => String(c.id)}
                 renderItem={({ item }) => (
                   item.id === 0 ? (
@@ -161,14 +163,19 @@ export function ClientModal({ visible, onClose, onSelect }: Props) {
                       style={styles.clientItem}
                       onPress={() => onSelect(null)}
                     >
-                      <Text style={styles.clientItemName}>Client de passage</Text>
+                      <Text style={styles.clientItemName}>{t('common.walk_in')}</Text>
                     </TouchableOpacity>
                   ) : (
                     <TouchableOpacity
                       style={styles.clientItem}
                       onPress={() => onSelect(item)}
                     >
-                      <Text style={styles.clientItemName}>{item.name}</Text>
+                      <View style={styles.clientItemRow}>
+                        <Text style={styles.clientItemName}>{item.name}</Text>
+                        {item.client_type === 'PROFESSIONNEL' && (
+                          <Text style={styles.proBadge}>{t('facturation.pro_badge')}</Text>
+                        )}
+                      </View>
                       {item.phone ? <Text style={styles.clientItemPhone}>{item.phone}</Text> : null}
                     </TouchableOpacity>
                   )
@@ -192,7 +199,18 @@ const styles = StyleSheet.create({
   input: { backgroundColor: theme.bg, borderRadius: ms(8), paddingHorizontal: ms(12), paddingVertical: ms(10), color: theme.text, fontSize: ms(14), borderWidth: 1, borderColor: theme.border, marginBottom: ms(12) },
   list: { maxHeight: ms(300) },
   clientItem: { padding: ms(12), backgroundColor: theme.bgMuted, borderRadius: ms(8), marginBottom: ms(4) },
-  clientItemName: { fontSize: ms(14), fontWeight: '600', color: theme.text },
+  clientItemRow: { flexDirection: 'row', alignItems: 'center', gap: ms(6) },
+  clientItemName: { fontSize: ms(14), fontWeight: '600', color: theme.text, flexShrink: 1 },
+  proBadge: {
+    fontSize: ms(9),
+    fontWeight: '800',
+    color: theme.primary,
+    backgroundColor: theme.primaryWash,
+    borderRadius: ms(4),
+    paddingHorizontal: ms(5),
+    paddingVertical: ms(1),
+    overflow: 'hidden',
+  },
   clientItemPhone: { fontSize: ms(12), color: theme.textMuted, marginTop: ms(2) },
   newClientBtn: { marginBottom: ms(10) },
   newClientText: { fontSize: ms(13), color: theme.primary, fontWeight: '700' },

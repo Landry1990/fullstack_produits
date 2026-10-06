@@ -399,6 +399,40 @@ class RuptureFournisseur(models.Model):
         return f"Rupture {self.produit.name} - {status} (depuis {self.date_debut})"
 
 
+class SignalementBesoin(models.Model):
+    """
+    Besoin de commande signalé depuis le terrain (mobile comptoir).
+    À ne pas confondre avec RuptureFournisseur (produit indisponible
+    chez le grossiste) : ici, le produit manque en rayon ou est demandé
+    par un client → à intégrer à la prochaine commande.
+    """
+    class Statut(models.TextChoices):
+        NOUVEAU = 'NOUVEAU', 'Nouveau'
+        INTEGRE = 'INTEGRE', 'Intégré à une commande'
+        IGNORE = 'IGNORE', 'Ignoré'
+
+    produit = models.ForeignKey(
+        'Produit', on_delete=models.CASCADE,
+        related_name='signalements_besoins'
+    )
+    quantite = models.PositiveIntegerField(null=True, blank=True)
+    note = models.TextField(blank=True, default='')
+    utilisateur = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    statut = models.CharField(
+        max_length=10, choices=Statut.choices, default=Statut.NOUVEAU
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['statut', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f"Besoin {self.produit.name} - {self.get_statut_display()}"
+
+
 # ============== SIGNALS ==============
 
 @receiver(pre_save, sender=StockLot)

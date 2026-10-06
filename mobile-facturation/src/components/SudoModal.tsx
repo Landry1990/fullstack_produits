@@ -4,6 +4,7 @@ import {
   ActivityIndicator, StyleSheet,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { verifySudoPassword } from '../services/api';
 import { theme } from '../config/theme';
 import { moderateScale as ms } from '../utils/scale';
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export function SudoModal({ visible, title, message, permission, onValidate, onClose }: Props) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -39,14 +41,14 @@ export function SudoModal({ visible, title, message, permission, onValidate, onC
       const user = await verifySudoPassword(password, permission);
       if (!user) {
         setPassword('');
-        setError('Mot de passe incorrect');
+        setError(t('sudo.error_wrong'));
         return;
       }
       await onValidate(user.id, password);
     } catch (err: unknown) {
       setPassword('');
       const e = err as { response?: { data?: { detail?: string; error?: string } }; message?: string };
-      setError(e?.response?.data?.detail || e?.response?.data?.error || 'Mot de passe incorrect');
+      setError(e?.response?.data?.detail || e?.response?.data?.error || t('sudo.error_wrong'));
     } finally {
       setLoading(false);
     }
@@ -59,15 +61,15 @@ export function SudoModal({ visible, title, message, permission, onValidate, onC
         paddingBottom: Math.max(insets.bottom, 24),
       }]}>
         <View style={styles.sheet}>
-          <Text style={styles.title}>{title || 'Validation requise'}</Text>
+          <Text style={styles.title}>{title || t('sudo.title_default')}</Text>
           <Text style={styles.subtitle}>
-            Saisissez le mot de passe d'un utilisateur disposant des droits requis
+            {t('sudo.subtitle')}
           </Text>
           {message ? <Text style={styles.message}>{message}</Text> : null}
 
           <TextInput
             style={[styles.input, error ? styles.inputError : null]}
-            placeholder="Mot de passe"
+            placeholder={t('sudo.password')}
             placeholderTextColor={theme.textMuted}
             value={password}
             onChangeText={(t) => { setPassword(t); setError(null); }}
@@ -79,7 +81,7 @@ export function SudoModal({ visible, title, message, permission, onValidate, onC
 
           <View style={styles.actions}>
             <TouchableOpacity style={styles.cancelBtn} onPress={onClose} disabled={loading}>
-              <Text style={styles.cancelText}>Annuler</Text>
+              <Text style={styles.cancelText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.validateBtn, (!password || loading) && styles.validateBtnDisabled]}
@@ -89,7 +91,7 @@ export function SudoModal({ visible, title, message, permission, onValidate, onC
               {loading ? (
                 <ActivityIndicator color="#fff" size="small" />
               ) : (
-                <Text style={styles.validateText}>Valider</Text>
+                <Text style={styles.validateText}>{t('common.validate')}</Text>
               )}
             </TouchableOpacity>
           </View>

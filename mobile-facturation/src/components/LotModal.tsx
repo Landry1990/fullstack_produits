@@ -4,6 +4,7 @@ import {
   ActivityIndicator, StyleSheet,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import type { Product, StockLot } from '../types';
 import { getLots } from '../services/api';
 import { expiryInfo } from '../utils/format';
@@ -19,6 +20,7 @@ interface Props {
 }
 
 export function LotModal({ visible, product, currentLotId, onSelect, onClose }: Props) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [lots, setLots] = useState<StockLot[]>([]);
   const [loading, setLoading] = useState(false);
@@ -47,7 +49,7 @@ export function LotModal({ visible, product, currentLotId, onSelect, onClose }: 
 
           <View style={styles.header}>
             <View>
-              <Text style={styles.title}>Sélection du lot</Text>
+              <Text style={styles.title}>{t('lot.title')}</Text>
               <Text style={styles.subtitle} numberOfLines={1}>{product.name}</Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
@@ -60,15 +62,15 @@ export function LotModal({ visible, product, currentLotId, onSelect, onClose }: 
             style={[styles.option, !currentLotId && styles.optionSelected]}
             onPress={() => handleSelect(null)}
           >
-            <Text style={styles.optionTitle}>🚀 AUTOMATIQUE (FEFO)</Text>
-            <Text style={styles.optionSub}>Le système choisit le lot expirant le plus tôt</Text>
+            <Text style={styles.optionTitle}>🚀 {t('lot.auto_title')}</Text>
+            <Text style={styles.optionSub}>{t('lot.auto_sub')}</Text>
             {!currentLotId && <Text style={styles.checkmark}>✓</Text>}
           </TouchableOpacity>
 
           {loading ? (
             <ActivityIndicator color={theme.primary} style={{ marginVertical: ms(30) }} />
           ) : lots.length === 0 ? (
-            <Text style={styles.empty}>Aucun lot spécifique disponible</Text>
+            <Text style={styles.empty}>{t('lot.empty')}</Text>
           ) : (
             <FlatList
               data={lots}
@@ -84,14 +86,14 @@ export function LotModal({ visible, product, currentLotId, onSelect, onClose }: 
                   >
                     <View style={styles.lotLeft}>
                       <Text style={[styles.lotNum, isSelected && styles.lotNumSelected]}>
-                        {item.lot || 'Sans lot'}
+                        {item.lot || t('lot.no_lot')}
                       </Text>
                       <Text style={[styles.lotExp, { color: exp.color }]}>
-                        Exp: {exp.label}
+                        {t('lot.exp', { label: exp.label })}
                       </Text>
                     </View>
                     <View style={styles.lotRight}>
-                      <Text style={styles.lotStock}>Stock: {item.quantity_remaining}</Text>
+                      <Text style={styles.lotStock}>{t('lot.stock', { count: item.quantity_remaining })}</Text>
                       {isSelected && <Text style={styles.checkmark}>✓</Text>}
                     </View>
                   </TouchableOpacity>
@@ -101,7 +103,7 @@ export function LotModal({ visible, product, currentLotId, onSelect, onClose }: 
           )}
 
           <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
-            <Text style={styles.cancelBtnText}>Fermer</Text>
+            <Text style={styles.cancelBtnText}>{t('common.close')}</Text>
           </TouchableOpacity>
         </View>
       </View>

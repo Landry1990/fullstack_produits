@@ -53,7 +53,11 @@ export function CaisseHeader({
           <p className="hidden xl:block text-slate-500 text-sm mt-1">{t('subtitle')}</p>
         </div>
 
-        {isMultiCaisse && (
+        {/* Sélecteur de caisse : filtre de vue uniquement. Masqué pour une
+            caissière dont le poste de caisse est ouvert (vue verrouillée sur
+            SA caisse — le vendeur choisit déjà la destination à l'envoi) ;
+            conservé sans poste ouvert (supervision) et pour les admins. */}
+        {isMultiCaisse && (!myActivePoste?.caisse || canManageSecurity) && (
           <div className="flex items-center gap-2 bg-slate-100 p-1.5 rounded-xl border border-slate-200">
             <div className="flex items-center gap-2 px-3 text-slate-500">
               <Monitor className="size-4" />

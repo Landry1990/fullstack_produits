@@ -3,6 +3,7 @@ import {
   Modal, View, Text, TextInput, TouchableOpacity, StyleSheet,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { theme } from '../config/theme';
 import { moderateScale as ms } from '../utils/scale';
 import type { CartLine } from '../types';
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export function LineEditModal({ visible, line, onApply, onClose }: Props) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [prix, setPrix] = useState('');
   const [remise, setRemise] = useState('');
@@ -45,9 +47,9 @@ export function LineEditModal({ visible, line, onApply, onClose }: Props) {
       }]}>
         <View style={styles.sheet}>
           <Text style={styles.title} numberOfLines={1}>{line.product.name}</Text>
-          <Text style={styles.subtitle}>Modifier la ligne</Text>
+          <Text style={styles.subtitle}>{t('lineEdit.subtitle')}</Text>
 
-          <Text style={styles.label}>Prix unitaire (F)</Text>
+          <Text style={styles.label}>{t('lineEdit.price_label')}</Text>
           <TextInput
             style={styles.input}
             value={prix}
@@ -55,7 +57,7 @@ export function LineEditModal({ visible, line, onApply, onClose }: Props) {
             keyboardType="decimal-pad"
           />
 
-          <Text style={styles.label}>Remise (%)</Text>
+          <Text style={styles.label}>{t('lineEdit.discount_label')}</Text>
           <TextInput
             style={styles.input}
             value={remise}
@@ -65,10 +67,10 @@ export function LineEditModal({ visible, line, onApply, onClose }: Props) {
 
           <View style={styles.actions}>
             <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
-              <Text style={styles.cancelText}>Annuler</Text>
+              <Text style={styles.cancelText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.applyBtn} onPress={handleApply}>
-              <Text style={styles.applyText}>Appliquer</Text>
+              <Text style={styles.applyText}>{t('common.apply')}</Text>
             </TouchableOpacity>
           </View>
         </View>

@@ -112,6 +112,7 @@ from .stock import (
     MouvementStock,
     ReapproSession,
     RuptureFournisseur,
+    SignalementBesoin,
     StockAdjustment,
     StockLot,
     TicketSessionSequence,
@@ -203,6 +204,7 @@ __all__ = [
     'RelevePaiement',
     'RuptureFournisseur',
     'SessionCaisse',
+    'SignalementBesoin',
     'ShiftAssignment',
     # Planning
     'ShiftConfig',
