@@ -12,6 +12,7 @@ import {
 } from '../services/api';
 import { useProductSearch } from '../hooks/useProductSearch';
 import { useSudo } from '../hooks/useSudo';
+import { ProductRow } from '../components/ProductRow';
 import { ScanBarcodeModal } from '../components/ScanBarcodeModal';
 import { SudoModal } from '../components/SudoModal';
 import { theme } from '../config/theme';
@@ -273,10 +274,7 @@ export function AjustementScreen({ onBack }: { onBack: () => void }) {
             keyExtractor={(p) => String(p.id)}
             keyboardShouldPersistTaps="handled"
             renderItem={({ item }) => (
-              <TouchableOpacity style={styles.resultRow} onPress={() => void selectProduct(item)}>
-                <Text style={styles.resultName} numberOfLines={1}>{item.name}</Text>
-                <Text style={styles.resultStock}>{t('scan.stock_label', { count: item.stock })}</Text>
-              </TouchableOpacity>
+              <ProductRow product={item} onPress={(prod) => void selectProduct(prod)} />
             )}
           />
         </View>
@@ -489,20 +487,6 @@ const styles = StyleSheet.create({
     paddingVertical: ms(10),
   },
   searchInput: { flex: 1, fontSize: ms(15), color: theme.text, padding: 0 },
-  resultRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: theme.bgElevated,
-    borderRadius: ms(theme.radiusSm),
-    borderWidth: 1,
-    borderColor: theme.border,
-    paddingHorizontal: ms(12),
-    paddingVertical: ms(10),
-    marginTop: ms(6),
-  },
-  resultName: { flex: 1, fontSize: ms(14), fontWeight: '600', color: theme.text },
-  resultStock: { fontSize: ms(12), color: theme.textMuted, marginLeft: ms(8) },
   form: { padding: ms(12), gap: ms(10) },
   productCard: {
     flexDirection: 'row',

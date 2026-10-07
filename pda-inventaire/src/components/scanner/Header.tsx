@@ -7,6 +7,7 @@ import {
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { theme } from '../../config/theme';
 
 interface HeaderProps {
@@ -31,13 +32,14 @@ export default function Header({
   count,
 }: HeaderProps) {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const topInset = Platform.OS === 'web' ? 8 : Math.min(insets.top, 32);
 
   return (
     <View style={[styles.header, { paddingTop: topInset }]}> 
       <View style={styles.topRow}>
         <TouchableOpacity onPress={onBack} style={styles.backBtn}>
-          <Text style={styles.backBtnText}>Terminer</Text>
+          <Text style={styles.backBtnText}>{t('scanner.finish')}</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>{reference}</Text>
         {typeof count === 'number' && (
@@ -49,7 +51,7 @@ export default function Header({
 
       <View style={styles.bottomRow}>
         <View style={[styles.statusBadge, isOnline ? styles.statusOnline : styles.statusOffline]}>
-          <Text style={styles.statusText}>{isOnline ? 'EN LIGNE' : 'HORS LIGNE'}</Text>
+          <Text style={styles.statusText}>{isOnline ? t('scanner.online') : t('scanner.offline')}</Text>
         </View>
         <View style={styles.headerRight}>
           {onToggleKeyboard && (
@@ -57,7 +59,7 @@ export default function Header({
               onPress={onToggleKeyboard}
               style={[styles.actionBtn, keyboardEnabled && styles.actionBtnActive]}
             >
-              <Text style={styles.actionBtnText}>Clavier</Text>
+              <Text style={styles.actionBtnText}>{t('scanner.keyboard')}</Text>
             </TouchableOpacity>
           )}
           <TouchableOpacity onPress={onExport} style={styles.actionBtn}>
@@ -65,7 +67,7 @@ export default function Header({
           </TouchableOpacity>
           {offlineCount > 0 && (
             <View style={styles.offlineBadge}>
-              <Text style={styles.offlineBadgeText}>{offlineCount} attente</Text>
+              <Text style={styles.offlineBadgeText}>{t('scanner.pending', { count: offlineCount })}</Text>
             </View>
           )}
         </View>
@@ -76,11 +78,11 @@ export default function Header({
 
 const styles = StyleSheet.create({
   header: {
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.bgElevated,
     paddingHorizontal: 16,
     paddingBottom: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    borderBottomColor: theme.border,
   },
   topRow: {
     minHeight: 48,
@@ -99,13 +101,13 @@ const styles = StyleSheet.create({
     paddingRight: 12,
   },
   backBtnText: {
-    color: '#059669',
+    color: theme.primary,
     fontSize: 15,
     fontWeight: '700',
   },
   headerTitle: {
     flex: 1,
-    color: '#0f172a',
+    color: theme.text,
     fontSize: 16,
     fontWeight: '700',
     textAlign: 'center',
@@ -119,10 +121,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statusOnline: {
-    backgroundColor: '#059669',
+    backgroundColor: theme.primary,
   },
   statusOffline: {
-    backgroundColor: '#dc2626',
+    backgroundColor: theme.danger,
   },
   statusText: {
     fontSize: 10,
@@ -140,18 +142,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f1f5f9',
+    backgroundColor: theme.bgMuted,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: theme.border,
   },
   actionBtnActive: {
-    backgroundColor: '#059669',
-    borderColor: '#047857',
+    backgroundColor: theme.primary,
+    borderColor: theme.primaryDark,
   },
   actionBtnText: {
     fontSize: 12,
-    color: '#1e293b',
+    color: theme.text,
     fontWeight: '700',
   },
   offlineBadge: {
@@ -172,7 +174,7 @@ const styles = StyleSheet.create({
     height: 36,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#059669',
+    backgroundColor: theme.primary,
     borderRadius: 18,
   },
   counterText: {

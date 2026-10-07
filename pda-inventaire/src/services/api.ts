@@ -1,70 +1,50 @@
 import axios from 'axios';
-import secureStore from '../utils/secureStore';
-import { API_BASE_URL, REQUEST_TIMEOUT, STORAGE_KEYS } from '../config';
+import { useAuthStore } from '../stores/useAuthStore';
 
-// Instance Axios configurée
-const api = axios.create({
-    baseURL: API_BASE_URL,
-    timeout: REQUEST_TIMEOUT,
-    headers: {
-        'Content-Type': 'application/json',
-    },
+const api = axios.create({ timeout: 10000 });
+
+api.interceptors.request.use((config) => {
+  const { serverUrl, token } = useAuthStore.getState();
+  config.baseURL = `${serverUrl}/api`;
+  if (token) config.headers.Authorization = `Token ${token}`;
+  return config;
 });
 
-// Callback pour gérer les erreurs 401 globalement
-let onUnauthorizedCallback: (() => void) | null = null;
-
-export const setUnauthorizedCallback = (callback: () => void) => {
-    onUnauthorizedCallback = callback;
-};
-
-// Intercepteur pour ajouter le token à chaque requête
-api.interceptors.request.use(
-    async (config) => {
-        try {
-            const token = await secureStore.getItemAsync(STORAGE_KEYS.AUTH_TOKEN);
-            if (token) {
-                config.headers.Authorization = `Token ${token}`;
-            }
-        } catch (error) {
-            console.warn('Erreur lecture token:', error);
-        }
-        return config;
-    },
-    (error) => Promise.reject(error)
-);
-
-// Intercepteur pour gérer les erreurs (401 = déconnexion)
+// Token expiré/révoqué → déconnexion immédiate : App.tsx rend l'écran de
+// login via useAuthStore.isAuthenticated.
 api.interceptors.response.use(
-    (response) => response,
-    async (error) => {
-        if (error.response?.status === 401) {
-            // Token expiré ou invalide
-            try {
-                await secureStore.deleteItemAsync(STORAGE_KEYS.AUTH_TOKEN);
-                await secureStore.deleteItemAsync(STORAGE_KEYS.USER_INFO);
-            } catch (e) {}
-
-            // Déclencher le callback de déconnexion si disponible
-            if (onUnauthorizedCallback) {
-                onUnauthorizedCallback();
-            }
-        }
-        return Promise.reject(error);
+  (res) => res,
+  (err) => {
+    if (err?.response?.status === 401) {
+      useAuthStore.getState().logout();
     }
+    return Promise.reject(err);
+  }
 );
 
 export default api;
 
+// ─── Auth ─────────────────────────────────────────────────
+// Login par mot de passe seul : le serveur identifie l'utilisateur actif
+// dont le mot de passe correspond et renvoie son username.
+export const login = async (serverUrl: string, password: string) => {
+  const res = await axios.post(
+    `${serverUrl}/api/auth/token/`,
+    { password, workstation: 'PDA Inventaire' },
+    { timeout: 8000 }
+  );
+  return res.data as { token: string; username: string };
+};
+
 // Types pour les réponses API
 export interface ApiResponse<T> {
-    data: T;
-    message?: string;
+  data: T;
+  message?: string;
 }
 
 export interface PaginatedResponse<T> {
-    count: number;
-    next: string | null;
-    previous: string | null;
-    results: T[];
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
 }

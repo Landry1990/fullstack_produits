@@ -3,14 +3,16 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView,
   FlatList, Alert, ActivityIndicator, Platform, Keyboard, RefreshControl,
 } from 'react-native';
-import { ArrowLeft, Search, ScanBarcode, Megaphone, PackageX } from 'lucide-react-native';
+import { ArrowLeft, Search, ScanBarcode, Megaphone, PackageX, Trash2 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import {
   searchProducts, getProductById, createSignalementBesoin, getMesSignalements,
+  viderSignalementsTraites,
   type SignalementBesoin,
 } from '../services/api';
 import { useProductSearch } from '../hooks/useProductSearch';
+import { ProductRow } from '../components/ProductRow';
 import { ScanBarcodeModal } from '../components/ScanBarcodeModal';
 import { theme } from '../config/theme';
 import { moderateScale as ms } from '../utils/scale';
@@ -50,6 +52,7 @@ export function SignalementScreen({ onBack }: { onBack: () => void }) {
 
   const [items, setItems] = useState<SignalementBesoin[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [clearing, setClearing] = useState(false);
 
   // Recherche produit débouncée (même pattern que FacturationScreen).
   useEffect(() => {
@@ -115,6 +118,31 @@ export function SignalementScreen({ onBack }: { onBack: () => void }) {
     }
   };
 
+  // Purge des signalements traités (INTÉGRÉ/IGNORÉ) — les NOUVEAU
+  // restent. Confirmation système avant l'appel bulk.
+  const handleClear = () => {
+    Alert.alert(t('signalement.clear'), t('signalement.clear_confirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('signalement.clear'),
+        style: 'destructive',
+        onPress: () => {
+          void (async () => {
+            setClearing(true);
+            try {
+              await viderSignalementsTraites();
+              await loadItems();
+            } catch {
+              Alert.alert(t('common.error'), t('signalement.error_generic'));
+            } finally {
+              setClearing(false);
+            }
+          })();
+        },
+      },
+    ]);
+  };
+
   return (
     <View style={[styles.container, {
       paddingBottom: Math.min(insets.bottom, 24),
@@ -144,6 +172,7 @@ export function SignalementScreen({ onBack }: { onBack: () => void }) {
                 placeholderTextColor={theme.textMuted}
                 value={query}
                 onChangeText={setQuery}
+                autoFocus
                 autoCorrect={false}
                 autoCapitalize="none"
               />
@@ -155,10 +184,7 @@ export function SignalementScreen({ onBack }: { onBack: () => void }) {
             </View>
             {searching && <ActivityIndicator color={theme.primary} style={{ marginTop: ms(12) }} />}
             {results.map((p) => (
-              <TouchableOpacity key={p.id} style={styles.resultRow} onPress={() => void selectProduct(p)}>
-                <Text style={styles.resultName} numberOfLines={1}>{p.name}</Text>
-                <Text style={styles.resultStock}>{t('scan.stock_label', { count: p.stock })}</Text>
-              </TouchableOpacity>
+              <ProductRow key={p.id} product={p} onPress={(prod) => void selectProduct(prod)} />
             ))}
           </>
         ) : (
@@ -216,8 +242,25 @@ export function SignalementScreen({ onBack }: { onBack: () => void }) {
           </View>
         )}
 
-        {/* Mes derniers signalements */}
-        <Text style={styles.sectionTitle}>{t('signalement.recent')}</Text>
+        {/* Mes derniers signalements — bouton « Vider » = purge des
+            traités (INTÉGRÉ/IGNORÉ), les NOUVEAU sont conservés. */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>{t('signalement.recent')}</Text>
+          {items.some((s) => s.statut !== 'NOUVEAU') && (
+            <TouchableOpacity
+              style={styles.clearBtn}
+              disabled={clearing}
+              onPress={handleClear}
+            >
+              {clearing ? (
+                <ActivityIndicator size="small" color={theme.danger} />
+              ) : (
+                <Trash2 size={ms(15)} color={theme.danger} />
+              )}
+              <Text style={styles.clearText}>{t('signalement.clear')}</Text>
+            </TouchableOpacity>
+          )}
+        </View>
         {items.length === 0 ? (
           <View style={styles.emptyRow}>
             <PackageX size={ms(18)} color={theme.borderStrong} />
@@ -286,20 +329,6 @@ const styles = StyleSheet.create({
     paddingVertical: ms(10),
   },
   searchInput: { flex: 1, fontSize: ms(15), color: theme.text, padding: 0 },
-  resultRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: theme.bgElevated,
-    borderRadius: ms(theme.radiusSm),
-    borderWidth: 1,
-    borderColor: theme.border,
-    paddingHorizontal: ms(12),
-    paddingVertical: ms(10),
-    marginTop: ms(6),
-  },
-  resultName: { flex: 1, fontSize: ms(14), fontWeight: '600', color: theme.text },
-  resultStock: { fontSize: ms(12), color: theme.textMuted, marginLeft: ms(8) },
   form: { gap: ms(10) },
   productCard: {
     flexDirection: 'row',
@@ -365,13 +394,20 @@ const styles = StyleSheet.create({
     paddingVertical: ms(14),
   },
   submitText: { color: '#fff', fontSize: ms(15), fontWeight: '700' },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: ms(16),
+    marginBottom: ms(6),
+  },
   sectionTitle: {
     fontSize: ms(13),
     fontWeight: '700',
     color: theme.textMuted,
-    marginTop: ms(16),
-    marginBottom: ms(6),
   },
+  clearBtn: { flexDirection: 'row', alignItems: 'center', gap: ms(5), padding: ms(4) },
+  clearText: { fontSize: ms(12), fontWeight: '600', color: theme.danger },
   emptyRow: { flexDirection: 'row', alignItems: 'center', gap: ms(8), paddingVertical: ms(8) },
   emptyText: { fontSize: ms(12), color: theme.textMuted, fontStyle: 'italic' },
   itemRow: {

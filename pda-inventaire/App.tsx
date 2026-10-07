@@ -5,23 +5,18 @@ import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import LoginScreen from './src/screens/LoginScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import ScannerScreen from './src/screens/ScannerScreen';
-import { authService } from './src/services/auth';
+import { useAuthStore } from './src/stores/useAuthStore';
+import { useSettingsStore } from './src/stores/useSettingsStore';
+import { loadStoredLanguage } from './src/i18n';
+import { theme } from './src/config/theme';
 import type { Inventaire } from './src/services/inventaire';
-import { setUnauthorizedCallback } from './src/services/api';
 
 type Screen = 'loading' | 'login' | 'home' | 'scanner';
 
 export default function App() {
+  const { isAuthenticated } = useAuthStore();
   const [currentScreen, setCurrentScreen] = useState<Screen>('loading');
   const [selectedInventaire, setSelectedInventaire] = useState<Inventaire | null>(null);
-
-  // Enregistrer le callback de déconnexion globale
-  useEffect(() => {
-    setUnauthorizedCallback(() => {
-      setSelectedInventaire(null);
-      setCurrentScreen('login');
-    });
-  }, []);
 
   // Vérifier l'authentification au démarrage
   useEffect(() => {
@@ -30,8 +25,10 @@ export default function App() {
 
   const checkAuth = async () => {
     try {
-      const { isAuthenticated } = await authService.checkAuth();
-      setCurrentScreen(isAuthenticated ? 'home' : 'login');
+      await useSettingsStore.getState().load();
+      await loadStoredLanguage();
+      const restored = await useAuthStore.getState().restoreSession();
+      setCurrentScreen(restored ? 'home' : 'login');
     } catch (error) {
       console.error('Erreur vérification auth:', error);
       setCurrentScreen('login');
@@ -43,6 +40,7 @@ export default function App() {
   };
 
   const handleLogout = () => {
+    setSelectedInventaire(null);
     setCurrentScreen('login');
   };
 
@@ -60,7 +58,7 @@ export default function App() {
   if (currentScreen === 'loading') {
     return (
       <View style={styles.loading}>
-        <ActivityIndicator size="large" color="#059669" />
+        <ActivityIndicator size="large" color={theme.primary} />
         <StatusBar style="dark" />
       </View>
     );
@@ -94,12 +92,12 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: theme.bg,
   },
   loading: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f8fafc',
+    backgroundColor: theme.bg,
   },
 });

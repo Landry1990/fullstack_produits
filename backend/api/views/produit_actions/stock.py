@@ -102,8 +102,11 @@ class ProduitStockMixin:
             history.append({
                 'date': v['facture__date'],
                 'type': 'SORTIE',
-                'quantity': -v['quantity'], 
-                'stock_apres': 0, 
+                'quantity': -v['quantity'],
+                # Pas de snapshot réel pour les ventes → None : la
+                # boucle finale garde le recalcul chaîné pour ces
+                # lignes (un 0 ici serait pris pour un vrai snapshot).
+                'stock_apres': None, 
                 'libelle': f"Vente Facture #{v['facture__numero_facture'] or v['facture__id']}",
                 'prix_unitaire': v['selling_price'],
                 'user': '',
@@ -168,16 +171,26 @@ class ProduitStockMixin:
 
         history.sort(key=lambda x: x['date'], reverse=True)
         
-        current_stock = produit.total_stock 
-        running_stock = current_stock
-        
+        # « stock_apres » : snapshot réel enregistré au moment du
+        # mouvement quand il existe — plus juste que la chaîne
+        # recalculée à rebours (qui masque les stocks négatifs et les
+        # resynchronisations stock=somme des lots faites en réception).
+        # Les lignes sans snapshot (anciennes données) gardent le
+        # recalcul chaîné depuis le stock actuel.
+        running_stock = produit.total_stock
+
         for item in history:
-            item['stock_apres'] = running_stock
             change_qty = item['quantity']
             if item.get('type') == MouvementStock.TypeMouvement.REAPPRO_INTERSTOCK:
                 change_qty = 0
-                
-            stock_before = running_stock - change_qty
+
+            stored = item.get('stock_apres')
+            if stored is not None:
+                item['stock_apres'] = stored
+            else:
+                item['stock_apres'] = running_stock
+
+            stock_before = item['stock_apres'] - change_qty
             item['stock_avant'] = stock_before
             running_stock = stock_before
             

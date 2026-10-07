@@ -95,6 +95,26 @@ export function DashboardScreen({ onBack }: { onBack: () => void }) {
               </View>
             )}
 
+            {/* Marge du jour (rôles globaux uniquement) */}
+            {global && stats.margin_today != null && (
+              <View style={styles.row}>
+                <View style={styles.card}>
+                  <View style={styles.cardIconRow}>
+                    <TrendingUp size={ms(14)} color={theme.primary} />
+                    <Text style={styles.cardLabel}>{t('dashboard.today_margin')}</Text>
+                  </View>
+                  <Text style={styles.cardValue}>{fmtF(stats.margin_today)}</Text>
+                  {stats.revenue && stats.revenue.value > 0 && (
+                    <Text style={styles.cardMeta}>
+                      {t('dashboard.margin_pct', {
+                        pct: ((stats.margin_today / stats.revenue.value) * 100).toFixed(1),
+                      })}
+                    </Text>
+                  )}
+                </View>
+              </View>
+            )}
+
             {/* Stats personnelles — toujours présentes */}
             <View style={styles.row}>
               <View style={styles.card}>

@@ -10,6 +10,60 @@
 
 ## ✅ Déjà en place
 
+- [x] **Entrée en stock (réception → commande web)** (2026-10-06) :
+  écran `EntreeStockScreen` (carte accueil) — le mobile prépare la
+  **liste**, la vraie entrée en stock reste la clôture web. Fournisseur
+  **obligatoire** — menu déroulant `FournisseurPickerModal` (liste
+  complète `GET /fournisseurs/` + filtre local). Saisie produit par
+  produit : scan caméra/douchette ou recherche débouncée. Datamatrix
+  GS1 aligné sur le web (`useDataMatrixScanner`) : lot + expiration
+  du code remplissent la **ligne sans lot** existante, même lot →
+  incrémente, nouveau lot → ligne préremplie (pas de lookup StockLot
+  — le lot reçu n'existe pas encore).
+  `EntreeStockLineModal` = fiche ligne préremplie (dernier prix
+  d'achat `cost_price`, TVA, marge, prix de vente) avec champs
+  **liés** identiques au web (`useCommandeProductLines`, type LOC) :
+  achat/marge/TVA → `PV = round(achat × marge × (1+tva/100))`, PV →
+  marge recalculée. TVA en **menu déroulant** (taux `GET /tva/` actifs).
+  Quantité, UG, lot, expiration MM/AA aussi éditables.
+  Brouillon persisté par vendeur (`draft.entree.<user>`) + store
+  `useEntreeStockStore`. **Réceptions en attente**
+  (`usePendingEntreeStore` + `PendingEntreeModal`, clé
+  `pending.entree.<user>`, max 30) : icône pause = mettre de côté,
+  icône horloge + badge = liste — reprendre (remplace, confirmé) ou
+  fusionner (quantités + par couple produit+lot) ; l'id de commande
+  déjà créée survit à la mise en attente → re-synchro sans doublon.
+  Téléversement = `POST /commandes/` (type LOC,
+  statut PREP) puis `POST /commande-produits/bulk_sync/` (atomique,
+  mêmes règles que le web : fusion produit+lot, warnings marge) —
+  **aucun changement backend**. Retry sûr : l'id de commande créée est
+  conservé, un second envoi re-synchronise sur la même commande au lieu
+  d'en créer une nouvelle. Traductions FR/EN (`entree.*`).
+- [x] **Adaptation petit écran (PDA 7" ~605dp)** (2026-10-06) :
+  `scale.ts` — ratio par bandes : ×1 téléphone (≤420dp), **jusqu'à
+  ×0.8 sur petit PDA** (420-700dp ; 605dp ≈ ×0.86), croissance ×1.17→
+  ×1.5 tablette (700→900dp+ ; 12" inchangé). `moderateScale` devient
+  asymétrique : réduction pleine, croissance atténuée ×0.5. Accueil et
+  login wrappés en `ScrollView` (centré si tout tient, scrollable
+  sinon, scrollbar persistante Android) ; login sous
+  `KeyboardAvoidingView`.
+- [x] **Purge des signalements traités** (2026-10-06) : bouton « Vider »
+  dans l'en-tête « Derniers signalements » (visible si ≥1 signalement
+  traité, confirmation) → `DELETE /signalements-besoins/vider/` supprime
+  les `INTÉGRÉ`/`IGNORÉ`, conserve les `NOUVEAU`. i18n fr/en.
+- [x] **Résultat de recherche produit unifié** (2026-10-06) : vente,
+  entrée en stock, ajustement et signalement utilisent désormais le même
+  composant `ProductRow` (celui de la vente) — nom pondéré selon stock
+  (extra-gras en stock / atténué à 0 / rouge négatif), CIP, stock coloré
+  et prix sur une ligne. Anciennes lignes simplifiées supprimées.
+- [x] **Signalement « produit manquant »** (2026-10-06) : écran
+  `SignalementScreen` (carte accueil) — scan/recherche produit, quantité
+  et note optionnelles, liste des derniers signalements avec badge de
+  statut (À traiter / Intégré / Ignoré). Backend : nouveau modèle
+  `SignalementBesoin` + `POST/GET /signalements-besoins/` ; côté web,
+  les signalements apparaissent dans les suggestions de commande
+  (badge « DEMANDÉ TERRAIN » + lignes ajoutées si non suggérées) et
+  passent `INTEGRE` quand le produit part en commande.
 - [x] **Écran d'accueil avec menu** (2026-10-06) : `HomeScreen` = point
   d'entrée après login — bascule FR/EN, déconnexion, cartes Vente /
   Ajustement de stock / Tableau de bord. L'en-tête de `FacturationScreen`

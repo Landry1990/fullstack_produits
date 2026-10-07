@@ -69,7 +69,7 @@ class InventaireService {
      * Récupérer les inventaires actifs
      */
     async getInventaires(): Promise<Inventaire[]> {
-        const response = await api.get<PaginatedResponse<Inventaire> | Inventaire[]>('/api/inventaires/');
+        const response = await api.get<PaginatedResponse<Inventaire> | Inventaire[]>('/inventaires/');
         return Array.isArray(response.data) ? response.data : response.data.results;
     }
 
@@ -77,7 +77,7 @@ class InventaireService {
      * Créer un nouvel inventaire
      */
     async createInventaire(reference: string): Promise<Inventaire> {
-        const response = await api.post<Inventaire>('/api/inventaires/', { reference });
+        const response = await api.post<Inventaire>('/inventaires/', { reference });
         return response.data;
     }
 
@@ -86,7 +86,7 @@ class InventaireService {
      */
     async getLignes(inventaireId: number): Promise<LigneInventaire[]> {
         const response = await api.get<PaginatedResponse<LigneInventaire> | LigneInventaire[]>(
-            `/api/inventaires/${inventaireId}/lignes/`
+            `/inventaires/${inventaireId}/lignes/`
         );
         return Array.isArray(response.data) ? response.data : response.data.results;
     }
@@ -96,7 +96,7 @@ class InventaireService {
      */
     async addLigne(inventaireId: number, ligne: CreateLigneInventaire): Promise<LigneInventaire> {
         const response = await api.post<LigneInventaire>(
-            `/api/inventaires/${inventaireId}/lignes/`,
+            `/inventaires/${inventaireId}/lignes/`,
             ligne
         );
         return response.data;
@@ -107,7 +107,7 @@ class InventaireService {
      */
     async updateLigne(inventaireId: number, ligneId: number, quantite_physique: number): Promise<LigneInventaire> {
         const response = await api.patch<LigneInventaire>(
-            `/api/lignes-inventaire/${ligneId}/`,
+            `/lignes-inventaire/${ligneId}/`,
             { quantite_physique }
         );
         return response.data;
@@ -118,7 +118,7 @@ class InventaireService {
      */
     async bulkImport(inventaireId: number, lignes: CreateLigneInventaire[]): Promise<{ imported: number; errors: string[] }> {
         const response = await api.post<{ imported: number; errors: string[] }>(
-            `/api/inventaires/${inventaireId}/lignes/bulk/`,
+            `/inventaires/${inventaireId}/lignes/bulk/`,
             { lignes }
         );
         return response.data;
@@ -137,7 +137,7 @@ class ProduitService {
         }
 
         try {
-            const response = await api.get<Produit>(`/api/produits/by-cip/${cip}/`);
+            const response = await api.get<Produit>(`/produits/by-cip/${cip}/`);
             return response.data;
         } catch (error: unknown) {
             const axiosError = error as { response?: { status?: number }; message?: string };
@@ -157,7 +157,7 @@ class ProduitService {
      */
     async search(query: string): Promise<Produit[]> {
         const response = await api.get<PaginatedResponse<Produit> | Produit[]>(
-            `/api/produits/?search=${encodeURIComponent(query)}`
+            `/produits/?search=${encodeURIComponent(query)}`
         );
         return Array.isArray(response.data) ? response.data : response.data.results;
     }
@@ -168,7 +168,7 @@ class ProduitService {
     async getLots(produitId: number, inventoryType: Inventaire['inventory_type'] = 'RAYON'): Promise<StockLot[]> {
         const stockFilter = inventoryType === 'RESERVE' ? 'quantity_reserved_gt' : 'quantity_remaining_gt';
         const response = await api.get<PaginatedResponse<StockLot> | StockLot[]>(
-            `/api/stock-lots/?produit=${produitId}&${stockFilter}=0`
+            `/stock-lots/?produit=${produitId}&${stockFilter}=0`
         );
         return Array.isArray(response.data) ? response.data : response.data.results;
     }
@@ -180,7 +180,7 @@ class ProduitService {
 
         while (true) {
             const response = await api.get<PaginatedResponse<Produit>>(
-                `/api/produits/?page_size=${pageSize}&page=${page}`
+                `/produits/?page_size=${pageSize}&page=${page}`
             );
             const results = response.data.results || [];
             all.push(...results);

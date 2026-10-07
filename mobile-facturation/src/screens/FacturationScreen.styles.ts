@@ -156,6 +156,16 @@ export const styles = StyleSheet.create({
   clientCardCompact: { marginTop: ms(6), paddingVertical: ms(6) },
   remiseRowCompact: { marginTop: ms(6) },
   footerRowCompact: { marginTop: ms(6), marginBottom: ms(2) },
-  totalBoxCompact: { paddingVertical: ms(6) },
+  // Total en ligne (label + valeur côte à côte, extras en dessous) —
+  // divise presque la hauteur du bloc par deux ; le bouton Envoyer,
+  // étiré à sa hauteur, se compacte en conséquence.
+  totalBoxCompact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    columnGap: ms(8),
+    paddingVertical: ms(6),
+  },
+  totalValueCompact: { fontSize: ms(16) },
   sendBtnCompact: { paddingVertical: ms(8) },
 });

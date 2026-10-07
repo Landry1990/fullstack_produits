@@ -27,6 +27,8 @@ export const theme = {
   dangerWash: '#fef2f2',
   warning: '#d97706',
   warningWash: '#fffbeb',
+  info: '#2563eb',
+  infoWash: 'rgba(37, 99, 235, 0.12)',
 
   // Borders
   border: '#e2e8f0',

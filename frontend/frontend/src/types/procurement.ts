@@ -47,6 +47,13 @@ export interface CommandeProduit {
     produit_cip?: string
     produit_ref?: string
     produit_stock?: number
+    // Snapshot enregistré à la clôture (null tant que la commande n'est
+    // pas clôturée) — référence exacte pour le bon de réception.
+    produit_stock_apres_reception?: number | null
+    // Vrai stock avant réception (dernier MouvementStock avant la
+    // clôture) — le resync stock=somme(lots) de la clôture peut masquer
+    // un stock dérivé négatif ; null si aucun mouvement antérieur.
+    produit_stock_avant_reception?: number | null
     produit_dernier_achat?: string | null
     produit_dernier_vente?: string | null
     produit_rotation_moyenne?: number | string

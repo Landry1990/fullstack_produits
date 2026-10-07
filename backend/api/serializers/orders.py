@@ -3,12 +3,14 @@ Serializers pour les commandes, fournisseurs et paiements.
 """
 from decimal import ROUND_HALF_UP, Decimal
 
+from django.db.models import OuterRef, Subquery
 from rest_framework import serializers
 
 from ..models import (
     Commande,
     CommandeProduit,
     Fournisseur,
+    MouvementStock,
     OrderSchedule,
     PaiementFournisseur,
 )
@@ -210,6 +212,38 @@ class CommandeSerializer(serializers.ModelSerializer):
                 }
             }
         }
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # Bon de réception : « stock antérieur » = snapshot du dernier
+        # MouvementStock du produit AVANT la clôture. La clôture
+        # resynchronise stock = somme des lots (les négatifs dérivés
+        # sont corrigés silencieusement) — seul l'historique des
+        # mouvements conserve le vrai avant, y compris négatif.
+        # Une seule sous-requête corrélée par commande, uniquement CLOT.
+        if (
+            instance.status == Commande.Status.CLOTUREE
+            and instance.date_cloture
+            and data.get('produits')
+        ):
+            dernier_mvt = (
+                MouvementStock.objects
+                .filter(
+                    produit=OuterRef('produit_id'),
+                    date__lt=instance.date_cloture,
+                    stock_apres__isnull=False,
+                )
+                .exclude(commande=instance)
+                .order_by('-date')
+            )
+            avant_map = dict(
+                instance.produits
+                .annotate(_avant=Subquery(dernier_mvt.values('stock_apres')[:1]))
+                .values_list('id', '_avant')
+            )
+            for ligne in data['produits']:
+                ligne['produit_stock_avant_reception'] = avant_map.get(ligne['id'])
+        return data
 
     def get_fournisseur_nom(self, obj):
         if obj.fournisseur:

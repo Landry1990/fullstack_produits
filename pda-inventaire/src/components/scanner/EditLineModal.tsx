@@ -10,6 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { theme } from '../../config/theme';
 
 interface EditLine {
@@ -37,6 +38,7 @@ export default function EditLineModal({
   loading,
 }: EditLineModalProps) {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
 
   const decrease = () => {
     const current = parseInt(quantity || '0', 10);
@@ -55,9 +57,9 @@ export default function EditLineModal({
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <View style={styles.card}>
-          <Text style={styles.title}>Modifier la quantité</Text>
+          <Text style={styles.title}>{t('scanner.edit_quantity')}</Text>
           <Text style={styles.productName} numberOfLines={2}>
-            {line.produit_nom || `Produit #${line.produit}`}
+            {line.produit_nom || t('scanner.product_fallback', { id: line.produit })}
           </Text>
 
           <View style={styles.quantityRow}>
@@ -79,14 +81,14 @@ export default function EditLineModal({
 
           <View style={styles.actions}>
             <TouchableOpacity style={styles.cancelBtn} onPress={onCancel} disabled={loading}>
-              <Text style={styles.cancelBtnText}>Annuler</Text>
+              <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.validateBtn, loading && styles.disabled]}
               onPress={onSave}
               disabled={loading}
             >
-              <Text style={styles.validateBtnText}>{loading ? 'Enregistrement...' : 'Valider'}</Text>
+              <Text style={styles.validateBtnText}>{loading ? t('scanner.save_loading') : t('common.validate')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -119,7 +121,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   productName: {
-    color: '#0f172a',
+    color: theme.text,
     fontSize: 17,
     fontWeight: '700',
     textAlign: 'center',
@@ -136,28 +138,28 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: theme.bgMuted,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: theme.border,
   },
   qtyBtnText: {
-    color: '#1e293b',
+    color: theme.textSecondary,
     fontSize: 30,
     fontWeight: '400',
   },
   qtyInput: {
     width: 118,
     height: 64,
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.bgElevated,
     borderRadius: 12,
-    color: '#0f172a',
+    color: theme.text,
     fontSize: 30,
     textAlign: 'center',
     fontWeight: '800',
     borderWidth: 2,
-    borderColor: '#059669',
+    borderColor: theme.primary,
   },
   actions: {
     flexDirection: 'row',
@@ -167,12 +169,12 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 52,
     borderRadius: 11,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: theme.bgMuted,
     justifyContent: 'center',
     alignItems: 'center',
   },
   cancelBtnText: {
-    color: '#1e293b',
+    color: theme.textSecondary,
     fontSize: 15,
     fontWeight: '700',
   },
@@ -180,12 +182,12 @@ const styles = StyleSheet.create({
     flex: 2,
     minHeight: 52,
     borderRadius: 11,
-    backgroundColor: '#059669',
+    backgroundColor: theme.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   validateBtnText: {
-    color: '#fff',
+    color: theme.textOnPrimary,
     fontSize: 15,
     fontWeight: '800',
   },

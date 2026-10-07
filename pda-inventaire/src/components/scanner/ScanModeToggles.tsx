@@ -1,5 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { theme } from '../../config/theme';
 
 interface ScanModeTogglesProps {
   continuousScanMode: boolean;
@@ -14,6 +16,8 @@ export default function ScanModeToggles({
   onToggleContinuous,
   onToggleRapid,
 }: ScanModeTogglesProps) {
+  const { t } = useTranslation();
+
   const handleManual = () => {
     if (continuousScanMode) onToggleContinuous();
     if (rapidCountMode) onToggleRapid();
@@ -32,7 +36,7 @@ export default function ScanModeToggles({
         activeOpacity={0.7}
       >
         <Text style={[styles.modeBtnText, continuousScanMode && styles.modeBtnTextActive]}>
-          Scan continu
+          {t('scanner.continuous')}
         </Text>
       </TouchableOpacity>
 
@@ -47,7 +51,7 @@ export default function ScanModeToggles({
         activeOpacity={0.7}
       >
         <Text style={[styles.modeBtnText, rapidCountMode && styles.modeBtnTextActive]}>
-          +1 rapide
+          {t('scanner.rapid')}
         </Text>
       </TouchableOpacity>
 
@@ -65,7 +69,7 @@ export default function ScanModeToggles({
             !continuousScanMode && !rapidCountMode && styles.modeBtnTextActive,
           ]}
         >
-          Manuel
+          {t('scanner.manual')}
         </Text>
       </TouchableOpacity>
     </View>
@@ -82,16 +86,16 @@ const styles = StyleSheet.create({
   modeBtn: {
     paddingVertical: 8,
     paddingHorizontal: 14,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: theme.bgMuted,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: theme.border,
     minWidth: 90,
     alignItems: 'center',
   },
   modeBtnActive: {
-    backgroundColor: '#059669',
-    borderColor: '#059669',
+    backgroundColor: theme.primary,
+    borderColor: theme.primary,
   },
   modeBtnDisabled: {
     opacity: 0.5,
@@ -99,9 +103,9 @@ const styles = StyleSheet.create({
   modeBtnText: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#1e293b',
+    color: theme.textSecondary,
   },
   modeBtnTextActive: {
-    color: '#fff',
+    color: theme.textOnPrimary,
   },
 });

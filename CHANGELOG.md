@@ -1,5 +1,122 @@
 # Changelog — Fullstack Produits
 
+## 2026-10-07 — 📱 PDA Inventaire : login au modèle mobile-facturation
+
+- **PDA Inventaire** : refonte du login sur le modèle `mobile-facturation`.
+  Connexion par **URL serveur + mot de passe seul** (le backend identifie
+  l'utilisateur via `/api/auth/token/` avec `workstation: 'PDA Inventaire'`).
+- Nouveau store Zustand `useAuthStore` : persistance du token, username et
+  `serverUrl` dans `expo-secure-store` ; `restoreSession` au boot.
+- `api.ts` : `baseURL` et token lus depuis le store à chaque requête ;
+  déconnexion automatique sur 401 via le store (plus de callback global).
+- `src/services/inventaire.ts` : retrait du préfixe `/api` des endpoints
+  (déjà présent dans `baseURL` du store), corrige les 404 au chargement
+  des inventaires après connexion.
+- Internationalisation FR/EN avec `i18next` + `react-i18next` +
+  `expo-localization` : traduction complète du login, Home, Scanner et
+  composants associés. Sélecteur de langue sur l'écran de connexion,
+  langue persistée dans `secureStore`.
+- UI alignée sur le design system existant (`theme.ts`) : fond slate,
+  accents emerald, cartes arrondies.
+- Suppression de `src/services/auth.ts` et nettoyage des clés de stockage
+  obsolètes (`STORAGE_KEYS.AUTH_TOKEN`, `STORAGE_KEYS.USER_INFO`).
+- Fichiers : `package.json`, `App.tsx`, `src/screens/LoginScreen.tsx`,
+  `src/screens/HomeScreen.tsx`, `src/screens/ScannerScreen.tsx`,
+  `src/services/api.ts`, `src/config/index.ts`,
+  `src/stores/useAuthStore.ts`, `src/stores/useSettingsStore.ts`,
+  `src/i18n/{index.ts,fr.ts,en.ts}`,
+  `src/components/scanner/{Header,ScannerInput,ProductCard,EditLineModal,RecentScans,ScanModeToggles,SyncBanner}.tsx`.
+
+## 2026-10-06 — 📱 Mobile : entrée en stock (liste → clôture web)
+
+- **Mobile-facturation** : nouvel écran `EntreeStockScreen` (carte
+  « Entrée en stock » sur l'accueil). Le mobile prépare la **liste de
+  réception** ; l'entrée en stock effective reste la **clôture web**
+  (inchangée). Fournisseur **obligatoire** avant téléversement, choisi
+  dans un **menu déroulant** (`FournisseurPickerModal` — liste complète
+  `/fournisseurs/` + filtre local).
+- Saisie **produit par produit** comme pda-inventaire : recherche
+  débouncée ou scan (caméra/douchette). Scan **datamatrix GS1** aligné
+  sur le web (`useDataMatrixScanner`) : lot + expiration extraits du
+  code remplissent la **ligne existante sans lot** du produit ; même
+  produit + même lot → incrémente ; nouveau lot → ligne préremplie
+  (pas via `/stock-lots/by-datamatrix/` — le lot reçu n'existe pas
+  encore en stock) ; résolution produit par CIP (`by-cip`) + détail.
+- `EntreeStockLineModal` : fiche ligne préremplie au dernier prix
+  d'achat (`cost_price`), TVA, coefficient de marge et prix de vente ;
+  **champs liés** identiques au web (`useCommandeProductLines`, type
+  LOC) : achat/marge/TVA → `PV TTC = round(achat × marge × (1+tva/100))`,
+  vente → marge recalculée. **TVA en menu déroulant** (taux configurés
+  `GET /tva/`, ex. 0 / 19.25). Quantité, unités gratuites, lot et
+  expiration MM/AA éditables ; produits `use_lot_management` signalés.
+- Store `useEntreeStockStore` + brouillon persisté par vendeur
+  (`draft.entree.<user>`, kv-store) : une longue réception survit à la
+  fermeture de l'app.
+- **Réceptions en attente** (`usePendingEntreeStore` +
+  `PendingEntreeModal`, kv-store `pending.entree.<user>`, max 30) :
+  icône pause en en-tête pour mettre de côté la réception courante,
+  icône horloge + badge pour rouvrir la liste — **reprendre** (remplace,
+  avec confirmation si la liste courante est remplie) ou **fusionner**
+  (quantités additionnées par couple produit+lot, fournisseur/commande
+  courants conservés). L'id de commande déjà créée est conservé dans la
+  mise en attente → la reprise re-synchronise sur la même commande.
+- **Téléversement** : `POST /commandes/` (LOC, `PREP`) puis
+  `POST /commande-produits/bulk_sync/` — endpoint existant, **aucun
+  changement backend**. La commande apparaît « En préparation » sur le
+  web pour vérification puis clôture (stocks, lots, PMP inchangés).
+  Retry sûr : l'id de commande est conservé — un second envoi
+  re-synchronise la même commande (bulk_sync = remplacement total).
+- **Mobile — produit manquant : purge de la liste** : bouton « Vider »
+  dans l'en-tête « Derniers signalements » (visible dès qu'un signalement
+  traité existe, confirmation système) → nouveau endpoint
+  `DELETE /signalements-besoins/vider/` qui supprime les signalements
+  `INTÉGRÉ`/`IGNORÉ` et conserve les `NOUVEAU` en attente.
+  `besoins.py`, `api.ts`, `SignalementScreen.tsx`, fr/en.
+- **Fix web (stocks avant/après réception — bon + onglet MVMTS)** :
+  la clôture resynchronise `stock = somme(lots)` pour les produits
+  gérés par lot, ce qui **corrige silencieusement un stock négatif
+  dérivé** (ex. vente forcée → stock -1, lots à 0 → réception de 2
+  affichait `0→2` au lieu de `-1→+2→1`). Trois corrections :
+  - **Bon de réception** (`printHelpers.ts`) : « avant » = vrai stock
+    pré-réception (nouveau champ `produit_stock_avant_reception` =
+    dernier `MouvementStock` avant clôture, négatif affiché tel quel) ;
+    « stock actuel » = formule demandée `avant + reçu + UG` (fallback
+    déduit du snapshot si pas d'historique).
+  - **Serializer** (`orders.py`) : `CommandeSerializer.to_representation`
+    injecte `produit_stock_avant_reception` par ligne pour les commandes
+    `CLOT` (une sous-requête corrélée indexée, pas de N+1).
+  - **Onglet MVMTS produit** (`produit_actions/stock.py`) : l'historique
+    n'écrase plus `stock_apres` avec la chaîne recalculée depuis le
+    stock actuel — le **snapshot réel** du mouvement est affiché quand
+    il existe (les ventes forcées affichent désormais leur vrai
+    `0 → -1`). Lignes sans snapshot (pseudo-lignes VENTE, vieilles
+    données) : recalcul chaîné conservé.
+- Fichiers : `src/screens/EntreeStockScreen.tsx`,
+  `src/components/EntreeStockLineModal.tsx`,
+  `src/stores/useEntreeStockStore.ts`, `src/services/api.ts`
+  (`searchFournisseurs`, `createEntreeCommande`, `syncCommandeProduits`),
+  `types/index.ts` (`Fournisseur`, `EntreeStockLine`, `cost_price`/
+  `taux_marge` produit), `App.tsx`, `HomeScreen.tsx`, `theme.ts`
+  (accent `info`), i18n FR/EN (`entree.*`, `home.menu_entree*`).
+
+## 2026-10-06 — 📱🖥️ Signalement « produit manquant » (terrain → commande)
+
+- **Backend** : nouveau modèle `SignalementBesoin` (produit, quantité,
+  note, utilisateur, statut NOUVEAU/INTEGRE/IGNORE) + migration `0265`
+  + `SignalementBesoinViewSet` (`/api/signalements-besoins/`, actions
+  `integrer/`/`ignorer/`). Distinct volontairement de
+  `RuptureFournisseur` (indisponibilité chez le grossiste ≠ manque en
+  rayon).
+- **Mobile** : écran `SignalementScreen` (carte « Produit manquant » sur
+  l'accueil) — scan/recherche, quantité + note optionnelles, liste des
+  derniers signalements avec badge de statut.
+- **Web** : `SuggestionCommandeModal` charge les signalements NOUVEAU —
+  badge violet « DEMANDÉ TERRAIN » sur les produits déjà suggérés,
+  lignes ajoutées en fin de liste pour ceux que l'analyse n'a pas
+  recommandés ; les signalements des produits partant en commande
+  passent `INTEGRE` automatiquement.
+- Traductions FR/EN (mobile `signalement.*`, web `orders:suggestion_modal`).
+
 ## 2026-10-06 — 📱 Mobile : écran d'accueil avec menu
 
 - Nouveau `HomeScreen` = point d'entrée post-login : bascule FR/EN,

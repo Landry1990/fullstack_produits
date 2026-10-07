@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { theme } from '../../config/theme';
 
 interface SyncBannerProps {
@@ -20,6 +21,8 @@ export default function SyncBanner({
   syncing,
   onSync,
 }: SyncBannerProps) {
+  const { t } = useTranslation();
+
   if (offlineCount === 0) return null;
 
   return (
@@ -36,7 +39,7 @@ export default function SyncBanner({
         <ActivityIndicator color={theme.textOnPrimary} size="small" />
       ) : (
         <Text style={[styles.syncBannerText, !isOnline && styles.syncBannerTextMuted]}>
-          {offlineCount} ligne(s) en attente — Terminer pour envoyer
+          {t('scanner.sync_banner', { count: offlineCount })}
         </Text>
       )}
     </TouchableOpacity>
