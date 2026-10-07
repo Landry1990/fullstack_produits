@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform, Alert } from 'react-native';
-import { ShoppingCart, PackagePlus, PackageX, BarChart3, LogOut, Store } from 'lucide-react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, Alert, ScrollView, useWindowDimensions } from 'react-native';
+import { ShoppingCart, PackagePlus, PackageX, PackageCheck, BarChart3, LogOut, Store } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../stores/useAuthStore';
@@ -17,6 +17,10 @@ export function HomeScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { username, posteVente, logout } = useAuthStore();
+  // Écran suffisamment large → menu en 2 colonnes (PDA portrait 605dp
+  // compris) ; téléphone portrait (~390-420dp) reste en 1 colonne.
+  const { width } = useWindowDimensions();
+  const twoCols = width >= 560;
 
   const handleLogout = () => {
     Alert.alert(t('home.logout_title'), t('home.logout_msg'), [
@@ -43,6 +47,15 @@ export function HomeScreen({ navigation }: Props) {
       screen: 'Ajustement',
       accent: theme.warning,
       bg: theme.warningWash,
+    },
+    {
+      key: 'entree',
+      icon: PackageCheck,
+      label: t('home.menu_entree'),
+      desc: t('home.menu_entree_desc'),
+      screen: 'EntreeStock',
+      accent: theme.info,
+      bg: theme.infoWash,
     },
     {
       key: 'signalement',
@@ -94,14 +107,19 @@ export function HomeScreen({ navigation }: Props) {
         </TouchableOpacity>
       </View>
 
-      {/* Menu principal */}
-      <View style={styles.menu}>
+      {/* Menu principal — ScrollView : centré quand tout tient,
+          scrollable sur petit écran (scrollbar persistante Android). */}
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={[styles.menu, twoCols && styles.menuGrid]}
+        persistentScrollbar
+      >
         {menu.map((m) => {
           const Icon = m.icon;
           return (
             <TouchableOpacity
               key={m.key}
-              style={styles.card}
+              style={[styles.card, twoCols && styles.cardHalf]}
               activeOpacity={0.7}
               onPress={() => navigation?.navigate(m.screen)}
             >
@@ -115,7 +133,7 @@ export function HomeScreen({ navigation }: Props) {
             </TouchableOpacity>
           );
         })}
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -137,7 +155,11 @@ const styles = StyleSheet.create({
   posteText: { fontSize: ms(12), color: theme.textSecondary },
   iconBtn: { padding: ms(8) },
   langText: { fontSize: ms(13), fontWeight: '700', color: theme.textMuted },
-  menu: { flex: 1, padding: ms(16), gap: ms(12), justifyContent: 'center' },
+  // contentContainerStyle du ScrollView : flexGrow + centrage =
+  // contenu centré s'il tient, scrollable sinon.
+  menu: { flexGrow: 1, padding: ms(16), gap: ms(12), justifyContent: 'center' },
+  // Grille paysage : lignes wrap centrées verticalement, 2 colonnes.
+  menuGrid: { flexDirection: 'row', flexWrap: 'wrap', alignContent: 'center' },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -148,6 +170,7 @@ const styles = StyleSheet.create({
     borderColor: theme.border,
     padding: ms(18),
   },
+  cardHalf: { width: '48%' },
   iconBox: {
     width: ms(52),
     height: ms(52),

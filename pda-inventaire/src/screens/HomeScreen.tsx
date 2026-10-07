@@ -12,12 +12,13 @@ import {
 } from 'react-native';
 import { showAlert } from '../utils/alert';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { inventaireService } from '../services/inventaire';
 import { produitService } from '../services/inventaire';
 import { productCacheService } from '../services/productCache';
 import type { Inventaire } from '../services/inventaire';
-import { authService } from '../services/auth';
-import type { User } from '../services/auth';
+import { useAuthStore } from '../stores/useAuthStore';
+import { theme } from '../config/theme';
 
 interface HomeScreenProps {
   onSelectInventaire: (inventaire: Inventaire) => void;
@@ -31,12 +32,13 @@ const generateDefaultReference = () => {
 
 export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenProps) {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
+  const { username, logout } = useAuthStore();
   const [inventaires, setInventaires] = useState<Inventaire[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [catalogLoading, setCatalogLoading] = useState(false);
   const [catalogCount, setCatalogCount] = useState<number | null>(null);
-  const [user, setUser] = useState<User | null>(null);
   
   // Filtre: Mes inventaires vs Tous
   const [filter, setFilter] = useState<'MINE' | 'ALL'>('MINE');
@@ -48,17 +50,13 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
 
   const loadData = async () => {
     try {
-      const [invData, userData] = await Promise.all([
-        inventaireService.getInventaires(),
-        authService.getUser(),
-      ]);
+      const invData = await inventaireService.getInventaires();
       setInventaires(invData.filter(i => i.status === 'EN_COURS'));
-      setUser(userData);
     } catch (error: unknown) {
       const status = (error as { response?: { status?: number } }).response?.status;
       if (status !== 401) {
         console.error('Erreur chargement:', error);
-        showAlert('Erreur', 'Impossible de charger les inventaires');
+        showAlert(t('common.error'), t('home.inventories_error'));
       }
     } finally {
       setLoading(false);
@@ -81,10 +79,10 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
     try {
       const produits = await produitService.downloadCatalog();
       setCatalogCount(produits.length);
-      showAlert('Catalogue téléchargé', `${produits.length} produit(s) mis en cache. Le scan est maintenant utilisable hors ligne.`);
+      showAlert(t('home.catalog_downloaded'), t('home.catalog_downloaded_msg', { count: produits.length }));
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Impossible de télécharger le catalogue';
-      showAlert('Erreur', message);
+      const message = error instanceof Error ? error.message : t('home.catalog_download_error');
+      showAlert(t('common.error'), message);
     } finally {
       setCatalogLoading(false);
     }
@@ -97,15 +95,15 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
 
   const handleLogout = () => {
     showAlert(
-      'Déconnexion',
-      'Voulez-vous vraiment vous déconnecter ?',
+      t('home.logout_title'),
+      t('home.logout_msg'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         { 
-          text: 'Déconnexion', 
+          text: t('home.logout_confirm'), 
           style: 'destructive',
           onPress: async () => {
-            await authService.logout();
+            logout();
             onLogout();
           }
         },
@@ -117,7 +115,7 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
   const handleCreateInventaire = async () => {
     const reference = newReference.trim();
     if (!reference) {
-      showAlert('Erreur', 'Veuillez entrer une référence');
+      showAlert(t('common.error'), t('home.reference_required'));
       return;
     }
 
@@ -131,7 +129,7 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
     } catch (error: unknown) {
       console.error('Erreur création:', error);
       const axiosError = error as { response?: { data?: { detail?: string } } };
-      showAlert('Erreur', axiosError.response?.data?.detail || 'Impossible de créer l\'inventaire');
+      showAlert(t('common.error'), axiosError.response?.data?.detail || t('home.create_inventory_error'));
     } finally {
       setCreating(false);
     }
@@ -147,14 +145,14 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
     const lignesCount = item.lignes_count ?? item.lignes?.length ?? 0;
     const ecart = item.lignes?.reduce((total, ligne) => total + Number(ligne.ecart ?? 0), 0) ?? 0;
     const createdAt = new Date(item.created_at || item.date);
-    const title = item.reference || item.description?.trim() || `Inventaire #${item.id}`;
+    const title = item.reference || item.description?.trim() || t('home.inventory_fallback', { id: item.id });
 
     return (
       <TouchableOpacity style={styles.card} onPress={() => onSelectInventaire(item)}>
         <View style={styles.cardHeader}>
           <Text style={styles.cardTitle} numberOfLines={1}>{title}</Text>
           <View style={styles.statusPill}>
-            <Text style={styles.statusPillText}>EN COURS</Text>
+            <Text style={styles.statusPillText}>{t('home.status_in_progress')}</Text>
           </View>
         </View>
         {item.description?.trim() && item.description.trim() !== title && (
@@ -162,15 +160,15 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
         )}
         <View style={styles.cardMetrics}>
           <View>
-            <Text style={styles.metricLabel}>Créé le</Text>
+            <Text style={styles.metricLabel}>{t('home.created_at')}</Text>
             <Text style={styles.metricValue}>
               {createdAt.toLocaleDateString('fr-FR')} à {createdAt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
             </Text>
           </View>
           <View style={styles.metricRight}>
-            <Text style={styles.metricLabel}>{lignesCount} ligne{lignesCount > 1 ? 's' : ''}</Text>
+            <Text style={styles.metricLabel}>{t('common.lines_count', { count: lignesCount })}</Text>
             <Text style={[styles.ecartValue, ecart === 0 ? styles.ecartNeutral : ecart > 0 ? styles.ecartPositive : styles.ecartNegative]}>
-              Écart {ecart > 0 ? '+' : ''}{ecart}
+              {t('home.gap_label')} {ecart > 0 ? '+' : ''}{ecart}
             </Text>
           </View>
         </View>
@@ -179,8 +177,10 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
   };
 
   const filteredInventaires = inventaires.filter(i => {
-    if (filter === 'MINE' && user) {
-        return i.created_by === user.id;
+    // Le filtre "Mes inventaires" n'est plus disponible faute de l'ID
+    // utilisateur en mémoire ; tous les inventaires en cours sont affichés.
+    if (filter === 'MINE') {
+        return i.created_by_name === username;
     }
     return true;
   });
@@ -188,8 +188,8 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
   if (loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#059669" />
-        <Text style={styles.loadingText}>Chargement...</Text>
+        <ActivityIndicator size="large" color={theme.primary} />
+        <Text style={styles.loadingText}>{t('common.loading')}</Text>
       </View>
     );
   }
@@ -197,22 +197,22 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top }]}>
+      <View style={[styles.header, { paddingTop: Math.max(insets.top, 16) }]}>
         <View>
-          <Text style={styles.greeting}>Bonjour,</Text>
-          <Text style={styles.username}>{user?.username || 'Utilisateur'}</Text>
+          <Text style={styles.greeting}>{t('home.greeting')}</Text>
+          <Text style={styles.username}>{username || t('home.user_fallback')}</Text>
         </View>
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-          <Text style={styles.logoutText}>⏻</Text>
+          <Text style={styles.logoutText}>{t('home.logout_short')}</Text>
         </TouchableOpacity>
       </View>
 
       {/* Catalogue offline */}
       <View style={styles.catalogBar}>
         <View style={styles.catalogInfo}>
-          <Text style={styles.catalogLabel}>Catalogue offline</Text>
+          <Text style={styles.catalogLabel}>{t('home.catalog_label')}</Text>
           <Text style={styles.catalogCount}>
-            {catalogLoading ? 'Téléchargement...' : catalogCount !== null ? `${catalogCount} produit(s)` : 'Non chargé'}
+            {catalogLoading ? t('home.catalog_loading') : catalogCount !== null ? t('home.catalog_count', { count: catalogCount }) : t('home.catalog_empty')}
           </Text>
         </View>
         <TouchableOpacity
@@ -223,7 +223,7 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
           {catalogLoading ? (
             <ActivityIndicator color="#fff" size="small" />
           ) : (
-            <Text style={styles.catalogBtnText}>Télécharger</Text>
+            <Text style={styles.catalogBtnText}>{t('common.download')}</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -234,23 +234,23 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
           style={[styles.tab, filter === 'MINE' && styles.tabActive]} 
           onPress={() => setFilter('MINE')}
         >
-          <Text style={[styles.tabText, filter === 'MINE' && styles.tabTextActive]}>Mes Inventaires</Text>
+          <Text style={[styles.tabText, filter === 'MINE' && styles.tabTextActive]}>{t('home.tab_mine')}</Text>
         </TouchableOpacity>
         <TouchableOpacity 
           style={[styles.tab, filter === 'ALL' && styles.tabActive]} 
           onPress={() => setFilter('ALL')}
         >
-          <Text style={[styles.tabText, filter === 'ALL' && styles.tabTextActive]}>Tous</Text>
+          <Text style={[styles.tabText, filter === 'ALL' && styles.tabTextActive]}>{t('home.tab_all')}</Text>
         </TouchableOpacity>
       </View>
 
       {filteredInventaires.length === 0 ? (
         <View style={styles.empty}>
           <Text style={styles.emptyText}>
-            {filter === 'MINE' ? 'Aucun inventaire trouvé' : 'Aucun inventaire en cours'}
+            {filter === 'MINE' ? t('home.empty_mine') : t('home.empty_all')}
           </Text>
           <TouchableOpacity style={styles.createBtn} onPress={openCreateModal}>
-            <Text style={styles.createBtnText}>Créer un inventaire</Text>
+            <Text style={styles.createBtnText}>{t('home.create_inventory')}</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -280,14 +280,14 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Nouvel Inventaire</Text>
+            <Text style={styles.modalTitle}>{t('home.new_inventory_title')}</Text>
             
             <TextInput
               style={styles.modalInput}
               value={newReference}
               onChangeText={setNewReference}
-              placeholder="Référence de l'inventaire"
-              placeholderTextColor="#94a3b8"
+              placeholder={t('home.reference_placeholder')}
+              placeholderTextColor={theme.textMuted}
               autoFocus
             />
 
@@ -296,7 +296,7 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
                 style={styles.modalCancelBtn}
                 onPress={() => setShowCreateModal(false)}
               >
-                <Text style={styles.modalCancelText}>Annuler</Text>
+                <Text style={styles.modalCancelText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               
               <TouchableOpacity
@@ -307,7 +307,7 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
                 {creating ? (
                   <ActivityIndicator color="#fff" size="small" />
                 ) : (
-                  <Text style={styles.modalCreateText}>Créer</Text>
+                  <Text style={styles.modalCreateText}>{t('common.create')}</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -321,16 +321,16 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: theme.bg,
   },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f8fafc',
+    backgroundColor: theme.bg,
   },
   loadingText: {
-    color: '#64748b',
+    color: theme.textMuted,
     marginTop: 16,
     fontSize: 15,
   },
@@ -340,39 +340,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingBottom: 20,
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.bgElevated,
   },
   greeting: {
-    color: '#64748b',
+    color: theme.textMuted,
     fontSize: 14,
   },
   username: {
-    color: '#0f172a',
+    color: theme.text,
     fontSize: 22,
     fontWeight: '700',
   },
   logoutBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#f1f5f9',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: theme.dangerWash,
     justifyContent: 'center',
     alignItems: 'center',
   },
   logoutText: {
-    fontSize: 22,
-    color: '#ef4444',
+    fontSize: 14,
+    fontWeight: '700',
+    color: theme.danger,
   },
   list: {
     padding: 16,
     gap: 10,
   },
   card: {
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.bgElevated,
     borderRadius: 12,
     padding: 18,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: theme.border,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -382,7 +383,7 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     flex: 1,
-    color: '#0f172a',
+    color: theme.text,
     fontSize: 17,
     fontWeight: '700',
     marginRight: 12,
@@ -394,12 +395,12 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   statusPillText: {
-    color: '#047857',
+    color: theme.primaryDark,
     fontSize: 10,
     fontWeight: '800',
   },
   cardDescription: {
-    color: '#64748b',
+    color: theme.textMuted,
     fontSize: 13,
     marginBottom: 12,
   },
@@ -413,12 +414,12 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   metricLabel: {
-    color: '#94a3b8',
+    color: theme.textMuted,
     fontSize: 11,
     marginBottom: 3,
   },
   metricValue: {
-    color: '#1e293b',
+    color: theme.textSecondary,
     fontSize: 13,
     fontWeight: '600',
   },
@@ -427,13 +428,13 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   ecartNeutral: {
-    color: '#94a3b8',
+    color: theme.textMuted,
   },
   ecartPositive: {
-    color: '#059669',
+    color: theme.primary,
   },
   ecartNegative: {
-    color: '#dc2626',
+    color: theme.danger,
   },
   empty: {
     flex: 1,
@@ -442,12 +443,12 @@ const styles = StyleSheet.create({
     padding: 48,
   },
   emptyText: {
-    color: '#64748b',
+    color: theme.textMuted,
     fontSize: 16,
     marginBottom: 20,
   },
   createBtn: {
-    backgroundColor: '#059669',
+    backgroundColor: theme.primary,
     paddingVertical: 14,
     paddingHorizontal: 28,
     borderRadius: 10,
@@ -464,11 +465,11 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#059669',
+    backgroundColor: theme.primary,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 6,
-    shadowColor: '#0f172a',
+    shadowColor: theme.text,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 6,
@@ -486,28 +487,28 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   modalContent: {
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.bgElevated,
     borderRadius: 14,
     padding: 24,
     width: '100%',
     maxWidth: 400,
   },
   modalTitle: {
-    color: '#0f172a',
+    color: theme.text,
     fontSize: 18,
     fontWeight: '700',
     marginBottom: 20,
     textAlign: 'center',
   },
   modalInput: {
-    backgroundColor: '#f1f5f9',
+    backgroundColor: theme.bgMuted,
     borderRadius: 10,
     padding: 14,
-    color: '#0f172a',
+    color: theme.text,
     fontSize: 15,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: theme.border,
   },
   modalActions: {
     flexDirection: 'row',
@@ -517,11 +518,11 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 14,
     borderRadius: 10,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: theme.bgMuted,
     alignItems: 'center',
   },
   modalCancelText: {
-    color: '#64748b',
+    color: theme.textMuted,
     fontSize: 15,
     fontWeight: '600',
   },
@@ -529,7 +530,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 14,
     borderRadius: 10,
-    backgroundColor: '#059669',
+    backgroundColor: theme.primary,
     alignItems: 'center',
   },
   modalCreateText: {
@@ -554,43 +555,43 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   tabActive: {
-    borderBottomColor: '#059669',
+    borderBottomColor: theme.primary,
   },
   tabText: {
-    color: '#94a3b8',
+    color: theme.textMuted,
     fontSize: 15,
     fontWeight: '600',
   },
   tabTextActive: {
-    color: '#059669',
+    color: theme.primary,
   },
   catalogBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.bgElevated,
     marginHorizontal: 16,
     marginBottom: 16,
     padding: 14,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: theme.border,
   },
   catalogInfo: {
     flex: 1,
   },
   catalogLabel: {
-    color: '#64748b',
+    color: theme.textMuted,
     fontSize: 13,
     marginBottom: 2,
   },
   catalogCount: {
-    color: '#0f172a',
+    color: theme.text,
     fontSize: 15,
     fontWeight: '600',
   },
   catalogBtn: {
-    backgroundColor: '#059669',
+    backgroundColor: theme.primary,
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 10,

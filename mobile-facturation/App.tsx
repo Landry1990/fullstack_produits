@@ -11,6 +11,7 @@ import { HistoriqueScreen } from './src/screens/HistoriqueScreen';
 import { DashboardScreen } from './src/screens/DashboardScreen';
 import { AjustementScreen } from './src/screens/AjustementScreen';
 import { SignalementScreen } from './src/screens/SignalementScreen';
+import { EntreeStockScreen } from './src/screens/EntreeStockScreen';
 import { LockScreen } from './src/components/LockScreen';
 import { useAuthStore } from './src/stores/useAuthStore';
 import { useSettingsStore } from './src/stores/useSettingsStore';
@@ -182,6 +183,9 @@ export default function App() {
               </Stack.Screen>
               <Stack.Screen name="Signalement">
                 {(props) => <SignalementScreen {...props} onBack={props.navigation.goBack} />}
+              </Stack.Screen>
+              <Stack.Screen name="EntreeStock">
+                {(props) => <EntreeStockScreen {...props} onBack={props.navigation.goBack} />}
               </Stack.Screen>
             </>
           )}

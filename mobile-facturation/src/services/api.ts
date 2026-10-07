@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { useAuthStore } from '../stores/useAuthStore';
-import type { CartLine, Client, AyantDroit, Product, CurrentUser, SudoCreds, PosteVente } from '../types';
+import type { CartLine, Client, AyantDroit, Product, CurrentUser, SudoCreds, PosteVente, Fournisseur } from '../types';
 import { useSettingsStore } from '../stores/useSettingsStore';
 
 const api = axios.create({ timeout: 10000 });
@@ -317,6 +317,75 @@ export const adjustStock = async (produitId: number, payload: AdjustStockPayload
   return res.data as Product;
 };
 
+// ─── Fournisseurs ─────────────────────────────────────────
+// Liste complète des fournisseurs actifs — menu déroulant de l'entrée
+// en stock (le backend filtre déjà is_active par défaut).
+export const getFournisseurs = async () => {
+  const res = await api.get('/fournisseurs/', { params: { page_size: 500 } });
+  const data = res.data;
+  return (Array.isArray(data) ? data : (data.results ?? [])) as Fournisseur[];
+};
+
+// ─── Taux de TVA ──────────────────────────────────────────
+// Taux configurés en pharmacie (TVAViewSet, lecture pour tout compte
+// authentifié) — menu déroulant TVA de la ligne d'entrée en stock.
+export interface TauxTVA {
+  id: number;
+  taux: string;
+  libelle?: string;
+  is_active?: boolean;
+}
+export const getTauxTVA = async () => {
+  const res = await api.get('/tva/', { params: { page_size: 50 } });
+  const data = res.data;
+  const list = (Array.isArray(data) ? data : (data.results ?? [])) as TauxTVA[];
+  return list.filter((tva) => tva.is_active !== false);
+};
+
+// ─── Entrée en stock (brouillon → commande web) ───────────
+// Même contrat que le web (commandeService) : création d'une Commande
+// locale « En préparation », puis bulk_sync atomique de toutes les
+// lignes. La clôture (vraie entrée en stock) reste faite sur le web.
+export interface CommandeProduitPayload {
+  produit: number;
+  quantity: number;
+  unites_gratuites: number;
+  price: string;
+  price_cost: string;
+  selling_price: string;
+  prix_euro: string | null;
+  tva: string;
+  taux_marge: string;
+  lot: string | null;
+  date_expiration: string | null; // 'MM/AA' → dernier jour du mois côté backend
+}
+
+export const createEntreeCommande = async (fournisseurId: number) => {
+  const res = await api.post('/commandes/', {
+    type: 'LOC',
+    fournisseur: fournisseurId,
+  });
+  return res.data as { id: number };
+};
+
+export interface BulkSyncResult {
+  status: string;
+  created: number;
+  updated: number;
+  deleted: number;
+  warnings: string[];
+}
+
+// bulk_sync = synchronisation totale : un second envoi sur la même
+// commande remplace les lignes (rejouable sans risque de doublon).
+export const syncCommandeProduits = async (commandeId: number, produits: CommandeProduitPayload[]) => {
+  const res = await api.post('/commande-produits/bulk_sync/', {
+    commande_id: commandeId,
+    produits,
+  });
+  return res.data as BulkSyncResult;
+};
+
 // ─── Signalements de besoin (ruptures terrain) ────────────
 // « Produit manquant / demandé par un client » → alimente les suggestions
 // de commande web. Distinct de ruptures-fournisseurs (indispo grossiste).
@@ -347,6 +416,13 @@ export const getMesSignalements = async () => {
   return (Array.isArray(data) ? data : (data.results ?? [])) as SignalementBesoin[];
 };
 
+// Purge les signalements déjà traités (INTÉGRÉ/IGNORÉ) — les NOUVEAU
+// en attente sont conservés.
+export const viderSignalementsTraites = async () => {
+  const res = await api.delete('/signalements-besoins/vider/');
+  return res.data as { deleted: number };
+};
+
 // ─── Dashboard ────────────────────────────────────────────
 // GET /dashboard/stats/ : pour VENDEUR/CAISSIER le backend ne renvoie que
 // { role, user_stats } (stats personnelles) ; les autres rôles reçoivent
@@ -357,6 +433,7 @@ export interface DashboardStats {
   revenue?: { value: number; change: number };
   sales?: { value: number; change: number };
   top_products?: { id: number; name: string; qty: number; revenue: number }[];
+  margin_today?: number;
 }
 
 export const getDashboardStats = async () => {

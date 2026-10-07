@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { theme } from '../../config/theme';
 
 interface RecentLine {
@@ -24,6 +25,7 @@ export default function RecentScans({
   onEdit,
   onRemove,
 }: RecentScansProps) {
+  const { t } = useTranslation();
   const recentLignes = lignes.slice(-10).reverse();
 
   const renderItem = ({ item }: { item: RecentLine }) => {
@@ -45,7 +47,7 @@ export default function RecentScans({
         >
           <Text style={styles.recentName} numberOfLines={1}>
             {item.details?.isOffline ? '* ' : ''}
-            {item.produit_nom || `Produit #${item.produit}`}
+            {item.produit_nom || t('scanner.product_fallback', { id: item.produit })}
           </Text>
           <Text style={styles.recentQty}>{item.quantite_physique}</Text>
         </TouchableOpacity>
@@ -64,12 +66,12 @@ export default function RecentScans({
 
   return (
     <View style={styles.recentContainer}>
-      <Text style={styles.recentTitle}>Derniers scans</Text>
+      <Text style={styles.recentTitle}>{t('scanner.recent_title')}</Text>
       <FlatList
         data={recentLignes}
         keyExtractor={(item) => item.tempId || item.id.toString()}
         renderItem={renderItem}
-        ListEmptyComponent={<Text style={styles.emptyText}>Aucun scan effectué</Text>}
+        ListEmptyComponent={<Text style={styles.emptyText}>{t('scanner.no_scan')}</Text>}
       />
     </View>
   );
@@ -77,15 +79,15 @@ export default function RecentScans({
 
 const styles = StyleSheet.create({
   recentContainer: {
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.bgElevated,
     padding: 16,
     borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
+    borderTopColor: theme.border,
     flex: 1,
     minHeight: 160,
   },
   recentTitle: {
-    color: '#64748b',
+    color: theme.textMuted,
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 16,
@@ -96,19 +98,19 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 4,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    borderBottomColor: theme.border,
     borderRadius: 12,
     marginBottom: 4,
   },
   recentItemActive: {
-    backgroundColor: 'rgba(5, 150, 105, 0.12)',
-    borderColor: '#059669',
+    backgroundColor: theme.primaryWash,
+    borderColor: theme.primary,
     borderWidth: 1,
   },
   recentItemOffline: {
     borderLeftWidth: 4,
     borderLeftColor: theme.warning,
-    backgroundColor: '#fffbeb',
+    backgroundColor: theme.warningWash,
   },
   recentContent: {
     flex: 1,
@@ -119,13 +121,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   recentName: {
-    color: '#0f172a',
+    color: theme.text,
     fontSize: 15,
     flex: 1,
     marginRight: 12,
   },
   recentQty: {
-    color: '#059669',
+    color: theme.primary,
     fontSize: 18,
     fontWeight: 'bold',
     minWidth: 40,
@@ -151,7 +153,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   emptyText: {
-    color: '#94a3b8',
+    color: theme.textMuted,
     fontSize: 16,
     fontStyle: 'italic',
     textAlign: 'center',

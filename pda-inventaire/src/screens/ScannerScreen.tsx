@@ -8,6 +8,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Inventaire } from '../services/inventaire';
 
+import { useTranslation } from 'react-i18next';
 import { useScannerController } from '../components/scanner/useScannerController';
 import Header from '../components/scanner/Header';
 import ScannerInput from '../components/scanner/ScannerInput';
@@ -16,6 +17,7 @@ import ProductCard from '../components/scanner/ProductCard';
 import EditLineModal from '../components/scanner/EditLineModal';
 import RecentScans from '../components/scanner/RecentScans';
 import SyncBanner from '../components/scanner/SyncBanner';
+import { theme } from '../config/theme';
 
 interface ScannerScreenProps {
   inventaire: Inventaire;
@@ -24,6 +26,7 @@ interface ScannerScreenProps {
 
 export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps) {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const {
     scanInputRef,
     scannedProduct,
@@ -67,7 +70,7 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
   return (
     <View style={[styles.container, { paddingBottom: Math.min(insets.bottom, 24) }]}>
       <Header
-        reference={inventaire.reference || inventaire.description || `Inventaire #${inventaire.id}`}
+        reference={inventaire.reference || inventaire.description || t('home.inventory_fallback', { id: inventaire.id })}
         isOnline={isOnline}
         offlineCount={offlineCount}
         onBack={handleBack}
@@ -85,8 +88,8 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
 
       {(continuousScanMode || rapidCountMode) && (
         <View style={styles.modesIndicator}>
-          {continuousScanMode && <Text style={styles.modeIndicatorText}>Scan continu</Text>}
-          {rapidCountMode && <Text style={styles.modeIndicatorText}>Mode +1 rapide</Text>}
+          {continuousScanMode && <Text style={styles.modeIndicatorText}>{t('scanner.continuous')}</Text>}
+          {rapidCountMode && <Text style={styles.modeIndicatorText}>{t('scanner.rapid')}</Text>}
         </View>
       )}
 
@@ -155,33 +158,33 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: theme.bg,
   },
   savedFeedbackBanner: {
-    backgroundColor: '#d1fae5',
+    backgroundColor: theme.primaryLight,
     padding: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#059669',
+    borderBottomColor: theme.primary,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
   },
   savedFeedbackText: {
-    color: '#047857',
+    color: theme.primaryDark,
     fontWeight: 'bold',
     fontSize: 14,
   },
   modesIndicator: {
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.bgElevated,
     padding: 8,
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    borderBottomColor: theme.border,
   },
   modeIndicatorText: {
-    color: '#059669',
+    color: theme.primary,
     fontSize: 12,
     fontWeight: '600',
   },

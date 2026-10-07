@@ -9,6 +9,8 @@ import {
   ActivityIndicator,
   Platform,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { theme } from '../../config/theme';
 
 interface ScannerInputProps {
   scanInputRef: React.RefObject<TextInput | null>;
@@ -29,6 +31,7 @@ export default function ScannerInput({
   isKeyboardEnabled,
   onFocus,
 }: ScannerInputProps) {
+  const { t } = useTranslation();
   const maxTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Timeout intelligent :
@@ -78,8 +81,8 @@ export default function ScannerInput({
 
   return (
     <View style={styles.scannerContainer}>
-      <Text style={styles.scanTitle}>Prêt à scanner</Text>
-      <Text style={styles.scanSubtitle}>Scannez un code-barres avec le laser</Text>
+      <Text style={styles.scanTitle}>{t('scanner.ready_title')}</Text>
+      <Text style={styles.scanSubtitle}>{t('scanner.ready_subtitle')}</Text>
 
       <TextInput
         ref={scanInputRef}
@@ -88,8 +91,8 @@ export default function ScannerInput({
         onChangeText={setScanInput}
         onSubmitEditing={handleManualSubmit}
         onFocus={onFocus}
-        placeholder="Code-barres..."
-        placeholderTextColor="#94a3b8"
+        placeholder={t('scanner.barcode_placeholder')}
+        placeholderTextColor={theme.textMuted}
         autoFocus
         blurOnSubmit={false}
         returnKeyType="search"
@@ -101,8 +104,8 @@ export default function ScannerInput({
 
       {searching && (
         <View style={styles.searchingIndicator}>
-          <ActivityIndicator color="#059669" size="large" />
-          <Text style={styles.searchingText}>Recherche...</Text>
+          <ActivityIndicator color={theme.primary} size="large" />
+          <Text style={styles.searchingText}>{t('scanner.searching')}</Text>
         </View>
       )}
 
@@ -111,7 +114,7 @@ export default function ScannerInput({
         onPress={handleManualSubmit}
         disabled={!scanInput.trim() || searching}
       >
-        <Text style={styles.searchBtnText}>Rechercher</Text>
+        <Text style={styles.searchBtnText}>{t('common.search')}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -126,27 +129,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   scanTitle: {
-    color: '#0f172a',
+    color: theme.text,
     fontSize: 22,
     fontWeight: '700',
     marginBottom: 6,
   },
   scanSubtitle: {
-    color: '#64748b',
+    color: theme.textMuted,
     fontSize: 15,
     marginBottom: 32,
     textAlign: 'center',
   },
   scanInput: {
     width: '100%',
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.bgElevated,
     borderRadius: 12,
     padding: 16,
-    color: '#0f172a',
+    color: theme.text,
     fontSize: 20,
     textAlign: 'center',
     borderWidth: 2,
-    borderColor: '#059669',
+    borderColor: theme.primary,
     marginBottom: 16,
   },
   searchingIndicator: {
@@ -155,19 +158,19 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   searchingText: {
-    color: '#059669',
+    color: theme.primary,
     fontSize: 16,
     marginLeft: 12,
   },
   searchBtn: {
-    backgroundColor: '#059669',
+    backgroundColor: theme.primary,
     paddingVertical: 16,
     paddingHorizontal: 32,
     borderRadius: 12,
     marginTop: 8,
   },
   searchBtnText: {
-    color: '#fff',
+    color: theme.textOnPrimary,
     fontSize: 16,
     fontWeight: 'bold',
   },

@@ -9,6 +9,10 @@ export interface Product {
   selling_price: string;
   stock: number;
   tva: string;
+  // Détail seulement (getProductById / by-cip) — dernier prix d'achat et
+  // coefficient de marge calculé par le backend. Absents du serializer liste.
+  cost_price?: string;
+  taux_marge?: string;
   use_lot_management?: boolean;
   is_active?: boolean;
   // 5 premiers lots non vides triés FEFO (SerializerMethodField du
@@ -111,6 +115,40 @@ export interface PendingSale {
   ayantDroit: AyantDroit | null;
   remiseGlobale: number;
   remiseMode: 'taux' | 'montant';
+}
+
+// ─── Fournisseur (contrat FournisseurSerializer) ──────────
+export interface Fournisseur {
+  id: number;
+  name: string;
+}
+
+// ─── Entrée en stock (brouillon → commande web) ───────────
+// Une ligne = un produit reçu ; les champs prix/marge/vente sont liés
+// (même formules que useCommandeProductLines côté web, type LOC).
+// date_expiration au format 'MM/AA' (contrat bulk_sync).
+export interface EntreeStockLine {
+  key: string;
+  product: Product;
+  quantity: string;
+  unites_gratuites: string;
+  price: string;          // prix d'achat HT
+  tva: string;
+  marge: string;          // coefficient (taux_marge)
+  selling_price: string;  // prix de vente TTC
+  lot: string;
+  date_expiration: string;
+}
+
+// ─── Réception mise en attente (local, comme les ventes) ──
+export interface PendingEntree {
+  id: string;
+  timestamp: string;
+  fournisseur: Fournisseur | null;
+  lines: EntreeStockLine[];
+  // Commande déjà créée côté serveur par un envoi interrompu :
+  // la reprise re-synchronise sur elle (pas de commande en double).
+  uploadedCommandeId: number | null;
 }
 
 // ─── Historique local ─────────────────────────────────────
