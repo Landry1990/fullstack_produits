@@ -12,12 +12,69 @@
 - `src/services/inventaire.ts` : retrait du préfixe `/api` des endpoints
   (déjà présent dans `baseURL` du store), corrige les 404 au chargement
   des inventaires après connexion.
+- **Sync par batches** : `useOfflineSync` envoie désormais les lignes
+  offline par paquets de 50 (`BATCH_SIZE`) pour éviter les timeouts sur
+  les gros inventaires. `SyncBanner` affiche la progression
+  (`current/total`) pendant l'envoi.
+- **Retry réseau** : chaque batch est retenté jusqu'à 3 fois (1 s, 2 s)
+  en cas d'erreur réseau/timeout ou 5xx ; les erreurs 4xx n'ont pas de
+  retry.
+- **Sync partielle** : si un batch importe partiellement, les lignes
+  sans erreur sont marquées synchronisées et seules les lignes en échec
+  (indexées par le backend) restent en attente.
+- **Catalogue incrémental** : `GET /api/produits/?updated_since=<ISO>`
+  (nouveau filtre viewset) + nouvel endpoint `GET /api/produits/stocks/`
+  renvoyant `{stocks: [{id, stock, stock_reserve}], server_time}`.
+  `produitService.syncCatalog()` : produits modifiés depuis le curseur
+  serveur + snapshot stocks (couvre les changements de stock qui ne
+  bumpent pas `updated_at` via `save(update_fields)`, et purge du cache
+  les produits désactivés). Le curseur de sync est le `server_time`
+  backend, pas l'horloge PDA. Fallback : download complet au premier
+  appel.
+- **Changement de pharmacie** : le login compare l'URL saisie à
+  `pda.session.lastServerUrl` (écrite uniquement au login réussi) ; si
+  différente → purge du cache produits (`productCacheService.clear()`)
+  et des lignes offline (`localStorageService.clearAll()`), sinon les
+  `id` produits des deux serveurs seraient mélangés. Alerte de
+  confirmation si des lignes non synchronisées vont être perdues
+  (`Alert` natif, `window.confirm` sur web).
+- **Bouton « Purger »** sur l'accueil (barre catalogue) : vide le cache
+  produits + lignes offline manuellement — couvre le cas (rare mais
+  réel) de deux pharmacies à IP identique, et sert de reset debug.
+  Utilitaire partagé `src/utils/confirmDialog.ts`.
+- **Fix faux positif changement de serveur** : `normalizeServerUrl`
+  (casse, slash, scheme, port par défaut) pour toutes les comparaisons
+  d'URL ; `restoreSession` initialise `lastServerUrl` depuis la session
+  restaurée (sinon premier login après migration = fausse purge). Le
+  cache produits est désormais lié à l'URL (`synced_server_url`) :
+  `syncCatalog` force un download complet si l'URL courante diffère.
+- **Suppression d'inventaire** : long-press sur une carte de l'accueil →
+  confirmation (mention des lignes locales non envoyées) → `DELETE
+  /inventaires/{id}/` (soft-delete existant) + purge des lignes offline
+  locales de cet inventaire.
+- **Bouton « Téléverser »** dans le header du scanner (visible quand des
+  lignes sont en attente) : envoie les lignes offline sans quitter
+  l'écran. Le bouton « Terminer » est renommé « Retour » — quitter est
+  déjà une « pause » (l'inventaire reste EN_COURS, lignes conservées).
+- **Export CSV retiré** : bouton, `handleExport`, `services/export.ts`,
+  clés i18n `export_*` et dépendance `expo-sharing` (package.json +
+  plugin app.json) supprimés — non utilisé sur le PDA.
+- **Idempotence téléversement offline** : `@idempotent_action` sur
+  `POST /inventaires/{id}/lignes/bulk/` (décorateur existant, header
+  `Idempotency-Key`, réponse cachée 24 h dans Redis). Le PDA génère un
+  `batch_id` par batch AVANT la boucle retry → une coupure réseau après
+  traitement serveur mais avant réception rejoue la réponse au lieu de
+  doubler les quantités (`mode: 'add'` non idempotent sinon). Testé en
+  conteneur : même clé → quantité inchangée, sans clé → doublon.
 - Internationalisation FR/EN avec `i18next` + `react-i18next` +
   `expo-localization` : traduction complète du login, Home, Scanner et
   composants associés. Sélecteur de langue sur l'écran de connexion,
   langue persistée dans `secureStore`.
 - UI alignée sur le design system existant (`theme.ts`) : fond slate,
   accents emerald, cartes arrondies.
+- Fix Home : bouton déconnexion remplacé par un label texte "Déco"
+  (l'icône unicode ne s'affichait pas sur certains appareils) ; padding
+  haut du header augmenté pour éviter que le contenu touche le status bar.
 - Suppression de `src/services/auth.ts` et nettoyage des clés de stockage
   obsolètes (`STORAGE_KEYS.AUTH_TOKEN`, `STORAGE_KEYS.USER_INFO`).
 - Fichiers : `package.json`, `App.tsx`, `src/screens/LoginScreen.tsx`,

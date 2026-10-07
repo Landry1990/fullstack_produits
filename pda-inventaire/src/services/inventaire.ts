@@ -1,5 +1,6 @@
 import api, { PaginatedResponse } from './api';
-import { productCacheService } from './productCache';
+import { productCacheService, CachedProduct } from './productCache';
+import { useAuthStore, normalizeServerUrl } from '../stores/useAuthStore';
 
 // Types
 export interface StockLot {
@@ -64,6 +65,12 @@ export interface CreateLigneInventaire {
     mode?: 'add' | 'replace';
 }
 
+export interface StockSnapshot {
+    id: number;
+    stock: number;
+    stock_reserve: number;
+}
+
 class InventaireService {
     /**
      * Récupérer les inventaires actifs
@@ -114,12 +121,28 @@ class InventaireService {
     }
 
     /**
+     * Supprimer un inventaire (soft-delete côté serveur : is_active=False).
+     */
+    async deleteInventaire(inventaireId: number): Promise<void> {
+        await api.delete(`/inventaires/${inventaireId}/`);
+    }
+
+    /**
      * Import en masse des lignes (pour synchronisation)
      */
-    async bulkImport(inventaireId: number, lignes: CreateLigneInventaire[]): Promise<{ imported: number; errors: string[] }> {
+    /**
+     * idempotencyKey : un retry réseau renvoie la même clé → le backend
+     * rejoue la réponse cachée au lieu de retraiter (anti-doublon).
+     */
+    async bulkImport(
+        inventaireId: number,
+        lignes: CreateLigneInventaire[],
+        idempotencyKey?: string
+    ): Promise<{ imported: number; errors: string[] }> {
         const response = await api.post<{ imported: number; errors: string[] }>(
             `/inventaires/${inventaireId}/lignes/bulk/`,
-            { lignes }
+            { lignes },
+            idempotencyKey ? { headers: { 'Idempotency-Key': idempotencyKey } } : undefined
         );
         return response.data;
     }
@@ -173,7 +196,24 @@ class ProduitService {
         return Array.isArray(response.data) ? response.data : response.data.results;
     }
 
+    /**
+     * Snapshot léger {id, stock} + curseur serveur pour la sync incrémentale.
+     */
+    private async fetchStocksSnapshot(): Promise<{ stocks: StockSnapshot[]; serverTime: string }> {
+        const res = await api.get<{ stocks: StockSnapshot[]; server_time: string }>('/produits/stocks/');
+        return { stocks: res.data.stocks || [], serverTime: res.data.server_time };
+    }
+
+    /**
+     * Téléchargement complet du catalogue (première sync ou reset).
+     * Snapshot stocks AVANT les pages : le server_time sert de curseur
+     * conservateur — les modifications faites pendant le download seront
+     * recapturées à la prochaine sync incrémentale.
+     */
     async downloadCatalog(): Promise<Produit[]> {
+        const { stocks, serverTime } = await this.fetchStocksSnapshot();
+        const stocksMap = new Map(stocks.map(s => [s.id, s.stock]));
+
         const all: Produit[] = [];
         let page = 1;
         const pageSize = 500;
@@ -191,8 +231,81 @@ class ProduitService {
             page++;
         }
 
-        await productCacheService.saveAll(all);
-        return all;
+        // Garde tous les produits des pages (actifs au fetch) ; applique le
+        // stock du snapshot quand présent (la purge des désactivés se fera
+        // à la prochaine sync incrémentale).
+        const merged = all.map(p => ({
+            ...p,
+            stock: stocksMap.get(p.id) ?? p.stock,
+        })) as CachedProduct[];
+
+        await productCacheService.saveAll(merged, serverTime);
+        await productCacheService.setSyncedServerUrl(normalizeServerUrl(useAuthStore.getState().serverUrl));
+        return merged;
+    }
+
+    /**
+     * Sync incrémentale :
+     * - le cache est lié à l'URL du serveur pour lequel il a été rempli :
+     *   une URL différente (changement de pharmacie non détecté au login)
+     *   force une purge + download complet.
+     * - snapshot stocks EN PREMIER : server_time = nouveau curseur capturé
+     *   avant le fetch `changed` → toute modification pendant le fetch sera
+     *   recapturée à la sync suivante (pas de trou dans le curseur).
+     * - `changed` = produits modifiés depuis le curseur serveur
+     *   (`updated_since`), toujours conservés (actifs au fetch).
+     * - les autres : stock rafraîchi via le snapshot, purge des désactivés
+     *   (absents du snapshot).
+     * Fallback : download complet si jamais syncé ou autre serveur.
+     */
+    async syncCatalog(): Promise<{ updated: number; total: number }> {
+        const currentUrl = normalizeServerUrl(useAuthStore.getState().serverUrl);
+        const [syncedAt, syncedUrl] = await Promise.all([
+            productCacheService.getSyncedAt(),
+            productCacheService.getSyncedServerUrl(),
+        ]);
+        if (!syncedAt || syncedUrl !== currentUrl) {
+            if (syncedUrl !== null && syncedUrl !== currentUrl) {
+                await productCacheService.clear();
+            }
+            const all = await this.downloadCatalog();
+            return { updated: all.length, total: all.length };
+        }
+
+        const { stocks, serverTime } = await this.fetchStocksSnapshot();
+        const stocksMap = new Map(stocks.map(s => [s.id, s.stock]));
+
+        const changed: Produit[] = [];
+        let page = 1;
+        const pageSize = 500;
+        while (true) {
+            const response = await api.get<PaginatedResponse<Produit>>(
+                `/produits/?page_size=${pageSize}&page=${page}&updated_since=${encodeURIComponent(syncedAt)}`
+            );
+            const results = response.data.results || [];
+            changed.push(...results);
+            if (!response.data.next || results.length < pageSize) {
+                break;
+            }
+            page++;
+        }
+
+        const changedIds = new Set(changed.map(p => p.id));
+        const cached = await productCacheService.getAll();
+        const byId = new Map<number, CachedProduct>(cached.map(p => [p.id, p]));
+        for (const p of changed) {
+            byId.set(p.id, p as CachedProduct);
+        }
+
+        const merged: CachedProduct[] = [];
+        for (const [id, p] of byId) {
+            const stock = stocksMap.get(id);
+            if (stock === undefined && !changedIds.has(id)) continue;
+            merged.push(stock === undefined ? p : { ...p, stock });
+        }
+
+        await productCacheService.saveAll(merged, serverTime);
+        return { updated: changed.length, total: merged.length };
     }
 }
 

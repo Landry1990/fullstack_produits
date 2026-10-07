@@ -47,6 +47,7 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
     isOnline,
     offlineCount,
     syncing,
+    syncProgress,
     setQuantity,
     setScanInput,
     setEditQuantity,
@@ -59,8 +60,8 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
     handleEditLine,
     handleRemoveLine,
     handleUpdateLine,
-    handleExport,
     toggleKeyboard,
+    handleUpload,
     handleFinishAndSync,
     handleBack,
     toggleContinuousMode,
@@ -74,7 +75,8 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
         isOnline={isOnline}
         offlineCount={offlineCount}
         onBack={handleBack}
-        onExport={handleExport}
+        onUpload={handleUpload}
+        syncing={syncing}
         keyboardEnabled={isKeyboardEnabled}
         onToggleKeyboard={toggleKeyboard}
         count={lignes.length}
@@ -97,6 +99,7 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
         offlineCount={offlineCount}
         isOnline={isOnline}
         syncing={syncing}
+        syncProgress={syncProgress}
         onSync={handleFinishAndSync}
       />
 
