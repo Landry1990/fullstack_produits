@@ -15,7 +15,8 @@ interface HeaderProps {
   isOnline: boolean;
   offlineCount: number;
   onBack: () => void;
-  onExport: () => void;
+  onUpload?: () => void;
+  syncing?: boolean;
   keyboardEnabled?: boolean;
   onToggleKeyboard?: () => void;
   count?: number;
@@ -26,7 +27,8 @@ export default function Header({
   isOnline,
   offlineCount,
   onBack,
-  onExport,
+  onUpload,
+  syncing,
   keyboardEnabled,
   onToggleKeyboard,
   count,
@@ -39,7 +41,7 @@ export default function Header({
     <View style={[styles.header, { paddingTop: topInset }]}> 
       <View style={styles.topRow}>
         <TouchableOpacity onPress={onBack} style={styles.backBtn}>
-          <Text style={styles.backBtnText}>{t('scanner.finish')}</Text>
+          <Text style={styles.backBtnText}>{t('common.back')}</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>{reference}</Text>
         {typeof count === 'number' && (
@@ -62,9 +64,15 @@ export default function Header({
               <Text style={styles.actionBtnText}>{t('scanner.keyboard')}</Text>
             </TouchableOpacity>
           )}
-          <TouchableOpacity onPress={onExport} style={styles.actionBtn}>
-            <Text style={styles.actionBtnText}>CSV</Text>
-          </TouchableOpacity>
+          {onUpload && offlineCount > 0 && (
+            <TouchableOpacity
+              onPress={onUpload}
+              style={[styles.actionBtn, styles.uploadBtn]}
+              disabled={syncing}
+            >
+              <Text style={styles.uploadBtnText}>{t('scanner.upload')}</Text>
+            </TouchableOpacity>
+          )}
           {offlineCount > 0 && (
             <View style={styles.offlineBadge}>
               <Text style={styles.offlineBadgeText}>{t('scanner.pending', { count: offlineCount })}</Text>
@@ -154,6 +162,15 @@ const styles = StyleSheet.create({
   actionBtnText: {
     fontSize: 12,
     color: theme.text,
+    fontWeight: '700',
+  },
+  uploadBtn: {
+    backgroundColor: theme.primary,
+    borderColor: theme.primaryDark,
+  },
+  uploadBtnText: {
+    fontSize: 12,
+    color: theme.textOnPrimary,
     fontWeight: '700',
   },
   offlineBadge: {

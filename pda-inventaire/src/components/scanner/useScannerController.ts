@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next';
 import { showAlert } from '../../utils/alert';
 import type { Inventaire, LigneInventaire, Produit } from '../../services/inventaire';
 import { inventaireService, produitService } from '../../services/inventaire';
-import { exportService } from '../../services/export';
 import { useOfflineSync } from '../../hooks/useOfflineSync';
 
 export interface DisplayLigne extends LigneInventaire {
@@ -36,6 +35,7 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
     syncAll,
     offlineCount,
     syncing,
+    syncProgress,
     offlineLignes,
     updateOffline,
     removeOffline,
@@ -476,23 +476,6 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
     }
   };
 
-  const handleExport = async () => {
-    if (offlineCount > 0) {
-      showAlert(t('common.error'), t('scanner.export_pending_first'));
-      return;
-    }
-    try {
-      setLoading(true);
-      await exportService.exportInventaireToCsv(inventaire);
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : t('scanner.export_error');
-      showAlert(t('common.error'), message);
-    } finally {
-      setLoading(false);
-      setTimeout(() => scanInputRef.current?.focus(), 500);
-    }
-  };
-
   const toggleKeyboard = () => {
     setIsKeyboardEnabled(prev => !prev);
     Keyboard.dismiss();
@@ -529,6 +512,31 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
             }
           }
         }
+      ]
+    );
+  };
+
+  // Téléverse les lignes en attente sans quitter l'écran (bouton dédié).
+  const handleUpload = async () => {
+    if (offlineCount === 0) {
+      showAlert(t('scanner.upload_title'), t('scanner.upload_empty'));
+      return;
+    }
+    if (!isOnline) {
+      showAlert(t('scanner.no_connection'), t('scanner.upload_offline'));
+      return;
+    }
+    showAlert(
+      t('scanner.upload_title'),
+      t('scanner.upload_confirm', { count: offlineCount }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.send'),
+          onPress: async () => {
+            await syncAll();
+          },
+        },
       ]
     );
   };
@@ -588,6 +596,7 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
     isOnline,
     offlineCount,
     syncing,
+    syncProgress,
     // Setters
     setQuantity,
     setScanInput,
@@ -603,8 +612,8 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
     handleEditLine,
     handleRemoveLine,
     handleUpdateLine,
-    handleExport,
     toggleKeyboard,
+    handleUpload,
     handleFinishAndSync,
     handleBack,
     toggleContinuousMode,

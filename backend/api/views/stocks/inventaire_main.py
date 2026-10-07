@@ -396,9 +396,13 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'], url_path='lignes/bulk')
     @transaction.atomic
+    @idempotent_action
     def bulk_lignes(self, request, pk=None):
         """
         Import en masse de lignes d'inventaire optimisé (Réduction N+1).
+        Idempotent via header Idempotency-Key : un retry réseau (coupure
+        après traitement mais avant réponse) rejoue la réponse cachée
+        au lieu de doubler les quantités.
         """
         inventaire = self.get_object()
         lignes_data = request.data.get('lignes', [])
