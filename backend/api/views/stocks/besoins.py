@@ -49,3 +49,16 @@ class SignalementBesoinViewSet(viewsets.ModelViewSet):
             pk, SignalementBesoin.Statut.IGNORE,
             'Ce signalement a déjà été traité.'
         )
+
+    @action(detail=False, methods=['delete'], url_path='vider')
+    def vider(self, request):
+        """Purge les signalements déjà traités (INTÉGRÉ / IGNORÉ).
+        Les NOUVEAU en attente sont conservés — la liste reste une
+        liste de travail partagée."""
+        deleted, _ = SignalementBesoin.objects.filter(
+            statut__in=[
+                SignalementBesoin.Statut.INTEGRE,
+                SignalementBesoin.Statut.IGNORE,
+            ]
+        ).delete()
+        return Response({'deleted': deleted})

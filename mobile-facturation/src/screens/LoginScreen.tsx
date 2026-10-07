@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator,
+  ScrollView, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -79,12 +80,23 @@ export function LoginScreen({ onLoginSuccess }: { onLoginSuccess: () => void }) 
   };
 
   return (
-    <View style={[styles.container, {
-      paddingTop: insets.top,
-      paddingBottom: insets.bottom,
-      paddingLeft: insets.left,
-      paddingRight: insets.right,
-    }]}>
+    <KeyboardAvoidingView
+      style={[styles.container, {
+        paddingTop: insets.top,
+        paddingBottom: insets.bottom,
+        paddingLeft: insets.left,
+        paddingRight: insets.right,
+      }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      {/* ScrollView : carte centrée quand elle tient, scrollable
+          clavier ouvert / petit écran (scrollbar persistante). */}
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+        persistentScrollbar
+      >
       <View style={styles.card}>
         <Text style={styles.title}>{t('login.title')}</Text>
         <Text style={styles.subtitle}>{t('login.subtitle')}</Text>
@@ -138,7 +150,8 @@ export function LoginScreen({ onLoginSuccess }: { onLoginSuccess: () => void }) 
           ))}
         </View>
       </View>
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -146,10 +159,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.bg,
-    justifyContent: 'center',
-    alignItems: 'center',
     padding: ms(24),
   },
+  // contentContainerStyle : centré si le contenu tient, scroll sinon.
+  scroll: { flexGrow: 1, justifyContent: 'center', alignItems: 'center' },
   card: {
     backgroundColor: theme.bgElevated,
     borderRadius: ms(16),

@@ -577,6 +577,8 @@
         "exclusive_badge": "EXCLUSIVE",
         "promis_badge": "PROMISED ×{{count}}",
         "rupture_badge": "SUPPLIER STOCKOUT",
+        "signalement_badge": "FIELD REQUEST",
+        "signalement_reason": "Field report (missing product)",
         "mode_hourly_title": "Sales by time range",
         "mode_hourly_desc": "Order products sold during a specific date/time range",
         "hourly_range_label": "Sales time range",

@@ -467,8 +467,15 @@ export function buildReceptionPrintHtml(commande: Commande, companyInfo: { name?
     const cip = escHtml(p.produit_cip || (typeof p.produit === 'object' ? p.produit.cip1 : '') || '');
     const qty = p.quantity || 0;
     const free = p.unites_gratuites || 0;
-    const stockAvant = (p.produit_stock || 0) - (qty + free);
-    const stockApres = p.produit_stock || 0;
+    // Stock après (référence) = snapshot enregistré à la clôture ;
+    // fallback stock courant pour les commandes non clôturées.
+    const stockApresReception = p.produit_stock_apres_reception ?? p.produit_stock ?? 0;
+    // Stock antérieur = vrai stock avant réception (dernier
+    // MouvementStock avant clôture — un négatif DOIT apparaître) ;
+    // fallback déduit de l'après si aucun mouvement antérieur.
+    const stockAvant = p.produit_stock_avant_reception ?? (stockApresReception - (qty + free));
+    // Formule du bon : stock antérieur + qté reçue + UG = stock actuel.
+    const stockApres = stockAvant + qty + free;
     const paHT = parseFloat(String(p.price_cost || p.price || 0));
     const totalLine = paHT * (qty + free);
     const tvaPct = parseFloat(String(p.tva || 0));
@@ -479,7 +486,7 @@ export function buildReceptionPrintHtml(commande: Commande, companyInfo: { name?
           <div class="product-line"><span class="product-name">${nom}</span>${lot ? `<span class="product-lot">${docT('reception.lot')}: ${lot}${exp ? `&nbsp;|&nbsp;${docT('reception.exp')}: ${exp}` : ''}</span>` : ''}</div>
         </td>
         <td class="text-center">${cip}</td>
-        <td class="text-center">${stockAvant > 0 ? stockAvant : 0}</td>
+        <td class="text-center">${stockAvant}</td>
         <td class="text-center">${qty}</td>
         <td class="text-center">${free}</td>
         <td class="text-center">${stockApres}</td>

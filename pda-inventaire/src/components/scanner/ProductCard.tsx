@@ -12,7 +12,9 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import type { Produit, StockLot } from '../../services/inventaire';
+import { theme } from '../../config/theme';
 
 const normalizeExpiryMMYY = (value: string) => {
   const digits = value.replace(/\D/g, '').slice(0, 4);
@@ -51,6 +53,7 @@ export default function ProductCard({
   loading,
 }: ProductCardProps) {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const lots = product.stock_lots || [];
 
   const handleLotQtyChange = (lotId: string | number, value: string) => {
@@ -69,23 +72,23 @@ export default function ProductCard({
     return (
       <View style={styles.lotItem}>
         <View style={styles.lotInfo}>
-          <Text style={styles.lotValue}>{item.lot || `Lot #${item.id}`}</Text>
-          <Text style={styles.lotMeta}>Exp. {item.date_expiration || 'Non renseignée'}</Text>
-          <Text style={styles.lotTheoretical}>Stock théorique : {theoretical}</Text>
+          <Text style={styles.lotValue}>{item.lot || t('scanner.product_fallback', { id: item.id })}</Text>
+          <Text style={styles.lotMeta}>{t('scanner.lot_expiry', { date: item.date_expiration || t('product.not_set') })}</Text>
+          <Text style={styles.lotTheoretical}>{t('scanner.theoretical_stock')} : {theoretical}</Text>
         </View>
         <View style={styles.quantityBlock}>
-          <Text style={styles.quantityLabel}>Stock compté</Text>
+          <Text style={styles.quantityLabel}>{t('scanner.counted_stock')}</Text>
           <TextInput
             style={styles.lotQtyInput}
             value={lotQuantities[String(item.id)] ?? ''}
             onChangeText={(value) => handleLotQtyChange(item.id, value)}
             placeholder="0"
-            placeholderTextColor="#64748b"
+            placeholderTextColor={theme.textMuted}
             keyboardType="number-pad"
             selectTextOnFocus
           />
           <Text style={[styles.difference, difference === 0 ? styles.neutral : difference > 0 ? styles.positive : styles.negative]}>
-            Écart {difference > 0 ? '+' : ''}{difference}
+            {t('home.gap_label')} {difference > 0 ? '+' : ''}{difference}
           </Text>
         </View>
       </View>
@@ -94,19 +97,19 @@ export default function ProductCard({
 
   const listFooter = product.use_lot_management ? (
     <View style={styles.newLotSection}>
-      <Text style={styles.sectionTitle}>Nouveau lot</Text>
+      <Text style={styles.sectionTitle}>{t('scanner.new_lot')}</Text>
       <TextInput
         style={styles.fullInput}
-        placeholder="Numéro du lot"
-        placeholderTextColor="#64748b"
+        placeholder={t('scanner.lot_number_placeholder')}
+        placeholderTextColor={theme.textMuted}
         value={newLotNumber}
         onChangeText={setNewLotNumber}
       />
       <View style={styles.newLotRow}>
         <TextInput
           style={styles.dateInput}
-          placeholder="Péremption MM/YY"
-          placeholderTextColor="#64748b"
+          placeholder={t('scanner.expiry_placeholder')}
+          placeholderTextColor={theme.textMuted}
           value={newLotExpiration}
           onChangeText={(value) => setNewLotExpiration(normalizeExpiryMMYY(value))}
           keyboardType="number-pad"
@@ -114,8 +117,8 @@ export default function ProductCard({
         />
         <TextInput
           style={styles.newQtyInput}
-          placeholder="Qté"
-          placeholderTextColor="#64748b"
+          placeholder={t('scanner.qty_placeholder')}
+          placeholderTextColor={theme.textMuted}
           value={quantity}
           onChangeText={setQuantity}
           keyboardType="number-pad"
@@ -126,11 +129,11 @@ export default function ProductCard({
   ) : (
     <View style={styles.singleCountSection}>
       <View>
-        <Text style={styles.quantityLabel}>Stock théorique</Text>
+        <Text style={styles.quantityLabel}>{t('scanner.theoretical_stock')}</Text>
         <Text style={styles.singleTheoretical}>{product.stock}</Text>
       </View>
       <View style={styles.singleQuantityBlock}>
-        <Text style={styles.quantityLabel}>Stock compté</Text>
+        <Text style={styles.quantityLabel}>{t('scanner.counted_stock')}</Text>
         <TextInput
           style={styles.singleQtyInput}
           value={quantity}
@@ -140,7 +143,7 @@ export default function ProductCard({
           autoFocus
         />
         <Text style={[styles.difference, Number(quantity || 0) - product.stock === 0 ? styles.neutral : Number(quantity || 0) - product.stock > 0 ? styles.positive : styles.negative]}>
-          Écart {Number(quantity || 0) - product.stock > 0 ? '+' : ''}{Number(quantity || 0) - product.stock}
+          {t('home.gap_label')} {Number(quantity || 0) - product.stock > 0 ? '+' : ''}{Number(quantity || 0) - product.stock}
         </Text>
       </View>
     </View>
@@ -156,18 +159,18 @@ export default function ProductCard({
           <View style={styles.header}>
             <View style={styles.headerText}>
               <Text style={styles.title} numberOfLines={2}>{product.name}</Text>
-              <Text style={styles.subtitle}>CIP : {product.cip1 || product.cip2 || product.cip3 || product.cip4 || 'Non renseigné'}</Text>
+              <Text style={styles.subtitle}>{t('product.cip', { code: product.cip1 || product.cip2 || product.cip3 || product.cip4 || t('product.not_set') })}</Text>
             </View>
             <View style={styles.stockBadge}>
-              <Text style={styles.stockBadgeLabel}>Stock global</Text>
+              <Text style={styles.stockBadgeLabel}>{t('scanner.global_stock')}</Text>
               <Text style={styles.stockBadgeValue}>{product.stock}</Text>
             </View>
           </View>
 
           <Text style={styles.instructions}>
             {product.use_lot_management
-              ? 'Vérifiez et modifiez le stock compté pour chaque lot.'
-              : 'Vérifiez et modifiez le stock compté.'}
+              ? t('scanner.card_lots_instruction')
+              : t('scanner.card_single_instruction')}
           </Text>
 
           <FlatList
@@ -177,7 +180,7 @@ export default function ProductCard({
             keyExtractor={(item) => String(item.id)}
             renderItem={renderLotItem}
             ListEmptyComponent={product.use_lot_management ? (
-              <Text style={styles.emptyLots}>Aucun lot actif. Ajoutez un nouveau lot ci-dessous.</Text>
+              <Text style={styles.emptyLots}>{t('scanner.no_active_lot')}</Text>
             ) : null}
             ListFooterComponent={listFooter}
             keyboardShouldPersistTaps="always"
@@ -186,10 +189,10 @@ export default function ProductCard({
 
           <View style={styles.actions}>
             <TouchableOpacity style={styles.cancelBtn} onPress={onCancel} disabled={loading}>
-              <Text style={styles.cancelBtnText}>Annuler</Text>
+              <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.validateBtn, loading && styles.disabled]} onPress={onValidate} disabled={loading}>
-              {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.validateBtnText}>Ajouter au comptage</Text>}
+              {loading ? <ActivityIndicator color={theme.textOnPrimary} /> : <Text style={styles.validateBtnText}>{t('scanner.add_to_count')}</Text>}
             </TouchableOpacity>
           </View>
         </View>
@@ -201,38 +204,38 @@ export default function ProductCard({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.5)',
+    backgroundColor: theme.bgOverlay,
     justifyContent: 'center',
     paddingHorizontal: 12,
   },
   modal: {
     flex: 1,
     maxHeight: 720,
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.bgElevated,
     borderRadius: 18,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: theme.border,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 18,
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.bgElevated,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    borderBottomColor: theme.border,
   },
   headerText: {
     flex: 1,
     marginRight: 12,
   },
   title: {
-    color: '#0f172a',
+    color: theme.text,
     fontSize: 20,
     fontWeight: '800',
   },
   subtitle: {
-    color: '#94a3b8',
+    color: theme.textMuted,
     fontSize: 13,
     marginTop: 5,
   },
@@ -240,24 +243,24 @@ const styles = StyleSheet.create({
     minWidth: 72,
     padding: 9,
     borderRadius: 10,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: theme.bgMuted,
     alignItems: 'center',
   },
   stockBadgeLabel: {
-    color: '#94a3b8',
+    color: theme.textMuted,
     fontSize: 9,
   },
   stockBadgeValue: {
-    color: '#059669',
+    color: theme.primary,
     fontSize: 18,
     fontWeight: '800',
   },
   instructions: {
-    color: '#64748b',
+    color: theme.textMuted,
     fontSize: 13,
     paddingHorizontal: 18,
     paddingVertical: 12,
-    backgroundColor: '#f8fafc',
+    backgroundColor: theme.bg,
   },
   content: {
     flex: 1,
@@ -271,26 +274,26 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: 10,
     borderRadius: 12,
-    backgroundColor: '#f8fafc',
+    backgroundColor: theme.bg,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: theme.border,
   },
   lotInfo: {
     flex: 1,
     marginRight: 12,
   },
   lotValue: {
-    color: '#0f172a',
+    color: theme.text,
     fontSize: 16,
     fontWeight: '800',
   },
   lotMeta: {
-    color: '#94a3b8',
+    color: theme.textMuted,
     fontSize: 11,
     marginTop: 4,
   },
   lotTheoretical: {
-    color: '#059669',
+    color: theme.primary,
     fontSize: 12,
     fontWeight: '600',
     marginTop: 6,
@@ -300,7 +303,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   quantityLabel: {
-    color: '#94a3b8',
+    color: theme.textMuted,
     fontSize: 10,
     fontWeight: '600',
     marginBottom: 5,
@@ -308,11 +311,11 @@ const styles = StyleSheet.create({
   lotQtyInput: {
     width: '100%',
     minHeight: 48,
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.bgElevated,
     borderRadius: 9,
     borderWidth: 2,
-    borderColor: '#059669',
-    color: '#0f172a',
+    borderColor: theme.primary,
+    color: theme.text,
     textAlign: 'center',
     fontSize: 20,
     fontWeight: '800',
@@ -323,27 +326,27 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   neutral: {
-    color: '#94a3b8',
+    color: theme.textMuted,
   },
   positive: {
-    color: '#059669',
+    color: theme.primary,
   },
   negative: {
-    color: '#dc2626',
+    color: theme.danger,
   },
   emptyLots: {
-    color: '#64748b',
+    color: theme.textMuted,
     textAlign: 'center',
     paddingVertical: 22,
   },
   newLotSection: {
     borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
+    borderTopColor: theme.border,
     marginTop: 4,
     paddingTop: 14,
   },
   sectionTitle: {
-    color: '#0f172a',
+    color: theme.text,
     fontSize: 14,
     fontWeight: '700',
     marginBottom: 10,
@@ -352,10 +355,10 @@ const styles = StyleSheet.create({
     minHeight: 48,
     paddingHorizontal: 12,
     borderRadius: 9,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: theme.bgMuted,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    color: '#0f172a',
+    borderColor: theme.border,
+    color: theme.text,
     marginBottom: 8,
   },
   newLotRow: {
@@ -367,19 +370,19 @@ const styles = StyleSheet.create({
     minHeight: 48,
     paddingHorizontal: 12,
     borderRadius: 9,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: theme.bgMuted,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    color: '#0f172a',
+    borderColor: theme.border,
+    color: theme.text,
   },
   newQtyInput: {
     width: 78,
     minHeight: 48,
     borderRadius: 9,
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.bgElevated,
     borderWidth: 2,
-    borderColor: '#059669',
-    color: '#0f172a',
+    borderColor: theme.primary,
+    color: theme.text,
     textAlign: 'center',
     fontSize: 18,
     fontWeight: '800',
@@ -392,7 +395,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   singleTheoretical: {
-    color: '#059669',
+    color: theme.primary,
     fontSize: 30,
     fontWeight: '800',
   },
@@ -404,10 +407,10 @@ const styles = StyleSheet.create({
     width: '100%',
     minHeight: 64,
     borderRadius: 12,
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.bgElevated,
     borderWidth: 2,
-    borderColor: '#059669',
-    color: '#0f172a',
+    borderColor: theme.primary,
+    color: theme.text,
     textAlign: 'center',
     fontSize: 28,
     fontWeight: '800',
@@ -417,8 +420,8 @@ const styles = StyleSheet.create({
     gap: 10,
     padding: 14,
     borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
-    backgroundColor: '#ffffff',
+    borderTopColor: theme.border,
+    backgroundColor: theme.bgElevated,
   },
   cancelBtn: {
     flex: 1,
@@ -426,10 +429,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 11,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: theme.bgMuted,
   },
   cancelBtnText: {
-    color: '#1e293b',
+    color: theme.textSecondary,
     fontSize: 15,
     fontWeight: '700',
   },
@@ -439,10 +442,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 11,
-    backgroundColor: '#059669',
+    backgroundColor: theme.primary,
   },
   validateBtnText: {
-    color: '#fff',
+    color: theme.textOnPrimary,
     fontSize: 15,
     fontWeight: '800',
   },

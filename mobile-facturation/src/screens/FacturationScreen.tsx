@@ -706,7 +706,7 @@ export function FacturationScreen({ navigation }: { navigation?: { navigate: (sc
       <View style={[styles.footerRow, compactVert && styles.footerRowCompact]}>
         <View style={[styles.totalBox, compactVert && styles.totalBoxCompact]}>
           <Text style={styles.totalLabel}>{t('facturation.total')}</Text>
-          <Text style={styles.totalValue}>{cart.totalTTC().toLocaleString('fr-FR')} F</Text>
+          <Text style={[styles.totalValue, compactVert && styles.totalValueCompact]}>{cart.totalTTC().toLocaleString('fr-FR')} F</Text>
           {remiseMontant > 0 && (
             <Text style={styles.sousTotal}>{t('facturation.subtotal', { amount: cart.sousTotal().toLocaleString('fr-FR') })}</Text>
           )}
