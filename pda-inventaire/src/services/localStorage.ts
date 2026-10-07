@@ -138,6 +138,16 @@ class LocalStorageService {
     }
 
     /**
+     * Supprimer toutes les lignes locales d'un inventaire (ex: inventaire supprimé).
+     */
+    async removeLignesByInventaire(inventaireId: number): Promise<number> {
+        const lignes = await this.getOfflineLignes();
+        const kept = lignes.filter(l => l.inventaireId !== inventaireId);
+        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(kept));
+        return lignes.length - kept.length;
+    }
+
+    /**
      * Vider complètement le stockage (pour debug/reset)
      */
     async clearAll(): Promise<void> {

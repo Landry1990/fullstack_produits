@@ -14,8 +14,12 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { login } from '../services/api';
-import { useAuthStore } from '../stores/useAuthStore';
+import { useAuthStore, KEY_LAST_SERVER_URL, normalizeServerUrl } from '../stores/useAuthStore';
 import { useSettingsStore } from '../stores/useSettingsStore';
+import { productCacheService } from '../services/productCache';
+import { localStorageService } from '../services/localStorage';
+import secureStore from '../utils/secureStore';
+import { confirmDialog } from '../utils/confirmDialog';
 import { theme } from '../config/theme';
 
 interface LoginScreenProps {
@@ -38,14 +42,35 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
 
     setLoading(true);
     try {
-      let cleanUrl = url.trim().replace(/\/+$/, '');
-      if (!/^https?:\/\//i.test(cleanUrl)) {
-        cleanUrl = `http://${cleanUrl}`;
-      }
+      const cleanUrl = normalizeServerUrl(url);
       console.log('[Login PDA] Tentative connexion vers:', cleanUrl);
       setServerUrl(cleanUrl);
       const { token, username } = await login(cleanUrl, password);
       console.log('[Login PDA] Connexion réussie :', username);
+
+      // Changement de pharmacie : le cache produits, les lignes offline et le
+      // curseur de sync de l'ancien serveur seraient mélangés avec le nouveau
+      // (même id produit ≠ même produit) → purge obligatoire.
+      const lastUrl = await secureStore.getItemAsync(KEY_LAST_SERVER_URL);
+      if (lastUrl !== null && normalizeServerUrl(lastUrl) !== cleanUrl) {
+        const unsynced = await localStorageService.getUnsyncedCount();
+        if (unsynced > 0) {
+          const proceed = await confirmDialog(
+            t,
+            t('login.server_change_title'),
+            t('login.server_change_msg', { count: unsynced })
+          );
+          if (!proceed) {
+            setLoading(false);
+            return;
+          }
+        }
+        await Promise.all([
+          productCacheService.clear(),
+          localStorageService.clearAll(),
+        ]);
+      }
+
       setAuth(token, username);
       onLoginSuccess();
     } catch (err: any) {

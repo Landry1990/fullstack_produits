@@ -16,6 +16,8 @@ import { useTranslation } from 'react-i18next';
 import { inventaireService } from '../services/inventaire';
 import { produitService } from '../services/inventaire';
 import { productCacheService } from '../services/productCache';
+import { localStorageService } from '../services/localStorage';
+import { confirmDialog } from '../utils/confirmDialog';
 import type { Inventaire } from '../services/inventaire';
 import { useAuthStore } from '../stores/useAuthStore';
 import { theme } from '../config/theme';
@@ -77,15 +79,36 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
   const handleDownloadCatalog = async () => {
     setCatalogLoading(true);
     try {
-      const produits = await produitService.downloadCatalog();
-      setCatalogCount(produits.length);
-      showAlert(t('home.catalog_downloaded'), t('home.catalog_downloaded_msg', { count: produits.length }));
+      const { updated, total } = await produitService.syncCatalog();
+      setCatalogCount(total);
+      showAlert(t('home.catalog_downloaded'), t('home.catalog_downloaded_msg', { count: total, updated }));
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : t('home.catalog_download_error');
       showAlert(t('common.error'), message);
     } finally {
       setCatalogLoading(false);
     }
+  };
+
+  // Purge manuelle du cache + lignes offline : utile en cas de changement de
+  // pharmacie à IP identique, ou pour repartir sur des données propres.
+  const handlePurgeCache = async () => {
+    const unsynced = await localStorageService.getUnsyncedCount();
+    const ok = await confirmDialog(
+      t,
+      t('home.purge_title'),
+      unsynced > 0
+        ? t('home.purge_msg_unsynced', { count: unsynced })
+        : t('home.purge_msg')
+    );
+    if (!ok) return;
+
+    await Promise.all([
+      productCacheService.clear(),
+      localStorageService.clearAll(),
+    ]);
+    setCatalogCount(0);
+    showAlert(t('home.purge_title'), t('home.purge_done'));
   };
 
   const handleRefresh = () => {
@@ -141,6 +164,30 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
     setShowCreateModal(true);
   };
 
+  // Suppression d'un inventaire (soft-delete serveur) + purge de ses lignes
+  // offline locales — sinon elles seraient renvoyées vers un inventaire
+  // supprimé.
+  const handleDeleteInventaire = async (item: Inventaire) => {
+    const title = item.reference || item.description?.trim() || t('home.inventory_fallback', { id: item.id });
+    const localLines = await localStorageService.getLignesByInventaire(item.id);
+    const unsynced = localLines.filter(l => !l.synced).length;
+
+    const msg = unsynced > 0
+      ? t('home.delete_msg_unsynced', { title, count: unsynced })
+      : t('home.delete_msg', { title });
+    const ok = await confirmDialog(t, t('home.delete_title'), msg);
+    if (!ok) return;
+
+    try {
+      await inventaireService.deleteInventaire(item.id);
+      await localStorageService.removeLignesByInventaire(item.id);
+      setInventaires(prev => prev.filter(i => i.id !== item.id));
+    } catch (error) {
+      console.error('Erreur suppression inventaire:', error);
+      showAlert(t('common.error'), t('home.delete_error'));
+    }
+  };
+
   const renderItem = ({ item }: { item: Inventaire }) => {
     const lignesCount = item.lignes_count ?? item.lignes?.length ?? 0;
     const ecart = item.lignes?.reduce((total, ligne) => total + Number(ligne.ecart ?? 0), 0) ?? 0;
@@ -148,7 +195,12 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
     const title = item.reference || item.description?.trim() || t('home.inventory_fallback', { id: item.id });
 
     return (
-      <TouchableOpacity style={styles.card} onPress={() => onSelectInventaire(item)}>
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => onSelectInventaire(item)}
+        onLongPress={() => handleDeleteInventaire(item)}
+        delayLongPress={500}
+      >
         <View style={styles.cardHeader}>
           <Text style={styles.cardTitle} numberOfLines={1}>{title}</Text>
           <View style={styles.statusPill}>
@@ -215,17 +267,26 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
             {catalogLoading ? t('home.catalog_loading') : catalogCount !== null ? t('home.catalog_count', { count: catalogCount }) : t('home.catalog_empty')}
           </Text>
         </View>
-        <TouchableOpacity
-          style={[styles.catalogBtn, catalogLoading && styles.btnDisabled]}
-          onPress={handleDownloadCatalog}
-          disabled={catalogLoading}
-        >
-          {catalogLoading ? (
-            <ActivityIndicator color="#fff" size="small" />
-          ) : (
-            <Text style={styles.catalogBtnText}>{t('common.download')}</Text>
-          )}
-        </TouchableOpacity>
+        <View style={styles.catalogActions}>
+          <TouchableOpacity
+            style={styles.purgeBtn}
+            onPress={handlePurgeCache}
+            disabled={catalogLoading}
+          >
+            <Text style={styles.purgeBtnText}>{t('home.purge')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.catalogBtn, catalogLoading && styles.btnDisabled]}
+            onPress={handleDownloadCatalog}
+            disabled={catalogLoading}
+          >
+            {catalogLoading ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Text style={styles.catalogBtnText}>{t('common.download')}</Text>
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Content */}
@@ -590,12 +651,29 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
   },
+  catalogActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flexShrink: 0,
+  },
+  purgeBtn: {
+    backgroundColor: theme.dangerWash,
+    paddingVertical: 8,
+    paddingHorizontal: 18,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  purgeBtnText: {
+    color: theme.danger,
+    fontSize: 14,
+    fontWeight: '700',
+  },
   catalogBtn: {
     backgroundColor: theme.primary,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
     borderRadius: 10,
-    minWidth: 120,
     alignItems: 'center',
   },
   catalogBtnText: {

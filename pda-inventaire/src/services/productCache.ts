@@ -4,6 +4,11 @@ import { Platform } from 'react-native';
 import { Produit } from './inventaire';
 
 const PRODUCTS_CACHE_DATE_KEY = 'pda_cached_products_date';
+// Curseur de sync = server_time backend (l'horloge PDA n'est pas fiable)
+const PRODUCTS_SYNCED_AT_KEY = 'pda_products_synced_server_at';
+// URL du serveur pour lequel le cache a été rempli — un cache rempli pour
+// une autre pharmacie doit être ignoré (même id produit ≠ même produit).
+const PRODUCTS_SYNCED_SERVER_KEY = 'pda_products_synced_server_url';
 // Ancien stockage AsyncStorage — trop volumineux (> 2 Mo, erreur CursorWindow Android)
 const LEGACY_PRODUCTS_CACHE_KEY = 'pda_cached_products';
 const CACHE_FILE = `${FileSystem.documentDirectory}pda_products_cache.json`;
@@ -48,7 +53,7 @@ class ProductCacheService {
         }
     }
 
-    async saveAll(produits: CachedProduct[]): Promise<void> {
+    async saveAll(produits: CachedProduct[], syncedAt?: string): Promise<void> {
         try {
             if (IS_WEB) {
                 localStorage.setItem(WEB_CACHE_KEY, JSON.stringify(produits));
@@ -56,6 +61,9 @@ class ProductCacheService {
                 await FileSystem.writeAsStringAsync(CACHE_FILE, JSON.stringify(produits));
             }
             await AsyncStorage.setItem(PRODUCTS_CACHE_DATE_KEY, new Date().toISOString());
+            if (syncedAt) {
+                await AsyncStorage.setItem(PRODUCTS_SYNCED_AT_KEY, syncedAt);
+            }
             await AsyncStorage.removeItem(LEGACY_PRODUCTS_CACHE_KEY).catch(() => {});
         } catch (error) {
             console.error('Erreur sauvegarde cache produits:', error);
@@ -71,6 +79,8 @@ class ProductCacheService {
                 await FileSystem.deleteAsync(CACHE_FILE, { idempotent: true });
             }
             await AsyncStorage.removeItem(PRODUCTS_CACHE_DATE_KEY);
+            await AsyncStorage.removeItem(PRODUCTS_SYNCED_AT_KEY);
+            await AsyncStorage.removeItem(PRODUCTS_SYNCED_SERVER_KEY);
             await AsyncStorage.removeItem(LEGACY_PRODUCTS_CACHE_KEY).catch(() => {});
         } catch (error) {
             console.error('Erreur nettoyage cache produits:', error);
@@ -90,6 +100,20 @@ class ProductCacheService {
 
     async getCacheDate(): Promise<string | null> {
         return AsyncStorage.getItem(PRODUCTS_CACHE_DATE_KEY);
+    }
+
+    /** Curseur serveur pour la sync incrémentale (null si jamais syncé v2). */
+    async getSyncedAt(): Promise<string | null> {
+        return AsyncStorage.getItem(PRODUCTS_SYNCED_AT_KEY);
+    }
+
+    /** URL du serveur associée au cache (null si inconnue). */
+    async getSyncedServerUrl(): Promise<string | null> {
+        return AsyncStorage.getItem(PRODUCTS_SYNCED_SERVER_KEY);
+    }
+
+    async setSyncedServerUrl(url: string): Promise<void> {
+        await AsyncStorage.setItem(PRODUCTS_SYNCED_SERVER_KEY, url);
     }
 
     async getCount(): Promise<number> {

@@ -1,4 +1,6 @@
 from django.db import transaction
+from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 from django.db.models import (
     CharField,
     Count,
@@ -15,6 +17,7 @@ from django.db.models import (
 from django.db.models.functions import Coalesce
 from rest_framework import filters, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from ..cache_mixins import CachedSearchMixin
@@ -205,6 +208,18 @@ class ProduitViewSet(
         groupe_id = self.request.query_params.get('groupe')
         if groupe_id is not None:
              queryset = queryset.filter(groupe_id=parse_id(groupe_id, field='groupe'))
+
+        # Sync incrémentale PDA : produits modifiés depuis un curseur ISO 8601.
+        # Attention : le stock seul ne bump pas updated_at (save(update_fields)),
+        # le rafraîchissement du stock passe par l'action `stocks`.
+        updated_since = self.request.query_params.get('updated_since')
+        if updated_since is not None:
+            dt = parse_datetime(updated_since)
+            if dt is None:
+                raise ValidationError({'updated_since': 'Format de date invalide (ISO 8601 attendu).'})
+            if timezone.is_naive(dt):
+                dt = timezone.make_aware(dt, timezone.get_current_timezone())
+            queryset = queryset.filter(updated_at__gte=dt)
              
         for_inventory = self.request.query_params.get('for_inventory', 'false').lower() == 'true'
         if for_inventory:
@@ -296,3 +311,24 @@ class ProduitViewSet(
         qs = Produit.objects.filter(dci_reference__isnull=True, is_active=True).order_by('name')[:50]
         serializer = ProduitListSerializer(qs, many=True, context={'request': request})
         return Response({'produits': serializer.data, 'count': qs.count()})
+
+    @action(detail=False, methods=['get'])
+    def stocks(self, request):
+        """
+        Snapshot ultra-léger {id, stock, stock_reserve} des produits actifs,
+        pour la sync incrémentale du catalogue PDA.
+
+        Bypass volontaire de get_queryset()/serializer (annotations lourdes
+        inutiles ici). `server_time` sert de curseur de sync fiable — l'horloge
+        du PDA n'est pas digne de confiance.
+        """
+        rows = list(
+            Produit.objects
+            .filter(is_active=True)
+            .values('id', 'stock', 'stock_reserve')
+            .order_by('id')
+        )
+        return Response({
+            'stocks': rows,
+            'server_time': timezone.now().isoformat(),
+        })
