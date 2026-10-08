@@ -63,7 +63,7 @@ export function CommandeProductRow({
     const { t, i18n } = useTranslation(['orders', 'common']);
     const [isMargeFocused, setIsMargeFocused] = useState(false);
 
-    const { produitName, isExclusive, supplierName, isDeleted, activePromisCount } = resolveProductInfo(p, produitsList, t);
+    const { produitName, isExclusive, supplierName, isDeleted, activePromisCount, hasPendingForce } = resolveProductInfo(p, produitsList, t);
 
     // Local search filter
     if (searchQuery) {
@@ -143,6 +143,16 @@ export function CommandeProductRow({
                                 >
                                     <span className="inline-flex items-center justify-center size-4 rounded text-[8px] font-bold bg-amber-100 text-amber-600">
                                         P
+                                    </span>
+                                </div>
+                            )}
+                            {hasPendingForce && (
+                                <div
+                                    className="group relative z-50 inline-flex shrink-0"
+                                    title={t('orders:product_table.forced_tooltip')}
+                                >
+                                    <span className="inline-flex items-center justify-center size-4 rounded text-[8px] font-bold bg-rose-100 text-rose-600">
+                                        F
                                     </span>
                                 </div>
                             )}

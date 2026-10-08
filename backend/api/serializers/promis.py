@@ -14,16 +14,18 @@ class PromisSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     facture_numero = serializers.CharField(source='facture.numero_facture', read_only=True)
     created_by_name = serializers.CharField(source='created_by.username', read_only=True)
+    quantite_restante = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Promis
         fields = [
             'id', 'facture', 'facture_numero', 'client', 'client_name', 'client_phone',
             'client_display', 'client_phone_display', 'produit', 'produit_name', 'produit_cip',
-            'quantite', 'status', 'status_display', 'date_promis', 'date_livraison',
+            'quantite', 'quantite_livree', 'quantite_restante',
+            'status', 'status_display', 'date_promis', 'date_livraison',
             'notes', 'created_by', 'created_by_name'
         ]
-        read_only_fields = ['date_promis', 'date_livraison', 'created_by', 'status']
+        read_only_fields = ['date_promis', 'date_livraison', 'created_by', 'status', 'quantite_livree']
 
     def validate_quantite(self, value):
         if value is None or value <= 0:

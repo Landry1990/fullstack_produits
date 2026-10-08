@@ -24,6 +24,8 @@ from ...models import (
 from ...pagination import StandardResultsSetPagination
 from ...serializers import AvoirClientSerializer, AvoirClientUpdateSerializer
 from ...services.lot_allocation_service import LotAllocationService
+from ...services.realtime import notify_stock_changed
+from ...services.stock_obligation_service import StockObligationService
 from ...sudo_utils import validate_sudo_mode
 from ...utils.validation import parse_date_param, parse_id
 
@@ -125,6 +127,8 @@ class AvoirClientViewSet(viewsets.ModelViewSet):
         product_ids_with_lots = set()
         for ligne in lignes:
             produit = Produit.objects.select_for_update().get(pk=ligne.produit_id)
+            StockObligationService.reapply_pending_obligations([produit.id])
+            produit.refresh_from_db(fields=['stock', 'stock_reserve'])
             if produit.use_lot_management:
                 if not ligne.stock_lot_id:
                     return Response(
@@ -172,6 +176,7 @@ class AvoirClientViewSet(viewsets.ModelViewSet):
 
         if product_ids_with_lots:
             LotAllocationService.sync_stock_from_lots(product_ids_with_lots)
+        notify_stock_changed(ligne.produit_id for ligne in lignes)
 
         if refund_method == 'cash':
             MouvementCaisse.objects.create(
@@ -236,8 +241,13 @@ class AvoirClientViewSet(viewsets.ModelViewSet):
         for ligne in facture.produits.all():
             produit = ligne.produit
             allocations = list(ligne.allocations.all())
-            if allocations:
-                for alloc in allocations:
+            delivered_allocations = [alloc for alloc in allocations if not alloc.is_pending]
+            if allocations and not delivered_allocations:
+                # Une ligne intégralement promise n'est pas retournable comme
+                # stock physique : elle relève de l'annulation du promis.
+                continue
+            if delivered_allocations:
+                for alloc in delivered_allocations:
                     lot = alloc.stock_lot
                     lignes_data.append({
                         'produit': ligne.produit_id,

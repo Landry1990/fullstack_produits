@@ -468,6 +468,13 @@ export const sendSaleToCaisse = async (
     discount: ((l.prix_unitaire * l.remise) / 100).toFixed(0),
     tva: parseFloat(l.product.tva) || 0,
     lot_id: l.lotId,
+    // Promis (vente à découvert) — même contrat que le web : la quantité
+    // reste facturée en entier, promis_quantity = part due livrée à la
+    // prochaine réception. Le check stock backend porte sur
+    // quantity - promis_quantity (pas de sudo nécessaire pour un promis).
+    is_promis: !!l.isPromis,
+    promis_quantity: l.isPromis ? (l.promisQuantity ?? 0) : 0,
+    promis_phone: l.isPromis ? (l.promisPhone ?? '') : '',
   }));
 
   const idempotencyKey = generateUUID();

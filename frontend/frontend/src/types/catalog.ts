@@ -87,6 +87,7 @@ export interface ProduitModel {
     use_lot_management?: boolean
     last_purchase_price?: string | number
     active_promis_count?: number
+    has_pending_force?: boolean
     message_alerte?: string | null
     blocking_alerte?: boolean
     // DCI / Clinique

@@ -17,7 +17,10 @@ from api.models import (
     Produit,
     StockAdjustment,
     StockLot,
+    StockObligation,
 )
+from api.services.realtime import notify_stock_changed
+from api.services.stock_obligation_service import StockObligationService
 from api.sudo_utils import validate_sudo_mode
 
 
@@ -193,6 +196,21 @@ def validate_inventaire(
                 p.use_lot_management = True
             Produit.objects.bulk_update(prods_needing_lot_flag, ['use_lot_management'])
 
+        # L'inventaire est une valeur physique brute : il devient la nouvelle
+        # référence. Les promis/obligations restent en attente, mais ne sont
+        # plus déjà retranchés du compteur physique. On ne détache que la
+        # zone réellement recomptée (rayon, réserve ou les deux en GLOBAL).
+        if inventaire.inventory_type == Inventaire.TypeStock.GLOBAL:
+            StockObligationService.mark_unapplied_after_absolute_stock_reset(product_ids)
+        elif inventaire.inventory_type == Inventaire.TypeStock.RESERVE:
+            StockObligationService.mark_unapplied_after_absolute_stock_reset(
+                product_ids, StockObligation.StockLocation.RESERVE
+            )
+        else:
+            StockObligationService.mark_unapplied_after_absolute_stock_reset(
+                product_ids, StockObligation.StockLocation.RAYON
+            )
+
         # Recalcul massif des stocks consolidés (produit = somme des lots)
         for prod in products_list:
             # On agrège les lots pour ce produit
@@ -231,4 +249,5 @@ def validate_inventaire(
             request=request
         )
 
+        notify_stock_changed(product_ids)
         return Response({'status': 'Inventaire validé.', 'validated_by': validator.username})

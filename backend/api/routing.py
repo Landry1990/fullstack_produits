@@ -15,6 +15,9 @@ websocket_urlpatterns = [
     # Endpoint caisse centralisée (notifications temps réel POS → caisse)
     re_path(r'ws/caisse_centralisee/$', consumers.CaisseCentraliseeConsumer.as_asgi()),
 
+    # Endpoint broadcast des changements de stock
+    re_path(r'ws/stock/$', consumers.StockUpdateConsumer.as_asgi()),
+
     # Endpoint verrouillage pessimiste documents (commande, inventaire, etc.)
     re_path(r'ws/lock/(?P<model>[a-z]+)/(?P<pk>\d+)/$', consumers.DocumentLockConsumer.as_asgi()),
 ]

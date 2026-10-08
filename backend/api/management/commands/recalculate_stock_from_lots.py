@@ -1,5 +1,4 @@
 from django.core.management.base import BaseCommand
-from django.db.models import Sum
 
 from api.models import Produit
 
@@ -15,13 +14,17 @@ class Command(BaseCommand):
         updated_count = 0
         
         for produit in produits:
-            total_lots = produit.stock_lots.aggregate(total=Sum('quantity_remaining'))['total'] or 0
-            
-            if produit.stock != total_lots:
-                old_stock = produit.stock
-                produit.stock = total_lots
-                produit.save(update_fields=['stock'])
-                self.stdout.write(f"Updated {produit.name}: {old_stock} -> {total_lots}")
+            old_stock = produit.stock
+            old_reserve = produit.stock_reserve
+            produit.calculate_stock_from_lots()
+            produit.refresh_from_db(fields=['stock', 'stock_reserve'])
+
+            if produit.stock != old_stock or produit.stock_reserve != old_reserve:
+                self.stdout.write(
+                    f"Updated {produit.name}: "
+                    f"rayon {old_stock} -> {produit.stock}, "
+                    f"réserve {old_reserve} -> {produit.stock_reserve}"
+                )
                 updated_count += 1
             
             count += 1

@@ -18,6 +18,8 @@ export interface LigneInventaire {
     lot_numero?: string | null
     lot_expiration?: string | null
     lot_quantity_remaining?: number | null
+    pending_promis?: number
+    pending_force?: number
     isLocalOnly?: boolean
 }
 

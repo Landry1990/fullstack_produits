@@ -30,6 +30,7 @@ import { PendingSalesModal } from '../components/PendingSalesModal';
 import { PinLockModal } from '../components/PinLockModal';
 import { PostePickerModal } from '../components/PostePickerModal';
 import { CaissePickerModal } from '../components/CaissePickerModal';
+import { StockResolutionModal } from '../components/StockResolutionModal';
 import { ClientModal } from '../components/ClientModal';
 import { AyantDroitSection } from '../components/AyantDroitSection';
 import { styles } from './FacturationScreen.styles';
@@ -308,9 +309,12 @@ export function FacturationScreen({ navigation }: { navigation?: { navigate: (sc
     });
   };
 
-  // ─── Envoi en caisse (hook extrait : forçage stock, AD, poste,
-  //     sendSaleToCaisse + retries, historique, clear) ─────
-  const { sending, handleSendToCashier, caisseChoices, pickCaisse, closeCaissePicker } = useSendSale({
+  // ─── Envoi en caisse (hook extrait : résolution ruptures/promis,
+  //     AD, poste, sendSaleToCaisse + retries, historique, clear) ─
+  const {
+    sending, handleSendToCashier, caisseChoices, pickCaisse, closeCaissePicker,
+    stockConflicts, confirmStockResolution, cancelStockResolution,
+  } = useSendSale({
     requireSudo, ensureSudoCreds, retryEnsurePoste, adNom, adMatricule,
   });
 
@@ -808,6 +812,16 @@ export function FacturationScreen({ navigation }: { navigation?: { navigate: (sc
         caisses={caisseChoices ?? []}
         onPick={pickCaisse}
         onClose={closeCaissePicker}
+      />
+
+      {/* Ruptures de stock à l'envoi : Promis (défaut) / Réduire / Forcer
+          — parité avec le StockResolutionModal de la vente web */}
+      <StockResolutionModal
+        visible={stockConflicts !== null}
+        conflicts={stockConflicts ?? []}
+        defaultPhone={cart.client?.phone ?? ''}
+        onConfirm={confirmStockResolution}
+        onClose={cancelStockResolution}
       />
 
       {/* Modal édition ligne (prix + remise) */}

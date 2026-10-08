@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useLicenceShortcut } from './hooks/useLicenceShortcut'
 import { useVersionCheck } from './hooks/useVersionCheck'
+import { useStockRealtime } from './hooks/useStockRealtime'
 import { AuthProvider } from './context/AuthContext'
 import { ConfirmProvider } from './hooks/useConfirm'
 import { PharmacySettingsProvider } from './context/PharmacySettingsContext'
@@ -119,6 +120,27 @@ function BackendHealthCheck({ children }: { children: React.ReactNode }) {
 }
 
 /**
+ * Monté uniquement en zone authentifiée : ouvre le WebSocket ws/stock/
+ * qui propage les changements de stock vers l'index de recherche et React Query.
+ * Jamais monté sur l'écran de login → pas de boucle de reconnexion 4001.
+ */
+function StockRealtime() {
+  useStockRealtime();
+  return null;
+}
+
+function GlobalAlerts() {
+  const { isAuthenticated, loading } = useAuth();
+  if (loading || !isAuthenticated) return null;
+  return (
+    <>
+      <ExpirationAlertToasts />
+      <StockRealtime />
+    </>
+  );
+}
+
+/**
  * App Component
  * 
  * Main entry point of the application.
@@ -129,12 +151,6 @@ function BackendHealthCheck({ children }: { children: React.ReactNode }) {
  * 
  * Route definitions are now managed in src/routes.tsx for better maintainability.
  */
-function GlobalAlerts() {
-  const { isAuthenticated, loading } = useAuth();
-  if (loading || !isAuthenticated) return null;
-  return <ExpirationAlertToasts />;
-}
-
 export default function App() {
   useLicenceShortcut();
   useVersionCheck();
