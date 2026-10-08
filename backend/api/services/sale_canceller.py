@@ -8,7 +8,7 @@ import logging
 
 from django.core.cache import cache
 from django.db import transaction
-from django.db.models import F
+from django.db.models import F, Sum
 from django.utils import timezone
 
 from ..models import (
@@ -22,7 +22,9 @@ from ..models import (
     Promis,
 )
 from .lot_allocation_service import LotAllocationService
+from .realtime import notify_stock_changed
 from .sale_integrity import is_invoice_period_closed
+from .stock_obligation_service import StockObligationService
 
 logger = logging.getLogger(__name__)
 
@@ -46,10 +48,27 @@ class SaleCanceller:
             return False, "Impossible d'annuler cette facture : la période de caisse est déjà clôturée. Utilisez un avoir client."
 
         if was_validated:
-            # 1. Restore lot allocations
-            _allocations, product_ids_with_allocations = LotAllocationService.restore_allocations(facture)
+            # 1. Restore physical allocations and cancel pending stock obligations
+            allocations, _product_ids_with_allocations = LotAllocationService.restore_allocations(facture)
+            covered_by_line = {}
+            for alloc in allocations:
+                covered_by_line[alloc.facture_produit_id] = (
+                    covered_by_line.get(alloc.facture_produit_id, 0) + alloc.quantity
+                )
 
-            # 2. Restore general stock for non-lot products
+            # Promis encore en attente sur des lignes historiques sans
+            # allocation : leur quantité n'a jamais été déstockée, donc elle ne
+            # doit pas être réintégrée en résidu.
+            pending_promis_map = {
+                row['produit_id']: row['total'] or 0
+                for row in Promis.objects.filter(
+                    facture=facture,
+                    status=Promis.Status.EN_ATTENTE,
+                    is_active=True,
+                ).values('produit_id').annotate(total=Sum('quantite'))
+            }
+
+            # 2. Restore residual quantities for legacy lines without allocations
             old_items = list(FactureProduit.objects.filter(facture=facture).select_related('produit'))
 
             # Verrouiller les produits pour éviter les race conditions avec une vente concurrente
@@ -62,18 +81,24 @@ class SaleCanceller:
             else:
                 locked_products = {}
 
+            restored_ids = []
             for item in old_items:
                 produit = locked_products.get(item.produit_id) or item.produit
-                if produit and produit.use_lot_management and item.produit_id in product_ids_with_allocations:
-                    produit.calculate_stock_from_lots()
-                elif produit:
-                    Produit.objects.filter(pk=item.produit_id).update(stock=F('stock') + item.quantity)
+                residual_quantity = item.quantity - covered_by_line.get(item.id, 0)
+                if residual_quantity > 0 and item.produit_id in pending_promis_map:
+                    residual_quantity -= min(residual_quantity, pending_promis_map[item.produit_id])
+                if produit and residual_quantity > 0:
+                    Produit.objects.filter(pk=item.produit_id).update(stock=F('stock') + residual_quantity)
+                    restored_ids.append(item.produit_id)
+            notify_stock_changed(restored_ids)
 
-            # 3. Stock movements (traceability)
+            # 3. Annuler les promis/obligations restants avant le snapshot stock
+            SaleCanceller._cancel_linked_promis(facture, user)
+
+            # 4. Stock movements (traceability)
             SaleCanceller._create_cancellation_movements(facture, old_items, user)
-
-        # 4. Cancel linked promis
-        SaleCanceller._cancel_linked_promis(facture)
+        else:
+            SaleCanceller._cancel_linked_promis(facture, user)
 
         # 5. Mark invoice as cancelled
         facture.status = Facture.Status.ANNULEE
@@ -160,11 +185,13 @@ class SaleCanceller:
             MouvementStock.objects.bulk_create(mouvements)
 
     @staticmethod
-    def _cancel_linked_promis(facture):
+    def _cancel_linked_promis(facture, user=None):
         """Annule les promis liés à cette facture."""
         linked_promis = Promis.objects.filter(facture=facture, is_active=True)
         for promis in linked_promis:
             if promis.status in (Promis.Status.EN_ATTENTE, Promis.Status.DELIVRE):
+                if promis.status == Promis.Status.EN_ATTENTE:
+                    StockObligationService.cancel_for_promis(promis, user=user)
                 promis.status = Promis.Status.ANNULE
                 promis.date_livraison = None
                 promis.notes = (

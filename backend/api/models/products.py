@@ -378,19 +378,22 @@ class Produit(models.Model):
     
     def calculate_stock_from_lots(self):
         """
-        Calcule et met à jour le stock du produit basé sur la somme
-        des quantités restantes de tous ses lots.
-        Gère à la fois le stock Rayon (quantity_remaining) et le stock Réserve (quantity_reserved).
+        Calcule le stock vendable depuis les lots, en retranchant les dettes
+        de stock en attente qui ont déjà été appliquées au compteur produit.
         """
         from django.db.models import Sum
         results = self.stock_lots.aggregate(
             total_remaining=Sum('quantity_remaining'),
             total_reserved=Sum('quantity_reserved')
         )
-        
-        self.stock = results['total_remaining'] or 0
-        self.stock_reserve = results['total_reserved'] or 0
-        
+        obligations = self.stock_obligations.filter(
+            status='ATT', stock_applied=True
+        ).values('stock_location').annotate(total=Sum('quantity_remaining'))
+        obligation_map = {row['stock_location']: row['total'] or 0 for row in obligations}
+
+        self.stock = (results['total_remaining'] or 0) - obligation_map.get('RAYON', 0)
+        self.stock_reserve = (results['total_reserved'] or 0) - obligation_map.get('RESERVE', 0)
+
         self.save(update_fields=['stock', 'stock_reserve'])
         return self.stock
 

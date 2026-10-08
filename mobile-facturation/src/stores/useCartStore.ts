@@ -39,6 +39,8 @@ interface CartState {
   updateRemise: (productId: number, remise: number) => void;
   setLot: (productId: number, lot: StockLot | null) => void;
   setProductLots: (productId: number, lots: StockLot[]) => void;
+  setLinePromis: (productId: number, promisQty: number, phone?: string) => void;
+  clearLinePromis: (productId: number) => void;
 
   // Remise globale + validations superviseur
   setRemiseGlobale: (value: number, mode: 'taux' | 'montant') => void;
@@ -105,7 +107,13 @@ export const useCartStore = create<CartState>((set, get) => ({
       set((s) => ({
         lines: s.lines.map((l) =>
           l.product.id === product.id
-            ? calcLine({ ...l, quantite: l.quantite + qty })
+            ? calcLine({
+                ...l,
+                quantite: l.quantite + qty,
+                isPromis: false,
+                promisQuantity: 0,
+                promisPhone: undefined,
+              })
             : l
         ),
       }));
@@ -139,10 +147,33 @@ export const useCartStore = create<CartState>((set, get) => ({
     if (qty <= 0) { get().removeLine(productId); return; }
     set((s) => ({
       lines: s.lines.map((l) =>
-        l.product.id === productId ? calcLine({ ...l, quantite: qty }) : l
+        l.product.id === productId
+          // Tout changement de qté invalide le partage promis (parité web).
+          ? calcLine({ ...l, quantite: qty, isPromis: false, promisQuantity: 0, promisPhone: undefined })
+          : l
       ),
     }));
   },
+
+  // Promis : la part manquante est due au client — la ligne garde la
+  // quantité facturée, le backend crée le Promis (livré à la réception).
+  setLinePromis: (productId, promisQty, phone) =>
+    set((s) => ({
+      lines: s.lines.map((l) =>
+        l.product.id === productId
+          ? { ...l, isPromis: promisQty > 0, promisQuantity: Math.max(0, promisQty), promisPhone: phone || undefined }
+          : l
+      ),
+    })),
+
+  clearLinePromis: (productId) =>
+    set((s) => ({
+      lines: s.lines.map((l) =>
+        l.product.id === productId
+          ? { ...l, isPromis: false, promisQuantity: 0, promisPhone: undefined }
+          : l
+      ),
+    })),
 
   updatePrix: (productId, prix) =>
     set((s) => ({

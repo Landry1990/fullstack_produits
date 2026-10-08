@@ -31,7 +31,6 @@ import { Card, CardContent, CardHeader, CardTitle } from './shadcn/card'
 import { Badge } from './shadcn/badge'
 import { Tabs, TabsList, TabsTrigger } from './shadcn/tabs'
 import { Checkbox } from './shadcn/checkbox'
-import { Input } from './shadcn/input'
 import { LocalizedDateInput } from './LocalizedDateInput'
 import {
   Table,
@@ -565,8 +564,8 @@ export default function Perimes() {
           </div>
         ) : activeTab === 'list' ? (
           /* ========== LIST VIEW ========== */
-          <div className="flex flex-col h-full bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-2 lg:p-4 border-b border-slate-100 bg-white sticky top-0 z-20 shrink-0">
+          <Card className="flex flex-col h-full overflow-hidden">
+            <CardHeader className="p-2 lg:p-4 border-b border-slate-100 space-y-0 shrink-0">
                <div className="flex flex-wrap justify-between items-center gap-2 min-h-10 py-1">
                   {selectedLotIds.size > 0 ? (
                      <div className="flex items-center gap-2">
@@ -633,9 +632,9 @@ export default function Perimes() {
                      </>
                   )}
                </div>
-            </div>
+            </CardHeader>
 
-            <div className="flex-1 overflow-auto">
+            <CardContent className="p-0 flex-1 overflow-auto">
               {loading ? (
                 <SkeletonTable rows={8} columns={8} />
               ) : lots.length === 0 ? (
@@ -725,12 +724,13 @@ export default function Perimes() {
                   </TableBody>
                 </Table>
               )}
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         ) : (
           /* ========== HISTORY VIEW ========== */
-          <div className="space-y-4">
-             <div className="flex flex-wrap gap-2 lg:gap-4 items-center justify-between bg-slate-50 p-3 lg:p-4 rounded-xl border border-slate-200">
+          <div className="space-y-4 lg:space-y-6">
+             <Card>
+               <CardContent className="p-3 lg:p-4 flex flex-wrap gap-2 lg:gap-4 items-center justify-between">
                 <div className="flex flex-wrap gap-2 lg:gap-4 items-center">
                     <div className="flex flex-col gap-1">
                         <span className="text-caption font-bold text-slate-400 uppercase pl-1">{t('common:from')}</span>
@@ -774,16 +774,22 @@ export default function Perimes() {
                         {t('perimes.history.excel')}
                     </Button>
                 </div>
-             </div>
+               </CardContent>
+             </Card>
 
              {adjustments.length > 0 && (
-               <Card>
-                 <CardContent className="p-4">
-                   <div className="text-xs font-bold uppercase text-slate-400">{t('perimes.history.total_valorization')}</div>
-                   <div className="text-red-500 text-2xl font-bold">
-                     {formatCurrency(adjustments.reduce((sum, a) => sum + (a.valorisation || 0), 0))}
+               <Card className="bg-gradient-to-br from-red-50 to-red-50/40 border-red-200">
+                 <CardContent className="p-3 lg:p-5">
+                   <div className="flex items-center gap-2 lg:gap-3">
+                     <div className="size-10 lg:size-12 rounded-full bg-red-100 flex items-center justify-center text-xl lg:text-2xl">💸</div>
+                     <div>
+                       <p className="text-xs lg:text-sm text-slate-500">{t('perimes.history.total_valorization')}</p>
+                       <p className="text-lg lg:text-2xl font-bold text-red-600">
+                         {formatCurrency(adjustments.reduce((sum, a) => sum + (a.valorisation || 0), 0))}
+                       </p>
+                       <p className="text-xs text-slate-400">{t('perimes.history.operations_count', { count: adjustments.length })}</p>
+                     </div>
                    </div>
-                   <div className="text-sm font-medium text-slate-400">{t('perimes.history.operations_count', { count: adjustments.length })}</div>
                  </CardContent>
                </Card>
              )}
@@ -797,6 +803,10 @@ export default function Perimes() {
                />
              ) : (
                <Card className="overflow-hidden">
+                 <CardHeader>
+                   <CardTitle className="text-lg">📜 {t('perimes.history.title')}</CardTitle>
+                 </CardHeader>
+                 <CardContent>
                  <div className="overflow-x-auto">
                    <Table className="w-full text-sm">
                      <TableHeader>
@@ -830,6 +840,7 @@ export default function Perimes() {
                      </TableBody>
                    </Table>
                  </div>
+                 </CardContent>
                </Card>
              )}
           </div>

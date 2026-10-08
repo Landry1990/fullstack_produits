@@ -5,6 +5,7 @@ from django.db.models import (
     CharField,
     Count,
     DecimalField,
+    Exists,
     F,
     IntegerField,
     Min,
@@ -27,7 +28,7 @@ from ..centralized_configs import (
     CommonOrderingFields,
     CommonSearchFields,
 )
-from ..models import CommandeProduit, Produit, Promis, StockLot
+from ..models import CommandeProduit, Produit, Promis, StockLot, StockObligation
 from ..search_mixins import MultiTermSearchMixin
 from ..serializer_mixins import OptimizedSerializerMixin
 from ..serializers import ProduitSerializer, ProduitUpdateSerializer
@@ -127,6 +128,18 @@ class ProduitViewSet(
         
         queryset = queryset.annotate(
             active_promis_count=Coalesce(Subquery(promis_subquery), 0, output_field=IntegerField())
+        )
+
+        # Vente forcée en attente de couverture (dette FORCE sans fiche Promis)
+        queryset = queryset.annotate(
+            has_pending_force=Exists(
+                StockObligation.objects.filter(
+                    produit=OuterRef('pk'),
+                    status=StockObligation.Status.EN_ATTENTE,
+                    type=StockObligation.TypeObligation.FORCE,
+                    quantity_remaining__gt=0,
+                )
+            )
         )
         
         # Par défaut, ne montrer que les produits actifs (sauf si include_inactive=true)

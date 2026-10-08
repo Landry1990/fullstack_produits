@@ -1,5 +1,308 @@
 # Changelog — Fullstack Produits
 
+## 2026-10-08 — 🐛 Vente doublée à la caisse par double-Entrée dans le modal sudo
+
+- **Symptôme** : deux Entrées rapides dans « Validation vendeur » (envoi à la
+  caisse) créaient deux factures identiques en caisse — reproduit 2× en test.
+- **Chaîne causale** : `SudoValidationModal.handleConfirm` n'avait aucune
+  garde → 2 `verify_password` en vol ; `verify_password` étant coûteux (hash
+  PBKDF2), le 2ᵉ pouvait résoudre **après** la fin de la vente #1 → tous les
+  verrous relâchés (`validatingRef`, `inFlightRef`, `saleInProgressRef`) ; le
+  callback `sudoState.onValidate` capturait `handleCompleteSale` d'une render
+  passée → panier figé non vide → `completeSale` avec **nouvelle clé UUID**
+  → doublon (la clé étant régénérée par appel, le backend ne dédoublonnait pas).
+- **Fix — 4 couches** :
+  1. `SudoValidationModal` : verrou synchrone `confirmInFlightRef` dès le haut
+     de `handleConfirm` (+ check `saving`) — le 2ᵉ Enter ne lance même plus
+     `verify_password`. Couvre tous les écrans (facturation, inventaire,
+     commandes, avoirs, périmés, fournisseurs, créances, caisse…).
+  2. `useFacturationState` : `requestInFlightRef` couvrant aussi les appels
+     **avec** credentials (le verrou existant ne filtrait que les appels sans).
+  3. Clé d'idempotence **déterministe** = hash du contenu du panier
+     (`lineId` = UUID par ligne + quantités/prix/remises/total/client) — une
+     re-soumission du même panier réutilise la même clé → le backend renvoie
+     la réponse en cache ; une vraie vente suivante a d'autres `lineId`.
+  4. `idempotency.py` : verrou atomique `cache.add` (SETNX) + sentinel
+     « en cours » (TTL 60 s) — deux requêtes concurrentes à même clé ne
+     s'exécutent plus en parallèle (fenêtre TOCTOU fermée) ; le sentinel est
+     libéré sur échec/exception pour autoriser le retry.
+- Fichiers : `SudoValidationModal.tsx`, `useFacturationState.ts`,
+  `useSaleCompletion.ts`, `types/finance.ts`, `backend/api/idempotency.py`.
+- Tests : 23/23 backend OK (cash_payment_edges, facturation_contract,
+  stock_realtime), lint/tsc propres, Facturation.test 3/3.
+
+## 2026-10-08 — 📡 Stock temps réel : « recharge invisible » via WebSocket
+
+- **Problème** : le stock affiché ne se mettait jamais à jour sans F5 —
+  l'index de recherche en mémoire (`useProductSearchIndex`, préchargé ~5 min)
+  alimente caisse, commandes, transformations, avoirs et inventaire ; React
+  Query ne se rafraîchit qu'au montage/focus. Conséquence terrain : « stock
+  OK à la recherche, rupture à la validation » sur un autre poste.
+- **Backend** : nouveau `ws/stock/` (`StockUpdateConsumer`, groupe
+  `stock_updates`, auth requise → close 4001) + helper
+  `services/realtime.py::notify_stock_changed(ids)` qui diffuse en
+  `transaction.on_commit` les compteurs post-commit
+  `{type:'stock_update', produits:[{id,stock,stock_reserve}]}` — jamais
+  bloquant (try/except).
+- **Câblage** : ~15 points d'écriture du compteur — vente
+  (`sale_validator`, chaud : caisse web + mobile + POS), annulation/
+  modification, réception + annulation (`cloture_mixin`), ajustements et
+  transferts (`produit_actions/stock.py`), réappro groupée, transformations,
+  avoirs (décharge + annulation + avoir client), promis (delivrer/annuler/
+  bulk + réservation), périmés, inventaire, import produits, obligations
+  (`resolve`/`cancel`/`reapply`), `lot_allocation_service`.
+- **Frontend** : `useStockRealtime` (monté en zone authentifiée de
+  `App.tsx`, token DRF en query string, ping 30s, reconnexion 3s, pas de
+  boucle sur refus 4001). Sur `stock_update` : (a) `patchSearchIndexStock`
+  mute en place les entrées de l'index + `indexVersion`
+  (`useSyncExternalStore`) → les résultats affichés se rafraîchissent sans
+  recharger l'index ; (b) patch instantané des caches React Query
+  (détail `['produit',id]` + listes) ; (c) invalidations debouncées 500ms →
+  refetch silencieux des queries actives.
+- **Limite** : la fenêtre de course tombe à ~1s ; le contrôle à la
+  validation reste l'autorité finale. Non couvert : stocks des proforma
+  en attente d'encaissement (quantités non encore engagées).
+- **Mobile** : souscription `ws/stock/` notée en P1 dans
+  `mobile-facturation/SUIVI.md` (périmètre ultérieur).
+- **Tests** : `test_stock_realtime.py` (3 tests : broadcast vente,
+  broadcast ajustement, ids vides ignorés). 90 tests backend OK,
+  9 tests vitest index OK, `tsc`/`eslint`/`build` propres.
+- Fichiers : `backend/api/{consumers.py,routing.py,services/realtime.py,
+  tests/test_stock_realtime.py}` + ~15 sites d'émission ;
+  `frontend/frontend/src/{hooks/useStockRealtime.ts,
+  hooks/useProductSearchIndex.ts, hooks/useProductSearch.ts, App.tsx,
+  hooks/useProductSearchIndex.test.ts}` ; `mobile-facturation/SUIVI.md`.
+
+## 2026-10-08 — 🧹 Historique produit : suppression de la ligne « Résolution dette » parasite
+
+- Constaté en test réel (PROLIFE MAGNESIUM) : la résolution d'une dette
+  PROMIS/FORCE à la réception créait un `MouvementStock` AJUSTEMENT de
+  **quantité 0** dont le snapshot `stock_apres` cassait la lecture chaînée
+  de l'onglet MVMTS (ligne intercalée entre l'ENTREE et la vente).
+- `resolve_pending_obligations` ne crée désormais un mouvement que si la
+  résolution fait réellement baisser le compteur — dette **détachée**
+  (`stock_applied=False`, comptage brut) : quantité `-résolu`, y compris en
+  gestion par lots où le retrait passe par le recalcul depuis les lots.
+  La trace métier reste assurée par `StockObligationResolution` +
+  `FactureProduitAllocation`.
+- Migration `0269` : purge des lignes AJUSTEMENT qty=0 « … - Promis|Vente
+  forcée #N (x unité(s)) » déjà en base (dev : 1 ligne supprimée).
+- Tests : `test_reception_applied_debt_creates_no_noise_movement` et
+  `test_reception_detached_debt_creates_real_movement`. 105 tests
+  stock/facturation OK.
+- Fichiers : `backend/api/services/stock_obligation_service.py`,
+  `backend/api/migrations/0269_drop_zero_qty_resolution_movements.py`,
+  `backend/api/tests/test_stock_management.py`.
+
+## 2026-10-08 — 🏷️ Commandes : signal « F » pour les ventes forcées en attente
+
+- Le signalement promis existait déjà (`active_promis_count` → badge « P » sur
+  les lignes de commande et « PROMIS (n) » dans la recherche produit), mais une
+  vente forcée sans fiche Promis n'affichait rien — cas réel : produit servi
+  depuis la table avant sa réception, l'entrée en stock le compense ensuite.
+- Nouvelle annotation `has_pending_force` (Exists sur `StockObligation` FORCE
+  EN_ATTENTE) exposée dans `ProduitListSerializer`.
+- Affichage (signal simple, sans quantité, validé par le métier) : badge rose
+  « F » à côté du « P » sur les lignes de commande (`CommandeProductRow`),
+  badge « FORCÉ » dans les résultats de `ProductSearch`. Tooltips FR/EN.
+- Vérifié : annotation OK en shell (EREKTA → True, DOLIPRANE → False), 48
+  tests commandes/produits OK, `tsc` et `git diff --check` propres.
+- Fichiers : `backend/api/views/produits.py`,
+  `backend/api/serializers_optimized.py`,
+  `frontend/frontend/src/{types/catalog.ts,components/Commandes/productTableUtils.ts,
+  components/Commandes/CommandeProductRow.tsx,components/common/ProductSearch/*}`,
+  `frontend/frontend/public/locales/{fr,en}/{orders,facturation}.json`.
+
+## 2026-10-08 — ⚠️ Inventaire : alerte sur les produits avec promis/ventes forcées en attente
+
+- L'inventaire reste « physique brut » (les dettes de stock sont détachées du
+  compteur via `stock_applied=False`), mais une dette invisible pouvait être
+  comptée comme vendable sans que l'opérateur s'en rende compte.
+- `LigneInventaireSerializer` expose désormais `pending_promis` et
+  `pending_force` (agrégat unique par requête, sans N+1) depuis
+  `StockObligation` EN_ATTENTE.
+- Écran d'édition d'inventaire (`InventaireDataTab`) : bandeau d'alerte ambre
+  récapitulatif + badges par ligne « Promis ×N » (ambre) et « Forcée ×N »
+  (rose), affichés aussi en lecture seule. Traductions FR/EN.
+- Cas couvert : produit servi « sur la table » avant sa réception (FORCE) ou
+  promis en attente — l'opérateur sait que ces unités comptées sont déjà dues.
+- Test : `test_lignes_serializer_exposes_pending_obligations` (PROMIS+FORCE
+  visibles, RESOLUE exclue). 9/9 tests inventaire OK, `tsc` propre.
+- Fichiers : `backend/api/serializers/inventory.py`,
+  `backend/api/tests/test_stock_inventory.py`,
+  `frontend/frontend/src/types/inventory.ts`,
+  `frontend/frontend/src/components/inventaire/editor/InventaireDataTab.tsx`,
+  `frontend/frontend/public/locales/{fr,en}/stock.json`.
+
+## 2026-10-08 — 🏗️ Dettes de stock explicites (`StockObligation`) : promis, ventes forcées et stock négatif
+
+- **Règle métier validée** : un promis = quantité **payée** non remise. La
+  facture porte la quantité totale, les lots ne couvrent que la part livrée,
+  et `Produit.stock` descend de la quantité totale → le stock passe **négatif
+  dès la validation** pour signaler visuellement le promis.
+  Ex. stock 1, facture 2, promis 1 → facture 2, lot 0, stock −1, promis 1.
+  Réception +2 → 1 unité couvre le promis, stock final 1.
+- **Nouveau modèle `StockObligation`** (`PROMIS` / `FORCE`, quantité initiale et
+  restante, `stock_applied`, emplacement `RAYON`/`RESERVE`, coût estimé) +
+  `StockObligationResolution` (historique de résolution par réception/lot) +
+  `FactureProduitAllocation.{stock_obligation,is_pending,resolved_commande}` +
+  `Promis.quantite_livree`. Migrations `0266`, `0267`, `0268` (backfill
+  prudent : promis existants rattachés ; déficit négatif inexpliqué → dette
+  `FORCE` au lieu d'être effacé).
+- **Service central** `services/stock_obligation_service.py` : création,
+  annulation, résolution partielle (PROMIS avant FORCE, ordre chronologique),
+  `reapply_pending_obligations` (ré-applique au compteur une dette détachée
+  par un comptage brut avant toute vente/consommation).
+- **Opérations revues** :
+  - Vente (`sale_validator`) : décrément total, allocations livrées + dettes ;
+    `sale_finalizer` refuse `promis_quantity > quantity`.
+  - Annulation/modification (`sale_canceller`, `sale_modifier`,
+    `restore_allocations`) : distinction lot livré / dette en attente / dette
+    résolue, plus de double restauration.
+  - Réception (`cloture_mixin`) : résout PROMIS puis FORCE puis déficit
+    historique ; réception partielle réduit le reste dû ; produits sans lots
+    traités ; annulation de réception rouvre exactement les obligations
+    résolues par cette commande (y compris lot externe non restauré à tort).
+  - Promis manuels (`promis.py`) : réservation basée sur le stock vendable,
+    `delivrer` via le service, annulation réintègre rayon/réserve correctement.
+  - Transferts réserve→rayon, réappro groupée : couvrent d'abord les dettes.
+  - Avoir fournisseur (annulation de déchargement) : recrée un lot traçable
+    pour les lignes FEFO et résout les dettes ; avoirs clients, périmés,
+    transformations (la destination couvre d'abord ses dettes) et annulation
+    de transformation ré-appliquent les dettes avant d'agir.
+  - Signaux lots / `calculate_stock_from_lots` / `recalculate_stock_from_lots`
+    : ne recalculent plus `stock = Σ lots` aveuglément — les dettes appliquées
+    sont préservées. Inventaire et ajustement absolu restent « physique brut »
+    et détachent les dettes (`stock_applied=False`) au lieu de les perdre.
+- **Frontend/mobile** : `PromisTable` affiche livré/restant ;
+  `useSaleCompletion` et le flux mobile envoient `is_promis/promis_quantity/
+  promis_phone` ; badge Promis.
+- **Tests** : `test_stock_management` (réception partielle, PROMIS avant FORCE,
+  sans lots, annulation de réception, lot externe, promis manuel avec dette
+  détachée), `test_stock_transformations` (destination avec dette),
+  `test_facturation_contract`, `test_lot_allocation_service` convertis au
+  nouveau contrat. Suite élargie : **281 tests OK**. `makemigrations --check` :
+  aucun changement.
+- **Données** : `EREKTA 50MG CP B/4` → stock −1 cohérent avec une dette `FORCE`
+  de 1 (résorbée à la prochaine réception). `Dbg` (stock 102, aucun lot,
+  gestion par lots activée) reste à corriger après décision métier.
+- Fichiers principaux : `backend/api/models/{stock,billing,products}.py`,
+  `backend/api/migrations/026{6,7,8}_*.py`,
+  `backend/api/services/{stock_obligation_service,lot_allocation_service,
+  sale_validator,sale_canceller,sale_modifier,sale_finalizer}.py`,
+  `backend/api/views/commandes/{cloture_mixin,promis,avoirs}.py`,
+  `backend/api/views/produit_actions/stock.py`,
+  `backend/api/views/stocks/{stock_lots,transformations,inventaire/validation}.py`,
+  `backend/api/views/ventes/client_credit.py`,
+  `backend/api/management/commands/recalculate_stock_from_lots.py`,
+  `backend/api/serializers/promis.py`, `backend/api/tests/*`.
+
+## 2026-10-08 — 💄 Périmés : harmonisation UI des onglets Liste et Historique
+
+- Les trois onglets de la page Périmés avaient des styles différents :
+  seul le Dashboard utilisait les composants `Card`/`CardHeader`/`CardContent`.
+- **Liste** : conteneur `div` blanc brut remplacé par une `Card` avec
+  `CardHeader` (toolbar titre + filtres / actions groupées) et
+  `CardContent` scrollable pour le tableau.
+- **Historique** : barre de filtres `bg-slate-50` remplacée par une `Card` ;
+  la carte « valorisation totale » reprend le style KPI du dashboard
+  (gradient rouge + pastille icône) ; le tableau reçoit un `CardHeader`
+  avec titre comme « Top produits périmés ».
+- Fichier : `frontend/frontend/src/components/Perimes.tsx` (+ retrait
+  d'un import `Input` inutilisé). Lint + tsc OK.
+
+## 2026-10-08 — 🐛 Fix 500 sur la sortie groupée des périmés
+
+- **Symptôme** : erreur 500 à la sortie groupée de lots périmés
+  (`POST /api/stock-lots/bulk_sortir_perimes/`).
+- **Cause** : la requête combinait `select_for_update()` et
+  `select_related('produit')`. `StockLot.produit` étant un FK nullable,
+  Django génère un `LEFT OUTER JOIN` et PostgreSQL refuse
+  `FOR UPDATE` sur le côté nullable (`NotSupportedError`).
+- **Fix** : retrait du `select_related` (inutile — seul `lot.produit_id`
+  est lu, les produits sont chargés/verrouillés via `locked_products`)
+  et verrou limité à la table des lots via `select_for_update(of=('self',))`.
+- **Test** : nouveau test de régression `test_bulk_disposal_of_expired_lots`
+  (2 lots périmés → 200, lots à 0, stock décrémenté, StockAdjustment PERIME
+  et MouvementStock AVOIR créés par lot). 4/4 tests du module OK.
+- Fichiers : `backend/api/views/stocks/stock_lots.py`,
+  `backend/api/tests/test_expired_lot_handling.py`.
+
+## 2026-10-08 — 🐛 Réception après découvert : cohérence stock ↔ lots
+
+- Lorsqu'une vente sans allocation ni promis avait créé un stock négatif, la
+  réception suivante calculait désormais correctement le stock global
+  (`-1 + 2 = 1`), mais le nouveau lot conservait encore 2 unités disponibles.
+  Le stock et la somme des lots divergeaient, permettant une future allocation
+  supérieure au stock physique.
+- La clôture absorbe maintenant le déficit historique non couvert par un
+  `Promis` directement dans les lots nouvellement reçus, après satisfaction
+  des vrais promis. Les quantités gratuites et la réserve suivent la même
+  décrémentation. Les promis en attente sont déduits du déficit à absorber pour
+  éviter toute double consommation.
+- Test renforcé : stock `-1`, réception `2` → stock `1`, lot initial `2`,
+  `quantity_remaining=1`, PMP au coût unitaire.
+- Donnée corrigée : CIP `3499879` (DOLIPRANE 150MG ENF SACH/12), lot
+  `CMD100-5158` : quantité restante `2 → 1`; stock global conservé à `1`.
+- Vérification : 52 tests stock, commandes, facturation et finalisation réussis.
+- Fichiers : `backend/api/views/commandes/cloture_mixin.py`,
+  `backend/api/tests/test_stock_management.py`.
+
+## 2026-10-07 — 📱 Promis sur mobile + déstockage réel corrigé
+
+- `mobile-facturation` propose désormais **Promis / Réduire / Forcer** par
+  produit lorsque la quantité dépasse le stock. Promis est sélectionné par
+  défaut ; le téléphone est prérempli depuis le client et envoyé avec
+  `is_promis`, `promis_quantity`, `promis_phone`. Forcer conserve la validation
+  superviseur `can_sell_negative_stock` ; Réduire ramène la ligne au stock.
+- Badge `Promis ×N` dans le panier et remise en résolution automatique après
+  toute modification de quantité. Traductions FR/EN et suivi mobile mis à jour.
+- Correction du backend commun web/mobile : la facture conserve la quantité
+  totale, tandis que lots, stock et mouvements ne consomment que la quantité
+  réellement livrée (`quantity - promis_quantity`). Avant, le contrôle de
+  stock excluait le promis mais le déstockage utilisait encore la quantité
+  totale, pouvant recréer un stock négatif.
+- Tests de contrat ajoutés avec et sans gestion par lots (facturé 2, stock 1,
+  promis 1 → facture 2, Promis 1, allocation/mouvement/stock −1 seulement).
+- Fichiers : `mobile-facturation/src/{components/StockResolutionModal.tsx,
+  components/CartItemRow.tsx,hooks/useSendSale.ts,services/api.ts,
+  stores/useCartStore.ts,types/index.ts,i18n/fr.ts,i18n/en.ts}`,
+  `backend/api/services/{sale_validator.py,lot_allocation_service.py}`,
+  `backend/api/tests/test_facturation_contract.py`,
+  `mobile-facturation/SUIVI.md`.
+
+## 2026-10-07 — 🐛 Fix PMP corrompu par ventes à découvert (marge 04/10 : 14% → 26%)
+
+- **Symptôme** : marge dashboard du 04/10 affichée à 13,5 % alors que les prix
+  d'achat/vente étaient corrects — réelle : ~26 %.
+- **Cause** : `CommandeClotureMixin.cloturer` calculait
+  `new_pmp = (old_stock × old_pmp + cout_total) / (old_stock + qté_reçue)`.
+  Après une **vente à découvert sans promis** (ex. vente mobile, qui ne gère
+  pas les promis) `old_stock` est négatif : `(-1 × 0 + 2 × 1567) / (-1 + 2)`
+  donnait un PMP de **3134 au lieu de 1567** (coût total de ligne au lieu du
+  coût unitaire). Les ventes sans allocation lot retombent sur le PMP → marges
+  écrasées (−49 % sur SPASFON, SMECTA, PAIDOFEBRIL le 04/10).
+- **Fix PMP** (`cloture_mixin.py`, 2 branches) : quand le stock pré-réception est
+  ≤ 0, le reliquat provient entièrement de la réception → `pmp = effective_cost`.
+- **Fix resync stock** (`cloture_mixin.py`) : le recalcul
+  `stock = somme(quantity_remaining des lots)` écrasait le découvert
+  (vente à stock négatif sans promis) : stock −1 + réception 2 donnait 2.
+  Désormais `stock = min(compteur incrémental, somme lots)` — le déficit
+  persiste (et les satisfactions de promis restent gérées via `qr` des lots).
+  Même garde pour `stock_reserve`.
+- **Données corrigées** : 4 PMP doublés → `cost_price` (SPASFON B/30, SMECTA
+  B/30, PAIDOFEBRIL, DOLOWIN 100MG) ; 4591 produits `pmp=0` avec `cost_price>0`
+  → `pmp = cost_price` (dont EREKTA, qui gonflait la marge à +100 %/ligne) ;
+  stock 2→1 + `quantity_remaining` du lot 2→1 sur SPASFON/SMECTA/PAIDOFEBRIL
+  (unité du 04/10 déjà livrée au client, confirmé pharmacien) + mouvement
+  AJUSTEMENT de traçabilité.
+- **Tests** : 3 tests de régression dans `PMPCalculationTestCase`
+  (`test_pmp_correct_with_negative_stock`,
+  `test_pmp_correct_second_line_still_negative`,
+  `test_negative_stock_preserved_by_lot_resync`).
+- Fichiers : `api/views/commandes/cloture_mixin.py`,
+  `api/tests/test_stock_management.py`, données `Produit.pmp`.
+
 ## 2026-10-07 — 📱 PDA Inventaire : login au modèle mobile-facturation
 
 - **PDA Inventaire** : refonte du login sur le modèle `mobile-facturation`.

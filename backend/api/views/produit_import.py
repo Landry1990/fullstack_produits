@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from api.models import Produit
+from api.services.realtime import notify_stock_changed
 
 
 class ProduitImportViewSet(viewsets.ViewSet):
@@ -59,6 +60,7 @@ class ProduitImportViewSet(viewsets.ViewSet):
             created_count = 0
             updated_count = 0
             errors = []
+            stock_changed_ids = set()
             
             # Précharger tous les produits existants en mémoire pour un matching ultra-rapide (O(1))
             # Évite d'exécuter 3 requêtes SELECT par ligne du CSV (soit 12 000+ requêtes SQL pour 4000 lignes !)
@@ -174,6 +176,7 @@ class ProduitImportViewSet(viewsets.ViewSet):
                             
                             produit.save()
                             updated_count += 1
+                            stock_changed_ids.add(produit.id)
                         else:
                             # Création
                             new_produit = Produit.objects.create(
@@ -194,13 +197,15 @@ class ProduitImportViewSet(viewsets.ViewSet):
                             if cip3:
                                 by_cip3[cip3] = new_produit
                             by_name[nom.lower().strip()] = new_produit
-                            
+
                             created_count += 1
+                            stock_changed_ids.add(new_produit.id)
                             
                     except Exception as e:
                         errors.append(f"Ligne {row_num}: {e!s}")
                         continue
-            
+
+            notify_stock_changed(stock_changed_ids)
             # Rapport final
             return Response({
                 'success': True,

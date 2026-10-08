@@ -127,7 +127,10 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
                 selling_price: prixUnitaire.toString(),
                 discount: (prixUnitaire - prixNet).toFixed(0),
                 tva: ligne.produit.tva || 0,
-                lot_id: ligne.lotId ? Number(ligne.lotId) : null
+                lot_id: ligne.lotId ? Number(ligne.lotId) : null,
+                is_promis: !!ligne.isPromis,
+                promis_quantity: ligne.isPromis ? (ligne.promisQuantity || 0) : 0,
+                promis_phone: ligne.isPromis ? (ligne.promisPhone || params.promisPhone || '') : ''
             };
         });
 
@@ -288,9 +291,10 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
             const paiementsList = buildPaymentsList(params.totals, params.paiements, params.montantPaye, params.modePaiement);
 
             // Payload atomique final
-            // Clé d'idempotence : générée une seule fois par tentative de vente.
-            // En cas de retry réseau, la même clé est réutilisée → pas de doublon.
-            const idempotencyKey = generateUUID();
+            // Clé d'idempotence : celle fournie par l'appelant si présente
+            // (empreinte déterministe du panier — dédoublonne les re-soumissions),
+            // sinon générée par tentative de vente (retry réseau → pas de doublon).
+            const idempotencyKey = params.idempotencyKey || generateUUID();
 
             const finalPayload = {
                 client: params.useManualClient ? null : params.selectedClient,

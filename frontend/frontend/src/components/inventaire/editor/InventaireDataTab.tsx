@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Trash2, PackageX, ArrowUp, ArrowDown } from 'lucide-react';
+import { Trash2, PackageX, ArrowUp, ArrowDown, AlertTriangle } from 'lucide-react';
 import { formatCurrency, normalizeNumberInput } from '../../../utils/formatters';
 import { formatDate } from '../../../utils/dateUtils';
 import type { LigneInventaire } from '../../../types';
@@ -111,6 +111,14 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
         }, 0);
     }, [sortedLines]);
 
+    const pendingTotals = useMemo(() => {
+        return lignes.reduce((acc, l) => {
+            acc.promis += l.pending_promis || 0;
+            acc.forced += l.pending_force || 0;
+            return acc;
+        }, { promis: 0, forced: 0 });
+    }, [lignes]);
+
     if (sortedLines.length === 0) {
         return (
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 animate-in fade-in">
@@ -146,6 +154,16 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                         <Trash2 className="h-4 w-4" />
                         {t('inventaire.detail.delete_selected')}
                     </button>
+                </div>
+            )}
+
+            {/* Pending stock obligations warning */}
+            {(pendingTotals.promis + pendingTotals.forced) > 0 && (
+                <div className="px-4 py-2 border-b border-amber-200 bg-amber-50 flex items-center gap-2">
+                    <AlertTriangle className="size-4 shrink-0 text-amber-600" />
+                    <span className="text-xs font-medium text-amber-800">
+                        {t('inventaire.detail.obligations_alert', { promis: pendingTotals.promis, forced: pendingTotals.forced })}
+                    </span>
                 </div>
             )}
 
@@ -239,6 +257,16 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                                             {isDirty && (
                                                 <span className="w-2 h-2 rounded-full bg-blue-400 shrink-0" title={t('common:unsaved')} />
                                             )}
+                                            {(l.pending_promis ?? 0) > 0 && (
+                                                <span className="text-caption rounded px-1.5 font-bold bg-amber-100 text-amber-700 shrink-0" title={t('inventaire.detail.badge_promis_title')}>
+                                                    {t('inventaire.detail.badge_promis', { count: l.pending_promis })}
+                                                </span>
+                                            )}
+                                            {(l.pending_force ?? 0) > 0 && (
+                                                <span className="text-caption rounded px-1.5 font-bold bg-rose-100 text-rose-700 shrink-0" title={t('inventaire.detail.badge_forced_title')}>
+                                                    {t('inventaire.detail.badge_forced', { count: l.pending_force })}
+                                                </span>
+                                            )}
                                             <span className="text-caption font-mono text-slate-400 truncate">{cip}</span>
                                             {lotNumero && (
                                                 <span className="text-caption font-mono text-emerald-600 font-bold truncate shrink-0">
@@ -255,6 +283,16 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                                             <span className="truncate">{l.produit_nom || getProduitName(l.produit)}</span>
                                             {isDirty && (
                                                 <span className="w-2 h-2 rounded-full bg-blue-400 shrink-0" title={t('common:unsaved')} />
+                                            )}
+                                            {(l.pending_promis ?? 0) > 0 && (
+                                                <span className="text-caption rounded px-1.5 font-bold bg-amber-100 text-amber-700 shrink-0" title={t('inventaire.detail.badge_promis_title')}>
+                                                    {t('inventaire.detail.badge_promis', { count: l.pending_promis })}
+                                                </span>
+                                            )}
+                                            {(l.pending_force ?? 0) > 0 && (
+                                                <span className="text-caption rounded px-1.5 font-bold bg-rose-100 text-rose-700 shrink-0" title={t('inventaire.detail.badge_forced_title')}>
+                                                    {t('inventaire.detail.badge_forced', { count: l.pending_force })}
+                                                </span>
                                             )}
                                         </div>
                                     </div>

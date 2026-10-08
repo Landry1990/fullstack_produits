@@ -9,6 +9,7 @@ import { ensureClientDivers } from '../services/clientDivers';
 import { drfError } from '../utils/drfError';
 import type { SudoOptions } from './useSudo';
 import type { PosteVente } from '../types';
+import type { ResolutionAction, StockConflict } from '../components/StockResolutionModal';
 
 type RequireSudo = (
   onSuccess: (validatorId: number, password: string) => void | Promise<void>,
@@ -46,6 +47,8 @@ export function useSendSale({
   // internes (retry poste, sudo stock) ne re-demandent pas la caisse.
   const [caisseChoices, setCaisseChoices] = useState<PosteVente[] | null>(null);
   const caisseCibleRef = useRef<number | null>(null);
+  // Ruptures à résoudre à l'envoi : non null = StockResolutionModal ouvert.
+  const [stockConflicts, setStockConflicts] = useState<StockConflict[] | null>(null);
 
   // Ayant droit obligatoire pour client PRO : sélection existante, ou
   // création/matching sur le matricule avant l'envoi.
@@ -108,29 +111,71 @@ export function useSendSale({
     return true;
   };
 
-  // Forçage de stock : une ligne dépasse le stock connu (récupéré à
-  // l'ajout) → validation superviseur avant l'envoi, comme l'ajout
-  // « hors stock » du web (can_sell_negative_stock). Le backend reste
-  // source de vérité : un stock devenu insuffisant entre-temps est
+  // Déficit réel d'une ligne : quantité facturée − part déjà « promis ».
+  // Même règle que le backend (_check_stock : stock < effective_qty).
+  const lineDeficit = (l: { quantite: number; promisQuantity?: number; product: { stock?: number } }) => {
+    const eff = l.quantite - (l.promisQuantity ?? 0);
+    return eff > 0 && (l.product.stock ?? 0) < eff;
+  };
+
+  // Résolution des ruptures à l'envoi — parité avec le StockResolutionModal
+  // web : par ligne en déficit, « Promis » (part manquante due au client,
+  // livrée à la prochaine réception — sans sudo), « Réduire » (qté ramenée
+  // au stock) ou « Forcer » (sudo can_sell_negative_stock). Le backend
+  // reste source de vérité : un stock devenu insuffisant entre-temps est
   // rattrapé par le retry 403 dans sendToCashier.
-  const ensureStockSudo = (after: () => void) => {
-    if (cart.stockSudoCreds) { after(); return; }
-    const over = cart.lines.filter((l) => l.quantite > 0 && l.quantite > l.product.stock);
-    if (over.length === 0) { after(); return; }
-    const names = over
-      .slice(0, 3)
-      .map((l) => `${l.product.name} (stock : ${l.product.stock})`)
-      .join(', ');
-    const namesSuffix = over.length > 3 ? `, +${over.length - 3}` : '';
+  const ensureStockResolution = (after: () => void) => {
+    const state = useCartStore.getState();
+    // Promis devenus inutiles : le stock couvre désormais toute la ligne
+    // (quantité baissée, réception entre-temps, brouillon restauré).
+    for (const l of state.lines) {
+      if (l.isPromis && l.quantite <= Math.max(0, l.product.stock ?? 0)) {
+        state.clearLinePromis(l.product.id);
+      }
+    }
+    const conflicts = useCartStore.getState().lines.filter(lineDeficit);
+    if (conflicts.length === 0) { after(); return; }
+    setStockConflicts(conflicts.map((l) => ({
+      product: l.product,
+      quantity: l.quantite,
+      stock: l.product.stock,
+    })));
+  };
+
+  // Confirmation du modal : applique l'action choisie à chaque ligne puis
+  // envoie — avec validation superviseur si une ligne reste forcée.
+  const confirmStockResolution = (actions: Record<number, ResolutionAction>, phone: string) => {
+    const conflicts = stockConflicts ?? [];
+    setStockConflicts(null);
+    const state = useCartStore.getState();
+    for (const c of conflicts) {
+      const action = actions[c.product.id] ?? 'promis';
+      const stock = Math.max(0, c.stock);
+      if (action === 'promis') {
+        state.setLinePromis(c.product.id, c.quantity - stock, phone);
+      } else if (action === 'reduce') {
+        state.updateQty(c.product.id, stock); // 0 → ligne retirée
+      }
+      // 'force' : ligne inchangée — exigera la validation superviseur.
+    }
+    const fresh = useCartStore.getState();
+    if (fresh.lines.length === 0) return;
+    const needsForceSudo = fresh.lines.some(lineDeficit);
+    if (!needsForceSudo || fresh.stockSudoCreds) {
+      void sendToCashier();
+      return;
+    }
     requireSudo(async (validatorId, password) => {
-      cart.setStockSudoCreds({ validatorId, password });
-      after();
+      useCartStore.getState().setStockSudoCreds({ validatorId, password });
+      void sendToCashier();
     }, {
       title: i18n.t('sudo.stock_title'),
-      message: i18n.t('sudo.stock_msg', { names: names + namesSuffix }),
+      message: i18n.t('sudo.stock_msg_generic'),
       permission: 'can_sell_negative_stock',
     });
   };
+
+  const cancelStockResolution = () => setStockConflicts(null);
 
   const handleSendToCashier = () => {
     if (cart.lines.length === 0) {
@@ -140,7 +185,7 @@ export function useSendSale({
     if (!checkCreditLimit()) return;
     // Nouvel envoi utilisateur → nouveau choix de caisse éventuel.
     caisseCibleRef.current = null;
-    ensureSudoCreds(() => ensureStockSudo(() => { void sendToCashier(); }));
+    ensureSudoCreds(() => ensureStockResolution(() => { void sendToCashier(); }));
   };
 
   // Caisse choisie dans CaissePickerModal → reprend l'envoi.
@@ -183,9 +228,13 @@ export function useSendSale({
         caisseCibleRef.current = caisses?.[0]?.caisse ?? null;
       }
 
+      // getState() : le `cart` du hook peut être un snapshot périmé après
+      // le modal de résolution ou un retry Sudo — le payload et
+      // l'historique doivent refléter le panier effectivement envoyé.
+      const sentCart = useCartStore.getState();
       let facture;
       try {
-        facture = await sendSaleToCaisse(cart, poste.id, caisseCibleRef.current);
+        facture = await sendSaleToCaisse(sentCart, poste.id, caisseCibleRef.current);
       } catch (err: unknown) {
         // Poste fermé entre-temps (caisse web) → une seule réouverture + renvoi.
         const detail = (err as { response?: { status?: number; data?: { detail?: string } } })
@@ -198,13 +247,13 @@ export function useSendSale({
             Alert.alert(i18n.t('poste.required_title'), i18n.t('poste.required_msg'));
             return;
           }
-          facture = await sendSaleToCaisse(cart, poste.id, caisseCibleRef.current);
-        } else if (status === 403 && detail?.includes('can_sell_negative_stock') && !cart.stockSudoCreds) {
+          facture = await sendSaleToCaisse(useCartStore.getState(), poste.id, caisseCibleRef.current);
+        } else if (status === 403 && detail?.includes('can_sell_negative_stock') && !useCartStore.getState().stockSudoCreds) {
           // Stock insuffisant non anticipé (stock local périmé) →
           // validation superviseur puis ré-envoi complet avec les creds
           // dans le bloc sudo du payload.
           requireSudo(async (validatorId, password) => {
-            cart.setStockSudoCreds({ validatorId, password });
+            useCartStore.getState().setStockSudoCreds({ validatorId, password });
             void sendToCashier();
           }, {
             title: i18n.t('sudo.stock_title'),
@@ -219,11 +268,11 @@ export function useSendSale({
       // Historique local AVANT le clear (totaux + client + lignes du panier).
       void addHistoriqueItem({
         numero_facture: facture?.numero_facture ?? null,
-        articles_count: cart.totalArticles(),
-        total_estime: cart.totalTTC(),
-        client: cart.client?.name ?? null,
-        remise_globale: cart.remiseGlobaleMontant(),
-        lignes: cart.lines.map((l) => ({
+        articles_count: sentCart.totalArticles(),
+        total_estime: sentCart.totalTTC(),
+        client: sentCart.client?.name ?? null,
+        remise_globale: sentCart.remiseGlobaleMontant(),
+        lignes: sentCart.lines.map((l) => ({
           name: l.product.name,
           quantite: l.quantite,
           prix_unitaire: l.prix_unitaire,
@@ -247,5 +296,9 @@ export function useSendSale({
     }
   };
 
-  return { sending, handleSendToCashier, caisseChoices, pickCaisse, closeCaissePicker };
+  return {
+    sending, handleSendToCashier,
+    caisseChoices, pickCaisse, closeCaissePicker,
+    stockConflicts, confirmStockResolution, cancelStockResolution,
+  };
 }

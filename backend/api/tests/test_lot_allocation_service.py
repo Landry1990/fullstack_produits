@@ -251,8 +251,8 @@ class TestLotAllocationService(TestCase):
         produit.refresh_from_db()
         assert produit.stock == 40  # 25 + 15
 
-    def test_sync_stock_from_lots_no_lots(self):
-        """Sync stock quand le produit n'a pas de lots — stock = 0."""
+    def test_sync_stock_from_lots_non_lot_product_ignored(self):
+        """Un produit sans gestion de lots conserve son stock incrémental."""
         produit = Produit.objects.create(
             name="No Lots Product",
             selling_price=Decimal("500"),
@@ -263,7 +263,7 @@ class TestLotAllocationService(TestCase):
         LotAllocationService.sync_stock_from_lots([produit.id])
 
         produit.refresh_from_db()
-        assert produit.stock == 0
+        assert produit.stock == 999
 
     def test_sync_stock_from_lots_empty_list(self):
         """Sync stock avec liste vide — ne fait rien."""

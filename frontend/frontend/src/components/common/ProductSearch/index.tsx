@@ -249,6 +249,11 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
                 PROMIS ({item.active_promis_count})
               </Badge>
             )}
+            {!!item.has_pending_force && (
+              <Badge variant="secondary" className={cn("text-caption h-4 px-1 shrink-0", isActive ? 'bg-rose-400 text-white border-rose-300' : 'bg-rose-100 text-rose-700 border-rose-200')}>
+                {t('facturation:search.forced_badge')}
+              </Badge>
+            )}
           </div>
           {(item.cip1 || item.rayon_name) && (
             <div className={cn(

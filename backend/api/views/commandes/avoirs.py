@@ -9,7 +9,9 @@ from rest_framework.response import Response
 
 from ...audit_helpers import log_audit
 from ...idempotency import idempotent_action
-from ...models import Avoir, LigneAvoir, MouvementStock, Produit, StockLot
+from ...models import Avoir, LigneAvoir, MouvementStock, Produit, StockLot, StockObligation
+from ...services.realtime import notify_stock_changed
+from ...services.stock_obligation_service import StockObligationService
 from ...pagination import StandardResultsSetPagination
 from ...serializers import AvoirSerializer, LigneAvoirSerializer, LigneAvoirUpdateSerializer
 from ...sudo_utils import validate_sudo_mode
@@ -143,6 +145,7 @@ class AvoirViewSet(viewsets.ModelViewSet):
                 lot_ids = sorted({ligne.stock_lot_id for ligne in lignes if ligne.stock_lot_id})
                 locked_products = {p.id: p for p in Produit.objects.filter(id__in=product_ids).select_for_update().order_by('id')} if product_ids else {}
                 locked_lots = {l.id: l for l in StockLot.objects.filter(id__in=lot_ids).select_for_update().order_by('id')} if lot_ids else {}
+                StockObligationService.reapply_pending_obligations(product_ids)
 
                 for ligne in lignes:
                     # Garde-fou : une quantité <= 0 inverse l'opération (créerait du stock)
@@ -236,6 +239,7 @@ class AvoirViewSet(viewsets.ModelViewSet):
                 avoir.stock_decharge_by = decharge_user
                 avoir.save(update_fields=['stock_decharge', 'stock_decharge_at', 'stock_decharge_by'])
 
+                notify_stock_changed(product_ids)
                 return Response({
                     'status': 'Stock déchargé avec succès.',
                     'avoir': AvoirSerializer(avoir).data
@@ -278,6 +282,7 @@ class AvoirViewSet(viewsets.ModelViewSet):
                 lot_ids = sorted({ligne.stock_lot_id for ligne in lignes if ligne.stock_lot_id})
                 locked_products = {p.id: p for p in Produit.objects.filter(id__in=product_ids).select_for_update().order_by('id')} if product_ids else {}
                 locked_lots = {l.id: l for l in StockLot.objects.filter(id__in=lot_ids).select_for_update().order_by('id')} if lot_ids else {}
+                StockObligationService.reapply_pending_obligations(product_ids)
 
                 for ligne in lignes:
                     # Garde-fou : une quantité <= 0 inverse l'opération (retirerait du stock)
@@ -305,19 +310,48 @@ class AvoirViewSet(viewsets.ModelViewSet):
                         lot.save()
                         used_lots.append(lot)
                     elif produit.use_lot_management:
-                        # Si le produit gère les lots mais qu'aucun lot n'était spécifié,
-                        # on ne peut pas savoir exactement quels lots étaient impliqués.
-                        # On remet simplement la quantité dans le stock global du produit
-                        # sans toucher aux lots individuels.
-                        pass
+                        # Les lignes sans lot explicite sont déstockées en FEFO sans
+                        # conserver les lots consommés. La réintégration recrée donc
+                        # un lot de correction traçable au lieu d'augmenter le seul
+                        # compteur produit.
+                        lot = StockLot.objects.create(
+                            produit=produit,
+                            fournisseur=avoir.fournisseur or produit.fournisseur,
+                            quantity_initial=ligne.quantity,
+                            quantity_paid=ligne.quantity,
+                            quantity_free=0,
+                            quantity_free_remaining=0,
+                            quantity_remaining=ligne.quantity,
+                            quantity_reserved=0,
+                            price_cost=ligne.price,
+                            selling_price=produit.selling_price or 0,
+                            lot=(ligne.lot or f"ANN-AV{avoir.id}-{ligne.id}")[:20],
+                            date_expiration=ligne.date_expiration,
+                            date_reception=timezone.now(),
+                            is_divers=True,
+                        )
+                        used_lots.append(lot)
 
                     # Mise à jour du stock produit
-                    if produit.use_lot_management and ligne.stock_lot_id:
+                    if produit.use_lot_management:
                         produit.calculate_stock_from_lots()
                     else:
                         produit.stock = F('stock') + ligne.quantity
                         produit.save(update_fields=['stock'])
                         produit.refresh_from_db()
+
+                    # Un retour en stock couvre d'abord les promis/dettes rayon,
+                    # comme une réception fournisseur.
+                    StockObligationService.resolve_pending_obligations(
+                        produit,
+                        available_quantity=int(ligne.quantity),
+                        lots=used_lots if produit.use_lot_management else None,
+                        user=cancel_user,
+                        movement_description=f"Annulation décharge Avoir {avoir.numero}",
+                        lot_field='quantity_remaining',
+                        stock_location=StockObligation.StockLocation.RAYON,
+                    )
+                    produit.refresh_from_db()
 
                     # Mouvement de stock (RETOUR = annulation du déchargement)
                     motif_info = f" - {ligne.motif}" if ligne.motif else ""
@@ -354,6 +388,7 @@ class AvoirViewSet(viewsets.ModelViewSet):
                 avoir.stock_decharge_by = None
                 avoir.save(update_fields=['stock_decharge', 'stock_decharge_at', 'stock_decharge_by'])
 
+                notify_stock_changed(product_ids)
                 return Response({
                     'status': 'Déchargement annulé avec succès. Stock réintégré.',
                     'avoir': AvoirSerializer(avoir).data

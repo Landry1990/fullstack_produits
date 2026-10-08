@@ -18,7 +18,10 @@ from ...models import (
     ReapproSession,
     StockAdjustment,
     StockLot,
+    StockObligation,
 )
+from ...services.realtime import notify_stock_changed
+from ...services.stock_obligation_service import StockObligationService
 from ...sudo_utils import validate_sudo_mode
 
 
@@ -247,17 +250,59 @@ class ProduitStockMixin:
             return Response({'detail': 'Les quantités ne peuvent pas être négatives.'}, status=status.HTTP_400_BAD_REQUEST)
 
         stock_lot = None
+        create_new_lot = bool(new_lot_number)
+        new_lot_date_exp = None
         if new_lot_number:
-            # Créer un nouveau lot
             import datetime as _dt
 
-            date_exp = None
             if new_lot_expiration:
                 try:
-                    date_exp = _dt.datetime.strptime(new_lot_expiration, '%Y-%m-%d').date()
+                    new_lot_date_exp = _dt.datetime.strptime(new_lot_expiration, '%Y-%m-%d').date()
                 except ValueError:
                     return Response({'detail': 'Format de date d\'expiration invalide (YYYY-MM-DD)'}, status=status.HTTP_400_BAD_REQUEST)
+        elif stock_lot_id:
+            try:
+                stock_lot = StockLot.objects.select_for_update().get(pk=stock_lot_id, produit=produit)
+            except StockLot.DoesNotExist:
+                return Response({'detail': 'Lot introuvable'}, status=status.HTTP_400_BAD_REQUEST)
 
+        quantity_before = produit.stock
+        adjust_rayon = new_quantity is not None
+        if new_quantity is None:
+            new_quantity = quantity_before
+        quantity_change = new_quantity - quantity_before
+
+        reserve_before = produit.stock_reserve or 0
+        adjust_reserve = new_reserve_quantity is not None
+        if new_reserve_quantity is None:
+            new_reserve_quantity = reserve_before
+        reserve_change = new_reserve_quantity - reserve_before
+
+        # Un ajustement absolu écrit le stock physique. Le delta à reporter sur
+        # les lots doit donc partir de la somme physique des lots, pas du
+        # compteur produit qui peut déjà inclure une dette PROMIS/FORCE.
+        rayon_lot_change = quantity_change
+        reserve_lot_change = reserve_change
+        if produit.use_lot_management:
+            lot_totals = produit.stock_lots.aggregate(
+                physical_rayon=Sum('quantity_remaining'),
+                physical_reserve=Sum('quantity_reserved'),
+            )
+            rayon_lot_change = (
+                new_quantity - (lot_totals['physical_rayon'] or 0)
+                if adjust_rayon else 0
+            )
+            reserve_lot_change = (
+                new_reserve_quantity - (lot_totals['physical_reserve'] or 0)
+                if adjust_reserve else 0
+            )
+
+        if create_new_lot:
+            if rayon_lot_change < 0 or reserve_lot_change < 0:
+                return Response(
+                    {'detail': 'Un nouveau lot ne peut pas absorber une diminution de stock.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             stock_lot = StockLot.objects.create(
                 produit=produit,
                 quantity_initial=0,
@@ -269,25 +314,22 @@ class ProduitStockMixin:
                 price_cost=produit.pmp or 0,
                 selling_price=produit.selling_price or 0,
                 lot=new_lot_number,
-                date_expiration=date_exp,
+                date_expiration=new_lot_date_exp,
                 date_reception=timezone.now(),
                 is_divers=True
             )
-        elif stock_lot_id:
-            try:
-                stock_lot = StockLot.objects.select_for_update().get(pk=stock_lot_id, produit=produit)
-            except StockLot.DoesNotExist:
-                return Response({'detail': 'Lot introuvable'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        quantity_before = produit.stock
-        if new_quantity is None:
-            new_quantity = quantity_before
-        quantity_change = new_quantity - quantity_before
 
-        reserve_before = produit.stock_reserve or 0
-        if new_reserve_quantity is None:
-            new_reserve_quantity = reserve_before
-        reserve_change = new_reserve_quantity - reserve_before
+        if stock_lot:
+            if stock_lot.quantity_remaining + rayon_lot_change < 0:
+                return Response(
+                    {'detail': f'Le lot {stock_lot.lot} ne contient pas assez de stock rayon.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            if stock_lot.quantity_reserved + reserve_lot_change < 0:
+                return Response(
+                    {'detail': f'Le lot {stock_lot.lot} ne contient pas assez de stock réserve.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
         
         adjustment = StockAdjustment.objects.create(
             produit=produit, stock_lot=stock_lot, user=request.user,
@@ -296,32 +338,23 @@ class ProduitStockMixin:
             reason_type=reason_type, reason_detail=(reason_detail or '').strip()
         )
         
-        produit.stock = new_quantity
-        produit.stock_reserve = new_reserve_quantity
-        produit.version += 1
-        produit.save(update_fields=['stock', 'stock_reserve', 'version'])
-
         if stock_lot:
-            if quantity_change != 0:
-                new_lot_qty = stock_lot.quantity_remaining + quantity_change
-                stock_lot.quantity_remaining = max(0, new_lot_qty)
-            if reserve_change != 0:
-                new_reserve_qty = stock_lot.quantity_reserved + reserve_change
-                stock_lot.quantity_reserved = max(0, new_reserve_qty)
+            if rayon_lot_change != 0:
+                stock_lot.quantity_remaining += rayon_lot_change
+            if reserve_lot_change != 0:
+                stock_lot.quantity_reserved += reserve_lot_change
             # Pour un nouveau lot, mettre à jour quantity_initial
-            if new_lot_number:
+            if create_new_lot:
                 stock_lot.quantity_initial = stock_lot.quantity_remaining + stock_lot.quantity_reserved
                 stock_lot.save(update_fields=['quantity_remaining', 'quantity_reserved', 'quantity_initial'])
             else:
                 stock_lot.save(update_fields=['quantity_remaining', 'quantity_reserved'])
         elif produit.use_lot_management:
-            # Aucun lot spécifique fourni : distribuer le changement across les lots
-            # existants pour maintenir la cohérence Produit.stock == Σ StockLot.
-            # Le signal sync_product_stock_on_lot_save recalculera produit.stock.
+            # Aucun lot spécifique fourni : distribuer le delta physique sur
+            # les lots existants pour atteindre la quantité comptée.
             today = timezone.now().date()
 
-            # --- Distribution du quantity_change (rayon) ---
-            if quantity_change > 0:
+            if rayon_lot_change > 0:
                 # Ajouter au lot le plus ancien non périmé (FEFO)
                 target_lot = (
                     produit.stock_lots
@@ -330,25 +363,24 @@ class ProduitStockMixin:
                     .first()
                 )
                 if target_lot:
-                    target_lot.quantity_remaining += quantity_change
+                    target_lot.quantity_remaining += rayon_lot_change
                     target_lot.save(update_fields=['quantity_remaining'])
                 else:
-                    # Aucun lot valide : créer un lot par défaut avec le stock total
-                    # (new_quantity, pas quantity_change, car il n'y a pas d'autres lots)
+                    # Aucun lot valide : créer un lot contenant uniquement le delta.
                     StockLot.objects.create(
                         produit=produit,
-                        quantity_initial=new_quantity,
+                        quantity_initial=rayon_lot_change,
                         quantity_paid=0,
                         quantity_free=0,
                         quantity_free_remaining=0,
-                        quantity_remaining=new_quantity,
+                        quantity_remaining=rayon_lot_change,
                         quantity_reserved=0,
                         price_cost=produit.pmp or 0,
                         selling_price=produit.selling_price or 0,
                         lot=f"ADJ-{produit.id}-{today.strftime('%Y%m%d')}",
                         date_reception=timezone.now(),
                     )
-            elif quantity_change < 0:
+            elif rayon_lot_change < 0:
                 # Déduire des lots en FEFO (non périmés d'abord, puis périmés)
                 lots_to_deduct = list(
                     produit.stock_lots
@@ -356,7 +388,7 @@ class ProduitStockMixin:
                     .order_by('date_expiration', 'date_reception')
                     .select_for_update()
                 )
-                remaining = -quantity_change
+                remaining = -rayon_lot_change
                 for lot in lots_to_deduct:
                     if remaining <= 0:
                         break
@@ -365,24 +397,23 @@ class ProduitStockMixin:
                     lot.save(update_fields=['quantity_remaining'])
                     remaining -= taken
 
-            # --- Distribution du reserve_change (réserve) ---
-            if reserve_change > 0:
+            if reserve_lot_change > 0:
                 target_lot = (
                     produit.stock_lots
                     .order_by('date_expiration', 'date_reception')
                     .first()
                 )
                 if target_lot:
-                    target_lot.quantity_reserved += reserve_change
+                    target_lot.quantity_reserved += reserve_lot_change
                     target_lot.save(update_fields=['quantity_reserved'])
-            elif reserve_change < 0:
+            elif reserve_lot_change < 0:
                 lots_to_deduct = list(
                     produit.stock_lots
                     .filter(quantity_reserved__gt=0)
                     .order_by('date_expiration', 'date_reception')
                     .select_for_update()
                 )
-                remaining = -reserve_change
+                remaining = -reserve_lot_change
                 for lot in lots_to_deduct:
                     if remaining <= 0:
                         break
@@ -394,6 +425,21 @@ class ProduitStockMixin:
             # Le signal a recalculé produit.stock depuis les lots.
             # Rafraîchir pour avoir la valeur cohérente.
             produit.refresh_from_db()
+
+        # L'ajustement manuel est une valeur absolue. Les promis restent en
+        # attente, mais ne sont plus retranchés du nouveau compteur physique.
+        if adjust_rayon:
+            StockObligationService.mark_unapplied_after_absolute_stock_reset(
+                [produit.id], StockObligation.StockLocation.RAYON
+            )
+        if adjust_reserve:
+            StockObligationService.mark_unapplied_after_absolute_stock_reset(
+                [produit.id], StockObligation.StockLocation.RESERVE
+            )
+        produit.stock = new_quantity
+        produit.stock_reserve = new_reserve_quantity
+        produit.version += 1
+        produit.save(update_fields=['stock', 'stock_reserve', 'version'])
         
         type_mv = MouvementStock.TypeMouvement.AJUSTEMENT
         if quantity_change == -reserve_change and quantity_change != 0:
@@ -416,7 +462,8 @@ class ProduitStockMixin:
                 'stock_lot': stock_lot.lot if stock_lot else None
             }, request=request
         )
-        
+
+        notify_stock_changed([produit.id])
         return Response({
             'status': 'success', 'adjustment_id': adjustment.id, 'produit_name': produit.name,
             'quantity_before': quantity_before, 'quantity_after': new_quantity, 'quantity_change': quantity_change,
@@ -430,6 +477,8 @@ class ProduitStockMixin:
         if error_res: return error_res
 
         produit = Produit.objects.select_for_update().get(pk=self.kwargs['pk'])
+        StockObligationService.reapply_pending_obligations([produit.id])
+        produit.refresh_from_db(fields=['stock', 'stock_reserve'])
         if not produit.has_reserve_storage:
             return Response({'detail': "La gestion de réserve n'est pas activée pour ce produit."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -445,6 +494,7 @@ class ProduitStockMixin:
         if quantity > produit.stock_reserve: return Response({'detail': f"Quantité demandée ({quantity}) supérieure au stock en réserve ({produit.stock_reserve})."}, status=status.HTTP_400_BAD_REQUEST)
 
         lots = produit.stock_lots.filter(quantity_reserved__gt=0).select_for_update().order_by('date_reception')
+        transferred_lots = []
         remaining_to_transfer = quantity
         for lot in lots:
             if remaining_to_transfer <= 0: break
@@ -452,19 +502,37 @@ class ProduitStockMixin:
             lot.quantity_reserved -= transfer_qty
             lot.quantity_remaining += transfer_qty
             lot.save(update_fields=['quantity_reserved', 'quantity_remaining'])
+            transferred_lots.append(lot)
             remaining_to_transfer -= transfer_qty
 
         if remaining_to_transfer > 0:
             return Response({'detail': f"Quantité réellement transférable ({quantity - remaining_to_transfer}) inférieure à la demande."}, status=status.HTTP_400_BAD_REQUEST)
 
-        produit.stock += quantity
-        produit.stock_reserve -= quantity
+        if produit.use_lot_management:
+            # Les lot.save() ont déjà recalculé stock/stock_reserve.
+            produit.refresh_from_db(fields=['stock', 'stock_reserve'])
+        else:
+            produit.stock += quantity
+            produit.stock_reserve -= quantity
         oldest_shelf_lot = produit.stock_lots.filter(quantity_remaining__gt=0).order_by('date_reception').first()
         if oldest_shelf_lot:
             produit.selling_price = oldest_shelf_lot.selling_price
             produit.expire_date = oldest_shelf_lot.date_expiration
 
         produit.save(update_fields=['stock', 'stock_reserve', 'selling_price', 'expire_date'])
+
+        # Les unités transférées en rayon doivent couvrir en priorité les
+        # promis/dettes déjà facturés au lieu de devenir revendables.
+        StockObligationService.resolve_pending_obligations(
+            produit,
+            available_quantity=quantity,
+            lots=transferred_lots if produit.use_lot_management else None,
+            user=validation_user,
+            movement_description='Réappro rayon - résolution dette de stock',
+            lot_field='quantity_remaining',
+            stock_location=StockObligation.StockLocation.RAYON,
+        )
+        produit.refresh_from_db(fields=['stock', 'stock_reserve'])
         
         base_desc = f" (Validé par {validation_user.username})" if validation_user != request.user else ""
         MouvementStock.objects.create(
@@ -485,7 +553,8 @@ class ProduitStockMixin:
                 'validator': validation_user.username, 'is_sudo': validation_user != request.user
             }, request=request
         )
-        
+
+        notify_stock_changed([produit.id])
         return Response({'detail': f"Transfert de {quantity} effectué avec succès par {validation_user.username}.", 'stock_rayon': produit.stock, 'stock_reserve': produit.stock_reserve})
 
     @action(detail=False, methods=['get'])
@@ -509,17 +578,21 @@ class ProduitStockMixin:
             return error_res
 
         results = []
+        transferred_ids = []
         with transaction.atomic():
             session = ReapproSession.objects.create(user=request.user, total_products=0, total_units=0)
             for pid in product_ids:
                 try:
                     produit = Produit.objects.select_for_update().get(pk=pid, has_reserve_storage=True)
+                    StockObligationService.reapply_pending_obligations([produit.id])
+                    produit.refresh_from_db(fields=['stock', 'stock_reserve'])
                     needed = max(0, produit.capacite_rayon - produit.stock)
                     quantity = min(needed, produit.stock_reserve)
                     
                     if quantity <= 0: continue
 
                     lots = produit.stock_lots.filter(quantity_reserved__gt=0).select_for_update().order_by('date_expiration', 'id')
+                    transferred_lots = []
                     remaining_to_transfer = quantity
 
                     for lot in lots:
@@ -535,19 +608,33 @@ class ProduitStockMixin:
                             reserve_before=produit.stock_reserve, reserve_after=produit.stock_reserve - can_take, reserve_change=-can_take,
                             reason_type='REAPPRO', reason_detail=f"Réappro session #{session.id} - Lot {lot.lot}"
                         )
+                        transferred_lots.append(lot)
                         remaining_to_transfer -= can_take
 
                     if remaining_to_transfer > 0:
                         quantity -= remaining_to_transfer
 
-                    produit.stock += quantity
-                    produit.stock_reserve -= quantity
+                    if produit.use_lot_management:
+                        produit.refresh_from_db(fields=['stock', 'stock_reserve'])
+                    else:
+                        produit.stock += quantity
+                        produit.stock_reserve -= quantity
                     oldest_shelf_lot = produit.stock_lots.filter(quantity_remaining__gt=0).order_by('date_reception').first()
                     if oldest_shelf_lot:
                         produit.selling_price = oldest_shelf_lot.selling_price
                         produit.expire_date = oldest_shelf_lot.date_expiration
                     produit.version += 1
                     produit.save(update_fields=['stock', 'stock_reserve', 'selling_price', 'expire_date', 'version'])
+                    StockObligationService.resolve_pending_obligations(
+                        produit,
+                        available_quantity=quantity,
+                        lots=transferred_lots if produit.use_lot_management else None,
+                        user=validation_user,
+                        movement_description=f'Réappro groupée #{session.id} - résolution dette de stock',
+                        lot_field='quantity_remaining',
+                        stock_location=StockObligation.StockLocation.RAYON,
+                    )
+                    produit.refresh_from_db(fields=['stock', 'stock_reserve'])
                     
                     MouvementStock.objects.create(
                         produit=produit, type_mouvement=MouvementStock.TypeMouvement.REAPPRO_INTERSTOCK,
@@ -557,11 +644,13 @@ class ProduitStockMixin:
                     
                     session.total_products += 1
                     session.total_units += quantity
+                    transferred_ids.append(pid)
                     results.append({'id': pid, 'success': True, 'transferred': quantity})
                 except Exception as e:
                     results.append({'id': pid, 'success': False, 'error': str(e)})
-            
+
+            notify_stock_changed(transferred_ids)
             if session.total_products > 0: session.save(update_fields=['total_products', 'total_units'])
-            else: session.delete() 
+            else: session.delete()
 
         return Response({'detail': f"{len([r for r in results if r['success']])} produits réapprovisionnés.", 'results': results, 'session_id': session.id if getattr(session, 'id', None) else None})

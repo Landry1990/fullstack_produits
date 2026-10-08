@@ -627,7 +627,12 @@
             "group_rayon": "Par Rayon",
             "group_forme": "Par Forme",
             "group_groupe": "Par Groupe",
-            "col_phys_qty": "Qté Physique"
+            "col_phys_qty": "Qté Physique",
+            "obligations_alert": "Attention : {{promis}} unité(s) promise(s) et {{forced}} unité(s) vendue(s) à découvert sont engagées sur cet inventaire. Ces quantités déjà dues resteront à couvrir à la prochaine entrée en stock.",
+            "badge_promis": "Promis ×{{count}}",
+            "badge_promis_title": "Unités déjà payées par le client, non encore livrées",
+            "badge_forced": "Forcée ×{{count}}",
+            "badge_forced_title": "Unités vendues à découvert, en attente d'une entrée en stock"
         },
         "lines": {
             "selected": "{{count}} ligne(s) sélectionnée(s)",

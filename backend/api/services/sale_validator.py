@@ -9,7 +9,7 @@ from decimal import Decimal, InvalidOperation
 
 from django.core.cache import cache
 from django.db import transaction
-from django.db.models import F, Q
+from django.db.models import F, Q, Sum
 from django.utils import timezone
 
 from ..models import (
@@ -22,9 +22,12 @@ from ..models import (
     Produit,
     Promis,
     StockLot,
+    StockObligation,
 )
 from .lot_allocation_service import LotAllocationService
 from .promotion_service import PromotionService
+from .realtime import notify_stock_changed
+from .stock_obligation_service import StockObligationService
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +48,7 @@ class SaleValidator:
         if facture.status not in [Facture.Status.BROUILLON, Facture.Status.PROFORMA]:
             raise ValueError(f"Impossible de valider une facture avec le statut {facture.get_status_display()}.")
 
-        items = FactureProduit.objects.filter(facture=facture)
+        items = list(FactureProduit.objects.filter(facture=facture))
 
         # 1. Integrity check
         if facture.remise > facture.total_ht:
@@ -59,18 +62,48 @@ class SaleValidator:
             p.id: p
             for p in Produit.objects.select_for_update().filter(id__in=product_ids)
         }
+        if StockObligationService.reapply_pending_obligations(product_ids):
+            for produit in products_map.values():
+                produit.refresh_from_db(fields=['stock', 'stock_reserve'])
 
         # 3. Credit ceiling check
         SaleValidator._check_credit_ceiling(facture, data)
 
         # 4. Stock check (accounting for promis)
         SaleValidator._check_stock(items, products_map, facture, validation_user)
+        SaleValidator._set_delivered_quantities(items, facture)
 
-        # 5. Lot allocation (FIFO/FEFO) with optimistic locking
+        # 5. Lot allocation (FIFO/FEFO) + dettes de stock non couvertes.
+        # La facture décrémente la quantité totale vendue : la part promis passe
+        # donc le stock en négatif, tandis que les lots ne couvrent que la part
+        # physiquement livrée.
         (
             allocations_to_create, items_to_update, lots_to_update_set,
-            prods_to_sync_from_lots, manual_stock_decrements
-        ) = SaleValidator._allocate_lots(items, products_map)
+            stock_deltas, obligation_specs
+        ) = SaleValidator._allocate_lots(items, products_map, validation_user)
+
+        if stock_deltas:
+            for pid, qty in stock_deltas.items():
+                Produit.objects.filter(id=pid).update(stock=F('stock') - qty)
+            notify_stock_changed(stock_deltas.keys())
+
+        if obligation_specs:
+            for spec in obligation_specs:
+                obligation = StockObligationService.create_obligation(
+                    facture_produit=spec['item'],
+                    quantity=spec['quantity'],
+                    obligation_type=spec['type'],
+                    promis=spec.get('promis'),
+                    user=validation_user,
+                )
+                allocations_to_create.append(FactureProduitAllocation(
+                    facture_produit=spec['item'],
+                    stock_obligation=obligation,
+                    is_pending=True,
+                    quantity=spec['quantity'],
+                    cost_price=obligation.cost_price,
+                    selling_price=obligation.selling_price,
+                ))
 
         # Execute bulk ops
         if allocations_to_create:
@@ -79,11 +112,6 @@ class SaleValidator:
             FactureProduit.objects.bulk_update(items_to_update, ['lot', 'date_expiration'])
         if lots_to_update_set:
             StockLot.objects.bulk_update(list(lots_to_update_set), ['quantity_remaining', 'quantity_free_remaining'])
-        if manual_stock_decrements:
-            for pid, qty in manual_stock_decrements.items():
-                Produit.objects.filter(id=pid).update(stock=F('stock') - qty)
-        if prods_to_sync_from_lots:
-            LotAllocationService.sync_stock_from_lots(prods_to_sync_from_lots)
 
         # 6. Stock movements (traceability)
         LotAllocationService.create_stock_movements(items, facture, validation_user, prefix="Vente")
@@ -151,7 +179,16 @@ class SaleValidator:
         for item in items:
             requested_map[item.produit_id] = requested_map.get(item.produit_id, 0) + item.quantity
 
-        promis_map = {p.produit_id: p.quantite for p in Promis.objects.filter(facture=facture)}
+        promis_map = {
+            row['produit_id']: row['total']
+            for row in Promis.objects.filter(
+                facture=facture,
+                status=Promis.Status.EN_ATTENTE,
+                is_active=True,
+            ).values('produit_id').annotate(
+                total=Sum(F('quantite') - F('quantite_livree'))
+            )
+        }
 
         can_sell_negative = validation_user.is_superuser or (
             hasattr(validation_user, 'profile') and validation_user.profile.can_sell_negative_stock
@@ -179,10 +216,43 @@ class SaleValidator:
                     raise ValueError(f"Permission de retour refusée pour {produit.name}.")
 
     @staticmethod
-    def _allocate_lots(items, products_map):
+    def _set_delivered_quantities(items, facture):
+        pending_promis = list(
+            Promis.objects.filter(
+                facture=facture,
+                status=Promis.Status.EN_ATTENTE,
+                is_active=True,
+            ).order_by('id')
+        )
+        remaining_promised = {
+            promis.id: max(0, (promis.quantite or 0) - (promis.quantite_livree or 0))
+            for promis in pending_promis
+        }
+
+        for item in items:
+            item._promis_assignments = []
+            if item.quantity <= 0:
+                item._delivered_quantity = item.quantity
+                continue
+
+            delivered = item.quantity
+            for promis in pending_promis:
+                if promis.produit_id != item.produit_id or delivered <= 0:
+                    continue
+                remaining = remaining_promised.get(promis.id, 0)
+                promised = min(delivered, remaining)
+                if promised <= 0:
+                    continue
+                item._promis_assignments.append((promis, promised))
+                delivered -= promised
+                remaining_promised[promis.id] = remaining - promised
+            item._delivered_quantity = delivered
+
+    @staticmethod
+    def _allocate_lots(items, products_map, validation_user=None):
         """
-        Effectue l'allocation des lots (FIFO/FEFO ou lot spécifique ou allocation explicite).
-        Retourne (allocations, items_to_update, lots_to_update, prods_to_sync, manual_decrements).
+        Alloue les lots pour la quantité livrée et prépare les dettes de stock
+        pour la quantité facturée non couverte.
         """
         # Lock lots referenced explicitly
         lot_ids_to_lock = [item.stock_lot_id for item in items if item.stock_lot_id]
@@ -199,7 +269,8 @@ class SaleValidator:
         # Prepare FIFO queues
         fifo_prods = [
             item.produit_id for item in items
-            if item.quantity > 0 and not item.stock_lot_id and not getattr(item, '_lot_allocations', None)
+            if getattr(item, '_delivered_quantity', item.quantity) > 0
+            and not item.stock_lot_id
         ]
         fifo_lots_queue = {}
         if fifo_prods:
@@ -215,43 +286,102 @@ class SaleValidator:
         allocations_to_create = []
         items_to_update = []
         lots_to_update_set = set()
-        prods_to_sync_from_lots = set()
-        manual_stock_decrements = {}
+        stock_deltas = {}
+        obligation_specs = []
+        virtual_stock_by_product = {
+            pid: max(0, int(product.stock or 0))
+            for pid, product in products_map.items()
+        }
 
         for item in items:
             produit = products_map.get(item.produit_id)
             if not produit:
                 continue
-            lots_updated = False
+            delivered_quantity = getattr(item, '_delivered_quantity', item.quantity)
+            allocated_quantity = 0
 
-            if item.quantity > 0:
-                lots_updated = SaleValidator._allocate_positive_item(
-                    item, produit, lots_map, fifo_lots_queue,
-                    allocations_to_create, lots_to_update_set, items_to_update
-                )
-            elif getattr(item, '_lot_allocations', None):
-                lots_updated = SaleValidator._allocate_explicit(
-                    item, produit, lots_map, initial_lot_versions,
-                    allocations_to_create, lots_to_update_set, items_to_update
-                )
-            elif item.quantity < 0:
-                lots_updated = SaleValidator._handle_return(
+            if delivered_quantity > 0:
+                if getattr(item, '_lot_allocations', None):
+                    allocated_quantity = SaleValidator._allocate_explicit(
+                        item, produit, lots_map, initial_lot_versions,
+                        allocations_to_create, lots_to_update_set, items_to_update
+                    )
+                    remaining_to_allocate = delivered_quantity - allocated_quantity
+                    if remaining_to_allocate > 0:
+                        allocated_quantity += SaleValidator._allocate_positive_item(
+                            item, produit, lots_map, fifo_lots_queue,
+                            allocations_to_create, lots_to_update_set, items_to_update,
+                            quantity=remaining_to_allocate,
+                        )
+                else:
+                    allocated_quantity = SaleValidator._allocate_positive_item(
+                        item, produit, lots_map, fifo_lots_queue,
+                        allocations_to_create, lots_to_update_set, items_to_update
+                    )
+            elif delivered_quantity < 0:
+                SaleValidator._handle_return(
                     item, produit, lots_map,
                     lots_to_update_set, items_to_update
                 )
 
-            if produit.use_lot_management and lots_updated:
-                prods_to_sync_from_lots.add(produit.id)
-            else:
-                manual_stock_decrements[produit.id] = manual_stock_decrements.get(produit.id, 0) + item.quantity
+            # Le mouvement comptable porte toujours sur la quantité facturée.
+            # Pour un retour, item.quantity est négatif et ajoute du stock.
+            stock_deltas[produit.id] = stock_deltas.get(produit.id, 0) + item.quantity
 
-        return allocations_to_create, items_to_update, lots_to_update_set, prods_to_sync_from_lots, manual_stock_decrements
+            if item.quantity <= 0:
+                continue
+
+            promised_quantity = sum(
+                qty for _promis, qty in getattr(item, '_promis_assignments', [])
+            )
+            for promis, qty in getattr(item, '_promis_assignments', []):
+                if qty <= 0:
+                    continue
+                obligation_specs.append({
+                    'item': item,
+                    'promis': promis,
+                    'quantity': qty,
+                    'type': StockObligation.TypeObligation.PROMIS,
+                })
+
+            if produit.use_lot_management:
+                forced_quantity = item.quantity - allocated_quantity - promised_quantity
+            else:
+                available_without_lot = virtual_stock_by_product.get(produit.id, 0)
+                delivered_without_lot = max(0, delivered_quantity)
+                covered_without_lot = min(delivered_without_lot, available_without_lot)
+                virtual_stock_by_product[produit.id] = available_without_lot - covered_without_lot
+
+                if covered_without_lot > 0:
+                    allocations_to_create.append(FactureProduitAllocation(
+                        facture_produit=item,
+                        stock_lot=None,
+                        is_pending=False,
+                        quantity=covered_without_lot,
+                        cost_price=StockObligationService.estimated_cost(produit),
+                        selling_price=item.selling_price,
+                    ))
+                forced_quantity = delivered_without_lot - covered_without_lot
+
+            if forced_quantity > 0:
+                obligation_specs.append({
+                    'item': item,
+                    'promis': None,
+                    'quantity': forced_quantity,
+                    'type': StockObligation.TypeObligation.FORCE,
+                })
+
+        return allocations_to_create, items_to_update, lots_to_update_set, stock_deltas, obligation_specs
 
     @staticmethod
     def _allocate_positive_item(item, produit, lots_map, fifo_lots_queue,
-                                  allocations_to_create, lots_to_update_set, items_to_update):
+                                  allocations_to_create, lots_to_update_set, items_to_update,
+                                  quantity=None):
         """Alloue un item à quantité positive (vente) — lot spécifié ou FIFO."""
-        qty_to_alloc = item.quantity
+        qty_to_alloc = (
+            quantity if quantity is not None
+            else getattr(item, '_delivered_quantity', item.quantity)
+        )
 
         if item.stock_lot_id:
             target_lot = lots_map.get(item.stock_lot_id)
@@ -272,10 +402,11 @@ class SaleValidator:
             item.lot = target_lot.lot[:20]
             item.date_expiration = target_lot.date_expiration
             items_to_update.append(item)
-            return True
+            return qty_to_alloc
         else:
             available = fifo_lots_queue.get(produit.id, [])
             used_lot_names = []
+            initial_quantity = qty_to_alloc
             for lot in available:
                 if qty_to_alloc <= 0:
                     break
@@ -296,19 +427,26 @@ class SaleValidator:
                 if available:
                     item.date_expiration = available[0].date_expiration
                 items_to_update.append(item)
-                return True
-            return False
+                return initial_quantity - qty_to_alloc
+            return 0
 
     @staticmethod
     def _allocate_explicit(item, produit, lots_map, initial_lot_versions,
                             allocations_to_create, lots_to_update_set, items_to_update):
         """Alloue selon les allocations explicites définies par l'utilisateur."""
         used_lot_names = []
+        allocated_quantity = 0
+        delivered_quantity = getattr(item, '_delivered_quantity', item.quantity)
         for alloc in item._lot_allocations:
             lot_id = alloc.get('lot_id') or alloc.get('stock_lot_id')
             qty = int(alloc.get('quantity', 0))
             if not lot_id or qty <= 0:
                 continue
+            if allocated_quantity + qty > delivered_quantity:
+                raise ValueError(
+                    f"Les allocations explicites ({allocated_quantity + qty}) dépassent "
+                    f"la quantité livrée ({delivered_quantity}) pour {produit.name}."
+                )
             target_lot = lots_map.get(lot_id)
             if target_lot is None:
                 raise ValueError(f"Lot de stock {lot_id} introuvable pour le produit {item.produit_id}.")
@@ -324,12 +462,13 @@ class SaleValidator:
             target_lot.quantity_free_remaining -= free_taken
             lots_to_update_set.add(target_lot)
             used_lot_names.append(target_lot.lot)
+            allocated_quantity += qty
         if used_lot_names:
             item.lot = ",".join([n for n in used_lot_names if n])[:20]
             item.date_expiration = None
             items_to_update.append(item)
-            return True
-        return False
+            return allocated_quantity
+        return 0
 
     @staticmethod
     def _handle_return(item, produit, lots_map, lots_to_update_set, items_to_update):

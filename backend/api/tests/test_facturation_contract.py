@@ -25,7 +25,9 @@ from ..models import (
     FactureProduit,
     FactureProduitAllocation,
     MouvementStock,
+    Promis,
     StockLot,
+    StockObligation,
 )
 from .factories import TestDataFactory
 
@@ -123,6 +125,93 @@ class FacturationContractTests(APITestCase):
         self.assertEqual(lines.count(), 1)
         self.assertEqual(lines.first().quantity, 3)
         self.assertEqual(lines.first().selling_price, Decimal('500.00'))
+
+    def test_promis_marks_stock_negative_without_lots(self):
+        self.produit.use_lot_management = False
+        self.produit.stock = 1
+        self.produit.save(update_fields=['use_lot_management', 'stock'])
+        payload = self._frontend_payload(
+            produits=[{
+                'produit': self.produit.id,
+                'quantity': 2,
+                'selling_price': '500',
+                'discount': '0',
+                'tva': 0,
+                'lot_id': None,
+                'lot_allocations': None,
+                'is_promis': True,
+                'promis_quantity': 1,
+                'promis_phone': '0600000099',
+            }],
+            paiements=[{'mode': 'especes', 'montant': 1000}],
+            totals={'totalTtc': 1000, 'totalHt': 1000, 'totalTva': 0},
+            montant_verse='1000',
+        )
+
+        response = self.client.post(reverse('facture-finaliser'), payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        facture = Facture.objects.order_by('-id').first()
+        self.produit.refresh_from_db()
+        self.assertEqual(FactureProduit.objects.get(facture=facture).quantity, 2)
+        self.assertEqual(Promis.objects.get(facture=facture).quantite, 1)
+        self.assertEqual(self.produit.stock, -1)
+        self.assertEqual(MouvementStock.objects.get(facture=facture).quantite, -2)
+        obligation = StockObligation.objects.get(facture=facture)
+        self.assertEqual(obligation.type, StockObligation.TypeObligation.PROMIS)
+        self.assertEqual(obligation.quantity_remaining, 1)
+        self.assertTrue(obligation.stock_applied)
+
+    def test_promis_marks_stock_negative_with_lot(self):
+        self.produit.use_lot_management = True
+        self.produit.stock = 0
+        self.produit.save(update_fields=['use_lot_management', 'stock'])
+        lot = TestDataFactory.create_stock_lot(
+            produit=self.produit, quantity=1, lot_name='LOT-PROMIS-001',
+        )
+        payload = self._frontend_payload(
+            produits=[{
+                'produit': self.produit.id,
+                'quantity': 2,
+                'selling_price': '500',
+                'discount': '0',
+                'tva': 0,
+                'lot_id': lot.id,
+                'lot_allocations': None,
+                'is_promis': True,
+                'promis_quantity': 1,
+                'promis_phone': '0600000099',
+            }],
+            paiements=[{'mode': 'especes', 'montant': 1000}],
+            totals={'totalTtc': 1000, 'totalHt': 1000, 'totalTva': 0},
+            montant_verse='1000',
+        )
+
+        response = self.client.post(reverse('facture-finaliser'), payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        facture = Facture.objects.order_by('-id').first()
+        lot.refresh_from_db()
+        self.produit.refresh_from_db()
+        delivered_allocation = FactureProduitAllocation.objects.get(
+            facture_produit__facture=facture,
+            stock_lot=lot,
+        )
+        pending_allocation = FactureProduitAllocation.objects.get(
+            facture_produit__facture=facture,
+            stock_lot__isnull=True,
+        )
+        self.assertEqual(FactureProduit.objects.get(facture=facture).quantity, 2)
+        self.assertEqual(Promis.objects.get(facture=facture).quantite, 1)
+        self.assertEqual(delivered_allocation.quantity, 1)
+        self.assertEqual(pending_allocation.quantity, 1)
+        self.assertTrue(pending_allocation.is_pending)
+        self.assertEqual(lot.quantity_remaining, 0)
+        self.assertEqual(self.produit.stock, -1)
+        self.assertEqual(MouvementStock.objects.get(facture=facture).quantite, -2)
+        obligation = StockObligation.objects.get(facture=facture)
+        self.assertEqual(obligation.type, StockObligation.TypeObligation.PROMIS)
+        self.assertEqual(obligation.quantity_remaining, 1)
 
     def test_frontend_payload_with_lot_id(self):
         """Le payload frontend avec lot_id specifique cree une facture avec allocation de lot."""

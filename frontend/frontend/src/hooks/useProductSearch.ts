@@ -59,7 +59,7 @@ export function useProductSearch(options: UseProductSearchOptions = {}): UseProd
     const [wasDatamatrixScanned, setWasDatamatrixScanned] = useState(false)
 
     // Index de recherche en mémoire — précharge tous les produits une fois
-    const { search: searchInIndex, isReady: indexReady, isLoading: indexLoading } = useProductSearchIndex()
+    const { search: searchInIndex, isReady: indexReady, isLoading: indexLoading, indexVersion } = useProductSearchIndex()
 
     // Debounce court quand l'index local est prêt (recherche instantanée < 1ms)
     // Debounce normal seulement pour le fallback API
@@ -136,7 +136,9 @@ export function useProductSearch(options: UseProductSearchOptions = {}): UseProd
             return null // null = pas de recherche locale, fallback vers API
         }
         return searchInIndex(debouncedSearch, pageSize)
-    }, [indexReady, debouncedSearch, minSearchLength, searchInIndex, pageSize])
+        // indexVersion : re-rendu quand le stock est patché en place via WebSocket stock_update
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [indexReady, debouncedSearch, minSearchLength, searchInIndex, pageSize, indexVersion])
 
     // Fetch function for React Query — utilisé uniquement si l'index n'est pas prêt
     const fetchProducts = async (search: string, auto: boolean): Promise<ProduitModel[]> => {

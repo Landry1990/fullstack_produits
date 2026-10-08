@@ -15,6 +15,8 @@ from ...models import AuditLog, MouvementStock, Produit, StockAdjustment, StockL
 from ...serializer_mixins import OptimizedSerializerMixin
 from ...serializers import StockLotSerializer, StockLotUpdateSerializer
 from ...serializers_optimized import StockLotDetailSerializer, StockLotListSerializer
+from ...services.realtime import notify_stock_changed
+from ...services.stock_obligation_service import StockObligationService
 from ...sudo_utils import validate_sudo_mode
 from ...utils.validation import MAX_INT32, parse_date_param, parse_id, parse_int
 
@@ -96,15 +98,17 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
 
         # Capture quantity before for adjustment record
         quantity_before = lot.quantity_remaining
+        produit = lot.produit
+        if produit:
+            produit = Produit.objects.select_for_update().get(pk=produit.pk)
+            StockObligationService.reapply_pending_obligations([produit.id])
 
         # Update lot
         lot.quantity_remaining -= quantity_to_remove
         lot.save()
 
         # Update product stock
-        produit = lot.produit
         if produit:
-            produit = Produit.objects.select_for_update().get(pk=produit.pk)
             if produit.use_lot_management:
                 # Recalculate stock from all lots
                 produit.calculate_stock_from_lots()
@@ -155,6 +159,7 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
             request=request
         )
 
+        notify_stock_changed([produit.id] if produit else [])
         return Response({'status': f'Lot mis à jour. {quantity_to_remove} unités sorties.', 'validated_by': validation_user.username})
 
     @action(detail=False, methods=['post'])
@@ -176,9 +181,12 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
              return error_res
 
         # Lock lots and associated products in deterministic order to avoid deadlocks
-        lots = list(StockLot.objects.filter(id__in=lot_ids, quantity_remaining__gt=0).select_for_update().select_related('produit'))
+        # Pas de select_related ici : produit est un FK nullable, le LEFT JOIN
+        # combiné à FOR UPDATE lève NotSupportedError sur PostgreSQL.
+        lots = list(StockLot.objects.filter(id__in=lot_ids, quantity_remaining__gt=0).select_for_update(of=('self',)))
         product_ids = sorted({lot.produit_id for lot in lots if lot.produit_id})
         locked_products = {p.id: p for p in Produit.objects.filter(id__in=product_ids).select_for_update().order_by('id')} if product_ids else {}
+        StockObligationService.reapply_pending_obligations(product_ids)
 
         count = 0
 
@@ -231,7 +239,8 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
             details={'lot_ids': lot_ids, 'reason': reason, 'count': count},
             request=request
         )
-        
+
+        notify_stock_changed(product_ids)
         return Response({'status': f'{count} lots sortis du stock.', 'validated_by': validation_user.username})
 
     @action(detail=False, methods=['get'])

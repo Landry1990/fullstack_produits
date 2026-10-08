@@ -1,6 +1,7 @@
 """
 Serializers pour l'inventaire, les avoirs, et les mouvements de stock.
 """
+from django.db.models import Sum
 from rest_framework import serializers
 
 from ..models import (
@@ -12,6 +13,7 @@ from ..models import (
     MouvementStock,
     RelationTransformation,
     StockAdjustment,
+    StockObligation,
 )
 
 
@@ -28,6 +30,10 @@ class LigneInventaireSerializer(serializers.ModelSerializer):
     lot_expiration = serializers.DateField(source='stock_lot.date_expiration', read_only=True, allow_null=True)
     lot_quantity_remaining = serializers.IntegerField(source='stock_lot.quantity_remaining', read_only=True, allow_null=True)
 
+    # Obligations de stock en attente (dette persistée après comptage physique)
+    pending_promis = serializers.SerializerMethodField()
+    pending_force = serializers.SerializerMethodField()
+
     class Meta:
         model = LigneInventaire
         fields = '__all__'
@@ -39,6 +45,46 @@ class LigneInventaireSerializer(serializers.ModelSerializer):
 
     def get_produit_nom(self, obj):
         return obj.produit.name if obj.produit else obj.produit_nom
+
+    def get_pending_promis(self, obj):
+        return self._pending_obligations(obj, StockObligation.TypeObligation.PROMIS)
+
+    def get_pending_force(self, obj):
+        return self._pending_obligations(obj, StockObligation.TypeObligation.FORCE)
+
+    def _pending_obligations(self, obj, obligation_type):
+        if not obj.produit_id:
+            return 0
+        obligations_map = self._get_obligations_map(obj.produit_id)
+        return obligations_map.get(obj.produit_id, {}).get(obligation_type, 0)
+
+    def _get_obligations_map(self, produit_id):
+        parent = self.parent
+        if isinstance(parent, serializers.ListSerializer) and parent.instance is not None:
+            obligations_map = getattr(parent, '_obligations_map', None)
+            if obligations_map is None:
+                produit_ids = [ligne.produit_id for ligne in parent.instance if ligne.produit_id]
+                obligations_map = self._aggregate_obligations(produit_ids)
+                parent._obligations_map = obligations_map
+            return obligations_map
+        return self._aggregate_obligations([produit_id])
+
+    @staticmethod
+    def _aggregate_obligations(produit_ids):
+        rows = (
+            StockObligation.objects
+            .filter(
+                produit_id__in=produit_ids,
+                status=StockObligation.Status.EN_ATTENTE,
+                quantity_remaining__gt=0,
+            )
+            .values('produit_id', 'type')
+            .annotate(total=Sum('quantity_remaining'))
+        )
+        obligations_map = {}
+        for row in rows:
+            obligations_map.setdefault(row['produit_id'], {})[row['type']] = row['total']
+        return obligations_map
 
 
 class LigneInventaireUpdateSerializer(LigneInventaireSerializer):

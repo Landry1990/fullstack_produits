@@ -481,6 +481,20 @@ class FactureProduitAllocation(models.Model):
         validators=[MinValueValidator(0)],
         help_text="Part de la quantité prélevée sur les unités gratuites (UG) du lot"
     )
+    stock_obligation = models.ForeignKey(
+        'StockObligation', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='allocations',
+        help_text="Dette de stock associée à une quantité non encore couverte"
+    )
+    resolved_commande = models.ForeignKey(
+        'Commande', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='resolved_stock_allocations',
+        help_text="Commande de réception qui a couvert cette dette"
+    )
+    is_pending = models.BooleanField(
+        default=False,
+        help_text="Quantité facturée mais non encore rattachée à un stock physique"
+    )
     cost_price = models.DecimalField(
         max_digits=10, decimal_places=2,
         validators=[MinValueValidator(Decimal('0'))],
@@ -501,7 +515,8 @@ class FactureProduitAllocation(models.Model):
         ]
 
     def __str__(self):
-        return f"Allocation {self.id} - {self.quantity} unités du lot {self.stock_lot.id}"
+        lot_display = self.stock_lot.id if self.stock_lot_id else 'non alloué'
+        return f"Allocation {self.id} - {self.quantity} unités du lot {lot_display}"
     
     @property
     def margin(self):
@@ -765,6 +780,10 @@ class Promis(models.Model):
         validators=[MinValueValidator(1)],
         help_text="Quantité promise au client"
     )
+    quantite_livree = models.IntegerField(
+        default=0, validators=[MinValueValidator(0)],
+        help_text="Part du promis déjà couverte par du stock"
+    )
     status = models.CharField(max_length=4, choices=Status.choices, default=Status.EN_ATTENTE)
     date_promis = models.DateTimeField(auto_now_add=True, help_text="Date de la promesse")
     date_livraison = models.DateTimeField(null=True, blank=True, help_text="Date de livraison effective")
@@ -791,6 +810,10 @@ class Promis(models.Model):
         client_display = self.client.name if self.client else self.client_name or 'Client inconnu'
         produit_name = self.produit.name if self.produit else self.produit_nom or 'Produit inconnu'
         return f"Promis #{self.id} - {produit_name} x{self.quantite} pour {client_display}"
+
+    @property
+    def quantite_restante(self):
+        return max(0, (self.quantite or 0) - (self.quantite_livree or 0))
 
     @property
     def client_display(self):

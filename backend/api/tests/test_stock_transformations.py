@@ -9,6 +9,7 @@ from api.models import (
     RelationTransformation,
     StockAdjustment,
     StockLot,
+    StockObligation,
 )
 from api.tests.factories import TestDataFactory
 
@@ -60,6 +61,37 @@ class StockTransformationTest(TestCase):
         self.assertTrue(HistoriqueTransformation.objects.filter(relation=self.relation).exists())
         self.assertTrue(StockAdjustment.objects.filter(produit=self.source, quantity_change=-2).exists())
         self.assertTrue(StockAdjustment.objects.filter(produit=self.dest, quantity_change=20).exists())
+
+    def test_transformation_resolves_destination_obligation(self):
+        """Les unités produites couvrent d'abord une dette de stock en attente."""
+        obligation = StockObligation.objects.create(
+            produit=self.dest,
+            produit_nom=self.dest.name,
+            type=StockObligation.TypeObligation.FORCE,
+            status=StockObligation.Status.EN_ATTENTE,
+            quantity=5,
+            quantity_remaining=5,
+            stock_applied=True,
+            stock_location=StockObligation.StockLocation.RAYON,
+            cost_price=self.dest.cost_price,
+            selling_price=self.dest.selling_price,
+            created_by=self.user,
+        )
+        self.dest.calculate_stock_from_lots()
+        self.assertEqual(self.dest.stock, -5)
+
+        response = self.client.post(
+            reverse('relationtransformation-transformer', args=[self.relation.id]),
+            {'quantite': 1},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.dest.refresh_from_db()
+        obligation.refresh_from_db()
+        dest_lot = StockLot.objects.get(produit=self.dest, lot='LOT-S1')
+        self.assertEqual(obligation.status, StockObligation.Status.RESOLUE)
+        self.assertEqual(dest_lot.quantity_remaining, 5)
+        self.assertEqual(self.dest.stock, 5)
 
     def test_transformation_insufficient_stock(self):
         url = reverse('relationtransformation-transformer', args=[self.relation.id])

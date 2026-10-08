@@ -10,6 +10,7 @@ export interface SearchResult {
   selling_price?: number | string
   isPromis?: boolean
   active_promis_count?: number
+  has_pending_force?: boolean
   /** Code CIP, affiché en sous-titre si présent (ex: écran inventaire) */
   cip1?: string | null
   /** Nom du rayon, affiché en sous-titre si présent (ex: écran inventaire) */

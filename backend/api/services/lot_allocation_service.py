@@ -15,7 +15,11 @@ from ..models import (
     MouvementStock,
     Produit,
     StockLot,
+    StockObligation,
+    StockObligationResolution,
 )
+from .realtime import notify_stock_changed
+from .stock_obligation_service import StockObligationService
 
 logger = logging.getLogger(__name__)
 
@@ -30,43 +34,120 @@ class LotAllocationService:
     @staticmethod
     def restore_allocations(facture):
         """
-        Restaure toutes les allocations de lots d'une facture :
-        - Remet quantity_remaining et quantity_free_remaining dans chaque lot
-        - Supprime les enregistrements FactureProduitAllocation
-        - Retourne (allocations, product_ids_with_allocations) pour usage par l'appelant
+        Restaure les allocations d'une facture sans écraser les autres dettes
+        de stock du produit.
 
-        Utilisé par cancel_invoice et modify_sale.
+        - allocation résolue avec lot : remet la quantité dans le lot ;
+        - allocation résolue sans lot : réintègre le compteur produit ;
+        - allocation en attente : annule l'obligation de stock correspondante.
         """
         allocations = list(
             FactureProduitAllocation.objects.filter(facture_produit__facture=facture)
-            .select_related('stock_lot', 'facture_produit', 'facture_produit__produit')
+            .select_related(
+                'stock_lot', 'stock_obligation',
+                'facture_produit', 'facture_produit__produit'
+            )
         )
         lot_ids = [alloc.stock_lot_id for alloc in allocations if alloc.stock_lot_id]
         locked_lots = {
             lot.id: lot
             for lot in StockLot.objects.filter(id__in=lot_ids).select_for_update().order_by('id')
         } if lot_ids else {}
+        product_ids = {
+            alloc.facture_produit.produit_id
+            for alloc in allocations
+            if alloc.facture_produit and alloc.facture_produit.produit_id
+        }
+        locked_products = {
+            produit.id: produit
+            for produit in Produit.objects.filter(id__in=product_ids).select_for_update().order_by('id')
+        } if product_ids else {}
+        StockObligationService.reapply_pending_obligations(product_ids)
+
+        product_stock_deltas = {}
+        obligations_to_update = []
+        lots_to_update = set()
+        resolved_obligation_ids = set()
 
         for alloc in allocations:
-            lot = locked_lots.get(alloc.stock_lot_id) if alloc.stock_lot_id else None
-            if not lot:
+            produit_id = alloc.facture_produit.produit_id if alloc.facture_produit else None
+            obligation = alloc.stock_obligation
+            if obligation:
+                resolved_obligation_ids.add(obligation.id)
+
+            if alloc.is_pending:
+                if obligation:
+                    if obligation.status == StockObligation.Status.EN_ATTENTE:
+                        if obligation.stock_applied:
+                            product_stock_deltas[produit_id] = (
+                                product_stock_deltas.get(produit_id, 0) + alloc.quantity
+                            )
+                        obligation.quantity_remaining = 0
+                        obligation.stock_applied = False
+                        obligation.status = StockObligation.Status.ANNULEE
+                        obligation.cancelled_at = timezone.now()
+                    obligations_to_update.append(obligation)
+                else:
+                    product_stock_deltas[produit_id] = (
+                        product_stock_deltas.get(produit_id, 0) + alloc.quantity
+                    )
                 continue
-            lot.quantity_remaining += alloc.quantity
-            # Restaurer exactement le nombre d'UG prélevées par cette
-            # allocation — sinon les annulations/modifications gonflent
-            # le compteur d'unités gratuites (UG fantômes).
-            lot.quantity_free_remaining = min(
-                lot.quantity_free_remaining + getattr(alloc, 'quantity_free', 0),
-                lot.quantity_free
+
+            if alloc.stock_lot_id:
+                lot = locked_lots.get(alloc.stock_lot_id)
+                if lot:
+                    lot.quantity_remaining += alloc.quantity
+                    lot.quantity_free_remaining = min(
+                        lot.quantity_free_remaining + getattr(alloc, 'quantity_free', 0),
+                        lot.quantity_free
+                    )
+                    lots_to_update.add(lot)
+                product_stock_deltas[produit_id] = (
+                    product_stock_deltas.get(produit_id, 0) + alloc.quantity
+                )
+            else:
+                product_stock_deltas[produit_id] = (
+                    product_stock_deltas.get(produit_id, 0) + alloc.quantity
+                )
+
+            if obligation and obligation.status != StockObligation.Status.ANNULEE:
+                obligation.quantity_remaining = 0
+                obligation.stock_applied = False
+                obligation.status = StockObligation.Status.ANNULEE
+                obligation.cancelled_at = timezone.now()
+                obligations_to_update.append(obligation)
+
+        if lots_to_update:
+            StockLot.objects.bulk_update(
+                list(lots_to_update),
+                ['quantity_remaining', 'quantity_free_remaining'],
+                batch_size=100,
             )
-            lot.save()
+        if product_stock_deltas:
+            for produit_id, delta in product_stock_deltas.items():
+                if delta and produit_id in locked_products:
+                    Produit.objects.filter(pk=produit_id).update(stock=F('stock') + delta)
+            notify_stock_changed(product_stock_deltas.keys())
+        if obligations_to_update:
+            unique_obligations = {obligation.id: obligation for obligation in obligations_to_update}
+            FactureProduitAllocation.objects.filter(id__in=[a.id for a in allocations]).delete()
+            StockObligation.objects.bulk_update(
+                list(unique_obligations.values()),
+                ['quantity_remaining', 'stock_applied', 'status', 'cancelled_at'],
+                batch_size=100,
+            )
+        else:
+            FactureProduitAllocation.objects.filter(id__in=[a.id for a in allocations]).delete()
+
+        if resolved_obligation_ids:
+            StockObligationResolution.objects.filter(
+                obligation_id__in=resolved_obligation_ids
+            ).delete()
 
         product_ids_with_allocations = set()
         for alloc in allocations:
             if alloc.facture_produit and alloc.facture_produit.produit_id:
                 product_ids_with_allocations.add(alloc.facture_produit.produit_id)
-
-        FactureProduitAllocation.objects.filter(id__in=[a.id for a in allocations]).delete()
 
         return allocations, product_ids_with_allocations
 
@@ -84,16 +165,11 @@ class LotAllocationService:
         """
         if not product_ids:
             return
-        total_lots_sum = (
-            StockLot.objects.filter(produit=OuterRef('pk'))
-            .order_by()
-            .values('produit')
-            .annotate(total=Sum('quantity_remaining'))
-            .values('total')
-        )
-        Produit.objects.filter(id__in=product_ids).update(
-            stock=Coalesce(Subquery(total_lots_sum), Value(0))
-        )
+        for produit in Produit.objects.filter(
+            id__in=product_ids,
+            use_lot_management=True,
+        ):
+            produit.calculate_stock_from_lots()
 
     # ──────────────────────────────────────────────
     #  Allocation FIFO/FEFO pour un item unique
@@ -189,7 +265,10 @@ class LotAllocationService:
         )
         lot.quantity_remaining -= quantity
         lot.quantity_free_remaining -= free_taken
-        lot.save()
+        StockLot.objects.filter(pk=lot.pk).update(
+            quantity_remaining=lot.quantity_remaining,
+            quantity_free_remaining=lot.quantity_free_remaining,
+        )
 
         return allocation
 
@@ -207,7 +286,10 @@ class LotAllocationService:
         space_for_free = lot.quantity_free - lot.quantity_free_remaining
         if space_for_free > 0:
             lot.quantity_free_remaining += min(quantity, space_for_free)
-        lot.save()
+        StockLot.objects.filter(pk=lot.pk).update(
+            quantity_remaining=lot.quantity_remaining,
+            quantity_free_remaining=lot.quantity_free_remaining,
+        )
 
     # ──────────────────────────────────────────────
     #  Création de mouvements de stock
@@ -228,9 +310,10 @@ class LotAllocationService:
 
         mouvements = []
         for item in items:
-            if item.quantity == 0:
+            stock_quantity = item.quantity
+            if stock_quantity == 0:
                 continue
-            is_return = item.quantity < 0
+            is_return = stock_quantity < 0
             label = "Retour" if is_return else prefix
             mouvements.append(MouvementStock(
                 produit_id=item.produit_id,
@@ -238,7 +321,7 @@ class LotAllocationService:
                     MouvementStock.TypeMouvement.RETOUR if is_return
                     else MouvementStock.TypeMouvement.SORTIE
                 ),
-                quantite=-item.quantity,
+                quantite=-stock_quantity,
                 stock_apres=product_stock_map.get(item.produit_id),
                 user=user,
                 facture=facture,

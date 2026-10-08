@@ -377,8 +377,13 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                                 </TableCell>
                                 <TableCell className="px-3 py-2 text-center">
                                     <Badge variant="outline" className="font-mono text-xs">
-                                        {p.quantite}
+                                        {p.quantite_restante ?? p.quantite}
                                     </Badge>
+                                    {p.quantite_restante !== undefined && p.quantite_restante !== p.quantite && (
+                                        <div className="text-[10px] text-slate-500 font-mono mt-0.5">
+                                            {p.quantite_livree ?? 0}/{p.quantite}
+                                        </div>
+                                    )}
                                 </TableCell>
                                 <TableCell className="px-3 py-2 text-center">
                                     <Badge variant="outline" className={cn('gap-1 uppercase tracking-wider text-xs', statusBadgeClass(p.status))}>
