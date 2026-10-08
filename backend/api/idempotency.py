@@ -12,6 +12,7 @@ Stockage : Django cache (Redis recommandé en production).
 """
 import json
 import logging
+import time
 from functools import wraps
 
 from django.conf import settings
@@ -25,6 +26,14 @@ logger = logging.getLogger(__name__)
 IDEMPOTENCY_TTL = getattr(settings, 'IDEMPOTENCY_TTL_SECONDS', 86400)  # 24h
 IDEMPOTENCY_HEADER = 'HTTP_IDEMPOTENCY_KEY'
 IDEMPOTENCY_HEADER_ALT = 'HTTP_X_IDEMPOTENCY_KEY'
+
+# Sentinel « requête en cours » : cache.add est atomique (SETNX), donc une
+# 2ᵉ requête concurrente avec la même clé attend le résultat de la 1ʳᵉ au
+# lieu de ré-exécuter l'opération en parallèle (race → doublon métier).
+_IN_PROGRESS = 'in-progress'
+_IN_PROGRESS_TTL = 60      # auto-expire si le worker meurt avant la fin
+_WAIT_TIMEOUT = 30         # durée max d'attente du résultat concurrent
+_WAIT_INTERVAL = 0.1
 
 
 def _cache_key(user_id: int | str, idempotency_key: str) -> str:
@@ -76,22 +85,43 @@ def idempotent_action(func):
         user_id = request.user.id if request.user.is_authenticated else 'anon'
         cache_key = _cache_key(user_id, idem_key)
 
-        # Vérifier si la requête a déjà été traitée
-        cached = cache.get(cache_key)
-        if cached is not None:
-            logger.info(
-                "[Idempotency] Résultat en cache retourné pour key=%s user=%s",
-                idem_key, user_id
-            )
-            try:
-                cached_data = json.loads(cached['data'])
-                return Response(cached_data, status=cached['status'])
-            except (KeyError, json.JSONDecodeError):
-                # Cache corrompu → ré-exécuter
-                logger.warning("[Idempotency] Cache corrompu pour key=%s, ré-exécution.", idem_key)
+        # Verrou atomique : seule la première requête réclame la clé.
+        # Une requête concurrente avec la même clé attend le résultat de la
+        # première — sinon les deux s'exécuteraient en parallèle (TOCTOU).
+        if not cache.add(cache_key, _IN_PROGRESS, timeout=_IN_PROGRESS_TTL):
+            deadline = time.monotonic() + _WAIT_TIMEOUT
+            while time.monotonic() < deadline:
+                cached = cache.get(cache_key)
+                if cached is None or cached == _IN_PROGRESS:
+                    time.sleep(_WAIT_INTERVAL)
+                    continue
+                try:
+                    logger.info(
+                        "[Idempotency] Résultat concurrent retourné pour key=%s user=%s",
+                        idem_key, user_id
+                    )
+                    return Response(json.loads(cached['data']), status=cached['status'])
+                except (KeyError, json.JSONDecodeError, TypeError, AttributeError):
+                    logger.warning("[Idempotency] Cache corrompu pour key=%s, ré-exécution.", idem_key)
+                    break
+            else:
+                # La première requête dépasse _WAIT_TIMEOUT ou est morte sans
+                # libérer le sentinel → refus explicite (le client peut retenter).
+                logger.warning("[Idempotency] Attente expirée pour key=%s user=%s", idem_key, user_id)
+                return Response(
+                    {'detail': "Une requête identique est déjà en cours de traitement. Veuillez patienter."},
+                    status=http_status.HTTP_409_CONFLICT
+                )
 
-        # Première exécution : appeler la vue réelle
-        response = func(self, request, *args, **kwargs)
+        # Réclamée (ou cache corrompu après break) : exécuter la vue réelle.
+        # Le sentinel est libéré sur échec/exception pour permettre le retry —
+        # sinon une erreur métier (ex. mot de passe sudo erroné → 400) bloquerait
+        # la clé jusqu'à expiration du sentinel.
+        try:
+            response = func(self, request, *args, **kwargs)
+        except Exception:
+            cache.delete(cache_key)
+            raise
 
         # Mettre en cache uniquement les réponses de succès (2xx)
         if 200 <= response.status_code < 300:
@@ -111,6 +141,8 @@ def idempotent_action(func):
             except Exception as exc:
                 # Ne jamais bloquer la réponse à cause du cache
                 logger.warning("[Idempotency] Échec mise en cache: %s", exc)
+        else:
+            cache.delete(cache_key)
 
         return response
 

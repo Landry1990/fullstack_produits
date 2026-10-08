@@ -30,6 +30,20 @@ import { generateUUID } from '../utils/uuid'
 
 export type FacturationState = ReturnType<typeof useFacturationState>
 
+// Hash stable (djb2 xor ×2) — empreinte du contenu du panier pour la clé
+// d'idempotence : deux soumissions du MÊME panier produisent la même clé
+// (dédoublonnage backend), deux ventes distinctes jamais (lineId = UUID par ligne).
+function saleContentHash(input: string): string {
+  let h1 = 5381
+  let h2 = 52711
+  for (let i = 0; i < input.length; i++) {
+    const c = input.charCodeAt(i)
+    h1 = (h1 * 33) ^ c
+    h2 = (h2 * 31) ^ c
+  }
+  return (h1 >>> 0).toString(36) + (h2 >>> 0).toString(36)
+}
+
 export function useFacturationState() {
   const { t } = useTranslation(['prescriptions', 'common', 'facturation', 'sales'])
   const queryClient = useQueryClient()
@@ -40,6 +54,7 @@ export function useFacturationState() {
   // --- Core local state ---
   const [loading, setLoading] = useState(false)
   const saleInProgressRef = useRef(false)
+  const requestInFlightRef = useRef(false)
   const pendingPrintWindowRef = useRef<Window | null>(null)
   const [isRetrocession, setIsRetrocession] = useState(false)
   const [isFactureA4, setIsFactureA4] = useState(false)
@@ -444,6 +459,17 @@ export function useFacturationState() {
       ? (activeCaissePosteVente?.id ?? null)
       : (multiCaisse.myActivePoste?.id ?? null)
 
+    // Clé d'idempotence DÉTERMINISTE dérivée du contenu du panier : un appel
+    // doublon via un callback sudo figé sur l'ancien panier (double Enter)
+    // réutilise la même clé → le backend renvoie la réponse en cache au lieu
+    // de créer une seconde facture. Une vente suivante a des lineId différents.
+    const saleIdempotencyKey = `sale-${saleContentHash(
+      cart.lignesFacture
+        .map(l => `${l.lineId}:${l.quantite}:${l.prix_unitaire}:${l.remise_produit}`)
+        .join('|')
+      + `|${totals.totalTtc}|${clientsHook.selectedClient ?? ''}|${ui.remiseGlobale}|${ui.isAvoirClient ? 'av' : ''}`
+    )}`
+
     const params = {
       selectedClient: clientsHook.selectedClient,
       useManualClient: clientsHook.useManualClient,
@@ -483,10 +509,16 @@ export function useFacturationState() {
       is_avoir_client: ui.isAvoirClient,
       promisClientName: ui.promisClientName,
       promisPhone: ui.promisPhone,
+      idempotencyKey: saleIdempotencyKey,
     }
+    // Garde couvrant aussi les appels avec credentials sudo : le verrou
+    // saleInProgressRef ci-dessus ne filtre que les appels sans credentials.
+    if (requestInFlightRef.current) return
+    requestInFlightRef.current = true
     try {
       await completeSale(params)
     } finally {
+      requestInFlightRef.current = false
       saleInProgressRef.current = false
     }
   }

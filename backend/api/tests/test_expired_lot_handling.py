@@ -277,3 +277,61 @@ class ExpiredLotHandlingTestCase(TestCase):
         self.assertEqual(adjustment.quantity_change, -15)
         self.assertEqual(adjustment.quantity_before, 15)
         self.assertEqual(adjustment.quantity_after, 0)
+
+    # ------------------------------------------------------------------
+    # 4. Sortie groupee de lots perimes -> pas de 500, lots vides
+    # ------------------------------------------------------------------
+    def test_bulk_disposal_of_expired_lots(self):
+        """
+        Regression: bulk_sortir_perimes ne doit pas lever une 500
+        (FOR UPDATE sur jointure externe nullable) et doit vider les lots,
+        decrementer le stock et creer les traces (MouvementStock + StockAdjustment).
+        """
+        today = timezone.now().date()
+        expired_date = today - timedelta(days=10)
+
+        produit = self.factory.create_produit(stock=0, use_lot_management=True)
+        lot1 = self.factory.create_stock_lot(
+            produit=produit, quantity=10, lot_name='LOT-BULK-1',
+            date_expiration=expired_date,
+        )
+        lot2 = self.factory.create_stock_lot(
+            produit=produit, quantity=5, lot_name='LOT-BULK-2',
+            date_expiration=expired_date,
+        )
+        produit.calculate_stock_from_lots()
+        produit.refresh_from_db()
+        self.assertEqual(produit.stock, 15)
+
+        url = reverse('stocklot-bulk-sortir-perimes')
+        response = self.client.post(url, {
+            'lot_ids': [lot1.id, lot2.id],
+            'reason': 'Sortie groupée périmés',
+        }, format='json')
+
+        self.assertEqual(
+            response.status_code, status.HTTP_200_OK,
+            f"La sortie groupée doit réussir. Response: {response.data}",
+        )
+
+        lot1.refresh_from_db()
+        lot2.refresh_from_db()
+        produit.refresh_from_db()
+
+        self.assertEqual(lot1.quantity_remaining, 0)
+        self.assertEqual(lot2.quantity_remaining, 0)
+        self.assertEqual(produit.stock, 0)
+        self.assertEqual(produit.stock, self._sum_lots(produit))
+
+        self.assertEqual(
+            StockAdjustment.objects.filter(
+                produit=produit, reason_type=StockAdjustment.ReasonType.PERIME
+            ).count(), 2,
+            'Un StockAdjustment PERIME doit être créé par lot',
+        )
+        self.assertEqual(
+            MouvementStock.objects.filter(
+                produit=produit, type_mouvement=MouvementStock.TypeMouvement.AVOIR
+            ).count(), 2,
+            'Un MouvementStock AVOIR doit être créé par lot',
+        )

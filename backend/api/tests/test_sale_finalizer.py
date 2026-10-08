@@ -224,8 +224,8 @@ class TestSaleFinalizerHandlePromis(TestCase):
             status=Facture.Status.BROUILLON,
         )
         produits_data = [
-            {"produit": produit.id, "is_promis": True, "promis_quantity": 5, "promis_phone": "690000000"},
-            {"produit": produit.id, "is_promis": False, "promis_quantity": 0},
+            {"produit": produit.id, "quantity": 5, "is_promis": True, "promis_quantity": 5, "promis_phone": "690000000"},
+            {"produit": produit.id, "quantity": 1, "is_promis": False, "promis_quantity": 0},
         ]
 
         SaleFinalizer._handle_promis(facture, produits_data, client_id=None, client_name_override="Client Test", validation_user=user)

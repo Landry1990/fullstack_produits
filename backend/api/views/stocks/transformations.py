@@ -19,7 +19,11 @@ from ...models import (
     RelationTransformation,
     StockAdjustment,
     StockLot,
+    StockObligation,
 )
+from ...services.realtime import notify_stock_changed
+from ...services.stock_obligation_service import StockObligationService
+
 from ...pagination import StandardResultsSetPagination
 from ...serializers import (
     HistoriqueTransformationSerializer,
@@ -68,6 +72,13 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
             
             if not source or not destination:
                  return Response({'error': 'Produit source ou destination introuvable'}, status=status.HTTP_404_NOT_FOUND)
+
+            # Un comptage physique a pu détacher les promis du compteur : les
+            # réappliquer avant de consommer la source, puis avant d'alimenter
+            # la destination.
+            if StockObligationService.reapply_pending_obligations(p_ids):
+                source.refresh_from_db(fields=['stock', 'stock_reserve'])
+                destination.refresh_from_db(fields=['stock', 'stock_reserve'])
 
             if source.stock < quantite:
                 return Response({'error': f'Stock insuffisant pour {source.name}'}, status=status.HTTP_400_BAD_REQUEST)
@@ -217,6 +228,7 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
                 
             # --- 2. CRÉATION DESTINATION ---
             ratio = Decimal(str(relation.ratio))
+            destination_lots = []
             
             if destination.use_lot_management:
                 if consumed_lots_info:
@@ -259,6 +271,8 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
                                 dest_lot.date_expiration = source_lot.date_expiration
                             dest_lot.save()
 
+                        destination_lots.append(dest_lot)
+
                         # Traceability Lot Dest
                         StockAdjustment.objects.create(
                              produit=destination,
@@ -289,6 +303,7 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
                             date_reception=timezone.now(),
                             fournisseur=source.fournisseur
                         )
+                        destination_lots.append(new_lot_dest)
                         StockAdjustment.objects.create(
                              produit=destination,
                              stock_lot=new_lot_dest,
@@ -309,6 +324,18 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
                 destination.stock += quantite_dest_total
                 destination.version += 1
                 destination.save(update_fields=['stock', 'version'])
+
+            if quantite_dest_total > 0:
+                StockObligationService.resolve_pending_obligations(
+                    destination,
+                    available_quantity=quantite_dest_total,
+                    lots=destination_lots if destination.use_lot_management else None,
+                    user=request.user,
+                    movement_description=f"Transformation depuis {source.name}",
+                    lot_field='quantity_remaining',
+                    stock_location=StockObligation.StockLocation.RAYON,
+                )
+                destination.refresh_from_db(fields=['stock', 'stock_reserve'])
             
             # --- 3. HISTORIQUE & MOUVEMENTS GLOBAUX ---
             
@@ -359,7 +386,8 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
                 },
                 request=request
             )
-        
+
+            notify_stock_changed([source.id, destination.id])
         return Response({
             'success': True,
             'stock_source': source.stock,
@@ -552,6 +580,10 @@ class HistoriqueTransformationViewSet(viewsets.ReadOnlyModelViewSet):
                     status=status.HTTP_404_NOT_FOUND
                 )
 
+            if StockObligationService.reapply_pending_obligations(p_ids):
+                source.refresh_from_db(fields=['stock', 'stock_reserve'])
+                destination.refresh_from_db(fields=['stock', 'stock_reserve'])
+
             if destination.stock < qty_dest:
                 return Response(
                     {'error': f'Stock insuffisant pour {destination.name} (disponible: {destination.stock}, requis: {qty_dest})'},
@@ -685,6 +717,7 @@ class HistoriqueTransformationViewSet(viewsets.ReadOnlyModelViewSet):
                 request=request
             )
 
+        notify_stock_changed([source.id, destination.id])
         return Response({
             'success': True,
             'message': f"Transformation annulée : {qty_dest} {destination.name} -> {qty_src} {source.name}",

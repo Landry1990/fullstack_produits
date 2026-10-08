@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { searchInIndex, buildIndex, normalize } from './useProductSearchIndex'
+import { searchInIndex, buildIndex, normalize, patchSearchIndexStock } from './useProductSearchIndex'
 import type { ProduitModel } from '../types'
 
 function makeProduct(name: string, overrides: Partial<ProduitModel> = {}): ProduitModel {
@@ -94,6 +94,36 @@ describe('searchInIndex', () => {
 describe('normalize', () => {
   it('met en minuscule et retire les accents', () => {
     expect(normalize('DoliprânÉ')).toBe('doliprane')
+  })
+})
+
+describe('patchSearchIndexStock', () => {
+  it('met à jour stock / stock_reserve / total_stock et ignore les ids inconnus', () => {
+    const idx = buildIndex([
+      makeProduct('PRODUIT A', { id: 1, stock: 10, stock_reserve: 2, total_stock: 12 }),
+      makeProduct('PRODUIT B', { id: 2, stock: 5 }),
+    ])
+
+    patchSearchIndexStock(
+      [
+        { id: 1, stock: 7, stock_reserve: 1 },
+        { id: 999, stock: 42 }, // id inconnu → ignoré
+      ],
+      idx,
+    )
+
+    expect(idx[0].product.stock).toBe(7)
+    expect(idx[0].product.stock_reserve).toBe(1)
+    expect(idx[0].product.total_stock).toBe(8) // 7 + 1
+    // Produit non concerné : inchangé
+    expect(idx[1].product.stock).toBe(5)
+  })
+
+  it('no-op sur index null ou updates vides', () => {
+    const idx = buildIndex([makeProduct('PRODUIT A', { id: 1, stock: 10 })])
+    patchSearchIndexStock([], idx)
+    patchSearchIndexStock([{ id: 1, stock: 3 }], null)
+    expect(idx[0].product.stock).toBe(10)
   })
 })
 

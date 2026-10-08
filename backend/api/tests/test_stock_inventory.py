@@ -9,6 +9,7 @@ from api.models import (
     LigneInventaire,
     MouvementStock,
     StockAdjustment,
+    StockObligation,
 )
 from api.tests.factories import TestDataFactory
 
@@ -277,6 +278,49 @@ class StockInventoryTest(TestCase):
         ligne.refresh_from_db()
         self.assertEqual(ligne.quantite_physique, 47)
         self.assertEqual(ligne.ecart, -3)
+
+    def test_lignes_serializer_exposes_pending_obligations(self):
+        """GET lignes doit exposer les obligations de stock EN_ATTENTE
+        (PROMIS/FORCE) agregees par produit ; les RESOLUE ne comptent pas."""
+        produit = self.factory.create_produit(
+            name="Obligation Product", stock=10, use_lot_management=False,
+            fournisseur=self.p1.fournisseur,
+        )
+        inventaire = Inventaire.objects.create(created_by=self.user)
+        ligne = LigneInventaire.objects.create(
+            inventaire=inventaire,
+            produit=produit,
+            stock_theorique=10,
+            quantite_physique=10,
+        )
+        StockObligation.objects.create(
+            produit=produit,
+            type=StockObligation.TypeObligation.PROMIS,
+            status=StockObligation.Status.EN_ATTENTE,
+            quantity=2,
+            quantity_remaining=2,
+        )
+        StockObligation.objects.create(
+            produit=produit,
+            type=StockObligation.TypeObligation.FORCE,
+            status=StockObligation.Status.EN_ATTENTE,
+            quantity=3,
+            quantity_remaining=3,
+        )
+        StockObligation.objects.create(
+            produit=produit,
+            type=StockObligation.TypeObligation.PROMIS,
+            status=StockObligation.Status.RESOLUE,
+            quantity=5,
+            quantity_remaining=5,
+        )
+
+        response = self.client.get(reverse('inventaire-lignes', args=[inventaire.id]))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = {l['id']: l for l in response.data}
+        self.assertEqual(data[ligne.id]['pending_promis'], 2)
+        self.assertEqual(data[ligne.id]['pending_force'], 3)
 
     def test_bulk_default_mode_still_adds_existing_lot_quantity(self):
         inventaire = Inventaire.objects.create(created_by=self.user)

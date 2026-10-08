@@ -124,6 +124,37 @@ class CaisseCentraliseeConsumer(AsyncWebsocketConsumer):
         }))
 
 
+class StockUpdateConsumer(AsyncWebsocketConsumer):
+    """Consumer WebSocket : broadcast des changements de stock produit."""
+
+    async def connect(self):
+        self.group_name = 'stock_updates'
+        user = self.scope.get('user')
+        if not (user and user.is_authenticated):
+            await self.close(code=4001)
+            return
+        await self.channel_layer.group_add(self.group_name, self.channel_name)
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(self.group_name, self.channel_name)
+
+    async def receive(self, text_data):
+        try:
+            data = json.loads(text_data)
+        except json.JSONDecodeError:
+            return
+        if data.get('type') == 'ping':
+            await self.send(text_data=json.dumps({'type': 'pong'}))
+
+    async def stock_update(self, event):
+        """Reçoit un événement de groupe et le transmet au client WebSocket."""
+        await self.send(text_data=json.dumps({
+            'type': 'stock_update',
+            'produits': event['produits'],
+        }))
+
+
 class DocumentLockConsumer(AsyncWebsocketConsumer):
     """
     Consumer WebSocket pour le verrouillage pessimiste des documents.

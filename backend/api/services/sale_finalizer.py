@@ -488,9 +488,21 @@ class SaleFinalizer:
     def _handle_promis(facture, produits_data, client_id, client_name_override, validation_user):
         """Crée les promis pour les produits marqués is_promis."""
         promis_to_create = []
+        requested_by_product = {}
+        promised_by_product = {}
         for p in produits_data:
             if not isinstance(p, dict):
                 raise ValueError("Format de ligne produit invalide.")
+            try:
+                quantity = parse_int(
+                    p.get('quantity', 0), field='quantity', max_value=MAX_INT32
+                )
+            except ValidationError as exc:
+                raise _as_value_error(exc) from exc
+            produit_id = p.get('produit')
+            requested_by_product[produit_id] = requested_by_product.get(produit_id, 0) + quantity
+
+        for p in produits_data:
             # '5' > 0 lèverait TypeError → 500 ; on parse d'abord en entier.
             try:
                 promis_qty = parse_int(
@@ -500,12 +512,16 @@ class SaleFinalizer:
                 raise _as_value_error(exc) from exc
             if not p.get('is_promis') or promis_qty <= 0:
                 continue
+            produit_id = p.get('produit')
+            promised_by_product[produit_id] = promised_by_product.get(produit_id, 0) + promis_qty
+            if promised_by_product[produit_id] > requested_by_product.get(produit_id, 0):
+                raise ValueError("La quantité promise ne peut pas dépasser la quantité facturée.")
             promis_to_create.append(Promis(
                 facture=facture,
                 client_id=client_id,
                 client_name=client_name_override or '',
                 client_phone=p.get('promis_phone', ''),
-                produit_id=p.get('produit'),
+                produit_id=produit_id,
                 quantite=promis_qty,
                 status=Promis.Status.EN_ATTENTE,
                 created_by=validation_user

@@ -49,7 +49,8 @@ class ProduitListSerializer(serializers.ModelSerializer):
         return None
     forme_nom = serializers.CharField(source='forme.nom', read_only=True)
     active_promis_count = serializers.IntegerField(read_only=True)
-    
+    has_pending_force = serializers.BooleanField(read_only=True)
+
     class Meta:
         model = Produit
         fields = [
@@ -60,7 +61,7 @@ class ProduitListSerializer(serializers.ModelSerializer):
             'tva', 'cost_price', 'taux_marge', 'pourcentage_marge',
             'dernier_achat', 'dernier_vente', 'is_supplier_exclusive',
             'stock_reserve', 'has_reserve_storage', 'capacite_rayon', 'min_rayon',
-            'active_promis_count'
+            'active_promis_count', 'has_pending_force'
         ]
 
 

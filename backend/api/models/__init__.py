@@ -115,6 +115,8 @@ from .stock import (
     SignalementBesoin,
     StockAdjustment,
     StockLot,
+    StockObligation,
+    StockObligationResolution,
     TicketSessionSequence,
     generate_lot_number,
     get_next_ticket_session,
@@ -215,6 +217,8 @@ __all__ = [
     'StockAdjustment',
     # Stock
     'StockLot',
+    'StockObligation',
+    'StockObligationResolution',
     'Substance',
     'Team',
     'TicketSessionSequence',

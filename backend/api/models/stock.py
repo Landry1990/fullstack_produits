@@ -368,6 +368,154 @@ class MouvementStock(models.Model):
         return f"{self.date} - {produit_name} - {self.type_mouvement} ({self.quantite})"
 
 
+class StockObligation(models.Model):
+    """
+    Dette de stock créée par une vente facturée mais non couverte par un lot.
+
+    - PROMIS : quantité payée par le client, non encore remise.
+    - FORCE : quantité livrée malgré l'absence de stock/lot disponible.
+
+    `stock_applied` indique que `quantity_remaining` est actuellement incluse
+    dans le stock négatif du produit. Une correction physique brute (inventaire
+    ou ajustement absolu) peut repasser ce drapeau à False sans supprimer la
+    dette métier.
+    """
+
+    class TypeObligation(models.TextChoices):
+        PROMIS = 'PROMIS', 'Promis'
+        FORCE = 'FORCE', 'Vente forcée'
+
+    class Status(models.TextChoices):
+        EN_ATTENTE = 'ATT', 'En attente'
+        RESOLUE = 'RES', 'Résolue'
+        ANNULEE = 'ANN', 'Annulée'
+
+    class StockLocation(models.TextChoices):
+        RAYON = 'RAYON', 'Rayon'
+        RESERVE = 'RESERVE', 'Réserve'
+
+    produit = models.ForeignKey(
+        'Produit', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='stock_obligations'
+    )
+    produit_nom = models.CharField(max_length=150, blank=True, null=True)
+    facture = models.ForeignKey(
+        'Facture', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='stock_obligations'
+    )
+    facture_produit = models.ForeignKey(
+        'FactureProduit', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='stock_obligations'
+    )
+    promis = models.ForeignKey(
+        'Promis', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='stock_obligations'
+    )
+    type = models.CharField(max_length=10, choices=TypeObligation.choices)
+    status = models.CharField(max_length=4, choices=Status.choices, default=Status.EN_ATTENTE, db_index=True)
+    quantity = models.IntegerField(
+        validators=[MinValueValidator(1)],
+        help_text='Quantité initialement non couverte'
+    )
+    quantity_remaining = models.IntegerField(
+        validators=[MinValueValidator(0)],
+        help_text='Quantité restant à couvrir'
+    )
+    stock_applied = models.BooleanField(
+        default=True,
+        help_text='La dette restante est actuellement incluse dans le stock produit'
+    )
+    stock_location = models.CharField(
+        max_length=10, choices=StockLocation.choices, default=StockLocation.RAYON,
+        help_text='Compteur de stock impacté par la dette'
+    )
+    cost_price = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal('0.00'),
+        validators=[MinValueValidator(Decimal('0'))],
+        help_text='Coût estimé au moment de la vente'
+    )
+    selling_price = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal('0.00'),
+        validators=[MinValueValidator(Decimal('0'))],
+        help_text='Prix de vente au moment de la vente'
+    )
+    resolved_stock_lot = models.ForeignKey(
+        'StockLot', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='resolved_stock_obligations'
+    )
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    resolved_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='resolved_stock_obligations'
+    )
+    cancelled_at = models.DateTimeField(null=True, blank=True)
+    cancelled_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='cancelled_stock_obligations'
+    )
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    notes = models.TextField(blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['created_at', 'id']
+        indexes = [
+            models.Index(fields=['produit', 'status'], name='stockobl_prod_status_idx'),
+            models.Index(fields=['promis', 'status'], name='stockobl_promis_status_idx'),
+            models.Index(fields=['facture', 'status'], name='stockobl_facture_status_idx'),
+            models.Index(fields=['stock_applied', 'status'], name='stockobl_applied_status_idx'),
+        ]
+
+    def __str__(self):
+        produit_name = self.produit.name if self.produit else self.produit_nom or 'Produit inconnu'
+        return f"{self.get_type_display()} {produit_name} x{self.quantity_remaining}/{self.quantity}"
+
+    @property
+    def quantity_resolved(self):
+        return max(0, self.quantity - self.quantity_remaining)
+
+
+class StockObligationResolution(models.Model):
+    """Trace chaque couverture d'une dette de stock, y compris hors facture."""
+    id: int
+    obligation = models.ForeignKey(
+        StockObligation, on_delete=models.CASCADE, related_name='resolutions'
+    )
+    produit = models.ForeignKey(
+        'Produit', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='stock_obligation_resolutions'
+    )
+    commande = models.ForeignKey(
+        'Commande', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='stock_obligation_resolutions'
+    )
+    stock_lot = models.ForeignKey(
+        'StockLot', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='stock_obligation_resolutions'
+    )
+    quantity = models.IntegerField(
+        validators=[MinValueValidator(1)],
+        help_text='Quantité de dette couverte'
+    )
+    quantity_free = models.IntegerField(
+        default=0, validators=[MinValueValidator(0)],
+        help_text='Part couverte par les unités gratuites du lot'
+    )
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ['created_at', 'id']
+        indexes = [
+            models.Index(fields=['commande'], name='stockoblres_commande_idx'),
+            models.Index(fields=['obligation', 'commande'], name='stockoblres_obligation_cmd_idx'),
+        ]
+
+    def __str__(self):
+        return f"Résolution obligation #{self.obligation_id} x{self.quantity}"
+
+
 class RuptureFournisseur(models.Model):
     """
     Historique des ruptures fournisseurs.
@@ -445,44 +593,15 @@ def auto_generate_lot_number(sender, instance, **kwargs):
 @receiver(post_save, sender=StockLot)
 def sync_product_stock_on_lot_save(sender, instance, created, **kwargs):
     """
-    Synchronise le stock du produit quand un lot est créé ou modifié.
-    Met à jour à la fois le stock Rayon et le stock Réserve.
+    Synchronise le stock vendable depuis les lots sans effacer les dettes
+    de stock en attente (promis ou vente forcée déjà comptées négativement).
     """
     if instance.produit and instance.produit.use_lot_management:
-        from django.db.models import Sum
-
-        from .products import Produit
-        
-        results = instance.produit.stock_lots.aggregate(
-            total_remaining=Sum('quantity_remaining'),
-            total_reserved=Sum('quantity_reserved')
-        )
-        
-        total_remaining = results['total_remaining'] or 0
-        total_reserved = results['total_reserved'] or 0
-        
-        # On ne sauve que si changement pour éviter boucles ou écritures inutiles
-        if instance.produit.stock != total_remaining or instance.produit.stock_reserve != total_reserved:
-            Produit.objects.filter(pk=instance.produit.pk).update(
-                stock=total_remaining,
-                stock_reserve=total_reserved
-            )
+        instance.produit.calculate_stock_from_lots()
 
 
 @receiver(post_delete, sender=StockLot)
 def sync_product_stock_on_lot_delete(sender, instance, **kwargs):
     """Synchronise le stock du produit quand un lot est supprimé."""
     if instance.produit and instance.produit.use_lot_management:
-        from django.db.models import Sum
-
-        from .products import Produit
-        
-        results = instance.produit.stock_lots.aggregate(
-            total_remaining=Sum('quantity_remaining'),
-            total_reserved=Sum('quantity_reserved')
-        )
-        
-        Produit.objects.filter(pk=instance.produit.pk).update(
-            stock=results['total_remaining'] or 0,
-            stock_reserve=results['total_reserved'] or 0
-        )
+        instance.produit.calculate_stock_from_lots()

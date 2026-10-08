@@ -248,7 +248,12 @@
             "group_rayon": "By Shelf",
             "group_forme": "By Form",
             "group_groupe": "By Group",
-            "col_phys_qty": "Physical Qty"
+            "col_phys_qty": "Physical Qty",
+            "obligations_alert": "Warning: {{promis}} promised unit(s) and {{forced}} forced-sale unit(s) are pending on this inventory. These already-owed quantities will still need to be covered by the next stock entry.",
+            "badge_promis": "Promised ×{{count}}",
+            "badge_promis_title": "Units already paid by the client, not yet delivered",
+            "badge_forced": "Forced ×{{count}}",
+            "badge_forced_title": "Units sold without stock, awaiting a stock entry"
         },
         "lines": {
             "selected": "{{count}} line(s) selected",

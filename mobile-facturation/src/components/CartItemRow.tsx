@@ -55,6 +55,9 @@ export function CartItemRow({ line, onIncrement, onDecrement, onRemove, onOpenLo
           {line.remise > 0 && (
             <Text style={styles.remise}>-{line.remise}%</Text>
           )}
+          {line.isPromis && (line.promisQuantity ?? 0) > 0 && (
+            <Text style={styles.promis}>{t('cart.promis_badge', { count: line.promisQuantity })}</Text>
+          )}
           <TouchableOpacity style={[styles.lotBadge, line.lotId ? styles.lotBadgeActive : null]} onPress={onOpenLot}>
             <Text style={[styles.lotText, line.lotId ? styles.lotTextActive : null]} numberOfLines={1}>
               {lotLabel}
@@ -103,6 +106,7 @@ const styles = StyleSheet.create({
   prixBtn: { flexDirection: 'row', alignItems: 'center', gap: ms(4) },
   prix: { fontSize: ms(11), color: theme.textSecondary },
   remise: { fontSize: ms(11), color: theme.warning, fontWeight: '700' },
+  promis: { fontSize: ms(11), color: theme.info, fontWeight: '700' },
   lotBadge: {
     paddingHorizontal: ms(6),
     paddingVertical: ms(2),

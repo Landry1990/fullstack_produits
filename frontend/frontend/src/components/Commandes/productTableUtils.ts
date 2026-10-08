@@ -46,6 +46,7 @@ export interface ResolvedProductInfo {
     isDeleted: boolean;
     produitId: number | undefined;
     activePromisCount: number;
+    hasPendingForce: boolean;
 }
 
 export function resolveProductInfo(
@@ -58,6 +59,7 @@ export function resolveProductInfo(
     let isExclusive = false;
     let supplierName = '';
     let activePromisCount = 0;
+    let hasPendingForce = false;
 
     const isObjectProduit = p.produit && typeof p.produit === 'object';
     const produitId = isObjectProduit ? (p.produit as ProduitModel).id : (p.produit as number);
@@ -68,6 +70,7 @@ export function resolveProductInfo(
         isExclusive = (p.produit as ProduitModel).is_supplier_exclusive || false;
         supplierName = (p.produit as ProduitModel).fournisseur_name || '';
         activePromisCount = (p.produit as ProduitModel).active_promis_count ?? 0;
+        hasPendingForce = (p.produit as ProduitModel).has_pending_force ?? false;
     } else {
         const found = produitId ? produitsList.find(prod => prod.id === produitId) : null;
         if (found) {
@@ -76,6 +79,7 @@ export function resolveProductInfo(
             isExclusive = found.is_supplier_exclusive || false;
             supplierName = found.fournisseur_name || '';
             activePromisCount = found.active_promis_count ?? 0;
+            hasPendingForce = found.has_pending_force ?? false;
         } else if (p.produit_nom) {
             produitName = p.produit_nom;
             cip = p.produit_cip || p.produit_ref || '';
@@ -88,7 +92,7 @@ export function resolveProductInfo(
 
     const isDeleted = p.produit === null || produitName.includes('(supprimé)');
 
-    return { produitName, cip, isExclusive, supplierName, isDeleted, produitId, activePromisCount };
+    return { produitName, cip, isExclusive, supplierName, isDeleted, produitId, activePromisCount, hasPendingForce };
 }
 
 export function resolveCip(p: CommandeProduit, produitsList: ProduitModel[]): string {

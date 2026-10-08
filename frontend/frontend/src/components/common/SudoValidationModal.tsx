@@ -38,6 +38,10 @@ export default function SudoValidationModal({
     const [password, setPassword] = useState('');
     const [passwordError, setPasswordError] = useState<string | null>(null);
     const passwordInputRef = useRef<HTMLInputElement>(null);
+    // Verrou synchrone : deux Enter/clics rapides lançaient deux verify_password
+    // en vol ; le second pouvait résoudre après la fin de la première action et
+    // ré-exécuter onValidate (doublon métier, ex. double envoi en caisse).
+    const confirmInFlightRef = useRef(false);
 
     useEffect(() => {
         if (isOpen) {
@@ -51,35 +55,40 @@ export default function SudoValidationModal({
     }, [isOpen]);
 
     const handleConfirm = async () => {
-        if (!password) return;
-        setPasswordError(null);
-        let verifiedUser: VerifiedUser | null = null;
+        if (!password || saving || confirmInFlightRef.current) return;
+        confirmInFlightRef.current = true;
         try {
-            const checkRes = await api.post('users/verify_password/', permission ? { password, permission } : { password });
-            if (!checkRes.data?.valid || !checkRes.data?.user?.id) {
+            setPasswordError(null);
+            let verifiedUser: VerifiedUser | null = null;
+            try {
+                const checkRes = await api.post('users/verify_password/', permission ? { password, permission } : { password });
+                if (!checkRes.data?.valid || !checkRes.data?.user?.id) {
+                    setPassword('');
+                    setPasswordError(t('common:sudo.invalid_password'));
+                    setTimeout(() => passwordInputRef.current?.focus(), 50);
+                    return;
+                }
+                verifiedUser = checkRes.data.user;
+            } catch (error: unknown) {
                 setPassword('');
-                setPasswordError(t('common:sudo.invalid_password'));
+                const errObj = error as { response?: { data?: { detail?: string } } };
+                const msg = errObj?.response?.data?.detail || t('common:sudo.invalid_password');
+                setPasswordError(msg);
                 setTimeout(() => passwordInputRef.current?.focus(), 50);
                 return;
             }
-            verifiedUser = checkRes.data.user;
-        } catch (error: unknown) {
-            setPassword('');
-            const errObj = error as { response?: { data?: { detail?: string } } };
-            const msg = errObj?.response?.data?.detail || t('common:sudo.invalid_password');
-            setPasswordError(msg);
-            setTimeout(() => passwordInputRef.current?.focus(), 50);
-            return;
-        }
-        if (!verifiedUser) return;
-        try {
-            await onValidate(verifiedUser.id, password);
-        } catch (error: unknown) {
-            setPassword('');
-            const errObj = error as { response?: { data?: { detail?: string; error?: string } }; message?: string };
-            const msg = errObj?.response?.data?.detail || errObj?.response?.data?.error || errObj?.message || t('common:sudo.invalid_password');
-            setPasswordError(msg);
-            setTimeout(() => passwordInputRef.current?.focus(), 50);
+            if (!verifiedUser) return;
+            try {
+                await onValidate(verifiedUser.id, password);
+            } catch (error: unknown) {
+                setPassword('');
+                const errObj = error as { response?: { data?: { detail?: string; error?: string } }; message?: string };
+                const msg = errObj?.response?.data?.detail || errObj?.response?.data?.error || errObj?.message || t('common:sudo.invalid_password');
+                setPasswordError(msg);
+                setTimeout(() => passwordInputRef.current?.focus(), 50);
+            }
+        } finally {
+            confirmInFlightRef.current = false;
         }
     };
 

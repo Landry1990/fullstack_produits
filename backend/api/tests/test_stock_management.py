@@ -14,9 +14,13 @@ from rest_framework.test import APITestCase
 
 from ..models import (
     CommandeProduit,
+    FactureProduitAllocation,
     MouvementStock,
+    Promis,
     StockAdjustment,
     StockLot,
+    StockObligation,
+    StockObligationResolution,
 )
 from .factories import TestDataFactory
 
@@ -237,6 +241,523 @@ class PMPCalculationTestCase(APITestCase):
             places=1,
             msg=f"PMP should be approximately {expected_pmp:.2f}"
         )
+
+    def test_pmp_correct_with_negative_stock(self):
+        """
+        Régression : vente à découvert (stock -1, pmp 0) puis réception.
+        Le PMP doit être le coût unitaire de la réception, pas le coût total
+        de la ligne divisé par un total proche de zéro.
+        Cas réel : (-1 * 0 + 2 * 1567) / (-1 + 2) donnait 3134 au lieu de 1567.
+        """
+        self.produit.stock = -1
+        self.produit.pmp = Decimal('0')
+        self.produit.save()
+
+        commande = TestDataFactory.create_commande(
+            fournisseur=self.fournisseur,
+            status='PREP'
+        )
+        CommandeProduit.objects.create(
+            commande=commande,
+            produit=self.produit,
+            quantity=2,
+            price=Decimal('60.00'),
+            price_cost=Decimal('60.00'),
+            lot='LOT-NEG'
+        )
+
+        url = reverse('commande-cloturer', kwargs={'pk': commande.pk})
+        response = self.client.post(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.produit.refresh_from_db()
+        self.assertEqual(float(self.produit.pmp), 60.00)
+        self.assertEqual(self.produit.stock, 1)
+
+    def test_negative_stock_preserved_by_lot_resync(self):
+        """
+        Régression : pour un produit géré par lots, le resync
+        stock = somme(quantity_remaining) effaçait le découvert.
+        -1 + réception de 2 doit donner stock = 1, pas 2.
+        """
+        self.produit.use_lot_management = True
+        self.produit.stock = -1
+        self.produit.pmp = Decimal('0')
+        self.produit.save()
+
+        commande = TestDataFactory.create_commande(
+            fournisseur=self.fournisseur,
+            status='PREP'
+        )
+        CommandeProduit.objects.create(
+            commande=commande,
+            produit=self.produit,
+            quantity=2,
+            price=Decimal('60.00'),
+            price_cost=Decimal('60.00'),
+            lot='LOT-NEG-RESYNC'
+        )
+
+        url = reverse('commande-cloturer', kwargs={'pk': commande.pk})
+        response = self.client.post(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.produit.refresh_from_db()
+        received_lot = StockLot.objects.get(produit=self.produit, lot='LOT-NEG-RESYNC')
+        self.assertEqual(self.produit.stock, 1)
+        self.assertEqual(received_lot.quantity_initial, 2)
+        self.assertEqual(received_lot.quantity_remaining, 1)
+        self.assertEqual(float(self.produit.pmp), 60.00)
+
+    def test_pmp_correct_second_line_still_negative(self):
+        """
+        Régression (branche produit déjà traité) : le stock redevient positif
+        seulement à la 2e ligne de la même commande — son coût fait foi.
+        """
+        self.produit.stock = -2
+        self.produit.pmp = Decimal('0')
+        self.produit.save()
+
+        commande = TestDataFactory.create_commande(
+            fournisseur=self.fournisseur,
+            status='PREP'
+        )
+        CommandeProduit.objects.create(
+            commande=commande,
+            produit=self.produit,
+            quantity=1,
+            price=Decimal('60.00'),
+            price_cost=Decimal('60.00'),
+            lot='LOT-NEG-1'
+        )
+        CommandeProduit.objects.create(
+            commande=commande,
+            produit=self.produit,
+            quantity=2,
+            price=Decimal('90.00'),
+            price_cost=Decimal('90.00'),
+            lot='LOT-NEG-2'
+        )
+
+        url = reverse('commande-cloturer', kwargs={'pk': commande.pk})
+        response = self.client.post(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.produit.refresh_from_db()
+        # -2 + 1 = -1 (toujours négatif, pmp inchangé) puis -1 + 2 = 1
+        # l'unité restante vient de la 2e réception -> pmp = 90, pas 180
+        self.assertEqual(float(self.produit.pmp), 90.00)
+
+
+class StockObligationReceptionTestCase(APITestCase):
+    """Réception des dettes explicites PROMIS / FORCE."""
+
+    def setUp(self):
+        self.user = TestDataFactory.create_superuser()
+        self.client.force_authenticate(user=self.user)
+        self.produit = TestDataFactory.create_produit(
+            name='Produit Dette', stock=-2,
+            cost_price=50, selling_price=100,
+            use_lot_management=True,
+        )
+        self.fournisseur = self.produit.fournisseur
+        self.client_obj = TestDataFactory.create_client()
+        self.facture = TestDataFactory.create_facture(
+            client=self.client_obj, status='VAL'
+        )
+        self.facture_produit = TestDataFactory.create_facture_produit(
+            facture=self.facture, produit=self.produit, quantity=2
+        )
+
+    def _create_obligation(self, obligation_type, quantity, promis=None):
+        obligation = StockObligation.objects.create(
+            produit=self.produit,
+            produit_nom=self.produit.name,
+            facture=self.facture,
+            facture_produit=self.facture_produit,
+            promis=promis,
+            type=obligation_type,
+            status=StockObligation.Status.EN_ATTENTE,
+            quantity=quantity,
+            quantity_remaining=quantity,
+            stock_applied=True,
+            stock_location=StockObligation.StockLocation.RAYON,
+            cost_price=self.produit.pmp or self.produit.cost_price,
+            selling_price=self.facture_produit.selling_price,
+            created_by=self.user,
+        )
+        FactureProduitAllocation.objects.create(
+            facture_produit=self.facture_produit,
+            stock_obligation=obligation,
+            is_pending=True,
+            quantity=quantity,
+            cost_price=obligation.cost_price,
+            selling_price=obligation.selling_price,
+        )
+        return obligation
+
+    def _close_reception(self, quantity):
+        commande = TestDataFactory.create_commande(
+            fournisseur=self.fournisseur, status='PREP'
+        )
+        CommandeProduit.objects.create(
+            commande=commande,
+            produit=self.produit,
+            quantity=quantity,
+            price=self.produit.cost_price,
+            price_cost=self.produit.cost_price,
+            lot='LOT-DETTE',
+        )
+        response = self.client.post(reverse('commande-cloturer', kwargs={'pk': commande.pk}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        return commande
+
+    def test_reception_resolves_promis_partially(self):
+        promis = Promis.objects.create(
+            facture=self.facture,
+            client=self.client_obj,
+            produit=self.produit,
+            produit_nom=self.produit.name,
+            quantite=2,
+            created_by=self.user,
+        )
+        obligation = self._create_obligation(
+            StockObligation.TypeObligation.PROMIS, 2, promis=promis
+        )
+
+        commande = self._close_reception(1)
+
+        self.produit.refresh_from_db()
+        obligation.refresh_from_db()
+        promis.refresh_from_db()
+        lot = StockLot.objects.get(commande_produit__commande=commande)
+        self.assertEqual(self.produit.stock, -1)
+        self.assertEqual(lot.quantity_remaining, 0)
+        self.assertEqual(obligation.quantity_remaining, 1)
+        self.assertEqual(obligation.status, StockObligation.Status.EN_ATTENTE)
+        self.assertEqual(promis.quantite_livree, 1)
+        self.assertEqual(promis.status, Promis.Status.EN_ATTENTE)
+        self.assertTrue(FactureProduitAllocation.objects.filter(
+            stock_obligation=obligation,
+            resolved_commande=commande,
+            quantity=1,
+            is_pending=False,
+        ).exists())
+
+    def test_reception_resolves_promis_before_force(self):
+        promis = Promis.objects.create(
+            facture=self.facture,
+            client=self.client_obj,
+            produit=self.produit,
+            produit_nom=self.produit.name,
+            quantite=1,
+            created_by=self.user,
+        )
+        promis_obligation = self._create_obligation(
+            StockObligation.TypeObligation.PROMIS, 1, promis=promis
+        )
+        force_obligation = self._create_obligation(
+            StockObligation.TypeObligation.FORCE, 1
+        )
+        commande = self._close_reception(2)
+
+        self.produit.refresh_from_db()
+        promis_obligation.refresh_from_db()
+        force_obligation.refresh_from_db()
+        promis.refresh_from_db()
+        lot = StockLot.objects.get(commande_produit__commande=commande)
+        self.assertEqual(self.produit.stock, 0)
+        self.assertEqual(lot.quantity_remaining, 0)
+        self.assertEqual(promis_obligation.status, StockObligation.Status.RESOLUE)
+        self.assertEqual(force_obligation.status, StockObligation.Status.RESOLUE)
+        self.assertEqual(promis.status, Promis.Status.DELIVRE)
+
+    def test_reception_resolves_debt_without_lot_management(self):
+        self.produit.use_lot_management = False
+        self.produit.stock = -1
+        self.produit.save(update_fields=['use_lot_management', 'stock'])
+        promis = Promis.objects.create(
+            facture=self.facture,
+            client=self.client_obj,
+            produit=self.produit,
+            produit_nom=self.produit.name,
+            quantite=1,
+            created_by=self.user,
+        )
+        obligation = self._create_obligation(
+            StockObligation.TypeObligation.PROMIS, 1, promis=promis
+        )
+
+        self._close_reception(2)
+
+        self.produit.refresh_from_db()
+        obligation.refresh_from_db()
+        promis.refresh_from_db()
+        self.assertEqual(self.produit.stock, 1)
+        self.assertEqual(obligation.status, StockObligation.Status.RESOLUE)
+        self.assertEqual(promis.status, Promis.Status.DELIVRE)
+
+    def test_reception_applied_debt_creates_no_noise_movement(self):
+        """Dette déjà comptée en négatif : la réception la résout sans
+        ligne AJUSTEMENT quantité 0 qui casserait la lecture chaînée —
+        la ligne d'entrée en stock suffit."""
+        self.produit.stock = -1
+        self.produit.save(update_fields=['stock'])
+        self._create_obligation(StockObligation.TypeObligation.FORCE, 1)
+
+        commande = self._close_reception(2)
+
+        self.produit.refresh_from_db()
+        self.assertEqual(self.produit.stock, 1)
+        self.assertFalse(MouvementStock.objects.filter(
+            produit=self.produit,
+            type_mouvement=MouvementStock.TypeMouvement.AJUSTEMENT,
+            quantite=0,
+        ).exists())
+        self.assertTrue(StockObligationResolution.objects.filter(
+            produit=self.produit, commande=commande, quantity=1
+        ).exists())
+
+    def test_reception_detached_debt_creates_real_movement(self):
+        """Dette détachée par un comptage brut : la résolution retire
+        réellement les unités du compteur → mouvement négatif tracé."""
+        self.produit.use_lot_management = False
+        self.produit.stock = 3
+        self.produit.save(update_fields=['use_lot_management', 'stock'])
+        obligation = self._create_obligation(StockObligation.TypeObligation.FORCE, 2)
+        obligation.stock_applied = False
+        obligation.save(update_fields=['stock_applied'])
+
+        self._close_reception(5)
+
+        self.produit.refresh_from_db()
+        # 3 comptés + 5 reçus - 2 déjà partis (dette détachée) = 6
+        self.assertEqual(self.produit.stock, 6)
+        mvt = MouvementStock.objects.get(
+            produit=self.produit,
+            type_mouvement=MouvementStock.TypeMouvement.AJUSTEMENT,
+        )
+        self.assertEqual(mvt.quantite, -2)
+
+    def test_cancel_reception_reopens_resolved_promis(self):
+        promis = Promis.objects.create(
+            facture=self.facture,
+            client=self.client_obj,
+            produit=self.produit,
+            produit_nom=self.produit.name,
+            quantite=1,
+            created_by=self.user,
+        )
+        self.produit.stock = -1
+        self.produit.save(update_fields=['stock'])
+        obligation = self._create_obligation(
+            StockObligation.TypeObligation.PROMIS, 1, promis=promis
+        )
+        commande = self._close_reception(1)
+        self.produit.refresh_from_db()
+        self.assertEqual(self.produit.stock, 0)
+
+        response = self.client.post(
+            reverse('commande-annuler-reception', kwargs={'pk': commande.pk})
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.produit.refresh_from_db()
+        obligation.refresh_from_db()
+        promis.refresh_from_db()
+        self.assertEqual(self.produit.stock, -1)
+        self.assertEqual(obligation.status, StockObligation.Status.EN_ATTENTE)
+        self.assertEqual(obligation.quantity_remaining, 1)
+        self.assertEqual(promis.status, Promis.Status.EN_ATTENTE)
+        self.assertEqual(promis.quantite_livree, 0)
+
+    def test_cancel_reception_restores_external_lot_used_for_obligation(self):
+        existing_lot = TestDataFactory.create_stock_lot(
+            produit=self.produit,
+            quantity=5,
+            lot_name='LOT-EXTERNE',
+        )
+        self.produit.refresh_from_db()
+        promis = Promis.objects.create(
+            facture=self.facture,
+            client=self.client_obj,
+            produit=self.produit,
+            produit_nom=self.produit.name,
+            quantite=1,
+            created_by=self.user,
+        )
+        obligation = self._create_obligation(
+            StockObligation.TypeObligation.PROMIS, 1, promis=promis
+        )
+        self.produit.calculate_stock_from_lots()
+        self.assertEqual(self.produit.stock, 4)
+
+        commande = self._close_reception(1)
+        existing_lot.refresh_from_db()
+        new_lot = StockLot.objects.get(commande_produit__commande=commande)
+        self.assertEqual(existing_lot.quantity_remaining, 5)
+        self.assertEqual(new_lot.quantity_remaining, 0)
+
+        response = self.client.post(
+            reverse('commande-annuler-reception', kwargs={'pk': commande.pk})
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        existing_lot.refresh_from_db()
+        self.produit.refresh_from_db()
+        obligation.refresh_from_db()
+        self.assertEqual(existing_lot.quantity_remaining, 5)
+        self.assertEqual(self.produit.stock, 4)
+        self.assertEqual(obligation.status, StockObligation.Status.EN_ATTENTE)
+        self.assertEqual(obligation.quantity_remaining, 1)
+
+    def test_cancel_reception_reopens_manual_promis_without_invoice_line(self):
+        self.produit.use_lot_management = False
+        self.produit.stock = 5
+        self.produit.save(update_fields=['use_lot_management', 'stock'])
+        promis = Promis.objects.create(
+            client=self.client_obj,
+            produit=self.produit,
+            produit_nom=self.produit.name,
+            quantite=1,
+            created_by=self.user,
+        )
+        obligation = StockObligation.objects.create(
+            produit=self.produit,
+            produit_nom=self.produit.name,
+            promis=promis,
+            type=StockObligation.TypeObligation.PROMIS,
+            status=StockObligation.Status.EN_ATTENTE,
+            quantity=1,
+            quantity_remaining=1,
+            stock_applied=False,
+            stock_location=StockObligation.StockLocation.RAYON,
+            created_by=self.user,
+        )
+
+        commande = self._close_reception(2)
+        self.produit.refresh_from_db()
+        obligation.refresh_from_db()
+        promis.refresh_from_db()
+        self.assertEqual(self.produit.stock, 6)
+        self.assertEqual(obligation.status, StockObligation.Status.RESOLUE)
+        self.assertTrue(StockObligationResolution.objects.filter(
+            obligation=obligation, commande=commande, quantity=1
+        ).exists())
+
+        response = self.client.post(
+            reverse('commande-annuler-reception', kwargs={'pk': commande.pk})
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.produit.refresh_from_db()
+        obligation.refresh_from_db()
+        promis.refresh_from_db()
+        self.assertEqual(self.produit.stock, 5)
+        self.assertEqual(obligation.status, StockObligation.Status.EN_ATTENTE)
+        self.assertEqual(obligation.quantity_remaining, 1)
+        self.assertEqual(promis.status, Promis.Status.EN_ATTENTE)
+        self.assertEqual(promis.quantite_livree, 0)
+        self.assertFalse(StockObligationResolution.objects.filter(commande=commande).exists())
+
+    def test_manual_adjustment_targets_physical_lot_quantity(self):
+        lot = TestDataFactory.create_stock_lot(
+            produit=self.produit,
+            quantity=5,
+            lot_name='LOT-AJUSTEMENT',
+        )
+        self.produit.refresh_from_db()
+        obligation = StockObligation.objects.create(
+            produit=self.produit,
+            produit_nom=self.produit.name,
+            facture=self.facture,
+            facture_produit=self.facture_produit,
+            type=StockObligation.TypeObligation.FORCE,
+            status=StockObligation.Status.EN_ATTENTE,
+            quantity=2,
+            quantity_remaining=2,
+            stock_applied=True,
+            stock_location=StockObligation.StockLocation.RAYON,
+            cost_price=self.produit.pmp or self.produit.cost_price,
+            selling_price=self.facture_produit.selling_price,
+            created_by=self.user,
+        )
+        self.produit.calculate_stock_from_lots()
+        self.assertEqual(self.produit.stock, 3)
+
+        response = self.client.post(
+            reverse('produit-adjust-stock', kwargs={'pk': self.produit.pk}),
+            {
+                'new_quantity': 5,
+                'reason_type': 'INVENTAIRE',
+                'reason_detail': 'Comptage physique'
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.produit.refresh_from_db()
+        lot.refresh_from_db()
+        obligation.refresh_from_db()
+        self.assertEqual(lot.quantity_remaining, 5)
+        self.assertEqual(self.produit.stock, 5)
+        self.assertTrue(obligation.stock_applied is False)
+        self.assertEqual(obligation.status, StockObligation.Status.EN_ATTENTE)
+        self.assertEqual(obligation.quantity_remaining, 2)
+
+    def test_manual_promis_reapplies_unapplied_obligation(self):
+        TestDataFactory.create_stock_lot(
+            produit=self.produit,
+            quantity=5,
+            lot_name='LOT-PROMIS-REAPPLY',
+        )
+        self.produit.refresh_from_db()
+        old_obligation = StockObligation.objects.create(
+            produit=self.produit,
+            produit_nom=self.produit.name,
+            type=StockObligation.TypeObligation.FORCE,
+            status=StockObligation.Status.EN_ATTENTE,
+            quantity=2,
+            quantity_remaining=2,
+            stock_applied=False,
+            stock_location=StockObligation.StockLocation.RAYON,
+            cost_price=self.produit.cost_price,
+            selling_price=self.produit.selling_price,
+            created_by=self.user,
+        )
+
+        response = self.client.post(
+            reverse('promis-list'),
+            {
+                'produit': self.produit.id,
+                'client': self.client_obj.id,
+                'quantite': 4,
+            },
+            format='json',
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        response = self.client.post(
+            reverse('promis-list'),
+            {
+                'produit': self.produit.id,
+                'client': self.client_obj.id,
+                'quantite': 3,
+            },
+            format='json',
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+        self.produit.refresh_from_db()
+        old_obligation.refresh_from_db()
+        new_obligation = StockObligation.objects.get(
+            promis_id=response.data['id'], status=StockObligation.Status.EN_ATTENTE
+        )
+        self.assertTrue(old_obligation.stock_applied)
+        self.assertTrue(new_obligation.stock_applied)
+        self.assertEqual(self.produit.stock, 0)
 
 
 class StockHistoryTestCase(APITestCase):

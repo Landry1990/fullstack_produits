@@ -10,6 +10,20 @@
 
 ## ✅ Déjà en place
 
+- [x] **Gestion des promis à la vente** (2026-10-07) : à l'envoi, toute
+  quantité supérieure au stock ouvre `StockResolutionModal`, avec une action
+  par produit : **Promis** par défaut (part manquante due au client),
+  **Réduire** au stock disponible, ou **Forcer** avec validation superviseur
+  `can_sell_negative_stock`. Téléphone prérempli depuis le client, badge
+  `Promis ×N` dans le panier, état conservé dans brouillons/ventes en attente,
+  payload identique au web (`is_promis`, `promis_quantity`, `promis_phone`).
+  Backend commun (règle finale 2026-10-08, `StockObligation`) : facture =
+  quantité totale **payée** ; lots = part livrée ; `Produit.stock` descend de
+  la quantité totale, donc **passe négatif dès la validation** pour signaler
+  le promis (stock 1, facture 2, promis 1 → stock −1, promis 1). La réception
+  couvre le promis en priorité sans redécrémenter. Le payload mobile est
+  inchangé ; `promis_quantity > quantity` est refusé par le backend.
+  Tests de contrat avec et sans lots.
 - [x] **Entrée en stock (réception → commande web)** (2026-10-06) :
   écran `EntreeStockScreen` (carte accueil) — le mobile prépare la
   **liste**, la vraie entrée en stock reste la clôture web. Fournisseur
@@ -434,6 +448,19 @@ le client, pas à implémenter sans décision) :
   à la caisse).
 - Encaissement mobile et états « Payée » côté mobile.
 - Fuzzy search (tolérance aux fautes) : chantier backend si demandé.
+
+### P1 — Stock temps réel sur le mobile (à faire)
+
+- [ ] **Souscription `ws/stock/`** : le web dispose (2026-10-08) d'un
+  broadcast Channels `stock_updates` — chaque opération de stock (vente
+  validée, réception, ajustement, annulation…) pousse
+  `{type:'stock_update', produits:[{id,stock,stock_reserve}]}` post-commit.
+  Le mobile doit s'y connecter (`?token=<authToken>`), rafraîchir le stock
+  affiché dans la recherche produit / fiche / panier, et gérer la
+  reconnexion + ping (mêmes conventions que `useCaisseRealtime` web).
+  Besoin né : « je cherche un produit → stock OK → je dis au client c'est
+  là → à la validation c'est plus là » (vente faite sur un autre poste
+  entre-temps). Le contrôle à la validation reste l'autorité finale.
 
 ## 💡 En réflexion — idées notées, pas encore actées
 

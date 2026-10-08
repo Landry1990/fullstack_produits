@@ -10,8 +10,7 @@ from decimal import Decimal
 
 from django.core.cache import cache
 from django.db import transaction
-from django.db.models import DecimalField, F, OuterRef, Subquery, Sum, Value
-from django.db.models.functions import Coalesce
+from django.db.models import DecimalField, F, Sum
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import action
@@ -23,15 +22,18 @@ from ...models import (
     AuditLog,
     Commande,
     CommandeProduit,
-    FactureProduit,
     FactureProduitAllocation,
     MouvementStock,
     PaiementFournisseur,
     Produit,
     Promis,
     StockLot,
+    StockObligation,
+    StockObligationResolution,
 )
 from ...optimistic_locking import ConcurrentModificationError
+from ...services.realtime import notify_stock_changed
+from ...services.stock_obligation_service import StockObligationService
 from ...sudo_utils import validate_sudo_mode
 
 logger = logging.getLogger(__name__)
@@ -78,6 +80,35 @@ class CommandeClotureMixin:
                     product_ids = [item.produit_id for item in items]
                     products = list(Produit.objects.filter(id__in=product_ids))
                     product_map = {p.id: p for p in products}
+                    pending_obligations_map = {}
+                    for row in StockObligation.objects.filter(
+                        produit_id__in=product_ids,
+                        status=StockObligation.Status.EN_ATTENTE,
+                        stock_applied=True,
+                    ).values('produit_id', 'stock_location').annotate(
+                        total=Sum('quantity_remaining')
+                    ):
+                        pending_obligations_map[(row['produit_id'], row['stock_location'])] = row['total'] or 0
+
+                    untracked_deficit_map = {}
+                    for produit in products:
+                        location = (
+                            StockObligation.StockLocation.RESERVE
+                            if produit.has_reserve_storage
+                            else StockObligation.StockLocation.RAYON
+                        )
+                        relevant_stock = (
+                            Decimal(produit.stock_reserve or 0)
+                            if produit.has_reserve_storage
+                            else Decimal(produit.stock)
+                        )
+                        if relevant_stock < 0:
+                            untracked_deficit_map[produit.id] = max(
+                                Decimal(0),
+                                -relevant_stock - Decimal(
+                                    pending_obligations_map.get((produit.id, location), 0)
+                                )
+                            )
                     
                     # Vérifier les versions si retry
                     if expected_versions:
@@ -148,13 +179,18 @@ class CommandeClotureMixin:
                             old_pmp = Decimal(produit.pmp)
                             qty_received = Decimal(total_qty)
                             cout_total = Decimal(quantity_paid) * Decimal(item.price_cost)
-                            
+
                             new_total_qty = old_stock + qty_received
-                            
-                            if new_total_qty > 0:
-                                current_val = old_stock * old_pmp
-                                incoming_val = cout_total
-                                new_pmp = (current_val + incoming_val) / new_total_qty
+
+                            if new_total_qty > 0 and qty_received > 0:
+                                if old_stock > 0:
+                                    new_pmp = (old_stock * old_pmp + cout_total) / new_total_qty
+                                else:
+                                    # Stock négatif (vente à découvert sans promis) :
+                                    # le stock restant provient entièrement de cette réception.
+                                    # La moyenne pondérée diviserait par un total proche de 0
+                                    # et produirait un PMP égal au coût total de la ligne.
+                                    new_pmp = effective_cost
                                 produit.pmp = new_pmp
                             
                             res_stock = Decimal(produit.stock_reserve or 0)
@@ -171,13 +207,16 @@ class CommandeClotureMixin:
                             current_pmp = Decimal(existing_produit.pmp)
                             qty_received = Decimal(total_qty)
                             cout_total = Decimal(quantity_paid) * Decimal(item.price_cost)
-                            
+
                             new_total_qty = current_stock + qty_received
-                            
-                            if new_total_qty > 0:
-                                current_val = current_stock * current_pmp
-                                incoming_val = cout_total
-                                new_pmp = (current_val + incoming_val) / new_total_qty
+
+                            if new_total_qty > 0 and qty_received > 0:
+                                if current_stock > 0:
+                                    new_pmp = (current_stock * current_pmp + cout_total) / new_total_qty
+                                else:
+                                    # Même garde que ci-dessus : stock encore négatif
+                                    # -> le reliquat vient entièrement de cette ligne.
+                                    new_pmp = effective_cost
                                 existing_produit.pmp = new_pmp
                             
                             if existing_produit.has_reserve_storage:
@@ -187,171 +226,94 @@ class CommandeClotureMixin:
                     
                     # Capturer le stock APRES réception pour chaque ligne
                     items_to_update_stock = []
+                    received_qty_by_product = {}
                     for item in items:
                         produit = product_map.get(item.produit_id)
                         if produit:
                             item.stock_apres_reception = int(produit.stock) if not produit.has_reserve_storage else int(produit.stock_reserve or 0)
                             items_to_update_stock.append(item)
+                            received_qty_by_product[item.produit_id] = (
+                                received_qty_by_product.get(item.produit_id, 0)
+                                + item.quantity + item.unites_gratuites
+                            )
                     
                     # Phase 2: Écritures en base avec optimistic locking
                     
                     # 2.1 Créer tous les lots et mettre à jour stock_apres_reception
-                    promis_allocations_to_create = []
-                    promis_to_update = []
-                    promis_mouvements_to_create = []
                     if lots_to_create:
                         StockLot.objects.bulk_create(lots_to_create, batch_size=100)
                         items_with_lot = [item for item in items if item.lot]
                         if items_with_lot:
                             CommandeProduit.objects.bulk_update(items_with_lot, ['lot'], batch_size=100)
 
-                        # 2.1b Satisfaire les promis en attente avec les lots nouvellement créés
-                        created_lots_by_produit = {}
-                        for lot in lots_to_create:
-                            created_lots_by_produit.setdefault(lot.produit_id, []).append(lot)
-
-                        # Récupérer les lots fraîchement créés (ils ont maintenant un ID)
-                        new_lot_ids = [lot.id for lot in lots_to_create]
-                        fresh_lots = {lot.id: lot for lot in StockLot.objects.filter(id__in=new_lot_ids)}
-                        for lot in lots_to_create:
-                            fresh = fresh_lots.get(lot.id)
-                            if fresh:
-                                lot.id = fresh.id
-
-                        for produit_id, prod_lots in created_lots_by_produit.items():
-                            pending_promis = list(Promis.objects.filter(
-                                produit_id=produit_id,
-                                status=Promis.Status.EN_ATTENTE,
-                                is_active=True
-                            ).select_related('facture'))
-
-                            for promis in pending_promis:
-                                qty_to_satisfy = promis.quantite
-                                if qty_to_satisfy <= 0:
-                                    continue
-
-                                # Trouver les FactureProduit de la facture du promis pour ce produit
-                                fp_items = list(FactureProduit.objects.filter(
-                                    facture=promis.facture,
-                                    produit_id=produit_id
-                                ))
-
-                                for lot in prod_lots:
-                                    if qty_to_satisfy <= 0:
-                                        break
-                                    # Pour les produits avec réserve, le stock est en quantity_reserved
-                                    # Pour les autres, il est en quantity_remaining
-                                    prod = product_map.get(produit_id)
-                                    if prod and prod.has_reserve_storage:
-                                        available = lot.quantity_reserved
-                                    else:
-                                        available = lot.quantity_remaining
-                                    if available <= 0:
-                                        continue
-                                    qty_from_lot = min(available, qty_to_satisfy)
-
-                                    if prod and prod.has_reserve_storage:
-                                        lot.quantity_reserved -= qty_from_lot
-                                    else:
-                                        lot.quantity_remaining -= qty_from_lot
-                                        if lot.quantity_free_remaining > 0:
-                                            lot.quantity_free_remaining -= min(qty_from_lot, lot.quantity_free_remaining)
-
-                                    # Créer une allocation pour tracer le lien promis → lot
-                                    for fp in fp_items:
-                                        promis_allocations_to_create.append(FactureProduitAllocation(
-                                            facture_produit=fp,
-                                            stock_lot=lot,
-                                            quantity=qty_from_lot,
-                                            cost_price=lot.price_cost,
-                                            selling_price=fp.selling_price
-                                        ))
-
-                                    qty_to_satisfy -= qty_from_lot
-
-                                if qty_to_satisfy <= 0:
-                                    promis.status = Promis.Status.DELIVRE
-                                    promis.date_livraison = timezone.now()
-                                    promis_to_update.append(promis)
-
-                                    produit = product_map.get(produit_id)
-                                    promis_mouvements_to_create.append(MouvementStock(
-                                        produit=produit,
-                                        type_mouvement=MouvementStock.TypeMouvement.SORTIE,
-                                        quantite=-promis.quantite,
-                                        stock_apres=None,
-                                        user=request.user,
-                                        description=f"Satisfaction Promis #{promis.id} lors réception commande #{commande.id}"
-                                    ))
-
-                        # Appliquer les mises à jour de lots
-                        lots_with_promis = [lot for lot in lots_to_create if lot.quantity_remaining < lot.quantity_initial or lot.quantity_reserved < lot.quantity_initial]
-                        if lots_with_promis:
-                            StockLot.objects.bulk_update(lots_with_promis, ['quantity_remaining', 'quantity_free_remaining', 'quantity_reserved'], batch_size=100)
-
-                        if promis_allocations_to_create:
-                            FactureProduitAllocation.objects.bulk_create(promis_allocations_to_create, batch_size=100)
-
-                        if promis_to_update:
-                            Promis.objects.bulk_update(promis_to_update, ['status', 'date_livraison'], batch_size=100)
-
-                        # promis_mouvements_to_create seront créés après resync (stock_apres correct)
-
-                    # Resync stock depuis la somme des lots pour les produits gérés par lots
-                    # (important après décrémentation promis pour cohérence stock général ↔ lots)
-                    prods_to_resync = set()
-                    prods_to_resync_reserve = set()
+                    created_lots_by_produit = {}
                     for lot in lots_to_create:
-                        if lot.produit_id:
-                            prod = product_map.get(lot.produit_id)
-                            if prod and prod.use_lot_management:
-                                if prod.has_reserve_storage:
-                                    prods_to_resync_reserve.add(lot.produit_id)
-                                else:
-                                    prods_to_resync.add(lot.produit_id)
-                    if prods_to_resync:
-                        total_lots_sum = StockLot.objects.filter(
-                            produit=OuterRef('pk')
-                        ).order_by().values('produit').annotate(
-                            total=Sum('quantity_remaining')
-                        ).values('total')
-                        Produit.objects.filter(id__in=prods_to_resync).update(
-                            stock=Coalesce(Subquery(total_lots_sum), Value(0))
-                        )
-                        # P0: Single batch query instead of N individual Produit.objects.get()
-                        resynced_stocks = dict(
-                            Produit.objects.filter(id__in=prods_to_resync).values_list('id', 'stock')
-                        )
-                        for pid in prods_to_resync:
-                            prod = product_map.get(pid)
-                            if prod:
-                                prod.stock = resynced_stocks.get(pid, prod.stock)
-                    if prods_to_resync_reserve:
-                        total_reserved_sum = StockLot.objects.filter(
-                            produit=OuterRef('pk')
-                        ).order_by().values('produit').annotate(
-                            total=Sum('quantity_reserved')
-                        ).values('total')
-                        Produit.objects.filter(id__in=prods_to_resync_reserve).update(
-                            stock_reserve=Coalesce(Subquery(total_reserved_sum), Value(0))
-                        )
-                        # P0: Single batch query instead of N individual Produit.objects.get()
-                        resynced_reserves = dict(
-                            Produit.objects.filter(id__in=prods_to_resync_reserve).values_list('id', 'stock_reserve')
-                        )
-                        for pid in prods_to_resync_reserve:
-                            prod = product_map.get(pid)
-                            if prod:
-                                prod.stock_reserve = resynced_reserves.get(pid, prod.stock_reserve)
+                        created_lots_by_produit.setdefault(lot.produit_id, []).append(lot)
 
-                    # Créer les mouvements de stock des promis après resync (stock_apres correct)
-                    if promis_mouvements_to_create:
-                        for mvt in promis_mouvements_to_create:
-                            if mvt.produit_id:
-                                prod = product_map.get(mvt.produit_id)
-                                if prod:
-                                    mvt.stock_apres = prod.total_stock
-                        MouvementStock.objects.bulk_create(promis_mouvements_to_create, batch_size=100)
+                    # 2.1b Satisfaire les obligations de stock avec la quantité reçue.
+                    # Les promis passent en premier, puis les anciennes ventes forcées.
+                    for produit_id, received_quantity in received_qty_by_product.items():
+                        produit = product_map.get(produit_id)
+                        if not produit or received_quantity <= 0:
+                            continue
+
+                        prod_lots = created_lots_by_produit.get(produit_id, [])
+                        resolved_quantity = StockObligationService.resolve_pending_obligations(
+                            produit,
+                            available_quantity=int(received_quantity),
+                            lots=prod_lots,
+                            user=request.user,
+                            commande=commande,
+                            movement_description=f"Résolution dette de stock - commande #{commande.id}",
+                        )
+
+                        # Compatibilité : absorber ensuite un ancien déficit qui
+                        # n'aurait pas encore de StockObligation associée.
+                        remaining_received = Decimal(received_quantity) - Decimal(resolved_quantity or 0)
+                        deficit_to_absorb = min(
+                            untracked_deficit_map.get(produit_id, Decimal(0)),
+                            remaining_received,
+                        )
+                        if produit.use_lot_management and deficit_to_absorb > 0:
+                            for lot in prod_lots:
+                                if deficit_to_absorb <= 0:
+                                    break
+                                available = (
+                                    Decimal(lot.quantity_reserved)
+                                    if produit.has_reserve_storage
+                                    else Decimal(lot.quantity_remaining)
+                                )
+                                if available <= 0:
+                                    continue
+                                absorbed = min(available, deficit_to_absorb)
+                                if produit.has_reserve_storage:
+                                    lot.quantity_reserved -= absorbed
+                                else:
+                                    lot.quantity_remaining -= absorbed
+                                    if lot.quantity_free_remaining > 0:
+                                        lot.quantity_free_remaining -= min(
+                                            absorbed, Decimal(lot.quantity_free_remaining)
+                                        )
+                                deficit_to_absorb -= absorbed
+                            StockLot.objects.bulk_update(
+                                prod_lots,
+                                ['quantity_remaining', 'quantity_free_remaining', 'quantity_reserved'],
+                                batch_size=100,
+                            )
+                            produit.calculate_stock_from_lots()
+                        untracked_deficit_map[produit_id] = deficit_to_absorb
+
+                    # Recalcul final depuis les lots, en conservant les dettes
+                    # encore appliquées au compteur produit.
+                    prods_to_resync = {
+                        lot.produit_id
+                        for lot in lots_to_create
+                        if lot.produit_id
+                    }
+                    for pid in prods_to_resync:
+                        prod = product_map.get(pid)
+                        if prod and prod.use_lot_management:
+                            prod.calculate_stock_from_lots()
 
                     if items_to_update_stock:
                         # Recalculer stock_apres_reception après resync
@@ -363,22 +325,15 @@ class CommandeClotureMixin:
                     
                     # 2.2 Mettre à jour les produits avec incrémentation de version
                     if produits_to_update:
-                        # P0: Batch query for resynced values instead of N individual Produit.objects.get()
-                        pids_to_resync = {p.id for p in produits_to_update if p.id in prods_to_resync}
-                        pids_to_resync_reserve = {p.id for p in produits_to_update if p.id in prods_to_resync_reserve}
-                        if pids_to_resync:
-                            final_stocks = dict(Produit.objects.filter(id__in=pids_to_resync).values_list('id', 'stock'))
-                        else:
-                            final_stocks = {}
-                        if pids_to_resync_reserve:
-                            final_reserves = dict(Produit.objects.filter(id__in=pids_to_resync_reserve).values_list('id', 'stock_reserve'))
-                        else:
-                            final_reserves = {}
+                        final_stock_values = {
+                            pid: (stock, stock_reserve)
+                            for pid, stock, stock_reserve in Produit.objects.filter(
+                                id__in=prods_to_resync
+                            ).values_list('id', 'stock', 'stock_reserve')
+                        }
                         for p in produits_to_update:
-                            if p.id in final_stocks:
-                                p.stock = final_stocks[p.id]
-                            if p.id in final_reserves:
-                                p.stock_reserve = final_reserves[p.id]
+                            if p.id in final_stock_values:
+                                p.stock, p.stock_reserve = final_stock_values[p.id]
                             p.version += 1
                         
                         update_fields = ['pmp', 'stock', 'stock_reserve', 'version']
@@ -471,6 +426,7 @@ class CommandeClotureMixin:
                         f"[COMMANDE] Cloture OK #{commande.id} | "
                         f"produits={len(product_ids)} | lots={len(lots_to_create)} | user={request.user.username}"
                     )
+                    notify_stock_changed(received_qty_by_product.keys())
                     return Response({'status': 'Commande clôturée avec optimistic locking.', 'versions_updated': len(produits_to_update)})
                     
             except ConcurrentModificationError:
@@ -547,7 +503,129 @@ class CommandeClotureMixin:
         
         # Phase 2: Vérifier l'absence de ventes sur ces lots avant suppression
         lots_to_delete = StockLot.objects.filter(commande_produit__commande=commande)
-        
+
+        # Rouvrir d'abord les obligations que cette réception avait couvertes.
+        # Elles ne sont pas des ventes : l'annulation doit remettre la dette en
+        # attente au lieu de bloquer la suppression des lots.
+        obligation_allocations = list(
+            FactureProduitAllocation.objects.filter(resolved_commande=commande)
+            .select_related(
+                'stock_obligation', 'stock_obligation__promis',
+                'stock_obligation__produit', 'stock_lot', 'stock_lot__commande_produit'
+            )
+        )
+        for alloc in obligation_allocations:
+            obligation = alloc.stock_obligation
+            if not obligation:
+                continue
+            obligation.quantity_remaining += alloc.quantity
+            obligation.status = StockObligation.Status.EN_ATTENTE
+            obligation.resolved_at = None
+            obligation.resolved_by = None
+            obligation.resolved_stock_lot = None
+            obligation.save(update_fields=[
+                'quantity_remaining', 'status', 'resolved_at',
+                'resolved_by', 'resolved_stock_lot'
+            ])
+
+            lot = alloc.stock_lot
+            lot_from_commande = (
+                lot is not None and lot.commande_produit_id is not None
+                and lot.commande_produit.commande_id == commande.id
+            )
+            if lot is not None and not lot_from_commande:
+                if obligation.stock_location == StockObligation.StockLocation.RESERVE:
+                    lot.quantity_reserved += alloc.quantity
+                    lot.save(update_fields=['quantity_reserved'])
+                else:
+                    lot.quantity_remaining += alloc.quantity
+                    if alloc.quantity_free:
+                        lot.quantity_free_remaining = min(
+                            lot.quantity_free,
+                            lot.quantity_free_remaining + alloc.quantity_free,
+                        )
+                    lot.save(update_fields=['quantity_remaining', 'quantity_free_remaining'])
+
+            promis = obligation.promis
+            if promis:
+                promis.quantite_livree = max(0, (promis.quantite_livree or 0) - alloc.quantity)
+                promis.status = Promis.Status.EN_ATTENTE
+                promis.date_livraison = None
+                promis.save(update_fields=['quantite_livree', 'status', 'date_livraison'])
+
+            produit = obligation.produit
+            if produit and not produit.use_lot_management and not obligation.stock_applied:
+                # La résolution d'une dette non appliquée avait sorti le stock.
+                # On l'annule avant de retirer la réception elle-même.
+                if obligation.stock_location == StockObligation.StockLocation.RESERVE:
+                    Produit.objects.filter(pk=produit.pk).update(stock_reserve=F('stock_reserve') + alloc.quantity)
+                else:
+                    Produit.objects.filter(pk=produit.pk).update(stock=F('stock') + alloc.quantity)
+            alloc.delete()
+
+        # Les promis manuels/historiques n'ont pas toujours de ligne de facture.
+        # Leur résolution est donc tracée séparément et doit aussi être rouverte.
+        orphan_resolutions = list(
+            StockObligationResolution.objects.filter(
+                commande=commande,
+                obligation__facture_produit__isnull=True,
+            ).select_related(
+                'obligation', 'obligation__promis', 'obligation__produit',
+                'stock_lot', 'stock_lot__commande_produit'
+            )
+        )
+        for resolution in orphan_resolutions:
+            obligation = resolution.obligation
+            obligation.quantity_remaining += resolution.quantity
+            obligation.status = StockObligation.Status.EN_ATTENTE
+            obligation.resolved_at = None
+            obligation.resolved_by = None
+            obligation.resolved_stock_lot = None
+            obligation.save(update_fields=[
+                'quantity_remaining', 'status', 'resolved_at',
+                'resolved_by', 'resolved_stock_lot'
+            ])
+
+            lot = resolution.stock_lot
+            lot_from_commande = (
+                lot is not None and lot.commande_produit_id is not None
+                and lot.commande_produit.commande_id == commande.id
+            )
+            if lot is not None and not lot_from_commande:
+                if obligation.stock_location == StockObligation.StockLocation.RESERVE:
+                    lot.quantity_reserved += resolution.quantity
+                    lot.save(update_fields=['quantity_reserved'])
+                else:
+                    lot.quantity_remaining += resolution.quantity
+                    if resolution.quantity_free:
+                        lot.quantity_free_remaining = min(
+                            lot.quantity_free,
+                            lot.quantity_free_remaining + resolution.quantity_free,
+                        )
+                    lot.save(update_fields=['quantity_remaining', 'quantity_free_remaining'])
+
+            promis = obligation.promis
+            if promis:
+                promis.quantite_livree = max(0, (promis.quantite_livree or 0) - resolution.quantity)
+                promis.status = Promis.Status.EN_ATTENTE
+                promis.date_livraison = None
+                promis.save(update_fields=['quantite_livree', 'status', 'date_livraison'])
+
+            produit = obligation.produit
+            if produit and not produit.use_lot_management and not obligation.stock_applied:
+                if obligation.stock_location == StockObligation.StockLocation.RESERVE:
+                    Produit.objects.filter(pk=produit.pk).update(stock_reserve=F('stock_reserve') + resolution.quantity)
+                else:
+                    Produit.objects.filter(pk=produit.pk).update(stock=F('stock') + resolution.quantity)
+
+        StockObligationResolution.objects.filter(commande=commande).delete()
+
+        # Les réintégrations de dettes non appliquées ont pu modifier le compteur
+        # via F() sur une autre instance Produit. On resynchronise les objets
+        # verrouillés avant le retrait de la réception elle-même.
+        for produit in product_map.values():
+            produit.refresh_from_db(fields=['stock', 'stock_reserve'])
+
         # Vérifier si un de ces lots est déjà utilisé dans une vente (via allocation)
         # On évite le ProtectedError brutal et on renvoie un message métier
         if FactureProduitAllocation.objects.filter(stock_lot__in=lots_to_delete).exists():
@@ -570,10 +648,9 @@ class CommandeClotureMixin:
                 produit.calculate_stock_from_lots()
             else:
                 old_stock = Decimal(produit.stock)
-                new_stock = old_stock - qty_to_remove
-                if new_stock < 0:
-                    new_stock = Decimal(0)
-                produit.stock = new_stock
+                # Les stocks négatifs peuvent être légitimes (promis / vente
+                # forcée) : l'annulation retire simplement la quantité reçue.
+                produit.stock = old_stock - qty_to_remove
                 produit.save(update_fields=['stock'])
             
             # Créer un MouvementStock pour traçabilité
@@ -626,6 +703,7 @@ class CommandeClotureMixin:
             f"[COMMANDE] Annulation reception OK #{commande.id} | "
             f"produits={len(produits_dict)} | lots_supprimes={deleted_lots_count} | user={request.user.username}"
         )
+        notify_stock_changed(produits_dict.keys())
         return Response({
             'status': 'Réception annulée avec succès.',
             'details': {

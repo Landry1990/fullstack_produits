@@ -323,6 +323,8 @@ export interface Promis {
     produit_name?: string
     produit_cip?: string
     quantite: number
+    quantite_livree?: number
+    quantite_restante?: number
     status: 'ATT' | 'DEL' | 'ANN'
     status_display?: string
     date_promis: string
@@ -369,6 +371,7 @@ export interface SaleCompletionParams {
     isFactureA4?: boolean;
     promisClientName?: string;
     promisPhone?: string;
+    idempotencyKey?: string;
 }
 
 export interface SaleCompletionResult {

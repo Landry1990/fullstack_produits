@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useCallback, useSyncExternalStore } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import api from '../services/api'
 import type { ProduitModel, PaginatedResponse } from '../types'
@@ -13,7 +13,7 @@ import type { ProduitModel, PaginatedResponse } from '../types'
  * La recherche locale est instantanée (< 1ms) vs 200-400ms par round-trip API.
  */
 
-interface SearchIndexEntry {
+export interface SearchIndexEntry {
   product: ProduitModel
   nameNorm: string
   // Nom sans espaces ni ponctuation : "FRA 1" → "fra1"
@@ -29,6 +29,72 @@ interface SearchIndexEntry {
 let cachedIndex: SearchIndexEntry[] | null = null
 let cachedAt = 0
 const CACHE_TTL = 1000 * 60 * 5 // 5 minutes
+
+// ── Versioning de l'index ──
+// L'index vit hors React Query (variable module-level). Pour que les composants
+// se re-rendent quand le stock est patché en place (WebSocket stock_update),
+// on expose un compteur de version + un set de listeners. Le hook s'y abonne
+// via useSyncExternalStore et retourne indexVersion à ajouter aux deps des useMemo.
+let indexVersion = 0
+const indexVersionListeners = new Set<() => void>()
+
+function notifyIndexVersionChanged() {
+  indexVersion++
+  indexVersionListeners.forEach(listener => listener())
+}
+
+function subscribeIndexVersion(listener: () => void): () => void {
+  indexVersionListeners.add(listener)
+  return () => { indexVersionListeners.delete(listener) }
+}
+
+function getIndexVersion(): number {
+  return indexVersion
+}
+
+export interface StockUpdateItem {
+  id: number
+  stock: number
+  stock_reserve?: number
+}
+
+/**
+ * Patch en place du stock dans l'index de recherche en mémoire.
+ * Appelé par le listener WebSocket `stock_update` (valeurs post-commit autoritaires).
+ * Incrémente indexVersion et notifie les abonnés pour déclencher le re-render.
+ * No-op si l'index n'est pas encore construit.
+ *
+ * @param updates liste des produits mis à jour {id, stock, stock_reserve?}
+ * @param index index à patcher (défaut : cachedIndex module-level) — injectable pour les tests
+ */
+export function patchSearchIndexStock(
+  updates: StockUpdateItem[],
+  index: SearchIndexEntry[] | null = cachedIndex,
+): void {
+  if (!index || updates.length === 0) return
+
+  const byId = new Map(updates.map(u => [u.id, u]))
+  let changed = false
+
+  for (const entry of index) {
+    const update = byId.get(entry.product.id)
+    if (!update) continue
+
+    entry.product.stock = update.stock
+    if (update.stock_reserve !== undefined) {
+      entry.product.stock_reserve = update.stock_reserve
+    }
+    // total_stock = stock rayon + stock réserve — recalculé seulement si le champ existe
+    if (entry.product.total_stock !== undefined) {
+      entry.product.total_stock = update.stock + (entry.product.stock_reserve ?? 0)
+    }
+    changed = true
+  }
+
+  if (changed) {
+    notifyIndexVersionChanged()
+  }
+}
 
 /** Normalise une chaîne pour la comparaison (sans accents, minuscules) */
 export function normalize(s: string | null | undefined): string {
@@ -186,7 +252,9 @@ export function searchInIndex(index: SearchIndexEntry[], query: string, limit: n
 
 export function useProductSearchIndex() {
   const [isReady, setIsReady] = useState(cachedIndex !== null)
-  const fetchRef = useRef<Promise<void> | null>(null)
+
+  // Se re-rendre quand le stock est patché en place via WebSocket
+  const version = useSyncExternalStore(subscribeIndexVersion, getIndexVersion, getIndexVersion)
 
   // Précharger tous les produits une seule fois
   const { data, isLoading, isFetching } = useQuery({
@@ -197,7 +265,7 @@ export function useProductSearchIndex() {
         return cachedIndex.map(e => e.product)
       }
 
-      try {
+      {
         // 1. Charger la première page pour connaître le total
         const pageSize = 1000
         const firstResponse = await api.get('produits/', {
@@ -246,8 +314,6 @@ export function useProductSearchIndex() {
         }
 
         return [...firstProducts, ...remainingProducts]
-      } catch (err) {
-        throw err
       }
     },
     staleTime: CACHE_TTL,
@@ -283,5 +349,7 @@ export function useProductSearchIndex() {
     isLoading: isLoading || (isFetching && !cachedIndex),
     invalidate,
     productCount: cachedIndex?.length ?? 0,
+    /** Compteur incrémenté à chaque patch de stock — à ajouter aux deps des useMemo */
+    indexVersion: version,
   }
 }

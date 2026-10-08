@@ -85,6 +85,12 @@ export interface CartLine {
   lotText: string | null;
   lotExp?: string | null;   // expiration du lot choisi (affichage)
   total_ttc: number;
+  // Promis (vente à découvert — parité web StockResolutionModal) :
+  // promisQuantity = part manquante due au client, livrée à la prochaine
+  // réception. quantite reste la quantité facturée totale.
+  isPromis?: boolean;
+  promisQuantity?: number;
+  promisPhone?: string;
 }
 
 // ─── Point de vente (contrat /postes-ventes/) ─────────────

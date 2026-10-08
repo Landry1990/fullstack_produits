@@ -2,7 +2,6 @@ import io
 import logging
 
 from django.db import models, transaction
-from django.db.models import F
 from django.http import HttpResponse
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
@@ -12,10 +11,20 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from ...idempotency import idempotent_action
-from ...models import MouvementStock, Produit, Promis
+from ...models import (
+    FactureProduit,
+    FactureProduitAllocation,
+    MouvementStock,
+    Produit,
+    Promis,
+    StockLot,
+    StockObligation,
+)
 from ...pagination import StandardResultsSetPagination
 from ...search_mixins import MultiTermSearchMixin
 from ...serializers import PromisSerializer
+from ...services.realtime import notify_stock_changed
+from ...services.stock_obligation_service import StockObligationService
 
 logger = logging.getLogger(__name__)
 
@@ -35,67 +44,164 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
     ordering_fields = ['date_promis', 'status']
     ordering = ['-date_promis']
 
+    def _create_obligation(self, promis, quantity, location, user, stock_applied=True, facture_produit=None):
+        obligation = StockObligationService.create_for_promis(
+            promis,
+            facture_produit=facture_produit,
+            quantity=quantity,
+            user=user,
+            stock_applied=stock_applied,
+            stock_location=location,
+        )
+        if facture_produit:
+            FactureProduitAllocation.objects.create(
+                facture_produit=facture_produit,
+                stock_obligation=obligation,
+                is_pending=True,
+                quantity=quantity,
+                cost_price=obligation.cost_price,
+                selling_price=obligation.selling_price,
+            )
+        return obligation
+
+    def _get_or_create_for_facture(self, validated_data):
+        """
+        Le SaleValidator a déjà créé les promis d'une vente. L'appel API reste
+        idempotent pour éviter un doublon (ex. retry caisse/web/mobile).
+        """
+        facture_id = validated_data.get('facture').id if validated_data.get('facture') else None
+        produit_id = validated_data.get('produit').id if validated_data.get('produit') else None
+        existing = Promis.objects.select_for_update().filter(
+            facture_id=facture_id,
+            produit_id=produit_id,
+            status=Promis.Status.EN_ATTENTE,
+            is_active=True,
+        ).first()
+        if existing:
+            return existing, False
+
+        promis = Promis.objects.create(**validated_data)
+        if facture_id and produit_id:
+            has_obligation = StockObligation.objects.filter(
+                promis=promis,
+                status=StockObligation.Status.EN_ATTENTE,
+            ).exists()
+            if not has_obligation:
+                facture_produit = FactureProduit.objects.filter(
+                    facture_id=facture_id,
+                    produit_id=produit_id,
+                ).order_by('id').first()
+                # Compatibilité : un promis ajouté à une ancienne facture n'a pas
+                # encore été sorti du stock à la validation. Il sera décrémenté
+                # lors de sa résolution.
+                self._create_obligation(
+                    promis,
+                    promis.quantite,
+                    StockObligation.StockLocation.RAYON,
+                    promis.created_by,
+                    stock_applied=False,
+                    facture_produit=facture_produit,
+                )
+        return promis, True
+
     def _reserve_stock_for_promis(self, promis):
-        """Réserve le stock au moment de la création d'un promis."""
-        # Garde-fou : une quantité <= 0 créerait du stock au lieu d'en retirer
+        """Réserve le stock pour un promis créé hors facture."""
         if promis.quantite is None or promis.quantite <= 0:
             raise ValueError(
                 f"Quantité de promis invalide ({promis.quantite}) : doit être strictement positive."
             )
-
         if not promis.produit_id:
             return
 
         produit = Produit.objects.select_for_update().get(pk=promis.produit_id)
+        StockObligationService.reapply_pending_obligations([produit.id])
+        produit.refresh_from_db(fields=['stock', 'stock_reserve'])
         if produit.use_lot_management:
-            # Produits gérés par lots : pas de réservation physique automatique,
-            # on trace juste la création du promis par un mouvement neutre.
+            location = (
+                StockObligation.StockLocation.RESERVE
+                if produit.has_reserve_storage
+                else StockObligation.StockLocation.RAYON
+            )
+            sellable_available = (
+                produit.stock_reserve if produit.has_reserve_storage else produit.stock
+            ) or 0
+            if sellable_available < promis.quantite:
+                raise ValueError(
+                    f"Stock insuffisant pour réserver {promis.quantite} unité(s) de {produit.name}. "
+                    f"Stock vendable disponible: {sellable_available}."
+                )
+            self._create_obligation(
+                promis,
+                promis.quantite,
+                location,
+                promis.created_by,
+                stock_applied=True,
+            )
+            if produit.has_reserve_storage:
+                produit.stock_reserve = (produit.stock_reserve or 0) - promis.quantite
+            else:
+                produit.stock -= promis.quantite
+            produit.version += 1
+            produit.save(update_fields=['stock', 'stock_reserve', 'version'])
+            notify_stock_changed([produit.id])
             MouvementStock.objects.create(
                 produit=produit,
                 type_mouvement=MouvementStock.TypeMouvement.SORTIE,
-                quantite=0,
+                quantite=-promis.quantite,
                 stock_apres=produit.total_stock,
                 user=promis.created_by,
-                description=f"Réservation logique - Promis #{promis.id} (gestion par lots) (Client: {promis.client_display})"
+                description=f"Réservation promis #{promis.id} (Client: {promis.client_display})"
             )
             return
 
-        total_available = produit.stock + (produit.stock_reserve or 0)
+        rayon_disponible = max(0, produit.stock)
+        reserve_disponible = max(0, produit.stock_reserve or 0)
+        total_available = rayon_disponible + reserve_disponible
         if total_available < promis.quantite:
             raise ValueError(
                 f"Stock insuffisant pour réserver {promis.quantite} unité(s) de {produit.name}. "
-                f"Stock total: {total_available} (Rayon: {produit.stock}, Réserve: {produit.stock_reserve or 0})."
+                f"Stock vendable total: {total_available}."
             )
 
-        # Puiser d'abord dans le rayon, puis dans la réserve si nécessaire
-        from_rayon = min(produit.stock, promis.quantite)
+        from_rayon = min(rayon_disponible, promis.quantite)
         from_reserve = promis.quantite - from_rayon
-
-        produit.stock -= from_rayon
+        if from_rayon > 0:
+            self._create_obligation(
+                promis, from_rayon,
+                StockObligation.StockLocation.RAYON,
+                promis.created_by,
+                stock_applied=True,
+            )
+            produit.stock -= from_rayon
         if from_reserve > 0:
+            self._create_obligation(
+                promis, from_reserve,
+                StockObligation.StockLocation.RESERVE,
+                promis.created_by,
+                stock_applied=True,
+            )
             produit.stock_reserve = (produit.stock_reserve or 0) - from_reserve
         produit.version += 1
         produit.save(update_fields=['stock', 'stock_reserve', 'version'])
+        notify_stock_changed([produit.id])
 
-        desc_parts = [f"Rayon: {-from_rayon:+d}"]
-        if from_reserve > 0:
-            desc_parts.append(f"Réserve: {-from_reserve:+d}")
         MouvementStock.objects.create(
             produit=produit,
             type_mouvement=MouvementStock.TypeMouvement.SORTIE,
             quantite=-promis.quantite,
             stock_apres=produit.total_stock,
             user=promis.created_by,
-            description=f"Réservation stock - Promis #{promis.id} ({', '.join(desc_parts)}) (Client: {promis.client_display})"
+            description=f"Réservation stock - Promis #{promis.id} (Client: {promis.client_display})"
         )
 
     @transaction.atomic
     def perform_create(self, serializer):
-        # DEBUG: Log the incoming data
-        logger.info(f"DEBUG PROMIS - Request data: {self.request.data}")
-        logger.info(f"DEBUG PROMIS - Client ID: {self.request.data.get('client')}, Client name: {self.request.data.get('client_name')}, Client phone: {self.request.data.get('client_phone')}")
-        promis = serializer.save(created_by=self.request.user)
-        self._reserve_stock_for_promis(promis)
+        validated_data = dict(serializer.validated_data)
+        validated_data['created_by'] = self.request.user
+        promis, created = self._get_or_create_for_facture(validated_data)
+        if created and not promis.facture_id:
+            self._reserve_stock_for_promis(promis)
+        serializer.instance = promis
         return promis
 
     @idempotent_action
@@ -124,8 +230,11 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         created = []
         try:
             for validated in serializer.validated_data:
-                promis = Promis.objects.create(created_by=request.user, **validated)
-                self._reserve_stock_for_promis(promis)
+                validated = dict(validated)
+                validated['created_by'] = request.user
+                promis, was_created = self._get_or_create_for_facture(validated)
+                if was_created and not promis.facture_id:
+                    self._reserve_stock_for_promis(promis)
                 created.append(promis)
         except ValueError as e:
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -153,10 +262,13 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         if promis.status == Promis.Status.ANNULE:
             return Response({'detail': 'Impossible de délivrer un promis annulé.'}, status=status.HTTP_400_BAD_REQUEST)
         
-        promis.status = Promis.Status.DELIVRE
-        promis.date_livraison = timezone.now()
-        promis.save()
-        
+        try:
+            StockObligationService.resolve_for_promis(promis, user=request.user)
+        except ValueError as e:
+            return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        notify_stock_changed([promis.produit_id])
+        promis.refresh_from_db()
         return Response({
             'detail': f'Promis #{promis.id} marqué comme délivré.',
             'promis': PromisSerializer(promis).data
@@ -177,53 +289,33 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         if promis.status == Promis.Status.DELIVRE:
             return Response({'detail': 'Impossible d\'annuler un promis déjà délivré.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 1. Réintégrer le stock (uniquement si le produit n'est pas géré par lots)
+        # 1. Annuler les obligations restantes et réintégrer leur effet stock
         produit = Produit.objects.select_for_update().get(pk=promis.produit_id) if promis.produit_id else None
-
-        stock_reintegre = 0
-        if produit and not produit.use_lot_management:
-            # Restaurer d'abord dans le rayon jusqu'à capacite_rayon, puis le reste en réserve
-            if produit.has_reserve_storage and produit.capacite_rayon > 0:
-                space_in_rayon = max(0, produit.capacite_rayon - produit.stock)
-                to_rayon = min(promis.quantite, space_in_rayon)
-                to_reserve = promis.quantite - to_rayon
-            else:
-                to_rayon = promis.quantite
-                to_reserve = 0
-            produit.stock += to_rayon
-            if to_reserve > 0:
-                produit.stock_reserve = (produit.stock_reserve or 0) + to_reserve
-            produit.version += 1
-            produit.save(update_fields=['stock', 'stock_reserve', 'version'])
-            stock_reintegre = promis.quantite
+        stock_reintegre = StockObligationService.cancel_for_promis(promis, user=request.user)
+        if produit:
+            produit.refresh_from_db(fields=['stock', 'stock_reserve'])
 
         # 2. Mouvement de traçabilité
         final_stock = produit.total_stock if produit else 0
-        if produit and produit.use_lot_management:
-            # Aucun lot n'a été réservé : pas de réintégration physique, juste un mouvement neutre
-            MouvementStock.objects.create(
-                produit=produit,
-                type_mouvement=MouvementStock.TypeMouvement.AJUSTEMENT,
-                quantite=0,
-                stock_apres=final_stock,
-                user=request.user,
-                description=f"Annulation promis #{promis.id} - pas de réintégration (gestion par lots) (Client: {promis.client_display})"
-            )
-        else:
-            MouvementStock.objects.create(
-                produit=produit,
-                type_mouvement=MouvementStock.TypeMouvement.RETOUR,
-                quantite=promis.quantite,
-                stock_apres=final_stock,
-                user=request.user,
-                description=f"Réintégration stock - Annulation promis #{promis.id} (Client: {promis.client_display})"
-            )
+        MouvementStock.objects.create(
+            produit=produit,
+            type_mouvement=(
+                MouvementStock.TypeMouvement.RETOUR
+                if stock_reintegre > 0
+                else MouvementStock.TypeMouvement.AJUSTEMENT
+            ),
+            quantite=stock_reintegre,
+            stock_apres=final_stock,
+            user=request.user,
+            description=f"Annulation promis #{promis.id} (Client: {promis.client_display})"
+        )
 
         # 3. Mettre à jour le statut du promis
         promis.status = Promis.Status.ANNULE
         promis.notes = f"{promis.notes}\n[Annulé le {timezone.now().strftime('%d/%m/%Y %H:%M')} par {request.user.username}]".strip()
-        promis.save()
+        promis.save(update_fields=['status', 'notes'])
 
+        notify_stock_changed([promis.produit_id])
         return Response({
             'detail': f'Promis #{promis.id} annulé. {stock_reintegre} unité(s) réintégrée(s) au stock de {produit.name if produit else "Produit inconnu"}.',
             'promis': PromisSerializer(promis).data,
@@ -241,18 +333,22 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         if not ids:
             return Response({'detail': 'Aucun ID fourni.'}, status=status.HTTP_400_BAD_REQUEST)
         
-        promis_list = Promis.objects.filter(id__in=ids, status=Promis.Status.EN_ATTENTE)
-        count = promis_list.count()
-        
+        promis_list = list(Promis.objects.select_for_update().filter(
+            id__in=ids,
+            status=Promis.Status.EN_ATTENTE,
+        ).order_by('id'))
+        count = len(promis_list)
+
         if count == 0:
             return Response({'detail': 'Aucun promis en attente trouvé.'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Bulk update
-        promis_list.update(
-            status=Promis.Status.DELIVRE,
-            date_livraison=timezone.now()
-        )
-        
+
+        try:
+            for promis in promis_list:
+                StockObligationService.resolve_for_promis(promis, user=request.user)
+        except ValueError as e:
+            return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        notify_stock_changed(promis.produit_id for promis in promis_list)
         return Response({
             'detail': f'{count} promis marqué(s) comme délivré(s).',
             'count': count
@@ -284,50 +380,31 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
 
         reintegrated = []
         mouvements_to_create = []
-        produits_to_save = {}
 
         for promis in promis_list:
             produit = locked_products.get(promis.produit_id) if promis.produit_id else None
-            stock_reintegre = 0
+            stock_reintegre = StockObligationService.cancel_for_promis(promis, user=request.user)
+            if produit:
+                produit.refresh_from_db(fields=['stock', 'stock_reserve'])
 
-            # Réintégrer le stock (uniquement si le produit n'est pas géré par lots)
-            if produit and not produit.use_lot_management:
-                produit.stock += promis.quantite
-                produits_to_save[produit.id] = produit
-                stock_reintegre = promis.quantite
-
-            # Mouvement de traçabilité
-            final_stock = produit.total_stock if produit else 0
-            if produit and produit.use_lot_management:
-                mouvements_to_create.append(MouvementStock(
-                    produit=produit,
-                    type_mouvement=MouvementStock.TypeMouvement.AJUSTEMENT,
-                    quantite=0,
-                    stock_apres=final_stock,
-                    user=request.user,
-                    description=f"Annulation promis #{promis.id} - pas de réintégration (gestion par lots) (Client: {promis.client_display})"
-                ))
-            else:
-                mouvements_to_create.append(MouvementStock(
-                    produit=produit,
-                    type_mouvement=MouvementStock.TypeMouvement.RETOUR,
-                    quantite=promis.quantite,
-                    stock_apres=final_stock,
-                    user=request.user,
-                    description=f"Réintégration stock - Annulation promis #{promis.id} (Client: {promis.client_display})"
-                ))
+            mouvements_to_create.append(MouvementStock(
+                produit=produit,
+                type_mouvement=(
+                    MouvementStock.TypeMouvement.RETOUR
+                    if stock_reintegre > 0
+                    else MouvementStock.TypeMouvement.AJUSTEMENT
+                ),
+                quantite=stock_reintegre,
+                stock_apres=produit.total_stock if produit else 0,
+                user=request.user,
+                description=f"Annulation promis #{promis.id} (Client: {promis.client_display})"
+            ))
 
             reintegrated.append({
                 'id': promis.id,
                 'produit': produit.name if produit else 'Produit inconnu',
                 'quantite': stock_reintegre
             })
-
-        # Bulk save products (1 query instead of N)
-        if produits_to_save:
-            Produit.objects.bulk_update(
-                list(produits_to_save.values()), ['stock'], batch_size=100
-            )
 
         # Bulk create mouvements (1 query instead of N)
         if mouvements_to_create:
@@ -339,6 +416,7 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
             notes=models.F('notes')  # Can't easily append in bulk, so just mark as cancelled
         )
 
+        notify_stock_changed(product_ids)
         return Response({
             'detail': f'{count} promis annulé(s) et stock réintégré.',
             'count': count,
@@ -541,24 +619,48 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         Retourne les promis en attente dont le produit est maintenant disponible en stock.
         Utile pour les alertes Dashboard et la page Promis.
         """
-        # Promis en attente avec stock suffisant
+        # Promis en attente avec suffisamment de stock physique pour le reste dû.
         promis_disponibles = Promis.objects.filter(
             status=Promis.Status.EN_ATTENTE,
+            is_active=True,
             produit__isnull=False,
-            produit__stock__gte=F('quantite')
         ).select_related('client', 'produit', 'facture').order_by('-date_promis')
-        
+
         # Sérialiser
         data = []
         for p in promis_disponibles:
+            reste = p.quantite_restante
+            produit = p.produit
+            if reste <= 0 or not produit:
+                continue
+            if produit.use_lot_management:
+                lot_field = 'quantity_reserved' if produit.has_reserve_storage else 'quantity_remaining'
+                stock_physique = StockLot.objects.filter(produit=produit).aggregate(
+                    total=models.Sum(lot_field)
+                )['total'] or 0
+            else:
+                location = (
+                    StockObligation.StockLocation.RESERVE
+                    if produit.has_reserve_storage
+                    else StockObligation.StockLocation.RAYON
+                )
+                accounting_stock = (
+                    produit.stock_reserve if produit.has_reserve_storage else produit.stock
+                ) or 0
+                stock_physique = accounting_stock + StockObligationService.pending_quantity(
+                    produit.id, location=location, stock_applied=True
+                )
+            if stock_physique < reste:
+                continue
+
             data.append({
                 'id': p.id,
                 'client': p.client_display,
                 'client_phone': p.client_phone_display,
-                'produit_id': p.produit.id if p.produit else None,
-                'produit_nom': p.produit.name if p.produit else p.produit_nom,
-                'quantite': p.quantite,
-                'stock_actuel': p.produit.stock if p.produit else 0,
+                'produit_id': produit.id,
+                'produit_nom': produit.name,
+                'quantite': reste,
+                'stock_actuel': stock_physique,
                 'date_promis': p.date_promis.isoformat(),
                 'jours_attente': (timezone.now() - p.date_promis).days
             })

@@ -81,6 +81,7 @@
         "min_chars": "Type at least 2 characters",
         "no_results": "No product found",
         "low_stock_badge": "Low stock",
+        "forced_badge": "FORCED",
         "recent_label": "Recent products",
         "label_pack": "Search a PACK",
         "placeholder_pack": "Type pack name...",

@@ -33,7 +33,9 @@ from ..utils.validation import (
 )
 from .lot_allocation_service import LotAllocationService
 from .promotion_service import PromotionService
+from .realtime import notify_stock_changed
 from .sale_integrity import is_invoice_period_closed
+from .stock_obligation_service import StockObligationService
 
 logger = logging.getLogger(__name__)
 
@@ -71,13 +73,13 @@ class SaleModifier:
             raise ValueError("La liste des produits est requise.")
 
         # 1. Restore stock (temporary)
-        old_quantity_by_product, _old_product_ids, old_product_ids_with_allocations = \
+        old_quantity_by_product, _old_product_ids, _old_product_ids_with_allocations = \
             SaleModifier._restore_stock(facture)
 
         # 1b. Cancel pending promis linked to this invoice (they will be recreated by the
         # frontend if the new cart still has insufficient stock). Promis already DELIVRE
         # are preserved since they were honored.
-        SaleModifier._cancel_pending_promis(facture)
+        SaleModifier._cancel_pending_promis(facture, user)
 
         # 2. Apply changes to facture
         # Decimal fini >= 0 dans la borne du DecimalField(12, 2) de Facture.remise ;
@@ -101,15 +103,8 @@ class SaleModifier:
         facture.save()
 
         # 3. Create new products and allocate
-        new_quantity_by_product, new_product_ids_with_allocations = \
-            SaleModifier._create_new_products(facture, new_products)
-
-        # Sync stock from lots for products that had lot allocations
-        products_to_sync = old_product_ids_with_allocations | new_product_ids_with_allocations
-        for pid in products_to_sync:
-            produit = Produit.objects.filter(pk=pid).first()
-            if produit and produit.use_lot_management:
-                produit.calculate_stock_from_lots()
+        new_quantity_by_product, _new_product_ids_with_allocations = \
+            SaleModifier._create_new_products(facture, new_products, user)
 
         # 4. Finalize totals and adjustment
         PromotionService.apply_promotions_to_invoice(facture)
@@ -131,13 +126,14 @@ class SaleModifier:
     # ──────────────────────────────────────────────
 
     @staticmethod
-    def _cancel_pending_promis(facture):
+    def _cancel_pending_promis(facture, user=None):
         """Annule les promis EN_ATTENTE liés à cette facture avant modification.
         Les promis DELIVRE sont préservés (ils ont été honorés)."""
         pending_promis = Promis.objects.filter(
             facture=facture, is_active=True, status=Promis.Status.EN_ATTENTE
         )
         for promis in pending_promis:
+            StockObligationService.cancel_for_promis(promis, user=user)
             promis.status = Promis.Status.ANNULE
             promis.date_livraison = None
             promis.notes = (
@@ -150,7 +146,21 @@ class SaleModifier:
     @staticmethod
     def _restore_stock(facture):
         """Restaure temporairement le stock avant modification."""
-        _allocations, product_ids_with_allocations = LotAllocationService.restore_allocations(facture)
+        allocations, product_ids_with_allocations = LotAllocationService.restore_allocations(facture)
+        covered_by_line = {}
+        for alloc in allocations:
+            covered_by_line[alloc.facture_produit_id] = (
+                covered_by_line.get(alloc.facture_produit_id, 0) + alloc.quantity
+            )
+
+        pending_promis_map = {
+            row['produit_id']: row['total'] or 0
+            for row in Promis.objects.filter(
+                facture=facture,
+                status=Promis.Status.EN_ATTENTE,
+                is_active=True,
+            ).values('produit_id').annotate(total=Sum('quantite'))
+        }
 
         old_items = list(FactureProduit.objects.filter(facture=facture).select_related('produit'))
         old_quantity_by_product = {}
@@ -166,12 +176,18 @@ class SaleModifier:
         else:
             locked_products = {}
 
+        restored_ids = []
         for item in old_items:
             old_quantity_by_product[item.produit_id] = old_quantity_by_product.get(item.produit_id, 0) + item.quantity
             old_product_ids.add(item.produit_id)
             produit = locked_products.get(item.produit_id) or item.produit
-            if produit and (not produit.use_lot_management or item.produit_id not in product_ids_with_allocations):
-                Produit.objects.filter(pk=item.produit_id).update(stock=F('stock') + item.quantity)
+            residual_quantity = item.quantity - covered_by_line.get(item.id, 0)
+            if residual_quantity > 0 and item.produit_id in pending_promis_map:
+                residual_quantity -= min(residual_quantity, pending_promis_map[item.produit_id])
+            if produit and residual_quantity > 0:
+                Produit.objects.filter(pk=item.produit_id).update(stock=F('stock') + residual_quantity)
+                restored_ids.append(item.produit_id)
+        notify_stock_changed(restored_ids)
 
         for item in old_items:
             item.delete()
@@ -179,8 +195,8 @@ class SaleModifier:
         return old_quantity_by_product, old_product_ids, product_ids_with_allocations
 
     @staticmethod
-    def _create_new_products(facture, new_products):
-        """Crée les nouvelles lignes FactureProduit et alloue les lots."""
+    def _create_new_products(facture, new_products, user):
+        """Crée les nouvelles lignes FactureProduit, les promis et les lots."""
         new_quantity_by_product = {}
         new_product_ids_with_allocations = set()
         if not all(isinstance(p, dict) for p in new_products):
@@ -202,6 +218,11 @@ class SaleModifier:
             }
         else:
             products_by_id = {}
+
+        virtual_stock_by_product = {
+            pid: max(0, int(product.stock or 0))
+            for pid, product in products_by_id.items()
+        }
 
         for prod_data in new_products:
             if not isinstance(prod_data, dict):
@@ -227,6 +248,10 @@ class SaleModifier:
                     prod_data.get('tva', '0'), field='tva',
                     min_value=Decimal(0), max_value=MAX_DECIMAL_5_2
                 )
+                promis_quantity = parse_int(
+                    prod_data.get('promis_quantity', 0), field='promis_quantity',
+                    min_value=0, max_value=MAX_INT32
+                )
             except ValidationError as exc:
                 raise _as_value_error(exc) from exc
             lot_id = prod_data.get('lot_id')
@@ -236,6 +261,22 @@ class SaleModifier:
                 # inexistant finissait en IntegrityError → 500.
                 raise ValueError(f"Produit introuvable (id={produit_id}).")
 
+            is_promis = bool(prod_data.get('is_promis')) and quantity > 0
+            promis_quantity = min(promis_quantity, quantity) if is_promis else 0
+            promis = None
+            if promis_quantity > 0:
+                promis = Promis.objects.create(
+                    facture=facture,
+                    client=facture.client,
+                    client_name=facture.client_name_override or '',
+                    client_phone=prod_data.get('promis_phone', '') or '',
+                    produit=produit,
+                    produit_nom=produit.name,
+                    quantite=promis_quantity,
+                    status=Promis.Status.EN_ATTENTE,
+                    created_by=user,
+                )
+
             fp = FactureProduit.objects.create(
                 facture=facture, produit_id=produit_id, quantity=quantity,
                 selling_price=selling_price, discount=discount,
@@ -243,27 +284,86 @@ class SaleModifier:
             )
             new_quantity_by_product[produit_id] = new_quantity_by_product.get(produit_id, 0) + quantity
 
-            lots_allocated = SaleModifier._allocate_product_lots(fp, produit, quantity, lot_id, selling_price)
+            delivered_quantity = quantity - promis_quantity if quantity > 0 else quantity
+            allocated_quantity = 0
+            if delivered_quantity > 0:
+                allocated_quantity = SaleModifier._allocate_product_lots(
+                    fp, produit, delivered_quantity, lot_id, selling_price
+                )
 
-            if lots_allocated:
+            # Le stock comptable descend de la quantité facturée totale.
+            Produit.objects.filter(pk=produit_id).update(stock=F('stock') - quantity)
+            notify_stock_changed([produit_id])
+
+            pending_allocations = []
+            if promis and promis_quantity > 0:
+                obligation = StockObligationService.create_obligation(
+                    fp,
+                    promis_quantity,
+                    'PROMIS',
+                    promis=promis,
+                    user=user,
+                )
+                pending_allocations.append(FactureProduitAllocation(
+                    facture_produit=fp,
+                    stock_obligation=obligation,
+                    is_pending=True,
+                    quantity=promis_quantity,
+                    cost_price=obligation.cost_price,
+                    selling_price=selling_price,
+                ))
+
+            if quantity > 0 and produit.use_lot_management:
+                forced_quantity = quantity - allocated_quantity - promis_quantity
+            elif quantity > 0:
+                available_without_lot = virtual_stock_by_product.get(produit_id, 0)
+                covered_without_lot = min(delivered_quantity, available_without_lot)
+                virtual_stock_by_product[produit_id] = available_without_lot - covered_without_lot
+                if covered_without_lot > 0:
+                    FactureProduitAllocation.objects.create(
+                        facture_produit=fp,
+                        stock_lot=None,
+                        is_pending=False,
+                        quantity=covered_without_lot,
+                        cost_price=StockObligationService.estimated_cost(produit),
+                        selling_price=selling_price,
+                    )
+                forced_quantity = delivered_quantity - covered_without_lot
+            else:
+                forced_quantity = 0
+
+            if forced_quantity > 0:
+                obligation = StockObligationService.create_obligation(
+                    fp,
+                    forced_quantity,
+                    'FORCE',
+                    user=user,
+                )
+                pending_allocations.append(FactureProduitAllocation(
+                    facture_produit=fp,
+                    stock_obligation=obligation,
+                    is_pending=True,
+                    quantity=forced_quantity,
+                    cost_price=obligation.cost_price,
+                    selling_price=selling_price,
+                ))
+
+            if pending_allocations:
+                FactureProduitAllocation.objects.bulk_create(pending_allocations)
+
+            if allocated_quantity:
                 new_product_ids_with_allocations.add(produit_id)
-            elif produit:
-                # Allocation de lot impossible (pas de lot disponible ou gestion
-                # par lots désactivée) : décrément manuel comme dans
-                # SaleValidator._allocate_lots — sinon le stock restauré n'est
-                # jamais re-facturé et la modification gonfle le stock.
-                Produit.objects.filter(pk=produit_id).update(stock=F('stock') - quantity)
 
             # Sync FactureProduit fields from allocated lots
-            SaleModifier._sync_fp_lot_info(fp, lot_id, produit, lots_allocated)
+            SaleModifier._sync_fp_lot_info(fp, lot_id, produit, allocated_quantity > 0)
 
         return new_quantity_by_product, new_product_ids_with_allocations
 
     @staticmethod
     def _allocate_product_lots(fp, produit, quantity, lot_id, selling_price):
-        """Alloue les lots pour un FactureProduit. Retourne True si des lots ont été alloués."""
+        """Alloue les lots pour un FactureProduit. Retourne la quantité allouée."""
         if quantity <= 0 or not produit or not produit.use_lot_management:
-            return False
+            return 0
 
         if lot_id:
             try:
@@ -271,11 +371,11 @@ class SaleModifier:
             except (StockLot.DoesNotExist, ValueError, TypeError) as exc:
                 # Id invalide/inexistant : ValueError métier → 400 (au lieu de 500).
                 raise ValueError(f"Lot de stock introuvable ou invalide (id={lot_id}).") from exc
-            LotAllocationService.allocate_specific_lot(fp, target_lot, quantity, selling_price)
-            return True
+            allocation = LotAllocationService.allocate_specific_lot(fp, target_lot, quantity, selling_price)
+            return allocation.quantity if allocation else 0
         else:
-            _, _, used_lot_names = LotAllocationService.allocate_fifo(fp, quantity, selling_price)
-            return len(used_lot_names) > 0
+            allocations, _lots_updated, _used_lot_names = LotAllocationService.allocate_fifo(fp, quantity, selling_price)
+            return sum(alloc.quantity for alloc in allocations)
 
     @staticmethod
     def _sync_fp_lot_info(fp, lot_id, produit, lots_allocated):
