@@ -24,6 +24,7 @@ import {
   CommandSeparator,
 } from '../shadcn/command';
 import { Badge } from '../shadcn/badge';
+import { ProductResultContent, type SearchResult } from '../common/ProductSearch';
 import type { ProduitModel, Client, Facture, Commande, Fournisseur } from '../../types';
 import { formatDate } from '../../utils/dateUtils';
 
@@ -154,12 +155,15 @@ export default function OmnisearchResults({
               <div className="size-8 rounded-lg bg-slate-100 flex items-center justify-center mr-3 group-aria-selected:bg-emerald-100 transition-colors">
                 <PackageSearch className="size-4 text-slate-400 group-aria-selected:text-emerald-700" />
               </div>
-              <div className="flex-1 flex flex-col items-start overflow-hidden">
-                <span className="font-bold truncate w-full group-aria-selected:text-emerald-700" title={prod.name}>{prod.name}</span>
-                <span className="text-caption text-slate-500 font-medium uppercase">
-                  {prod.forme_name} • {prod.rayon_name || prod.groupe_name}
-                </span>
-              </div>
+              <ProductResultContent
+                product={prod as unknown as SearchResult}
+                showPrice={false}
+                extraMeta={[prod.forme_name, !prod.rayon_name ? prod.groupe_name : null].filter(Boolean).length > 0 ? (
+                  <span className="truncate uppercase">
+                    {[prod.forme_name, !prod.rayon_name ? prod.groupe_name : null].filter(Boolean).join(' • ')}
+                  </span>
+                ) : undefined}
+              />
               {prod.selling_price !== undefined && (
                 <Badge variant="outline" className="ml-2 shrink-0 text-xs font-black tracking-tight group-aria-selected:bg-emerald-600 group-aria-selected:text-white group-aria-selected:border-emerald-600 transition-colors">
                   {Number(prod.selling_price).toLocaleString()} F

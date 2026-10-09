@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from django.contrib.auth.models import User
 from django.contrib.postgres.indexes import GinIndex
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db import models
+from django.db import models, transaction
 from django.db.models import DecimalField, F, Sum
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
@@ -163,11 +163,11 @@ class Facture(models.Model):
     )
     deleted_at = models.DateTimeField(null=True, blank=True, help_text="Date/heure de la suppression")
     remise = models.DecimalField(
-        max_digits=12, decimal_places=2, default=0.00,
+        max_digits=12, decimal_places=2, default=Decimal('0.00'),
         validators=[MinValueValidator(Decimal('0'))]
     )
     tva = models.DecimalField(
-        max_digits=5, decimal_places=2, default=19.25,
+        max_digits=5, decimal_places=2, default=Decimal('19.25'),
         validators=[MinValueValidator(Decimal('0')), MaxValueValidator(Decimal('100'))]
     )
     notes = models.TextField(blank=True, null=True)
@@ -177,7 +177,7 @@ class Facture(models.Model):
     points_fidelite_gagnes = models.IntegerField(default=0, validators=[MinValueValidator(0)])
     points_fidelite_utilises = models.IntegerField(default=0, validators=[MinValueValidator(0)])
     montant_fidelite = models.DecimalField(
-        max_digits=10, decimal_places=2, default=0.00,
+        max_digits=10, decimal_places=2, default=Decimal('0.00'),
         validators=[MinValueValidator(Decimal('0'))]
     )
 
@@ -199,17 +199,17 @@ class Facture(models.Model):
         help_text="Version pour optimistic locking (concurrency control)"
     )
     
-    total_ht = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
-    total_tva = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
-    total_ttc = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    total_ht = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    total_tva = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    total_ttc = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
     ticket_session = models.IntegerField(null=True, blank=True, help_text="Numéro de ticket pour la session du jour")
     montant_verse = models.DecimalField(
-        max_digits=12, decimal_places=2, null=True, blank=True, default=0.00,
+        max_digits=12, decimal_places=2, null=True, blank=True, default=Decimal('0.00'),
         validators=[MinValueValidator(Decimal('0'))],
         help_text="Montant total reçu du client (pour ticket de caisse)"
     )
     montant_rendu = models.DecimalField(
-        max_digits=12, decimal_places=2, null=True, blank=True, default=0.00,
+        max_digits=12, decimal_places=2, null=True, blank=True, default=Decimal('0.00'),
         validators=[MinValueValidator(Decimal('0'))],
         help_text="Monnaie rendue au client (pour ticket de caisse)"
     )
@@ -426,14 +426,14 @@ class FactureProduit(models.Model):
         validators=[MinValueValidator(Decimal('0'))]
     )
     discount = models.DecimalField(
-        max_digits=10, decimal_places=2, default=0.00,
+        max_digits=10, decimal_places=2, default=Decimal('0.00'),
         validators=[MinValueValidator(Decimal('0'))],
         help_text="Montant de la remise unitaire"
     )
     tva = models.DecimalField(
         max_digits=5,
         decimal_places=2,
-        default=0.00,
+        default=Decimal('0.00'),
         validators=[MinValueValidator(Decimal('0')), MaxValueValidator(Decimal('100'))],
         help_text="TVA applicable à cette ligne"
     )
@@ -864,15 +864,50 @@ def update_facture_totals_on_change(sender, instance, created, **kwargs):
             instance._skip_recalculate = False
 
 
+class DocumentCounter(models.Model):
+    """Compteur de numérotation par type de document (DEV, FAC, …).
+
+    Les devis et les factures ont chacun leur propre séquence : un devis ne
+    consomme pas de numéro de facture (pas de trou dans la numérotation FAC
+    si le client ne revient jamais), et un devis converti tardivement prend
+    le prochain numéro FAC — l'ordre des numéros reste chronologique.
+    """
+    name = models.CharField(max_length=10, primary_key=True)
+    value = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        verbose_name = "Compteur de documents"
+
+    def __str__(self):
+        return f"{self.name}={self.value}"
+
+
+def next_document_number(prefix: str) -> str:
+    """Incrémente atomiquement le compteur `prefix` et retourne le numéro
+    formaté (ex: DEV-000042).
+
+    La ligne compteur est verrouillée (select_for_update) : deux appels
+    concurrents sont sérialisés — pas de doublon (renforcé par
+    numero_facture unique=True). Les lignes 'DEV'/'FAC' sont créées et
+    amorcées sur le max existant par la migration de création du modèle.
+    """
+    with transaction.atomic():
+        counter = DocumentCounter.objects.select_for_update().get(name=prefix)
+        counter.value += 1
+        counter.save(update_fields=['value'])
+    return f"{prefix}-{counter.value:06d}"
+
+
 @receiver(post_save, sender=Facture)
 def auto_generate_devis_number(sender, instance, created, **kwargs):
     """
     Génère automatiquement un numéro DEV-XXXXXX pour les devis (statut PROF)
-    qui n'ont pas encore de numéro de facture.
+    qui n'ont pas encore de numéro de facture. La séquence DEV- est propre
+    aux devis et indépendante de l'id / de la séquence FAC-.
     Couvre tous les chemins de création (API directe, SaleFinalizer, etc.).
     """
     if created and instance.status == Facture.Status.PROFORMA and not instance.numero_facture:
-        numero = f"DEV-{instance.id:06d}"
+        numero = next_document_number('DEV')
         # Update direct pour éviter de re-déclencher les signaux post_save
         Facture.objects.filter(id=instance.id).update(numero_facture=numero)
         instance.numero_facture = numero

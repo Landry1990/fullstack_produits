@@ -468,18 +468,12 @@ class ClientViewSet(SimpleListCacheMixin, OptimizedSerializerMixin, viewsets.Mod
         Optimisé avec cache Redis (TTL 60s) pour les requêtes répétées.
         """
         client = self.get_object()
-        
-        # Pattern Cache-Aside: vérifier le cache d'abord
-        cached = ClientDebtCache.get_client_debt(client.id)
-        if cached is not None:
-            return Response(cached)
-        
-        # Cache miss: calculer le résultat
-        result = self._compute_unpaid_invoices(client)
-        
-        # Stocker en cache pour les prochaines requêtes
-        ClientDebtCache.set_client_debt(client.id, result)
-        
+
+        # Cache-Aside + verrou anti-stampede (un seul worker calcule sur miss)
+        result = ClientDebtCache.get_cached_debt_or_compute(
+            client.id,
+            lambda: self._compute_unpaid_invoices(client),
+        )
         return Response(result)
 
     @action(detail=False, methods=['post'])

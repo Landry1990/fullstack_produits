@@ -167,8 +167,8 @@ class LigneEcriture(models.Model):
     ecriture = models.ForeignKey(EcritureComptable, on_delete=models.CASCADE, related_name='lignes')
     compte = models.ForeignKey(CompteComptable, on_delete=models.PROTECT, related_name='lignes')
     libelle_ligne = models.CharField(max_length=255, blank=True)
-    debit = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
-    credit = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
+    debit = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'))
+    credit = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'))
 
     class Meta:
         verbose_name = "Ligne d'Écriture"

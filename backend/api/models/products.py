@@ -190,19 +190,19 @@ class Produit(models.Model):
     stock_minimum = models.IntegerField(default=0, validators=[MinValueValidator(0)])
     stock_maximum = models.IntegerField(default=0, validators=[MinValueValidator(0)])
     tva = models.DecimalField(
-        max_digits=5, decimal_places=2, default=0.00,
+        max_digits=5, decimal_places=2, default=Decimal('0.00'),
         validators=[MinValueValidator(Decimal('0')), MaxValueValidator(Decimal('100'))]
     )
     rotation_moyenne = models.DecimalField(
-        max_digits=10, decimal_places=2, default=0.00,
+        max_digits=10, decimal_places=2, default=Decimal('0.00'),
         validators=[MinValueValidator(Decimal('0'))]
     )
     # NOTE: taux_marge / pourcentage_marge peuvent être négatifs (vente à perte)
     # — volontairement non bornés.
-    taux_marge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, editable=False)
-    pourcentage_marge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, editable=False)
+    taux_marge = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'), editable=False)
+    pourcentage_marge = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'), editable=False)
     pmp = models.DecimalField(
-        max_digits=10, decimal_places=2, default=0.00,
+        max_digits=10, decimal_places=2, default=Decimal('0.00'),
         validators=[MinValueValidator(Decimal('0'))],
         help_text="Prix Moyen Pondéré"
     )

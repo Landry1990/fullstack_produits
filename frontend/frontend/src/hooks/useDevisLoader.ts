@@ -4,7 +4,7 @@ import { gooeyToast } from 'goey-toast'
 import { useTranslation } from 'react-i18next'
 import { safeStorage } from '../utils/storage'
 import { generateUUID } from '../utils/uuid'
-import type { ProduitModel, Facture, FactureProduit, LigneFacture } from '../types'
+import type { ProduitModel, Facture, FactureProduit, LigneFacture, StockLot } from '../types'
 
 interface DevisProduit extends FactureProduit {
     stock_lot?: number | string | null
@@ -53,6 +53,8 @@ export function useDevisLoader({ clientsHook, cart, ui }: UseDevisLoaderOptions)
                     clientsHook.setManualClientName(devis.client_name_override)
                 }
 
+                const isDevis = devis.status === 'PROF' || devis.status === 'PROFORMA'
+
                 if (devis.produits && devis.produits.length > 0) {
                     const devisProduits = devis.produits as DevisProduit[]
                     const missingIds = devisProduits
@@ -67,6 +69,42 @@ export function useDevisLoader({ clientsHook, cart, ui }: UseDevisLoaderOptions)
                         } catch { /* fallback individuel géré ci-dessous */ }
                     }
 
+                    // Un devis ne gère pas les lots (pas de déstockage à la
+                    // création) : le lot sera choisi ou alloué en FEFO à la
+                    // conversion. La restauration ne concerne que le rappel
+                    // d'une facture VALIDÉE — son stock est restitué puis
+                    // revalidé, le lot d'origine est restauré s'il est encore
+                    // disponible (sinon AUTO, au lieu d'échouer sur
+                    // « lot insuffisant »).
+                    const todayStr = new Date().toISOString().slice(0, 10)
+                    const lotsById = new Map<number, StockLot>()
+                    if (!isDevis) {
+                        const collectLots = (prod: ProduitModel | null | undefined) => {
+                            prod?.stock_lots?.forEach((l) => { if (l?.id) lotsById.set(Number(l.id), l) })
+                        }
+                        productMap.forEach(collectLots)
+                        devisProduits.forEach((p) => {
+                            if (typeof p.produit === 'object') collectLots(p.produit as ProduitModel)
+                        })
+
+                        const pidsToFetch = new Set<number>()
+                        devisProduits.forEach((p) => {
+                            if (!p.stock_lot || lotsById.has(Number(p.stock_lot))) return
+                            const pid = typeof p.produit === 'object' ? p.produit.id : p.produit
+                            if (pid) pidsToFetch.add(pid)
+                        })
+                        if (pidsToFetch.size > 0) {
+                            await Promise.all([...pidsToFetch].map(async (pid) => {
+                                try {
+                                    const { data } = await api.get('stock-lots/', { params: { produit: pid } })
+                                    const lots: StockLot[] = Array.isArray(data) ? data : data.results || []
+                                    lots.forEach((l) => { if (l?.id) lotsById.set(Number(l.id), l) })
+                                } catch { /* lot considéré indisponible */ }
+                            }))
+                        }
+                    }
+
+                    const droppedLots: string[] = []
                     const lignes: LigneFacture[] = devisProduits.map((p) => {
                         let produitData: ProduitModel
                         if (typeof p.produit === 'object' && p.produit.stock !== undefined) {
@@ -75,7 +113,14 @@ export function useDevisLoader({ clientsHook, cart, ui }: UseDevisLoaderOptions)
                             const produitId = typeof p.produit === 'object' ? p.produit.id : p.produit
                             produitData = productMap.get(produitId) || { id: produitId, name: p.produit_nom || t('messages.product_fallback_name', { id: produitId }), stock: 0, is_deleted: true } as ProduitModel
                         }
-                        const lotId = p.stock_lot ? String(p.stock_lot) : (p.lot || null)
+                        const stockLotId = !isDevis && p.stock_lot ? Number(p.stock_lot) : null
+                        const storedLot = stockLotId ? lotsById.get(stockLotId) : null
+                        const lotAvailable = storedLot != null
+                            && storedLot.quantity_remaining >= p.quantity
+                            && (!storedLot.date_expiration || storedLot.date_expiration >= todayStr)
+                        if (stockLotId && !lotAvailable) {
+                            droppedLots.push(p.lot || `#${stockLotId}`)
+                        }
                         return {
                             lineId: generateUUID(),
                             produit: produitData,
@@ -83,14 +128,17 @@ export function useDevisLoader({ clientsHook, cart, ui }: UseDevisLoaderOptions)
                             prix_unitaire: p.selling_price,
                             remise_produit: '0',
                             total_ligne: p.quantity * Number(p.selling_price),
-                            lotId: lotId,
-                            lotText: p.lot || null,
-                            lotExpiration: p.date_expiration || null,
+                            lotId: lotAvailable ? String(stockLotId) : null,
+                            lotText: lotAvailable ? (p.lot || null) : null,
+                            lotExpiration: lotAvailable ? (p.date_expiration || null) : null,
                             lotSellingPrice: p.selling_price || null,
                             treatment_duration_days: p.treatment_duration_days
                         }
                     })
                     cart.setLignesFacture(lignes)
+                    if (droppedLots.length > 0) {
+                        gooeyToast.info(t('messages.devis_lots_unavailable', { lots: droppedLots.join(', ') }))
+                    }
                 }
 
                 if (devis.remise) {
@@ -102,7 +150,6 @@ export function useDevisLoader({ clientsHook, cart, ui }: UseDevisLoaderOptions)
                     ui.setIsAvoirClient(devis.is_avoir_client)
                 }
 
-                const isDevis = devis.status === 'PROF' || devis.status === 'PROFORMA'
                 const isValidatedOrPaid = devis.status === 'VAL' || devis.status === 'PAY'
                 if ((isDevis || isValidatedOrPaid) && devis.id) {
                     ui.setIsModificationMode(true)

@@ -462,6 +462,26 @@ le client, pas à implémenter sans décision) :
   là → à la validation c'est plus là » (vente faite sur un autre poste
   entre-temps). Le contrôle à la validation reste l'autorité finale.
 
+### P1 — Lots : parité avec la fusion FEFO web (2026-10-09, à discuter)
+
+Contexte : fix web `useCart.addProduit` (2026-10-08) — re-saisie d'un même
+libellé fusionne sur la ligne du lot au lieu de dupliquer, et bascule sur le
+lot FEFO suivant quand le lot est saturé dans le panier.
+
+État mobile : `useCartStore.addProduct` fusionne déjà par `product.id`
+(une ligne par produit, pas de doublon — le bug web n'existe pas ici).
+Mais le modèle diffère et pose deux écarts à arbitrer :
+
+- **Scan datamatrix d'un autre lot** (`addScanResult`) : `addProduct`
+  fusionne la quantité puis `setLot` **écrase** `lotId` de la ligne —
+  vendre 1×lotA + 1×lotB finit en « qté 2, lot B » alors que le web garde
+  une ligne par lot. Question : splitter la ligne par lot (parité web) ou
+  garder le modèle simple ?
+- **Pas de contrôle de capacité par lot** : rien ne compare la quantité de
+  la ligne au `quantity_remaining` du lot choisi (le web ouvre le modal de
+  répartition). Le contrôle à la validation reste l'autorité finale — à
+  voir si ça suffit en pratique.
+
 ## 💡 En réflexion — idées notées, pas encore actées
 
 ### Fusion `mobile-facturation` + `pda-inventaire` (2026-10-05, en attente de tests terrain)

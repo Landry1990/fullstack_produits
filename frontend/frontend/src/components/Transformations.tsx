@@ -7,6 +7,7 @@ import { useConfirm } from '../hooks/useConfirm';
 import { useProductSearch } from '../hooks/useProductSearch';
 import { useSearchNavigation } from '../hooks/useSearchNavigation';
 import PremiumModal from './common/PremiumModal';
+import { ProductResultRow, type SearchResult } from './common/ProductSearch';
 import { Checkbox } from './ui/Checkbox';
 import { EmptyState } from './ui/EmptyState';
 import { Skeleton } from './ui/Skeleton';
@@ -160,45 +161,26 @@ const ProductAutocomplete: React.FC<ProductAutocompleteProps> = ({
 
         {/* Dropdown résultats */}
         {showResults && (
-          <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden max-h-60 overflow-y-auto">
+          <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden max-h-60 overflow-y-auto space-y-0.5 p-1">
             {produits.length === 0 && !loading && (
               <EmptyState compact title={t('common:no_results_found')} className="p-4" />
             )}
             {produits.map((p, idx) => {
               const itemProps = getItemProps(idx);
+              const isActive = Object.keys(itemProps.style || {}).length > 0 || itemProps.className.includes('active');
               return (
-                <div
+                <ProductResultRow
                   key={p.id}
-                  id={itemProps.id}
-                  onMouseEnter={itemProps.onMouseEnter}
-                  className={`px-4 py-3 cursor-pointer border-b border-slate-100 last:border-0 flex items-center gap-3 transition-colors group ${itemProps.className}`}
-                  style={itemProps.style}
+                  product={p as unknown as SearchResult}
+                  active={isActive}
+                  itemProps={itemProps}
                   onClick={() => handleSelect(p)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      handleSelect(p);
-                    }
-                  }}
-                >
-                  <div className="size-8 rounded-lg bg-slate-100 group-hover:bg-emerald-50 flex items-center justify-center text-slate-500 group-hover:text-emerald-600 font-bold text-xs transition-colors"
-                    style={itemProps.style.backgroundColor ? { backgroundColor: 'rgba(255,255,255,0.2)' } : {}}
-                  >
-                    {p.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-sm truncate text-slate-700">{p.name}</div>
-                    <div className="text-caption flex gap-3 text-slate-400">
-                      <span>{t('common:cip')}: {p.cip1 || t('common:not_available')}</span>
-                      <span>{t('common:stock')}: <b>{formatNumber(p.stock)}</b></span>
-                    </div>
-                  </div>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-300 group-hover:text-emerald-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
+                  right={
+                    <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 transition-colors ${isActive ? 'text-white' : 'text-slate-300 group-hover:text-emerald-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                  }
+                />
               );
             })}
           </div>
