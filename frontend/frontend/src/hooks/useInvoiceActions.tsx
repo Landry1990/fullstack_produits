@@ -150,7 +150,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
 
         // Charger détails si manquants
         if (!facture.produits || facture.produits.length === 0) {
-            const toastId = gooeyToast.loading(t('messages.loading_details', { defaultValue: 'Chargement...' }));
+            const toastId = gooeyToast.info(t('messages.loading_details', { defaultValue: 'Chargement...' }), { duration: Infinity });
             try {
                 const response = await api.get(`factures/${facture.id}/`);
                 fullFacture = response.data;
@@ -233,7 +233,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
 
         // Si les produits ne sont pas complets, on charge le détail
         if (!facture.produits || facture.produits.length === 0) {
-            const toastId = gooeyToast.loading(t('messages.loading_details', { defaultValue: 'Chargement...' }));
+            const toastId = gooeyToast.info(t('messages.loading_details', { defaultValue: 'Chargement...' }), { duration: Infinity });
             try {
                 const response = await api.get(`factures/${facture.id}/`);
                 fullFacture = response.data;
@@ -259,7 +259,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
 
         // Si les produits ne sont pas complets, on charge le détail
         if (!facture.produits || facture.produits.length === 0) {
-            const toastId = gooeyToast.loading(t('messages.loading_details', { defaultValue: 'Chargement...' }));
+            const toastId = gooeyToast.info(t('messages.loading_details', { defaultValue: 'Chargement...' }), { duration: Infinity });
             try {
                 const response = await api.get(`factures/${facture.id}/`);
                 fullFacture = response.data;
@@ -302,7 +302,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
 
     // --- GENERER AVOIR ---
     const handleGenerateAvoir = async (facture: Facture) => {
-        const toastId = gooeyToast.loading(t('sales:messages.loading_details', { defaultValue: 'Génération de l\'avoir...' }));
+        const toastId = gooeyToast.info(t('sales:messages.loading_details', { defaultValue: 'Génération de l\'avoir...' }), { duration: Infinity });
         try {
             const response = await api.get(`factures/${facture.id}/generer_avoir/`);
             const avoirData = response.data;

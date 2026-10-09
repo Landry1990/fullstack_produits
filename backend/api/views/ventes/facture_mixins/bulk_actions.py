@@ -138,7 +138,7 @@ class FactureBulkMixin:
         if request.data.get('all_pending'):
             all_pending_qs = Facture.objects.filter(
                 is_active=True,
-                status__in=[Facture.Status.BROUILLON, Facture.Status.PROFORMA, Facture.Status.VALIDEE]
+                status__in=[Facture.Status.BROUILLON, Facture.Status.VALIDEE]
             ).order_by('id')
             total_remaining = all_pending_qs.count()
             if total_remaining > self.MAX_BULK_CANCEL and not batch_size:

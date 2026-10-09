@@ -93,7 +93,7 @@ const _navigate = useNavigate()
     fetchingRef.current = true
     try {
       const params: Record<string, unknown> = {
-        status__in: 'BROU,VAL,PROF',
+        status__in: 'BROU,VAL',
         include_pending: true,
         include_details: true
       }
