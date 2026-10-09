@@ -37,6 +37,7 @@ import LoyaltyConfigModal from './LoyaltyConfigModal';
 import ClientFormModal from './clients/ClientFormModal';
 import PurchaseHistoryDrawer from './clients/PurchaseHistoryDrawer';
 import SelectionHeader from './ui/SelectionHeader';
+import { DropdownMenuItem } from './shadcn/dropdown-menu';
 import PaginationControls from './ui/PaginationControls';
 import { EmptyState } from './ui/EmptyState';
 import { Skeleton } from './ui/Skeleton';
@@ -447,23 +448,13 @@ export default function Clients() {
                 onClear={() => setSelectedIds([])}
                 colSpan={1}
                 actions={
-                  <li>
-                    <a
-                      role="button"
-                      tabIndex={0}
-                      onClick={handleBulkDelete}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          handleBulkDelete();
-                        }
-                      }}
-                      className="text-red-600 hover:bg-red-50 font-medium"
-                    >
-                      <Trash2 className="size-4" />
-                      {t('clients:actions.bulk_delete', { count: selectedIds.length })}
-                    </a>
-                  </li>
+                  <DropdownMenuItem
+                    onSelect={handleBulkDelete}
+                    className="gap-2.5 px-3 py-2 rounded-md cursor-pointer text-red-600 font-semibold focus:bg-red-50 focus:text-red-600 dark:focus:bg-red-950/50"
+                  >
+                    <Trash2 className="size-4" />
+                    {t('clients:actions.bulk_delete', { count: selectedIds.length })}
+                  </DropdownMenuItem>
                 }
              >
                 <></>

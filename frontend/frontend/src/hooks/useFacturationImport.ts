@@ -23,7 +23,7 @@ export function useFacturationImport({ cart, t }: UseFacturationImportOptions) {
             gooeyToast.error(t('facturation:messages.pack_empty'))
             return
         }
-        const toastId = gooeyToast.loading(t('facturation:messages.adding_pack'))
+        const toastId = gooeyToast.info(t('facturation:messages.adding_pack'), { duration: Infinity })
         try {
             const ids = pack.pack_items.map((item: { product: number; quantity: number }) => item.product)
             const { data: products } = await api.post<ProduitModel[]>('produits/bulk-detail/', { ids })
@@ -60,7 +60,7 @@ export function useFacturationImport({ cart, t }: UseFacturationImportOptions) {
 
     // CSV Import
     const handleCsvImport = useCallback(async (file: File) => {
-        const toastId = gooeyToast.loading(t('facturation:messages.csv_loading'));
+        const toastId = gooeyToast.info(t('facturation:messages.csv_loading'), { duration: Infinity });
         try {
             const text = await file.text();
             const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');

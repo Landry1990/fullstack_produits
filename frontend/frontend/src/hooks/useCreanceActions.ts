@@ -240,7 +240,7 @@ export const useCreanceActions = ({
             return;
         }
 
-        const loadingToast = gooeyToast.loading(t('creances:toasts.releve_loading'));
+        const loadingToast = gooeyToast.info(t('creances:toasts.releve_loading'), { duration: Infinity });
         try {
             const releveData = await creanceService.getReleve({
                 client_id: selectedClient,
@@ -275,7 +275,7 @@ export const useCreanceActions = ({
         date_fin?: string;
         history?: boolean;
     }) => {
-        const loadingToast = gooeyToast.loading(t('creances:toasts.excel_loading'));
+        const loadingToast = gooeyToast.info(t('creances:toasts.excel_loading'), { duration: Infinity });
         try {
             const blob = await creanceService.exportExcel(params);
             const url = window.URL.createObjectURL(blob);
