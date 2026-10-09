@@ -6,102 +6,83 @@ from django.views.decorators.cache import cache_page
 from django.views.decorators.vary import vary_on_headers
 from rest_framework.response import Response
 
-from .cache_utils import SearchCache
+from .cache_utils import SearchCache, cache_get_or_compute
 
 
 class CachedSearchMixin:
     """
     Mixin pour ajouter le cache automatique aux recherches de produits.
-    
+
     Usage:
         class ProduitViewSet(CachedSearchMixin, viewsets.ModelViewSet):
             ...
     """
-    
+
     cache_ttl = 60  # 60 secondes — stock doit rester frais pour la facturation
-    
+
     def list(self, request, *args, **kwargs):
         """
-        Override de la méthode list pour ajouter le cache.
+        Override de la méthode list pour ajouter le cache (avec verrou
+        anti-stampede : un seul worker calcule sur miss concurrent).
         """
         # Extraire les paramètres de recherche
         search_query = request.query_params.get('search', '')
         page = request.query_params.get('page', '1')
         page_size = request.query_params.get('page_size', '50')
         ordering = request.query_params.get('ordering', '-created_at')
-        
+
         # Extraire les filtres
         filters = {}
         for key, value in request.query_params.items():
             if key not in ['search', 'page', 'page_size', 'ordering']:
                 filters[key] = value
-        
-        # Si c'est une recherche textuelle, utiliser le cache de recherche
-        # Les requêtes avec seulement des filtres/pagination passent par le cache de liste
-        # pour que page/page_size soient pris en compte dans la clé de cache.
-        if search_query:
-            cached_results = SearchCache.get_search_results(search_query, filters)
-            if cached_results is not None:
-                # Ajouter un header pour indiquer que c'est du cache
-                response = Response(cached_results)
-                response['X-Cache-Hit'] = 'true'
-                return response
-            
-            # Pas en cache, exécuter la requête normale
-            response = super().list(request, *args, **kwargs)
-            
-            # Mettre en cache les résultats
-            SearchCache.set_search_results(
-                search_query, 
-                response.data, 
-                filters,
-                ttl=self.cache_ttl
-            )
-            response['X-Cache-Hit'] = 'false'
-            return response
-        
-        # Pour les listes sans recherche textuelle, utiliser le cache de liste
-        # (gère correctement filtres + pagination)
+
         try:
             page_num = int(page)
             page_size_num = int(page_size)
         except (ValueError, TypeError):
             page_num = 1
             page_size_num = 50
-        
-        if filters:
-            # Cache des requêtes filtrées avec TTL court (60s)
-            filter_cache_key = f"product_filters:{hash(frozenset(filters.items()))}:{page}:{page_size}:{ordering}"
-            from django.core.cache import cache
-            cached_filtered = cache.get(filter_cache_key)
-            if cached_filtered is not None:
-                response = Response(cached_filtered)
-                response['X-Cache-Hit'] = 'true'
-                return response
-            
-            response = super().list(request, *args, **kwargs)
-            cache.set(filter_cache_key, response.data, 60)  # 60s pour les filtres
-            response['X-Cache-Hit'] = 'false'
-            return response
-        else:
-            # Pas de filtres, utiliser le cache de liste standard
-            cached_list = SearchCache.get_product_list(page_num, page_size_num, ordering)
-            if cached_list is not None:
-                response = Response(cached_list)
-                response['X-Cache-Hit'] = 'true'
-                return response
-            
-            response = super().list(request, *args, **kwargs)
-            SearchCache.set_product_list(
-                response.data,
-                page_num,
-                page_size_num,
-                ordering,
-                ttl=self.cache_ttl
+
+        if search_query:
+            # La pagination fait partie de la clé : sans elle, la page 2 d'une
+            # recherche renvoyait les résultats cachés de la page 1.
+            cache_key = SearchCache._generate_cache_key(
+                SearchCache.PREFIX_PRODUCT_SEARCH,
+                query=search_query,
+                filters=filters,
+                page=page_num,
+                page_size=page_size_num,
+                ordering=ordering,
             )
-            response['X-Cache-Hit'] = 'false'
-            return response
-    
+        elif filters:
+            # Clé déterministe (md5) : hash() Python est randomisé par processus.
+            cache_key = SearchCache._generate_cache_key(
+                'product_filters',
+                filters=filters,
+                page=page_num,
+                page_size=page_size_num,
+                ordering=ordering,
+            )
+        else:
+            cache_key = SearchCache._generate_cache_key(
+                SearchCache.PREFIX_PRODUCT_LIST,
+                page=page_num,
+                page_size=page_size_num,
+                ordering=ordering,
+            )
+
+        # super() doit être résolu ici (le 0-arg super ne marche pas dans une closure)
+        parent_list = super().list
+
+        def compute():
+            return parent_list(request, *args, **kwargs).data
+
+        data, hit = cache_get_or_compute(cache_key, compute, self.cache_ttl)
+        response = Response(data)
+        response['X-Cache-Hit'] = 'true' if hit else 'false'
+        return response
+
     def retrieve(self, request, *args, **kwargs):
         """
         Pas de cache sur retrieve : le stock doit être en temps réel
@@ -202,24 +183,30 @@ class SimpleListCacheMixin:
     cache_ttl = 120  # 2 minutes par défaut
     
     def _build_cache_key(self, request):
-        """Génère une clé de cache basée sur l'URL + query params."""
-        query_string = request.GET.urlencode()
-        return f"{self.cache_prefix}_list:{request.path}:{query_string}"
+        """Génère une clé de cache basée sur l'URL + query params (ordre normalisé)."""
+        import hashlib
+        import json
+        # Tri des params : ?a=1&b=2 et ?b=2&a=1 partagent la même entrée.
+        # Hash stable pour borner la longueur des clés.
+        params = sorted(
+            (key, value) for key, values in request.GET.lists() for value in values
+        )
+        params_hash = hashlib.md5(
+            json.dumps(params).encode(), usedforsecurity=False
+        ).hexdigest()
+        return f"{self.cache_prefix}_list:{request.path}:{params_hash}"
     
     def list(self, request, *args, **kwargs):
-        from django.core.cache import cache
-        
         cache_key = self._build_cache_key(request)
-        cached = cache.get(cache_key)
-        
-        if cached is not None:
-            response = Response(cached)
-            response['X-Cache-Hit'] = 'true'
-            return response
-        
-        response = super().list(request, *args, **kwargs)
-        cache.set(cache_key, response.data, self.cache_ttl)
-        response['X-Cache-Hit'] = 'false'
+        # super() doit être résolu ici (le 0-arg super ne marche pas dans une closure)
+        parent_list = super().list
+
+        def compute():
+            return parent_list(request, *args, **kwargs).data
+
+        data, hit = cache_get_or_compute(cache_key, compute, self.cache_ttl)
+        response = Response(data)
+        response['X-Cache-Hit'] = 'true' if hit else 'false'
         return response
     
     def _invalidate_cache(self):

@@ -11,6 +11,7 @@ whenever stock levels change through:
 
 import logging
 
+from django.core.cache import cache
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 
@@ -54,6 +55,13 @@ def invalidate_cache_on_facture_save(sender, instance, created, **kwargs):
     if instance.status in [Facture.Status.VALIDEE, Facture.Status.PAYEE]:
         invalidate_produit_cache()
         DashboardCache.invalidate_on_sale()
+        # Une facture validée/payée change la liste (statut, montant payé) mais
+        # 'factures_list' du SimpleListCacheMixin n'est vidé que via perform_* —
+        # les flux Caisse/SalesService (encaissement) n'y passent pas.
+        try:
+            cache.delete_pattern('factures_list:*')
+        except AttributeError:
+            pass
         logger.debug(f"Cache invalidated after invoice {instance.id} validation/payment")
 
 

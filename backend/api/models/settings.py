@@ -91,7 +91,7 @@ class PharmacySettings(models.Model):
     coefficient_direct_commande = models.DecimalField(
         max_digits=5,
         decimal_places=2,
-        default=1.35,
+        default=Decimal('1.35'),
         validators=[MinValueValidator(Decimal('0.01'))],
         help_text="Coefficient multiplicateur pour les commandes directes (Euro -> Revient)"
     )
@@ -99,7 +99,7 @@ class PharmacySettings(models.Model):
     taux_change_actif = models.DecimalField(
         max_digits=10,
         decimal_places=3,
-        default=655.957,
+        default=Decimal('655.957'),
         validators=[MinValueValidator(Decimal('0.001'))],
         help_text="Taux de change actif pour les commandes directes (Euro -> FCFA). Source de vérité unique."
     )
@@ -108,7 +108,7 @@ class PharmacySettings(models.Model):
     min_margin_threshold = models.DecimalField(
         max_digits=5,
         decimal_places=2,
-        default=1.34,
+        default=Decimal('1.34'),
         validators=[MinValueValidator(Decimal('0.01'))],
         help_text="Taux de marge minimum acceptable pour les commandes (ex: 1.34 = 25% de marge)"
     )
@@ -327,7 +327,7 @@ class PharmacySettings(models.Model):
 
     # --- Seuils d'alertes et de performance configurables ---
     perf_drop_threshold = models.DecimalField(
-        max_digits=3, decimal_places=2, default=0.70,
+        max_digits=3, decimal_places=2, default=Decimal('0.70'),
         validators=[MinValueValidator(Decimal('0')), MaxValueValidator(Decimal('1'))],
         help_text="Seuil de baisse CA pour alerte (0.7 = 30% de baisse)"
     )
@@ -467,32 +467,32 @@ class PharmacySettings(models.Model):
         help_text="Mode d'imposition : marge administrée (pharmacie) ou droit commun"
     )
     taux_accompte_reel = models.DecimalField(
-        max_digits=5, decimal_places=2, default=2.00,
+        max_digits=5, decimal_places=2, default=Decimal('2.00'),
         validators=[MinValueValidator(Decimal('0')), MaxValueValidator(Decimal('100'))],
         help_text="Taux d'accompte mensuel sur CA en régime Réel (2% par défaut)"
     )
     taux_accompte_simplifie = models.DecimalField(
-        max_digits=5, decimal_places=2, default=5.00,
+        max_digits=5, decimal_places=2, default=Decimal('5.00'),
         validators=[MinValueValidator(Decimal('0')), MaxValueValidator(Decimal('100'))],
         help_text="Taux d'accompte mensuel sur CA en régime Simplifié (5% par défaut)"
     )
     taux_cac = models.DecimalField(
-        max_digits=5, decimal_places=2, default=10.00,
+        max_digits=5, decimal_places=2, default=Decimal('10.00'),
         validators=[MinValueValidator(Decimal('0')), MaxValueValidator(Decimal('100'))],
         help_text="Taux CAC (Centimes Additionnels Communaux) appliqué sur l'accompte (10% par défaut)"
     )
     taux_precompte_reel = models.DecimalField(
-        max_digits=5, decimal_places=2, default=1.00,
+        max_digits=5, decimal_places=2, default=Decimal('1.00'),
         validators=[MinValueValidator(Decimal('0')), MaxValueValidator(Decimal('100'))],
         help_text="Taux de précompte sur achats en régime Réel (1% par défaut)"
     )
     taux_precompte_simplifie = models.DecimalField(
-        max_digits=5, decimal_places=2, default=5.00,
+        max_digits=5, decimal_places=2, default=Decimal('5.00'),
         validators=[MinValueValidator(Decimal('0')), MaxValueValidator(Decimal('100'))],
         help_text="Taux de précompte sur achats en régime Simplifié (3-5%, 5% par défaut)"
     )
     taux_marge_brute = models.DecimalField(
-        max_digits=5, decimal_places=2, default=14.00,
+        max_digits=5, decimal_places=2, default=Decimal('14.00'),
         validators=[MinValueValidator(Decimal('0')), MaxValueValidator(Decimal('100'))],
         help_text="Taux sur marge brute en mode marge administrée (14% par défaut)"
     )

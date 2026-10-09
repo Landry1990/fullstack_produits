@@ -7,6 +7,7 @@ import { Loader2 } from 'lucide-react';
 import { Button } from './shadcn/button';
 import { Badge } from './ui/Badge';
 import { useProductSearch } from '../hooks/useProductSearch';
+import { ProductResultContent, type SearchResult } from './common/ProductSearch';
 import type { ProduitModel } from '../types';
 import type { Substance } from '../hooks/useSubstances';
 
@@ -173,27 +174,19 @@ export default function CatalogDCIAddModal({
                 >
                   <input
                     type="checkbox"
-                    className="mt-1 size-4 rounded border-base-300 accent-secondary cursor-pointer"
+                    className="mt-1 size-4 rounded border-base-300 accent-secondary cursor-pointer shrink-0"
                     checked={isSelected}
                     disabled={alreadyLinked}
                     onChange={() => !alreadyLinked && toggleSelect(prod.id)}
                     aria-label={prod.name}
                   />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start">
-                      <h4 className="font-bold text-sm uppercase leading-tight truncate">{prod.name}</h4>
-                      {alreadyLinked && (
-                        <Badge variant="success" size="sm" className="font-bold">{t('products:dci.already_linked')}</Badge>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-3 mt-1 text-xs opacity-60">
-                      <span>{prod.forme_name || t('products:dci.unknown_form')}</span>
-                      <Badge variant={prod.stock > 0 ? 'success' : 'error'} size="sm" className="h-4 px-1 text-micro">
-                        {t('products:dci.in_stock', { count: prod.stock })}
-                      </Badge>
-                      <span className="font-bold text-primary">{prod.selling_price} F</span>
-                    </div>
-                  </div>
+                  <ProductResultContent
+                    product={prod as unknown as SearchResult}
+                    extraMeta={prod.forme_name ? <span className="truncate">{prod.forme_name}</span> : undefined}
+                    badges={alreadyLinked && (
+                      <Badge variant="success" size="sm" className="font-bold shrink-0">{t('products:dci.already_linked')}</Badge>
+                    )}
+                  />
                 </label>
               );
             })

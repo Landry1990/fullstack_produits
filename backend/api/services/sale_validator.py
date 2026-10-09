@@ -23,6 +23,7 @@ from ..models import (
     Promis,
     StockLot,
     StockObligation,
+    next_document_number,
 )
 from .lot_allocation_service import LotAllocationService
 from .promotion_service import PromotionService
@@ -122,10 +123,11 @@ class SaleValidator:
         # 8. Final updates
         facture.status = Facture.Status.VALIDEE
         facture._skip_audit = True
-        # À la validation, remplacer le numéro DEV-XXXXXX par FAC-XXXXXX
-        # (un devis validé devient une facture)
+        # À la validation, remplacer le numéro DEV-XXXXXX par le prochain
+        # FAC-XXXXXX de la séquence factures (un devis validé devient une
+        # facture ; la numérotation reste chronologique et sans trou).
         if not facture.numero_facture or facture.numero_facture.startswith('DEV-'):
-            facture.numero_facture = f"FAC-{facture.id:06d}"
+            facture.numero_facture = next_document_number('FAC')
         if not facture.validated_by:
             facture.validated_by = validation_user
         facture.save(update_fields=[

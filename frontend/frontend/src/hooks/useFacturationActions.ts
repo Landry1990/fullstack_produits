@@ -104,22 +104,17 @@ export function useFacturationActions({
                 const prixUnitaire = Number(ligne.prix_unitaire)
                 const remiseProduit = Number(ligne.remise_produit)
                 const prixNet = prixUnitaire * (1 - remiseProduit / 100)
+                // Pas de lots sur un devis : aucun déstockage n'a lieu, le lot
+                // sera choisi (ou alloué en FEFO) lors de la conversion en facture.
                 return {
                     facture: createdFacture.id,
                     produit: ligne.produit.id,
                     quantity: Number(ligne.quantite),
                     selling_price: prixNet.toString(),
                     discount: (prixUnitaire - prixNet).toFixed(0),
-                    stock_lot: ligne.lotId ? Number(ligne.lotId) : null,
+                    stock_lot: null,
                     lot: null,
                     date_expiration: ligne.produit.expire_date || null,
-                    lot_allocations: ligne.lotAllocations && ligne.lotAllocations.length > 0
-                        ? ligne.lotAllocations.map(a => ({
-                            lot_id: Number(a.lotId),
-                            quantity: Number(a.quantity),
-                            selling_price: a.sellingPrice ? Number(a.sellingPrice) : undefined,
-                        }))
-                        : undefined,
                 }
             })
 

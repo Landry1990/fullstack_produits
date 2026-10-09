@@ -42,11 +42,11 @@ class Commande(models.Model):
         help_text="Type de commande (Locale, Directe ou Divers)"
     )
     taux_change = models.DecimalField(
-        max_digits=10, decimal_places=3, default=655.957,
+        max_digits=10, decimal_places=3, default=Decimal('655.957'),
         validators=[MinValueValidator(Decimal('0.001'))]
     )
     frais_coefficient = models.DecimalField(
-        max_digits=5, decimal_places=2, default=1.00,
+        max_digits=5, decimal_places=2, default=Decimal('1.00'),
         validators=[MinValueValidator(Decimal('0.01'))]
     )
     
@@ -291,11 +291,11 @@ class CommandeProduit(models.Model):
     )
     lot = models.CharField(max_length=20, blank=True, null=True)
     tva = models.DecimalField(
-        max_digits=5, decimal_places=2, default=0.00,
+        max_digits=5, decimal_places=2, default=Decimal('0.00'),
         validators=[MinValueValidator(Decimal('0')), MaxValueValidator(Decimal('100'))]
     )
     selling_price = models.DecimalField(
-        max_digits=10, decimal_places=2, default=0.00,
+        max_digits=10, decimal_places=2, default=Decimal('0.00'),
         validators=[MinValueValidator(Decimal('0'))]
     )
     taux_marge = models.DecimalField(

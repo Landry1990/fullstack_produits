@@ -7,8 +7,10 @@ import { Badge } from '../../shadcn/badge'
 import { EmptyState } from '../../ui/EmptyState'
 import { cn } from '../../../lib/utils'
 import type { ProductSearchProps, SearchMode, SearchResult, PackResult, DciResult } from './types'
+import { ProductResultRow } from './ProductResultRow'
 
 export * from './types'
+export * from './ProductResultRow'
 
 const modeConfig: Record<SearchMode, { icon: React.ReactNode; color: string; label: string }> = {
   products: { icon: <Pill className="size-3.5" />, color: 'emerald', label: 'products' },
@@ -204,8 +206,6 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
     const canSellNegativeStock = skipStockCheck || user?.is_superuser || user?.profile?.can_sell_negative_stock || user?.can_sell_negative_stock
     const isOutOfStock = stock <= 0
     const isBlocked = isOutOfStock && !canSellNegativeStock
-    const isNegativeStock = stock < 0
-    const isZeroStock = stock === 0
     const isLowStock = stock > 0 && stockMin > 0 && stock <= stockMin
 
     const handleClick = () => {
@@ -218,72 +218,36 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
     }
 
     return (
-      <div
+      <ProductResultRow
         key={item.id}
-        {...itemProps}
+        product={item}
+        active={isActive}
+        blocked={isBlocked}
+        itemProps={itemProps}
         onClick={handleClick}
-        style={isActive ? itemProps.style : undefined}
-        className={cn(
-          itemProps.className,
-          "group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all",
-          isActive ? 'bg-blue-500 shadow-md border-l-4 border-l-blue-700' : 'hover:bg-slate-50',
-          isBlocked && !isActive ? 'text-slate-400 cursor-not-allowed' : ''
-        )}
-      >
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <div className={cn(
-              "truncate text-sm",
-              isActive ? 'text-white font-bold' :
-              isNegativeStock ? 'text-red-600 font-medium' :
-              isZeroStock ? 'text-slate-500 font-normal' :
-              'text-slate-800 font-bold'
-            )}>{item.name}</div>
-            {isLowStock && (
-              <Badge variant="secondary" className={cn("text-caption h-4 px-1 shrink-0", isActive ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-amber-100 text-amber-700 border-amber-200')}>
-                {t('facturation:search.low_stock_badge')}
-              </Badge>
-            )}
-            {(item.active_promis_count ?? 0) > 0 && (
-              <Badge variant="secondary" className={cn("text-caption h-4 px-1 shrink-0", isActive ? 'bg-blue-400 text-white border-blue-300' : 'bg-amber-100 text-amber-700 border-amber-200 animate-pulse')}>
-                PROMIS ({item.active_promis_count})
-              </Badge>
-            )}
-            {!!item.has_pending_force && (
-              <Badge variant="secondary" className={cn("text-caption h-4 px-1 shrink-0", isActive ? 'bg-rose-400 text-white border-rose-300' : 'bg-rose-100 text-rose-700 border-rose-200')}>
-                {t('facturation:search.forced_badge')}
-              </Badge>
-            )}
-          </div>
-          {(item.cip1 || item.rayon_name) && (
-            <div className={cn(
-              "text-caption flex gap-1.5 mt-0.5",
-              isActive ? 'text-blue-100' : 'text-slate-400'
-            )}>
-              {item.cip1 && <span className={cn("font-mono px-1 rounded", isActive ? 'bg-white/20' : 'bg-slate-100')}>{item.cip1}</span>}
-              {item.rayon_name && <span>• {item.rayon_name}</span>}
-            </div>
+        badges={<>
+          {isLowStock && (
+            <Badge variant="secondary" className={cn("text-caption h-4 px-1 shrink-0", isActive ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-amber-100 text-amber-700 border-amber-200')}>
+              {t('facturation:search.low_stock_badge')}
+            </Badge>
           )}
-          <div className="text-xs flex gap-3 mt-0.5">
-            <span className={cn(
-              isActive ? 'text-blue-100 font-semibold' :
-              isNegativeStock ? 'text-red-500 font-semibold' :
-              isZeroStock ? 'text-slate-400' :
-              'text-slate-500'
-            )}>
-              {isZeroStock
-                ? t('facturation:search.out_of_stock', { defaultValue: 'Épuisé' })
-                : `${t('facturation:search.stock_label')} ${stock}`}
-            </span>
-            <span className={cn(isActive ? 'text-white font-semibold' : 'text-slate-600 font-medium')}>{formatCurrency(Number(item.selling_price))}</span>
-          </div>
-        </div>
-        {!isBlocked && (
+          {(item.active_promis_count ?? 0) > 0 && (
+            <Badge variant="secondary" className={cn("text-caption h-4 px-1 shrink-0", isActive ? 'bg-blue-400 text-white border-blue-300' : 'bg-amber-100 text-amber-700 border-amber-200 animate-pulse')}>
+              PROMIS ({item.active_promis_count})
+            </Badge>
+          )}
+          {!!item.has_pending_force && (
+            <Badge variant="secondary" className={cn("text-caption h-4 px-1 shrink-0", isActive ? 'bg-rose-400 text-white border-rose-300' : 'bg-rose-100 text-rose-700 border-rose-200')}>
+              {t('facturation:search.forced_badge')}
+            </Badge>
+          )}
+        </>}
+        right={!isBlocked && (
           <Button variant="ghost" size="icon" aria-label={t('common:add')} className={cn("size-8 opacity-0 group-hover:opacity-100", isActive ? 'text-white hover:text-white hover:bg-blue-600' : 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-100')}>
             <Plus className="size-4" />
           </Button>
         )}
-      </div>
+      />
     )
   }
   

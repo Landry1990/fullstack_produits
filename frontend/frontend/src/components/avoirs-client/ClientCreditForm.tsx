@@ -10,10 +10,10 @@ import { Select } from '../shadcn/select';
 import { Textarea } from '../shadcn/textarea';
 import api from '../../services/api';
 import { useProductSearch } from '../../hooks/useProductSearch';
-import { cn } from '../../lib/utils';
 import { formatCurrency as formatCurrencyValue } from '../../utils/formatters';
 import { EmptyState } from '../ui/EmptyState';
 import { Skeleton } from '../ui/Skeleton';
+import { ProductResultRow, type SearchResult } from '../common/ProductSearch';
 import { gooeyToast } from 'goey-toast';
 
 interface FormLine {
@@ -138,7 +138,7 @@ export const ClientCreditForm: React.FC<ClientCreditFormProps> = ({
                     }))
                 );
             }
-        } catch (err: unknown) {
+        } catch {
             gooeyToast.error(t('messages.invoice_load_error'));
         }
     };
@@ -361,7 +361,7 @@ export const ClientCreditForm: React.FC<ClientCreditFormProps> = ({
                     />
                 ) : (
                     <div className="space-y-3">
-                        {lines.map((line, index) => (
+                        {lines.map((line) => (
                             <div
                                 key={line.id}
                                 className="space-y-2 p-3 border border-slate-200 rounded-xl bg-white"
@@ -396,24 +396,24 @@ export const ClientCreditForm: React.FC<ClientCreditFormProps> = ({
                                                 disabled={isSubmitting}
                                             />
                                             {productSearch && !line.produit && (
-                                                <ul role="listbox" className="absolute z-10 w-full bg-white border border-slate-200 rounded-md shadow-lg max-h-40 overflow-auto mt-1">
+                                                <div role="listbox" className="absolute z-10 w-full bg-white border border-slate-200 rounded-md shadow-lg max-h-56 overflow-auto mt-1 p-1 space-y-0.5">
                                                     {productsLoading ? (
-                                                        <li className="px-3 py-2 space-y-2">
+                                                        <div className="px-3 py-2 space-y-2">
                                                             <Skeleton className="h-4 w-3/4" />
                                                             <Skeleton className="h-4 w-1/2" />
-                                                        </li>
+                                                        </div>
                                                     ) : produits.length === 0 ? (
-                                                        <li className="px-3 py-2 text-sm text-slate-500">
+                                                        <div className="px-3 py-2 text-sm text-slate-500">
                                                             {t('form.no_products')}
-                                                        </li>
+                                                        </div>
                                                     ) : (
                                                         produits.map((p) => (
-                                                            <li
+                                                            <ProductResultRow
                                                                 key={p.id}
+                                                                product={p as unknown as SearchResult}
                                                                 role="option"
                                                                 aria-selected={false}
                                                                 tabIndex={0}
-                                                                className="px-3 py-2 hover:bg-slate-50 cursor-pointer text-sm text-slate-700 truncate"
                                                                 onClick={() => handleSelectProduct(line.id, p)}
                                                                 onKeyDown={(e) => {
                                                                     if (e.key === 'Enter' || e.key === ' ') {
@@ -421,12 +421,10 @@ export const ClientCreditForm: React.FC<ClientCreditFormProps> = ({
                                                                         handleSelectProduct(line.id, p);
                                                                     }
                                                                 }}
-                                                            >
-                                                                {p.name}
-                                                            </li>
+                                                            />
                                                         ))
                                                     )}
-                                                </ul>
+                                                </div>
                                             )}
                                         </div>
                                     )}

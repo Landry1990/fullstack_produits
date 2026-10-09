@@ -164,7 +164,7 @@ class StockLot(models.Model):
         help_text="Prix d'achat unitaire effectif (ajusté avec UG)"
     )
     selling_price = models.DecimalField(
-        max_digits=10, decimal_places=2, default=0.00,
+        max_digits=10, decimal_places=2, default=Decimal('0.00'),
         validators=[MinValueValidator(Decimal('0'))],
         help_text="Prix de vente lors de la réception"
     )

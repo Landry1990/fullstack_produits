@@ -150,7 +150,7 @@ class Client(models.Model):
     taux_couverture = models.DecimalField(
         max_digits=5,
         decimal_places=2,
-        default=0.00,
+        default=Decimal('0.00'),
         validators=[MinValueValidator(Decimal('0')), MaxValueValidator(Decimal('100'))],
         help_text="Taux de couverture assurance en % (0-100) pour tiers payant"
     )
@@ -158,7 +158,7 @@ class Client(models.Model):
     remise_automatique = models.DecimalField(
         max_digits=5,
         decimal_places=2,
-        default=0.00,
+        default=Decimal('0.00'),
         validators=[MinValueValidator(0), MaxValueValidator(100)],
         help_text="Pourcentage de remise automatique (0-100%) appliqué à chaque vente",
         verbose_name="Remise automatique (%)"
@@ -167,7 +167,7 @@ class Client(models.Model):
     majoration_pro_pourcentage = models.DecimalField(
         max_digits=5,
         decimal_places=2,
-        default=0.00,
+        default=Decimal('0.00'),
         validators=[MinValueValidator(0), MaxValueValidator(100)],
         help_text="Pourcentage de majoration des prix pour les clients professionnels (compensation délais longs)",
         verbose_name="Majoration Pro (%)"
@@ -175,7 +175,7 @@ class Client(models.Model):
     
     points_fidelite = models.IntegerField(default=0, validators=[MinValueValidator(0)])
     pending_discount = models.DecimalField(
-        max_digits=5, decimal_places=2, default=0.00,
+        max_digits=5, decimal_places=2, default=Decimal('0.00'),
         validators=[MinValueValidator(Decimal('0')), MaxValueValidator(Decimal('100'))],
         help_text="Remise en % acquise pour la prochaine vente"
     )
@@ -187,7 +187,7 @@ class Client(models.Model):
     solde_depot = models.DecimalField(
         max_digits=12, 
         decimal_places=2, 
-        default=0.00,
+        default=Decimal('0.00'),
         help_text="Solde actuel du dépôt/acompte du client"
     )
     
@@ -207,7 +207,7 @@ class Client(models.Model):
     solde_factures = models.DecimalField(
         max_digits=12,
         decimal_places=2,
-        default=0.00,
+        default=Decimal('0.00'),
         help_text="Solde total des factures impayées (denormalisé)",
         verbose_name="Solde factures"
     )
