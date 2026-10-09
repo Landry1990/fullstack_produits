@@ -376,9 +376,20 @@ class SaleFinalizer:
     def _update_existing_facture(existing_id, client_id, client_name_override, ayant_droit_id,
                                   remise_montant, validation_user, poste_vente, poste_caisse_id, centralized,
                                   remise_validation_user=None, prix_validation_user=None):
-        """Met à jour une facture existante (mode re-validation)."""
+        """Met à jour une facture existante (mode re-validation).
+
+        Verrou + garde de statut : seuls BROUILLON et PROFORMA (conversion
+        devis → facture) peuvent être re-finalisés ici. Une facture validée
+        doit passer par SaleModifier (restauration du stock), sinon ses
+        lignes seraient recréées et revalidées → double décrémentation.
+        """
         try:
-            facture = Facture.objects.get(id=existing_id)
+            facture = Facture.objects.select_for_update().get(id=existing_id)
+            if facture.status not in (Facture.Status.BROUILLON, Facture.Status.PROFORMA):
+                raise ValueError(
+                    f"Impossible de re-finaliser la facture #{existing_id} "
+                    f"(statut {facture.get_status_display()})."
+                )
             facture.status = Facture.Status.BROUILLON
             facture.client_id = client_id
             facture.client_name_override = client_name_override

@@ -90,7 +90,7 @@ class LigneInventaire(models.Model):
     quantite_physique = models.IntegerField(default=0, validators=[MinValueValidator(0)])
     ecart = models.IntegerField(default=0, editable=False)
     pmp_snapshot = models.DecimalField(
-        max_digits=10, decimal_places=2, default=0.00,
+        max_digits=10, decimal_places=2, default=Decimal('0.00'),
         validators=[MinValueValidator(Decimal('0'))]
     )
     

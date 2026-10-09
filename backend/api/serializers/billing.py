@@ -229,7 +229,9 @@ class FactureSerializer(serializers.ModelSerializer):
 
     def get_reste_a_payer(self, obj):
         montant_paye = self.get_montant_paye(obj)
-        return obj.total_ttc - montant_paye
+        # Decimal(str(...)) : total_ttc peut être un float sur une instance
+        # fraîchement créée (défaut Python non rechargé depuis la BDD)
+        return Decimal(str(obj.total_ttc or 0)) - montant_paye
 
     def get_is_remise_auto(self, obj):
         if not obj.remise or obj.remise <= 0:
@@ -306,7 +308,7 @@ class FacturePrintSerializer(serializers.ModelSerializer):
 
     def get_part_assurance(self, obj):
         if obj.part_client is not None:
-            return obj.total_ttc - obj.part_client
+            return Decimal(str(obj.total_ttc or 0)) - obj.part_client
         return Decimal('0.00')
 
     def get_vendeur_nom(self, obj):
@@ -406,4 +408,4 @@ class CreanceSerializer(serializers.ModelSerializer):
 
     def get_reste_a_payer(self, obj):
         montant_paye = self.get_montant_paye(obj)
-        return obj.total_ttc - montant_paye
+        return Decimal(str(obj.total_ttc or 0)) - montant_paye

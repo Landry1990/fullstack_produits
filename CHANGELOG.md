@@ -1,5 +1,182 @@
 # Changelog — Fullstack Produits
 
+## 2026-10-09 — 🔢 Numérotations DEV- / FAC- indépendantes (séquences dédiées)
+
+- **Problème** : `DEV-XXXXXX` et `FAC-XXXXXX` étaient dérivés de l'`id` de
+  la facture → un devis jamais converti laissait un **trou** dans la
+  numérotation FAC, et un devis converti tardivement recevait un numéro
+  **antérieur** aux factures validées entre-temps (ordre chronologique
+  cassé — problème fiscal de numérotation séquentielle).
+- **Nouveau** `DocumentCounter` (modèle + migration `0271`) : compteur par
+  préfixe, verrouillé `select_for_update` → incréments sérialisés, pas de
+  doublon (renforcé par `numero_facture unique=True`). Amorcé sur le max
+  des numéros existants (`DEV=25489`, `FAC=25488` en dev).
+- **`next_document_number(prefix)`** dans `models/billing.py` —
+  `transaction.atomic` intégré (utilisable depuis un signal post_save hors
+  transaction comme dans `finalize_sale`).
+- **Devis** : signal `auto_generate_devis_number` → prochain `DEV-` de la
+  séquence devis (au lieu de `DEV-{id}`).
+- **Factures** : `sale_validator` → prochain `FAC-` de la séquence factures
+  à la validation (au lieu de `FAC-{id}`). Un devis converti prend le
+  numéro **suivant** en date réelle — chronologie respectée.
+- **Tests** `test_facturation_contract.py` : conversion vérifie
+  FAC-converti > FAC émise entre-temps ; nouveau test
+  `test_devis_and_facture_have_own_numbering` (DEV-000001/2, FAC-000001
+  indépendants des ids). 45/45 OK (contract + facturation).
+
+## 2026-10-09 — ✨ Devis sans gestion de lots + conversion devis → facture sécurisée
+
+- **Décision métier** : un devis ne gère **pas** les lots — aucun déstockage
+  n'a lieu à sa création, le lot sera choisi (ou alloué en FEFO) lors de la
+  conversion en facture. Plus simple et évite le problème des lots qui
+  bougent entre le devis et le retour du client.
+- **`useFacturationActions.handleProforma`** : `stock_lot`/`lot_allocations`
+  retirés du payload `facture-produits/bulk_create/` — les lignes de devis
+  ne portent plus de lot.
+- **`useDevisLoader.ts`** : au rappel d'un **devis** (PROF), les lots ne sont
+  plus restaurés (`lotId: null` → AUTO/FEFO à la conversion). La restauration
+  ne concerne plus que le rappel d'une **facture validée** (VAL/PAY), avec
+  contrôle de disponibilité — lot encore présent, `quantity_remaining`
+  suffisant, non expiré — sinon AUTO + toast `messages.devis_lots_unavailable`
+  (fr/en) au lieu d'échouer sur « Stock insuffisant dans le lot » (400).
+  Le fallback `p.lot` (nom mis dans `lotId`, champ qui attend un id) supprimé.
+- **`sale_finalizer._update_existing_facture`** :
+  `select_for_update()` + garde de statut — seuls `BROUILLON` et `PROFORMA`
+  peuvent être re-finalisés. Avant, un `existing_id` forgé sur une facture
+  validée aurait supprimé/recréé ses lignes et décrémenté le stock une
+  seconde fois ; et deux conversions simultanées du même devis pouvaient
+  se chevaucher (race).
+- **Tests** `test_facturation_contract.py` (+4, 12/12 OK) :
+  conversion en place DEV→FAC (lignes remplacées pas dupliquées, stock
+  décrémenté une fois, quantité modifiée au retour), lot explicite réalloué
+  à la conversion, double conversion rejetée, `existing_id` sur facture
+  validée rejeté (400).
+
+## 2026-10-09 — ✨ Résultats de recherche produit unifiés (style mobile)
+
+- **Objectif** : reproduire partout le rendu compact des résultats de recherche
+  de `mobile-facturation` (`ProductRow`) : nom lisible selon stock
+  (gras / gris si 0 / rouge si <0) + **une seule ligne meta**
+  `CIP · rayon · stock coloré · prix`.
+- **Nouveau** `components/common/ProductSearch/ProductResultRow.tsx` :
+  - `ProductResultContent` : nom + ligne meta compacte (stock en vert si >0,
+    rouge si <0, « Épuisé » gris si 0, prix en gras émeraude) ; slots
+    `badges`, `extraMeta`, `showPrice`.
+  - `ProductResultRow` : ligne complète cliquable (wrapper + slot `right`,
+    `itemProps` de navigation clavier, états `active`/`blocked`).
+- **`ProductSearch` partagé** (`index.tsx`) : `renderProductItem` délégué à
+  `ProductResultRow` → nouveau rendu propagé d'un coup à **Facturation,
+  Commandes, Promotions, Inventaire, Avoirs** (badges conservés).
+- **Dropdowns custom migrés** :
+  - `Transformations.tsx` (autocomplete source/destination) — avatar et
+    séparateurs remplacés par `ProductResultRow` (+ chevron en `right`).
+  - `ClientCreditForm.tsx` (avoirs clients) — `<li>` texte seul →
+    `ProductResultRow` (stock + prix désormais visibles).
+  - `CatalogDCIAddModal.tsx` — lignes checkbox → `ProductResultContent`
+    (forme galénique en `extraMeta`, badge « déjà lié » conservé).
+  - `OmnisearchResults.tsx` — section produits → `ProductResultContent`
+    (`showPrice=false`, badge prix à droite conservé, stock maintenant
+    affiché).
+- **i18n** : clé `facturation:search.out_of_stock` ajoutée fr (« Épuisé ») /
+  en (« Out of stock ») — elle était utilisée avec `defaultValue` mais absente
+  des locales.
+- **Bonus lint** : 3 erreurs pré-existantes corrigées dans
+  `ClientCreditForm.tsx` (import `cn`, `err` et `index` inutilisés).
+- Vérifs : `tsc --noEmit` propre, eslint propre sur les 6 fichiers,
+  vitest 20/20 (Facturation, Commandes, Avoirs, useProductSearchIndex).
+
+## 2026-10-09 — 🐛 Toast « connexion perdue » ne disparaissait pas au retour réseau
+
+- **Symptôme** : coupure réseau → toast rouge persistant « Connexion réseau
+  perdue » ; au retour du réseau, le toast vert « rétablie » s'affichait mais
+  le rouge restait collé à l'écran.
+- **Cause** (`services/api.ts`) : le toast `'offline-warning'` est créé avec
+  `duration: Infinity` mais le handler `online` ne le fermait jamais (il ne
+  resettait que le flag + affichait le toast de succès).
+- **Fix** : `gooeyToast.dismiss('offline-warning')` +
+  `gooeyToast.dismiss('network-error')` dans le listener `online`
+  (le toast `'network-error'` de l'intercepteur est déjà fermé au premier
+  succès de requête — le dismiss couvre le cas `offline`→`online` direct).
+- ESLint propre. Déployé via `deploy.ps1 -Target frontend`.
+
+## 2026-10-09 — ⚡ Cache : verrou anti-stampede (SET NX) sur les endpoints chauds
+
+- **Nouveau helper `cache_get_or_wait` / `cache_get_or_compute` /
+  `CacheGuard`** (`cache_utils.py`) : sur miss, le premier worker prend un
+  verrou atomique `cache.add` (SET NX, token UUID) et calcule ; les autres
+  attendent le remplissage (backoff exponentiel + jitter, 3s max) puis
+  relisent le cache. À timeout → calcul quand même (le service prime sur la
+  déduplication). Release token-guarded (pas de double-release après
+  expiration du verrou). Testé : 8 threads concurrents → 1 calcul, 7 hits.
+- **Recâblage** : `SimpleListCacheMixin.list` (factures, clients, commandes),
+  `CachedSearchMixin.list` (produits — 3 branches fusionnées en 1),
+  `ClientDebtCache.get_cached_debt_or_compute` (+ `check_unpaid_invoices`),
+  `DashboardCache.get_or_wait` sur les 5 endpoints lourds (stats,
+  stats_heavy, manager_stats, hourly_traffic, revenue_chart),
+  `CommandeViewSet.list` (cache inline).
+- **Bug bonus corrigé** : la clé du cache de recherche produits ignorait la
+  pagination — la page 2+ d'une recherche renvoyait les résultats cachés de
+  la page 1 pendant 60s.
+- Fichiers : `cache_utils.py`, `cache_mixins.py`, `dashboard_cache.py`,
+  `views/clients.py`, `views/dashboard/core.py`,
+  `views/commandes/commandes.py`. Backend redémarré en dev.
+- Tests : 51/51 (`test_facturation` + `test_creances`) et 46/46
+  (`test_dashboard` + `test_dashboard_optimization` + `test_client_financials`).
+
+## 2026-10-09 — ⚡ Cache : correctifs hit-rate et trous d'invalidation
+
+- **`CachedSearchMixin` — clé `product_filters` non déterministe** : la clé
+  utilisait `hash(frozenset(...))`, randomisé par processus → les 4 workers
+  uvicorn généraient 4 clés différentes pour les mêmes filtres (~25% de hit
+  rate + clés mortes dans Redis). Remplacé par
+  `SearchCache._generate_cache_key` (md5 déterministe).
+- **Trou d'invalidation `product_filters:*`** : `invalidate_all_products`
+  (appelé par les signaux vente/commande/ajustement) ne vidait pas le cache
+  des listes filtrées → stock périmé servi jusqu'à 60s. Ajout du pattern
+  dans `invalidate_all_products` (`cache_utils.py`).
+- **`SimpleListCacheMixin._build_cache_key`** : clé = path + query string
+  brute → `?a=1&b=2` et `?b=2&a=1` créaient 2 entrées. Params désormais
+  triés + hash md5 (clé stable et bornée).
+- **`factures_list:*` jamais invalidé hors `perform_*`** : les flux
+  Caisse/SalesService (validation, encaissement) ne passaient pas par le
+  mixin → liste des factures périmée jusqu'à 60s après paiement. Ajout de
+  `delete_pattern('factures_list:*')` dans `invalidate_cache_on_facture_save`
+  (VAL/PAY).
+- Fichiers : `api/cache_mixins.py`, `api/cache_utils.py`,
+  `api/cache_invalidation.py`. Backend redémarré en dev.
+- Tests : 32/32 `test_facturation` OK. Reste à faire (non urgent) :
+  `transaction.on_commit` pour les invalidations, versioned keys (INCR au
+  lieu de SCAN), anti-stampede, code mort (`prod_detail`, `CacheMonitor`).
+
+## 2026-10-09 — 🐛 Devis/proforma : 500 sur `POST /api/factures/` (float − Decimal)
+
+- **Symptôme** : création d'un devis (proforma) → `TypeError: unsupported
+  operand type(s) for -: 'float' and 'decimal.Decimal'` dans
+  `get_reste_a_payer` → HTTP 500. La facture était quand même créée en base
+  (risque de doublons si l'utilisateur retente).
+- **Cause** : les `DecimalField` de `Facture`/`FactureProduit` avaient des
+  défauts Python `float` (`default=0.00`). Sur une instance fraîchement
+  créée (avant rechargement BDD), `total_ttc` restait `0.0` — le serializer
+  faisait `0.0 - Decimal('0.00')`.
+- **Fix** :
+  - `models/billing.py` : défauts passés en `Decimal('0.00')` / `Decimal('19.25')`
+    (remise, tva, montant_fidelite, total_ht/tva/ttc, montant_verse,
+    montant_rendu, discount). Pas de migration : valeurs identiques pour
+    l'autodétecteur (`0.00 == Decimal('0.00')`).
+  - `serializers/billing.py` : `get_reste_a_payer` (×2 : FactureSerializer,
+    CreanceSerializer) et `get_part_assurance` coercent `total_ttc` via
+    `Decimal(str(...))` — défensif pour toute autre source de float.
+- **Passe globale** : même correction des défauts `float` → `Decimal` sur tous
+  les `DecimalField` restants : `stock.py` (1), `products.py` (5),
+  `settings.py` (10), `orders.py` (4), `comptabilite.py` (2),
+  `inventory.py` (1), `clients.py` (6).
+- Migration `0270` générée : 5 `AlterField` **no-op SQL** (uniquement les
+  défauts non représentables en binaire : `655.957`, `1.35`, `1.34`, `0.70` ;
+  `0.00 == Decimal('0.00')` pour l'autodétecteur). Vérifié via `sqlmigrate`.
+- Vérifié en shell Docker : `Facture(status='PROF')` sérialisée sans erreur,
+  `reste_a_payer` correct aussi avec `total_ttc` float forcé.
+  Tests : 23/23 (`test_creances`, `test_caisse_multi_payment`).
+
 ## 2026-10-08 — 🧠 Facturation : re-saisie d'un même libellé — fusion FEFO au lieu de N lignes
 
 - **Symptôme** : saisir/scanner le même produit plusieurs fois affichait N lignes

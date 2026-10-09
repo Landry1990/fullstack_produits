@@ -44,6 +44,25 @@ class DashboardCache:
         sorted_params = json.dumps(params, sort_keys=True)
         param_hash = hashlib.md5(sorted_params.encode(), usedforsecurity=False).hexdigest()[:8]
         return f"{prefix}:{user_id}:{date_str}:{param_hash}"
+
+    # === ANTI-STAMPEDE ===
+    @classmethod
+    def get_or_wait(cls, prefix: str, ttl: int, user_id: int = 0,
+                    date_str: str | None = None, **params):
+        """
+        Cache-aside avec verrou anti-stampede : sur miss, un seul worker
+        calcule, les autres attendent le remplissage puis relisent le cache.
+
+        Usage:
+            guard = DashboardCache.get_or_wait(PREFIX_STATS, ttl, user_id, role=role)
+            if guard.hit:
+                return Response(guard.data)
+            response_data = ...  # calcul
+            guard.publish(response_data)
+        """
+        from .cache_utils import cache_get_or_wait
+        key = cls._generate_key(prefix, user_id, date_str, **params)
+        return cache_get_or_wait(key, ttl)
     
     # === STATS PRINCIPALES ===
     @classmethod

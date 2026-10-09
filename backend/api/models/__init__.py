@@ -20,6 +20,7 @@ from .billing import (
     Caisse,
     ClotureCaisse,
     CouponMonnaie,
+    DocumentCounter,
     Facture,
     FactureProduit,
     FactureProduitAllocation,
@@ -28,6 +29,7 @@ from .billing import (
     Promis,
     RelevePaiement,
     SessionCaisse,
+    next_document_number,
 )
 
 # Clients

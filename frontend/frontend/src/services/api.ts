@@ -56,6 +56,9 @@ let hasShownOfflineToast = false;
 
 window.addEventListener('online', () => {
     hasShownOfflineToast = false;
+    // Fermer les toasts persistants d'erreur réseau (duration: Infinity)
+    gooeyToast.dismiss('offline-warning');
+    gooeyToast.dismiss('network-error');
     gooeyToast.success(t('messages.connection_restored', 'Connexion serveur rétablie.'), {
         id: 'back-online',
         duration: 3000,

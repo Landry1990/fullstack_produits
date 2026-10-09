@@ -3,8 +3,110 @@ Utilitaires de cache pour optimiser les performances des recherches fréquentes.
 """
 import hashlib
 import json
+import random
+import time
+import uuid
 
 from django.core.cache import cache
+
+_LOCK_PREFIX = "__lock__:"
+_DEFAULT_WAIT_TIMEOUT = 3.0
+
+
+class CacheGuard:
+    """
+    Résultat de cache_get_or_wait : soit les données sont déjà en cache
+    (``hit=True``), soit l'appelant doit calculer puis appeler ``publish()``.
+
+    Usage:
+        guard = cache_get_or_wait(key, ttl=60)
+        if guard.hit:
+            return Response(guard.data)
+        data = compute()
+        guard.publish(data)
+    """
+
+    __slots__ = ('key', 'ttl', 'hit', 'data', '_locked', '_token')
+
+    def __init__(self, key, ttl, hit, data, locked, token):
+        self.key = key
+        self.ttl = ttl
+        self.hit = hit
+        self.data = data
+        self._locked = locked
+        self._token = token
+
+    def publish(self, data, ttl=None):
+        """Stocke le résultat calculé en cache puis libère le verrou."""
+        self.data = data
+        cache.set(self.key, data, ttl or self.ttl)
+        self.release()
+
+    def release(self):
+        """Libère le verrou s'il est détenu (token-guarded : on ne libère pas
+        un verrou ré-acquis par un autre worker après expiration)."""
+        if not self._locked:
+            return
+        lock_key = _LOCK_PREFIX + self.key
+        try:
+            if cache.get(lock_key) == self._token:
+                cache.delete(lock_key)
+        finally:
+            self._locked = False
+
+
+def cache_get_or_wait(cache_key, ttl, *, lock_ttl=30.0,
+                      wait_timeout=_DEFAULT_WAIT_TIMEOUT):
+    """
+    Cache-aside avec verrou anti-stampede.
+
+    - Hit → ``CacheGuard(hit=True, data)``.
+    - Miss + verrou acquis (``cache.add`` = SET NX, atomique sur Redis) →
+      ``CacheGuard(hit=False)`` : l'appelant calcule puis ``publish()``.
+    - Verrou déjà détenu → attente du remplissage (backoff + jitter) ;
+      à timeout → ``CacheGuard(hit=False, non verrouillé)`` : l'appelant
+      calcule quand même — le service prime sur la déduplication.
+    """
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return CacheGuard(cache_key, ttl, True, cached, False, None)
+
+    lock_key = _LOCK_PREFIX + cache_key
+    token = uuid.uuid4().hex
+    if cache.add(lock_key, token, lock_ttl):
+        return CacheGuard(cache_key, ttl, False, None, True, token)
+
+    # Un autre worker calcule : attendre qu'il remplisse le cache.
+    deadline = time.monotonic() + wait_timeout
+    delay = 0.05
+    while time.monotonic() < deadline:
+        time.sleep(delay + random.uniform(0, delay))
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return CacheGuard(cache_key, ttl, True, cached, False, None)
+        delay = min(delay * 2, 0.4)
+
+    return CacheGuard(cache_key, ttl, False, None, False, None)
+
+
+def cache_get_or_compute(cache_key, compute, ttl, *, lock_ttl=30.0,
+                         wait_timeout=_DEFAULT_WAIT_TIMEOUT):
+    """
+    Variante callable de ``cache_get_or_wait``.
+    Retourne ``(data, hit)`` — ``hit=True`` si servi depuis le cache.
+    """
+    guard = cache_get_or_wait(
+        cache_key, ttl, lock_ttl=lock_ttl, wait_timeout=wait_timeout
+    )
+    if guard.hit:
+        return guard.data, True
+    try:
+        data = compute()
+        guard.publish(data)
+        return data, False
+    except Exception:
+        guard.release()
+        raise
 
 
 class SearchCache:
@@ -177,6 +279,8 @@ class SearchCache:
             cache.delete_pattern(f"{cls.PREFIX_PRODUCT_SEARCH}:*")  # type: ignore[attr-defined]
             cache.delete_pattern(f"{cls.PREFIX_PRODUCT_LIST}:*")  # type: ignore[attr-defined]
             cache.delete_pattern(f"{cls.PREFIX_PRODUCT_DETAIL}:*")  # type: ignore[attr-defined]
+            # Listes filtrées du CachedSearchMixin (stock inclus → même fraîcheur)
+            cache.delete_pattern("product_filters:*")  # type: ignore[attr-defined]
             # Clear old styles if they exist
             cache.delete_pattern("produit_search_*")  # type: ignore[attr-defined]
             cache.delete('produit_list')
@@ -328,22 +432,18 @@ class ClientDebtCache:
             cache.clear()
     
     @classmethod
-    def get_cached_debt_or_compute(cls, client_id: int, compute_func) -> dict:
+    def get_cached_debt_or_compute(cls, client_id: int, compute_func, ttl: int | None = None) -> dict:
         """
-        Pattern: Cache-Aside. Récupère du cache ou calcule et stocke.
-        
+        Pattern: Cache-Aside avec verrou anti-stampede. Récupère du cache ou
+        calcule et stocke (un seul worker calcule sur miss concurrent).
+
         Args:
             client_id: ID du client
             compute_func: Fonction à appeler si pas en cache (doit retourner un dict)
-        
+
         Returns:
             Données de dette (depuis cache ou calculées)
         """
-        cached = cls.get_client_debt(client_id)
-        if cached is not None:
-            return cached
-        
-        # Cache miss: calculer
-        result = compute_func()
-        cls.set_client_debt(client_id, result)
-        return result
+        cache_key = f"{cls.PREFIX_CLIENT_DEBT}:{client_id}"
+        data, _hit = cache_get_or_compute(cache_key, compute_func, ttl or cls.DEBT_TTL)
+        return data

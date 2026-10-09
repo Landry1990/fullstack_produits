@@ -137,12 +137,12 @@ class CommandeViewSet(
         Retourne la liste paginée avec des compteurs par statut indépendants de la pagination.
         Cache de 120s via SimpleListCacheMixin.
         """
-        from django.core.cache import cache as django_cache
+        from ...cache_utils import cache_get_or_wait
 
         cache_key = self._build_cache_key(request)
-        cached = django_cache.get(cache_key)
-        if cached is not None:
-            response = Response(cached)
+        guard = cache_get_or_wait(cache_key, self.cache_ttl)
+        if guard.hit:
+            response = Response(guard.data)
             response['X-Cache-Hit'] = 'true'
             return response
 
@@ -177,7 +177,7 @@ class CommandeViewSet(
                 'status_counts': status_counts,
             })
 
-        django_cache.set(cache_key, response.data, self.cache_ttl)
+        guard.publish(response.data)
         response['X-Cache-Hit'] = 'false'
         return response
 

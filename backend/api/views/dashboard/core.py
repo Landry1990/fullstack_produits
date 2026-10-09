@@ -74,9 +74,12 @@ class DashboardCoreMixin(viewsets.ViewSet):
     
         # Cache: 30s pour les stats temps réel (CA, ventes, stock)
         user_id = request.user.id if request.user.is_authenticated else 0
-        cached = DashboardCache.get_stats(user_id, role)
-        if cached is not None:
-            return Response(cached)
+        guard = DashboardCache.get_or_wait(
+            DashboardCache.PREFIX_STATS, DashboardCache.STATS_FAST_TTL,
+            user_id, role=role,
+        )
+        if guard.hit:
+            return Response(guard.data)
     
         # 1. Combined Global & User Metrics (Factures)
         global_stats = {}
@@ -235,8 +238,8 @@ class DashboardCoreMixin(viewsets.ViewSet):
             })
         
         # Mettre en cache (30s pour les stats temps réel)
-        DashboardCache.set_stats(user_id, role, response_data, ttl=DashboardCache.STATS_FAST_TTL)
-    
+        guard.publish(response_data)
+
         return Response(response_data)
     
     @action(detail=False, methods=['get'])
@@ -249,9 +252,11 @@ class DashboardCoreMixin(viewsets.ViewSet):
         user_id = request.user.id if request.user.is_authenticated else 0
         
         # Cache: 5 min pour les stats lourdes
-        cached = DashboardCache.get_heavy_stats(user_id)
-        if cached is not None:
-            return Response(cached)
+        guard = DashboardCache.get_or_wait(
+            DashboardCache.PREFIX_HEAVY, DashboardCache.HEAVY_STATS_TTL, user_id,
+        )
+        if guard.hit:
+            return Response(guard.data)
         
         # 1. Today's Margin
         from ...services.margin_service import MarginService
@@ -299,7 +304,7 @@ class DashboardCoreMixin(viewsets.ViewSet):
             'dormant_stock': dormant_stock_data
         }
         
-        DashboardCache.set_heavy_stats(user_id, response_data)
+        guard.publish(response_data)
         return Response(response_data)
     
     @action(detail=False, methods=['get'])
@@ -315,9 +320,12 @@ class DashboardCoreMixin(viewsets.ViewSet):
 
         # Cache: 60s pour les stats manager (KPIs changent peu dans la minute)
         user_id = request.user.id if request.user.is_authenticated else 0
-        cached = DashboardCache.get_manager_stats(user_id)
-        if cached is not None:
-            return Response(cached)
+        guard = DashboardCache.get_or_wait(
+            DashboardCache.PREFIX_MANAGER_STATS, DashboardCache.ALERTS_TTL,
+            user_id,
+        )
+        if guard.hit:
+            return Response(guard.data)
     
         # 1. Basic dates
         now = timezone.localtime(timezone.now())
@@ -630,7 +638,7 @@ class DashboardCoreMixin(viewsets.ViewSet):
             },
             'alerts': alerts
         }
-        DashboardCache.set_manager_stats(user_id, response_data, ttl=DashboardCache.ALERTS_TTL)
+        guard.publish(response_data, ttl=DashboardCache.ALERTS_TTL)
         return Response(response_data)
     
     @action(detail=False, methods=['get'])
@@ -672,9 +680,12 @@ class DashboardCoreMixin(viewsets.ViewSet):
 
         # Cache: 5 min pour le trafic horaire
         user_id = request.user.id if request.user.is_authenticated else 0
-        cached = DashboardCache.get_hourly_traffic(user_id)
-        if cached is not None:
-            return Response(cached)
+        guard = DashboardCache.get_or_wait(
+            DashboardCache.PREFIX_HOURLY_TRAFFIC, DashboardCache.CHARTS_TTL,
+            user_id,
+        )
+        if guard.hit:
+            return Response(guard.data)
 
         settings = PharmacySettings.objects.first()
         days_count = settings.traffic_analysis_days if (settings and settings.traffic_analysis_days) else 30
@@ -731,7 +742,7 @@ class DashboardCoreMixin(viewsets.ViewSet):
             for h in range(24)
         ]
     
-        DashboardCache.set_hourly_traffic(user_id, response_data)
+        guard.publish(response_data)
         return Response(response_data)
     
     @action(detail=False, methods=['get'])
@@ -739,9 +750,12 @@ class DashboardCoreMixin(viewsets.ViewSet):
         """Returns daily revenue for the last 7 days in format expected by frontend."""
         # Cache: 5 min pour le graphique de CA
         user_id = request.user.id if request.user.is_authenticated else 0
-        cached = DashboardCache.get_revenue_chart(user_id)
-        if cached is not None:
-            return Response(cached)
+        guard = DashboardCache.get_or_wait(
+            DashboardCache.PREFIX_REVENUE_CHART, DashboardCache.CHART_FAST_TTL,
+            user_id, period='7d',
+        )
+        if guard.hit:
+            return Response(guard.data)
 
         end_date = timezone.localtime(timezone.now())
         start_date = end_date - timedelta(days=6)  # 7 days including today
@@ -812,7 +826,7 @@ class DashboardCoreMixin(viewsets.ViewSet):
             'marges_pct': marges_pct_data,
         }
         # Cache 45s : le graphique change souvent mais ne mérite pas une requête par seconde
-        DashboardCache.set_revenue_chart(user_id, '7d', response_data, ttl=DashboardCache.CHART_FAST_TTL)
+        guard.publish(response_data)
         return Response(response_data)
     
     @action(detail=False, methods=['get'])
