@@ -5,10 +5,30 @@ import { useCart } from '../useCart'
 import { useAuth } from '../../context/AuthContext'
 import { safeStorage } from '../../utils/storage'
 import { generateUUID } from '../../utils/uuid'
+import api from '../../services/api'
 
 // 1. Mocks
 vi.mock('../../context/AuthContext', () => ({
     useAuth: vi.fn()
+}))
+
+vi.mock('../../services/api', () => ({
+    default: {
+        get: vi.fn(),
+        post: vi.fn(),
+        put: vi.fn(),
+        delete: vi.fn(),
+    }
+}))
+
+vi.mock('goey-toast', () => ({
+    gooeyToast: Object.assign(vi.fn(), {
+        error: vi.fn(),
+        success: vi.fn(),
+        warning: vi.fn(),
+        info: vi.fn(),
+    }),
+    GooeyToaster: () => null
 }))
 
 vi.mock('../../utils/storage', () => ({
@@ -197,5 +217,146 @@ describe('useCart Hook - Persistance Multi-Utilisateur', () => {
         // cartStats reflete les 2 lignes
         expect(result.current.cartStats.totalLines).toBe(2)
         expect(result.current.cartStats.totalQty).toBe(5)
+    })
+})
+
+describe('useCart - addProduit : fusion intelligente des scans répétés', () => {
+    const produit = { id: 5, name: 'Cifran 500mg', selling_price: '7000', cost_price: '3000', stock: 20, tva: 0 }
+    const lotA = { id: 11, lot: 'LOT-A', date_expiration: '2030-01-01', quantity_remaining: 2, selling_price: '5100' }
+    const lotB = { id: 12, lot: 'LOT-B', date_expiration: '2031-01-01', quantity_remaining: 10, selling_price: '5200' }
+
+    beforeEach(() => {
+        vi.clearAllMocks()
+        vi.mocked(useAuth).mockReturnValue({ user: { id: 1 } } as unknown)
+        // Store localStorage frais par test — sinon le panier persisté du test
+        // précédent est réhydraté au renderHook (clé activeCartLignes_1).
+        const store: Record<string, string> = {}
+        vi.mocked(safeStorage.getItem).mockImplementation((key) => store[key] || null)
+        vi.mocked(safeStorage.setItem).mockImplementation((key, value) => { store[key] = value })
+        vi.mocked(safeStorage.removeItem).mockImplementation((key) => { delete store[key] })
+    })
+
+    const mockApiGet = (fullProduit: unknown, lots: unknown[] = []) => {
+        vi.mocked(api.get).mockImplementation((url: string) => {
+            if (url.startsWith('produits/')) return Promise.resolve({ data: fullProduit })
+            if (url.startsWith('stock-lots/')) return Promise.resolve({ data: lots })
+            return Promise.resolve({ data: {} })
+        })
+    }
+
+    it('2 scans du même produit à prix par lot → 1 seule ligne, quantité 2, même lot', async () => {
+        mockApiGet(produit, [lotA, lotB])
+        const { result } = renderHook(() => useCart())
+
+        await act(async () => { await result.current.addProduit(produit as never) })
+        await act(async () => { await result.current.addProduit(produit as never) })
+
+        const lignes = result.current.lignesFacture
+        expect(lignes).toHaveLength(1)
+        expect(lignes[0].quantite).toBe(2)
+        expect(lignes[0].lotId).toBe('11')
+        expect(lignes[0].lotAllocations).toEqual([
+            { lotId: 11, lotText: 'LOT-A', lotExpiration: '2030-01-01', quantity: 2, sellingPrice: '5100' }
+        ])
+    })
+
+    it('au-delà de la capacité du 1er lot FEFO, le scan bascule sur le lot suivant', async () => {
+        mockApiGet(produit, [lotA, lotB])
+        const { result } = renderHook(() => useCart())
+
+        // lotA capacité 2 : scan1→A×1, scan2→A×2, scan3→B×1
+        await act(async () => { await result.current.addProduit(produit as never) })
+        await act(async () => { await result.current.addProduit(produit as never) })
+        await act(async () => { await result.current.addProduit(produit as never) })
+
+        const lignes = result.current.lignesFacture
+        expect(lignes).toHaveLength(2)
+        expect(lignes[0].lotId).toBe('11')
+        expect(lignes[0].quantite).toBe(2)
+        expect(lignes[1].lotId).toBe('12')
+        expect(lignes[1].quantite).toBe(1)
+        expect(lignes[1].prix_unitaire).toBe('5200')
+
+        // scan4 → le lot B a encore de la capacité → fusion dans sa ligne
+        await act(async () => { await result.current.addProduit(produit as never) })
+        const lignes2 = result.current.lignesFacture
+        expect(lignes2).toHaveLength(2)
+        expect(lignes2[1].lotId).toBe('12')
+        expect(lignes2[1].quantite).toBe(2)
+        expect(lignes2[1].lotAllocations?.[0].quantity).toBe(2)
+    })
+
+    it('produit sans prix par lot : 2 scans → 1 ligne, quantité 2', async () => {
+        // Des lots existent mais aucun n'a de selling_price → pas d'allocation auto
+        const lotsSansPrix = [{ id: 20, lot: 'L1', date_expiration: '2030-01-01', quantity_remaining: 5, selling_price: null }]
+        mockApiGet(produit, lotsSansPrix)
+        const { result } = renderHook(() => useCart())
+
+        await act(async () => { await result.current.addProduit(produit as never) })
+        await act(async () => { await result.current.addProduit(produit as never) })
+
+        const lignes = result.current.lignesFacture
+        expect(lignes).toHaveLength(1)
+        expect(lignes[0].quantite).toBe(2)
+        expect(lignes[0].lotId).toBeNull()
+    })
+
+    it('produit sans prix par lot déjà au panier sur un lot manuel → incrémente cette ligne', async () => {
+        mockApiGet(produit, [])
+        const { result } = renderHook(() => useCart())
+
+        act(() => {
+            result.current.setLignesFacture([{
+                lineId: 'line-manual',
+                produit,
+                quantite: 1,
+                prix_unitaire: '6000',
+                remise_produit: '0',
+                total_ligne: 6000,
+                lotId: '99',
+                lotText: 'LOT-MANUEL',
+                lotExpiration: null,
+                lotSellingPrice: '6000',
+                lotAllocations: [{ lotId: '99', lotText: 'LOT-MANUEL', quantity: 1, sellingPrice: '6000' }],
+            } as unknown])
+        })
+
+        await act(async () => { await result.current.addProduit(produit as never) })
+
+        const lignes = result.current.lignesFacture
+        expect(lignes).toHaveLength(1)
+        expect(lignes[0].lineId).toBe('line-manual')
+        expect(lignes[0].quantite).toBe(2)
+        expect(lignes[0].lotId).toBe('99')
+        expect(lignes[0].lotAllocations?.[0].quantity).toBe(2)
+        // Prix du lot manuel conservé
+        expect(lignes[0].prix_unitaire).toBe('6000')
+    })
+
+    it('ne fusionne pas avec une ligne promis du même produit', async () => {
+        mockApiGet(produit, [])
+        const { result } = renderHook(() => useCart())
+
+        act(() => {
+            result.current.setLignesFacture([{
+                lineId: 'line-promis',
+                produit,
+                quantite: 5,
+                prix_unitaire: '7000',
+                remise_produit: '0',
+                total_ligne: 35000,
+                lotId: null,
+                isPromis: true,
+                promisQuantity: 3,
+            } as unknown])
+        })
+
+        await act(async () => { await result.current.addProduit(produit as never) })
+
+        const lignes = result.current.lignesFacture
+        expect(lignes).toHaveLength(2)
+        expect(lignes[0].lineId).toBe('line-promis')
+        expect(lignes[0].quantite).toBe(5)
+        expect(lignes[1].quantite).toBe(1)
     })
 })
