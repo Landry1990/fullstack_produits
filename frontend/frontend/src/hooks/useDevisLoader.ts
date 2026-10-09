@@ -29,14 +29,22 @@ export interface UseDevisLoaderOptions {
         setOriginalTotalTtc: (v: number) => void
         setIsAvoirClient?: (v: boolean) => void
     }
+    /**
+     * N'hydrater qu'une fois le poste de vente actif : quand le modal forcé
+     * « Ouvrir un point de vente » est affiché, le flux d'ouverture remet à
+     * plat l'écran et effacerait un panier hydraté trop tôt. Sans poste
+     * actif, `devis_to_load` reste en stockage → re-proposé ensuite.
+     */
+    isPosteActive?: boolean
 }
 
-export function useDevisLoader({ clientsHook, cart, ui }: UseDevisLoaderOptions) {
+export function useDevisLoader({ clientsHook, cart, ui, isPosteActive = true }: UseDevisLoaderOptions) {
     const { t } = useTranslation('facturation')
     const hasLoadedDevisRef = useRef(false)
 
     useEffect(() => {
         const loadDevis = async () => {
+            if (!isPosteActive) return
             if (hasLoadedDevisRef.current) return
             const devisString = safeStorage.getItem('devis_to_load', 'local')
             if (!devisString) return
@@ -174,5 +182,5 @@ export function useDevisLoader({ clientsHook, cart, ui }: UseDevisLoaderOptions)
         }
         loadDevis()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
+    }, [isPosteActive])
 }

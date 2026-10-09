@@ -212,16 +212,7 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
         poste.montant_total_encaisse = None
         poste.save()
 
-        # Rattacher les factures en attente sans poste de vente
-        factures_rattachees = Facture.objects.filter(
-            status=Facture.Status.PROFORMA,
-            poste_vente__isnull=True,
-            is_active=True
-        ).update(poste_vente=poste)
-
-        data = self.get_serializer(poste).data
-        data['factures_en_attente_rattachees'] = factures_rattachees
-        return Response(data)
+        return Response(self.get_serializer(poste).data)
 
     @action(detail=True, methods=['post'])
     @transaction.atomic
@@ -275,16 +266,7 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
             mode_pos=False
         )
 
-        # Rattacher les factures en attente (PROF) sans poste de vente assigné
-        factures_rattachees = Facture.objects.filter(
-            status=Facture.Status.PROFORMA,
-            poste_vente__isnull=True,
-            is_active=True
-        ).update(poste_vente=poste)
-
-        data = self.get_serializer(poste).data
-        data['factures_en_attente_rattachees'] = factures_rattachees
-        return Response(data)
+        return Response(self.get_serializer(poste).data)
 
     @action(detail=True, methods=['post'])
     @transaction.atomic

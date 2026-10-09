@@ -1,5 +1,55 @@
 # Changelog — Fullstack Produits
 
+## 2026-10-09 — 🐛 Rappel devis effacé à l'ouverture du point de vente
+
+- **Symptôme** : devis chargé en facturation (« Charger en facturation »),
+  panier rempli en mode modification → à la sélection du point de vente
+  (modal forcé quand aucun poste actif), tout s'effaçait.
+- **Fix (ordre garanti)** : `useDevisLoader` n'hydrate plus le panier tant
+  qu'aucun poste de vente n'est actif (`isPosteActive`). Le devis se charge
+  **après** la fermeture du modal d'ouverture → plus rien ne peut l'écraser.
+  Cas inchangé : poste déjà actif → hydratation immédiate au montage. Si
+  l'utilisateur quitte sans choisir de poste, `devis_to_load` reste en
+  stockage → re-proposé à la prochaine visite.
+- Fichiers : `hooks/useDevisLoader.ts` (option `isPosteActive`, effet
+  re-déclenché sur activation), `hooks/useFacturationState.ts` (passe
+  `Boolean(multiCaisse.myActivePoste)`).
+- Test : `hooks/__tests__/useDevisLoaderPosteWipe.test.tsx` — vérifie que
+  sans poste le panier reste vide et `devis_to_load` conservé, puis que
+  l'hydratation se fait après `openPoste` (panier + mode modification).
+
+## 2026-10-09 — 🐛 Crash `gooeyToast.loading` (méthode supprimée de goey-toast)
+
+- **Symptôme** : « Charger en facturation » (rappel devis depuis Ventes) ne
+  faisait rien — `TypeError: (intermediate value).loading is not a function`
+  avant `navigate`. Idem pour ticket/duplication/avoir depuis Ventes, relevé/
+  export Excel créances, import pack/CSV en facturation.
+- **Cause** : `goey-toast` n'exporte plus `.loading()` ; seuls
+  `success/error/warning/info/promise/dismiss/update` existent.
+- **Fix** : les 8 appels `gooeyToast.loading(msg)` → `gooeyToast.info(msg,
+  { duration: Infinity })` — l'id retourné permet toujours
+  `gooeyToast.dismiss(id)` et le remplacement via `{ id: toastId }` sur
+  `success`/`error`.
+- Fichiers : `useInvoiceActions.tsx` (×4), `useCreanceActions.ts` (×2),
+  `useFacturationImport.ts` (×2).
+
+## 2026-10-09 — 💄 Menu d'actions de sélection migré vers shadcn DropdownMenu
+
+- **Avant** : dropdown « Actions » des sélections en masse = `<ul><li><a>`
+  custom (click-outside et clavier gérés à la main, items plats, pas de
+  portal → risque de clipping dans les `overflow`, look DaisyUI).
+- **`ui/SelectionHeader.tsx`** : le `<ul>` maison est remplacé par
+  `DropdownMenu`/`DropdownMenuTrigger`/`DropdownMenuContent` shadcn
+  (Radix) — focus trap, navigation clavier, fermeture Échap/clic extérieur
+  et positionnement via portal gérés nativement. Le composant attend
+  désormais des primitives `DropdownMenuItem` en `actions`.
+- **`sales/SalesTable.tsx`** (`BulkActionsMenu`) : items convertis en
+  `DropdownMenuItem`/`DropdownMenuLabel`/`DropdownMenuSeparator`
+  (`onSelect` Radix au lieu de `onClick` + keydown maison), classes
+  mutualisées (`menuItemClass`, `menuItemDangerClass`).
+- **`Clients.tsx`** : item bulk-delete converti de la même façon.
+- Le séparateur avant « Supprimer » passe par `DropdownMenuSeparator`.
+
 ## 2026-10-09 — 🔢 Numérotations DEV- / FAC- indépendantes (séquences dédiées)
 
 - **Problème** : `DEV-XXXXXX` et `FAC-XXXXXX` étaient dérivés de l'`id` de

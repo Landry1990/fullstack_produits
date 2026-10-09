@@ -183,8 +183,8 @@ export function useFacturationState() {
   // --- Multi-Caisse ---
   const multiCaisse = useMultiCaisse({})
 
-  // --- Devis Loader (on mount) ---
-  useDevisLoader({ clientsHook, cart, ui })
+  // --- Devis Loader : attend qu'un poste de vente soit actif pour hydrater ---
+  useDevisLoader({ clientsHook, cart, ui, isPosteActive: Boolean(multiCaisse.myActivePoste) })
 
   // --- Recall invoice ---
   const onInvoiceLoaded = useCallback(async (invoice: Facture) => {

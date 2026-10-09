@@ -8,7 +8,15 @@ import ActionIcon from '../ui/ActionIcon';
 import SelectionHeader from '../ui/SelectionHeader';
 import { EmptyState } from '../ui/EmptyState';
 import SkeletonTable from '../ui/SkeletonTable';
+import {
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+} from '../shadcn/dropdown-menu';
 import { cn } from '../../lib/utils';
+
+const menuItemClass = 'gap-2.5 px-3 py-2 rounded-md cursor-pointer';
+const menuItemDangerClass = cn(menuItemClass, 'text-red-600 font-semibold focus:bg-red-50 focus:text-red-600 dark:focus:bg-red-950/50');
 
 // Composant séparé pour éviter les re-renders inutiles
 interface BulkActionsMenuProps {
@@ -31,42 +39,35 @@ const BulkActionsMenu: React.FC<BulkActionsMenuProps> = React.memo(({
 }) => {
     const { t } = useTranslation(['sales', 'common']);
 
-    const handleMenuKeyDown = (e: React.KeyboardEvent<HTMLAnchorElement>) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            e.currentTarget.click();
-        }
-    };
-
     if (selectedIds.length === 1) {
         const selectedFacture = factures.find(f => f.id === selectedIds[0]);
         if (!selectedFacture) return null;
         return (
             <>
-                <li className="text-caption font-medium text-slate-500 px-4 py-2 uppercase tracking-widest">{t('common:single_selection', { defaultValue: 'Sélection' })}</li>
-                <li><a role="menuitem" tabIndex={0} onKeyDown={handleMenuKeyDown} onClick={() => onView(selectedFacture)} className="gap-3 py-3"><Eye className="size-4 text-slate-500" />{t('common:details')}</a></li>
-                <li><a role="menuitem" tabIndex={0} onKeyDown={handleMenuKeyDown} onClick={() => onPrint(selectedFacture)} className="gap-3 py-3"><Printer className="size-4 text-emerald-600" />{t('sales:print.a4')}</a></li>
-                <li><a role="menuitem" tabIndex={0} onKeyDown={handleMenuKeyDown} onClick={() => onPrintTicket(selectedFacture)} className="gap-3 py-3"><Receipt className="size-4 text-emerald-600" />{t('sales:print.ticket')}</a></li>
-                <li><a role="menuitem" tabIndex={0} onKeyDown={handleMenuKeyDown} onClick={() => onPrintBL(selectedFacture)} className="gap-3 py-3"><Truck className="size-4 text-emerald-600" />{t('sales:print.delivery_note')}</a></li>
-                <li><a role="menuitem" tabIndex={0} onKeyDown={handleMenuKeyDown} onClick={() => onDuplicate(selectedFacture)} className="gap-3 py-3"><Copy className="size-4 text-blue-500" />{t('common:duplicate', { defaultValue: 'Dupliquer' })}</a></li>
+                <DropdownMenuLabel className="text-caption font-medium text-slate-500 uppercase tracking-widest">{t('common:single_selection', { defaultValue: 'Sélection' })}</DropdownMenuLabel>
+                <DropdownMenuItem className={menuItemClass} onSelect={() => onView(selectedFacture)}><Eye className="size-4 text-slate-500" />{t('common:details')}</DropdownMenuItem>
+                <DropdownMenuItem className={menuItemClass} onSelect={() => onPrint(selectedFacture)}><Printer className="size-4 text-emerald-600" />{t('sales:print.a4')}</DropdownMenuItem>
+                <DropdownMenuItem className={menuItemClass} onSelect={() => onPrintTicket(selectedFacture)}><Receipt className="size-4 text-emerald-600" />{t('sales:print.ticket')}</DropdownMenuItem>
+                <DropdownMenuItem className={menuItemClass} onSelect={() => onPrintBL(selectedFacture)}><Truck className="size-4 text-emerald-600" />{t('sales:print.delivery_note')}</DropdownMenuItem>
+                <DropdownMenuItem className={menuItemClass} onSelect={() => onDuplicate(selectedFacture)}><Copy className="size-4 text-blue-500" />{t('common:duplicate', { defaultValue: 'Dupliquer' })}</DropdownMenuItem>
                 {(selectedFacture.status === 'PROF' || selectedFacture.status === 'PROFORMA') && (
-                    <li><a role="menuitem" tabIndex={0} onKeyDown={handleMenuKeyDown} onClick={() => onRefund(selectedFacture)} className="gap-3 py-3"><FileEdit className="size-4 text-emerald-600" />{t('sales:load_to_facturation', { defaultValue: 'Charger en facturation' })}</a></li>
+                    <DropdownMenuItem className={menuItemClass} onSelect={() => onRefund(selectedFacture)}><FileEdit className="size-4 text-emerald-600" />{t('sales:load_to_facturation', { defaultValue: 'Charger en facturation' })}</DropdownMenuItem>
                 )}
                 {(selectedFacture.status === 'VALIDEE' || selectedFacture.status === 'PAY' || selectedFacture.status === 'VAL' || selectedFacture.status === 'PAYEE') && (
-                    <li><a role="menuitem" tabIndex={0} onKeyDown={handleMenuKeyDown} onClick={() => onGenerateAvoir(selectedFacture)} className="gap-3 py-3"><FileDigit className="size-4 text-emerald-600" />{t('actions.generate_avoir')}</a></li>
+                    <DropdownMenuItem className={menuItemClass} onSelect={() => onGenerateAvoir(selectedFacture)}><FileDigit className="size-4 text-emerald-600" />{t('actions.generate_avoir')}</DropdownMenuItem>
                 )}
                 {selectedFacture.status !== 'ANN' && selectedFacture.status !== 'BROU' && selectedFacture.status !== 'PROF' && selectedFacture.status !== 'PROFORMA' && (
-                    <li><a role="menuitem" tabIndex={0} onKeyDown={handleMenuKeyDown} onClick={() => onRefund(selectedFacture)} className="gap-3 py-3"><RotateCcw className="size-4 text-amber-500" />{t('common:refund', { defaultValue: "Modifier/Retour" })}</a></li>
+                    <DropdownMenuItem className={menuItemClass} onSelect={() => onRefund(selectedFacture)}><RotateCcw className="size-4 text-amber-500" />{t('common:refund', { defaultValue: "Modifier/Retour" })}</DropdownMenuItem>
                 )}
-                <div className="border-t border-slate-200 my-1"></div>
-                <li><a role="menuitem" tabIndex={0} onKeyDown={handleMenuKeyDown} onClick={() => onDelete(selectedFacture.id)} className="gap-3 py-3 text-red-600 hover:bg-red-50 font-bold"><Trash2 className="size-4" />{t('common:delete')}</a></li>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className={menuItemDangerClass} onSelect={() => onDelete(selectedFacture.id)}><Trash2 className="size-4" />{t('common:delete')}</DropdownMenuItem>
             </>
         );
     }
     return (
         <>
-            <li className="text-caption font-medium text-slate-500 px-4 py-2 uppercase tracking-widest">{t('common:bulk_actions')}</li>
-            <li><a role="menuitem" tabIndex={0} onKeyDown={handleMenuKeyDown} onClick={onBulkDelete} className="gap-3 py-3 text-red-600 hover:bg-red-50 font-bold"><Trash2 className="size-4" />{t('sales:confirm_bulk_delete', { count: selectedIds.length })}</a></li>
+            <DropdownMenuLabel className="text-caption font-medium text-slate-500 uppercase tracking-widest">{t('common:bulk_actions')}</DropdownMenuLabel>
+            <DropdownMenuItem className={menuItemDangerClass} onSelect={onBulkDelete}><Trash2 className="size-4" />{t('sales:confirm_bulk_delete', { count: selectedIds.length })}</DropdownMenuItem>
         </>
     );
 });
