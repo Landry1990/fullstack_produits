@@ -1,5 +1,36 @@
 # Changelog — Fullstack Produits
 
+## 2026-10-08 — 🧠 Facturation : re-saisie d'un même libellé — fusion FEFO au lieu de N lignes
+
+- **Symptôme** : saisir/scanner le même produit plusieurs fois affichait N lignes
+  sur le **même lot** dès que le produit avait des prix par lot.
+- **Cause** : `useCart.addProduit` ne fusionnait que les lignes **sans lot** ;
+  chaque ajout créait une ligne neuve sur `autoAllocations[0]` (1er lot FEFO).
+- **Nouveau comportement** (`useCart.ts`) : l'unité va au 1er lot FEFO ayant
+  encore de la capacité compte tenu du panier (`inCartByLot` agrège
+  `lotAllocations`/`lotId` des lignes du produit) :
+  - ligne existante sur ce lot → **+1** (avec resync de `lotAllocations[0].quantity`) ;
+  - lot saturé → nouvelle ligne sur le **lot suivant** (prix de lot propre) ;
+  - sans prix de lot → +1 sur la ligne existante, lot manuel éventuel conservé
+    (avant : créait une ligne sans lot dupliquée) ;
+  - lignes `isPromis` et répartitions multi-lots jamais fusionnées ;
+  - tous les lots engagés → +1 quand même, le flux promis/force au checkout
+    reste l'autorité finale.
+- Le modal de répartition auto (`needsLotModal`/`onMultiLotDetected`) est
+  supprimé : la bascule de lot se fait désormais en silence pendant le scan.
+  Le modal reste disponible via le bouton lot de la ligne et le dépassement
+  de quantité en édition manuelle.
+- Bonus : suppression de la prop `position` invalide dans les options
+  `gooeyToast` (`useCart.ts`, `LicenceNotifications.tsx` ×3) — ignorée par la
+  lib (position = prop du `<GooeyToaster>` global, déjà top-center) ;
+  remplacé `style` par les options réelles (`borderColor`/`borderWidth`/
+  `fillColor`) pour le toast d'interaction.
+- Fichiers : `hooks/useCart.ts`, `hooks/useFacturationState.ts`,
+  `components/LicenceNotifications.tsx`,
+  `hooks/__tests__/useCart.test.tsx` (+5 tests : fusion même lot, bascule
+  lot suivant, sans prix de lot, lot manuel, ligne promis).
+- Tests : 11/11 useCart, 13 Facturation/CartTable OK, eslint propre.
+
 ## 2026-10-08 — 🐛 Vente doublée à la caisse par double-Entrée dans le modal sudo
 
 - **Symptôme** : deux Entrées rapides dans « Validation vendeur » (envoi à la

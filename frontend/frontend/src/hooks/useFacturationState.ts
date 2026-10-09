@@ -97,7 +97,6 @@ export function useFacturationState() {
     onAlert: (message, title, type, is_blocking, targetId) => ui.pushDisplayAlert({ message, title, type, is_blocking, targetId }),
     onSubstitution: (produit) => setSubstitutionProduct(produit),
     onForceStock: (produit) => setForceStockProduct(produit),
-    onMultiLotDetected: (produit, lineId, quantity) => ui.openLotModal(produit, null, quantity, null, lineId),
     onQuantityExceedsLot: (produit, lineId, quantity) => ui.openLotModal(produit, null, quantity, null, lineId),
     quantityInputsRef
   })

@@ -75,7 +75,6 @@ export function LicenceNotifications() {
             }} />,
             {
               duration: Infinity,
-              position: 'top-center',
               style: {
                 background: '#dc2626',
                 color: 'white',
@@ -95,7 +94,6 @@ export function LicenceNotifications() {
             }} />,
             {
               duration: 30000, // 30 secondes
-              position: 'top-center',
               style: {
                 background: '#f59e0b',
                 color: 'white',
@@ -115,7 +113,6 @@ export function LicenceNotifications() {
             }} />,
             {
               duration: 10000, // 10 secondes
-              position: 'top-center',
               style: {
                 background: '#3b82f6',
                 color: 'white',

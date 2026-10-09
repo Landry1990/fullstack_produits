@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import api from '../services/api'
 import { gooeyToast } from 'goey-toast'
-import type { ProduitModel, LigneFacture, StockLot, LotAllocation } from '../types'
+import type { ProduitModel, LigneFacture, StockLot, LotAllocation, PaginatedResponse } from '../types'
 import { normalizeNumberInput } from '../utils/formatters'
 import { calculateLineTotal, calculateCartStats } from '../utils/finance'
 import { useAuth } from '../context/AuthContext'
@@ -16,22 +16,22 @@ import { getLotPrice } from '../utils/lotPricing'
 
 // --- Helpers purs pour la gestion des lots ---
 
-/** Récupère les lots d'un produit et calcule les allocations FEFO + métadonnées */
+/** Récupère les lots d'un produit (triés FEFO) et calcule les allocations + métadonnées */
 async function fetchProductLots(produitId: number): Promise<{
+    lots: StockLot[]
     allocations: LotAllocation[] | null
     firstLotMaxQty: number
-    needsLotModal: boolean
 }> {
     try {
-        const { data: lotsData } = await api.get<StockLot[]>('stock-lots/', {
+        const { data: lotsData } = await api.get<StockLot[] | PaginatedResponse<StockLot>>('stock-lots/', {
             params: { produit: produitId, include_empty: 'false' },
         })
         const lots = Array.isArray(lotsData) ? lotsData : (lotsData.results || [])
-        if (lots.length === 0) return { allocations: null, firstLotMaxQty: 0, needsLotModal: false }
+        if (lots.length === 0) return { lots: [], allocations: null, firstLotMaxQty: 0 }
 
         const sorted = sortLotsByFEFO(lots)
         const hasLotPrices = sorted.some(l => l.selling_price && Number(l.selling_price) > 0)
-        if (!hasLotPrices) return { allocations: null, firstLotMaxQty: 0, needsLotModal: false }
+        if (!hasLotPrices) return { lots: sorted, allocations: null, firstLotMaxQty: 0 }
 
         const allocations = sorted.map(lot => ({
             lotId: lot.id,
@@ -41,12 +41,11 @@ async function fetchProductLots(produitId: number): Promise<{
             sellingPrice: lot.selling_price ?? null,
         }))
         const firstLotMaxQty = sorted[0].quantity_remaining ?? 0
-        const needsLotModal = firstLotMaxQty < 1 && sorted.length > 1
 
-        return { allocations, firstLotMaxQty, needsLotModal }
+        return { lots: sorted, allocations, firstLotMaxQty }
     } catch (err) {
         logger.error('Failed to fetch stock lots for auto-allocation:', err)
-        return { allocations: null, firstLotMaxQty: 0, needsLotModal: false }
+        return { lots: [], allocations: null, firstLotMaxQty: 0 }
     }
 }
 
@@ -131,12 +130,11 @@ interface UseCartOptions {
     onAlert?: (msg: string, title: string, type: 'product' | 'client', is_blocking: boolean, targetId?: number) => void
     onSubstitution?: (produit: ProduitModel) => void
     onForceStock?: (produit: ProduitModel) => void
-    onMultiLotDetected?: (produit: ProduitModel, lineId: string, quantity: number) => void
     onQuantityExceedsLot?: (produit: ProduitModel, lineId: string, quantity: number) => void
     quantityInputsRef?: React.MutableRefObject<Map<number, HTMLInputElement>>
 }
 
-export function useCart({ onRequirePrescription, onAlert, onSubstitution, onForceStock, onMultiLotDetected, onQuantityExceedsLot, quantityInputsRef }: UseCartOptions = {}) {
+export function useCart({ onRequirePrescription, onAlert, onSubstitution, onForceStock, onQuantityExceedsLot, quantityInputsRef }: UseCartOptions = {}) {
     const { t } = useTranslation(['facturation', 'prescriptions', 'common'])
     const { user } = useAuth()
     
@@ -194,7 +192,7 @@ export function useCart({ onRequirePrescription, onAlert, onSubstitution, onForc
             }
 
             // Récupérer les lots pour appliquer automatiquement le prix du lot (FEFO)
-            const { allocations: autoAllocations, firstLotMaxQty, needsLotModal } = await fetchProductLots(fullProduit.id)
+            const { lots: sortedLots, allocations: autoAllocations, firstLotMaxQty } = await fetchProductLots(fullProduit.id)
 
             // Générer le lineId à l'avance pour pouvoir l'utiliser dans le callback multi-lot
             const newLineId = generateUUID()
@@ -210,40 +208,87 @@ export function useCart({ onRequirePrescription, onAlert, onSubstitution, onForc
                         setTimeout(() => {
                             gooeyToast.error(
                                 t('facturation:messages.interaction_warning', { name: fullProduit.name, family: fullProduit.famille_risque_nom, conflict: conflict.produit.name }),
-                                { duration: 6000, position: 'top-center', style: { border: '2px solid #fbbd23', background: '#fff', color: '#333', maxWidth: '400px' }, icon: '⚠️' }
+                                { duration: 6000, icon: '⚠️', borderColor: '#fbbd23', borderWidth: 2, fillColor: '#fff' }
                             )
                         }, 100)
                     }
                 }
 
-                // Si ligne existante sans lot → incrémenter la quantité
-                const existingLigne = prevLignes.find(ligne => ligne.produit.id === fullProduit.id)
-                if (existingLigne && !existingLigne.lotId && !existingLigne.lotAllocations) {
-                    const nouvelleQuantite = existingLigne.quantite + 1
-                    return prevLignes.map(ligne =>
-                        ligne.lineId === existingLigne.lineId
-                            ? { ...ligne, produit: fullProduit, quantite: nouvelleQuantite, total_ligne: calculateLineTotal(nouvelleQuantite, ligne.prix_unitaire, ligne.remise_produit) }
-                            : ligne
-                    )
+                // +1 sur une ligne existante, en gardant l'allocation mono-lot
+                // synchronisée avec la quantité de la ligne.
+                const bumpLigne = (target: LigneFacture): LigneFacture => {
+                    const nouvelleQuantite = target.quantite + 1
+                    return {
+                        ...target,
+                        produit: fullProduit,
+                        quantite: nouvelleQuantite,
+                        total_ligne: calculateLineTotal(nouvelleQuantite, target.prix_unitaire, target.remise_produit),
+                        lotAllocations: target.lotAllocations?.length === 1
+                            ? [{ ...target.lotAllocations[0], quantity: target.lotAllocations[0].quantity + 1 }]
+                            : target.lotAllocations,
+                    }
                 }
 
-                // Créer une nouvelle ligne
-                const basePrice = computeBasePrice(fullProduit, options)
+                // Lignes du même produit (hors promis). Les lignes multi-lots issues
+                // du modal de répartition ne sont pas fusionnables : leur répartition
+                // manuelle est conservée intacte.
+                const productLines = prevLignes.filter(l => l.produit.id === fullProduit.id && !l.isPromis)
+                const mergeable = productLines.filter(l => l.quantite > 0 && (l.lotAllocations?.length ?? 0) <= 1)
 
-                // Avec lot FEFO
-                if (autoAllocations && autoAllocations.length > 0) {
+                // Produit à prix par lot : l'unité va au 1er lot FEFO pouvant encore
+                // l'absorber compte tenu des quantités déjà au panier — fusion dans la
+                // ligne de ce lot si elle existe, sinon nouvelle ligne sur ce lot.
+                if (autoAllocations && sortedLots.length > 0) {
+                    const inCartByLot = new Map<string, number>()
+                    productLines.forEach(l => {
+                        if (l.lotAllocations && l.lotAllocations.length > 0) {
+                            l.lotAllocations.forEach(a => {
+                                if (a.quantity > 0) {
+                                    const key = String(a.lotId)
+                                    inCartByLot.set(key, (inCartByLot.get(key) || 0) + a.quantity)
+                                }
+                            })
+                        } else if (l.lotId && l.quantite > 0) {
+                            const key = String(l.lotId)
+                            inCartByLot.set(key, (inCartByLot.get(key) || 0) + l.quantite)
+                        }
+                    })
+
+                    const targetLot = sortedLots.find(lot =>
+                        (lot.quantity_remaining ?? 0) > (inCartByLot.get(String(lot.id)) || 0)
+                    )
+                    if (targetLot) {
+                        const sameLotLine = mergeable.find(l => l.lotId === String(targetLot.id))
+                        if (sameLotLine) {
+                            return prevLignes.map(l => l.lineId === sameLotLine.lineId ? bumpLigne(l) : l)
+                        }
+                        const alloc = autoAllocations.find(a => String(a.lotId) === String(targetLot.id))
+                        if (alloc) {
+                            return [...prevLignes, createLotLine(newLineId, fullProduit, alloc, targetLot.quantity_remaining ?? 0)]
+                        }
+                    }
+
+                    // Tous les lots sont déjà engagés dans le panier (dépassement de
+                    // stock) : on incrémente une ligne existante — le contrôle au
+                    // checkout (promis / vente forcée) reste l'autorité finale.
+                    const fallbackLine = mergeable.find(l => l.lotId === String(sortedLots[0].id)) ?? mergeable[0]
+                    if (fallbackLine) {
+                        return prevLignes.map(l => l.lineId === fallbackLine.lineId ? bumpLigne(l) : l)
+                    }
                     return [...prevLignes, createLotLine(newLineId, fullProduit, autoAllocations[0], firstLotMaxQty)]
                 }
 
-                // Sans lot
+                // Produit sans prix par lot : +1 sur la ligne existante — de préférence
+                // une ligne sans lot, sinon la 1re ligne fusionnable (lot manuel conservé).
+                const existingLigne = mergeable.find(l => !l.lotId && !l.lotAllocations?.length) ?? mergeable[0]
+                if (existingLigne) {
+                    return prevLignes.map(l => l.lineId === existingLigne.lineId ? bumpLigne(l) : l)
+                }
+
+                // Nouvelle ligne sans lot
+                const basePrice = computeBasePrice(fullProduit, options)
                 return [...prevLignes, createPlainLine(newLineId, fullProduit, basePrice)]
             })
-
-            // MULTI-LOT AUTO: si la qty demandée ne peut pas être satisfaite par le premier lot FEFO,
-            // ouvrir automatiquement le modal de répartition
-            if (needsLotModal && onMultiLotDetected) {
-                setTimeout(() => onMultiLotDetected(fullProduit, newLineId, 1), 200)
-            }
 
             // ORDONNANCIER CHECK
             const requiresOrdonnance = fullProduit.requires_prescription ||
@@ -299,7 +344,7 @@ export function useCart({ onRequirePrescription, onAlert, onSubstitution, onForc
             setLoading(false)
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [onRequirePrescription, onMultiLotDetected, quantityInputsRef])
+    }, [onRequirePrescription, quantityInputsRef])
 
     const updateQuantite = useCallback((lineId: string, quantite: number, callback?: (err: string) => void) => {
         // Permettre les quantités négatives (retours) et positives (ventes)
