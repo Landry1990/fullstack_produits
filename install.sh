@@ -224,6 +224,9 @@ ok "Variables CPU écrites dans .env"
 
 # ── 7. Permissions ────────────────────────────────────
 step "7. Permissions des scripts"
+# Les chmod +x ci-dessous ne doivent pas apparaître comme des modifications
+# locales dans git (ils bloqueraient les git pull des mises à jour).
+git config --local core.fileMode false 2>/dev/null || true
 chmod +x auto-deploy.sh deploy.sh rollback.sh backup-db.sh watchdog.sh start-watchdog.sh setup-cron.sh init-db.sh 2>/dev/null || true
 chmod +x nightly-update.sh zenith-update.sh install-desktop-shortcut.sh set-update-time.sh update-app.sh 2>/dev/null || true
 chmod +x webhook-deploy.py 2>/dev/null || true
