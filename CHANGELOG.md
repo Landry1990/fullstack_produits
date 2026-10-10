@@ -1,5 +1,48 @@
 # Changelog — Fullstack Produits
 
+## 2026-10-10 — 🐛 `git pull` bloqué en prod par les chmod des scripts
+
+- **Symptôme** : `update.sh` échoue chez le client —
+  `Vos modifications locales aux fichiers suivants seraient écrasées par la
+  fusion : update-app.sh`.
+- **Cause** : tous les scripts `.sh` étaient commités en mode `644`, mais
+  `install.sh`, `zenith-update.sh`, `update-app.sh` et `system_admin.py`
+  (`os.chmod(script_path, 0o755)` à chaque update depuis l'app) font des
+  `chmod +x`. Avec `core.fileMode=true` (défaut Linux), git voyait un
+  changement de mode comme une modification locale → merge refusé dès qu'un
+  script changeait en upstream.
+- **Fix** :
+  - Tous les `*.sh` + `webhook-deploy.py` passés en `100755` dans l'index
+    (40 fichiers, changement de mode seul — les chmod côté client deviennent
+    des no-op pour git).
+  - `update.sh`, `update-app.sh`, `zenith-update.sh` : `git config --local
+    core.fileMode false` + `git pull --autostash` (une éventuelle retouche
+    locale est stashée puis réappliquée au lieu de bloquer).
+  - `install.sh` : `core.fileMode false` ajouté en section 7 pour les
+    futures installations.
+- **Déblocage ponctuel chez un client déjà bloqué** :
+  `cd /opt/zenith-pharma && git config core.fileMode false &&
+   git checkout -- update-app.sh && git pull && ./update.sh`
+
+## 2026-10-10 — 🐛 Le devis ne se rattache plus à la caisse
+
+- **Symptôme** : un devis enregistré apparaissait dans la caisse centralisée
+  (ventes à encaisser) et se faisait rattacher au poste de vente à chaque
+  activation/ouverture de poste.
+- **Fix** : un devis est un document commercial, pas une vente en attente.
+  - `CaisseCentralisee.tsx` : filtre `status__in` `BROU,VAL,PROF` → `BROU,VAL`
+    (les PROF n'apparaissent plus dans la file d'encaissement).
+  - `caisse_poste.py` : suppression du rattachement automatique des PROF sans
+    poste dans `activer` et `ouvrir` (le champ
+    `factures_en_attente_rattachees` de la réponse, inutilisé, est retiré).
+    Le devis reste `poste_vente=NULL` ; la conversion `existing_id` assigne
+    le poste actif au moment de la validation (`_update_existing_facture`).
+  - `bulk_actions.py` : la vidange `all_pending` (annulation en masse des
+    ventes en attente caisse) n'inclut plus les PROF — évite d'annuler des
+    devis clients par erreur. Annulation d'un devis toujours possible via
+    `facture_ids` explicite.
+- Tests backend : 38/38 (`test_facturation_contract` + `test_sale_finalizer`).
+
 ## 2026-10-09 — 🐛 Rappel devis effacé à l'ouverture du point de vente
 
 - **Symptôme** : devis chargé en facturation (« Charger en facturation »),

@@ -36,7 +36,10 @@ cd "$APP_DIR" || {
 
 # Récupérer les dernières mises à jour
 echo "📥 Récupération des mises à jour..."
-git pull origin main 2>/dev/null || true
+# core.fileMode=false : les chmod +x (install.sh, ce script) ne doivent pas
+# bloquer le merge. --autostash : préserve d'éventuelles retouches locales.
+git config --local core.fileMode false 2>/dev/null || true
+git pull --autostash origin main 2>/dev/null || true
 
 # Corriger les permissions du script principal
 chmod +x nightly-update.sh 2>/dev/null || sudo chmod +x nightly-update.sh 2>/dev/null || true
