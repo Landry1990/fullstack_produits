@@ -29,7 +29,10 @@ echo "========================================"
 # 1. Récupérer le nouveau code (backend + frontend buildé)
 echo ""
 echo ">> Git pull..."
-git pull
+# Les chmod +x faits par install.sh/update-app.sh ne doivent pas être vus
+# comme des modifications locales (bloqueraient le merge).
+git config --local core.fileMode false
+git pull --autostash
 
 # 2. Backend : copier le code api/ dans le conteneur
 echo ""

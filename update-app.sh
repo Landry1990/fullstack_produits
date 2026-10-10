@@ -84,7 +84,12 @@ if [ -f "$APP_DIR/backend/requirements.txt" ]; then
     REQUIREMENTS_HASH_BEFORE=$(sha256sum "$APP_DIR/backend/requirements.txt" 2>/dev/null | cut -d' ' -f1)
 fi
 
-if ! git pull origin main >> "$LOG_FILE" 2>&1; then
+# Les scripts .sh reçoivent un chmod +x (install.sh, system_admin) — sans
+# core.fileMode=false git les verrait comme modifiés et bloquerait le merge.
+# --autostash : préserve/remet d'éventuelles retouches locales sur le serveur.
+git config --local core.fileMode false 2>/dev/null || true
+
+if ! git pull --autostash origin main >> "$LOG_FILE" 2>&1; then
     write_status "failed" "Échec du git pull" "Vérifiez la connexion ou les conflits"
     log "✗ Échec du git pull"
     exit 1
