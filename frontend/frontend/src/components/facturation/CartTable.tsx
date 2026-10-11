@@ -46,7 +46,7 @@ const CartTable = React.memo(({
   isSidebarStyle
 }: CartTableProps) => {
   const { user } = useAuth()
-  const { t } = useTranslation(['facturation', 'common'])
+  const { t } = useTranslation(['facturation', 'common', 'products'])
   const [flashId, setFlashId] = React.useState<string | null>(null)
   const prevLenRef = React.useRef(lignesFacture.length)
 

@@ -25,6 +25,7 @@ from ...search_mixins import MultiTermSearchMixin
 from ...serializers import PromisSerializer
 from ...services.realtime import notify_stock_changed
 from ...services.stock_obligation_service import StockObligationService
+from ...utils.validation import parse_id
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +71,12 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         idempotent pour éviter un doublon (ex. retry caisse/web/mobile).
         """
         facture_id = validated_data.get('facture').id if validated_data.get('facture') else None
-        produit_id = validated_data.get('produit').id if validated_data.get('produit') else None
+        produit = validated_data.get('produit')
+        produit_id = produit.id if produit else None
+        if produit is not None and produit.is_service:
+            raise ValueError(
+                f"« {produit.name} » est un service : un service ne peut pas être mis en promis."
+            )
         existing = Promis.objects.select_for_update().filter(
             facture_id=facture_id,
             produit_id=produit_id,
@@ -281,7 +287,12 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         Annuler un promis et réintégrer le stock.
         Crée un mouvement de stock de type RETOUR (affiché en vert dans les stats).
         """
-        promis = Promis.objects.select_for_update().get(pk=self.kwargs['pk'])
+        # parse_id lève ValidationError (400) : pk='abc' lèverait ValueError
+        # dans le filtre ORM → 500. DoesNotExist → 404 explicite.
+        try:
+            promis = Promis.objects.select_for_update().get(pk=parse_id(pk, field='pk'))
+        except Promis.DoesNotExist:
+            return Response({'detail': 'Promis introuvable.'}, status=status.HTTP_404_NOT_FOUND)
 
         if promis.status == Promis.Status.ANNULE:
             return Response({'detail': 'Ce promis est déjà annulé.'}, status=status.HTTP_400_BAD_REQUEST)

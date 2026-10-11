@@ -38,6 +38,8 @@ export interface ProduitModel {
     id: number
     name: string
     description: string
+    type_produit?: 'PRODUIT' | 'SERVICE'
+    is_service?: boolean
     stock: number
     total_stock?: number
     cost_price: string
@@ -104,6 +106,7 @@ export interface ProduitModel {
 export interface ProduitForm {
     name: string
     description: string
+    type_produit?: 'PRODUIT' | 'SERVICE'
     stock: string
     cost_price: string
     selling_price: string

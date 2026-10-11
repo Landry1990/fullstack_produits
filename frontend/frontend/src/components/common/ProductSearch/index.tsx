@@ -203,8 +203,10 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
     const isActive = isActiveItem(itemProps)
     const stock = item.stock ?? 0
     const stockMin = item.stock_minimum ?? 0
+    const isService = item.is_service || item.type_produit === 'SERVICE'
     const canSellNegativeStock = skipStockCheck || user?.is_superuser || user?.profile?.can_sell_negative_stock || user?.can_sell_negative_stock
-    const isOutOfStock = stock <= 0
+    // Un service n'a pas de stock : toujours sélectionnable, jamais "épuisé".
+    const isOutOfStock = !isService && stock <= 0
     const isBlocked = isOutOfStock && !canSellNegativeStock
     const isLowStock = stock > 0 && stockMin > 0 && stock <= stockMin
 

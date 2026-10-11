@@ -153,6 +153,10 @@ class ProduitViewSet(
             queryset = queryset.filter(is_active=True, is_public=True)
             
         # Filtrage manuel (ex: rapports, alertes)
+        type_produit = self.request.query_params.get('type_produit')
+        if type_produit in ('PRODUIT', 'SERVICE'):
+            queryset = queryset.filter(type_produit=type_produit)
+
         has_reserve = self.request.query_params.get('has_reserve_storage')
         if has_reserve is not None:
             queryset = queryset.filter(has_reserve_storage=(has_reserve.lower() == 'true'))

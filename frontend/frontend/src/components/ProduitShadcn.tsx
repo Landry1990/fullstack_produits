@@ -165,8 +165,8 @@ export default function ProduitShadcn() {
   }, [page, productsData, totalCount, totalPages])
 
   /* ── Stats ── */
-  const lowStockCount = useMemo(() => produits.filter(p => (p.stock ?? 0) <= (p.stock_alert ?? 0) && (p.stock ?? 0) > 0).length, [produits])
-  const outOfStockCount = useMemo(() => produits.filter(p => (p.stock ?? 0) <= 0).length, [produits])
+  const lowStockCount = useMemo(() => produits.filter(p => !p.is_service && (p.stock ?? 0) <= (p.stock_alert ?? 0) && (p.stock ?? 0) > 0).length, [produits])
+  const outOfStockCount = useMemo(() => produits.filter(p => !p.is_service && (p.stock ?? 0) <= 0).length, [produits])
   const error = loadError instanceof Error ? loadError.message : (loadError ? String(loadError) : null)
 
   /* ── Handlers ── */
@@ -526,9 +526,12 @@ export default function ProduitShadcn() {
                             </td>
                             <td className="py-2 px-2">
                               <div className="flex min-w-0 items-center gap-2">
-                                <span className={cn("min-w-0 text-sm uppercase truncate", stockClass(stock))} title={produit.name}>
+                                <span className={cn("min-w-0 text-sm uppercase truncate", produit.is_service ? 'text-slate-800 font-medium' : stockClass(stock))} title={produit.name}>
                                   {produit.name}
                                 </span>
+                                {produit.is_service && (
+                                  <Badge variant="secondary" size="sm">{t('products:form.service_badge')}</Badge>
+                                )}
                                 {produit.is_supplier_exclusive && (
                                   <Badge variant="success" size="sm">{t('products:table.exclusive_badge')}</Badge>
                                 )}
@@ -594,6 +597,11 @@ export default function ProduitShadcn() {
                         </h2>
                         {selectedProduit.is_active === false && <Badge variant="ghost" size="sm">{t('products:table.inactive_badge')}</Badge>}
                         {selectedProduit.is_supplier_exclusive && <Badge variant="success" size="sm">{t('products:table.exclusive_badge_full')}</Badge>}
+                        {selectedProduit.is_service ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-violet-50 text-violet-600">
+                            {t('products:form.service_badge')}
+                          </span>
+                        ) : (
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold ${
                           ((selectedProduit.total_stock ?? selectedProduit.stock) ?? 0) <= 0 ? 'bg-red-50 text-red-600' :
                           ((selectedProduit.total_stock ?? selectedProduit.stock) ?? 0) <= (selectedProduit.stock_alert ?? 0) ? 'bg-amber-50 text-amber-600' :
@@ -605,6 +613,7 @@ export default function ProduitShadcn() {
                             <>{t('common:stock')}: {selectedProduit.stock ?? 0}</>
                           )}
                         </span>
+                        )}
                       </div>
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5">
                         <p className="text-sm text-slate-500 font-mono">{t('common:cip')}: <span className="text-slate-700">{selectedProduit.cip1 || '-'}</span></p>
@@ -614,6 +623,7 @@ export default function ProduitShadcn() {
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+                      {!selectedProduit.is_service && (
                       <Button variant="outline" size="sm" onClick={() => {
                         setAdjustForm({
                           new_quantity: String(selectedProduit?.stock || 0),
@@ -627,7 +637,8 @@ export default function ProduitShadcn() {
                       }} leftIcon={<BarChart3 className="size-4" />} title={t('products:actions.adjust_stock', { defaultValue: 'Ajuster le stock' })}>
                         {t('products:actions.adjust_stock', { defaultValue: 'Stock' })}
                       </Button>
-                      {selectedProduit.has_reserve_storage && (selectedProduit.stock_reserve ?? 0) > 0 && (
+                      )}
+                      {!selectedProduit.is_service && selectedProduit.has_reserve_storage && (selectedProduit.stock_reserve ?? 0) > 0 && (
                         <Button variant="outline" size="sm" onClick={() => handleTransferToRayon(selectedProduit)} disabled={transferLoading} leftIcon={<Truck className="size-4" />} title={t('products:actions.refill_rayon', { defaultValue: 'R\u00e9approvisionner rayon' })} aria-label={t('products:actions.refill_rayon', { defaultValue: 'R\u00e9approvisionner rayon' })} />
                       )}
                       <Button variant="outline" size="sm" onClick={() => handleGenerateLabels(selectedProduit)} leftIcon={<Tags className="size-4" />} title={t('products:actions.labels', { defaultValue: '\u00c9tiquettes' })} aria-label={t('products:actions.labels', { defaultValue: '\u00c9tiquettes' })} />

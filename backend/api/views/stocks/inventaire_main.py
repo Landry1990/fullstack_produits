@@ -16,6 +16,7 @@ from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -163,8 +164,8 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         groupe_id = request.data.get('groupe_id')
         forme_id = request.data.get('forme_id')
         
-        # Filtrer les produits
-        filters = Q(is_active=True)
+        # Filtrer les produits (les services n'ont pas de stock à inventorier)
+        filters = Q(is_active=True, type_produit='PRODUIT')
         if rayon_id:
             filters &= Q(rayon_id=rayon_id)
         if groupe_id:
@@ -269,7 +270,15 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
             try:
                 data = request.data.copy()
                 data['inventaire'] = inventaire.id
-                
+
+                # Garde-fou : 'produit' est requis dans tous les modes
+                # (sinon KeyError plus bas → 500 au lieu de 400).
+                if not data.get('produit'):
+                    return Response(
+                        {'error': 'Le champ produit est requis.'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
                 if data.get('stock_lot'):
                     lot = StockLot.objects.get(id=data['stock_lot'])
                     data['stock_theorique'] = lot.quantity_remaining
@@ -639,7 +648,12 @@ class LigneInventaireViewSet(viewsets.ModelViewSet):
         if data.get('stock_lot'):
             # Mode LOT EXISTANT: Utiliser l'ID du lot fourni
             try:
-                lot = StockLot.objects.get(id=data['stock_lot'])
+                lot = StockLot.objects.select_related('produit').get(id=data['stock_lot'])
+                if lot.produit and lot.produit.is_service:
+                    return Response(
+                        {'error': f"« {lot.produit.name} » est un service : non concerné par l'inventaire physique."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
                 data['stock_theorique'] = lot.quantity_remaining
                 if 'quantite_physique' not in data:
                     data['quantite_physique'] = lot.quantity_remaining
@@ -656,7 +670,12 @@ class LigneInventaireViewSet(viewsets.ModelViewSet):
                 produit = Produit.objects.get(id=produit_id)
             except Produit.DoesNotExist:
                 return Response({'error': 'Produit non trouvé'}, status=status.HTTP_400_BAD_REQUEST)
-                
+            if produit.is_service:
+                return Response(
+                    {'error': f"« {produit.name} » est un service : non concerné par l'inventaire physique."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
             # Chercher si le lot existe déjà pour ce produit
             existing_lot = StockLot.objects.filter(produit=produit, lot=lot_num).first()
             
@@ -684,8 +703,17 @@ class LigneInventaireViewSet(viewsets.ModelViewSet):
                  
         else:
             # Mode PRODUIT GLOBAL: Utiliser le stock total
+            # KeyError 'produit' → 500 : champ requis, 400 explicite si absent.
+            produit_id = data.get('produit')
+            if not produit_id:
+                return Response({'error': 'Le champ produit est requis.'}, status=status.HTTP_400_BAD_REQUEST)
             try:
-                produit = Produit.objects.get(id=data['produit'])
+                produit = Produit.objects.get(id=produit_id)
+                if produit.is_service:
+                    return Response(
+                        {'error': f"« {produit.name} » est un service : non concerné par l'inventaire physique."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
                 if 'stock_theorique' not in data:
                     data['stock_theorique'] = produit.stock
                 if 'quantite_physique' not in data:
@@ -702,6 +730,10 @@ class LigneInventaireViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         # Capture theoretical stock at time of creation
         produit = serializer.validated_data['produit']
+        if produit and produit.is_service:
+            raise DRFValidationError(
+                f"« {produit.name} » est un service : non concerné par l'inventaire physique."
+            )
         if 'stock_theorique' not in serializer.validated_data:
             serializer.save(stock_theorique=produit.stock)
         else:

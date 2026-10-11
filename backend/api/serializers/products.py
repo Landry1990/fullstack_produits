@@ -104,6 +104,7 @@ class ProduitSerializer(UppercaseSerializerMixin, serializers.ModelSerializer):
     has_active_lots = serializers.BooleanField(read_only=True)  # From annotation
     forme_nom = serializers.CharField(source='forme.nom', read_only=True)
     groupe_nom = serializers.CharField(source='groupe.nom', read_only=True)
+    is_service = serializers.BooleanField(read_only=True)
 
     active_promotion = serializers.SerializerMethodField()
 

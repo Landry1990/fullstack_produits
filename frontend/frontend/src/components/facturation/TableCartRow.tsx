@@ -60,6 +60,7 @@ export default React.memo(function TableCartRow({
   } = useCartRowState({ ligne, updateQuantite, updatePrix, updateRemiseProduit, maxDiscount, t, refreshTrigger })
 
   const { lotDisplayText, lotTooltip } = useLotDisplay({ ligne, t })
+  const isService = ligne.produit.is_service || ligne.produit.type_produit === 'SERVICE'
 
   return (
     <TableRow
@@ -81,6 +82,11 @@ export default React.memo(function TableCartRow({
         <div className={`font-medium ${ligne.produit.is_deleted ? 'italic' : ''}`}>
           <div className="flex items-center gap-2">
             <span className="truncate text-slate-800" title={`${t('facturation:cart.headers.total')} ${formatCurrency(normalizeNumberInput(ligne.total_ligne))}`}>{ligne.produit.name}</span>
+            {isService && (
+              <Badge variant="secondary" className="text-caption h-5 bg-violet-100 text-violet-700 border-violet-200 shrink-0">
+                {t('products:form.service_badge')}
+              </Badge>
+            )}
             {ligne.isPromis && (
               <Badge variant="secondary" className="text-caption h-5 bg-amber-100 text-amber-700 border-amber-200 animate-pulse shrink-0">
                 {t('facturation:cart_extra.promis')}
@@ -173,23 +179,31 @@ export default React.memo(function TableCartRow({
         />
       </TableCell>
       <TableCell className="text-center py-2 hidden md:table-cell">
-        <div className={`font-mono font-semibold ${
-          (ligne.produit.stock ?? 0) <= 0 ? 'text-red-500' :
-          (ligne.produit.stock ?? 0) < 5 ? 'text-amber-500' : 'text-emerald-600'
-        }`}>
-          {ligne.produit.stock ?? 0}
-        </div>
+        {isService ? (
+          <span className="text-caption font-semibold text-violet-600">—</span>
+        ) : (
+          <div className={`font-mono font-semibold ${
+            (ligne.produit.stock ?? 0) <= 0 ? 'text-red-500' :
+            (ligne.produit.stock ?? 0) < 5 ? 'text-amber-500' : 'text-emerald-600'
+          }`}>
+            {ligne.produit.stock ?? 0}
+          </div>
+        )}
       </TableCell>
       <TableCell className="text-center py-2 hidden md:table-cell">
-        <Button
-          variant={(ligne.lotId || ligne.lotAllocations?.length) ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => onOpenLotModal(ligne.produit, ligne.lotId || null, ligne.quantite, ligne.lotAllocations || null, ligne.lineId)}
-          className={`w-full max-w-[260px] truncate text-xs h-7 ${(ligne.lotId || ligne.lotAllocations?.length) ? 'bg-emerald-600 hover:bg-emerald-700' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
-          title={lotTooltip}
-        >
-          {lotDisplayText}
-        </Button>
+        {isService ? (
+          <span className="text-caption text-slate-300">—</span>
+        ) : (
+          <Button
+            variant={(ligne.lotId || ligne.lotAllocations?.length) ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => onOpenLotModal(ligne.produit, ligne.lotId || null, ligne.quantite, ligne.lotAllocations || null, ligne.lineId)}
+            className={`w-full max-w-[260px] truncate text-xs h-7 ${(ligne.lotId || ligne.lotAllocations?.length) ? 'bg-emerald-600 hover:bg-emerald-700' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
+            title={lotTooltip}
+          >
+            {lotDisplayText}
+          </Button>
+        )}
       </TableCell>
       <TableCell className="text-right font-semibold text-slate-800 pr-2 md:pr-4 py-2">
         {formatCurrency(normalizeNumberInput(ligne.total_ligne))}

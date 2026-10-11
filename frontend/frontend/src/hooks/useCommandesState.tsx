@@ -225,8 +225,12 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
   const setIsMergeModalOpen = useCommandesStore((s) => s.setIsMergeModalOpen);
 
   // Les produits sont déjà filtrés et triés par l'index local (useProductSearch)
-  // Pas besoin de re-filtrer — l'index fait un scoring par pertinence
-  const filteredProduits = produitsList;
+  // Pas besoin de re-filtrer — l'index fait un scoring par pertinence.
+  // Les services sont exclus : on ne commande pas de stock pour un service.
+  const filteredProduits = useMemo(
+    () => produitsList.filter(p => !p.is_service && p.type_produit !== 'SERVICE'),
+    [produitsList]
+  );
 
   const {
       handleSaveCommande,

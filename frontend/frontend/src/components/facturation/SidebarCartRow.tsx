@@ -56,6 +56,7 @@ export default React.memo(function SidebarCartRow({
   } = useCartRowState({ ligne, updateQuantite, updatePrix, updateRemiseProduit, maxDiscount, t, refreshTrigger })
 
   const { lotDisplayText, lotTooltip } = useLotDisplay({ ligne, t })
+  const isService = ligne.produit.is_service || ligne.produit.type_produit === 'SERVICE'
 
   return (
     <div
@@ -79,9 +80,10 @@ export default React.memo(function SidebarCartRow({
              <h4 className={`text-sm font-semibold truncate leading-tight ${isReturn ? 'text-red-600' : 'text-slate-800'}`} title={`${t('facturation:cart.headers.total')} ${formatCurrency(normalizeNumberInput(ligne.total_ligne))}`}>
                {ligne.produit.name}
              </h4>
+             {isService && <Badge variant="secondary" className="text-caption h-4 px-1 bg-violet-100 text-violet-700 border-violet-200">{t('products:form.service_badge')}</Badge>}
              {ligne.isPromis && <Badge variant="secondary" className="text-caption h-4 px-1 bg-amber-100 text-amber-700 border-amber-200">{t('facturation:cart_extra.promis')}</Badge>}
            </div>
-           {ligne.produit.stock !== undefined && (
+           {ligne.produit.stock !== undefined && !isService && (
               <div className={`text-caption leading-none mt-1 ${ligne.produit.stock <= 0 ? 'text-red-500 font-semibold' : 'text-slate-400'}`}>
                 {t('facturation:cart_extra.stock_label')} {ligne.produit.stock}
               </div>
@@ -179,7 +181,8 @@ export default React.memo(function SidebarCartRow({
            </div>
          </div>
 
-         {/* Bouton Lot FEFO condensé */}
+         {/* Bouton Lot FEFO condensé — pas de lots sur un service */}
+         {!isService && (
          <Button
            variant="outline"
            size="sm"
@@ -193,6 +196,7 @@ export default React.memo(function SidebarCartRow({
            <Tag className="size-3 shrink-0" />
            <span className="truncate max-w-[140px] xl:max-w-[200px] 2xl:max-w-[320px] tracking-wide">{lotDisplayText}</span>
          </Button>
+         )}
       </div>
     </div>
   )

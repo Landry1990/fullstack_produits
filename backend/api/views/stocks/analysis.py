@@ -364,7 +364,7 @@ class StockAnalysisShortageView(APIView):
             produits = produits.filter(fournisseur_id=fournisseur_id)
 
         # ── 1b. Produits déjà en rupture (stock <= 0, rotation > 0) ──
-        produits_rupture = Produit.objects.filter(stock__lte=0, is_active=True, rotation_moyenne__gt=0).select_related('fournisseur')
+        produits_rupture = Produit.objects.filter(stock__lte=0, is_active=True, rotation_moyenne__gt=0, type_produit='PRODUIT').select_related('fournisseur')
         if fournisseur_id:
             produits_rupture = produits_rupture.filter(fournisseur_id=fournisseur_id)
 

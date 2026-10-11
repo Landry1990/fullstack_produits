@@ -127,6 +127,10 @@ class AvoirClientViewSet(viewsets.ModelViewSet):
         product_ids_with_lots = set()
         for ligne in lignes:
             produit = Produit.objects.select_for_update().get(pk=ligne.produit_id)
+            if produit.is_service:
+                # Un service ne retourne pas en stock — la ligne sert
+                # uniquement au remboursement.
+                continue
             StockObligationService.reapply_pending_obligations([produit.id])
             produit.refresh_from_db(fields=['stock', 'stock_reserve'])
             if produit.use_lot_management:

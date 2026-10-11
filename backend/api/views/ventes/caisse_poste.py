@@ -402,7 +402,10 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
 
             filtre_postes = Q()
             for p in postes:
-                filtre_postes |= Q(facture__poste_vente=p, date_paiement__gte=p.date_ouverture)
+                q = Q(facture__poste_vente=p)
+                if p.date_ouverture:
+                    q &= Q(date_paiement__gte=p.date_ouverture)
+                filtre_postes |= q
 
             paiements_qs = Caisse.objects.filter(
                 filtre_postes,
@@ -418,7 +421,10 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
                 if item['total']:
                     details[item['mode_paiement']] = float(item['total'])
 
-            date_ouverture = min(p.date_ouverture for p in postes)
+            date_ouverture = min(
+                (p.date_ouverture for p in postes if p.date_ouverture),
+                default=None,
+            )
             poste_nom = ' + '.join(postes_noms) if len(postes_noms) > 1 else postes_noms[0]
 
             return Response({
@@ -437,9 +443,11 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
 
         paiements = Caisse.objects.filter(
             facture__poste_vente=poste,
-            date_paiement__gte=poste.date_ouverture,
             statut='completee'
-        ).exclude(mode_paiement__in=['en_compte', 'depot'])
+        )
+        if poste.date_ouverture:
+            paiements = paiements.filter(date_paiement__gte=poste.date_ouverture)
+        paiements = paiements.exclude(mode_paiement__in=['en_compte', 'depot'])
 
         # OPTIMISATION : total + count en UNE seule requête agrégée
         agg = paiements.aggregate(total=Sum('montant'), count=Count('facture', distinct=True))

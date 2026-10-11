@@ -7,6 +7,7 @@ from django.http import HttpResponse
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -27,6 +28,11 @@ class RuptureFournisseurViewSet(viewsets.ModelViewSet):
     search_fields = ['produit__name', 'fournisseur__name', 'remarques']
 
     def perform_create(self, serializer):
+        produit = serializer.validated_data.get('produit')
+        if produit is not None and produit.is_service:
+            raise ValidationError(
+                f"« {produit.name} » est un service : pas de rupture fournisseur sur un service."
+            )
         serializer.save(utilisateur=self.request.user)
 
     @action(detail=True, methods=['post'])

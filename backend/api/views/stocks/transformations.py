@@ -73,6 +73,12 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
             if not source or not destination:
                  return Response({'error': 'Produit source ou destination introuvable'}, status=status.HTTP_404_NOT_FOUND)
 
+            if source.is_service or destination.is_service:
+                 return Response(
+                     {'error': 'Un service n\'a pas de stock : il ne peut pas être transformé.'},
+                     status=status.HTTP_400_BAD_REQUEST
+                 )
+
             # Un comptage physique a pu détacher les promis du compteur : les
             # réappliquer avant de consommer la source, puis avant d'alimenter
             # la destination.
@@ -578,6 +584,12 @@ class HistoriqueTransformationViewSet(viewsets.ReadOnlyModelViewSet):
                 return Response(
                     {'error': 'Produit source ou destination introuvable'},
                     status=status.HTTP_404_NOT_FOUND
+                )
+
+            if source.is_service or destination.is_service:
+                return Response(
+                    {'error': 'Un des produits de cette transformation est devenu un service : annulation impossible (pas de stock).'},
+                    status=status.HTTP_400_BAD_REQUEST
                 )
 
             if StockObligationService.reapply_pending_obligations(p_ids):

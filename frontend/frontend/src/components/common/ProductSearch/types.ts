@@ -5,6 +5,8 @@ export type SearchMode = 'products' | 'packs' | 'dci'
 export interface SearchResult {
   id: number
   name: string
+  type_produit?: 'PRODUIT' | 'SERVICE'
+  is_service?: boolean
   stock?: number
   stock_minimum?: number | null
   selling_price?: number | string

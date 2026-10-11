@@ -28,10 +28,11 @@ export const ProductResultContent: React.FC<ProductResultContentProps> = ({
   extraMeta,
   showPrice = true,
 }) => {
-  const { t } = useTranslation(['facturation', 'common'])
+  const { t } = useTranslation(['facturation', 'common', 'products'])
+  const isService = product.is_service || product.type_produit === 'SERVICE'
   const stock = product.stock ?? 0
-  const isNegativeStock = stock < 0
-  const isZeroStock = stock === 0
+  const isNegativeStock = !isService && stock < 0
+  const isZeroStock = !isService && stock === 0
 
   return (
     <div className="flex-1 min-w-0">
@@ -55,13 +56,16 @@ export const ProductResultContent: React.FC<ProductResultContentProps> = ({
         {extraMeta}
         <span className={cn(
           active ? 'text-blue-100 font-semibold' :
+          isService ? 'text-violet-600 font-semibold' :
           isNegativeStock ? 'text-red-500 font-semibold' :
           isZeroStock ? 'text-slate-400' :
           'text-emerald-600 font-semibold'
         )}>
-          {isZeroStock
-            ? t('facturation:search.out_of_stock', { defaultValue: 'Épuisé' })
-            : `${t('facturation:search.stock_label')} ${stock}`}
+          {isService
+            ? t('products:form.service_badge')
+            : isZeroStock
+              ? t('facturation:search.out_of_stock', { defaultValue: 'Épuisé' })
+              : `${t('facturation:search.stock_label')} ${stock}`}
         </span>
         {showPrice && product.selling_price !== undefined && product.selling_price !== null && (
           <span className={cn("font-bold", active ? 'text-white' : 'text-emerald-700')}>

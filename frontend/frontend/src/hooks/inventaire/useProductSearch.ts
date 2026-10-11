@@ -63,7 +63,8 @@ export const useProductSearch = (
         const fetchProducts = async () => {
             setLoadingSearch(true);
             try {
-                const response = await api.get('produits/', { params: { search: searchQuery }, signal: controller.signal });
+                // Les services n'ont pas de stock physique : exclus de l'inventaire.
+                const response = await api.get('produits/', { params: { search: searchQuery, type_produit: 'PRODUIT' }, signal: controller.signal });
                 const productsList = Array.isArray(response.data) ? response.data : response.data.results;
                 setSearchResults(productsList || []);
                 setSelectedItemIndex(productsList?.length > 0 ? 0 : -1);

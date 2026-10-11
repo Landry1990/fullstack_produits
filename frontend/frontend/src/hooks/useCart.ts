@@ -179,9 +179,11 @@ export function useCart({ onRequirePrescription, onAlert, onSubstitution, onForc
         setLoading(true)
         try {
             const { data: fullProduit } = await api.get<ProduitModel>(`produits/${produit.id}/`)
+            const isService = fullProduit.is_service || fullProduit.type_produit === 'SERVICE'
 
-            // SUBSTITUTION CHECK: if product is out of stock, ask whether to force or substitute
-            if (fullProduit.stock <= 0 && !options?.forceStock) {
+            // SUBSTITUTION CHECK: if product is out of stock, ask whether to force or substitute.
+            // Un service n'a pas de stock : facturable directement, jamais de force/promis.
+            if (!isService && fullProduit.stock <= 0 && !options?.forceStock) {
                 setLoading(false)
                 if (onForceStock) {
                     onForceStock(fullProduit)
@@ -192,7 +194,10 @@ export function useCart({ onRequirePrescription, onAlert, onSubstitution, onForc
             }
 
             // Récupérer les lots pour appliquer automatiquement le prix du lot (FEFO)
-            const { lots: sortedLots, allocations: autoAllocations, firstLotMaxQty } = await fetchProductLots(fullProduit.id)
+            // Un service n'a pas de lots — on saute la requête.
+            const { lots: sortedLots, allocations: autoAllocations, firstLotMaxQty } = isService
+                ? { lots: [], allocations: null, firstLotMaxQty: 0 }
+                : await fetchProductLots(fullProduit.id)
 
             // Générer le lineId à l'avance pour pouvoir l'utiliser dans le callback multi-lot
             const newLineId = generateUUID()

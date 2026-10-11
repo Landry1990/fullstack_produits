@@ -48,13 +48,14 @@ class ProduitListSerializer(serializers.ModelSerializer):
             return obj.fournisseur.name
         return None
     forme_nom = serializers.CharField(source='forme.nom', read_only=True)
+    is_service = serializers.BooleanField(read_only=True)
     active_promis_count = serializers.IntegerField(read_only=True)
     has_pending_force = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Produit
         fields = [
-            'id', 'name', 'cip1', 'cip2', 'cip3', 'cip4',
+            'id', 'name', 'type_produit', 'is_service', 'cip1', 'cip2', 'cip3', 'cip4',
             'stock', 'total_stock', 'stock_minimum', 'stock_maximum', 'stock_alert', 'pmp', 'selling_price',
             'rayon_name', 'fournisseur_name', 'forme_nom', 'rotation_moyenne',
             'use_lot_management',

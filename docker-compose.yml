@@ -93,6 +93,7 @@ services:
       - ./backup-db.sh:/backup-db.sh
       - ./backups:/backups
       - wal_archive:/wal_archive
+      - ./CHANGELOG.md:/app/CHANGELOG.md:ro  # endpoint maintenance/changelog
     env_file:
       - .env
     environment:

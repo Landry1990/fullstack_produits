@@ -210,6 +210,11 @@ class ProduitStockMixin:
 
         # Lock product (and optional lot) to prevent concurrent manual adjustments.
         produit = Produit.objects.select_for_update().get(pk=self.kwargs['pk'])
+        if produit.is_service:
+            return Response(
+                {'detail': f"« {produit.name} » est un service : pas de stock à ajuster."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         new_quantity = request.data.get('new_quantity')
         new_reserve_quantity = request.data.get('new_reserve_quantity')
@@ -477,6 +482,11 @@ class ProduitStockMixin:
         if error_res: return error_res
 
         produit = Produit.objects.select_for_update().get(pk=self.kwargs['pk'])
+        if produit.is_service:
+            return Response(
+                {'detail': f"« {produit.name} » est un service : pas de réserve ni de rayon."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         StockObligationService.reapply_pending_obligations([produit.id])
         produit.refresh_from_db(fields=['stock', 'stock_reserve'])
         if not produit.has_reserve_storage:
@@ -560,7 +570,8 @@ class ProduitStockMixin:
     @action(detail=False, methods=['get'])
     def reappro_summary(self, request):
         needs_reappro_qs = Produit.objects.filter(
-            has_reserve_storage=True, stock__lte=F('min_rayon'), stock_reserve__gt=0, is_active=True
+            has_reserve_storage=True, stock__lte=F('min_rayon'), stock_reserve__gt=0, is_active=True,
+            type_produit='PRODUIT'
         )
         count = needs_reappro_qs.count()
         suggestion_aggregate = needs_reappro_qs.annotate(needed=F('capacite_rayon') - F('stock')).aggregate(
@@ -583,7 +594,7 @@ class ProduitStockMixin:
             session = ReapproSession.objects.create(user=request.user, total_products=0, total_units=0)
             for pid in product_ids:
                 try:
-                    produit = Produit.objects.select_for_update().get(pk=pid, has_reserve_storage=True)
+                    produit = Produit.objects.select_for_update().get(pk=pid, has_reserve_storage=True, type_produit='PRODUIT')
                     StockObligationService.reapply_pending_obligations([produit.id])
                     produit.refresh_from_db(fields=['stock', 'stock_reserve'])
                     needed = max(0, produit.capacite_rayon - produit.stock)

@@ -71,7 +71,8 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
             setSearchLoading(true);
             try {
                 const response = await api.get('produits/', {
-                    params: { search: searchProduitQuery, page_size: 20 }
+                    // Un service n'est pas retournable au fournisseur (pas de stock)
+                    params: { search: searchProduitQuery, page_size: 20, type_produit: 'PRODUIT' }
                 });
                 const data = response.data;
                 const results: ProduitModel[] = Array.isArray(data) ? data : data.results || [];

@@ -156,7 +156,7 @@ class AvoirViewSet(viewsets.ModelViewSet):
                         )
 
                     produit = locked_products.get(ligne.produit_id) if ligne.produit_id else None
-                    if not produit:
+                    if not produit or produit.is_service:
                         continue
 
                     used_lots = []
@@ -293,7 +293,7 @@ class AvoirViewSet(viewsets.ModelViewSet):
                         )
 
                     produit = locked_products.get(ligne.produit_id) if ligne.produit_id else None
-                    if not produit:
+                    if not produit or produit.is_service:
                         continue
 
                     used_lots = []

@@ -1247,7 +1247,7 @@ def _collect_data(date_debut, date_fin, lang: str | None = None):
         valeur_pmp   = prods.aggregate(
             t=Coalesce(Sum(F("stock") * F("pmp"), output_field=DecimalField()), Decimal(0))
         )["t"]
-        alertes_rupt = prods.filter(stock__lte=F("stock_minimum")).count()
+        alertes_rupt = prods.filter(stock__lte=F("stock_minimum"), type_produit='PRODUIT').count()
         alertes_per  = StockLot.objects.filter(
             produit__rayon=rayon,
             quantity_remaining__gt=0,

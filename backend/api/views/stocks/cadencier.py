@@ -38,8 +38,8 @@ class CadencierViewSet(viewsets.ViewSet):
         else:
             min_rotation = None
 
-        # Produits actifs
-        queryset = Produit.objects.filter(is_active=True)
+        # Produits actifs (les services n'ont pas de stock à cadencer)
+        queryset = Produit.objects.filter(is_active=True, type_produit='PRODUIT')
 
         if search:
             queryset = queryset.filter(
