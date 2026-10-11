@@ -133,7 +133,8 @@ export function useProduitPage() {
   const totalPages = Math.ceil(totalCount / 50) || 1
 
   /* ── Stats ── */
-  const lowStockCount = useMemo(() => produits.filter(p => !p.is_service && (p.stock ?? 0) <= (p.stock_alert ?? 0) && (p.stock ?? 0) > 0).length, [produits])
+  // Seuil d'alerte = stock_minimum (même règle que les alertes backend : stock <= min, min > 0)
+  const lowStockCount = useMemo(() => produits.filter(p => !p.is_service && (p.stock_minimum ?? 0) > 0 && (p.stock ?? 0) <= (p.stock_minimum ?? 0) && (p.stock ?? 0) > 0).length, [produits])
   const outOfStockCount = useMemo(() => produits.filter(p => !p.is_service && (p.stock ?? 0) <= 0).length, [produits])
   const error = loadError instanceof Error ? loadError.message : (loadError ? String(loadError) : null)
 
