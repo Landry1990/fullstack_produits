@@ -52,6 +52,13 @@
         "provider_placeholder_short": "the supplier",
         "search_med_ref": "Search a pharmacy product...",
         "price_margin": "Price and Margin (HT)",
+        "type_label": "Type",
+        "type_product": "Product",
+        "type_product_desc": "Item with physical stock",
+        "type_service": "Service",
+        "type_service_desc": "Billable act or service, no stock",
+        "service_no_stock_hint": "Service: billable only — no stock management.",
+        "service_badge": "Service",
         "sections": {
             "identification": "Identification",
             "stock_location": "Stock & Location",

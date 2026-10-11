@@ -67,7 +67,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
               </div>
               <div className="flex flex-col">
                 <span className="text-caption uppercase font-bold text-base-content/50">{t('products:detail.total_stock')}</span>
-                <span className={`text-xl font-bold ${
+                <span className={`text-3xl font-black tabular-nums ${
                   (selectedProduit.stock ?? 0) <= 0 ? 'text-error' :
                   (selectedProduit.stock ?? 0) <= (selectedProduit.stock_alert ?? 0) ? 'text-warning' :
                   'text-success'

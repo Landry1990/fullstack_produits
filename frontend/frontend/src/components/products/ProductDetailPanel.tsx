@@ -66,15 +66,23 @@ export const ProductDetailPanel: React.FC<ProductDetailPanelProps> = (props) => 
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="inline-flex items-center px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-semibold uppercase">#{selectedProduit.id}</span>
-                <span className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold ${
-                  ((selectedProduit.total_stock ?? selectedProduit.stock) ?? 0) <= 0 ? 'bg-error/10 text-error' :
-                  ((selectedProduit.total_stock ?? selectedProduit.stock) ?? 0) <= (selectedProduit.stock_alert ?? 0) ? 'bg-warning/10 text-warning' :
-                  'bg-success/10 text-success'
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border ${
+                  ((selectedProduit.total_stock ?? selectedProduit.stock) ?? 0) <= 0 ? 'bg-error/10 text-error border-error/25' :
+                  ((selectedProduit.total_stock ?? selectedProduit.stock) ?? 0) <= (selectedProduit.stock_alert ?? 0) ? 'bg-warning/10 text-warning border-warning/25' :
+                  'bg-success/10 text-success border-success/25'
                 }`}>
                   {selectedProduit.has_reserve_storage ? (
-                    <>Rayon: {selectedProduit.stock ?? 0} / {t('products:detail.reserve_label')}: {selectedProduit.stock_reserve ?? 0}</>
+                    <>
+                      <span className="text-caption font-bold uppercase tracking-wider opacity-75">Rayon</span>
+                      <span className="text-2xl font-black tabular-nums leading-none">{selectedProduit.stock ?? 0}</span>
+                      <span className="text-caption font-bold uppercase tracking-wider opacity-75 border-l border-current/25 pl-1.5 ml-1">{t('products:detail.reserve_label')}</span>
+                      <span className="text-2xl font-black tabular-nums leading-none">{selectedProduit.stock_reserve ?? 0}</span>
+                    </>
                   ) : (
-                    <>{t('products:detail.stock_label', { defaultValue: 'Stock' })}: {selectedProduit.stock ?? 0}</>
+                    <>
+                      <span className="text-caption font-bold uppercase tracking-wider opacity-75">{t('products:detail.stock_label', { defaultValue: 'Stock' })}</span>
+                      <span className="text-2xl font-black tabular-nums leading-none">{selectedProduit.stock ?? 0}</span>
+                    </>
                   )}
                 </span>
               </div>

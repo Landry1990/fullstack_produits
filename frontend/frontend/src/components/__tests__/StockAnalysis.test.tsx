@@ -104,6 +104,7 @@ const defaultHookValue = {
 describe('StockAnalysis', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        localStorage.clear();
         (useStockAnalysis as unknown).mockReturnValue(defaultHookValue);
     });
 
@@ -196,6 +197,25 @@ describe('StockAnalysis', () => {
         expect(rows[0].textContent).toContain('Doliprane');
         expect(rows[1].textContent).toContain('Ibuprofene');
         expect(rows[2].textContent).toContain('Aspirine');
+    });
+
+    it('replie et réaffiche les filtres via le toggle', async () => {
+        renderWithContext(<StockAnalysis />);
+        await waitFor(() => {
+            expect(screen.getAllByRole('combobox').length).toBeGreaterThan(0);
+        });
+        const hideBtn = screen.getByRole('button', { name: /Masquer les filtres/i });
+        expect(hideBtn).toHaveAttribute('aria-expanded', 'true');
+        await act(async () => {
+            fireEvent.click(hideBtn);
+        });
+        const showBtn = screen.getByRole('button', { name: /Afficher les filtres/i });
+        expect(showBtn).toHaveAttribute('aria-expanded', 'false');
+        expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+        await act(async () => {
+            fireEvent.click(showBtn);
+        });
+        expect(screen.getAllByRole('combobox').length).toBeGreaterThan(0);
     });
 
     it('declenche l\'export Excel au clic sur le bouton Excel', async () => {

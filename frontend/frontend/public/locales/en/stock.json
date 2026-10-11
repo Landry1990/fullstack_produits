@@ -76,7 +76,8 @@
                 "impact": "Impact"
             },
             "rupture": "Out of stock",
-            "impact_pts": "{{pts}} pts"
+            "impact_pts": "{{pts}} pts",
+            "days_short": "d"
         }
     },
     "health": {
@@ -500,7 +501,9 @@
             "supplier": "Supplier",
             "all_suppliers": "All suppliers",
             "refresh": "Refresh",
-            "days_threshold": "Days without sale"
+            "days_threshold": "Days without sale",
+            "show": "Show filters",
+            "hide": "Hide filters"
         },
         "stats": {
             "supplier": "Supplier",
