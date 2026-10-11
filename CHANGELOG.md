@@ -2,6 +2,26 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-10-11 — 🎯 Fiche produit : seuil d'alerte = stock minimum
+
+- **Alignement métier** : le backend n'utilise `stock_alert` (champ
+  manuel historique) nulle part — les vraies alertes se basent sur
+  `stock_minimum` (dashboard ruptures `stock <= stock_minimum`,
+  suggestions de commande idem). L'UI affichait `stock_alert`, souvent
+  0 → seuil affiché incohérent avec les alertes réelles.
+- **Fix** :
+  - KPI « Seuil d'alerte » du header → affiche `stock_minimum`.
+  - Couleur ambre du KPI stock → basée sur `stock_minimum` (rouge ≤ 0
+    inchangé).
+  - Compteur « stock bas » du footer liste → même règle que le backend
+    (`min > 0 && stock <= min && stock > 0`) au lieu de `stock_alert`.
+  - Ligne « Seuil d'alerte » retirée de l'onglet Général — redondante
+    avec « Stock Min / Max » et affichait l'ancien champ.
+- Le champ `stock_alert` reste présent en base et éditable dans le
+  formulaire (pas de migration) — simplement plus affiché comme seuil.
+- Fichiers : `ProductDetailHeader.tsx`, `useProduitPage.ts`,
+  `ProductTabsContent.tsx`.
+
 ## 2026-10-11 — ♻️ Refactor `ProduitShadcn.tsx` (810 → ~200 lignes)
 
 - Découpage de la page Produits en 4 unités à responsabilité unique,

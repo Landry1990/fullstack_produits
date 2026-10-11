@@ -83,7 +83,7 @@ export const ProductDetailHeader: React.FC<ProductDetailHeaderProps> = ({
           <>
             <div className={`flex-1 min-w-[110px] rounded-xl border px-3 py-2 ${
               ((produit.total_stock ?? produit.stock) ?? 0) <= 0 ? 'bg-red-50 border-red-200 text-red-700' :
-              ((produit.total_stock ?? produit.stock) ?? 0) <= (produit.stock_alert ?? 0) ? 'bg-amber-50 border-amber-200 text-amber-700' :
+              ((produit.total_stock ?? produit.stock) ?? 0) <= (produit.stock_minimum ?? 0) ? 'bg-amber-50 border-amber-200 text-amber-700' :
               'bg-emerald-50 border-emerald-200 text-emerald-700'
             }`}>
               <div className="text-caption font-bold uppercase tracking-wider opacity-75">
@@ -99,7 +99,7 @@ export const ProductDetailHeader: React.FC<ProductDetailHeaderProps> = ({
             )}
             <div className="flex-1 min-w-[110px] rounded-xl border bg-slate-50 border-slate-200 text-slate-700 px-3 py-2">
               <div className="text-caption font-bold uppercase tracking-wider opacity-75">{t('products:detail.general.alert_threshold')}</div>
-              <div className="text-2xl font-black tabular-nums leading-tight">{produit.stock_alert ?? 0}</div>
+              <div className="text-2xl font-black tabular-nums leading-tight">{produit.stock_minimum ?? 0}</div>
             </div>
           </>
         )}

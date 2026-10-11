@@ -618,10 +618,6 @@ export const ProductTabsContent: React.FC<ProductTabsContentProps> = ({
                 <TableCell className="font-black">{selectedProduit.stock_minimum ?? 0} / {selectedProduit.stock_maximum ?? 0}</TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="w-1/3 font-bold text-sm text-slate-400 uppercase tracking-wider">{t('products:detail.general.alert_threshold')}</TableCell>
-                <TableCell><Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">{selectedProduit.stock_alert ?? 0}</Badge></TableCell>
-              </TableRow>
-              <TableRow>
                 <TableCell className="w-1/3 font-bold text-sm text-slate-400 uppercase tracking-wider">{t('products:detail.general.expiration')}</TableCell>
                 <TableCell className="font-mono font-black text-sm">{selectedProduit.expire_date ? (() => {
                   const d = new Date(selectedProduit.expire_date);
