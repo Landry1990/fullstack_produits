@@ -184,7 +184,7 @@ class SaleModifier:
             residual_quantity = item.quantity - covered_by_line.get(item.id, 0)
             if residual_quantity > 0 and item.produit_id in pending_promis_map:
                 residual_quantity -= min(residual_quantity, pending_promis_map[item.produit_id])
-            if produit and residual_quantity > 0:
+            if produit and not produit.is_service and residual_quantity > 0:
                 Produit.objects.filter(pk=item.produit_id).update(stock=F('stock') + residual_quantity)
                 restored_ids.append(item.produit_id)
         notify_stock_changed(restored_ids)
@@ -263,6 +263,8 @@ class SaleModifier:
 
             is_promis = bool(prod_data.get('is_promis')) and quantity > 0
             promis_quantity = min(promis_quantity, quantity) if is_promis else 0
+            if produit.is_service and promis_quantity > 0:
+                raise ValueError(f"« {produit.name} » est un service : un service ne peut pas être mis en promis.")
             promis = None
             if promis_quantity > 0:
                 promis = Promis.objects.create(
@@ -286,14 +288,16 @@ class SaleModifier:
 
             delivered_quantity = quantity - promis_quantity if quantity > 0 else quantity
             allocated_quantity = 0
-            if delivered_quantity > 0:
+            if delivered_quantity > 0 and not produit.is_service:
                 allocated_quantity = SaleModifier._allocate_product_lots(
                     fp, produit, delivered_quantity, lot_id, selling_price
                 )
 
             # Le stock comptable descend de la quantité facturée totale.
-            Produit.objects.filter(pk=produit_id).update(stock=F('stock') - quantity)
-            notify_stock_changed([produit_id])
+            # Un service n'a pas de stock : rien à décrémenter.
+            if not produit.is_service:
+                Produit.objects.filter(pk=produit_id).update(stock=F('stock') - quantity)
+                notify_stock_changed([produit_id])
 
             pending_allocations = []
             if promis and promis_quantity > 0:
@@ -313,9 +317,11 @@ class SaleModifier:
                     selling_price=selling_price,
                 ))
 
-            if quantity > 0 and produit.use_lot_management:
+            if produit.is_service or quantity <= 0:
+                forced_quantity = 0
+            elif produit.use_lot_management:
                 forced_quantity = quantity - allocated_quantity - promis_quantity
-            elif quantity > 0:
+            else:
                 available_without_lot = virtual_stock_by_product.get(produit_id, 0)
                 covered_without_lot = min(delivered_quantity, available_without_lot)
                 virtual_stock_by_product[produit_id] = available_without_lot - covered_without_lot
@@ -329,9 +335,6 @@ class SaleModifier:
                         selling_price=selling_price,
                     )
                 forced_quantity = delivered_quantity - covered_without_lot
-            else:
-                forced_quantity = 0
-
             if forced_quantity > 0:
                 obligation = StockObligationService.create_obligation(
                     fp,
@@ -355,7 +358,8 @@ class SaleModifier:
                 new_product_ids_with_allocations.add(produit_id)
 
             # Sync FactureProduit fields from allocated lots
-            SaleModifier._sync_fp_lot_info(fp, lot_id, produit, allocated_quantity > 0)
+            if not produit.is_service:
+                SaleModifier._sync_fp_lot_info(fp, lot_id, produit, allocated_quantity > 0)
 
         return new_quantity_by_product, new_product_ids_with_allocations
 
@@ -425,9 +429,12 @@ class SaleModifier:
 
         updated_products = Produit.objects.filter(id__in=all_product_ids)
         product_stock_map = {p.id: p.total_stock for p in updated_products}
+        service_ids = {p.id for p in updated_products if p.is_service}
 
         mouvements = []
         for pid in all_product_ids:
+            if pid in service_ids:
+                continue
             old_qty = old_quantity_by_product.get(pid, 0)
             new_qty = new_quantity_by_product.get(pid, 0)
             delta = old_qty - new_qty

@@ -434,7 +434,7 @@ class TelegramRapportFlashView(APIView):
                 factures_today = Facture.objects.filter(date__gte=day_lo, date__lt=day_hi, status=Facture.Status.VALIDEE)
                 ca = sum(f.total_ttc for f in factures_today) or 0
                 nb_ventes = factures_today.count()
-                ruptures = Produit.objects.filter(stock__lte=0, is_active=True).count()
+                ruptures = Produit.objects.filter(stock__lte=0, is_active=True, type_produit='PRODUIT').count()
                 creances = 0
 
             arrow = "📈" if float(change) >= 0 else "📉"

@@ -11,6 +11,9 @@ Déployée en production chez des clients (mode "zenith" : licence, watchdog, mi
 - **Lire `CHANGELOG.md`** (dernières entrées en haut) en début de session.
 - **Ajouter une entrée `CHANGELOG.md`** (section datée en haut) après toute tâche
   significative : quoi, pourquoi, fichiers touchés. Même format que l'existant.
+- `CHANGELOG.md` ne garde que **le mois courant** ; l'historique est archivé par
+  mois dans `docs/changelog/YYYY-MM.md` — consulter si besoin d'entrées anciennes.
+  Au changement de mois, déplacer les entrées du mois écoulé vers l'archive.
 - Les apps mobiles ont leur propre suivi : `mobile-facturation/SUIVI.md`.
 
 ## ⚠️ Demandes complexes — Avertir avant d'agir

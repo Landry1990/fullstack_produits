@@ -602,7 +602,10 @@ class RapportFinanceMixin:
     @action(detail=False, methods=['get'])
     def rapport_remises_details_excel(self, request):
         from api.models import PharmacySettings
-        data = self.rapport_remises_details(request).data or []
+        inner = self.rapport_remises_details(request)
+        if inner.status_code != status.HTTP_200_OK:
+            return inner
+        data = inner.data or []
         try:
             log_audit(
                 user=request.user,
@@ -642,7 +645,10 @@ class RapportFinanceMixin:
     @action(detail=False, methods=['get'])
     def rapport_remises_excel(self, request):
         from api.models import PharmacySettings
-        data = self.rapport_remises(request).data or []
+        inner = self.rapport_remises(request)
+        if inner.status_code != status.HTTP_200_OK:
+            return inner
+        data = inner.data or []
         try:
             log_audit(
                 user=request.user,

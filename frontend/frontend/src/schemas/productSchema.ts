@@ -3,6 +3,7 @@ import i18n from '../i18n';
 
 export const productSchema = z.object({
   name: z.string().min(2, { error: () => i18n.t('products:form.validation.name_min') }),
+  type_produit: z.enum(['PRODUIT', 'SERVICE']).default('PRODUIT'),
   cip1: z.string().optional().nullable(),
   cip2: z.string().optional().nullable(),
   cip3: z.string().optional().nullable(),

@@ -132,7 +132,7 @@ class DashboardCoreMixin(viewsets.ViewSet):
                 stock_value=Coalesce(Sum(ExpressionWrapper(F('stock') * F('pmp'), output_field=DecimalField())), Decimal(0)),
                 stock_count=Count(Case(When(stock__gt=0, then=Value(1)))),
                 stock_critique=Count(Case(When(
-                    Q(is_active=True) & (
+                    Q(is_active=True, type_produit='PRODUIT') & (
                         Q(stock__lte=F('stock_minimum')) |
                         Q(stock__lte=0) |
                         (Q(rotation_moyenne__gt=1) & Q(stock__lt=F('rotation_moyenne') / 2.0))
@@ -502,7 +502,8 @@ class DashboardCoreMixin(viewsets.ViewSet):
         shortages = Produit.objects.filter(
             stock__lte=F('stock_minimum'), 
             stock_minimum__gt=0,
-            is_active=True
+            is_active=True,
+            type_produit='PRODUIT'
         ).count()
         if shortages > shortage_alert_threshold:
             alerts.append({
@@ -850,7 +851,8 @@ class DashboardCoreMixin(viewsets.ViewSet):
         # Avoid division by zero: only take products with moving stock (rotation > 0)
         # days_remaining = stock / (rotation_moyenne / 30) = stock * 30 / rotation_moyenne
         products = Produit.objects.filter(
-            rotation_moyenne__gt=1
+            rotation_moyenne__gt=1,
+            type_produit='PRODUIT'
         ).annotate(
             daily_rotation=Cast(F('rotation_moyenne'), FloatField()) / 30.0,
             days_remaining=Cast(F('stock'), FloatField()) / (Cast(F('rotation_moyenne'), FloatField()) / 30.0)

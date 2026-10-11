@@ -307,11 +307,12 @@ class LotAllocationService:
 
         updated_products = Produit.objects.filter(id__in=product_ids)
         product_stock_map = {p.id: p.total_stock for p in updated_products}
+        service_ids = {p.id for p in updated_products if p.is_service}
 
         mouvements = []
         for item in items:
             stock_quantity = item.quantity
-            if stock_quantity == 0:
+            if stock_quantity == 0 or item.produit_id in service_ids:
                 continue
             is_return = stock_quantity < 0
             label = "Retour" if is_return else prefix

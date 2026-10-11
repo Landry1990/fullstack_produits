@@ -87,7 +87,7 @@ class SaleCanceller:
                 residual_quantity = item.quantity - covered_by_line.get(item.id, 0)
                 if residual_quantity > 0 and item.produit_id in pending_promis_map:
                     residual_quantity -= min(residual_quantity, pending_promis_map[item.produit_id])
-                if produit and residual_quantity > 0:
+                if produit and not produit.is_service and residual_quantity > 0:
                     Produit.objects.filter(pk=item.produit_id).update(stock=F('stock') + residual_quantity)
                     restored_ids.append(item.produit_id)
             notify_stock_changed(restored_ids)
@@ -166,10 +166,11 @@ class SaleCanceller:
 
         updated_products = Produit.objects.filter(id__in=product_ids)
         product_stock_map = {p.id: p.total_stock for p in updated_products}
+        service_ids = {p.id for p in updated_products if p.is_service}
 
         mouvements = []
         for item in old_items:
-            if item.quantity == 0:
+            if item.quantity == 0 or item.produit_id in service_ids:
                 continue
             mouvements.append(MouvementStock(
                 produit_id=item.produit_id,

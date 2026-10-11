@@ -908,6 +908,7 @@ class PurgeViewSet(ViewSet):
 
     def _changelog_path(self):
         candidates = [
+            Path('/opt/zenith-pharma/CHANGELOG.md'),  # Prod : repo monté dans le conteneur
             Path(settings.BASE_DIR).parent / 'CHANGELOG.md',
             Path(settings.BASE_DIR) / 'CHANGELOG.md',
         ]

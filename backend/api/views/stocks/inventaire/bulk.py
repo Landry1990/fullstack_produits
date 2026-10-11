@@ -214,6 +214,8 @@ def _process_bulk_line(
     produit = produits_map.get(p_id)
     if not produit:
         raise ValueError(f"Produit {p_id} inconnu")
+    if produit.is_service:
+        raise ValueError(f"Le produit {produit.name} est un service — non concerné par l'inventaire.")
 
     target_lot = None
 

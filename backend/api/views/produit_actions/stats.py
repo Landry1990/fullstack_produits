@@ -91,7 +91,7 @@ class ProduitStatsMixin:
 
     @action(detail=False, methods=['get'])
     def stock_alerts(self, request):
-        produits = Produit.objects.filter(is_active=True).filter(
+        produits = Produit.objects.filter(is_active=True, type_produit='PRODUIT').filter(
             Q(stock__lt=F('rotation_moyenne'), rotation_moyenne__gt=1) |
             Q(stock__lte=F('stock_minimum'), stock_minimum__gt=0) |
             Q(stock__lt=0)

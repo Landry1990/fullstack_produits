@@ -204,7 +204,7 @@ class SaleValidator:
             promis_qty = promis_map.get(pid, 0)
             effective_qty = Decimal(str(total_qty - promis_qty))
 
-            if effective_qty > 0 and produit.stock < effective_qty and not can_sell_negative:
+            if effective_qty > 0 and not produit.is_service and produit.stock < effective_qty and not can_sell_negative:
                 raise ValueError(
                     f"Stock insuffisant pour le produit {produit.name}. "
                     f"Quantité totale demandée: {total_qty}, Disponible: {produit.stock}"
@@ -273,6 +273,7 @@ class SaleValidator:
             item.produit_id for item in items
             if getattr(item, '_delivered_quantity', item.quantity) > 0
             and not item.stock_lot_id
+            and not getattr(products_map.get(item.produit_id), 'is_service', False)
         ]
         fifo_lots_queue = {}
         if fifo_prods:
@@ -298,6 +299,10 @@ class SaleValidator:
         for item in items:
             produit = products_map.get(item.produit_id)
             if not produit:
+                continue
+            # Service : ligne facturable sans stock — ni lots, ni décrément,
+            # ni obligation de couverture.
+            if produit.is_service:
                 continue
             delivered_quantity = getattr(item, '_delivered_quantity', item.quantity)
             allocated_quantity = 0

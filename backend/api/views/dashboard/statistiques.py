@@ -220,7 +220,7 @@ class StatistiquesViewSet(viewsets.ViewSet):
         dead_stock_count = dormant_qs.count()
     
         # 2. Pertes Estimées sur Ruptures (Ventes manquées)
-        rupture_qs = Produit.objects.filter(stock__lte=0, rotation_moyenne__gt=0, is_active=True)
+        rupture_qs = Produit.objects.filter(stock__lte=0, rotation_moyenne__gt=0, is_active=True, type_produit='PRODUIT')
     
         lost_revenue_monthly = rupture_qs.aggregate(
             total=Coalesce(Sum(ExpressionWrapper(F('rotation_moyenne') * F('selling_price'), output_field=DecimalField())), Decimal(0))
@@ -312,7 +312,8 @@ class StatistiquesViewSet(viewsets.ViewSet):
         relevant_days = 90
         relevant_cutoff = today - timedelta(days=relevant_days)
         relevant_qs = Produit.objects.filter(
-            is_active=True
+            is_active=True,
+            type_produit='PRODUIT'
         ).filter(
             Q(stock__gt=0) |
             Q(dernier_vente__gte=relevant_cutoff) |

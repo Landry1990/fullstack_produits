@@ -52,6 +52,13 @@
         "provider_placeholder_short": "le fournisseur",
         "search_med_ref": "Rechercher un produit de la pharmacie...",
         "price_margin": "Prix et Marge (HT)",
+        "type_label": "Type",
+        "type_product": "Produit",
+        "type_product_desc": "Article avec stock physique",
+        "type_service": "Service",
+        "type_service_desc": "Acte ou prestation facturable, sans stock",
+        "service_no_stock_hint": "Service : facturable uniquement — aucune gestion de stock.",
+        "service_badge": "Service",
         "sections": {
             "identification": "Identification",
             "stock_location": "Stock & Localisation",

@@ -184,7 +184,12 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
                 continue
             if _pid:
                 product_ids_in_payload.add(_pid)
-        product_tva_map = {p.id: p.tva for p in Produit.objects.filter(id__in=product_ids_in_payload)}
+        product_rows = list(
+            Produit.objects.filter(id__in=product_ids_in_payload)
+            .values('id', 'tva', 'name', 'type_produit')
+        )
+        product_tva_map = {r['id']: r['tva'] for r in product_rows}
+        service_products = {r['id']: r['name'] for r in product_rows if r['type_produit'] == 'SERVICE'}
         # Fetch existing items for this order to know what to update vs create
         existing_qs = CommandeProduit.objects.filter(commande=commande)
         existing_items = {item.id: item for item in existing_qs}
@@ -197,6 +202,11 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
                 item_id = to_int(p.get('id'), None)
                 produit_id = to_int(p.get('produit'), None)
                 lot = p.get('lot') or None
+
+                if produit_id in service_products:
+                    raise ValueError(
+                        f"« {service_products[produit_id]} » est un service : non commandable (pas de stock)."
+                    )
 
                 quantity = to_int(p.get('quantity'))
                 unites_gratuites = to_int(p.get('unites_gratuites'))

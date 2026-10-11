@@ -513,6 +513,14 @@ class SaleFinalizer:
             produit_id = p.get('produit')
             requested_by_product[produit_id] = requested_by_product.get(produit_id, 0) + quantity
 
+        # Un service n'a pas de stock : pas de livraison différée possible.
+        service_names = dict(
+            Produit.objects.filter(
+                id__in=[pid for pid in requested_by_product if pid is not None],
+                type_produit='SERVICE',
+            ).values_list('id', 'name')
+        )
+
         for p in produits_data:
             # '5' > 0 lèverait TypeError → 500 ; on parse d'abord en entier.
             try:
@@ -524,6 +532,15 @@ class SaleFinalizer:
             if not p.get('is_promis') or promis_qty <= 0:
                 continue
             produit_id = p.get('produit')
+            try:
+                produit_id_int = parse_int(produit_id, field='produit', min_value=1, max_value=MAX_INT32)
+            except ValidationError as exc:
+                raise _as_value_error(exc) from exc
+            if produit_id_int in service_names:
+                raise ValueError(
+                    f"« {service_names[produit_id_int]} » est un service : "
+                    "un service ne peut pas être mis en promis."
+                )
             promised_by_product[produit_id] = promised_by_product.get(produit_id, 0) + promis_qty
             if promised_by_product[produit_id] > requested_by_product.get(produit_id, 0):
                 raise ValueError("La quantité promise ne peut pas dépasser la quantité facturée.")

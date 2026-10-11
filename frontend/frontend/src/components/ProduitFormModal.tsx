@@ -5,7 +5,7 @@ import api from '../services/api';
 import type { ProduitForm, ProduitModel, Rayon, Fournisseur, Forme, Groupe } from '../types';
 import { useTVA } from '../hooks/useTVA';
 import {
-  X, Package, Hash, Layers, DollarSign, AlertTriangle, Loader2, Save
+  X, Package, Hash, Layers, DollarSign, AlertTriangle, Loader2, Save, Wrench
 } from 'lucide-react';
 import { gooeyToast } from 'goey-toast';
 import { normalizeNumberInput } from '../utils/formatters';
@@ -18,7 +18,7 @@ import { Select } from './ui/Select';
 import { Checkbox } from './shadcn/checkbox';
 import { ErrorState } from './ui/ErrorState';
 
-const EMPTY_ARRAY: unknown[] = [];
+const EMPTY_ARRAY: never[] = [];
 
 interface ProduitFormModalProps {
   open: boolean;
@@ -26,7 +26,7 @@ interface ProduitFormModalProps {
   onCreated?: (produit: ProduitModel) => void;
   onSuccess?: (produit: ProduitModel) => void;
   produitsEndpoint: string;
-  initialData?: Partial<ProduitForm>;
+  initialData?: Partial<ProduitForm> & { id?: number };
   title?: string;
   rayons: Rayon[];
   fournisseurs: Fournisseur[];
@@ -43,18 +43,17 @@ export default function ProduitFormModal({
   initialData,
   title,
   rayons = EMPTY_ARRAY,
-  _fournisseurs = EMPTY_ARRAY,
   formes = EMPTY_ARRAY,
   groupes = EMPTY_ARRAY,
 }: ProduitFormModalProps) {
   const { t } = useTranslation(['products', 'common']);
-  const productId = (initialData as unknown)?.id;
+  const productId = initialData?.id;
   const isEditMode = Boolean(productId);
   const titleText = title || (isEditMode ? t('products:edit_title') : t('products:create_title'));
   const { tvaList, loading: loadingTVA } = useTVA();
 
   const [form, setForm] = useState<ProduitForm>({
-    name: '', stock: '', cost_price: '', selling_price: '', cip1: '', cip2: '', cip3: '', cip4: '',
+    name: '', type_produit: 'PRODUIT', stock: '', cost_price: '', selling_price: '', cip1: '', cip2: '', cip3: '', cip4: '',
     expire_date: '', stock_alert: '', stock_minimum: '', stock_maximum: '', tva: '19.25',
     rayon: '', fournisseur: '', description: '', unite_mesure: '', is_perissable: false,
     forme: '', groupe: '',
@@ -98,7 +97,7 @@ export default function ProduitFormModal({
         ? Math.round(htPrice * (1 + initialTva / 100)).toString()
         : initialData?.selling_price ?? '';
       setForm({
-        name: '', stock: '', cost_price: '', cip1: '', cip2: '', cip3: '', cip4: '',
+        name: '', type_produit: 'PRODUIT', stock: '', cost_price: '', cip1: '', cip2: '', cip3: '', cip4: '',
         expire_date: '', stock_alert: '', stock_minimum: '', stock_maximum: '', tva: '19.25',
         rayon: '', fournisseur: '', description: '', unite_mesure: '', is_perissable: false,
         forme: '', groupe: '',
@@ -134,6 +133,7 @@ export default function ProduitFormModal({
   const costPrice = normalizeNumberInput(form.cost_price);
   const sellingPriceTTC = normalizeNumberInput(form.selling_price);
   const tvaRate = parseFloat(form.tva) || 0;
+  const isService = form.type_produit === 'SERVICE';
 
   // Le prix de vente saisi est TTC — on déduit le HT
   const sellingPriceHT = tvaRate > 0 ? sellingPriceTTC / (1 + tvaRate / 100) : sellingPriceTTC;
@@ -274,17 +274,19 @@ export default function ProduitFormModal({
       const payload = {
         name: form.name.trim().toUpperCase(),
         description: '',
-        stock: Number.isFinite(stockValue) ? stockValue : undefined,
+        type_produit: form.type_produit || 'PRODUIT',
+        // Un service n'a pas de stock : on force les champs liés à 0/neutre
+        stock: isService ? 0 : (Number.isFinite(stockValue) ? stockValue : undefined),
         cost_price: form.cost_price.trim(),
         selling_price: Math.round(sellingHT * 100) / 100, // HT, arrondi à 2 décimales
         cip1: form.cip1.trim() || null,
         cip2: form.cip2.trim() || null,
         cip3: form.cip3.trim() || null,
         cip4: form.cip4.trim() || null,
-        expire_date: form.expire_date.trim() || null,
-        stock_alert: form.stock_alert ? parseInt(form.stock_alert, 10) : 0,
-        stock_minimum: form.stock_minimum ? parseInt(form.stock_minimum, 10) : 0,
-        stock_maximum: form.stock_maximum ? parseInt(form.stock_maximum, 10) : 0,
+        expire_date: isService ? null : (form.expire_date.trim() || null),
+        stock_alert: !isService && form.stock_alert ? parseInt(form.stock_alert, 10) : 0,
+        stock_minimum: !isService && form.stock_minimum ? parseInt(form.stock_minimum, 10) : 0,
+        stock_maximum: !isService && form.stock_maximum ? parseInt(form.stock_maximum, 10) : 0,
         rayon: form.rayon ? parseInt(form.rayon, 10) : null,
         fournisseur: form.fournisseur ? parseInt(form.fournisseur, 10) : null,
         forme: form.forme ? parseInt(form.forme, 10) : null,
@@ -293,12 +295,12 @@ export default function ProduitFormModal({
         requires_prescription: form.requires_prescription || false,
         surveillance_category: form.surveillance_category || 'NONE',
         is_supplier_exclusive: form.is_supplier_exclusive || false,
-        use_lot_management: form.use_lot_management,
+        use_lot_management: isService ? false : form.use_lot_management,
         is_chronic: form.is_chronic || false,
         default_treatment_days: normalizeNumberInput(form.default_treatment_days || '', { min: 1 }),
-        has_reserve_storage: form.has_reserve_storage || false,
-        capacite_rayon: normalizeNumberInput(form.capacite_rayon || '', { min: 0 }),
-        min_rayon: normalizeNumberInput(form.min_rayon || '', { min: 0 }),
+        has_reserve_storage: isService ? false : (form.has_reserve_storage || false),
+        capacite_rayon: isService ? 0 : normalizeNumberInput(form.capacite_rayon || '', { min: 0 }),
+        min_rayon: isService ? 0 : normalizeNumberInput(form.min_rayon || '', { min: 0 }),
         message_alerte: form.message_alerte?.trim() || null,
       };
 
@@ -331,7 +333,7 @@ export default function ProduitFormModal({
       }
       onClose();
     } catch (err: unknown) {
-      const anyErr = err as unknown;
+      const anyErr = err as { response?: { data?: unknown }; message?: string };
       if (anyErr.response) {
         const detail = anyErr.response?.data ?? anyErr.message;
         const errorText = typeof detail === 'string' ? detail : formatBackendErrors(detail);
@@ -412,6 +414,40 @@ export default function ProduitFormModal({
                 ))}
               </div>
             </div>
+            {/* Sélecteur Type Produit / Service */}
+            <div className="mt-3">
+              <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.type_label')}</label>
+              <div className="grid grid-cols-2 gap-2 max-w-md">
+                <button
+                  type="button"
+                  onClick={() => setForm((p) => ({ ...p, type_produit: 'PRODUIT' }))}
+                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold transition-colors ${
+                    !isService ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
+                  }`}
+                  aria-pressed={!isService}
+                >
+                  <Package className="size-4 shrink-0" />
+                  <span className="text-left">
+                    {t('products:form.type_product')}
+                    <span className="block text-caption font-normal text-slate-400">{t('products:form.type_product_desc')}</span>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm((p) => ({ ...p, type_produit: 'SERVICE' }))}
+                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold transition-colors ${
+                    isService ? 'border-violet-500 bg-violet-50 text-violet-700' : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
+                  }`}
+                  aria-pressed={isService}
+                >
+                  <Wrench className="size-4 shrink-0" />
+                  <span className="text-left">
+                    {t('products:form.type_service')}
+                    <span className="block text-caption font-normal text-slate-400">{t('products:form.type_service_desc')}</span>
+                  </span>
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Section: Stock & Localisation */}
@@ -419,8 +455,11 @@ export default function ProduitFormModal({
             <h4 className="text-caption font-black uppercase tracking-widest text-slate-500 mb-2 flex items-center gap-1.5">
               <Layers size={12} /> {t('products:form.sections.stock_location')}
             </h4>
+            {isService && (
+              <p className="mb-2 text-caption font-semibold text-violet-600">{t('products:form.service_no_stock_hint')}</p>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-              {!isEditMode && (
+              {!isEditMode && !isService && (
                 <div>
                   <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.initial_stock')}</label>
                   <Input type="number" className={inputBase} aria-label={t('products:form.initial_stock')} value={form.stock} onChange={(e) => setForm((p) => ({ ...p, stock: e.target.value }))} min={0} step={1} required />
@@ -444,20 +483,22 @@ export default function ProduitFormModal({
                   })}
                 </Select>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <div>
-                  <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.alert')}</label>
-                  <Input type="number" className={inputSm} aria-label={t('products:form.alert')} value={form.stock_alert} onChange={(e) => setForm((p) => ({ ...p, stock_alert: e.target.value }))} min={0} step={1} />
+              {!isService && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div>
+                    <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.alert')}</label>
+                    <Input type="number" className={inputSm} aria-label={t('products:form.alert')} value={form.stock_alert} onChange={(e) => setForm((p) => ({ ...p, stock_alert: e.target.value }))} min={0} step={1} />
+                  </div>
+                  <div>
+                    <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.min')}</label>
+                    <Input type="number" className={inputSm} aria-label={t('products:form.min')} value={form.stock_minimum} onChange={(e) => setForm((p) => ({ ...p, stock_minimum: e.target.value }))} min={0} step={1} />
+                  </div>
+                  <div>
+                    <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.max')}</label>
+                    <Input type="number" className={inputSm} aria-label={t('products:form.max')} value={form.stock_maximum} onChange={(e) => setForm((p) => ({ ...p, stock_maximum: e.target.value }))} min={0} step={1} />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.min')}</label>
-                  <Input type="number" className={inputSm} aria-label={t('products:form.min')} value={form.stock_minimum} onChange={(e) => setForm((p) => ({ ...p, stock_minimum: e.target.value }))} min={0} step={1} />
-                </div>
-                <div>
-                  <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.max')}</label>
-                  <Input type="number" className={inputSm} aria-label={t('products:form.max')} value={form.stock_maximum} onChange={(e) => setForm((p) => ({ ...p, stock_maximum: e.target.value }))} min={0} step={1} />
-                </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -555,14 +596,17 @@ export default function ProduitFormModal({
                 <span className="text-xs font-semibold">{t('products:form.negative_margin_warning')}</span>
               </div>
             )}
-            <div className="mt-3">
-              <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.expiration_date')}</label>
-              <LocalizedDateInput  className={`${inputBase} md:w-1/4`} aria-label={t('products:form.expiration_date')} value={form.expire_date} onChange={(e) => setForm((p) => ({ ...p, expire_date: e.target.value }))} />
-            </div>
+            {!isService && (
+              <div className="mt-3">
+                <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.expiration_date')}</label>
+                <LocalizedDateInput  className={`${inputBase} md:w-1/4`} aria-label={t('products:form.expiration_date')} value={form.expire_date} onChange={(e) => setForm((p) => ({ ...p, expire_date: e.target.value }))} />
+              </div>
+            )}
           </div>
 
           {/* Section: Options */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {!isService && (
             <div
               className="flex items-center gap-3 p-2.5 rounded-lg border bg-white border-slate-200 hover:bg-slate-100 transition-colors cursor-pointer"
               role="checkbox"
@@ -583,6 +627,7 @@ export default function ProduitFormModal({
                 <p className="text-caption text-slate-400">{t('products:form.lot_management_desc')}</p>
               </div>
             </div>
+            )}
             <div
               className="flex items-center gap-3 p-2.5 rounded-lg border bg-blue-50 border-blue-100 hover:bg-blue-100 transition-colors cursor-pointer"
               role="checkbox"
@@ -621,6 +666,7 @@ export default function ProduitFormModal({
           </div>
 
           {/* Section: Réserve */}
+          {!isService && (
           <div className="bg-indigo-50/50 rounded-lg border border-indigo-100 p-3">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
@@ -650,6 +696,7 @@ export default function ProduitFormModal({
               </div>
             )}
           </div>
+          )}
 
           {/* Pathologie Chronique */}
           <div

@@ -163,6 +163,18 @@ class Produit(models.Model):
     )
     name = models.CharField(max_length=100, db_index=True)
     description = models.TextField(blank=True, null=True)
+
+    TYPE_PRODUIT_CHOICES = [
+        ('PRODUIT', 'Produit'),
+        ('SERVICE', 'Service'),
+    ]
+    type_produit = models.CharField(
+        max_length=10,
+        choices=TYPE_PRODUIT_CHOICES,
+        default='PRODUIT',
+        db_index=True,
+        help_text="SERVICE = acte/prestation facturable sans gestion de stock (soin, injection, glycémie, prise de tension…)"
+    )
     message_alerte = models.TextField(blank=True, null=True, help_text="Message d'alerte affiché lors de la saisie en caisse")
     blocking_alerte = models.BooleanField(
         default=False, 
@@ -337,6 +349,12 @@ class Produit(models.Model):
         Returns the total stock: Rayon (stock) + Reserve (stock_reserve).
         """
         return (self.stock or 0) + (self.stock_reserve or 0)
+
+    @property
+    def is_service(self):
+        """Un service est facturable mais ne consomme pas de stock
+        (pas de lots, pas de décrément, pas d'inventaire, pas de promis)."""
+        return self.type_produit == 'SERVICE'
 
     def save(self, *args, **kwargs):
         # Validation Exclusivité

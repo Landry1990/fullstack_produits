@@ -2,9 +2,8 @@
 Commande Django pour nettoyer les données Silk et éviter les deadlocks.
 Usage: python manage.py cleanup_silk [--keep N]
 """
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.db import connection, transaction
-from silk.models import Request, Response
 
 
 class Command(BaseCommand):
@@ -24,6 +23,16 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        # Import paresseux : silk n'est dans INSTALLED_APPS que si ENABLE_SILK
+        # est actif (profiling dev). Sans lui, l'import top-level lèverait un
+        # RuntimeError "doesn't declare an explicit app_label".
+        try:
+            from silk.models import Request, Response
+        except (ImportError, RuntimeError) as exc:
+            raise CommandError(
+                "django-silk n'est pas activé (ENABLE_SILK) — rien à nettoyer."
+            ) from exc
+
         keep_limit = options['keep']
         do_vacuum = options['vacuum']
         

@@ -14,11 +14,18 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 django.setup()
 
 from django.db import connection
-from silk.models import Request, Response
 
 
 def cleanup_silk_data():
     """Nettoie les anciennes données Silk pour éviter les deadlocks."""
+    # Import paresseux : silk n'est dans INSTALLED_APPS que si ENABLE_SILK
+    # est actif (profiling dev) — sinon RuntimeError à l'import.
+    try:
+        from silk.models import Request, Response
+    except (ImportError, RuntimeError):
+        print("django-silk n'est pas activé (ENABLE_SILK) — rien à nettoyer.")
+        return
+
     print("Nettoyage des données Silk...")
     
     # Compter avant

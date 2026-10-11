@@ -30,7 +30,7 @@ def get_produits_a_par_marge(periode=90, fournisseur_id=None):
 
     date_debut = timezone.now() - timedelta(days=periode)
 
-    qs = Produit.objects.filter(is_active=True)
+    qs = Produit.objects.filter(is_active=True, type_produit='PRODUIT')
     if fournisseur_id:
         from ...models import StockLot
         lots_produit_ids = set(StockLot.objects.filter(fournisseur_id=fournisseur_id).values_list('produit_id', flat=True))
@@ -179,8 +179,8 @@ def calculer_reapprovisionnement_simple(periode, fournisseur_id=None, budget_max
     date_debut = timezone.now() - timedelta(days=periode)
     from django.db.models import Q, Sum
     
-    # Récupérer les produits actifs uniquement (pas les inactifs/supprimés)
-    produits = Produit.objects.filter(is_active=True).select_related('fournisseur')
+    # Récupérer les produits actifs uniquement (pas les inactifs/supprimés, ni les services)
+    produits = Produit.objects.filter(is_active=True, type_produit='PRODUIT').select_related('fournisseur')
     fournisseur_obj = None
     if fournisseur_id:
         from ...models import Fournisseur, StockLot
@@ -307,7 +307,7 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=
     from django.db.models import Q, Sum
 
     # Produits actifs uniquement, filtrer par fournisseur si spécifié
-    produits_qs = Produit.objects.filter(is_active=True)
+    produits_qs = Produit.objects.filter(is_active=True, type_produit='PRODUIT')
 
     fournisseur_obj = None
     if fournisseur_id:
@@ -574,9 +574,9 @@ def calculer_ventes_tranche_horaire(date_debut, date_fin, fournisseur_id=None):
         total_vendu=Sum('quantity')
     ).order_by('-total_vendu')
     
-    # Récupérer les objets Produit en une seule requête
+    # Récupérer les objets Produit en une seule requête (hors services)
     produit_ids = [v['produit_id'] for v in ventes]
-    produits_qs = Produit.objects.filter(id__in=produit_ids).select_related('fournisseur')
+    produits_qs = Produit.objects.filter(id__in=produit_ids, type_produit='PRODUIT').select_related('fournisseur')
     
     if fournisseur_id:
         from django.db.models import OuterRef, Subquery

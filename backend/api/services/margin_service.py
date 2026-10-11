@@ -505,14 +505,14 @@ class MarginService:
         # Requête optimisée pour identifier les produits suspects
         suspicious = FactureProduit.objects.filter(
             facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
-            cost_price__gt=0
+            produit__cost_price__gt=0
         ).values('produit__id', 'produit__name', 'produit__pmp').annotate(
             total_ca=Coalesce(
                 Sum(F('selling_price') * F('quantity'), output_field=DecimalField()),
                 Value(0, output_field=DecimalField())
             ),
             avg_margin_pct=Avg(
-                (F('selling_price') - F('cost_price')) / F('selling_price') * 100,
+                (F('selling_price') - F('produit__cost_price')) / F('selling_price') * 100,
                 output_field=DecimalField()
             ),
             nb_ventes=Count('id')

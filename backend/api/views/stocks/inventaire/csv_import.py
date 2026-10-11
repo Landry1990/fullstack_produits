@@ -163,6 +163,8 @@ def _process_csv_row(
 
     if not produit:
         raise ValueError(f"Produit '{cip}' introuvable.")
+    if produit.is_service:
+        raise ValueError(f"Produit '{cip}' ({produit.name}) est un service — non concerné par l'inventaire.")
 
     stock_theorique = produit.stock
     return LigneInventaire(

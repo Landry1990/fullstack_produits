@@ -7,6 +7,7 @@ from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from ...audit_helpers import log_audit
@@ -65,6 +66,14 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
             
         return qs
 
+    def perform_create(self, serializer):
+        produit = serializer.validated_data.get('produit')
+        if produit is not None and produit.is_service:
+            raise ValidationError(
+                f"« {produit.name} » est un service : un service n'a pas de lots de stock."
+            )
+        serializer.save()
+
     @action(detail=True, methods=['post'])
     @transaction.atomic
     def sortir_perimes(self, request, pk=None):
@@ -72,7 +81,14 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
         Sort un lot du stock (destruction/retour).
         Supporte le mode SUDO pour valider par un autre utilisateur.
         """
-        lot = StockLot.objects.select_for_update().get(pk=self.kwargs['pk'])
+        # parse_id lève ValidationError (400) : pk='abc' lèverait ValueError
+        # dans le filtre ORM → 500. DoesNotExist → 404 explicite.
+        try:
+            lot = StockLot.objects.select_for_update().get(
+                pk=parse_id(self.kwargs['pk'], field='pk')
+            )
+        except StockLot.DoesNotExist:
+            return Response({'detail': 'Lot introuvable.'}, status=status.HTTP_404_NOT_FOUND)
 
         # Cast protégé : 'abc'/'1.5'/None → 400 propre (au lieu de 500)
         raw_quantity = request.data.get('quantity', lot.quantity_remaining)

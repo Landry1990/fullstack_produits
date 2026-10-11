@@ -77,7 +77,11 @@ def validate_inventaire(
         lot_ids = {l.stock_lot_id for l in lignes if l.stock_lot_id}
 
         # OPTIMISTIC LOCKING: Récupérer sans verrou, vérifier versions avant sauvegarde
-        products_list = list(Produit.objects.filter(id__in=product_ids))
+        # Les services sont exclus : un produit converti en service après ajout
+        # à l'inventaire ne doit pas voir son stock réécrit par la validation.
+        products_list = list(Produit.objects.filter(
+            id__in=product_ids
+        ).exclude(type_produit='SERVICE'))
         products_map = {p.id: p for p in products_list}
         initial_product_versions = {p.id: p.version for p in products_list}
 
