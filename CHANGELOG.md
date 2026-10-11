@@ -63,6 +63,44 @@
   (icône `Download` inline, plus de `leftIcon`).
 - Aucune nouvelle clé i18n. Typecheck + eslint OK.
 
+## 2026-10-11 — 🧪 Test de charge : plafond réel ~30 users actifs (écriture sérialisée)
+
+- **Méthode** : `backend/scripts/load_test_api.py --stress` (recherche produits /
+  liste factures / `finaliser` vente), 60 users `lt_*` avec tokens (throttle
+  réaliste par user), produits/clients `[TEST]` dédiés (catalogue intact),
+  backend limité à 1.5 CPU comme la prod.
+- **Résultat** : sain jusqu'à **~30 clients simultanés** (P95 < 3 s), rupture
+  à 50 (P95 3,9 s ; `finaliser` P95 ~10 s). 0 % d'erreurs, 0 crash — le serveur
+  *ralentit* mais ne tombe pas.
+- **Goulots identifiés** :
+  1. **Écriture** : `next_document_number` verrouille la ligne `DocumentCounter`
+     via `select_for_update` pendant TOUTE la transaction de vente
+     (`billing.py:895`) → toutes les ventes se sérialisent (~2–4 ventes/s max).
+     Avec 8 workers : aucune amélioration → le verrou est le plafond, pas les
+     workers.
+  2. **Concurrence** : chaque worker uvicorn exécute tout le code sync (vues +
+     ORM) sur UN thread (`thread_sensitive`) → 4 workers = ~4 requêtes
+     parallèles réelles ; le reste queute (CPU restant bas).
+  3. `UVICORN_WORKERS` en env est défini mais jamais utilisé (`--workers 4`
+     en dur dans les commandes compose).
+- **Conclusion** : ~30–40 users actifs simultanés OK ; au-delà, les lectures
+  restent bonnes mais les ventes queuent. Leviers : réduire la fenêtre du
+  verrou DocumentCounter, `BACKEND_CPUS` > 1.5, câbler `UVICORN_WORKERS`.
+- Cleanup intégral : 469 factures `[TEST]` purgées, 60 users `lt_*`, postes/
+  caisse `[TEST]`, 469 AuditLog — compteurs restaurés (4951 produits,
+  17 clients). Fichier `loadtest_tokens.txt` supprimé.
+
+## 2026-10-11 — 🔧 Fix typecheck : `cn()` local refusait `null`
+
+- Erreur TS dans `ProduitShadcn.tsx` (l. 427) :
+  `selectedProduit && 'max-lg:hidden'` produit `null | string` car
+  `selectedProduit` est `ProduitModel | null`, mais le `cn()` local
+  n'acceptait que `string | false | undefined`.
+- Fix : suppression du `cn()` local dupliqué, utilisation du `cn()`
+  standard shadcn de `src/lib/utils.ts` (clsx + tailwind-merge, accepte
+  `ClassValue` dont `null`). Aucun changement visuel. Typecheck +
+  eslint OK.
+
 ## 2026-10-11 — 💄 Fiche produit : refonte header + adaptation petit écran
 
 - **Problème mobile corrigé** : sous `lg`, les deux panneaux (liste +
