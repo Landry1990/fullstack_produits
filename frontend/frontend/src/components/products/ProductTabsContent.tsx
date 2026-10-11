@@ -9,8 +9,9 @@ import { formatCurrency } from '../../utils/formatters';
 import { formatDate } from '../../utils/dateUtils';
 import api from '../../services/api';
 import { gooeyToast } from 'goey-toast';
-import { Button } from '../ui/Button';
-import { Badge } from '../ui/Badge';
+import { Button } from '../shadcn/button';
+import { Badge } from '../shadcn/badge';
+import { Tabs, TabsList, TabsTrigger } from '../shadcn/tabs';
 import { Input } from '../shadcn/input';
 import { LocalizedDateInput } from '../LocalizedDateInput';
 import { Select } from '../ui/Select';
@@ -87,7 +88,7 @@ const PriceEvolutionChart = ({ achats, t }: { achats: AchatProduit[]; t: TFuncti
                             {t('products:detail.purchases.price_evolution')}
                         </span>
                         {hasMultiplePoints && (
-                            <Badge variant={isStable ? 'secondary' : isHausse ? 'error' : 'success'} size="sm" className="inline-flex items-center gap-1">
+                            <Badge variant="outline" className={`inline-flex items-center gap-1 ${isStable ? 'bg-slate-50 text-slate-600 border-slate-200' : isHausse ? 'bg-red-50 text-red-700 border-red-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
                                 {isStable ? <ArrowRight className="size-3" /> : isHausse ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />} {Math.abs(variation).toFixed(1)}%
                             </Badge>
                         )}
@@ -183,7 +184,7 @@ const PurchasesTabContent = ({ achats, t }: { achats: AchatProduit[]; t: TFuncti
                                 {formatCurrency(Math.round(Number(achat.price_cost)))}
                             </TableCell>
                             <TableCell className="py-2 px-3">
-                                <span className="inline-flex items-center px-2 py-0.5 rounded border border-slate-200 text-xs font-mono font-semibold text-slate-500 bg-slate-100">{achat.lot || '-'}</span>
+                                <Badge variant="outline" className="font-mono bg-slate-50 text-slate-600 border-slate-200">{achat.lot || '-'}</Badge>
                             </TableCell>
                             <TableCell className="text-sm font-bold text-slate-400 py-2 px-3">
                                 {formatDate(achat.date_expiration)}
@@ -287,7 +288,7 @@ const LotsTabContent = ({ lots, produitId, t }: { lots: StockLot[]; produitId: n
                                         autoFocus
                                     />
                                 ) : (
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded border border-slate-200 text-xs font-mono font-bold text-slate-700 bg-slate-100">{lot.lot || '-'}</span>
+                                    <Badge variant="outline" className="font-mono bg-slate-50 text-slate-700 border-slate-200">{lot.lot || '-'}</Badge>
                                 )}
                             </TableCell>
                             <TableCell className="py-2 px-3">
@@ -444,9 +445,9 @@ const MovementsTabContent = ({ stockHistory, loadingHistory, onMovementClick, pr
                 <Button
                     variant="outline"
                     size="sm"
-                    leftIcon={<Download className="size-4" />}
                     onClick={handleExportExcel}
                 >
+                    <Download className="size-4" />
                     {t('products:detail.movements.export_excel')}
                 </Button>
             </div>
@@ -477,9 +478,9 @@ const MovementsTabContent = ({ stockHistory, loadingHistory, onMovementClick, pr
                             .replace(/\s*-\s*Lot:.*?(?=\s*-\s*|$)/gi, '')
                             .trim();
 
-                        const badgeVariant = item.type === 'AJUSTEMENT'
-                            ? 'warning'
-                            : isPositive ? 'success' : 'error';
+                        const badgeClass = item.type === 'AJUSTEMENT'
+                            ? 'bg-amber-50 text-amber-700 border-amber-200'
+                            : isPositive ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200';
 
                         return (
                             <TableRow
@@ -489,7 +490,7 @@ const MovementsTabContent = ({ stockHistory, loadingHistory, onMovementClick, pr
                                     {formatDate(item.date)}
                                 </TableCell>
                                 <TableCell className="py-2 px-3">
-                                    <Badge variant={badgeVariant} size="sm" className="whitespace-nowrap">
+                                    <Badge variant="outline" className={`whitespace-nowrap ${badgeClass}`}>
                                         {t(`products:detail.movements.types.${item.type}`, { defaultValue: item.type })}
                                     </Badge>
                                 </TableCell>
@@ -526,14 +527,14 @@ const MovementsTabContent = ({ stockHistory, loadingHistory, onMovementClick, pr
                                         )}
                                         <span className="truncate">{cleanedLibelle}</span>
                                         {item.commande_numero && (
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded border border-slate-200 text-xs font-mono font-bold text-slate-500 bg-slate-100 ml-auto">
+                                            <Badge variant="outline" className="font-mono bg-slate-50 text-slate-600 border-slate-200 ml-auto">
                                                 {item.commande_numero}
-                                            </span>
+                                            </Badge>
                                         )}
                                         {item.avoir_client_numero && (
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded border border-slate-200 text-xs font-mono font-bold text-slate-500 bg-slate-100 ml-auto">
+                                            <Badge variant="outline" className="font-mono bg-slate-50 text-slate-600 border-slate-200 ml-auto">
                                                 {item.avoir_client_numero}
-                                            </span>
+                                            </Badge>
                                         )}
                                     </div>
                                 </TableCell>
@@ -571,24 +572,27 @@ export const ProductTabsContent: React.FC<ProductTabsContentProps> = ({
     <div className="flex flex-col h-full">
       {/* Onglets */}
       <div className="bg-white shrink-0 border-b border-slate-200">
-        <div className="flex gap-1 px-4 pt-3 pb-2 overflow-x-auto">
-        {[
-          { id: 'general', label: t('products:detail.tabs.general') },
-          { id: 'prix', label: t('products:detail.tabs.price') },
-          { id: 'achats', label: t('products:detail.tabs.purchases') },
-          { id: 'lots', label: t('products:detail.tabs.lots') },
-          { id: 'stats', label: t('products:detail.tabs.stats') },
-          { id: 'mvmts', label: t('products:detail.tabs.movements') }
-        ].map((tab) => (
-          <Button
-            key={tab.id}
-            variant="ghost" size="sm"
-            className={`px-3 py-1.5 text-xs font-semibold uppercase tracking-tight rounded-lg transition-colors whitespace-nowrap ${activeTab === tab.id ? 'bg-indigo-50 text-indigo-600' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-800'}`}
-            onClick={() => setActiveTab(tab.id)}
-          >
-            {tab.label}
-          </Button>
-        ))}
+        <div className="px-4 pt-3 pb-2 overflow-x-auto">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="h-auto gap-1 bg-transparent p-0">
+            {[
+              { id: 'general', label: t('products:detail.tabs.general') },
+              { id: 'prix', label: t('products:detail.tabs.price') },
+              { id: 'achats', label: t('products:detail.tabs.purchases') },
+              { id: 'lots', label: t('products:detail.tabs.lots') },
+              { id: 'stats', label: t('products:detail.tabs.stats') },
+              { id: 'mvmts', label: t('products:detail.tabs.movements') }
+            ].map((tab) => (
+              <TabsTrigger
+                key={tab.id}
+                value={tab.id}
+                className="px-3 py-1.5 text-xs font-semibold uppercase tracking-tight rounded-lg transition-colors whitespace-nowrap text-slate-400 hover:bg-slate-100 hover:text-slate-800 data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-600 data-[state=active]:shadow-none"
+              >
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
       </div>
     </div>
 
@@ -603,11 +607,11 @@ export const ProductTabsContent: React.FC<ProductTabsContentProps> = ({
               </TableRow>
               <TableRow>
                 <TableCell className="w-1/3 font-bold text-sm text-slate-400 uppercase tracking-wider">{t('products:detail.general.rayon')}</TableCell>
-                <TableCell><span className="inline-flex items-center px-2 py-0.5 rounded-md text-caption font-bold bg-blue-50 text-blue-600 border border-blue-100">{selectedProduit.rayon_name || '-'}</span></TableCell>
+                <TableCell><Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">{selectedProduit.rayon_name || '-'}</Badge></TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className="w-1/3 font-bold text-sm text-slate-400 uppercase tracking-wider">{t('products:detail.general.provider')}</TableCell>
-                <TableCell><span className="inline-flex items-center px-2 py-0.5 rounded-md text-caption font-bold bg-slate-100 text-slate-500 border border-slate-200">{selectedProduit.fournisseur_name || '-'}</span></TableCell>
+                <TableCell><Badge variant="outline" className="bg-slate-100 text-slate-600 border-slate-200">{selectedProduit.fournisseur_name || '-'}</Badge></TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className="w-1/3 font-bold text-sm text-slate-400 uppercase tracking-wider">{t('products:detail.general.min_max')}</TableCell>
@@ -615,7 +619,7 @@ export const ProductTabsContent: React.FC<ProductTabsContentProps> = ({
               </TableRow>
               <TableRow>
                 <TableCell className="w-1/3 font-bold text-sm text-slate-400 uppercase tracking-wider">{t('products:detail.general.alert_threshold')}</TableCell>
-                <TableCell><span className="inline-flex items-center px-2 py-0.5 rounded-md text-caption font-bold bg-amber-50 text-amber-600 border border-amber-100">{selectedProduit.stock_alert ?? 0}</span></TableCell>
+                <TableCell><Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">{selectedProduit.stock_alert ?? 0}</Badge></TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className="w-1/3 font-bold text-sm text-slate-400 uppercase tracking-wider">{t('products:detail.general.expiration')}</TableCell>

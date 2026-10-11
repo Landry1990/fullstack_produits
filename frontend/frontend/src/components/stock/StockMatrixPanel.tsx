@@ -310,7 +310,7 @@ const TopPenaltiesTable: React.FC<{ products: MatrixProduct[] }> = ({ products }
                                         </span>
                                     </td>
                                     <td className="px-4 py-3.5 text-right text-sm text-slate-600">
-                                        {p.days_since_sale === 0 ? <span className="text-red-500 font-semibold">{t('matrix.penalties.rupture')}</span> : `${p.days_since_sale}${t('matrix.penalties.days_short')}`}
+                                        {p.days_since_sale === 0 ? <span className="text-red-500 font-semibold">{t('matrix.penalties.rupture')}</span> : `${p.days_since_sale} ${t('matrix.penalties.days_short')}`}
                                     </td>
                                     <td className="px-4 py-3.5 text-right text-sm text-slate-700">
                                         {p.stock_value > 0 ? formatCurrency(p.stock_value) : '—'}

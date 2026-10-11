@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
     PackageSearch, ShoppingBag, X,
-    TrendingUp, AlertTriangle, Package, Clock, FileSpreadsheet
+    TrendingUp, AlertTriangle, Package, Clock, FileSpreadsheet,
+    ChevronDown, ChevronUp
 } from 'lucide-react';
 import { formatCurrency } from '../utils/formatters';
 import { formatDate } from '../utils/dateUtils';
@@ -27,8 +29,21 @@ const tabs = [
     { id: 'shortage' as const, icon: AlertTriangle },
 ];
 
+const FILTERS_COLLAPSED_KEY = 'stock-analysis-filters-collapsed';
+
 const StockAnalysis = () => {
     const { t } = useTranslation(['stock', 'common']);
+    const [filtersCollapsed, setFiltersCollapsed] = useState(
+        () => localStorage.getItem(FILTERS_COLLAPSED_KEY) === '1'
+    );
+
+    const toggleFilters = () => {
+        setFiltersCollapsed(prev => {
+            localStorage.setItem(FILTERS_COLLAPSED_KEY, prev ? '0' : '1');
+            return !prev;
+        });
+    };
+
     const {
         activeTab,
         setActiveTab,
@@ -164,37 +179,62 @@ const StockAnalysis = () => {
                     <div className="flex-1 min-h-0 overflow-hidden flex flex-col space-y-4">
                         {/* Filters Card */}
                         <Card className="py-3">
-                            <CardHeader className="pb-2">
+                            <CardHeader className={filtersCollapsed ? 'py-0' : 'pb-2'}>
                                 <div className="flex items-center gap-3">
-                                    <div className="size-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                                    <div className="size-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
                                         <TabIcon className="size-5" />
                                     </div>
-                                    <div>
+                                    <div className="min-w-0 flex-1">
                                         <CardTitle className="text-base">
                                             {t(`stock:analyse.tabs.${activeTab}`)}
                                         </CardTitle>
-                                        <CardDescription className="text-xs">
-                                            {t('stock:analyse.filter_description')}
+                                        <CardDescription className="text-xs truncate">
+                                            {filtersCollapsed
+                                                ? [
+                                                    fournisseurs.find(f => String(f.id) === selectedFournisseur)?.name
+                                                        || t('stock:analyse.filters.all_suppliers'),
+                                                    activeTab === 'unsold' ? `${unsoldDays} ${t('stock:analyse.days')}` : null,
+                                                ].filter(Boolean).join(' · ')
+                                                : t('stock:analyse.filter_description')}
                                         </CardDescription>
                                     </div>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={toggleFilters}
+                                        aria-expanded={!filtersCollapsed}
+                                        aria-controls="stock-analysis-filters"
+                                        aria-label={t(filtersCollapsed ? 'stock:analyse.filters.show' : 'stock:analyse.filters.hide')}
+                                        title={t(filtersCollapsed ? 'stock:analyse.filters.show' : 'stock:analyse.filters.hide')}
+                                        className="shrink-0 text-slate-500"
+                                    >
+                                        {filtersCollapsed
+                                            ? <ChevronDown className="size-4" />
+                                            : <ChevronUp className="size-4" />}
+                                        <span className="hidden sm:inline">
+                                            {t(filtersCollapsed ? 'stock:analyse.filters.show' : 'stock:analyse.filters.hide')}
+                                        </span>
+                                    </Button>
                                 </div>
                             </CardHeader>
-                            <CardContent className="pb-2">
-                                <StockAnalysisFilters
-                                    activeTab={activeTab}
-                                    fournisseurs={fournisseurs}
-                                    selectedFournisseur={selectedFournisseur}
-                                    onFournisseurChange={setSelectedFournisseur}
-                                    unsoldDays={unsoldDays}
-                                    onUnsoldDaysChange={setUnsoldDays}
-                                    onRefresh={actions.fetchData}
-                                    loading={loading}
-                                />
-                            </CardContent>
+                            {!filtersCollapsed && (
+                                <CardContent className="pb-2" id="stock-analysis-filters">
+                                    <StockAnalysisFilters
+                                        activeTab={activeTab}
+                                        fournisseurs={fournisseurs}
+                                        selectedFournisseur={selectedFournisseur}
+                                        onFournisseurChange={setSelectedFournisseur}
+                                        unsoldDays={unsoldDays}
+                                        onUnsoldDaysChange={setUnsoldDays}
+                                        onRefresh={actions.fetchData}
+                                        loading={loading}
+                                    />
+                                </CardContent>
+                            )}
                         </Card>
 
                         {/* Stats Cards */}
-                        {!loading && data && (
+                        {!filtersCollapsed && !loading && data && (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                                 <Card>
                                     <CardContent className="p-3 flex items-center gap-3">

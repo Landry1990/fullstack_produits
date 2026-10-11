@@ -76,7 +76,8 @@
                 "impact": "Impact"
             },
             "rupture": "Rupture",
-            "impact_pts": "{{pts}} pts"
+            "impact_pts": "{{pts}} pts",
+            "days_short": "j"
         }
     },
     "health": {
@@ -1024,7 +1025,9 @@
             "supplier": "Fournisseur",
             "all_suppliers": "Tous les fournisseurs",
             "days_threshold": "Seuil (jours)",
-            "refresh": "Actualiser"
+            "refresh": "Actualiser",
+            "show": "Afficher les filtres",
+            "hide": "Masquer les filtres"
         },
         "stats": {
             "supplier": "Fournisseur",

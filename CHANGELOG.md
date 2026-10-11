@@ -2,6 +2,113 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-10-11 — ♻️ Refactor `ProduitShadcn.tsx` (810 → ~200 lignes)
+
+- Découpage de la page Produits en 4 unités à responsabilité unique,
+  **sans changement de comportement** :
+  - **`hooks/useProduitPage.ts`** : tout l'état, les queries
+    (produits/lots/stats/achats/historique + référentiels), les
+    handlers (delete, ajustement, toggle, étiquettes, transfert rayon,
+    mouvements, édition), la nav clavier et le debounce de recherche.
+    Exporte `ActiveTab` + `AdjustForm`.
+  - **`products/ProductListPanel.tsx`** : panneau gauche (recherche,
+    filtres + chips, table, footer stats, pagination).
+  - **`products/ProductDetailHeader.tsx`** : header fiche en 3 zones
+    (nom/méta, KPI strip, actions + menu ⋯).
+  - **`products/ProduitPageModals.tsx`** : les 6 modals regroupés.
+- **`ProduitShadcn.tsx`** = orchestrateur : header page, grille
+  master-detail (mobile inclus), composition des 3 sous-composants.
+- **Code mort supprimé** : sous-composant `_PriceRow` inutilisé,
+  `console.log` de debug (`[Filter Change]`, `[Pagination Debug]`),
+  effet `setPage(1)` débarrassé de son log.
+- Micro-perf : `new Set(selectedIds)` sorti de la boucle `.map` des
+  lignes (était recréé par produit).
+- Typecheck + eslint OK sur les 5 fichiers.
+
+## 2026-10-11 — 🧩 Fiche produit : harmonisation shadcn/ui des onglets
+
+- **`ProductTabsContent.tsx`** : la partie « fiche » était mixte — table
+  déjà shadcn mais onglets en `Button` custom (`ui/Button`, deprecated)
+  et puces en `<span>` maison.
+- **Barre d'onglets** → `Tabs`/`TabsList`/`TabsTrigger` shadcn (Radix) :
+  look identique (actif indigo, inactif slate, scroll horizontal) +
+  navigation clavier roving-tabindex et rôles ARIA corrects en bonus.
+- **Puces** → `Badge` shadcn `variant="outline"` + teinte : rayon (bleu),
+  fournisseur (slate), seuil d'alerte (ambre), numéros de lot (achats +
+  lots), type de mouvement (ambre AJUSTEMENT / vert entrée / rouge
+  sortie), n° commande/avoir dans MVMTS, badge de variation du graphe
+  prix achat.
+- **Boutons du fichier** → `Button` shadcn (`outline`/`ghost`/`sm`) :
+  « lots épuisés », édition inline lot/péremption, export Excel MVMTS
+  (icône `Download` inline, plus de `leftIcon`).
+- Aucune nouvelle clé i18n. Typecheck + eslint OK.
+
+## 2026-10-11 — 💄 Fiche produit : refonte header + adaptation petit écran
+
+- **Problème mobile corrigé** : sous `lg`, les deux panneaux (liste +
+  détail) faisaient `h-full` dans une grille `overflow-hidden` → la
+  fiche produit était poussée hors écran, quasi inaccessible.
+- **Navigation maître-détail (< lg)** : la liste occupe tout l'écran ;
+  la sélection d'un produit affiche la fiche en plein écran avec un
+  bouton « ← Retour » (`lg:hidden`, reset de `selectedProduit`). La
+  fiche devient enfin utilisable sur tablette/téléphone.
+- **Header restructuré en 3 zones** (`ProduitShadcn.tsx`) :
+  - **Nom + méta** : `truncate` supprimé → `break-words` (les noms
+    pharma longs ne sont plus coupés) ; badges inactif/exclusif/service
+    et ligne CIP regroupés.
+  - **KPI strip** : cartes `flex-wrap` — Stock (code couleur
+    rouge/ambre/vert), Réserve (si `has_reserve_storage`), Seuil
+    d'alerte, Prix de vente — contexte complet en un coup d'œil.
+    Service → carte violette « Service » à la place du stock.
+  - **Actions** : 2 primaires visibles (Ajuster stock, Modifier) +
+    menu `⋯` `DropdownMenu` shadcn (Réappro rayon, Étiquettes,
+    Activer/Désactiver, Supprimer en destructif) — fini les 6 boutons
+    concurrents.
+- i18n : `common:back` réutilisé, `common:actions_title` pour l'aria
+  du menu ; aucune nouvelle clé. Typecheck + eslint OK.
+
+## 2026-10-11 — 👁️ Fiche produit : stock beaucoup plus visible
+
+- **Demande** : l'info du stock dans la fiche produit (panneau droit de la
+  page Produits) était un badge `text-xs` — trop petit pour être lu
+  rapidement en caisse/magasin.
+- **Fix** : la quantité passe en `text-2xl font-black tabular-nums` avec
+  libellé en capitales discrètes + bordure assortie au code couleur
+  existant (rouge rupture / ambre sous seuil d'alerte / vert OK).
+  En mode réserve : « RAYON n | RÉSERVE n » avec séparateur vertical.
+- Fichiers : `ProduitShadcn.tsx` (en-tête fiche), `products/modals/
+  ProductDetailsModal.tsx` (stock total `text-xl` → `text-3xl`),
+  `products/ProductDetailPanel.tsx` (même traitement — composant
+  actuellement non importé, harmonisé par cohérence).
+- Aucune nouvelle clé i18n (réutilise `common:stock`, `common:rayon`,
+  `products:detail.reserve_label`).
+
+## 2026-10-11 — 🌐 Fix clé i18n manquante `matrix.penalties.days_short`
+
+- Le tableau « Top 5 — Pénalités de score » (matrice santé du stock)
+  affichait la clé brute `95matrix.penalties.days_short` au lieu de
+  « 95 j » — la clé n'existait ni en `fr` ni en `en`.
+- Ajout : `days_short` = « j » (fr) / « d » (en) sous `matrix.penalties`
+  + espace ajoutée côté template dans `StockMatrixPanel.tsx`.
+
+## 2026-10-11 — 🗜️ Analyse stock : bloc filtres repliable (iPad)
+
+- **UX** : le bloc « filtres + statistiques » de l'Analyse de stock occupait
+  ~40 % de la hauteur d'un iPad 6 avant d'atteindre le tableau.
+  Ajout d'un toggle chevron dans l'en-tête de la carte filtre qui replie
+  les filtres **et** les cartes de stats (compteurs déjà présents dans le
+  badge d'en-tête : nb articles + valeur).
+- En mode replié, la description affiche un résumé compact des filtres
+  actifs (ex. « Tous les fournisseurs · 90 jours »).
+- Choix persisté en `localStorage` (`stock-analysis-filters-collapsed`) —
+  reste replié entre les pages/onglets.
+- Accessibilité : `aria-expanded`, `aria-controls`, label bilingue
+  « Masquer/Afficher les filtres ».
+- Couvre les 3 onglets partageant le bloc : invendus, surstock, ruptures.
+- Fichiers : `components/StockAnalysis.tsx`, locales `stock.json` (fr/en),
+  test du toggle ajouté dans `StockAnalysis.test.tsx` (10/10 verts, lint
+  + build OK).
+
 ## 2026-10-11 — 🧪 Smoke test invariants métier : la dérive de stock
 
 - **Nouveau** : `api/tests/test_invariants_smoke.py` — 7 tests vérifiant
