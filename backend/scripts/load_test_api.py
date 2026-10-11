@@ -61,25 +61,31 @@ def get_token(username: str, password: str) -> str:
     return resp.json()["token"]
 
 
-def fetch_product_ids(token: str, limit: int = 20) -> list[int]:
+def fetch_product_ids(token: str, limit: int = 20, query: str = "") -> list[int]:
     headers = {"Authorization": f"Token {token}"}
-    resp = requests.get(PRODUITS_URL, params={"page_size": limit}, headers=headers, timeout=10)
+    params = {"page_size": limit}
+    if query:
+        params["search"] = query
+    resp = requests.get(PRODUITS_URL, params=params, headers=headers, timeout=10)
     resp.raise_for_status()
     data = resp.json()
     results = data.get("results", data)
     return [p["id"] for p in results if "id" in p][:limit]
 
 
-def fetch_clients(token: str, limit: int = 10) -> list[int]:
+def fetch_clients(token: str, limit: int = 10, query: str = "") -> list[int]:
     headers = {"Authorization": f"Token {token}"}
-    resp = requests.get(f"{BASE_URL}/api/clients/", params={"page_size": limit}, headers=headers, timeout=10)
+    params = {"page_size": limit}
+    if query:
+        params["search"] = query
+    resp = requests.get(f"{BASE_URL}/api/clients/", params=params, headers=headers, timeout=10)
     resp.raise_for_status()
     data = resp.json()
     results = data.get("results", data)
     return [c["id"] for c in results if "id" in c][:limit]
 
 
-def worker_search(token: str, product_ids: list[int], duration: int, result: LoadTestResult):
+def worker_search(token: str, duration: int, result: LoadTestResult):
     headers = {"Authorization": f"Token {token}"}
     terms = ["doli", "para", "amoxi", "vita", "500", "sirop", "comprime"]
     end = time.time() + duration
@@ -92,6 +98,7 @@ def worker_search(token: str, product_ids: list[int], duration: int, result: Loa
             result.record(resp.status_code == 200, elapsed, f"search HTTP {resp.status_code}")
         except Exception as e:
             result.record(False, 0, str(e))
+        time.sleep(random.uniform(0.5, 1.5))
 
 
 def worker_list_factures(token: str, duration: int, result: LoadTestResult):
@@ -105,9 +112,10 @@ def worker_list_factures(token: str, duration: int, result: LoadTestResult):
             result.record(resp.status_code == 200, elapsed, f"list HTTP {resp.status_code}")
         except Exception as e:
             result.record(False, 0, str(e))
+        time.sleep(random.uniform(0.8, 2.0))
 
 
-def worker_finalize(token: str, product_ids: list[int], client_ids: list[int], duration: int, result: LoadTestResult):
+def worker_finalize(token: str, product_ids: list[int], client_ids: list[int], duration: int, result: LoadTestResult, sale_price: float):
     headers = {"Authorization": f"Token {token}", "Content-Type": "application/json"}
     end = time.time() + duration
     while time.time() < end:
@@ -118,7 +126,7 @@ def worker_finalize(token: str, product_ids: list[int], client_ids: list[int], d
                 lignes.append({
                     "produit": pid,
                     "quantity": random.randint(1, 3),
-                    "selling_price": random.choice([500, 1000, 2500, 5000]),
+                    "selling_price": sale_price,
                     "discount": 0,
                     "tva": 0,
                 })
@@ -138,22 +146,23 @@ def worker_finalize(token: str, product_ids: list[int], client_ids: list[int], d
         time.sleep(random.uniform(0.5, 2.0))
 
 
-def run_phase(token: str, product_ids: list[int], client_ids: list[int], clients: int, duration: int, finalize_ratio: float = 0.3):
+def run_phase(tokens: list[str], product_ids: list[int], client_ids: list[int], clients: int, duration: int, finalize_ratio: float = 0.3, sale_price: float = 1000):
     search_result = LoadTestResult()
     list_result = LoadTestResult()
     finalize_result = LoadTestResult()
 
     print(f"\n🔥 Phase {clients} clients / {duration}s (finalize_ratio={finalize_ratio:.0%})")
-    print(f"   Produits disponibles: {len(product_ids)} | Clients: {len(client_ids)}")
+    print(f"   Produits disponibles: {len(product_ids)} | Clients: {len(client_ids)} | Tokens: {len(tokens)}")
 
     start = time.time()
     with ThreadPoolExecutor(max_workers=clients) as pool:
         for i in range(clients):
+            token = tokens[i % len(tokens)]
             r = random.random()
             if r < finalize_ratio:
-                pool.submit(worker_finalize, token, product_ids, client_ids, duration, finalize_result)
+                pool.submit(worker_finalize, token, product_ids, client_ids, duration, finalize_result, sale_price)
             elif r < 0.7:
-                pool.submit(worker_search, token, product_ids, duration, search_result)
+                pool.submit(worker_search, token, duration, search_result)
             else:
                 pool.submit(worker_list_factures, token, duration, list_result)
 
@@ -166,7 +175,7 @@ def run_phase(token: str, product_ids: list[int], client_ids: list[int], clients
 
 
 def run_stress_test(
-    token: str,
+    tokens: list[str],
     product_ids: list[int],
     client_ids: list[int],
     start_clients: int,
@@ -177,6 +186,7 @@ def run_stress_test(
     error_threshold: float,
     latency_threshold_ms: float,
     cooldown: int,
+    sale_price: float,
 ):
     """
     Augmente progressivement le nombre de clients simultanés jusqu'à ce que
@@ -201,12 +211,13 @@ def run_stress_test(
         print(f"\n🔥 Palier: {clients} clients simultanés / {phase_duration}s")
         start = time.time()
         with ThreadPoolExecutor(max_workers=clients) as pool:
-            for _ in range(clients):
+            for i in range(clients):
+                token = tokens[i % len(tokens)]
                 r = random.random()
                 if r < finalize_ratio:
-                    pool.submit(worker_finalize, token, product_ids, client_ids, phase_duration, finalize_result)
+                    pool.submit(worker_finalize, token, product_ids, client_ids, phase_duration, finalize_result, sale_price)
                 elif r < 0.7:
-                    pool.submit(worker_search, token, product_ids, phase_duration, search_result)
+                    pool.submit(worker_search, token, phase_duration, search_result)
                 else:
                     pool.submit(worker_list_factures, token, phase_duration, list_result)
         elapsed = time.time() - start
@@ -249,6 +260,10 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--username", default="loadtest")
     parser.add_argument("--password", default="loadtestpass123")
+    parser.add_argument("--tokens-file", default=None, help="Fichier contenant des tokens (1/ligne) — un par worker round-robin, bypass le login")
+    parser.add_argument("--product-query", default="", help="Filtre ?search= pour la récup des produits (ex: '[TEST]')")
+    parser.add_argument("--client-query", default="", help="Filtre ?search= pour la récup des clients (ex: '[TEST]')")
+    parser.add_argument("--sale-price", type=float, default=1000, help="Prix de vente envoyé dans les lignes (doit matcher selling_price du produit)")
     parser.add_argument("--clients", type=int, default=10)
     parser.add_argument("--duration", type=int, default=60)
     parser.add_argument("--finalize-ratio", type=float, default=0.3)
@@ -272,17 +287,23 @@ def main():
 
     print("🚀 Test de charge backend")
     print(f"   URL: {BASE_URL}")
-    print("🔑 Authentification...")
-    try:
-        token = get_token(args.username, args.password)
-        print("   Authentifié.")
-    except Exception as e:
-        print(f"   Échec auth: {e}")
-        sys.exit(1)
+    if args.tokens_file:
+        with open(args.tokens_file, encoding="utf-8") as f:
+            tokens = [line.strip() for line in f if line.strip()]
+        print(f"🔑 {len(tokens)} tokens chargés depuis {args.tokens_file}")
+    else:
+        print("🔑 Authentification...")
+        try:
+            tokens = [get_token(args.username, args.password)]
+            print("   Authentifié.")
+        except Exception as e:
+            print(f"   Échec auth: {e}")
+            sys.exit(1)
 
+    token = tokens[0]
     print("📦 Récupération des produits et clients...")
-    product_ids = fetch_product_ids(token)
-    client_ids = fetch_clients(token)
+    product_ids = fetch_product_ids(token, query=args.product_query)
+    client_ids = fetch_clients(token, query=args.client_query)
     if not product_ids:
         print("   Aucun produit trouvé.")
         sys.exit(1)
@@ -290,7 +311,7 @@ def main():
 
     if args.stress:
         run_stress_test(
-            token, product_ids, client_ids,
+            tokens, product_ids, client_ids,
             start_clients=args.start_clients,
             step=args.step,
             max_clients=args.max_clients,
@@ -299,9 +320,10 @@ def main():
             error_threshold=args.error_threshold,
             latency_threshold_ms=args.latency_threshold_ms,
             cooldown=args.cooldown,
+            sale_price=args.sale_price,
         )
     else:
-        run_phase(token, product_ids, client_ids, args.clients, args.duration, args.finalize_ratio)
+        run_phase(tokens, product_ids, client_ids, args.clients, args.duration, args.finalize_ratio, args.sale_price)
 
 
 if __name__ == "__main__":
