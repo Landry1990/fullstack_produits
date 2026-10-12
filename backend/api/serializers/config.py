@@ -45,6 +45,17 @@ class LoyaltySettingSerializer(serializers.ModelSerializer):
 class PharmacySettingsSerializer(serializers.ModelSerializer):
     pharmacy_name = serializers.SerializerMethodField()
 
+    # Secrets métier : jamais renvoyés en clair aux utilisateurs non-staff.
+    # (GET pharmacy-settings est IsAuthenticated — tout compte authentifié
+    # y a accès, alors que seul un admin peut écrire.)
+    MASKED_VALUE = '••••'
+    SECRET_FIELDS = (
+        'telegram_bot_token',
+        'whatsapp_access_token',
+        'cloud_backup_access_key',
+        'cloud_backup_secret_key',
+    )
+
     class Meta:
         model = PharmacySettings
         fields = '__all__'
@@ -55,6 +66,22 @@ class PharmacySettingsSerializer(serializers.ModelSerializer):
         if valide and payload and payload.get('pharmacie_nom'):
             return payload.get('pharmacie_nom')
         return obj.pharmacy_name
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get('request') if self.context else None
+        user = getattr(request, 'user', None)
+        is_privileged = bool(
+            user and user.is_authenticated
+            and (user.is_staff or user.is_superuser)
+        )
+        if not is_privileged:
+            # On masque uniquement les valeurs renseignées : un champ vide
+            # reste '' pour ne pas afficher '••••' dans les formulaires.
+            for field in self.SECRET_FIELDS:
+                if data.get(field):
+                    data[field] = self.MASKED_VALUE
+        return data
 
 
 class ConfigurationOptionSerializer(serializers.ModelSerializer):

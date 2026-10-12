@@ -3,9 +3,10 @@ from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.throttling import AnonRateThrottle
+from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 
 
 class LoginRateThrottle(AnonRateThrottle):
@@ -17,6 +18,16 @@ class SudoRateThrottle(AnonRateThrottle):
     """Throttle renforcé pour le mode sudo (verify_password)."""
     scope = 'sudo'
     THROTTLE_RATES = {'sudo': '5/min'}
+
+
+class PasswordChangeRateThrottle(UserRateThrottle):
+    """
+    Anti-bruteforce sur change-my-password (on teste l'ancien mot de passe).
+    UserRateThrottle (et non AnonRateThrottle) : l'endpoint exige un user
+    authentifié, AnonRateThrottle ne s'appliquerait jamais.
+    """
+    scope = 'password_change'
+    THROTTLE_RATES = {'password_change': '5/min'}
 
 
 class LoginOptionsRateThrottle(AnonRateThrottle):
@@ -160,7 +171,12 @@ class CustomAuthToken(ObtainAuthToken):
         if not created and session.last_logout:
             session.last_logout = None
         session.save()
-            
+
+        # Flag lu pour superuser et non-superuser : les comptes auto-créés
+        # (entrypoint, secours, essai) sont tous superusers avec un profil.
+        profile = getattr(user, 'profile', None)
+        must_change_password = bool(profile and profile.must_change_password)
+
         return Response({
             'token': token.key,
             'user_id': user.pk,
@@ -168,6 +184,7 @@ class CustomAuthToken(ObtainAuthToken):
             'email': user.email,
             'role': role,
             'is_superuser': user.is_superuser,
+            'must_change_password': must_change_password,
             'allowed_menus': allowed_menus,
             'can_do_returns': can_do_returns,
             'can_sell_negative_stock': can_sell_negative_stock,
@@ -218,6 +235,9 @@ class UserViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         # Throttle pour login_options : limite l'énumération de usernames
         if self.action == 'login_options':
             return [LoginOptionsRateThrottle()]
+        # Throttle pour change_my_password : l'endpoint teste l'ancien mot de passe
+        if self.action == 'change_my_password':
+            return [PasswordChangeRateThrottle()]
         return super().get_throttles()
 
     def partial_update(self, request, *args, **kwargs):
@@ -398,6 +418,72 @@ class UserViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
                     })
 
         return Response({'valid': False, 'detail': 'Mot de passe incorrect.'}, status=status.HTTP_403_FORBIDDEN)
+
+    @action(detail=False, methods=['post'], url_path='change-my-password')
+    def change_my_password(self, request):
+        """
+        Changement de mot de passe en self-service.
+        POST { "old_password": "xxx", "new_password": "yyy" }
+
+        Réutilise les règles de UserSerializer.validate_password (longueur mini
+        + unicité inter-comptes). Retourne un NOUVEAU token : les anciens sont
+        révoqués, sans quoi l'utilisateur serait déconnecté en plein écran forcé.
+        """
+        user = request.user
+        old_password = request.data.get('old_password') or ''
+        new_password = request.data.get('new_password') or ''
+
+        if not old_password or not new_password:
+            return Response(
+                {'detail': 'Ancien et nouveau mot de passe requis.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not user.check_password(old_password):
+            return Response(
+                {'detail': 'Ancien mot de passe incorrect.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if new_password == old_password:
+            return Response(
+                {'detail': 'Le nouveau mot de passe doit être différent de l’ancien.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Réutilise les règles métier de UserSerializer.validate_password
+        serializer = self.get_serializer(instance=user)
+        try:
+            serializer.validate_password(new_password)
+        except DRFValidationError as exc:
+            return Response({'detail': exc.detail}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.set_password(new_password)
+        user.save(update_fields=['password'])
+
+        profile = getattr(user, 'profile', None)
+        if profile is not None:
+            profile.must_change_password = False
+            profile.save(update_fields=['must_change_password'])
+
+        # Révoque toutes les sessions existantes et émet un token frais
+        Token.objects.filter(user=user).delete()
+        token = Token.objects.create(user=user)
+
+        log_audit(
+            user=user,
+            action=AuditLog.Action.UPDATE,
+            model_name='User',
+            object_id=user.id,
+            description=f"Changement de mot de passe (self-service): {user.username}",
+            details={'username': user.username},
+            request=request,
+        )
+
+        return Response({
+            'token': token.key,
+            'detail': 'Mot de passe modifié avec succès.',
+        })
 
     @action(detail=False, methods=['get'])
     def login_options(self, request):

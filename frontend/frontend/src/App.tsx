@@ -16,6 +16,7 @@ import ErrorBoundary from './components/ErrorBoundary'
 import { LicenceNotifications } from './components/LicenceNotifications'
 import { ClockSyncAlert } from './components/ClockSyncAlert'
 import { ExpirationAlertToasts } from './components/ExpirationAlertToast'
+import ForcePasswordChangeGuard from './components/auth/ForcePasswordChangeGuard'
 import { useAuth } from './context/AuthContext'
 import { router } from './routes'
 import { Loader2 } from 'lucide-react'
@@ -165,6 +166,7 @@ export default function App() {
               <LicenceNotifications />
               <ClockSyncAlert />
               <GlobalAlerts />
+              <ForcePasswordChangeGuard />
               <BackendHealthCheck>
                 <Suspense fallback={<LoadingScreen size="lg" overlay />}>
                   <PosteCaisseModeProvider>

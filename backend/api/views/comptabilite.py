@@ -24,10 +24,26 @@ from ..serializers import (
 from ..utils.validation import parse_date_param, parse_id
 
 
+class IsComptaWriteAllowed(permissions.BasePermission):
+    """Lecture pour tout utilisateur authentifié ; écriture réservée au
+    staff/superuser ou aux profils de rôle COMPTABLE/PHARMACIEN."""
+    message = "Vous n'avez pas les droits pour modifier la comptabilité."
+
+    def has_permission(self, request, view):
+        user = request.user
+        if not (user and user.is_authenticated):
+            return False
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        if user.is_superuser or user.is_staff:
+            return True
+        return getattr(getattr(user, 'profile', None), 'role', None) in ('COMPTABLE', 'PHARMACIEN')
+
+
 class CompteComptableViewSet(viewsets.ModelViewSet):
     queryset = CompteComptable.objects.all()
     serializer_class = CompteComptableSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsComptaWriteAllowed]
 
     @transaction.atomic
     def perform_create(self, serializer):
@@ -44,7 +60,7 @@ class CompteComptableViewSet(viewsets.ModelViewSet):
 class JournalComptableViewSet(viewsets.ModelViewSet):
     queryset = JournalComptable.objects.all()
     serializer_class = JournalComptableSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsComptaWriteAllowed]
 
     @transaction.atomic
     def perform_create(self, serializer):
@@ -61,7 +77,7 @@ class JournalComptableViewSet(viewsets.ModelViewSet):
 class ExerciceComptableViewSet(viewsets.ModelViewSet):
     queryset = ExerciceComptable.objects.all()
     serializer_class = ExerciceComptableSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsComptaWriteAllowed]
 
     @transaction.atomic
     def perform_create(self, serializer):
@@ -81,7 +97,7 @@ from ..filters import EcritureComptableFilter
 class EcritureComptableViewSet(viewsets.ModelViewSet):
     queryset = EcritureComptable.objects.all().select_related('journal', 'exercice').prefetch_related('lignes', 'lignes__compte')
     serializer_class = EcritureComptableSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsComptaWriteAllowed]
     filterset_class = EcritureComptableFilter
 
     @action(detail=False, methods=['get'])

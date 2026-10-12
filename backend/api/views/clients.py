@@ -295,6 +295,12 @@ class ClientViewSet(SimpleListCacheMixin, OptimizedSerializerMixin, viewsets.Mod
     def add_depot(self, request, pk=None):
         """Enregistre un nouveau dépôt ou retrait manuel."""
         client = self.get_object()
+        # Verrou pessimiste (TOCTOU) : sans select_for_update, deux retraits
+        # concurrents liraient le même solde_depot, passeraient tous les deux
+        # le contrôle "solde insuffisant" et le signal post_save débiterait
+        # deux fois → découvert. Le verrou sérialise les écritures sur la
+        # ligne client jusqu'au commit de la transaction.
+        client = Client.objects.select_for_update().get(pk=client.pk)
         data = request.data
         
         try:

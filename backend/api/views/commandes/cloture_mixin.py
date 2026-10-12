@@ -57,7 +57,11 @@ class CommandeClotureMixin:
             try:
                 with transaction.atomic():
                     commande = self.get_object()
-                    
+                    # Verrouiller la ligne Commande avant le check de statut :
+                    # deux requêtes concurrentes ne doivent pas passer toutes
+                    # les deux et déclencher une double réception de stock.
+                    commande = Commande.objects.select_for_update().get(pk=commande.pk)
+
                     if commande.status == Commande.Status.CLOTUREE:
                         return Response({'detail': 'Cette commande est déjà clôturée.'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -454,8 +458,12 @@ class CommandeClotureMixin:
         - Repasse la commande en statut PREP
         """
         commande = self.get_object()
+        # Verrouiller la ligne Commande avant le check de statut (méthode
+        # décorée @transaction.atomic) : deux annulations concurrentes ne
+        # doivent pas retirer le stock deux fois.
+        commande = Commande.objects.select_for_update().get(pk=commande.pk)
         business_logger.info(f"[COMMANDE] Annulation reception demandee #{commande.id} par {request.user.username}")
-        
+
         if commande.status != Commande.Status.CLOTUREE:
             business_logger.warning(f"[COMMANDE] Annulation refusee #{commande.id} - status={commande.status}")
             return Response(

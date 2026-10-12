@@ -52,6 +52,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const can_generate_coupon = safeStorage.getItem('can_generate_coupon') === 'true';
     const can_view_cash_totals = safeStorage.getItem('can_view_cash_totals') !== 'false'; // default true
     const is_terminal_account = safeStorage.getItem('is_terminal_account') === 'true';
+    const must_change_password = safeStorage.getItem('must_change_password') === 'true';
     const role = safeStorage.getItem('role') || undefined;
 
     const storedOffset = safeStorage.getItem('timeOffset');
@@ -78,6 +79,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         can_generate_coupon,
         can_view_cash_totals,
         is_terminal_account,
+        must_change_password,
         role,
         profile: {
           can_generate_coupon,
@@ -128,6 +130,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     safeStorage.setItem('can_generate_coupon', String(userData.can_generate_coupon || userData.profile?.can_generate_coupon || false));
     safeStorage.setItem('can_view_cash_totals', String(userData.can_view_cash_totals ?? userData.profile?.can_view_cash_totals ?? true));
     safeStorage.setItem('is_terminal_account', String(userData.is_terminal_account || false));
+    safeStorage.setItem('must_change_password', String(userData.must_change_password || false));
     if (userData.role) {
       safeStorage.setItem('role', userData.role);
     }

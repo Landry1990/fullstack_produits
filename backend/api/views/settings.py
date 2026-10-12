@@ -182,14 +182,14 @@ class PharmacySettingsView(APIView):
     def get(self, request):
         from django.utils import timezone
         settings, _created = PharmacySettings.objects.get_or_create(pk=1)
-        serializer = PharmacySettingsSerializer(settings)
+        serializer = PharmacySettingsSerializer(settings, context={'request': request})
         data = serializer.data
         data['server_time'] = timezone.now().isoformat()
         return Response(data)
 
     def put(self, request):
         settings, _created = PharmacySettings.objects.get_or_create(pk=1)
-        serializer = PharmacySettingsSerializer(settings, data=request.data, partial=True)
+        serializer = PharmacySettingsSerializer(settings, data=request.data, partial=True, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             from django.utils import timezone

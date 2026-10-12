@@ -68,6 +68,13 @@ services:
       --appendonly no
     volumes:
       - redis_data:/data
+    healthcheck:
+      # ${REDIS_PASSWORD:-...} est substitué par Compose (pattern du --requirepass
+      # ci-dessus) — le conteneur redis n'a pas cette var en env.
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-pharma_redis_2026}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - app-network
 
@@ -76,16 +83,10 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    command: >
-      sh -c "python manage.py migrate &&
-             python manage.py collectstatic --noinput --clear &&
-             uvicorn backend.asgi:application
-             --host 0.0.0.0 --port 8000
-             --workers 4
-             --loop uvloop
-             --http httptools
-             --timeout-keep-alive 75
-             --log-level warning"
+    # ⚠️ PAS de `command:` ici — l'image définit ENTRYPOINT ["./entrypoint.sh"]
+    # qui ignore "$@" et lance ses propres migrate + uvicorn. Tout `command:`
+    # serait silencieusement ignoré. Réglages effectifs : variables DB_*/UVICORN_*
+    # dans `environment:` ci-dessous.
     volumes:
       - ./backend:/app
       - static_volume:/app/staticfiles
@@ -101,6 +102,11 @@ services:
       - DB_HOST=${DB_HOST:-db}
       - DB_PORT=${DB_PORT:-5432}
       - DB_CONN_MAX_AGE=600
+      # Timeouts PostgreSQL par connexion (ms) — lus par settings.py.
+      # Valeurs élevées pour que `migrate` (entrypoint.sh) ne soit pas tué
+      # par statement_timeout=30s / lock_timeout=5s sur les grosses tables.
+      - DB_STATEMENT_TIMEOUT=${DB_STATEMENT_TIMEOUT:-300000}
+      - DB_LOCK_TIMEOUT=${DB_LOCK_TIMEOUT:-30000}
       - UVICORN_WORKERS=4
       - DOCKER_HOST=tcp://docker-socket-proxy:2375
       - REDIS_URL=redis://:${REDIS_PASSWORD:-pharma_redis_2026}@redis:6379/0
@@ -110,7 +116,7 @@ services:
       db:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - app-network

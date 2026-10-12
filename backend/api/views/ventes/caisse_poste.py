@@ -1,3 +1,4 @@
+import logging
 from decimal import Decimal
 
 from django.db import transaction
@@ -20,6 +21,8 @@ from ...utils.validation import (
     parse_decimal,
     parse_id,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class PosteCaisseViewSet(viewsets.ModelViewSet):
@@ -79,7 +82,14 @@ class PosteCaisseViewSet(viewsets.ModelViewSet):
         try:
             has_legacy_sessions = caisse.sessions.exists()
         except Exception:
-            has_legacy_sessions = False
+            # Fail-safe : si la vérification échoue (table legacy absente ou
+            # erreur DB), on refuse la suppression plutôt que de risquer de
+            # perdre l'historique (FK CASCADE sur SessionCaisse).
+            logger.exception(
+                "[PosteCaisse] Échec de vérification des sessions legacy pour la caisse %s — suppression refusée",
+                caisse.pk,
+            )
+            has_legacy_sessions = True
         if has_legacy_sessions:
             return Response(
                 {"detail": f"La caisse {caisse.nom} possède un historique de sessions : suppression impossible."},

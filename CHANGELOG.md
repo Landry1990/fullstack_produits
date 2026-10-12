@@ -2,6 +2,171 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-10-12 — 🐛 Fix 500 sur produit inexistant (adjust_stock / transfer_to_shelf)
+
+- `ProduitStockMixin.adjust_stock` et `transfer_to_shelf` récupéraient le
+  produit via `Produit.objects.select_for_update().get(pk=...)` — un pk
+  inexistant levait `DoesNotExist` → **HTTP 500 au lieu de 404**.
+  Remplacé par `get_object_or_404(...)` (`api/views/produit_actions/stock.py`).
+- Détecté par `test_post_smoke` : le balayage générique est maintenant
+  **308/308 routes POST < 500** (était 304 + 4 échecs).
+
+## 2026-10-12 — ✅ Renfort de la chaîne de tests (CI + vigile licence + double finalisation)
+
+- **CI** : nouveau job `frontend-test` dans `.github/workflows/ci.yml`
+  (`npm ci` + `npm run test:run`, node 20, cache npm) — les ~432 tests
+  Vitest ne tournaient jamais en CI (`npm test` = mode watch).
+  Script `test:run: vitest run` ajouté à `frontend/frontend/package.json`.
+- **`LicenceMiddleware`** : bypass test `sys.argv` remplacé par
+  `getattr(settings, 'DISABLE_LICENCE_MIDDLEWARE', …)` — comportement
+  inchangé par défaut, mais le vigile devient testable via
+  `override_settings(DISABLE_LICENCE_MIDDLEWARE=False)`. Fix au passage :
+  `sys.argv[0]` pouvait lever `IndexError` (argv vide) → `any(... for a in sys.argv)`.
+- **Nouveau `test_licence_middleware.py`** : licence valide (cache signé
+  HMAC `_sign_cache_value`) → 200 ; expirée → 403 `LICENCE_INVALIDE` ;
+  clé corrompue en base → 403 ; cache forgé non signé → rejeté ;
+  whitelist (`/api/health/`) et kill switch `DISABLE_LICENCE_MIDDLEWARE=True`.
+- **Nouveau `test_sale_double_finalization.py`** : `POST /api/factures/finaliser/`
+  sur le même devis deux fois (séquentiel + 2 threads via
+  `TransactionTestCase`) → {201, 400}, une seule facture, stock décrémenté
+  une fois ; même `Idempotency-Key` → réponse rejouée, une seule facture.
+
+## 2026-10-12 — 🛡️ P0 sécurité & infra : 12 correctifs d'audit
+
+Suite de l'audit `docs/ANALYSE_PROJET_2026-10-12.md` — correctifs P0
+vérifiés (manage.py check, 19 tests OK, tsc/eslint/build OK, smoke E2E).
+
+**Sécurité backend** :
+- `CategoriesListView`/`CategoriesDetailView` : `AllowAny` →
+  `IsAuthenticated` + audit log sur POST/PUT/DELETE ; `cache_page(300)`
+  retiré sur `categories/` (bypass d'auth — GET caché resservi aux
+  non-authentifiés). Vérifié : 401 sans token, frontend inchangé.
+- WebSockets : auth obligatoire dans `CashierConsumer`, `PDAConsumer`,
+  `CaisseCentraliseeConsumer` (close 4001) — `useCaisseRealtime.ts`
+  envoie désormais `?token=` + `wss` en HTTPS. ⚠️ Aucun client WS pour
+  `ws/cashier/`/`ws/pda/` n'existe dans le repo — des PDA terrain non
+  versionnés sans token seraient refusés.
+- `/api/licence/` : `LicenceSudoThrottle` (20/jour) sur POST/DELETE —
+  fin de l'oracle de bruteforce `sudo_password`/keyday.
+- `PharmacySettingsSerializer` : tokens Telegram/WhatsApp/clés cloud
+  masqués `'••••'` pour les non-staff ; `pharmacy-settings` passé en
+  `no-store` (retiré du cache public 300s).
+- `NUM_PROXIES=1` + `AXES_IPWARE_PROXY_COUNT` (était `AXES_PROXY_COUNT`,
+  déprécié) → X-Forwarded-For non spoofable, lockout axes effectif ;
+  `audit_helpers` lit l'IP à droite du XFF.
+- `init-db.sh` : lignes `replication … trust 0.0.0.0/0` supprimées.
+
+**Infrastructure / déploiement** :
+- `command:` supprimé des 2 compose (mort — ENTRYPOINT l'ignorait) ;
+  `DB_STATEMENT_TIMEOUT`/`DB_LOCK_TIMEOUT` déplacés vers `environment:`
+  → les timeouts de migration prod (300s/30s) s'appliquent réellement.
+- `watchdog.sh`/`rollback.sh` : noms de conteneurs/images paramétrables
+  (défauts `zenith-pharma-*`), conteneur introuvable ≠ unhealthy
+  (fin des faux rollbacks), rollback aligné sur les `:previous` réels.
+- `zenith-nightly-update.service` : `TimeoutStartSec=600` → `1800`
+  (> `BUILD_TIMEOUT=900`). `nightly-update.sh` : statut `"done"` après
+  healthcheck `/api/health/` seulement ; échec → `"failed"` + rollback
+  ; helper compose au bon `project name` (bug "app" vs "zenith-pharma").
+- `update-app.sh` : hot-deploy backend uniquement — le frontend est
+  géré par rebuild image (le `dist/` copié n'existait jamais).
+- `deploy.ps1` : `all-full` géré + `default` explicite, warning
+  `makemigrations` sur cible, smoke test `/api/health/` post-restart.
+- `vite.config.ts` : `maintenance.html` exclu du precache PWA
+  (l'`internal` nginx le rendait 404 → install SW cassée).
+
+**Vérifié en live** : `/api/categories/` → 401 sans auth ; compte
+flaggé `must_change_password` → 403 partout sauf whitelist → changement
+→ flag retombé + token rotaté → 200. Migration `0273` appliquée.
+
+## 2026-10-12 — 🔐 Changement de mot de passe obligatoire au 1er login
+
+- **Problème** : les comptes admin auto-créés (`admin`/`admin123`,
+  `sysadmin`, `admin`/`admin` en essai) gardaient leur mot de passe public.
+- **`Profile.must_change_password`** (BooleanField, défaut False) +
+  migration `0273_profile_must_change_password`.
+- **Flag posé à l'attribution du mot de passe**, pas à la recréation des
+  privilèges : `entrypoint.sh` (compte admin par défaut, uniquement si
+  créé), `ensure_emergency_admin.py` (uniquement à la création — jamais
+  au boot suivant), `utils_licence.py` (superuser `admin/admin` essai),
+  `UserSerializer.create/update` (tout mot de passe attribué par un
+  admin via l'API).
+- **Endpoint self-service** `POST /api/users/change-my-password/`
+  (`UserViewSet.change_my_password`) : vérifie `old_password`, réutilise
+  `UserSerializer.validate_password` (longueur + unicité inter-comptes),
+  refuse `new == old`, retombe le flag, révoque les tokens et retourne
+  un token frais `{token, detail}`. Throttle `PasswordChangeRateThrottle`
+  (`UserRateThrottle`, scope `password_change`, 5/min).
+- **Login** : `CustomAuthToken` renvoie `must_change_password` (bool).
+- **Enforcement serveur** : `api/middleware/force_password_change.py`
+  — pour un user authentifié (session ou token résolu via le header
+  Authorization) dont le flag est True, seuls les chemins whitelistés
+  passent (change-my-password, logout, GET me/pharmacy-settings/licence/
+  version/health) ; sinon 403 `{detail, code_erreur: PASSWORD_CHANGE_REQUIRED}`.
+  Enregistré après `LicenceMiddleware` dans `settings.MIDDLEWARE`.
+- **Frontend** : flag propagé (login → sessionStorage → `AuthContext`),
+  dialogue shadcn **non dismissible** `ForcePasswordChangeGuard` monté
+  dans `App.tsx` (ancien/nouveau/confirmation, i18n `auth:force_change`
+  fr+en), nouveau token stocké puis reload ; le 403
+  `PASSWORD_CHANGE_REQUIRED` n'affiche pas de toast parasite.
+- Vérifications (`manage.py check`, `makemigrations --check`, tests,
+  `tsc`/`eslint`) non exécutées — environnement sans exec.
+
+## 2026-10-12 — 🔒 Correctifs intégrité : validation inventaire + verrous document
+
+- **`validate_inventaire`** (`api/views/stocks/inventaire/validation.py`) :
+  le 409 conflit de versions ne committe plus les écritures partielles —
+  tout return d'erreur depuis le bloc `atomic` est désormais précédé de
+  `transaction.set_rollback(True)` (inventaire vide, quantités invalides,
+  conflits lots/produits).
+  - Check de statut `VALIDEE` refait sous `select_for_update()` dans la
+    transaction → deux validations concurrentes ne passent plus toutes
+    les deux (double réécriture du stock).
+  - Versions des `StockLot` désormais vérifiées avant `bulk_update`
+    (le dict `{l.id: l.version}` était calculé puis ignoré) → 409 +
+    rollback en cas de modification concurrente.
+  - N+1 supprimé : le recalcul des stocks consolidés utilise un seul
+    `values('produit_id').annotate(Sum...)` groupé au lieu d'un aggregate
+    `StockLot` par produit.
+- **Verrous document** (transitions de statut) :
+  - `cloturer` et `annuler_reception` (`api/views/commandes/cloture_mixin.py`)
+    re-fetch la `Commande` via `select_for_update()` avant le check de
+    statut → plus de double réception / double retrait de stock.
+  - `SaleValidator.validate_invoice` (`api/services/sale_validator.py`)
+    verrouille la `Facture` via `select_for_update()` puis
+    `refresh_from_db()` (même instance conservée pour les appelants).
+- **Test de non-régression** : `api/tests/test_inventory_validation_lock.py`
+  — double validation → erreur propre sans écriture partielle ;
+  inventaire vide → 400 sans écriture.
+- Vérifications `manage.py check` / tests non exécutées dans l'environnement
+  du correctif (pas d'accès Docker) — à lancer par l'agent de contrôle.
+
+## 2026-10-12 — 🔍 Audit complet du projet (5 sous-agents)
+
+- **Rapport** : `docs/ANALYSE_PROJET_2026-10-12.md` — analyse complète
+  (backend, frontend, sécurité, infra/déploiement, tests) avec références
+  `fichier:ligne`, matrice de risque et plan d'action priorisé (P0→P2).
+- **Constats critiques principaux** :
+  - Sécurité : comptes admin à mots de passe publics recréés au boot,
+    CRUD rayons `AllowAny` (categories.py:208-258), 3 WebSockets sans
+    auth (injection d'articles en caisse), réplication Postgres `trust`
+    0.0.0.0/0, throttle login contournable par XFF + axes contourné,
+    licence qui n'expire pas (`verify_exp=False`), secrets métier
+    (tokens Telegram/WhatsApp) lisibles par tout authentifié.
+  - Intégrité : `validate_inventaire` commit les écritures malgré le 409
+    ; transitions de statut (`cloturer`, `validate_invoice`) sans verrou
+    document → double validation/réception possible.
+  - Infra : `command:` compose ignoré par l'ENTRYPOINT (timeouts
+    migration jamais appliqués), watchdog surveille les conteneurs dev
+    en prod → boucle de faux rollbacks, rollback automatique incapable
+    de fonctionner, hot-deploy frontend jamais appliqué, timeout
+    systemd < timeout du build.
+  - Frontend : `ws://` hardcodé → WebSockets morts en HTTPS ; tunnel de
+    vente sans couverture + Vitest absent de la CI ; middleware licence
+    auto-désactivé sous test.
+- **Verdict** : cœur métier solide (vente/stock/caisse bien testés),
+  périphérie fragile — P0 = ~10 correctifs circonscrits, non structurels.
+- Aucune modification de code — audit en lecture seule.
+
 ## 2026-10-11 — 🎯 Fiche produit : seuil d'alerte = stock minimum
 
 - **Alignement métier** : le backend n'utilise `stock_alert` (champ

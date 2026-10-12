@@ -198,6 +198,15 @@ else:
 
 # Garantir le Profile avec tous les droits
 profile, p_created = Profile.objects.get_or_create(user=user)
+if created:
+    # Compte cree avec le mot de passe par defaut (public) : imposer
+    # le changement de mot de passe a la premiere connexion.
+    # Tolerant si la migration 0273 n'est pas encore appliquee.
+    try:
+        profile.must_change_password = True
+        profile.save(update_fields=['must_change_password'])
+    except Exception as flag_err:
+        print(f'  ⚠ must_change_password non pose: {flag_err}')
 if p_created or profile.role != 'PHARMACIEN':
     profile.role = 'PHARMACIEN'
     profile.allowed_menus = []

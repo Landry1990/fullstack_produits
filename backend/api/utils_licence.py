@@ -82,7 +82,13 @@ def _get_or_create_trial():
         try:
             from django.contrib.auth.models import User
             if not User.objects.exists():
-                User.objects.create_superuser('admin', password='admin')
+                trial_admin = User.objects.create_superuser('admin', password='admin')
+                # Mot de passe par défaut (admin/admin) → changement obligatoire
+                try:
+                    trial_admin.profile.must_change_password = True
+                    trial_admin.profile.save(update_fields=['must_change_password'])
+                except Exception as profile_err:
+                    logger.warning(f"[LICENCE] must_change_password non posé: {profile_err!s}")
                 logger.info("[LICENCE] Superuser par défaut créé (admin/admin) — période d'essai")
         except Exception as e:
             logger.warning(f"[LICENCE] Impossible de créer le superuser par défaut: {e!s}")

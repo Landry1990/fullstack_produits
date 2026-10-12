@@ -1,6 +1,5 @@
 from django.http import JsonResponse
 from django.urls import include, path
-from django.views.decorators.cache import cache_page
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.routers import DefaultRouter
@@ -283,9 +282,13 @@ urlpatterns = [
     path('auth/token/', CustomAuthToken.as_view(), name='token-auth'),
     path('auth/logout/', UserViewSet.as_view({'post': 'logout'}), name='auth-logout'),
     path('verify-password/', verify_password, name='verify-password'),
-    # Endpoints stables cachés (TTL 5 min) — pas de cache sur stock/produits
-    path('menu-hierarchy/', cache_page(300)(menu_hierarchy), name='menu-hierarchy'),
-    path('categories/', cache_page(300)(CategoriesListView.as_view()), name='categories-list'),
+    # menu-hierarchy/ n'est PAS caché côté serveur : cache_page servirait la
+    # réponse aux utilisateurs non authentifiés pendant 5 min (bypass
+    # d'IsAuthenticated) — même raison que categories/ ci-dessous.
+    path('menu-hierarchy/', menu_hierarchy, name='menu-hierarchy'),
+    # categories/ n'est PAS caché côté serveur : cache_page servirait la liste
+    # aux utilisateurs non authentifiés pendant 5 min (bypass d'IsAuthenticated).
+    path('categories/', CategoriesListView.as_view(), name='categories-list'),
     path('categories/<int:pk>/', CategoriesDetailView.as_view(), name='categories-detail'),
     path('stock-analysis/unsold/', StockAnalysisUnsoldView.as_view(), name='stock-analysis-unsold'),
     path('stock-analysis/overstock/', StockAnalysisOverstockView.as_view(), name='stock-analysis-overstock'),

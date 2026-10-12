@@ -44,6 +44,8 @@ export interface User {
     can_generate_coupon?: boolean;
     can_view_cash_totals?: boolean;
     is_terminal_account?: boolean;
+    /** True si le mot de passe a été attribué par un tiers → changement obligatoire */
+    must_change_password?: boolean;
 }
 
 export interface SudoOptions {

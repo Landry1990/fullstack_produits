@@ -10,6 +10,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",
+    "test:run": "vitest run",
     "doctor": "npx react-doctor@latest",
     "test:e2e": "playwright test"
   },

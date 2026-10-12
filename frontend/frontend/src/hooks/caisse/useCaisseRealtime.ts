@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { logger } from '../../utils/logger'
+import { safeStorage } from '../../utils/storage'
 
 interface UseCaisseRealtimeParams {
   selectedPosteCaisseId: string
@@ -38,14 +39,20 @@ export function useCaisseRealtime({
     fetchCoupons()
 
     // ── WebSocket pour notifications temps réel ──
-    const wsBase = import.meta.env.VITE_WS_URL ?? `ws://${window.location.host}`
+    const wsBase = import.meta.env.VITE_WS_URL
+      ?? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}`
     let ws: WebSocket | null = null
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null
     let pingTimer: ReturnType<typeof setInterval> | null = null
+    let wsStopped = false
 
     const connectWs = () => {
+      // Le consumer exige un utilisateur authentifié (?token=) — sans token,
+      // on s'appuie uniquement sur le polling de fallback.
+      const token = safeStorage.getItem('authToken')
+      if (!token) return
       try {
-        ws = new WebSocket(`${wsBase}/ws/caisse_centralisee/`)
+        ws = new WebSocket(`${wsBase}/ws/caisse_centralisee/?token=${encodeURIComponent(token)}`)
 
         ws.onopen = () => {
           logger.info('WebSocket caisse connecté')
@@ -75,10 +82,17 @@ export function useCaisseRealtime({
           }
         }
 
-        ws.onclose = () => {
+        ws.onclose = (event) => {
           logger.info('WebSocket caisse déconnecté, reconnexion dans 3s')
           if (pingTimer) { clearInterval(pingTimer); pingTimer = null }
-          reconnectTimer = setTimeout(connectWs, 3_000)
+          // 4001/4401 = refus d'auth : inutile de boucler, le polling prend le relais
+          if (event.code === 4001 || event.code === 4401) {
+            logger.info('WebSocket caisse fermé par le serveur (auth), pas de reconnexion')
+            return
+          }
+          if (!wsStopped) {
+            reconnectTimer = setTimeout(connectWs, 3_000)
+          }
         }
 
         ws.onerror = () => {
@@ -99,6 +113,7 @@ export function useCaisseRealtime({
 
     return () => {
       clearInterval(interval)
+      wsStopped = true
       if (reconnectTimer) clearTimeout(reconnectTimer)
       if (pingTimer) clearInterval(pingTimer)
       if (ws) { ws.onclose = null; ws.close() }

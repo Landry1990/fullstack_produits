@@ -82,7 +82,9 @@ function Invoke-DockerRebuild {
             "frontend"     { docker compose build frontend; docker compose up -d frontend }
             { $_ -in "backend","backend-full" } {
                              docker compose build backend;  docker compose up -d backend  }
-            "all"          { docker compose build;          docker compose up -d          }
+            { $_ -in "all","all-full" } {
+                             docker compose build;          docker compose up -d          }
+            default        { throw "RebuildTarget '$RebuildTarget' non géré — rebuild annulé." }
         }
         Write-Host "✅ Rebuild terminé" -ForegroundColor Green
     } finally { Pop-Location }
@@ -163,6 +165,8 @@ function Deploy-Backend {
                 docker cp unified_meds.txt "${BACKEND_CONTAINER}:/app/unified_meds.txt"
             }
 
+            Write-Host "  ⚠️  makemigrations sur la cible (usage dev) — en prod, les fichiers" -ForegroundColor Yellow
+            Write-Host "      de migration doivent être versionnés (git) AVANT déploiement." -ForegroundColor Yellow
             Write-Host "  Migrations..." -ForegroundColor Yellow
             docker exec $BACKEND_CONTAINER python manage.py makemigrations 2>&1 |
                 Select-String -Pattern "No changes|Migration|already" |
@@ -187,6 +191,26 @@ function Deploy-Backend {
 
         Write-Host "  Redémarrage conteneur..." -ForegroundColor Yellow
         docker restart $BACKEND_CONTAINER | Out-Null
+
+        # Smoke test : le conteneur redémarré doit répondre sur /api/health/
+        # (endpoint sans auth, cf. backend/api/urls.py). 12 tentatives × 5s = 60s max.
+        Write-Host "  Smoke test /api/health/ ..." -ForegroundColor Yellow
+        $smokeOk = $false
+        for ($i = 1; $i -le 12; $i++) {
+            $prevEAP = $ErrorActionPreference
+            $ErrorActionPreference = "Continue"
+            docker exec $BACKEND_CONTAINER python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health/', timeout=3)" 2>$null | Out-Null
+            $smokeExit = $LASTEXITCODE
+            $ErrorActionPreference = $prevEAP
+            if ($smokeExit -eq 0) { $smokeOk = $true; break }
+            Write-Host "    tentative $i/12 — backend pas encore prêt" -ForegroundColor Gray
+            Start-Sleep -Seconds 5
+        }
+        if (-not $smokeOk) {
+            Write-Host "  ❌ Smoke test ÉCHOUÉ : /api/health/ injoignable après 60s." -ForegroundColor Red
+            throw "Backend déployé mais ne répond pas — vérifier : docker logs $BACKEND_CONTAINER"
+        }
+        Write-Host "  ✅ Smoke test OK" -ForegroundColor Green
         Write-Host "  ✅ Backend déployé" -ForegroundColor Green
     } finally { Pop-Location }
 }

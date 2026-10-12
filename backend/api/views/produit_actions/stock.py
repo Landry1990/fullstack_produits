@@ -1,5 +1,6 @@
 from django.db import transaction
 from django.db.models import Case, F, IntegerField, Q, Sum, When
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import action
@@ -209,7 +210,7 @@ class ProduitStockMixin:
             return error_res
 
         # Lock product (and optional lot) to prevent concurrent manual adjustments.
-        produit = Produit.objects.select_for_update().get(pk=self.kwargs['pk'])
+        produit = get_object_or_404(Produit.objects.select_for_update(), pk=self.kwargs['pk'])
         if produit.is_service:
             return Response(
                 {'detail': f"« {produit.name} » est un service : pas de stock à ajuster."},
@@ -481,7 +482,7 @@ class ProduitStockMixin:
         validation_user, error_res = validate_sudo_mode(request, permission_attr='can_adjust_stock')
         if error_res: return error_res
 
-        produit = Produit.objects.select_for_update().get(pk=self.kwargs['pk'])
+        produit = get_object_or_404(Produit.objects.select_for_update(), pk=self.kwargs['pk'])
         if produit.is_service:
             return Response(
                 {'detail': f"« {produit.name} » est un service : pas de réserve ni de rayon."},

@@ -10,6 +10,7 @@ from ...audit_helpers import log_audit
 from ...models import AuditLog, MouvementCaisse
 from ...pagination import StandardResultsSetPagination
 from ...serializers import MouvementCaisseSerializer
+from ...sudo_utils import validate_sudo_mode
 from ..rapports.tz_utils import parse_api_datetime
 
 logger = logging.getLogger(__name__)
@@ -48,7 +49,16 @@ class MouvementCaisseViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(date__lte=dt)
             
         return queryset
-    
+
+    def create(self, request, *args, **kwargs):
+        """Écritures (entrées/sorties manuelles de caisse) : même permission
+        que l'encaissement (CaisseViewSet.create) — `can_cash_out` sur le
+        profil, ou validation sudo par un utilisateur autorisé."""
+        _validation_user, error_res = validate_sudo_mode(request, permission_attr='can_cash_out')
+        if error_res:
+            return error_res
+        return super().create(request, *args, **kwargs)
+
     @transaction.atomic
     def perform_create(self, serializer):
         """Automatically set the user to the currently authenticated user and audit."""
@@ -68,42 +78,3 @@ class MouvementCaisseViewSet(viewsets.ModelViewSet):
             },
             request=self.request
         )
-
-    @transaction.atomic
-    def perform_update(self, serializer):
-        mouvement = serializer.instance
-        old_montant = mouvement.montant
-        serializer.save()
-        
-        log_audit(
-            user=self.request.user,
-            action=AuditLog.Action.UPDATE,
-            model_name='MouvementCaisse',
-            object_id=mouvement.id,
-            description=f"Modification mouvement caisse #{mouvement.id}",
-            details={
-                'old_montant': float(old_montant),
-                'new_montant': float(mouvement.montant),
-                'motif': mouvement.motif
-            },
-            request=self.request
-        )
-
-    @transaction.atomic
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        mvmt_id = instance.id
-        mvmt_info = f"{instance.type} {instance.montant}F ({instance.motif})"
-        
-        response = super().destroy(request, *args, **kwargs)
-        
-        log_audit(
-            user=request.user,
-            action=AuditLog.Action.DELETE,
-            model_name='MouvementCaisse',
-            object_id=mvmt_id,
-            description=f"Suppression mouvement caisse: {mvmt_info}",
-            details={'info': mvmt_info},
-            request=request
-        )
-        return response

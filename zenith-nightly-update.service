@@ -8,4 +8,6 @@ Type=oneshot
 ExecStart=/opt/zenith-pharma/nightly-update.sh
 WorkingDirectory=/opt/zenith-pharma
 User=root
-TimeoutStartSec=600
+# BUILD_TIMEOUT=900 dans nightly-update.sh (x2 retries possibles) + marge :
+# le service ne doit pas tuer la MAJ en vol avant la fin du build.
+TimeoutStartSec=1800

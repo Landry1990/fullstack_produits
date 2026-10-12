@@ -106,6 +106,13 @@ class UserSerializer(serializers.ModelSerializer):
             profile.role = profile_data.get('role', 'VENDEUR')
             profile.save()
 
+        # Mot de passe attribué par un tiers (création admin) : l'utilisateur
+        # devra le changer à sa première connexion.
+        profile = getattr(user, 'profile', None)
+        if profile is not None:
+            profile.must_change_password = True
+            profile.save(update_fields=['must_change_password'])
+
         return user
 
     def update(self, instance, validated_data):
@@ -157,6 +164,15 @@ class UserSerializer(serializers.ModelSerializer):
             profile.max_discount_rate = profile_data.get('max_discount_rate', profile.max_discount_rate)
             profile.role = profile_data.get('role', profile.role)
             profile.save()
+
+        # Un mot de passe attribué par un tiers (admin) doit être changé à la
+        # prochaine connexion. Le self-service change-my-password ne passe pas
+        # par ce serializer — le flag n'est donc jamais reposé sur lui-même.
+        if password:
+            profile = getattr(instance, 'profile', None)
+            if profile is not None:
+                profile.must_change_password = True
+                profile.save(update_fields=['must_change_password'])
 
         return instance
 
