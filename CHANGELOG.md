@@ -63,6 +63,87 @@
   (icône `Download` inline, plus de `leftIcon`).
 - Aucune nouvelle clé i18n. Typecheck + eslint OK.
 
+## 2026-10-12 — 🚑 Fix critique : page blanche globale (chunks circulaires)
+
+- **Symptôme** : app entièrement blanche après le build UI/UX —
+  `TypeError: can't access property "displayName" of undefined` dans
+  `feature-inventory-states`.
+- **Cause** : l'import de `@radix-ui/react-dropdown-menu` a déplacé les
+  modules internes Radix partagés (`primitive`, `context`…) entre chunks.
+  Le binding `DialogPrimitive.Overlay` vivait dans `feature-caisse` en
+  import circulaire avec `feature-inventory-states` → non initialisé à
+  l'évaluation → crash au chargement.
+- **Fix** : `manualChunks` converti en fonction dans `vite.config.ts` — tous
+  les `@radix-ui/*` + dépendances proches (`aria-hidden`, `react-remove-scroll`,
+  `react-style-singleton`…) vont dans un chunk `vendor-radix` feuille
+  (aucun import vers les features → plus de binding partagé non initialisé).
+  Les groupes existants sont préservés à l'identique.
+- Build vérifié : `feature-inventory-states` n'importe plus Radix depuis
+  `feature-caisse`, bundle déployé et servi par nginx.
+
+## 2026-10-12 — ✨ Organisation : relooking UI/UX de la page
+
+- **Recherche catégories** : l'input de recherche de la sidebar était mort
+  (pas de `onChange`) — il filtre désormais la liste, sous-rayons inclus
+  (un parent remonte si un enfant matche).
+- **Badges de comptage** : chaque catégorie affiche son nombre de produits.
+  Backend : `produits_count` annoté (`Count`) sur les querysets des 3 viewsets
+  + `SerializerMethodField` avec fallback ; `parent_name` exposé sur
+  `RayonSerializer` (était référencé côté front mais jamais renvoyé).
+- **Actions de ligne** : les 4–5 icônes cryptiques au survol sont regroupées
+  dans un menu `⋯` (shadcn DropdownMenu) avec libellés explicites. Les
+  sous-rayons gagnent l'action « Modifier » qui leur manquait.
+- **Modal « Ajouter des produits »** : chaque résultat affiche un chip de son
+  assignation actuelle — gris « Non classé », vert « nom de la catégorie »
+  (déjà ici), ambre « nom · sera migré » (autre catégorie).
+- **Modal de fusion** : refait — flux visuel source → cible, liste de cibles
+  recherchable avec badges de comptage et chemin parent (`parent › enfant`),
+  sélection radio, récapitulatif d'impact conservé.
+- `cursor-pointer` ajouté sur les éléments cliquables (reset Tailwind 4).
+- i18n fr/en (`assignment_none`, `will_move_tag`, `will_move_tooltip`).
+- Vérifié live : `produits_count` sur rayons/formes/groupes (ex. COLLYRES=117).
+  Typecheck + eslint + build OK.
+
+## 2026-10-11 — 🔀 Organisation : fusion de rayons / formes / groupes
+
+- **Demande** : pouvoir fusionner deux catégories dans le menu Organisation.
+- **Backend** : nouvel endpoint `POST /api/{rayons|formes|groupes}/{id}/merge/`
+  (body `{target_id}`). Atomique : produits de la source réassignés à la cible,
+  sous-rayons rattachés à la cible (choix utilisateur), source supprimée.
+  Rejets : cible = source, cible = descendant de la source (cycle), cible
+  inexistante. Audit log DELETE + `SearchCache.invalidate_all_products()`.
+  - `api/views/category_merge.py` (helper partagé `merge_category` +
+    `rayon_descendant_ids`)
+  - Actions `merge` dans `CategorieViewSet`, `FormeViewSet`, `GroupeViewSet`.
+- **Frontend** (`CategoryManager.tsx`) : icône fusion (ambre) sur chaque
+  catégorie (parent, enfant, en-tête détail) → modal de sélection de la cible
+  (exclut la source + ses descendants), affiche le nb de produits et de
+  sous-rayons concernés + avertissement d'irréversibilité avant confirmation.
+  Après fusion : rafraîchissement liste, sélection basculée sur la cible.
+- i18n fr/en (`category_manager.merge_*`).
+- Vérifié en live : produit déplacé (forme 5→6), sous-rayon rattaché
+  (parent 10→12), rejet cycle et auto-fusion, sources supprimées.
+  Données `[TEST]` purgées. Typecheck + eslint + build OK.
+
+## 2026-10-11 — 🔄 Organisation : confirmation de migration rayon/forme/groupe
+
+- **Demande** : dans Organisation, l'ajout d'un produit à un rayon écrasait
+  silencieusement son rayon actuel (FK unique). Idem formes et groupes.
+- **Ajout simple** (`CategoryManager.handleAddProduct`) : si le produit a déjà
+  un autre rayon/forme/groupe → dialog de confirmation « appartient déjà à
+  « X » — migrer vers « Y » ? » (Oui/Non). S'il est déjà dans la catégorie
+  cible → toast info + skip (évite le doublon d'affichage).
+- **Rangement intelligent** (`SmartOrganizerModal`) : le dialog de
+  confirmation affiche « N produit(s) déjà classé(s) ailleurs seront migrés ».
+- **Backend** : `ProduitListSerializer` expose désormais les FK `rayon`,
+  `forme`, `groupe` + `groupe_nom` (avant : seuls `rayon_name`/`forme_nom`) ;
+  `for_import` renvoie aussi `rayon`/`rayon__name`/`forme`/`forme__nom`/
+  `groupe`/`groupe__nom` ; `select_related` + `groupe`. Additif, pas de
+  cassure de contrat.
+- i18n fr/en (`category_manager.migration_*`, `already_in_category`,
+  `smart_organizer.migration_note`). Typecheck + eslint + JSON OK, endpoint
+  vérifié en live.
+
 ## 2026-10-11 — 🧪 Test de charge : plafond réel ~30 users actifs (écriture sérialisée)
 
 - **Méthode** : `backend/scripts/load_test_api.py --stress` (recherche produits /

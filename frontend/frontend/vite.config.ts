@@ -3,6 +3,59 @@ import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+// Regroupement des chunks. Les modules Radix UI et leurs dépendances proches
+// doivent vivre dans un seul chunk vendor : éparpillés dans les feature chunks
+// (selon le premier importateur), ils créent des imports circulaires entre
+// chunks qui laissent des bindings non initialisés (crash `displayName` au boot).
+const RADIX_CHUNK_DEPS = [
+  '@radix-ui',
+  'aria-hidden',
+  'react-remove-scroll',
+  'react-remove-scroll-bar',
+  'react-style-singleton',
+  'get-nonce',
+  'detect-node-es',
+];
+
+const CHUNK_GROUPS: Record<string, string[]> = {
+  // Core - toujours necessaire
+  'vendor-core': ['react', 'react-dom'],
+  'vendor-router': ['react-router-dom'],
+  // Data & API
+  'vendor-query': ['@tanstack/react-query'],
+  'vendor-http': ['axios'],
+  // UI & utils
+  'vendor-ui': ['react-hot-toast', 'lucide-react'],
+  'vendor-dates': ['date-fns'],
+  'vendor-i18n': ['react-i18next', 'i18next'],
+  // Heavy libs - isolated so they don't bloat the main chunk
+  'vendor-pdf': ['jspdf', 'jspdf-autotable'],
+  'vendor-xlsx': ['xlsx'],
+  // Feature inventory découpé en sous-chunks
+  'feature-inventory': ['/src/components/Inventaire'],
+  'feature-inventory-editor': ['/src/components/inventaire/editor/InventaireEditor'],
+  'feature-inventory-states': ['/src/components/EtatsInventaire', '/src/components/Organisation'],
+  // Reports
+  'feature-reports': ['/src/components/RapportMensuel', '/src/components/CentreRapports', '/src/components/AnalyseABC'],
+  // History
+  'feature-history': ['/src/components/HistoriqueVentes', '/src/components/HistoriqueAchats', '/src/components/HistoriqueClotures'],
+  // Caisse & cash register
+  'feature-caisse': ['/src/components/CaisseCentralisee', '/src/components/JournalCaisse'],
+  // Settings & admin
+  'feature-settings': ['/src/components/settings/PharmacySettingsForm', '/src/components/users/GestionUtilisateurs', '/src/components/SystemAdmin'],
+  // Dashboard
+  'feature-dashboard': ['/src/components/DashboardManagerShadcn', '/src/components/DashboardShadcn'],
+  // Produits & facturation (pages principales mais lazy-loaded)
+  'feature-produits': ['/src/components/ProduitShadcn'],
+  'feature-ventes': ['/src/components/Ventes', '/src/components/Facturation'],
+  // Commandes
+  'feature-commandes': ['/src/components/Commandes'],
+  // Compta
+  'feature-compta': ['/src/components/compta/Comptabilite'],
+  // Printing
+  'feature-printing': ['/src/components/printing/PrintPage'],
+};
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
@@ -86,43 +139,16 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Core - toujours necessaire
-          'vendor-core': ['react', 'react-dom'],
-          'vendor-router': ['react-router-dom'],
-          // Data & API
-          'vendor-query': ['@tanstack/react-query'],
-          'vendor-http': ['axios'],
-          // UI & utils
-          'vendor-ui': ['react-hot-toast', 'lucide-react'],
-          'vendor-dates': ['date-fns'],
-          'vendor-i18n': ['react-i18next', 'i18next'],
-          // Feature inventory découpé en sous-chunks
-          'feature-inventory': ['./src/components/Inventaire'],
-          'feature-inventory-editor': ['./src/components/inventaire/editor/InventaireEditor'],
-          'feature-inventory-states': ['./src/components/EtatsInventaire', './src/components/Organisation'],
-          // Reports
-          'feature-reports': ['./src/components/RapportMensuel', './src/components/CentreRapports', './src/components/AnalyseABC'],
-          // History
-          'feature-history': ['./src/components/HistoriqueVentes', './src/components/HistoriqueAchats', './src/components/HistoriqueClotures'],
-          // Caisse & cash register
-          'feature-caisse': ['./src/components/CaisseCentralisee', './src/components/JournalCaisse'],
-          // Settings & admin
-          'feature-settings': ['./src/components/settings/PharmacySettingsForm', './src/components/users/GestionUtilisateurs', './src/components/SystemAdmin'],
-          // Dashboard
-          'feature-dashboard': ['./src/components/DashboardManagerShadcn', './src/components/DashboardShadcn'],
-          // Produits & facturation (pages principales mais lazy-loaded)
-          'feature-produits': ['./src/components/ProduitShadcn'],
-          'feature-ventes': ['./src/components/Ventes', './src/components/Facturation'],
-          // Commandes
-          'feature-commandes': ['./src/components/Commandes'],
-          // Compta
-          'feature-compta': ['./src/components/compta/Comptabilite'],
-          // Printing
-          'feature-printing': ['./src/components/printing/PrintPage'],
-          // Heavy libs - isolated so they don't bloat the main chunk
-          'vendor-pdf': ['jspdf', 'jspdf-autotable'],
-          'vendor-xlsx': ['xlsx'],
+        manualChunks(id: string) {
+          // Radix UI + dépendances partagées dans un chunk dédié
+          if (RADIX_CHUNK_DEPS.some(p => id.includes(`node_modules/${p}`))) {
+            return 'vendor-radix';
+          }
+          for (const [chunk, modules] of Object.entries(CHUNK_GROUPS)) {
+            if (modules.some(m => id.includes(m.startsWith('/') ? m : `node_modules/${m}/`))) {
+              return chunk;
+            }
+          }
         },
         entryFileNames: 'assets/[name]-[hash].js',
         chunkFileNames: 'assets/[name]-[hash].js',

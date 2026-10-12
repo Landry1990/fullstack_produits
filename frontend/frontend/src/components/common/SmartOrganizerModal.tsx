@@ -35,6 +35,12 @@ interface MiniProduct {
     id: number;
     name: string;
     cip1?: string;
+    rayon?: number | null;
+    rayon__name?: string | null;
+    forme?: number | null;
+    forme__nom?: string | null;
+    groupe?: number | null;
+    groupe__nom?: string | null;
 }
 
 interface IndexedProduct {
@@ -382,6 +388,17 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
         [filteredProducts, excludedIds]
     );
 
+    const migratingCount = useMemo(
+        () => {
+            const field = targetCategory.type as 'rayon' | 'forme' | 'groupe';
+            return finalProducts.filter(p => {
+                const current = p[field];
+                return current != null && current !== targetCategory.id;
+            }).length;
+        },
+        [finalProducts, targetCategory.type, targetCategory.id]
+    );
+
     const hasActiveFilters = debouncedFromName.trim() || debouncedToName.trim() || debouncedContains.trim();
 
     const handleExcludeAll = () => {
@@ -659,6 +676,11 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
                         <p>
                             <span className="font-semibold">{t('stock:organisation.smart_organizer.products_found', { count: finalProducts.length })}</span>
                         </p>
+                        {migratingCount > 0 && (
+                            <p className="text-amber-700 font-medium">
+                                {t('stock:organisation.smart_organizer.migration_note', { count: migratingCount })}
+                            </p>
+                        )}
                     </div>
                     <DialogFooter className="gap-2">
                         <button

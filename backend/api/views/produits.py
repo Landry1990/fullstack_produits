@@ -68,7 +68,7 @@ class ProduitViewSet(
     # Explicitement autoriser toutes les méthodes CRUD
     http_method_names = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options']
     
-    queryset = Produit.objects.select_related('rayon', 'fournisseur', 'forme').order_by('name')
+    queryset = Produit.objects.select_related('rayon', 'fournisseur', 'forme', 'groupe').order_by('name')
     serializer_class = ProduitSerializer
     list_serializer_class = ProduitListSerializer
     detail_serializer_class = ProduitDetailSerializer
