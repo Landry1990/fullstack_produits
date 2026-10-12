@@ -32,7 +32,26 @@ echo ">> Git pull..."
 # Les chmod +x faits par install.sh/update-app.sh ne doivent pas être vus
 # comme des modifications locales (bloqueraient le merge).
 git config --local core.fileMode false
+
+# Hash AVANT le pull — pour détecter les fichiers protégés modifiés.
+BEFORE_HASH=$(git rev-parse HEAD)
+
+# dist/ est un artefact de build tracké : il peut être localement "modifié"
+# (rebuild sur place, fins de ligne) et bloque le merge — autostash ne
+# s'applique qu'aux rebases, pas aux merges. On le réinitialise, le pull
+# ramène la version commitée.
+git checkout -- frontend/frontend/dist/ 2>/dev/null || true
+
 git pull --autostash
+
+# Détecter si des fichiers qui exigent un rebuild d'image ont changé :
+# - fichiers Cythonisés (.so prioritaires sur .py dans l'image → le
+#   docker cp ci-dessous serait ignoré)
+# - entrypoint.sh / requirements.txt / Dockerfile (hors du docker cp api/)
+CHANGED_FILES=$(git diff --name-only "$BEFORE_HASH" HEAD 2>/dev/null || echo "")
+NEEDS_REBUILD=""
+echo "$CHANGED_FILES" | grep -Eq 'middleware_licence|utils_licence|entrypoint\.sh|requirements\.txt|Dockerfile' \
+    && NEEDS_REBUILD="yes"
 
 # 2. Backend : copier le code api/ dans le conteneur
 echo ""
@@ -60,6 +79,19 @@ echo ""
 echo ">> Copie du frontend..."
 docker cp frontend/frontend/dist/. zenith-pharma-frontend:/usr/share/nginx/html/
 docker exec zenith-pharma-frontend nginx -s reload
+
+echo ""
+if [ "$NEEDS_REBUILD" = "yes" ]; then
+    echo "============================================================"
+    echo "  ⚠️  REBUILD D'IMAGE REQUIS"
+    echo "  Des fichiers compilés/système ont changé (middleware_licence,"
+    echo "  utils_licence, entrypoint.sh, requirements ou Dockerfile)."
+    echo "  Le hot-deploy ci-dessus NE les applique PAS. Lance :"
+    echo ""
+    echo "    docker compose -f docker-compose.prod.yml build backend"
+    echo "    docker compose -f docker-compose.prod.yml up -d backend"
+    echo "============================================================"
+fi
 
 echo ""
 echo "========================================"

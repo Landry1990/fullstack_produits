@@ -110,6 +110,7 @@ export const StockResolutionHandler: React.FC<StockResolutionHandlerProps> = ({
 
         // CHECK IF SUDO IS NEEDED FOR FORCE SALE
         const hasForceSale = updatedLignes.some(l => {
+            if (l.produit.is_service || l.produit.type_produit === 'SERVICE') return false
             const stock = l.produit.stock ?? 0
             return !l.isPromis && l.quantite > stock
         })

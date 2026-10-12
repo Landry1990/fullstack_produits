@@ -2,6 +2,42 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-10-12 — 🐛 Fix : les services déclenchaient le modal promis
+
+- **Symptôme** : vendre un service (`type_produit = SERVICE`, stock non géré)
+  ouvrait le modal de résolution de stock (Promis/Réduire/Forcer) dès que
+  `quantite > stock` — un service a typiquement `stock = 0`.
+- **Frontend web** : 3 checks de stock ignoraient le flag service —
+  `problematicLines` de `useFacturationState` (ouverture du modal), le
+  contrôle temps réel de `useSaleCompletion` (toast « stock insuffisant »
+  bloquant la vente) et `hasForceSale` de `StockResolutionHandler` (sudo
+  inutile si un service cohabite avec un produit en rupture). Tous excluent
+  désormais `is_service`/`type_produit === 'SERVICE'`, comme le fait déjà
+  `addProduit` (pas de prompt force/substitution) et le backend
+  (`_check_stock`, `_allocate_lots`).
+- **Backend** : `bulk_refresh` renvoie `is_service` (le check temps réel se
+  base sur la donnée fraîche, pas seulement sur le panier ; `.only()`
+  étendu à `type_produit`, 0 requête en plus — propriété dérivée).
+- **Mobile** : même bug corrigé — `lineDeficit` de `useSendSale` ignore les
+  services ; type `Product` complété (`type_produit`, `is_service`, déjà
+  présents dans les serializers liste/détail).
+- Vérifié : `manage.py check` OK, `is_service` sur queryset `.only()`
+  (requête unique), tsc + eslint OK (web + mobile), 73 tests vitest.
+
+## 2026-10-12 — 🔧 update.sh : pull bloqué par dist/ + avertissement rebuild
+
+- `git checkout -- frontend/frontend/dist/` avant `git pull` : `dist/` est
+  un artefact tracké souvent "modifié" sur le serveur et `--autostash` ne
+  couvre que les rebases → chaque pull échouait sur le merge.
+- Détection post-pull des fichiers exigeant un rebuild d'image
+  (`middleware_licence`, `utils_licence`, `entrypoint.sh`, `requirements.txt`,
+  `Dockerfile`) → bannière "REBUILD D'IMAGE REQUIS" avec les commandes,
+  car le hot-deploy `docker cp` est ignoré pour les fichiers Cythonisés.
+- Audit races stock : tous les chemins d'écriture en exploitation sont
+  verrouillés ; imports Excel classés risque accepté (one-shot install) ;
+  convention `recalculate_stock_from_lots` sous verrou documentée dans
+  `docs/ANALYSE_PROJET_2026-10-12.md` §6.
+
 ## 2026-10-12 — 🐛 Fix 500 sur produit inexistant (adjust_stock / transfer_to_shelf)
 
 - `ProduitStockMixin.adjust_stock` et `transfer_to_shelf` récupéraient le

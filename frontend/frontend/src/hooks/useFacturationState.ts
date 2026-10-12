@@ -562,7 +562,7 @@ export function useFacturationState() {
             isPromis: ligne.isPromis,
             promisQuantity: ligne.promisQuantity,
             promisPhone: ligne.promisPhone,
-            produit: { ...ligne.produit, stock: freshProduct.stock, selling_price: freshProduct.selling_price, is_active: freshProduct.is_active }
+            produit: { ...ligne.produit, stock: freshProduct.stock, selling_price: freshProduct.selling_price, is_active: freshProduct.is_active, is_service: freshProduct.is_service ?? ligne.produit.is_service }
           }
         }
         return ligne
@@ -574,7 +574,11 @@ export function useFacturationState() {
     cart.setLignesFacture(freshLignes)
     setLoading(false)
 
-    const problematicLines = freshLignes.filter((l: LigneFacture) => !l.isPromis && l.quantite > (l.produit.stock ?? 0))
+    // Un service n'a pas de stock géré : jamais de modal promis/force.
+    const problematicLines = freshLignes.filter((l: LigneFacture) =>
+      !l.isPromis
+      && !(l.produit.is_service || l.produit.type_produit === 'SERVICE')
+      && l.quantite > (l.produit.stock ?? 0))
 
     if (problematicLines.length > 0) {
       // Fermer la fenêtre pré-ouverte — le flux de résolution de stock

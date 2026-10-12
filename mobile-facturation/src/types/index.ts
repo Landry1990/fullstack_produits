@@ -15,6 +15,9 @@ export interface Product {
   taux_marge?: string;
   use_lot_management?: boolean;
   is_active?: boolean;
+  // SERVICE = prestation facturable, stock non géré (jamais de promis/force).
+  type_produit?: 'PRODUIT' | 'SERVICE';
+  is_service?: boolean;
   // 5 premiers lots non vides triés FEFO (SerializerMethodField du
   // ProduitSerializer — présent sur list/retrieve/by-cip).
   stock_lots?: StockLot[];

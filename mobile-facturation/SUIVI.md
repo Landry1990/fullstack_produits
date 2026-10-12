@@ -10,6 +10,14 @@
 
 ## ✅ Déjà en place
 
+- [x] **Services exclus du modal promis** (2026-10-12) : un produit
+  `type_produit = SERVICE` (stock non géré) déclenchait `StockResolutionModal`
+  à l'envoi dès que `quantite > stock` (stock souvent 0). `lineDeficit`
+  ignore désormais les lignes service (`is_service` / `type_produit`) — parité
+  avec le fix web du même jour (`problematicLines`, check temps réel
+  `useSaleCompletion`, `hasForceSale`) et le backend (`_check_stock`). Le type
+  `Product` expose `type_produit`/`is_service` (déjà renvoyés par les
+  serializers liste/détail).
 - [x] **Gestion des promis à la vente** (2026-10-07) : à l'envoi, toute
   quantité supérieure au stock ouvre `StockResolutionModal`, avec une action
   par produit : **Promis** par défaut (part manquante due au client),
