@@ -8,7 +8,8 @@
 #   2. docker cp backend → conteneur backend
 #   3. migrate + collectstatic
 #   4. docker restart backend (redémarrage bref ~5s)
-#   5. docker cp frontend/dist → conteneur nginx + reload
+#   (le frontend n'est PAS hot-deployé : dist/ est gitignored → rebuild
+#    d'image uniquement, via nightly-update.sh)
 #
 # Avantages :
 #   - Pas de rebuild Docker (30s au lieu de 10-15 min)
@@ -168,20 +169,17 @@ write_status "running" "Collecte des fichiers statiques..."
 docker exec "$BACKEND_CONTAINER" python manage.py collectstatic --noinput --clear >> "$LOG_FILE" 2>&1 || true
 log "✓ Fichiers statiques collectés"
 
-# ── Étape 7 : Copie frontend + reload nginx ───────────────────
+# ── Étape 7 : Frontend (non hot-deployé) ──────────────────────
 
-# IMPORTANT : le frontend est copié AVANT le restart backend.
-# Le restart final tue ce script (il tourne dans le conteneur backend) —
-# tout ce qui est après le restart ne s'exécuterait jamais.
+# IMPORTANT : tout ce qui doit se faire avant le restart backend doit
+# rester AVANT — le restart final tue ce script (il tourne dans le
+# conteneur backend), rien après ne s'exécuterait.
 
-write_status "running" "Copie du frontend..."
-if [ -d "$APP_DIR/frontend/frontend/dist" ]; then
-    docker cp "$APP_DIR/frontend/frontend/dist/." "$FRONTEND_CONTAINER:/usr/share/nginx/html/" >> "$LOG_FILE" 2>&1 || true
-    docker exec "$FRONTEND_CONTAINER" nginx -s reload >> "$LOG_FILE" 2>&1 || true
-    log "✓ Frontend copié et nginx rechargé"
-else
-    log "⚠ Pas de dist/ trouvé — le frontend n'est pas mis à jour"
-fi
+write_status "running" "Frontend : géré par rebuild image (hors hot-deploy)..."
+# Le hot-deploy ne couvre QUE le backend : frontend/dist est gitignored
+# (généré uniquement à l'intérieur de l'image Docker au build). Le frontend
+# est mis à jour par rebuild d'image via nightly-update.sh.
+log "Frontend : géré par rebuild image (nightly-update), hot-deploy ignoré"
 
 # ── Étape 8 : Redémarrage backend via helper détaché ──────────
 

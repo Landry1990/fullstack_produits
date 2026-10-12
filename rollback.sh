@@ -10,6 +10,18 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INCLUDE_DB=false
 FORCE=false
 
+# Noms des images Docker et des conteneurs.
+# Prod (zenith) : images et conteneurs zenith-pharma-* (nightly-update.sh
+# tag les images courantes en zenith-pharma-{backend,frontend}:previous).
+# Dev : surcharger par variable d'env, ex :
+#   BACKEND_IMAGE=fullstack_produits-backend FRONTEND_IMAGE=fullstack_produits-frontend \
+#   BACKEND_CONTAINER=fullstack_produits-backend-1 ./rollback.sh
+BACKEND_IMAGE="${BACKEND_IMAGE:-zenith-pharma-backend}"
+FRONTEND_IMAGE="${FRONTEND_IMAGE:-zenith-pharma-frontend}"
+BACKEND_CONTAINER="${BACKEND_CONTAINER:-zenith-pharma-backend}"
+FRONTEND_CONTAINER="${FRONTEND_CONTAINER:-zenith-pharma-frontend}"
+DB_CONTAINER="${DB_CONTAINER:-zenith-pharma-db}"
+
 # Couleurs
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -39,12 +51,12 @@ info "╚═══════════════════════�
 echo ""
 
 # Verifier images previous
-backend_previous=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep "fullstack_produits-backend:previous" || true)
-frontend_previous=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep "fullstack_produits-frontend:previous" || true)
+backend_previous=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep -x "${BACKEND_IMAGE}:previous" || true)
+frontend_previous=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep -x "${FRONTEND_IMAGE}:previous" || true)
 
 if [[ -z "$backend_previous" && -z "$frontend_previous" ]]; then
-    err "❌ Aucune image 'previous' trouvee. Impossible de rollback."
-    warn "   Astuce: les images sont taggees 'previous' lors du deploy.sh"
+    err "❌ Aucune image 'previous' trouvee (${BACKEND_IMAGE}:previous / ${FRONTEND_IMAGE}:previous). Impossible de rollback."
+    warn "   Astuce: les images sont taggees 'previous' par nightly-update.sh avant chaque mise a jour"
     exit 1
 fi
 
@@ -84,7 +96,7 @@ docker compose -f "$SCRIPT_DIR/docker-compose.prod.yml" stop backend frontend 2>
 # 2. Rollback Backend
 if [[ -n "$backend_previous" ]]; then
     warn "🔙 Rollback BACKEND..."
-    docker tag fullstack_produits-backend:previous fullstack_produits-backend:latest
+    docker tag "${BACKEND_IMAGE}:previous" "${BACKEND_IMAGE}:latest"
     docker compose -f "$SCRIPT_DIR/docker-compose.prod.yml" up -d --no-deps --force-recreate backend >/dev/null 2>&1
     log "   ✅ Backend restaure"
 fi
@@ -92,7 +104,7 @@ fi
 # 3. Rollback Frontend
 if [[ -n "$frontend_previous" ]]; then
     warn "🔙 Rollback FRONTEND..."
-    docker tag fullstack_produits-frontend:previous fullstack_produits-frontend:latest
+    docker tag "${FRONTEND_IMAGE}:previous" "${FRONTEND_IMAGE}:latest"
     docker compose -f "$SCRIPT_DIR/docker-compose.prod.yml" up -d --no-deps --force-recreate frontend >/dev/null 2>&1
     log "   ✅ Frontend restaure"
 fi
@@ -116,11 +128,11 @@ if [[ "$INCLUDE_DB" == "true" && -n "$last_backup" ]]; then
         # Backup de sécurité avant le DROP
         safety_backup="$SCRIPT_DIR/backups/safety_before_rollback_$(date +%Y%m%d_%H%M%S).sql"
         warn "   💾 Backup de sécurité: $(basename "$safety_backup")"
-        docker exec fullstack_produits-db-1 pg_dump -U "$DB_USER" -d "$DB_NAME" > "$safety_backup" 2>/dev/null || true
+        docker exec "$DB_CONTAINER" pg_dump -U "$DB_USER" -d "$DB_NAME" > "$safety_backup" 2>/dev/null || true
 
         # Restore
-        docker exec -i fullstack_produits-db-1 psql -U "$DB_USER" -d "$DB_NAME" -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;" 2>/dev/null || true
-        cat "$last_backup" | docker exec -i fullstack_produits-db-1 psql -U "$DB_USER" -d "$DB_NAME" 2>/dev/null || true
+        docker exec -i "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;" 2>/dev/null || true
+        cat "$last_backup" | docker exec -i "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" 2>/dev/null || true
 
         log "   ✅ Database restaurée"
         docker compose -f "$SCRIPT_DIR/docker-compose.prod.yml" up -d backend >/dev/null 2>&1
@@ -132,8 +144,8 @@ warn ""
 warn "🔍 Verification..."
 sleep 3
 
-backend_health=$(docker inspect --format='{{.State.Status}}' fullstack_produits-backend-1 2>/dev/null || echo "unknown")
-frontend_health=$(docker inspect --format='{{.State.Status}}' fullstack_produits-frontend-1 2>/dev/null || echo "unknown")
+backend_health=$(docker inspect --format='{{.State.Status}}' "$BACKEND_CONTAINER" 2>/dev/null || echo "unknown")
+frontend_health=$(docker inspect --format='{{.State.Status}}' "$FRONTEND_CONTAINER" 2>/dev/null || echo "unknown")
 
 if [[ "$backend_health" == "running" ]]; then
     log "   ✅ Backend: running"
@@ -153,6 +165,6 @@ log "  Rollback termine !"
 info "══════════════════════════════════════════════"
 echo ""
 echo "Commandes utiles :"
-gray "  docker logs fullstack_produits-backend-1 --tail 20"
-gray "  docker logs fullstack_produits-frontend-1 --tail 20"
+gray "  docker logs $BACKEND_CONTAINER --tail 20"
+gray "  docker logs $FRONTEND_CONTAINER --tail 20"
 echo ""

@@ -55,16 +55,13 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: zenith-pharma-backend
-    command: >
-      sh -c "DB_STATEMENT_TIMEOUT=300000 DB_LOCK_TIMEOUT=30000 python manage.py migrate &&
-             python manage.py collectstatic --noinput --clear &&
-             uvicorn backend.asgi:application
-             --host 0.0.0.0 --port 8000
-             --workers 4
-             --loop uvloop
-             --http httptools
-             --timeout-keep-alive 75
-             --log-level warning"
+    # ⚠️ PAS de `command:` ici — l'image définit ENTRYPOINT ["./entrypoint.sh"]
+    # qui ignore "$@" et lance ses propres migrate + uvicorn. Tout `command:`
+    # serait donc silencieusement ignoré (c'est ce qui rendait les timeouts
+    # DB_STATEMENT_TIMEOUT/DB_LOCK_TIMEOUT ci-dessous inopérants).
+    # Réglages effectifs :
+    #   - migrations + timeouts DB  → variables DB_* dans `environment:`
+    #   - workers/keep-alive uvicorn → variables UVICORN_* dans `environment:`
     logging:
       driver: json-file
       options:
@@ -75,6 +72,9 @@ services:
     volumes:
       - static_volume:/app/staticfiles
       - media_volume:/app/media
+      # Logs Django (app.log / error.log / business.log) — persistés hors du
+      # conteneur, sinon perdus à chaque `recreate` (LOG_DIR=/app/logs).
+      - backend_logs:/app/logs
       - /var/run/docker.sock:/var/run/docker.sock
       - ./backup-db.sh:/backup-db.sh
       - ./backups:/backups
@@ -99,6 +99,11 @@ services:
       - DB_PORT=5432
       - REDIS_URL=${REDIS_URL:-redis://:${REDIS_PASSWORD:-pharma_redis_2026}@redis:6379/0}
       - DB_CONN_MAX_AGE=600
+      # Timeouts PostgreSQL appliqués par settings.py à CHAQUE connexion (ms).
+      # Valeurs élevées pour que `migrate` (entrypoint.sh) puisse poser des
+      # verrous longs sur les grosses tables sans être tué à 30s/5s.
+      - DB_STATEMENT_TIMEOUT=${DB_STATEMENT_TIMEOUT:-300000}
+      - DB_LOCK_TIMEOUT=${DB_LOCK_TIMEOUT:-30000}
       - UVICORN_WORKERS=${UVICORN_WORKERS:-4}
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://127.0.0.1:8000/api/health/ || exit 1"]
@@ -117,7 +122,7 @@ services:
       db:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
     restart: always
     networks:
       - app-network
@@ -171,6 +176,13 @@ services:
         max-file: "3"
     volumes:
       - redis_data:/data
+    healthcheck:
+      # ${REDIS_PASSWORD:-...} est substitué par Compose (pattern du --requirepass
+      # ci-dessus) — le conteneur redis n'a pas cette var en env.
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-pharma_redis_2026}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: always
     deploy:
       resources:
@@ -234,6 +246,7 @@ volumes:
     external: true
   static_volume:
   media_volume:
+  backend_logs:
   redis_data:
   portainer_data:
   tailscale_data:

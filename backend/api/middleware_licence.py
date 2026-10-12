@@ -1,5 +1,7 @@
 import logging
+import sys
 
+from django.conf import settings
 from django.core.cache import cache
 from django.db import DatabaseError, transaction
 from django.http import JsonResponse
@@ -55,9 +57,16 @@ class LicenceMiddleware:
     def __call__(self, request):
         path = request.path_info
 
-        # On autorise tout en mode TEST pour ne pas casser l'intégration continue
-        import sys
-        if 'test' in sys.argv or 'pytest' in sys.argv[0] or any('pytest' in arg for arg in sys.argv):
+        # On autorise tout en mode TEST pour ne pas casser l'intégration continue.
+        # Le setting DISABLE_LICENCE_MIDDLEWARE permet de piloter explicitement
+        # ce bypass (True = toujours désactivé, False = vigile actif même en
+        # test — utilisé par test_licence_middleware.py). Par défaut, on garde
+        # l'ancien comportement : désactivé sous `manage.py test` ou pytest.
+        if getattr(
+            settings,
+            'DISABLE_LICENCE_MIDDLEWARE',
+            'test' in sys.argv or any('pytest' in arg for arg in sys.argv),
+        ):
             return self.get_response(request)
 
         # 1. On exclut les URL critiques (connexion, admin, health check, et l'API de licence elle-même)

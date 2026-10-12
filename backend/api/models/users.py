@@ -61,6 +61,13 @@ class Profile(models.Model):
     ]
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='VENDEUR')
 
+    # Compte créé avec un mot de passe attribué (défaut ou par un admin) :
+    # l'utilisateur doit définir son propre mot de passe au prochain login.
+    must_change_password = models.BooleanField(
+        default=False,
+        verbose_name="Changement de mot de passe obligatoire",
+    )
+
     def __str__(self):
         return f"Profile of {self.user.username}"
 

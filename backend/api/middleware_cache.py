@@ -2,18 +2,21 @@
 Middleware pour ajouter des headers Cache-Control sur les réponses API.
 
 Règles :
-- Endpoints stables (categories, tva, menu-hierarchy, pharmacy-settings) : Cache-Control: public, max-age=300
-- Endpoints sensibles (stock, produits, ventes, caisse, factures) : Cache-Control: no-store
+- Endpoints stables publics (tva, invoice-settings, version) : Cache-Control: public, max-age=300
+- Endpoints sensibles (stock, produits, ventes, caisse, factures, pharmacy-settings) : Cache-Control: no-store
 - Par défaut : Cache-Control: no-cache (validation systématique)
+
+Note sécurité : un endpoint authentifié ne doit JAMAIS être en 'public'
+(un cache partagé pourrait stocker une réponse authentifiée).
 """
 import re
 
 # Patterns d'URLs stables (lecture seule, changent rarement)
+# NB : uniquement des endpoints PUBLICS. menu-hierarchy/ en a été retiré :
+# endpoint IsAuthenticated — un 'public' laisserait un cache partagé
+# stocker puis resservir du contenu authentifié (comme categories/ avant).
 STABLE_PATTERNS = [
-    re.compile(r'^/api/categories/?$'),
     re.compile(r'^/api/tva/?$'),
-    re.compile(r'^/api/menu-hierarchy/?$'),
-    re.compile(r'^/api/pharmacy-settings/?$'),
     re.compile(r'^/api/invoice-settings/?$'),
     re.compile(r'^/api/version/?$'),
 ]
@@ -29,6 +32,8 @@ NO_STORE_PATTERNS = [
     re.compile(r'^/api/commandes'),
     re.compile(r'^/api/inventaire'),
     re.compile(r'^/api/omnisearch'),
+    # pharmacy-settings contient des secrets métier (tokens Telegram/WhatsApp/S3)
+    re.compile(r'^/api/pharmacy-settings/?$'),
 ]
 
 

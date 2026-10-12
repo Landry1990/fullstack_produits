@@ -9,6 +9,7 @@ from django.db.models import Q
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 
 from ..models import MedicamentReference, Produit, Substance
@@ -17,6 +18,9 @@ from ..utils.validation import parse_id, parse_int
 
 class DCIAdminViewSet(viewsets.ViewSet):
     """Admin DCI : stats, upload, auto-match, produits non liés, liaison manuelle."""
+    # Endpoints d'administration (upload Excel ANSM, auto-match, liaison manuelle) :
+    # réservés au staff, cohérent avec la route frontend /app/import-dci (AdminRoute).
+    permission_classes = [IsAdminUser]
 
     @action(detail=False, methods=['get'])
     def stats(self, request):

@@ -16,13 +16,14 @@ from reportlab.platypus import (
     Table,
     TableStyle,
 )
-from rest_framework import permissions, status, viewsets
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from ..models import Produit, Rayon
+from ..audit_helpers import log_audit
+from ..models import AuditLog, Produit, Rayon
 from ..pagination import StandardResultsSetPagination
 from ..serializers import RayonSerializer
 from .category_merge import merge_category
@@ -206,9 +207,8 @@ class CategorieViewSet(viewsets.ModelViewSet):
         return merge_category(request, source, target, 'rayon')
 
 class CategoriesListView(APIView):
-    """Simple API View for categories without authentication."""
-    permission_classes = [permissions.AllowAny]
-    authentication_classes = []
+    """Simple API View for categories — authentification requise."""
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         rayons = Rayon.objects.annotate(produits_count=Count('produit')).order_by('name')
@@ -218,14 +218,22 @@ class CategoriesListView(APIView):
     def post(self, request):
         serializer = RayonSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            rayon = serializer.save()
+            log_audit(
+                user=request.user,
+                action=AuditLog.Action.CREATE,
+                model_name='Rayon',
+                object_id=rayon.pk,
+                description=f"Création rayon: {rayon.name}",
+                details=serializer.data,
+                request=request,
+            )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class CategoriesDetailView(APIView):
     """Simple API View for category detail operations."""
-    permission_classes = [permissions.AllowAny]
-    authentication_classes = []
+    permission_classes = [IsAuthenticated]
 
     def get_object(self, pk):
         try:
@@ -246,7 +254,16 @@ class CategoriesDetailView(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
         serializer = RayonSerializer(rayon, data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            rayon = serializer.save()
+            log_audit(
+                user=request.user,
+                action=AuditLog.Action.UPDATE,
+                model_name='Rayon',
+                object_id=rayon.pk,
+                description=f"Modification rayon: {rayon.name}",
+                details=serializer.data,
+                request=request,
+            )
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -254,5 +271,15 @@ class CategoriesDetailView(APIView):
         rayon = self.get_object(pk)
         if not rayon:
             return Response(status=status.HTTP_404_NOT_FOUND)
+        rayon_name = str(rayon)
+        rayon_pk = rayon.pk
         rayon.delete()
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.DELETE,
+            model_name='Rayon',
+            object_id=rayon_pk,
+            description=f"Suppression rayon: {rayon_name}",
+            request=request,
+        )
         return Response(status=status.HTTP_204_NO_CONTENT)

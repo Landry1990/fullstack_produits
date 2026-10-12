@@ -1,6 +1,7 @@
 """
 Validation d'inventaire avec support des lots et gestion des stocks.
-Utilise Optimistic Locking (pas de select_for_update) pour 12 postes simultanés.
+Optimistic Locking sur produits/lots (versions) ; select_for_update limité
+à la ligne Inventaire pour sérialiser les validations concurrentes.
 """
 from django.db import transaction
 from django.db.models import Sum
@@ -40,6 +41,8 @@ def validate_inventaire(
     Returns:
         Response DRF avec le résultat de la validation
     """
+    # Fast-path hors verrou pour le cas d'erreur courant ; le check faisant
+    # foi est refait sous select_for_update() dans la transaction ci-dessous.
     if inventaire.status == Inventaire.Status.VALIDEE:
         return Response(
             {'detail': 'Cet inventaire est déjà validé.'},
@@ -50,13 +53,23 @@ def validate_inventaire(
     if error_res:
         return error_res
 
-    inventaire.validated_by = validator
-
     with transaction.atomic():
+        # Verrouiller la ligne Inventaire : deux validations concurrentes ne
+        # doivent pas passer toutes les deux le check de statut.
+        inventaire = Inventaire.objects.select_for_update().get(pk=inventaire.pk)
+        inventaire.validated_by = validator
+        if inventaire.status == Inventaire.Status.VALIDEE:
+            transaction.set_rollback(True)
+            return Response(
+                {'detail': 'Cet inventaire est déjà validé.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         # 1. Préparation et Verrouillage Atomique
         # On récupère toutes les lignes avec leurs relations
         lignes = list(inventaire.lignes.select_related('produit', 'stock_lot').all())
         if not lignes:
+            transaction.set_rollback(True)
             return Response(
                 {'detail': 'Cet inventaire est vide.'},
                 status=status.HTTP_400_BAD_REQUEST
@@ -67,6 +80,7 @@ def validate_inventaire(
         lignes_invalides = [l for l in lignes if l.quantite_physique is None or l.quantite_physique < 0]
         if lignes_invalides:
             ids = ', '.join(str(l.id) for l in lignes_invalides[:10])
+            transaction.set_rollback(True)
             return Response(
                 {'detail': f'Quantité physique négative ou manquante sur {len(lignes_invalides)} ligne(s) (ids: {ids}). Corrigez avant de valider.'},
                 status=status.HTTP_400_BAD_REQUEST
@@ -87,7 +101,7 @@ def validate_inventaire(
 
         lots_list = list(StockLot.objects.filter(id__in=lot_ids))
         lots_map = {l.id: l for l in lots_list}
-        {l.id: l.version for l in lots_list}
+        initial_lot_versions = {l.id: l.version for l in lots_list}
 
         # Collections pour les opérations batch
         lots_to_update: dict[int, StockLot] = {}
@@ -170,8 +184,28 @@ def validate_inventaire(
         if lignes:
             LigneInventaire.objects.bulk_update(lignes, ['ecart', 'pmp_snapshot', 'stock_lot'])
 
-        # 3b. Mise à jour des lots avec incrémentation de version
+        # 3b. Mise à jour des lots avec incrémentation de version.
+        # Optimistic locking : un lot modifié depuis sa lecture initiale
+        # (ex: vente concurrente) doit faire échouer la validation plutôt
+        # que d'écraser silencieusement la valeur concurrente. Les lots
+        # créés plus haut via get_or_create ne sont pas dans
+        # initial_lot_versions et sont exclus du check.
         if lots_to_update:
+            current_lot_versions = {
+                l.id: l.version
+                for l in StockLot.objects.filter(id__in=lots_to_update)
+            }
+            lot_conflicts = [
+                lid for lid in lots_to_update
+                if lid in initial_lot_versions
+                and current_lot_versions.get(lid) != initial_lot_versions[lid]
+            ]
+            if lot_conflicts:
+                transaction.set_rollback(True)
+                return Response({
+                    'detail': f'Conflit de concurrence détecté sur {len(lot_conflicts)} lots.',
+                    'error_code': 'CONCURRENT_MODIFICATION'
+                }, status=status.HTTP_409_CONFLICT)
             for lot in lots_to_update.values():
                 lot.version += 1
             StockLot.objects.bulk_update(lots_to_update.values(), ['quantity_remaining', 'quantity_reserved', 'version'])
@@ -188,6 +222,9 @@ def validate_inventaire(
             if initial_product_versions[pid] != current_versions.get(pid, 0)
         ]
         if version_conflicts:
+            # Rollback explicite : sans lui, le return depuis le bloc atomic
+            # committerait les bulk_update/bulk_create déjà exécutés.
+            transaction.set_rollback(True)
             return Response({
                 'detail': f'Conflit de concurrence détecté sur {len(version_conflicts)} produits.',
                 'error_code': 'CONCURRENT_MODIFICATION'
@@ -215,15 +252,21 @@ def validate_inventaire(
                 product_ids, StockObligation.StockLocation.RAYON
             )
 
-        # Recalcul massif des stocks consolidés (produit = somme des lots)
-        for prod in products_list:
-            # On agrège les lots pour ce produit
-            results = StockLot.objects.filter(produit=prod).aggregate(
+        # Recalcul massif des stocks consolidés (produit = somme des lots).
+        # Une seule requête GROUP BY au lieu d'un aggregate par produit (N+1).
+        lot_totals = {
+            row['produit_id']: row
+            for row in StockLot.objects.filter(produit_id__in=[p.id for p in products_list])
+            .values('produit_id')
+            .annotate(
                 total_remaining=Sum('quantity_remaining'),
-                total_reserved=Sum('quantity_reserved')
+                total_reserved=Sum('quantity_reserved'),
             )
-            prod.stock = results['total_remaining'] or 0
-            prod.stock_reserve = results['total_reserved'] or 0
+        }
+        for prod in products_list:
+            totals = lot_totals.get(prod.id) or {}
+            prod.stock = totals.get('total_remaining') or 0
+            prod.stock_reserve = totals.get('total_reserved') or 0
 
             # Mise à jour du snapshot de stock final dans les objets mouvements EN MÉMOIRE
             # avant qu'ils ne soient créés en base

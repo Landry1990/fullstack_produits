@@ -68,7 +68,9 @@ export default defineConfig({
       workbox: {
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,ttf}'],
-        globIgnores: ['**/*tesseract*.wasm*', '**/tesseract*.js'],
+        // maintenance.html est servi par nginx en `internal` (404 externe) —
+        // le precacher ferait échouer l'install du service worker.
+        globIgnores: ['**/*tesseract*.wasm*', '**/tesseract*.js', 'maintenance.html'],
         // Ne pas intercepter les requêtes API — elles doivent toujours atteindre le backend
         navigateFallbackDenylist: [/^\/api\/.*/],
         runtimeCaching: [

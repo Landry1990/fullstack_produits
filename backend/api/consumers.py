@@ -17,11 +17,24 @@ def _group_name(model: str, pk: str) -> str:
     return f"lock_{model}_{pk}"
 
 
+def _is_ws_authenticated(scope) -> bool:
+    """Vérifie que le scope WebSocket porte un utilisateur authentifié.
+
+    L'utilisateur est injecté par TokenAuthMiddleware (?token= en query string)
+    ou par AuthMiddlewareStack (session cookie).
+    """
+    user = scope.get('user')
+    return bool(user and user.is_authenticated)
+
+
 class CashierConsumer(AsyncWebsocketConsumer):
     """Consumer WebSocket pour la caisse web : reçoit les articles du PDA."""
 
     async def connect(self):
         self.group_name = 'cashier'
+        if not _is_ws_authenticated(self.scope):
+            await self.close(code=4001)
+            return
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
 
@@ -59,6 +72,9 @@ class PDAConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
         self.group_name = 'pda'
+        if not _is_ws_authenticated(self.scope):
+            await self.close(code=4001)
+            return
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
 
@@ -100,6 +116,9 @@ class CaisseCentraliseeConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
         self.group_name = 'caisse_centralisee'
+        if not _is_ws_authenticated(self.scope):
+            await self.close(code=4001)
+            return
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
 

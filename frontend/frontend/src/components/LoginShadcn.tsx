@@ -92,8 +92,8 @@ export default function LoginShadcn() {
         workstation: workstationName
       });
 
-      const { token, username: loggedInUsername, is_superuser, allowed_menus, can_cash_out, can_do_returns, can_sell_negative_stock, role } = response.data;
-      login({ username: loggedInUsername, token, is_superuser, allowed_menus, can_cash_out, can_do_returns, can_sell_negative_stock, role });
+      const { token, username: loggedInUsername, is_superuser, allowed_menus, can_cash_out, can_do_returns, can_sell_negative_stock, role, must_change_password } = response.data;
+      login({ username: loggedInUsername, token, is_superuser, allowed_menus, can_cash_out, can_do_returns, can_sell_negative_stock, role, must_change_password });
       // Revient sur la page où l'utilisateur était avant la déconnexion, si mémorisée
       navigate(consumePostLoginRedirect() || '/app');
     } catch (err) {

@@ -4,6 +4,7 @@ Superadmin-only tool to preview, export and purge old transactional data.
 """
 import csv
 import io
+import logging
 import os
 import re
 import subprocess
@@ -27,6 +28,8 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 
 from ..utils.validation import parse_bool
+
+logger = logging.getLogger(__name__)
 
 # ── Registry of purgeable tables ──────────────────────────────────────────
 # Each entry: key → (label_fr, Model import path, date_field, [child relations])
@@ -448,7 +451,9 @@ class PurgeViewSet(ViewSet):
                 details={'tables': tables, 'date_from': date_from_raw, 'date_to': date_to_raw, 'results': results},
             )
         except Exception:
-            pass  # Don't fail the purge if audit logging fails
+            # Ne pas faire échouer la purge si l'audit échoue, mais ne jamais
+            # avaler l'erreur silencieusement.
+            logger.error("[PURGE] Échec de l'écriture du log d'audit de purge", exc_info=True)
 
         return Response({
             'message': 'Purge effectuée avec succès.',

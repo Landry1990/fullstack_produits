@@ -23,10 +23,13 @@ def log_audit(user, action, model_name, object_id, description, details=None, re
     """
     ip_address = None
     if request:
-        # Obtenir l'IP, en tenant compte des proxies
+        # Obtenir l'IP, en tenant compte des proxies.
+        # NUM_PROXIES=1 : l'IP client réelle est l'entrée la plus à DROITE de
+        # X-Forwarded-For (ajoutée par nginx). L'entrée de gauche est forgeable
+        # par le client → ne jamais la prendre comme IP de confiance.
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
         if x_forwarded_for:
-            ip_address = x_forwarded_for.split(',')[0].strip()
+            ip_address = x_forwarded_for.split(',')[-1].strip()
         else:
             ip_address = request.META.get('REMOTE_ADDR')
     

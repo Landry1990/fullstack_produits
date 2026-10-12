@@ -47,6 +47,14 @@ def ensure_emergency_admin():
     if created:
         user.set_password(default_password)
         user.save()
+        # Mot de passe par défaut attribué automatiquement → changement
+        # obligatoire à la première connexion. Ne PAS remettre ce flag à
+        # True dans le bloc 'else' : l'admin ne pourrait plus se connecter.
+        try:
+            user.profile.must_change_password = True
+            user.profile.save(update_fields=['must_change_password'])
+        except Exception as e:
+            print(f"⚠️  Impossible de poser must_change_password sur '{username}': {e}")
         print(f"✅ Compte de secours '{username}' créé")
         print(f"⚠️  MOT DE PASSE PAR DÉFAUT: {default_password}")
         print("⚠️  CHANGEZ IMMÉDIATEMENT avec: python scripts/reset_emergency_admin.py --password '...'")

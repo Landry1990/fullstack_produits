@@ -43,6 +43,13 @@ class SaleValidator:
         Performs stock validation, FIFO/FEFO allocation, loyalty updates.
         The validation_user is the user who authorized the sale (e.g. via sudo).
         """
+        # Verrou pessimiste sur la ligne Facture : sérialise les validations
+        # concurrentes avant le check de statut (deux requêtes ne doivent pas
+        # déstocker deux fois). refresh_from_db() conserve la même instance
+        # en mémoire, réutilisée par les appelants après le retour.
+        Facture.objects.select_for_update().get(pk=facture.pk)
+        facture.refresh_from_db()
+
         if facture.status == Facture.Status.VALIDEE:
             return facture
 

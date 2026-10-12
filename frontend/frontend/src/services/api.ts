@@ -208,6 +208,9 @@ api.interceptors.response.use(
                 if (window.location.pathname !== '/licence') {
                     navigationService.navigate('/licence', { replace: true });
                 }
+            } else if (responseData?.code_erreur === 'PASSWORD_CHANGE_REQUIRED') {
+                // Le dialogue de changement de mot de passe obligatoire est
+                // déjà affiché — pas de toast "accès refusé" parasite.
             } else if (!requestUrl.includes('verify-password')) {
                 gooeyToast.error(t('messages.access_denied', 'Accès refusé : permissions insuffisantes'), { id: 'access-denied' });
             }

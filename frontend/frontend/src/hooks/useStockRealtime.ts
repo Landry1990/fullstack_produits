@@ -53,7 +53,8 @@ export function useStockRealtime() {
     const token = safeStorage.getItem('authToken')
     if (!token) return // pas de session → pas de connexion (évite boucle 4001 sur login)
 
-    const wsBase = import.meta.env.VITE_WS_URL ?? `ws://${window.location.host}`
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
+    const wsBase = import.meta.env.VITE_WS_URL ?? `${wsProtocol}://${window.location.host}`
     let ws: WebSocket | null = null
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null
     let pingTimer: ReturnType<typeof setInterval> | null = null

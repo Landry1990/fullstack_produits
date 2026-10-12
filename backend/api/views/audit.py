@@ -19,14 +19,34 @@ from ..serializers import AuditLogSerializer
 from ..utils.validation import parse_date_param
 
 
+class IsAuditLogReader(permissions.BasePermission):
+    """Lecture du journal d'audit réservée au staff/superuser ou aux profils
+    dont `allowed_menus` contient la clé 'audit'.
+
+    'audit' est une clé adminOnly (menu_hierarchy.get_admin_only_keys) et la
+    page JournalAudit est derrière AdminRoute côté frontend : l'endpoint ne
+    doit donc pas être lisible par n'importe quel utilisateur authentifié.
+    """
+    message = "Vous n'avez pas accès au journal d'audit."
+
+    def has_permission(self, request, view):
+        user = request.user
+        if not (user and user.is_authenticated):
+            return False
+        if user.is_superuser or user.is_staff:
+            return True
+        allowed = getattr(getattr(user, 'profile', None), 'allowed_menus', None) or []
+        return 'audit' in allowed
+
+
 class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
     """
     ViewSet pour consulter les logs d'audit.
-    Lecture seule, accès authentifié.
+    Lecture seule, accès restreint (menu 'audit' / staff / superuser).
     """
     queryset = AuditLog.objects.select_related('user').all().order_by('-timestamp')
     serializer_class = AuditLogSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuditLogReader]
     pagination_class = StandardResultsSetPagination
 
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
@@ -34,9 +54,6 @@ class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
     search_fields = ['description', 'object_id', 'details', 'user__username']
     ordering_fields = ['timestamp', 'action']
     ordering = ['-timestamp']
-
-    def get_permissions(self):
-        return [permissions.IsAuthenticated()]
 
     def _filtered_queryset(self):
         """Applique le filterset aux paramètres GET et retourne le queryset filtré.

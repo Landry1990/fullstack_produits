@@ -5,6 +5,7 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import SimpleRateThrottle
 from rest_framework.views import APIView
 
 from api.models.licence import Licence, LicenceNotification
@@ -15,6 +16,17 @@ from api.utils_licence import (
     valider_licence_systeme,
 )
 from api.utils.validation import parse_bool
+
+
+class LicenceSudoThrottle(SimpleRateThrottle):
+    """
+    Throttle strict sur les actions licence protégées par sudo/keyday.
+    Sans limite, le check_password sur tous les superusers serait un oracle
+    de bruteforce du mot de passe admin. SimpleRateThrottle couvre aussi les
+    utilisateurs authentifiés non-admin (clé = user.pk, sinon IP via NUM_PROXIES).
+    """
+    scope = 'licence_sudo'
+    THROTTLE_RATES = {'licence_sudo': '20/day'}
 
 
 def _validate_admin_sudo(request):
@@ -68,8 +80,15 @@ class LicenceStatusView(APIView):
     # L'utilisateur n'a pas besoin d'être connecté pour voir le statut de la licence
     # Ignorer les tokens périmés envoyés accidentellement par le navigateur
     authentication_classes = []
-    permission_classes = [AllowAny] 
-    
+    permission_classes = [AllowAny]
+
+    def get_throttles(self):
+        # POST/DELETE valident un sudo_password ou un code keyday → throttle
+        # strict anti-bruteforce. Le GET (statut public) garde le throttle global.
+        if self.request.method in ('POST', 'DELETE'):
+            return [LicenceSudoThrottle()]
+        return super().get_throttles()
+
     def get(self, request):
         """Récupérer l'état actuel de la licence et l'empreinte matérielle"""
         est_valide, message, payload = valider_licence_systeme()

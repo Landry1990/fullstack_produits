@@ -43,6 +43,7 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = True
 USE_X_FORWARDED_PORT = True
 USE_X_FORWARDED_FOR = True  # Permet au throttle DRF d’utiliser l’IP réelle du client
+# NUM_PROXIES est déclaré dans REST_FRAMEWORK ci-dessous (DRF lit api_settings.NUM_PROXIES)
 
 # Password hashing: Argon2 (fast + secure) instead of PBKDF2 (1M iterations = ~12s on this CPU)
 PASSWORD_HASHERS = [
@@ -91,6 +92,7 @@ MIDDLEWARE += [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'api.middleware_licence.LicenceMiddleware',   # Vigile de la Licence système
+    'api.middleware.force_password_change.ForcePasswordChangeMiddleware',  # Changement de mdp obligatoire
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'api.middleware_cache.CacheControlMiddleware',  # Headers Cache-Control sur API
@@ -138,7 +140,14 @@ REST_FRAMEWORK = {
         'login': os.getenv('DJANGO_THROTTLE_LOGIN', '30/min'),
         'sudo': os.getenv('DJANGO_THROTTLE_SUDO', '5/min'),
         'login_options': os.getenv('DJANGO_THROTTLE_LOGIN_OPTIONS', '10/min'),
+        'password_change': os.getenv('DJANGO_THROTTLE_PASSWORD_CHANGE', '5/min'),
+        # Actions sudo licence (install/suppression) : anti-bruteforce admin
+        'licence_sudo': os.getenv('DJANGO_THROTTLE_LICENCE_SUDO', '20/day'),
     },
+    # Nombre de proxies de confiance devant l'app (nginx en prod/dev Docker).
+    # DRF lit X-Forwarded-For en partant de la droite : sans NUM_PROXIES,
+    # l'IP client (throttles, axes, logs) est spoofable via un header XFF forgé.
+    'NUM_PROXIES': int(os.getenv('DJANGO_NUM_PROXIES', '1')),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 50,
     'EXCEPTION_HANDLER': 'api.exceptions.custom_exception_handler',
@@ -226,6 +235,9 @@ AXES_COOLOFF_TIME = timedelta(minutes=int(os.getenv('AXES_COOLOFF_TIME_MINUTES',
 AXES_RESET_ON_SUCCESS = True
 AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]
 AXES_USERNAME_FORM_FIELD = 'username'
+# Même valeur que REST_FRAMEWORK['NUM_PROXIES'] : sans ça, axes lit le XFF
+# de gauche (forgeable) → contournement du lockout IP.
+AXES_IPWARE_PROXY_COUNT = int(os.getenv('DJANGO_NUM_PROXIES', '1'))
 
 
 # Internationalization
@@ -488,9 +500,10 @@ if SENTRY_DSN:
         # We recommend adjusting this value in production.
         traces_sample_rate=SENTRY_TRACES_RATE,
         
-        # If you wish to associate users to errors (assuming you are using
-        # django.contrib.auth) you may enable sending PII data.
-        send_default_pii=True,
+        # send_default_pii=False : ne JAMAIS envoyer de PII à Sentry
+        # (IP, username, cookies, headers de requête) — conformité RGPD.
+        # Réactiver uniquement si l'association user↔erreur est requise.
+        send_default_pii=False,
         
         # Set profiles_sample_rate to 1.0 to profile 100%
         # of sampled transactions.
