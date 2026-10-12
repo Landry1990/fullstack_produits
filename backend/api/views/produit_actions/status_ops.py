@@ -52,7 +52,8 @@ class ProduitStatusMixin:
     def for_import(self, request):
         produits = Produit.objects.all().order_by('name').values(
             'id', 'name', 'type_produit', 'cip1', 'cip2', 'cip3', 'stock', 'selling_price',
-            'cost_price', 'tva', 'taux_marge', 'is_active'
+            'cost_price', 'tva', 'taux_marge', 'is_active',
+            'rayon', 'rayon__name', 'forme', 'forme__nom', 'groupe', 'groupe__nom'
         )
         return Response(list(produits))
 

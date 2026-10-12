@@ -1123,7 +1123,25 @@
             "remove_entry": "Remove this row",
             "save_all": "Save all ({{count}})",
             "bulk_create_success": "{{count}} {{type}}s created successfully",
-            "bulk_create_error": "{{count}} error(s) during creation"
+            "bulk_create_error": "{{count}} error(s) during creation",
+            "migration_confirm_title": "Move this product?",
+            "migration_confirm_msg": "\"{{name}}\" already belongs to the {{type}} \"{{from}}\". Do you want to move it to \"{{to}}\"?",
+            "migration_confirm_btn": "Move",
+            "already_in_category": "\"{{name}}\" is already in this {{type}}.",
+            "merge_btn": "Merge",
+            "merge_title": "Merge {{type}}",
+            "merge_subtitle": "\"{{name}}\" will be merged into another {{type}} then deleted.",
+            "merge_target_label": "Merge into",
+            "merge_target_placeholder": "Choose the target {{type}}...",
+            "merge_products_count": "{{count}} product(s) will be moved to the target.",
+            "merge_children_count": "{{count}} sub-aisle(s) will be attached to the target.",
+            "merge_warning": "This action is irreversible: \"{{name}}\" will be permanently deleted.",
+            "merge_confirm_btn": "Merge and delete",
+            "merge_success": "\"{{source}}\" merged into \"{{target}}\"",
+            "merge_error": "Error while merging.",
+            "assignment_none": "Unassigned",
+            "will_move_tag": "will move",
+            "will_move_tooltip": "Currently in \"{{from}}\" — will be moved to this {{type}}"
         },
         "config_option_manager": {
             "title": "Adjustment Reasons",
@@ -1170,7 +1188,8 @@
             "apply_btn": "Organize in {{name}}",
             "success_message": "{{count}} products have been organized into \"{{name}}\"",
             "load_error": "Error retrieving product list",
-            "bulk_error": "Error during bulk organizing"
+            "bulk_error": "Error during bulk organizing",
+            "migration_note": "{{count}} product(s) already classified elsewhere will be moved."
         }
     },
     "etats_inventaire": {

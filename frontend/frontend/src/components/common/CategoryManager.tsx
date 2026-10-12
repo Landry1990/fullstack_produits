@@ -3,8 +3,15 @@ import api from '../../services/api';
 import { 
   Sparkles, Pencil, Trash2, Plus, 
   Search, Package, LayoutGrid, Printer,
-  Download, Loader2
+  Download, Loader2, Merge, MoreHorizontal
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../shadcn/dropdown-menu';
 import { useTranslation } from 'react-i18next';
 import { Input } from '../shadcn/input';
 import { Textarea } from '../shadcn/textarea';
@@ -27,6 +34,7 @@ interface Category {
   description?: string;
   parent?: number | null;
   parent_name?: string | null;
+  produits_count?: number;
   children?: Category[];
 }
 
@@ -38,6 +46,12 @@ interface Product {
   stock_alert: number;
   selling_price: string;
   description?: string;
+  rayon?: number | null;
+  rayon_name?: string | null;
+  forme?: number | null;
+  forme_nom?: string | null;
+  groupe?: number | null;
+  groupe_nom?: string | null;
 }
 
 interface CategoryManagerProps {
@@ -70,6 +84,8 @@ export default function CategoryManager({
   const [productsLoading, setProductsLoading] = useState(false);
   
   // Modal states
+  const [categorySearch, setCategorySearch] = useState('');
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -82,6 +98,13 @@ export default function CategoryManager({
 
   const [isOrganizerOpen, setIsOrganizerOpen] = useState(false);
   const [organizerTarget, setOrganizerTarget] = useState<{id: number, name: string} | null>(null);
+
+  // Merge state
+  const [mergeSource, setMergeSource] = useState<Category | null>(null);
+  const [mergeTargetId, setMergeTargetId] = useState('');
+  const [mergeTargetSearch, setMergeTargetSearch] = useState('');
+  const [mergeProductCount, setMergeProductCount] = useState<number | null>(null);
+  const [merging, setMerging] = useState(false);
 
   // Count display
   const [totalCount, setTotalCount] = useState(0);
@@ -367,6 +390,31 @@ export default function CategoryManager({
 
   const handleAddProduct = async (product: Product) => {
     if (!selectedCategory) return;
+
+    const currentCatId = product[type];
+    if (currentCatId === selectedCategory.id) {
+      gooeyToast.info(t('stock:organisation.category_manager.already_in_category', { name: product.name, type }));
+      setSearchResults(prev => prev.filter(p => p.id !== product.id));
+      return;
+    }
+    if (currentCatId) {
+      const fromName = type === 'rayon' ? product.rayon_name
+        : type === 'forme' ? product.forme_nom
+        : product.groupe_nom;
+      const confirmed = await confirm({
+        title: t('stock:organisation.category_manager.migration_confirm_title'),
+        message: t('stock:organisation.category_manager.migration_confirm_msg', {
+          name: product.name,
+          from: fromName || '?',
+          to: getCategoryName(selectedCategory),
+          type
+        }),
+        variant: 'warning',
+        confirmText: t('stock:organisation.category_manager.migration_confirm_btn')
+      });
+      if (!confirmed) return;
+    }
+
     try {
       const payload: Record<string, unknown> = {};
       payload[type] = selectedCategory.id;
@@ -405,16 +453,76 @@ export default function CategoryManager({
     }
   };
 
-  // Rayon Specific Hierarchy
+  const openMergeModal = async (cat: Category) => {
+    setMergeSource(cat);
+    setMergeTargetId('');
+    setMergeTargetSearch('');
+    setMergeProductCount(null);
+    try {
+      const res = await api.get(`produits/?${type}=${cat.id}&page_size=1`);
+      setMergeProductCount(res.data.count ?? (res.data.results || res.data).length);
+    } catch {
+      setMergeProductCount(0);
+    }
+  };
+
+  // Targets eligible for merge: all categories except the source and its descendants (cycle)
+  const mergeTargets = useMemo(() => {
+    if (!mergeSource) return [];
+    const excluded = new Set<number>([mergeSource.id]);
+    let frontier = [mergeSource.id];
+    while (frontier.length > 0) {
+      const next = categories
+        .filter(c => c.parent != null && frontier.includes(c.parent))
+        .map(c => c.id)
+        .filter(id => !excluded.has(id));
+      next.forEach(id => excluded.add(id));
+      frontier = next;
+    }
+    return categories.filter(c => !excluded.has(c.id));
+  }, [mergeSource, categories]);
+
+  const mergeChildrenCount = mergeSource
+    ? categories.filter(c => c.parent === mergeSource.id).length
+    : 0;
+
+  const handleMerge = async () => {
+    if (!mergeSource || !mergeTargetId) return;
+    const target = categories.find(c => c.id === parseInt(mergeTargetId));
+    if (!target) return;
+
+    setMerging(true);
+    try {
+      await api.post(`${apiPath.replace(/^\/api\//, '')}${mergeSource.id}/merge/`, { target_id: target.id });
+      gooeyToast.success(t('stock:organisation.category_manager.merge_success', {
+        source: getCategoryName(mergeSource),
+        target: getCategoryName(target)
+      }));
+      const wasSelected = selectedCategory?.id === mergeSource.id;
+      setMergeSource(null);
+      if (wasSelected) setSelectedCategory(target);
+      fetchCategories();
+    } catch {
+      gooeyToast.error(t('stock:organisation.category_manager.merge_error'));
+    } finally {
+      setMerging(false);
+    }
+  };
+
+  // Rayon Specific Hierarchy (+ filtre de recherche)
   const hierarchy = useMemo(() => {
-    if (!hasHierarchy) return categories;
+    const q = categorySearch.trim().toLowerCase();
+    const matches = (c: Category) => !q || getCategoryName(c).toLowerCase().includes(q);
+    if (!hasHierarchy) return categories.filter(matches);
     const parents = categories.filter(c => !c.parent);
     const children = categories.filter(c => c.parent);
-    return parents.map(p => ({
-      ...p,
-      children: children.filter(c => c.parent === p.id)
-    }));
-  }, [categories, hasHierarchy]);
+    return parents
+      .map(p => ({
+        ...p,
+        children: children.filter(c => c.parent === p.id && (matches(p) || matches(c)))
+      }))
+      .filter(p => matches(p) || (p.children && p.children.length > 0));
+  }, [categories, hasHierarchy, categorySearch]);
 
   return (
     <div className="flex flex-col lg:flex-row h-full min-h-0 gap-4">
@@ -473,6 +581,8 @@ export default function CategoryManager({
                 type="text"
                 placeholder={t('stock:organisation.category_manager.search', { type })}
                 aria-label={t('stock:organisation.category_manager.search', { type })}
+                value={categorySearch}
+                onChange={e => setCategorySearch(e.target.value)}
                 className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 h-8 text-sm font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
               />
            </div>
@@ -506,50 +616,59 @@ export default function CategoryManager({
                        <LayoutGrid size={16} className={selectedCategory?.id === cat.id ? 'text-white' : 'text-slate-400'} aria-hidden="true" />
                        <span className="font-medium truncate">{getCategoryName(cat)}</span>
                     </button>
-                    <div className={`flex gap-1 items-center p-3 transition-opacity ${selectedCategory?.id === cat.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                       {type === 'rayon' && (
-                          <button
-                            className={`inline-flex items-center justify-center size-7 rounded-md transition-colors ${selectedCategory?.id === cat.id ? 'text-white/70 hover:bg-white/20' : 'text-blue-500 hover:bg-blue-50'}`}
-                            onClick={(e) => { e.stopPropagation(); openPrintModal(cat.id, getCategoryName(cat)); }}
-                            title={t('stock:organisation.category_manager.print_stock_title')}
-                            aria-label={t('stock:organisation.category_manager.print_stock_title')}
-                          >
-                            <Printer size={12} />
-                          </button>
-                       )}
-                       <button
-                         className={`inline-flex items-center justify-center size-7 rounded-md transition-colors ${selectedCategory?.id === cat.id ? 'text-white/70 hover:bg-white/20' : 'text-purple-500 hover:bg-purple-50'}`}
-                         onClick={(e) => { e.stopPropagation(); setOrganizerTarget({id: cat.id, name: getCategoryName(cat)}); setIsOrganizerOpen(true); }}
-                         title={t('stock:organisation.smart_organizer.title')}
-                         aria-label={t('stock:organisation.smart_organizer.title')}
-                       >
-                         <Sparkles size={12} />
-                       </button>
-                       <button
-                         className={`inline-flex items-center justify-center size-7 rounded-md transition-colors ${selectedCategory?.id === cat.id ? 'text-white/70 hover:bg-white/20' : 'text-slate-400 hover:bg-slate-200'}`}
-                         onClick={(e) => {
-                           e.stopPropagation();
-                           setEditingCategory(cat);
-                           setEntries([{
-                             id: generateUUID(),
-                             name: getCategoryName(cat),
-                             description: cat.description || '',
-                             parent: cat.parent?.toString() || ''
-                           }]);
-                           setIsModalOpen(true);
-                         }}
-                         aria-label={t('stock:organisation.category_manager.edit_title', { type })}
-                       >
-                         <Pencil size={12} />
-                       </button>
-                       <button
-                         className={`inline-flex items-center justify-center size-7 rounded-md transition-colors ${selectedCategory?.id === cat.id ? 'text-red-300 hover:bg-white/20 hover:text-red-200' : 'text-slate-300 hover:bg-red-50 hover:text-red-500'}`}
-                         onClick={(e) => { e.stopPropagation(); handleDelete(cat.id, getCategoryName(cat)); }}
-                         title={t('products:category.move_to_trash')}
-                         aria-label={t('products:category.move_to_trash')}
-                       >
-                         <Trash2 size={12} />
-                       </button>
+                    <div className={`flex gap-2 items-center pr-3 transition-opacity ${selectedCategory?.id === cat.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                       <span className={`inline-flex items-center justify-center min-w-6 h-5 px-1.5 rounded-md text-[10px] font-bold tabular-nums ${
+                         selectedCategory?.id === cat.id ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
+                       }`}>
+                         {cat.produits_count ?? 0}
+                       </span>
+                       <DropdownMenu>
+                         <DropdownMenuTrigger asChild>
+                           <button
+                             className={`inline-flex items-center justify-center size-7 rounded-md transition-colors cursor-pointer ${selectedCategory?.id === cat.id ? 'text-white/70 hover:bg-white/20' : 'text-slate-400 hover:bg-slate-200'}`}
+                             aria-label={t('common:buttons.actions', { defaultValue: 'Actions' })}
+                           >
+                             <MoreHorizontal size={14} />
+                           </button>
+                         </DropdownMenuTrigger>
+                         <DropdownMenuContent align="end" className="min-w-44">
+                           {type === 'rayon' && (
+                             <DropdownMenuItem onClick={() => openPrintModal(cat.id, getCategoryName(cat))} className="gap-2 cursor-pointer">
+                               <Printer size={14} className="text-blue-500" />
+                               {t('stock:organisation.category_manager.print_stock_title')}
+                             </DropdownMenuItem>
+                           )}
+                           <DropdownMenuItem onClick={() => { setOrganizerTarget({id: cat.id, name: getCategoryName(cat)}); setIsOrganizerOpen(true); }} className="gap-2 cursor-pointer">
+                             <Sparkles size={14} className="text-purple-500" />
+                             {t('stock:organisation.smart_organizer.title')}
+                           </DropdownMenuItem>
+                           <DropdownMenuItem onClick={() => openMergeModal(cat)} className="gap-2 cursor-pointer">
+                             <Merge size={14} className="text-amber-500" />
+                             {t('stock:organisation.category_manager.merge_btn')}
+                           </DropdownMenuItem>
+                           <DropdownMenuItem
+                             className="gap-2 cursor-pointer"
+                             onClick={() => {
+                               setEditingCategory(cat);
+                               setEntries([{
+                                 id: generateUUID(),
+                                 name: getCategoryName(cat),
+                                 description: cat.description || '',
+                                 parent: cat.parent?.toString() || ''
+                               }]);
+                               setIsModalOpen(true);
+                             }}
+                           >
+                             <Pencil size={14} className="text-slate-500" />
+                             {t('stock:organisation.category_manager.edit_title', { type })}
+                           </DropdownMenuItem>
+                           <DropdownMenuSeparator />
+                           <DropdownMenuItem onClick={() => handleDelete(cat.id, getCategoryName(cat))} className="gap-2 cursor-pointer text-red-600 focus:text-red-600">
+                             <Trash2 size={14} />
+                             {t('products:category.move_to_trash')}
+                           </DropdownMenuItem>
+                         </DropdownMenuContent>
+                       </DropdownMenu>
                     </div>
                   </div>
 
@@ -572,31 +691,57 @@ export default function CategoryManager({
                           >
                             <span className="truncate">↳ {getCategoryName(child)}</span>
                           </button>
-                          <div className={`flex gap-1 items-center p-2 ${selectedCategory?.id === child.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
-                             {type === 'rayon' && (
-                                <button
-                                  className="inline-flex items-center justify-center size-6 rounded-md text-blue-500 hover:bg-blue-50 transition-colors"
-                                  onClick={(e) => { e.stopPropagation(); openPrintModal(child.id, getCategoryName(child)); }}
-                                  aria-label={t('stock:organisation.category_manager.print_stock_title')}
-                                >
-                                  <Printer size={10} />
-                                </button>
-                             )}
-                             <button
-                               className="inline-flex items-center justify-center size-6 rounded-md text-purple-500 hover:bg-purple-50 transition-colors"
-                               onClick={(e) => { e.stopPropagation(); setOrganizerTarget({id: child.id, name: getCategoryName(child)}); setIsOrganizerOpen(true); }}
-                               aria-label={t('stock:organisation.smart_organizer.title')}
-                             >
-                               <Sparkles size={10} />
-                             </button>
-                             <button
-                               className="inline-flex items-center justify-center size-6 rounded-md text-slate-300 hover:bg-red-50 hover:text-red-500 transition-colors"
-                               onClick={(e) => { e.stopPropagation(); handleDelete(child.id, getCategoryName(child)); }}
-                               title={t('products:category.move_to_trash')}
-                               aria-label={t('products:category.move_to_trash')}
-                             >
-                               <Trash2 size={10} />
-                             </button>
+                          <div className={`flex gap-2 items-center pr-2 ${selectedCategory?.id === child.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
+                             <span className="inline-flex items-center justify-center min-w-5 h-4.5 px-1 rounded text-[10px] font-bold tabular-nums bg-slate-100 text-slate-500">
+                               {child.produits_count ?? 0}
+                             </span>
+                             <DropdownMenu>
+                               <DropdownMenuTrigger asChild>
+                                 <button
+                                   className="inline-flex items-center justify-center size-6 rounded-md text-slate-400 hover:bg-slate-200 transition-colors cursor-pointer"
+                                   aria-label={t('common:buttons.actions', { defaultValue: 'Actions' })}
+                                 >
+                                   <MoreHorizontal size={12} />
+                                 </button>
+                               </DropdownMenuTrigger>
+                               <DropdownMenuContent align="end" className="min-w-44">
+                                 {type === 'rayon' && (
+                                   <DropdownMenuItem onClick={() => openPrintModal(child.id, getCategoryName(child))} className="gap-2 cursor-pointer">
+                                     <Printer size={14} className="text-blue-500" />
+                                     {t('stock:organisation.category_manager.print_stock_title')}
+                                   </DropdownMenuItem>
+                                 )}
+                                 <DropdownMenuItem onClick={() => { setOrganizerTarget({id: child.id, name: getCategoryName(child)}); setIsOrganizerOpen(true); }} className="gap-2 cursor-pointer">
+                                   <Sparkles size={14} className="text-purple-500" />
+                                   {t('stock:organisation.smart_organizer.title')}
+                                 </DropdownMenuItem>
+                                 <DropdownMenuItem onClick={() => openMergeModal(child)} className="gap-2 cursor-pointer">
+                                   <Merge size={14} className="text-amber-500" />
+                                   {t('stock:organisation.category_manager.merge_btn')}
+                                 </DropdownMenuItem>
+                                 <DropdownMenuItem
+                                   className="gap-2 cursor-pointer"
+                                   onClick={() => {
+                                     setEditingCategory(child);
+                                     setEntries([{
+                                       id: generateUUID(),
+                                       name: getCategoryName(child),
+                                       description: child.description || '',
+                                       parent: child.parent?.toString() || ''
+                                     }]);
+                                     setIsModalOpen(true);
+                                   }}
+                                 >
+                                   <Pencil size={14} className="text-slate-500" />
+                                   {t('stock:organisation.category_manager.edit_title', { type })}
+                                 </DropdownMenuItem>
+                                 <DropdownMenuSeparator />
+                                 <DropdownMenuItem onClick={() => handleDelete(child.id, getCategoryName(child))} className="gap-2 cursor-pointer text-red-600 focus:text-red-600">
+                                   <Trash2 size={14} />
+                                   {t('products:category.move_to_trash')}
+                                 </DropdownMenuItem>
+                               </DropdownMenuContent>
+                             </DropdownMenu>
                           </div>
                         </div>
                       ))}
@@ -642,6 +787,14 @@ export default function CategoryManager({
                         >
                           <Plus size={18} />
                           {t('stock:organisation.category_manager.add_products_btn')}
+                        </button>
+                        <button
+                           onClick={() => openMergeModal(selectedCategory)}
+                           className="inline-flex items-center justify-center size-9 text-amber-500 hover:bg-amber-50 rounded-xl transition-colors"
+                           title={t('stock:organisation.category_manager.merge_btn')}
+                           aria-label={t('stock:organisation.category_manager.merge_btn')}
+                        >
+                           <Merge size={18} />
                         </button>
                         <button
                            onClick={() => handleDelete(selectedCategory.id, getCategoryName(selectedCategory))}
@@ -868,11 +1021,32 @@ export default function CategoryManager({
                   </div>
                ) : searchResults.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                     {searchResults.map(p => (
+                     {searchResults.map(p => {
+                        const currentCatId = p[type];
+                        const currentName = type === 'rayon' ? p.rayon_name
+                          : type === 'forme' ? p.forme_nom
+                          : p.groupe_nom;
+                        const alreadyHere = currentCatId === selectedCategory?.id;
+                        return (
                         <div key={p.id} className="bg-white rounded-xl p-4 flex items-center justify-between shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
                            <div className="overflow-hidden">
                               <h5 className="font-bold truncate text-slate-800">{p.name}</h5>
-                              <p className="text-xs text-slate-400">{p.cip1}</p>
+                              <div className="flex items-center gap-2 min-w-0">
+                                 <p className="text-xs text-slate-400 shrink-0">{p.cip1}</p>
+                                 {!currentCatId ? (
+                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-400 truncate">
+                                       {t('stock:organisation.category_manager.assignment_none')}
+                                    </span>
+                                 ) : alreadyHere ? (
+                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-600 truncate">
+                                       {currentName}
+                                    </span>
+                                 ) : (
+                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-600 truncate" title={t('stock:organisation.category_manager.will_move_tooltip', { from: currentName })}>
+                                       {currentName} · {t('stock:organisation.category_manager.will_move_tag')}
+                                    </span>
+                                 )}
+                              </div>
                            </div>
                            <button
                              className="inline-flex items-center justify-center size-8 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors"
@@ -882,7 +1056,8 @@ export default function CategoryManager({
                              <Plus size={16} />
                            </button>
                         </div>
-                     ))}
+                        );
+                     })}
                   </div>
                ) : (
                   <EmptyState
@@ -915,6 +1090,115 @@ export default function CategoryManager({
           }}
         />
       )}
+
+      {/* MODAL: MERGE */}
+      <PremiumModal
+        isOpen={!!mergeSource}
+        onClose={() => setMergeSource(null)}
+        title={t('stock:organisation.category_manager.merge_title', { type })}
+        subtitle={mergeSource ? t('stock:organisation.category_manager.merge_subtitle', { name: getCategoryName(mergeSource), type }) : ''}
+        icon={<Merge className="size-5" />}
+      >
+        <div className="p-6 space-y-5">
+           {/* Flux visuel : source → cible */}
+           <div className="flex items-center gap-3">
+              <div className="flex-1 min-w-0 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+                 <LayoutGrid size={14} className="text-slate-400 shrink-0" />
+                 <span className="text-sm font-bold text-slate-700 truncate">{mergeSource ? getCategoryName(mergeSource) : ''}</span>
+                 <span className="ml-auto shrink-0 inline-flex items-center justify-center min-w-6 h-5 px-1.5 rounded-md text-[10px] font-bold tabular-nums bg-slate-200 text-slate-600">
+                    {mergeProductCount ?? '…'}
+                 </span>
+              </div>
+              <Merge size={16} className="text-amber-500 shrink-0" />
+              <div className={`flex-1 min-w-0 flex items-center gap-2 rounded-xl border px-3 py-2.5 transition-colors ${
+                mergeTargetId ? 'border-amber-300 bg-amber-50' : 'border-dashed border-slate-300 bg-white'
+              }`}>
+                 <LayoutGrid size={14} className={mergeTargetId ? 'text-amber-500' : 'text-slate-300'} />
+                 <span className={`text-sm font-bold truncate ${mergeTargetId ? 'text-amber-700' : 'text-slate-400'}`}>
+                    {mergeTargetId ? getCategoryName(categories.find(c => c.id === parseInt(mergeTargetId))!) : t('stock:organisation.category_manager.merge_target_placeholder', { type })}
+                 </span>
+              </div>
+           </div>
+
+           <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+                 {t('stock:organisation.category_manager.merge_target_label')}
+              </label>
+              <div className="relative mb-2">
+                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-300" />
+                 <input
+                   type="text"
+                   placeholder={t('stock:organisation.category_manager.search', { type })}
+                   value={mergeTargetSearch}
+                   onChange={e => setMergeTargetSearch(e.target.value)}
+                   className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 h-9 text-sm font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all"
+                   autoFocus
+                 />
+              </div>
+              <div className="max-h-56 overflow-y-auto rounded-xl border border-slate-200 divide-y divide-slate-100">
+                 {mergeTargets
+                   .filter(c => getCategoryName(c).toLowerCase().includes(mergeTargetSearch.trim().toLowerCase()))
+                   .map(c => (
+                   <button
+                     key={c.id}
+                     type="button"
+                     onClick={() => setMergeTargetId(c.id.toString())}
+                     className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors cursor-pointer ${
+                       mergeTargetId === c.id.toString() ? 'bg-amber-50' : 'hover:bg-slate-50'
+                     }`}
+                   >
+                     <span className={`inline-flex items-center justify-center size-4 rounded-full border-2 transition-colors ${
+                       mergeTargetId === c.id.toString() ? 'border-amber-500 bg-amber-500' : 'border-slate-300 bg-white'
+                     }`}>
+                       {mergeTargetId === c.id.toString() && <span className="size-1.5 rounded-full bg-white" />}
+                     </span>
+                     <span className="flex-1 min-w-0 text-sm font-medium text-slate-700 truncate">
+                        {c.parent_name ? <span className="text-slate-400 font-normal">{c.parent_name} › </span> : null}
+                        {getCategoryName(c)}
+                     </span>
+                     <span className="inline-flex items-center justify-center min-w-6 h-5 px-1.5 rounded-md text-[10px] font-bold tabular-nums bg-slate-100 text-slate-500">
+                        {c.produits_count ?? 0}
+                     </span>
+                   </button>
+                 ))}
+                 {mergeTargets.filter(c => getCategoryName(c).toLowerCase().includes(mergeTargetSearch.trim().toLowerCase())).length === 0 && (
+                   <p className="px-3 py-6 text-center text-sm text-slate-400 italic">{t('common:no_results_found')}</p>
+                 )}
+              </div>
+           </div>
+
+           <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 space-y-1.5">
+              {mergeProductCount !== null && (
+                <p className="text-sm text-amber-800 font-medium">
+                   {t('stock:organisation.category_manager.merge_products_count', { count: mergeProductCount })}
+                </p>
+              )}
+              {hasHierarchy && mergeChildrenCount > 0 && (
+                <p className="text-sm text-amber-800 font-medium">
+                   {t('stock:organisation.category_manager.merge_children_count', { count: mergeChildrenCount })}
+                </p>
+              )}
+              {mergeSource && (
+                <p className="text-sm text-amber-800 font-bold">
+                   {t('stock:organisation.category_manager.merge_warning', { name: getCategoryName(mergeSource) })}
+                </p>
+              )}
+           </div>
+
+           <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+              <button className="inline-flex items-center h-9 px-5 text-slate-600 hover:bg-slate-100 rounded-xl text-sm font-medium transition-colors" onClick={() => setMergeSource(null)}>{t('stock:organisation.category_manager.cancel')}</button>
+              <button
+                disabled={!mergeTargetId || merging}
+                onClick={handleMerge}
+                className="inline-flex items-center justify-center gap-2 h-9 px-8 bg-amber-600 text-white rounded-xl text-sm font-bold hover:bg-amber-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {merging && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+                <Merge size={16} />
+                {t('stock:organisation.category_manager.merge_confirm_btn')}
+              </button>
+           </div>
+        </div>
+      </PremiumModal>
 
       {/* Print Modal */}
       <PremiumModal

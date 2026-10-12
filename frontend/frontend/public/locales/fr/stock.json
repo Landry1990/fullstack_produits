@@ -325,7 +325,25 @@
             "remove_entry": "Retirer cette ligne",
             "save_all": "Tout enregistrer ({{count}})",
             "bulk_create_success": "{{count}} {{type}}s créés avec succès",
-            "bulk_create_error": "{{count}} erreur(s) lors de la création"
+            "bulk_create_error": "{{count}} erreur(s) lors de la création",
+            "migration_confirm_title": "Migrer le produit ?",
+            "migration_confirm_msg": "« {{name}} » appartient déjà au {{type}} « {{from}} ». Voulez-vous le migrer vers « {{to}} » ?",
+            "migration_confirm_btn": "Migrer",
+            "already_in_category": "« {{name}} » est déjà dans ce {{type}}.",
+            "merge_btn": "Fusionner",
+            "merge_title": "Fusionner le {{type}}",
+            "merge_subtitle": "« {{name}} » sera fusionné dans un autre {{type}} puis supprimé.",
+            "merge_target_label": "Fusionner dans",
+            "merge_target_placeholder": "Choisissez le {{type}} de destination...",
+            "merge_products_count": "{{count}} produit(s) seront déplacés vers la cible.",
+            "merge_children_count": "{{count}} sous-rayon(s) seront rattachés à la cible.",
+            "merge_warning": "Cette action est irréversible : « {{name}} » sera définitivement supprimé.",
+            "merge_confirm_btn": "Fusionner et supprimer",
+            "merge_success": "« {{source}} » fusionné dans « {{target}} »",
+            "merge_error": "Erreur lors de la fusion.",
+            "assignment_none": "Non classé",
+            "will_move_tag": "sera migré",
+            "will_move_tooltip": "Actuellement dans « {{from}} » — sera migré vers ce {{type}}"
         },
         "config_option_manager": {
             "title": "Motifs d'ajustement",
@@ -372,7 +390,8 @@
             "apply_btn": "Ranger dans {{name}}",
             "success_message": "{{count}} produits ont été rangés dans \"{{name}}\"",
             "load_error": "Erreur lors de la récupération de la liste des produits",
-            "bulk_error": "Erreur lors du rangement massif"
+            "bulk_error": "Erreur lors du rangement massif",
+            "migration_note": "{{count}} produit(s) déjà classé(s) dans un autre élément seront migrés."
         }
     },
     "etats_inventaire": {

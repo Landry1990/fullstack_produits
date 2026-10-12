@@ -1,7 +1,7 @@
 import io
 from datetime import datetime
 
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.http import HttpResponse
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
@@ -25,11 +25,12 @@ from rest_framework.views import APIView
 from ..models import Produit, Rayon
 from ..pagination import StandardResultsSetPagination
 from ..serializers import RayonSerializer
+from .category_merge import merge_category
 
 
 class CategorieViewSet(viewsets.ModelViewSet):
     """API endpoint for categories (rayons) - Fresh implementation."""
-    queryset = Rayon.objects.all().order_by('name')
+    queryset = Rayon.objects.annotate(produits_count=Count('produit')).order_by('name')
     serializer_class = RayonSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = StandardResultsSetPagination
@@ -191,13 +192,26 @@ class CategorieViewSet(viewsets.ModelViewSet):
         response.write(pdf)
         return response
 
+    @action(detail=True, methods=['post'])
+    def merge(self, request, pk=None):
+        """
+        Fusionne ce rayon dans un rayon cible ({target_id}).
+        Les sous-rayons sont rattachés à la cible, puis la source est supprimée.
+        """
+        source = self.get_object()
+        try:
+            target = Rayon.objects.get(pk=request.data.get('target_id'))
+        except (Rayon.DoesNotExist, TypeError, ValueError):
+            return Response({'detail': 'Rayon cible introuvable.'}, status=status.HTTP_400_BAD_REQUEST)
+        return merge_category(request, source, target, 'rayon')
+
 class CategoriesListView(APIView):
     """Simple API View for categories without authentication."""
     permission_classes = [permissions.AllowAny]
     authentication_classes = []
 
     def get(self, request):
-        rayons = Rayon.objects.all().order_by('name')
+        rayons = Rayon.objects.annotate(produits_count=Count('produit')).order_by('name')
         serializer = RayonSerializer(rayons, many=True)
         return Response(serializer.data)
 

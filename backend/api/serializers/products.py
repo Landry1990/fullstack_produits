@@ -42,6 +42,13 @@ class MedicamentReferenceSerializer(serializers.ModelSerializer):
 
 
 class RayonSerializer(UppercaseSerializerMixin, serializers.ModelSerializer):
+    parent_name = serializers.CharField(source='parent.name', read_only=True)
+    produits_count = serializers.SerializerMethodField()
+
+    def get_produits_count(self, obj):
+        val = getattr(obj, 'produits_count', None)
+        return val if val is not None else obj.produit_set.count()
+
     class Meta:
         model = Rayon
         fields = '__all__'
@@ -60,6 +67,12 @@ class FamilleRisqueSerializer(UppercaseSerializerMixin, serializers.ModelSeriali
 
 
 class GroupeSerializer(UppercaseSerializerMixin, serializers.ModelSerializer):
+    produits_count = serializers.SerializerMethodField()
+
+    def get_produits_count(self, obj):
+        val = getattr(obj, 'produits_count', None)
+        return val if val is not None else obj.produits.count()
+
     class Meta:
         model = Groupe
         fields = '__all__'
