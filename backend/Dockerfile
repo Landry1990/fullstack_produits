@@ -16,15 +16,34 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
+# Binaires vendorisés (optionnel — voir vendor/README.md) : sur un serveur à
+# connexion instable, déposer docker-27.0.3.tgz et/ou docker-compose dans
+# backend/vendor/ AVANT le build → installés en local, zéro téléchargement.
+# S'ils sont absents, fallback curl (--http1.1 : PROTOCOL_ERROR fréquent sur
+# connexions instables/proxies ; -C - + retries : reprise sur coupure).
+COPY vendor/ /tmp/vendor/
+
 # Installer le client Docker CLI seul (~15MB vs docker.io ~800MB)
-RUN curl -fsSL https://download.docker.com/linux/static/stable/x86_64/docker-27.0.3.tgz -o docker.tgz && \
+RUN if [ -f /tmp/vendor/docker-27.0.3.tgz ]; then \
+        cp /tmp/vendor/docker-27.0.3.tgz docker.tgz && \
+        echo "docker CLI : binaire vendorisé utilisé (pas de téléchargement)"; \
+    else \
+        curl -fsSL --http1.1 -C - --retry 6 --retry-all-errors --retry-delay 10 --connect-timeout 30 \
+        https://download.docker.com/linux/static/stable/x86_64/docker-27.0.3.tgz -o docker.tgz; \
+    fi && \
     tar --extract --file docker.tgz --strip-components 1 --directory /usr/local/bin/ docker/docker && \
     rm docker.tgz
 
 # Installer le plugin Docker Compose v2 (nécessaire pour nightly-update.sh qui tourne dans ce conteneur)
 RUN mkdir -p /usr/local/lib/docker/cli-plugins && \
-    curl -fsSL https://github.com/docker/compose/releases/download/v2.29.2/docker-compose-linux-x86_64 \
-    -o /usr/local/lib/docker/cli-plugins/docker-compose && \
+    if [ -f /tmp/vendor/docker-compose ]; then \
+        cp /tmp/vendor/docker-compose /usr/local/lib/docker/cli-plugins/docker-compose && \
+        echo "docker-compose : binaire vendorisé utilisé (pas de téléchargement)"; \
+    else \
+        curl -fsSL --http1.1 -C - --retry 6 --retry-all-errors --retry-delay 10 --connect-timeout 30 \
+        https://github.com/docker/compose/releases/download/v2.29.2/docker-compose-linux-x86_64 \
+        -o /usr/local/lib/docker/cli-plugins/docker-compose; \
+    fi && \
     chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
 
 # Définir le fuseau horaire local (Africa/Douala = UTC+1)

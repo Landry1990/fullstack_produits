@@ -93,3 +93,8 @@ backups/
 # Fichiers fantômes créés par des redirections >nul sous Git Bash
 nul
 NUL
+
+# Binaires vendorisés pour build Docker sur serveurs à réseau instable
+# (téléchargés à la main — voir backend/vendor/README.md)
+backend/vendor/docker-compose
+backend/vendor/docker-*.tgz
