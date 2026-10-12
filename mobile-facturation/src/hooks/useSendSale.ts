@@ -113,7 +113,9 @@ export function useSendSale({
 
   // Déficit réel d'une ligne : quantité facturée − part déjà « promis ».
   // Même règle que le backend (_check_stock : stock < effective_qty).
-  const lineDeficit = (l: { quantite: number; promisQuantity?: number; product: { stock?: number } }) => {
+  // Un service n'a pas de stock géré : jamais de déficit/promis.
+  const lineDeficit = (l: { quantite: number; promisQuantity?: number; product: { stock?: number; is_service?: boolean; type_produit?: string } }) => {
+    if (l.product.is_service || l.product.type_produit === 'SERVICE') return false;
     const eff = l.quantite - (l.promisQuantity ?? 0);
     return eff > 0 && (l.product.stock ?? 0) < eff;
   };

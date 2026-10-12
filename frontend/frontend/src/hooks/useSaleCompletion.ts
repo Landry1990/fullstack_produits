@@ -227,7 +227,9 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
 
                 for (const ligne of params.lignesFacture) {
                     const realProd = realStockMap.get(ligne.produit.id);
-                    if (realProd) {
+                    // Un service n'a pas de stock géré : pas de contrôle de stock.
+                    const isService = realProd?.is_service ?? (ligne.produit.is_service || ligne.produit.type_produit === 'SERVICE')
+                    if (realProd && !isService) {
                         const effectiveQty = ligne.quantite - (ligne.isPromis ? (ligne.promisQuantity || 0) : 0);
                         // On autorise la vente si stock suffisant OU si une validation Sudo est présente (Vente forcée)
                         if (effectiveQty > 0 && realProd.stock < effectiveQty && !params.sudo_password) {

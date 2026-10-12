@@ -21,7 +21,7 @@ class ProduitBulkMixin:
             return Response({'detail': 'Liste d\'IDs requise'}, status=status.HTTP_400_BAD_REQUEST)
         
         produits = Produit.objects.filter(id__in=product_ids).only(
-            'id', 'name', 'stock', 'selling_price', 'cip1', 'is_active'
+            'id', 'name', 'stock', 'selling_price', 'cip1', 'is_active', 'type_produit'
         )
         
         data = []
@@ -32,7 +32,8 @@ class ProduitBulkMixin:
                 'stock': p.stock,
                 'selling_price': str(p.selling_price),
                 'cip1': p.cip1,
-                'is_active': p.is_active
+                'is_active': p.is_active,
+                'is_service': p.is_service
             })
             
         return Response(data)
