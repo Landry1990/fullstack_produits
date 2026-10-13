@@ -5,10 +5,14 @@ import { useTranslation } from 'react-i18next'
 import Sidebar from './Sidebar'
 import UserHeader from './common/UserHeader'
 import Omnisearch from './common/Omnisearch'
+import PageTitle from './common/PageTitle'
+import GlobalSearchTrigger from './common/GlobalSearchTrigger'
 import { Button } from './shadcn/button'
 import { Badge } from './shadcn/badge'
 import TransformationAlertListener from './common/TransformationAlertListener'
+import { ExpirationAlertToasts } from './ExpirationAlertToast'
 import { SidebarProvider } from '../context/SidebarContext'
+import { OmnisearchProvider } from '../context/OmnisearchContext'
 import { useSidebar } from '../hooks/useSidebar'
 import { usePosteCaisseMode } from '../context/PosteCaisseModeContext'
 import { useLicence } from '../context/LicenceContext'
@@ -64,41 +68,51 @@ function LayoutContent() {
   }
 
   return (
-    <div className={`flex flex-col h-dvh ${isZenithMode ? 'bg-base-100' : 'bg-base-200'} ${isMidnightTheme ? 'theme-midnight' : ''} transition-colors duration-300 relative overflow-hidden`}>
-      <LicenceExpirationBanner />
-      <div className="flex flex-1 relative overflow-hidden">
-        <Omnisearch />
-        {!isZenithMode && <Sidebar />}
-        
-        <main className={`flex-1 overflow-hidden flex flex-col transition-all duration-300 min-h-0`}>
-          {!isZenithMode && (
-            <div className="sticky top-0 z-40 flex items-center justify-between bg-base-200/80 backdrop-blur-md border-b border-base-300/50 px-2 py-1">
-              {/* Badge jours restants licence — toujours visible */}
-              {daysRemaining !== null && (
-                <Badge
-                  variant={daysRemaining <= 7 ? 'destructive' : daysRemaining <= 30 ? 'default' : 'secondary'}
-                  className={`text-caption shrink-0 gap-1 ${daysRemaining > 30 ? 'bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200' : ''}`}
-                >
-                  <Clock className="size-3" />
-                  {t('dashboard:licence_days_remaining', { count: daysRemaining })}
-                </Badge>
-              )}
-              <UserHeader />
-            </div>
-          )}
-        <div className={`flex-1 flex flex-col max-size-full overflow-x-hidden overflow-y-auto ${!isZenithMode ? 'px-1 py-1 sm:px-2 sm:py-2 lg:px-3 lg:py-3 xl:px-4 xl:py-4' : ''}`}>
-          {/* Outlet render direct - Suspense pour les composants lazy-loaded */}
-          <Suspense fallback={
-            <div className="flex-1 flex items-center justify-center">
-              <Loader2 className="size-8 animate-spin text-primary" />
-            </div>
-          }>
-            <Outlet />
-          </Suspense>
-        </div>
-      </main>
-    </div>
-    </div>
+    <OmnisearchProvider>
+      <div className={`flex flex-col h-dvh ${isZenithMode ? 'bg-base-100' : 'bg-base-200'} ${isMidnightTheme ? 'theme-midnight' : ''} transition-colors duration-300 relative overflow-hidden`}>
+        <LicenceExpirationBanner />
+        <div className="flex flex-1 relative overflow-hidden">
+          <Omnisearch />
+          {!isZenithMode && <Sidebar />}
+
+          <main className={`flex-1 overflow-hidden flex flex-col transition-all duration-300 min-h-0`}>
+            {!isZenithMode && (
+              <div className="sticky top-0 z-40 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 bg-base-200/80 backdrop-blur-md border-b border-base-300/50 px-2 py-1.5 sm:gap-3 sm:px-3">
+                <div className="min-w-0">
+                  <PageTitle />
+                </div>
+                <div className="flex justify-center">
+                  <GlobalSearchTrigger />
+                </div>
+                <div className="flex min-w-0 items-center justify-end gap-2">
+                  {/* Badge jours restants licence — toujours visible */}
+                  {daysRemaining !== null && (
+                    <Badge
+                      variant={daysRemaining <= 7 ? 'destructive' : daysRemaining <= 30 ? 'default' : 'secondary'}
+                      className={`text-caption shrink-0 gap-1 ${daysRemaining > 30 ? 'bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200' : ''}`}
+                    >
+                      <Clock className="size-3" />
+                      {t('dashboard:licence_days_remaining', { count: daysRemaining })}
+                    </Badge>
+                  )}
+                  <UserHeader />
+                </div>
+              </div>
+            )}
+          <div className={`flex-1 flex flex-col max-size-full overflow-x-hidden overflow-y-auto ${!isZenithMode ? 'px-1 py-1 sm:px-2 sm:py-2 lg:px-3 lg:py-3 xl:px-4 xl:py-4' : ''}`}>
+            {/* Outlet render direct - Suspense pour les composants lazy-loaded */}
+            <Suspense fallback={
+              <div className="flex-1 flex items-center justify-center">
+                <Loader2 className="size-8 animate-spin text-primary" />
+              </div>
+            }>
+              <Outlet />
+            </Suspense>
+          </div>
+        </main>
+      </div>
+      </div>
+    </OmnisearchProvider>
   )
 }
 
@@ -106,6 +120,7 @@ export default function Layout() {
   return (
     <SidebarProvider>
       <TransformationAlertListener />
+      <ExpirationAlertToasts />
       <UpdateReminderModal />
       <LayoutContent />
     </SidebarProvider>

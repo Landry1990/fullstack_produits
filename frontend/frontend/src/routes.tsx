@@ -9,7 +9,8 @@ import i18n from './i18n';
 const MAX_RETRIES = 3;
 const LOAD_TIMEOUT = 10000; // 10 secondes
 
-function lazyWithRetry<T extends ComponentType>(
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function lazyWithRetry<T extends ComponentType<any>>(
   factory: () => Promise<{ default: T }>,
   retries = MAX_RETRIES
 ): React.LazyExoticComponent<T> {
@@ -109,6 +110,7 @@ const PlanningOperateurs = lazyWithRetry(() => import('./components/PlanningOper
 const LoyaltyPage = lazyWithRetry(() => import('./components/loyalty/LoyaltyPage'));
 const ChallengesPage = lazyWithRetry(() => import('./components/challenges/ChallengesPage'));
 const TeamReportsPage = lazyWithRetry(() => import('./components/TeamReportsPage'));
+const FeatureHub = lazyWithRetry(() => import('./components/hubs/FeatureHub'));
 
 // ── Helper to reduce boilerplate ──
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -183,6 +185,7 @@ export const router = createBrowserRouter([
           { path: 'statistiques-fournisseurs', ...perm('statistiques_fournisseurs', StatistiquesFournisseur) },
 
           // ── Inventaire ──
+          { path: 'stock', ...perm(['inventaire', 'inventaire_saisie', 'inventaire_journal', 'inventaire_reappro', 'inventaire_avoirs', 'inventaire_promis', 'inventaire_transformations', 'inventaire_perimes', 'inventaire_organisation', 'inventaire_analyse', 'inventaire_cadencier', 'inventaire_etats', 'inventaire_rapport_ug', 'perimes', 'avoirs', 'promis'], FeatureHub, { category: 'stock' }) },
           { path: 'inventaire', ...perm(['inventaire', 'inventaire_saisie'], Inventaire) },
           { path: 'organisation', ...perm(['inventaire', 'inventaire_organisation'], Organisation) },
           { path: 'rayons', ...perm(['inventaire', 'inventaire_organisation'], Organisation, { defaultTab: 'rayons' }) },
@@ -206,6 +209,7 @@ export const router = createBrowserRouter([
           { path: 'historique-achats/directes', ...perm('commandes_dir_history', HistoriqueAchats, { forcedType: 'DIR' }) },
 
           // ── Statistiques & Rapports ──
+          { path: 'rapports', ...perm(['statistiques', 'statistiques_rapports', 'statistiques_mensuels', 'statistiques_vendeurs', 'statistiques_challenges', 'statistiques_temporelle', 'statistiques_abc', 'statistiques_finances', 'statistiques_fournisseurs', 'statistiques_guide', 'compta', 'compta_dashboard', 'divers', 'divers_ca', 'divers_commandes'], FeatureHub, { category: 'rapports' }) },
           { path: 'rapports-mensuels', ...perm(['statistiques', 'statistiques_mensuels'], RapportMensuel) },
           { path: 'centre-rapports', ...perm(['statistiques', 'statistiques_rapports'], CentreRapports) },
           { path: 'analyse-abc', ...perm(['statistiques', 'statistiques_abc'], AnalyseABC) },

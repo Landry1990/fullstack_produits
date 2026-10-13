@@ -128,7 +128,10 @@
         "manual_movements": "Manual movements ({{count}})",
         "theoretical_amount": "THEORETICAL AMOUNT",
         "theoretical_formula": "Sales + Entries - Exits + Initial Fund",
-        "active_session_blocked": "This cashier has an active session. Close the cash register first before closing."
+        "active_session_blocked": "This cashier has an active session. Close their cash register station before closing.",
+        "ready_to_close": "Closing available: cashier selected and no active session.",
+        "real_amount_required": "Enter the actual amount or complete the cash breakdown to continue.",
+        "ready_to_confirm": "All required information is complete. The closing can be confirmed."
     },
     "modes": {
         "especes": "Cash",

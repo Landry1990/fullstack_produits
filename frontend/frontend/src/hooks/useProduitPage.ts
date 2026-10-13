@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef, type FormEvent } from 'react'
+import { useState, useMemo, useEffect, useRef, useCallback, type FormEvent } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
@@ -10,7 +10,7 @@ import { useConfirm } from './useConfirm'
 import { useAuth } from '../context/AuthContext'
 import type { ProduitModel, Facture } from '../types'
 import {
-  useProduits, useRayons, useFournisseurs, useFormes, useGroupes,
+  useProduits, useProduit, useRayons, useFournisseurs, useFormes, useGroupes,
   useProduitLots, useProduitStats, useProduitAchats, useProduitHistory,
   useAdjustStock
 } from './useProduits'
@@ -45,14 +45,16 @@ export function useProduitPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [filterRayon, setFilterRayon] = useState('')
-  const [filterFournisseur, setFilterFournisseur] = useState('')
+  const [filterForme, setFilterForme] = useState('')
   const [showInactive, setShowInactive] = useState(false)
   const [showInStockOnly, setShowInStockOnly] = useState(false)
 
   /* ── Selection ── */
   const [selectedProduit, setSelectedProduit] = useState<ProduitModel | null>(null)
-  const [selectedIds, setSelectedIds] = useState<number[]>([])
   const [activeTab, setActiveTab] = useState<ActiveTab>('general')
+  const [pendingProduitId, setPendingProduitId] = useState<number | null>(null)
+  const [pendingProduitAction, setPendingProduitAction] = useState<'edit' | 'adjust' | 'movements' | null>(null)
+  const { data: pendingProduit, isError: pendingProduitError } = useProduit(pendingProduitId)
 
   /* ── Modals ── */
   const [isCreateOpen, setIsCreateOpen] = useState(false)
@@ -80,6 +82,8 @@ export function useProduitPage() {
   })
   const adjustStockMutation = useAdjustStock()
   const [transferLoading, setTransferLoading] = useState(false)
+  const [labelProduct, setLabelProduct] = useState<ProduitModel | null>(null)
+  const [transferProduct, setTransferProduct] = useState<ProduitModel | null>(null)
 
   /* ── Debounce search ── */
   useEffect(() => {
@@ -89,7 +93,7 @@ export function useProduitPage() {
 
   useEffect(() => {
     setPage(1)
-  }, [showInStockOnly, showInactive, filterRayon, filterFournisseur])
+  }, [showInStockOnly, showInactive, filterRayon, filterForme])
 
   /* ── Data ── */
   const { data: productsData, isLoading, error: loadError, refetch } = useProduits({
@@ -97,7 +101,7 @@ export function useProduitPage() {
     page,
     page_size: 50,
     rayon: filterRayon,
-    fournisseur: filterFournisseur,
+    forme: filterForme,
     include_inactive: showInactive,
     only_in_stock: showInStockOnly,
   })
@@ -111,16 +115,16 @@ export function useProduitPage() {
     if (location.state?.action === 'NEW_PRODUCT') {
       setIsCreateOpen(true)
       navigate(location.pathname, { replace: true, state: {} })
+      return
     }
-    if (location.state?.searchProduitId && productsData?.results) {
-      const pid = location.state.searchProduitId
-      const found = productsData.results.find((p: ProduitModel) => p.id === pid)
-      if (found) { setSelectedProduit(found); setActiveTab('stats') }
-      else if (searchQuery !== String(pid)) setSearchQuery(String(pid))
-      navigate(location.pathname, { replace: true, state: {} })
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [productsData])
+
+    const pid = location.state?.searchProduitId
+    if (!pid) return
+
+    setPendingProduitId(pid)
+    const action = location.state?.openProductAction
+    setPendingProduitAction(action === 'edit' || action === 'adjust' || action === 'movements' ? action : null)
+  }, [location.state, location.pathname, navigate])
 
   const { data: rayons = [] } = useRayons()
   const { data: fournisseurs = [] } = useFournisseurs()
@@ -205,7 +209,7 @@ export function useProduitPage() {
     setIsPasswordOpen(true)
   }
 
-  const handleOpenAdjust = (produit: ProduitModel) => {
+  const handleOpenAdjust = useCallback((produit: ProduitModel) => {
     setAdjustForm({
       new_quantity: String(produit.stock ?? 0),
       new_reserve_quantity: String(produit.stock_reserve ?? 0),
@@ -215,7 +219,7 @@ export function useProduitPage() {
       new_lot_expiration: ''
     })
     setIsAdjustOpen(true)
-  }
+  }, [])
 
   const handleToggleActive = async (produit: ProduitModel) => {
     try {
@@ -227,32 +231,31 @@ export function useProduitPage() {
     } catch (err) { gooeyToast.error(getApiErrorDetail(err, t('products:messages.status_error'))) }
   }
 
-  const handleGenerateLabels = async (produit: ProduitModel) => {
-    const qtyStr = prompt(t('products:messages.labels_prompt', { name: produit.name, defaultValue: `Quantité étiquettes pour ${produit.name}` }), "1")
-    if (!qtyStr) return
-    const quantity = parseInt(qtyStr, 10)
-    if (isNaN(quantity) || quantity <= 0) { gooeyToast.error(t('products:messages.invalid_quantity')); return }
+  const handleGenerateLabels = (produit: ProduitModel) => setLabelProduct(produit)
+
+  const confirmGenerateLabels = async (quantity: number) => {
+    if (!labelProduct) return
     try {
-      const resp = await api.post('produits/generate_labels/', { products: [{ id: produit.id, quantity }] }, { responseType: 'blob' })
+      const resp = await api.post('produits/generate_labels/', { products: [{ id: labelProduct.id, quantity }] }, { responseType: 'blob' })
       const url = window.URL.createObjectURL(new Blob([resp.data]))
-      const link = document.createElement('a'); link.href = url; link.setAttribute('download', `etiquettes_${produit.name}.pdf`)
+      const link = document.createElement('a'); link.href = url; link.setAttribute('download', `etiquettes_${labelProduct.name}.pdf`)
       document.body.appendChild(link); link.click(); link.remove()
       window.URL.revokeObjectURL(url)
+      setLabelProduct(null)
     } catch (err) { gooeyToast.error(getApiErrorDetail(err, t('products:messages.generation_error'))) }
   }
 
-  const handleTransferToRayon = async (produit: ProduitModel) => {
-    if (!produit.has_reserve_storage || (produit.stock_reserve ?? 0) <= 0) return
-    const needed = Math.max(0, (produit.capacite_rayon ?? 0) - (produit.stock ?? 0))
-    const suggest = Math.min(needed, produit.stock_reserve ?? 0)
-    const qtyStr = prompt(t('products:messages.transfer_prompt', { reserve: produit.stock_reserve, capacity: produit.capacite_rayon, needed }), String(suggest))
-    if (qtyStr === null) return
-    const qty = parseInt(qtyStr, 10)
-    if (isNaN(qty) || qty <= 0) { gooeyToast.error(t('products:messages.invalid_quantity')); return }
+  const handleTransferToRayon = (produit: ProduitModel) => {
+    if (produit.has_reserve_storage && (produit.stock_reserve ?? 0) > 0) setTransferProduct(produit)
+  }
+
+  const confirmTransferToRayon = async (quantity: number) => {
+    if (!transferProduct) return
     setTransferLoading(true)
     try {
-      await api.post(`produits/${produit.id}/transfer_to_shelf/`, { quantity: qty })
-      gooeyToast.success(t('products:messages.transfer_success', { count: qty }))
+      await api.post(`produits/${transferProduct.id}/transfer_to_shelf/`, { quantity })
+      gooeyToast.success(t('products:messages.transfer_success', { count: quantity }))
+      setTransferProduct(null)
       refetch()
     } catch (err) {
       gooeyToast.error(getApiErrorDetail(err, t('products:messages.transfer_error')))
@@ -286,7 +289,7 @@ export function useProduitPage() {
     }
   }
 
-  const handleOpenEdit = (produit: ProduitModel) => {
+  const handleOpenEdit = useCallback((produit: ProduitModel) => {
     setEditForm({
       id: produit.id,
       name: produit.name,
@@ -315,29 +318,54 @@ export function useProduitPage() {
       message_alerte: produit.message_alerte || ''
     })
     setIsEditOpen(true)
-  }
+  }, [])
+
+  useEffect(() => {
+    if (!pendingProduitId) return
+
+    const target = produits.find((produit) => produit.id === pendingProduitId) || pendingProduit
+    if (target) {
+      setSelectedProduit(target)
+      setActiveTab(pendingProduitAction === 'movements' ? 'mvmts' : 'stats')
+      if (pendingProduitAction === 'edit') handleOpenEdit(target)
+      if (pendingProduitAction === 'adjust') handleOpenAdjust(target)
+      setPendingProduitId(null)
+      setPendingProduitAction(null)
+      navigate(location.pathname, { replace: true, state: {} })
+      return
+    }
+
+    if (pendingProduitError) {
+      setSearchQuery(String(pendingProduitId))
+      setPendingProduitId(null)
+      setPendingProduitAction(null)
+      navigate(location.pathname, { replace: true, state: {} })
+    }
+  }, [
+    pendingProduitId,
+    pendingProduit,
+    pendingProduitError,
+    pendingProduitAction,
+    produits,
+    handleOpenEdit,
+    handleOpenAdjust,
+    navigate,
+    location.pathname,
+  ])
 
   const resetFilters = () => {
     setSearchQuery('')
     setFilterRayon('')
-    setFilterFournisseur('')
+    setFilterForme('')
     setShowInactive(false)
     setShowInStockOnly(false)
   }
-
-  const isAllSelected = selectedIds.length === produits.length && produits.length > 0
-  const isPartial = selectedIds.length > 0 && selectedIds.length < produits.length
 
   /* ── Keyboard nav ── */
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const el = document.activeElement as HTMLElement
       if (el?.tagName === 'TEXTAREA' || (el?.tagName === 'INPUT' && el.getAttribute('type') !== 'text')) return
-      if (e.key === 'Enter' && selectedProduit) {
-        e.preventDefault()
-        setSelectedIds(prev => prev.includes(selectedProduit.id) ? prev.filter(id => id !== selectedProduit.id) : [...prev, selectedProduit.id])
-        return
-      }
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         if (!produits.length) return
         const idx = selectedProduit ? produits.findIndex(p => p.id === selectedProduit.id) : -1
@@ -360,16 +388,15 @@ export function useProduitPage() {
     rayons, fournisseurs, formes, groupes,
     /* filters */
     searchQuery, setSearchQuery,
-    filterRayon, filterFournisseur,
+    filterRayon, setFilterRayon,
+    filterForme, setFilterForme,
     showInactive, setShowInactive,
     showInStockOnly, setShowInStockOnly,
     resetFilters,
     page, setPage,
     /* selection */
     selectedProduit, setSelectedProduit,
-    selectedIds, setSelectedIds,
     activeTab, setActiveTab,
-    isAllSelected, isPartial,
     lowStockCount, outOfStockCount,
     /* modals */
     isCreateOpen, setIsCreateOpen,
@@ -383,9 +410,11 @@ export function useProduitPage() {
     pendingActionRef,
     /* forms */
     editForm, adjustForm, setAdjustForm, adjustStockMutation, transferLoading,
+    labelProduct, setLabelProduct, transferProduct, setTransferProduct,
     /* handlers */
     handleDelete, handleStockAdjustmentSubmit, handleOpenAdjust,
-    handleToggleActive, handleGenerateLabels, handleTransferToRayon,
+    handleToggleActive, handleGenerateLabels, confirmGenerateLabels,
+    handleTransferToRayon, confirmTransferToRayon,
     handleMovementClick, handleOpenEdit,
     queryClient,
   }

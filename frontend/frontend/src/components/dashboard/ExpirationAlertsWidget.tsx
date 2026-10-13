@@ -211,7 +211,17 @@ export default function ExpirationAlertsWidget({ className = '' }: ExpirationAle
                       {t('expiration.days_until', { days: alert.days_until })}
                     </span>
                     <h4 className="text-sm font-semibold text-base-content truncate">
-                      {alert.produit_nom}
+                      {alert.produit_id ? (
+                        <Link
+                          to="/app/produits"
+                          state={{ searchProduitId: alert.produit_id }}
+                          className="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-800 hover:underline focus:outline-none focus:ring-2 focus:ring-emerald-500/30 rounded-sm"
+                          aria-label={t('expiration.open_product', { name: alert.produit_nom })}
+                        >
+                          <span className="truncate">{alert.produit_nom}</span>
+                          <ExternalLink className="size-3 shrink-0" />
+                        </Link>
+                      ) : alert.produit_nom}
                     </h4>
                   </div>
 
@@ -226,9 +236,18 @@ export default function ExpirationAlertsWidget({ className = '' }: ExpirationAle
                       </span>
                     )}
                     {alert.fournisseur_nom && (
-                      <span className="truncate">
-                        {alert.fournisseur_nom}
-                      </span>
+                      alert.fournisseur_id ? (
+                        <Link
+                          to="/app/fournisseurs"
+                          state={{ selectedSupplierId: alert.fournisseur_id }}
+                          className="truncate text-blue-600 hover:text-blue-700 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500/30 rounded-sm"
+                          aria-label={t('expiration.open_supplier', { name: alert.fournisseur_nom })}
+                        >
+                          {alert.fournisseur_nom}
+                        </Link>
+                      ) : (
+                        <span className="truncate">{alert.fournisseur_nom}</span>
+                      )
                     )}
                   </div>
                 </div>

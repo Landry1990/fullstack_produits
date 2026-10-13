@@ -1,4 +1,5 @@
 {
+    "navigation_label": "Navigation principale",
     "dashboard": "Tableau de bord",
     "manager_sidebar": "Tableau de Bord Manager",
     "teams_report_sidebar": "Rapport Équipes",
@@ -43,6 +44,7 @@
     "creances": "Créances",
     "stock": {
         "title": "Stock",
+        "overview": "Vue d'ensemble",
         "inventaire": {
             "title": "Inventaire"
         },
@@ -56,6 +58,7 @@
         "reappro": {
             "title": "Réappro Rayon"
         },
+        "reappro_history": "Historique Réappro",
         "ruptures": {
             "title": "Suivi des Ruptures"
         },
@@ -101,6 +104,7 @@
     },
     "statistiques": {
         "title": "Statistiques",
+        "overview": "Vue d'ensemble",
         "rapports": "Centre de Rapports",
         "abc": "Analyse ABC",
         "marges_produit": "Marges par Produit",
@@ -123,6 +127,7 @@
         "admin_system": "Administration Système"
     },
     "maintenance": "Entretien",
+    "import_dci": "Import DCI",
     "sauvegardes": "Sauvegardes",
     "corbeille": "Corbeille",
     "logout": "Déconnexion",
@@ -134,6 +139,7 @@
     "divers": {
         "title": "Gestion Divers",
         "ca": "CA Divers",
+        "stock": "Stock Divers",
         "commandes": "Commandes Divers"
     },
     "changelog": "Quoi de neuf ?",
@@ -146,6 +152,20 @@
         "stock": "Stock & Inventaire",
         "rapports": "Rapports & Analyses",
         "parametres": "Paramètres & Admin"
+    },
+    "hub": {
+        "stock_title": "Centre Stock",
+        "stock_subtitle": "Toutes les opérations et analyses de stock au même endroit",
+        "rapports_title": "Centre de Rapports",
+        "rapports_subtitle": "Statistiques, finances et analyses de l'activité"
+    },
+    "menu_groups": {
+        "commandes_locales": "Locales (Grossistes)",
+        "commandes_directes": "Directes (Étranger)",
+        "stock_operations": "Opérations",
+        "stock_pilotage": "Pilotage & Analyse",
+        "stats_ventes": "Ventes & Performance",
+        "stats_finance": "Finance & Produits"
     },
     "toggle_menu": "Basculer le menu",
     "close_menu": "Fermer le menu",

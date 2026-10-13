@@ -162,8 +162,9 @@ export interface StockAdjustment {
     quantity_after: number
     quantity_change: number
     valorisation: number
-    reason_type: 'INVENTAIRE' | 'CASSE' | 'VOL' | 'CONFUSION' | 'ERR_ENTREE' | 'AVARIE' | 'USAGE_INT'
+    reason_type: 'INVENTAIRE' | 'CASSE' | 'VOL' | 'CONFUSION' | 'ERR_ENTREE' | 'AVARIE' | 'USAGE_INT' | 'PERIME' | 'REAPPRO'
     reason_type_display: string
+    restored?: boolean
     reason_detail?: string
     created_at: string
 }

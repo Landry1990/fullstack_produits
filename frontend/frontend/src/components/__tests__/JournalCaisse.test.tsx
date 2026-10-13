@@ -167,5 +167,11 @@ describe('JournalCaisse Component', () => {
     await waitFor(() => {
       expect(screen.getByText(/Écart de caisse/i)).toBeInTheDocument();
     });
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    await waitFor(() => {
+      expect(screen.queryByPlaceholderText(/montant r[eé]el|real amount/i)).not.toBeInTheDocument();
+    });
   });
 });

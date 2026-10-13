@@ -397,6 +397,7 @@
         }
     },
     "omnisearch": {
+        "trigger": "Search products, clients, pages…",
         "placeholder": "Search (products, clients, navigation)...",
         "empty": "No results found.",
         "searching": "Searching…",
@@ -405,6 +406,7 @@
         "groups": {
             "actions": "Quick Actions",
             "navigation": "Quick Navigation",
+            "pages": "Pages and features",
             "products": "Products",
             "clients": "Clients",
             "invoices": "Invoices / Sales",
@@ -465,7 +467,8 @@
             "date": "Date",
             "unit": "unit",
             "more_items": "...and {{count}} more item(s)",
-            "open_detail_hint": "Click or press Enter to open details"
+            "open_detail_hint": "Click or press Enter to open details",
+            "open_page": "Press Enter to open this page"
         }
     },
     "substitution": {

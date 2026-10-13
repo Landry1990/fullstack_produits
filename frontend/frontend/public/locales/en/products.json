@@ -121,12 +121,27 @@
         "rayon_placeholder": "Shelf",
         "provider_placeholder": "Supplier",
         "reset": "Clear active filters",
-        "rayon_active": "Active Rayon",
+        "rayon_active": "Active shelf",
+        "forme_active": "Active form",
         "provider_active": "Active Supplier",
         "exclusive_only": "Exclusives",
         "inactive_only": "Inactives",
         "in_stock_only": "In stock only",
-        "show_inactive": "Show inactive"
+        "show_inactive": "Show inactive",
+        "rayon": "Filter by shelf",
+        "forme": "Filter by form",
+        "provider": "Filter by supplier",
+        "all_rayons": "All shelves",
+        "all_formes": "All forms",
+        "all_providers": "All suppliers"
+    },
+    "quantity_dialog": {
+        "label": "Quantity",
+        "labels_title": "Print labels",
+        "labels_description": "Enter the number of labels to generate for {{name}}.",
+        "transfer_title": "Transfer to shelf",
+        "transfer_description": "{{name}} — reserve: {{reserve}}, shelf capacity: {{capacity}}.",
+        "max_error": "Enter a whole number between 1 and {{max}}."
     },
     "table": {
         "cip": "CIP",

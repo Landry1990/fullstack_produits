@@ -58,6 +58,17 @@ export default function Commandes({ forcedType, embedded }: CommandesProps) {
     setDetailProduitId(produitId);
     setDetailActiveTab('general');
   };
+
+  const openProductPage = (action?: 'edit' | 'adjust' | 'movements') => {
+    if (!detailProduitId) return;
+    setDetailProduitId(null);
+    navigate('/app/produits', {
+      state: {
+        searchProduitId: detailProduitId,
+        ...(action ? { openProductAction: action } : {}),
+      },
+    });
+  };
   
   const location = useLocation();
   const navigate = useNavigate();
@@ -282,9 +293,9 @@ export default function Commandes({ forcedType, embedded }: CommandesProps) {
             achats={detailAchats}
             stockHistory={detailHistory}
             loadingHistory={detailHistoryLoading}
-            onMovementClick={() => {}}
-            onOpenAdjustment={() => {}}
-            onOpenEdit={() => {}}
+            onMovementClick={() => openProductPage('movements')}
+            onOpenAdjustment={() => openProductPage('adjust')}
+            onOpenEdit={() => openProductPage('edit')}
             onDelete={() => {}}
           />
         </Suspense>

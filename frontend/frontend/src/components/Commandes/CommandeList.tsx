@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Eye, Trash2, Printer, GitMerge, Sparkles, Plus, Search, X, Package, Loader2 } from 'lucide-react';
+import { Eye, Trash2, GitMerge, Sparkles, Plus, Search, X, Package, Loader2 } from 'lucide-react';
 import type { Commande, Fournisseur } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 import { formatDate } from '../../utils/dateUtils';
@@ -396,20 +396,6 @@ export default function CommandeList({
                                   </a>
 
                                 </li>
-
-                                {commande.status === 'ATT' && (
-
-                                    <li>
-
-                                        <a role="button" tabIndex={0} onClick={() => {/* Handle print if available */}} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.preventDefault(); }} className="flex items-center gap-2 py-2 hover:bg-slate-100 text-slate-600 font-medium text-sm">
-
-                                            <Printer className="size-4" /> {t('common:print', 'Imprimer')}
-
-                                        </a>
-
-                                    </li>
-
-                                )}
 
                                 {commande.status === 'PREP' && (
 

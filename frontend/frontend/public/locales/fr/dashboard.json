@@ -216,7 +216,9 @@
         "lot_label": "LOT {{lot}}",
         "exp_label": "EXP: {{date}}",
         "na": "N/A",
-        "units_suffix": "{{count}}u"
+        "units_suffix": "{{count}}u",
+        "open_product": "Ouvrir la fiche de {{name}}",
+        "open_promis": "Voir le produit promis {{name}}"
     },
     "vendeur": {
         "loading": "Chargement…",

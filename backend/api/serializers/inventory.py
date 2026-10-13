@@ -221,6 +221,7 @@ class StockAdjustmentSerializer(serializers.ModelSerializer):
     lot_expiration = serializers.DateField(source='stock_lot.date_expiration', read_only=True, allow_null=True)
     lot_quantity_remaining = serializers.IntegerField(source='stock_lot.quantity_remaining', read_only=True, allow_null=True)
     valorisation = serializers.SerializerMethodField()
+    restored = serializers.BooleanField(read_only=True, default=False)
 
     class Meta:
         model = StockAdjustment
@@ -231,7 +232,7 @@ class StockAdjustmentSerializer(serializers.ModelSerializer):
             'quantity_before', 'quantity_after', 'quantity_change',
             'reserve_before', 'reserve_after', 'reserve_change',
             'valorisation',
-            'reason_type', 'reason_type_display', 'reason_detail',
+            'reason_type', 'reason_type_display', 'reason_detail', 'restored',
             'created_at'
         ]
         read_only_fields = ['id', 'user', 'created_at', 'quantity_change']

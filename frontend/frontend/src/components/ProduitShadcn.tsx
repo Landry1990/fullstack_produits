@@ -15,6 +15,7 @@ import { ProductListPanel } from './products/ProductListPanel'
 import { ProductDetailHeader } from './products/ProductDetailHeader'
 import { ProduitPageModals } from './products/ProduitPageModals'
 import { ProductTabsContent } from './products/ProductTabsContent'
+import { QuantityInputDialog } from './products/modals/QuantityInputDialog'
 
 /* ------------------------------------------------------------------ */
 /*  Component — orchestrateur : layout + composition                    */
@@ -29,14 +30,13 @@ export default function ProduitShadcn() {
     lots, monthlyStats, achats, stockHistory, loadingHistory,
     rayons, fournisseurs, formes, groupes,
     searchQuery, setSearchQuery,
-    filterRayon, filterFournisseur,
+    filterRayon, setFilterRayon,
+    filterForme, setFilterForme,
     showInactive, setShowInactive,
     showInStockOnly, setShowInStockOnly,
     resetFilters,
     selectedProduit, setSelectedProduit,
-    selectedIds, setSelectedIds,
     activeTab, setActiveTab,
-    isAllSelected, isPartial,
     lowStockCount, outOfStockCount,
     isCreateOpen, setIsCreateOpen,
     isEditOpen, setIsEditOpen,
@@ -47,8 +47,10 @@ export default function ProduitShadcn() {
     showAvoirModal, setShowAvoirModal, selectedAvoirId, setSelectedAvoirId,
     pendingActionRef,
     editForm, adjustForm, setAdjustForm, adjustStockMutation, transferLoading,
+    labelProduct, setLabelProduct, transferProduct, setTransferProduct,
     handleDelete, handleStockAdjustmentSubmit, handleOpenAdjust,
-    handleToggleActive, handleGenerateLabels, handleTransferToRayon,
+    handleToggleActive, handleGenerateLabels, confirmGenerateLabels,
+    handleTransferToRayon, confirmTransferToRayon,
     handleMovementClick, handleOpenEdit,
     queryClient,
   } = state
@@ -106,16 +108,18 @@ export default function ProduitShadcn() {
               onShowInStockOnlyChange={setShowInStockOnly}
               showInactive={showInactive}
               onShowInactiveChange={setShowInactive}
-              hasActiveFilters={Boolean(filterRayon || filterFournisseur || showInactive || showInStockOnly)}
+              filterRayon={filterRayon}
+              onFilterRayonChange={setFilterRayon}
+              filterForme={filterForme}
+              onFilterFormeChange={setFilterForme}
+              rayons={rayons}
+              formes={formes}
+              hasActiveFilters={Boolean(filterRayon || filterForme || showInactive || showInStockOnly)}
               hasFilterRayon={Boolean(filterRayon)}
-              hasFilterFournisseur={Boolean(filterFournisseur)}
+              hasFilterForme={Boolean(filterForme)}
               onResetFilters={resetFilters}
               selectedProduit={selectedProduit}
               onSelectProduit={setSelectedProduit}
-              selectedIds={selectedIds}
-              setSelectedIds={setSelectedIds}
-              isAllSelected={isAllSelected}
-              isPartial={isPartial}
               totalCount={totalCount}
               lowStockCount={lowStockCount}
               outOfStockCount={outOfStockCount}
@@ -166,6 +170,31 @@ export default function ProduitShadcn() {
       </main>
 
       {/* ── Modals ── */}
+      <QuantityInputDialog
+        open={Boolean(labelProduct)}
+        title={t('products:quantity_dialog.labels_title')}
+        description={t('products:quantity_dialog.labels_description', { name: labelProduct?.name || '' })}
+        initialValue={1}
+        onClose={() => setLabelProduct(null)}
+        onConfirm={confirmGenerateLabels}
+      />
+      <QuantityInputDialog
+        open={Boolean(transferProduct)}
+        title={t('products:quantity_dialog.transfer_title')}
+        description={t('products:quantity_dialog.transfer_description', {
+          name: transferProduct?.name || '',
+          reserve: transferProduct?.stock_reserve ?? 0,
+          capacity: transferProduct?.capacite_rayon ?? 0,
+        })}
+        initialValue={transferProduct ? Math.max(1, Math.min(
+          Math.max(0, (transferProduct.capacite_rayon ?? 0) - (transferProduct.stock ?? 0)),
+          transferProduct.stock_reserve ?? 0,
+        )) : 1}
+        max={transferProduct?.stock_reserve ?? undefined}
+        loading={transferLoading}
+        onClose={() => setTransferProduct(null)}
+        onConfirm={confirmTransferToRayon}
+      />
       <ProduitPageModals
         isEditOpen={isEditOpen}
         editForm={editForm}

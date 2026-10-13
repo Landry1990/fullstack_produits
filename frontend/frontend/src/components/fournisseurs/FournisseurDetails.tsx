@@ -1,5 +1,6 @@
 import React from 'react';
-import { Eye, EyeOff, Building2, MapPin, Pencil, Trash2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Eye, EyeOff, Building2, MapPin, Pencil, Trash2, ExternalLink } from 'lucide-react';
 import { formatCurrency } from '../../utils/formatters';
 import type { useFournisseurs } from '../../hooks/useFournisseurs';
 import { Button } from '../shadcn/button';
@@ -229,9 +230,16 @@ export default function FournisseurDetails({ hook }: Props) {
                               </span>
                             </td>
                             <td className="px-3 py-2">
-                              <span className="text-xs text-base-content line-clamp-1" title={item.produit_nom}>
-                                {item.produit_nom}
-                              </span>
+                              <Link
+                                to="/app/produits"
+                                state={{ searchProduitId: item.produit_id }}
+                                className="inline-flex max-w-full items-center gap-1.5 rounded-sm text-xs font-medium text-emerald-700 hover:text-emerald-800 hover:underline focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                                title={item.produit_nom}
+                                aria-label={t('providers:catalogue.open_product', { name: item.produit_nom })}
+                              >
+                                <span className="line-clamp-1">{item.produit_nom}</span>
+                                <ExternalLink className="size-3 shrink-0" />
+                              </Link>
                             </td>
                             <td className="px-3 py-2 text-right">
                               <span className="text-xs font-medium text-base-content">

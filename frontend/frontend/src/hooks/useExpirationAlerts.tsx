@@ -6,6 +6,7 @@ export interface ExpirationAlert {
   produit_id: number | null;
   produit_nom: string;
   lot_numero: string | null;
+  fournisseur_id: number | null;
   fournisseur_nom: string | null;
   quantity_remaining: number;
   date_expiration: string | null;

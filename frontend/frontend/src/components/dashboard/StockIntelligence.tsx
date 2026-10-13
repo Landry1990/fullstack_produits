@@ -6,7 +6,8 @@ import {
   Package,
   CalendarDays,
   TrendingUp,
-  ChevronDown
+  ChevronDown,
+  ExternalLink
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
@@ -35,6 +36,7 @@ interface LowStockItem {
 
 interface ExpiringLot {
   id: number;
+  produit: number;
   date_expiration?: string | null;
   produit_nom: string;
   lot?: string | null;
@@ -204,7 +206,13 @@ export default function StockIntelligence({
                   }
                   
                   return (
-                    <div key={lot.id} className={`flex items-center justify-between p-3 rounded-xl border transition-all hover:scale-[1.02] ${urgencyStyle}`}>
+                    <Link
+                      key={lot.id}
+                      to="/app/produits"
+                      state={{ searchProduitId: lot.produit }}
+                      aria-label={t('alerts.open_product', { name: lot.produit_nom })}
+                      className={`flex items-center justify-between p-3 rounded-xl border transition-all hover:scale-[1.02] hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 ${urgencyStyle}`}
+                    >
                       <div className="flex items-center gap-3 flex-1 min-w-0">
                         <div className={`size-1.5 rounded-full shrink-0 ${dotStyle} ${daysUntilExpiry <= 7 ? 'animate-ping' : ''}`}></div>
                         <div className="flex-1 min-w-0">
@@ -219,10 +227,13 @@ export default function StockIntelligence({
                           </div>
                         </div>
                       </div>
-                      <div className="bg-white/50 text-micro font-black px-2 py-1 rounded-lg uppercase tracking-widest ml-3 shrink-0 whitespace-nowrap border border-current text-slate-500">
-                        {daysUntilExpiry <= 0 ? t('alerts.expired') : formatExpiryDuration(daysUntilExpiry, t)}
+                      <div className="flex items-center gap-2 shrink-0 ml-3">
+                        <div className="bg-white/50 text-micro font-black px-2 py-1 rounded-lg uppercase tracking-widest whitespace-nowrap border border-current text-slate-500">
+                          {daysUntilExpiry <= 0 ? t('alerts.expired') : formatExpiryDuration(daysUntilExpiry, t)}
+                        </div>
+                        <ExternalLink className="size-3.5 text-slate-400" />
                       </div>
-                    </div>
+                    </Link>
                   );
                 })
               )}
@@ -259,15 +270,22 @@ export default function StockIntelligence({
             <div className="space-y-3 flex-grow overflow-y-auto pr-1 custom-scrollbar h-[300px] 2xl:h-[350px]">
               {dormantItems.length > 0 ? (
                 dormantItems.map((p) => (
-                  <div key={p.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-100 border border-slate-100 hover:border-slate-300 transition-all group">
+                  <Link
+                    key={p.id}
+                    to="/app/produits"
+                    state={{ searchProduitId: p.id }}
+                    aria-label={t('alerts.open_product', { name: p.name })}
+                    className="flex items-center justify-between p-3 rounded-xl bg-slate-100 border border-slate-100 hover:border-slate-300 transition-all group focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                  >
                     <div className="flex items-center gap-3 min-w-0">
                       <span className="text-xs font-bold text-slate-700 truncate">{p.name}</span>
+                      <ExternalLink className="size-3.5 text-slate-300 opacity-0 transition-opacity group-hover:opacity-100 group-focus:opacity-100" />
                     </div>
                     <div className="flex flex-col items-end shrink-0">
                       <span className="text-caption font-bold text-slate-700">{t('alerts.units_suffix', { count: p.stock })}</span>
                       <span className="text-micro font-bold text-slate-400">{formatCurrencyLocal(p.value)}</span>
                     </div>
-                  </div>
+                  </Link>
                 ))
               ) : (
                 <div className="flex flex-col items-center justify-center py-12 text-slate-300 text-center h-full">
@@ -316,11 +334,20 @@ export default function StockIntelligence({
             <div className="space-y-3 flex-grow overflow-y-auto pr-1 custom-scrollbar h-[300px] 2xl:h-[350px]">
               {overstockItems.length > 0 ? (
                 overstockItems.map((p, i) => (
-                  <div key={p.id} className="flex items-center justify-between p-3 rounded-xl bg-amber-50/60 border border-orange-100 hover:border-orange-300 transition-all group">
+                  <Link
+                    key={p.id}
+                    to="/app/produits"
+                    state={{ searchProduitId: p.id }}
+                    aria-label={t('alerts.open_product', { name: p.name })}
+                    className="flex items-center justify-between p-3 rounded-xl bg-amber-50/60 border border-orange-100 hover:border-orange-300 transition-all group focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+                  >
                     <div className="flex items-center gap-3 min-w-0">
                       <span className="text-xs font-black text-orange-500 bg-amber-100 size-6 flex items-center justify-center rounded-lg border border-orange-200 shrink-0">{i + 1}</span>
                       <div className="min-w-0">
-                        <span className="text-xs font-bold text-slate-700 truncate block">{p.name}</span>
+                        <span className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+                          <span className="truncate">{p.name}</span>
+                          <ExternalLink className="size-3.5 shrink-0 text-orange-300 opacity-0 transition-opacity group-hover:opacity-100 group-focus:opacity-100" />
+                        </span>
                         <span className="text-micro font-bold text-orange-500/70 uppercase tracking-widest">
                           {p.excess_qty != null ? t('overstock.excess_qty', '+{{count}} unités en excès', { count: p.excess_qty }) : t('overstock.stock_label', 'Stock: {{count}}', { count: p.stock })}
                         </span>
@@ -330,7 +357,7 @@ export default function StockIntelligence({
                       <span className="text-caption font-bold text-amber-500">{formatCurrencyLocal(p.excess_value ?? p.value ?? 0)}</span>
                       <span className="text-micro font-bold text-slate-400">{t('overstock.excess_label', 'excédent')}</span>
                     </div>
-                  </div>
+                  </Link>
                 ))
               ) : (
                 <EmptyState
@@ -372,7 +399,12 @@ export default function StockIntelligence({
               </div>
               <div className="space-y-2 flex-grow overflow-y-auto pr-1 custom-scrollbar h-[300px] 2xl:h-[350px]">
                 {promisDisponibles.slice(0, 5).map((p) => (
-                  <div key={p.id} className="flex items-center justify-between p-3 rounded-xl bg-white border border-emerald-100 shadow-sm transition-all hover:border-emerald-300">
+                  <Link
+                    key={p.id}
+                    to="/app/promis"
+                    aria-label={t('alerts.open_promis', { name: p.produit_nom })}
+                    className="flex items-center justify-between p-3 rounded-xl bg-white border border-emerald-100 shadow-sm transition-all hover:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  >
                     <div className="flex-1 min-w-0">
                       <span className="text-xs font-bold text-slate-700 block truncate">{p.produit_nom}</span>
                       <div className="flex items-center gap-1.5 mt-0.5">
@@ -381,10 +413,13 @@ export default function StockIntelligence({
                         <span className="text-caption font-bold text-slate-500">{p.quantite} {t('alerts.units')}</span>
                       </div>
                     </div>
-                    <div className="bg-emerald-100 text-emerald-600 font-bold text-micro px-2 py-1 rounded-lg uppercase tracking-widest">
-                      {t('alerts.days_left', { count: p.jours_attente })}
+                    <div className="flex items-center gap-2 shrink-0">
+                      <div className="bg-emerald-100 text-emerald-600 font-bold text-micro px-2 py-1 rounded-lg uppercase tracking-widest">
+                        {t('alerts.days_left', { count: p.jours_attente })}
+                      </div>
+                      <ExternalLink className="size-3.5 text-emerald-300" />
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
               <div className="mt-4 shrink-0">
@@ -480,8 +515,17 @@ export default function StockIntelligence({
                 />
               ) : (
                 lowStockItems.slice(0, 10).map((item) => (
-                  <div key={item.id} className={`flex flex-col gap-1 p-3 rounded-xl border transition-all ${item.stock <= 0 ? 'bg-red-50 border-red-100 shadow-sm' : 'bg-amber-50 border-amber-100'}`}>
-                    <p className="text-xs font-bold text-slate-700 truncate">{item.name}</p>
+                  <Link
+                    key={item.id}
+                    to="/app/produits"
+                    state={{ searchProduitId: item.id }}
+                    aria-label={t('alerts.open_product', { name: item.name })}
+                    className={`flex flex-col gap-1 p-3 rounded-xl border transition-all hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 ${item.stock <= 0 ? 'bg-red-50 border-red-100 shadow-sm' : 'bg-amber-50 border-amber-100'}`}
+                  >
+                    <p className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+                      <span className="truncate">{item.name}</span>
+                      <ExternalLink className="size-3.5 shrink-0 text-slate-300" />
+                    </p>
                     <div className="flex items-center justify-between">
                       <span className={`text-caption font-bold uppercase tracking-widest ${item.stock <= 0 ? 'text-red-500' : 'text-amber-500'}`}>
                         {item.stock <= 0 ? t('alerts.rupture') : t('alerts.remaining_stock', { count: item.stock })}
@@ -492,7 +536,7 @@ export default function StockIntelligence({
                         </span>
                       )}
                     </div>
-                  </div>
+                  </Link>
                 ))
               )}
             </div>

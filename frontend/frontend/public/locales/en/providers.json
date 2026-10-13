@@ -82,6 +82,7 @@
         "search_placeholder": "Search product in catalogue...",
         "no_result": "No product found in catalogue",
         "empty": "Catalogue is empty for this provider",
+        "open_product": "Open the {{name}} product sheet",
         "headers": {
             "cip": "CIP",
             "product": "Product",

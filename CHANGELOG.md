@@ -2,6 +2,192 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-10-13 — UX : « Détails flux » replié par défaut
+
+- La barre Détails flux (puces par mode, activité intervalle, solde opérationnel)
+  est repliée derrière un bouton bascule — contenu redondant avec les cartes KPI
+  et la ventilation déjà visible dans la modale de clôture.
+- Choix persisté (`localStorage journal_caisse_show_flow`).
+- Fichier : `caisse/JournalCaisseStats.tsx`.
+- Vérifié : TypeScript, ESLint, JournalCaisse.test 5/5, déploiement OK.
+
+## 2026-10-13 — UX : en-tête compact du Journal de caisse
+
+- Réorganisation en **2 lignes** au lieu de 3 : titre + statut de clôture +
+  actions sur la première ; segment Tout/Entrées/Sorties + recherche + mode +
+  caissier + dates sur la seconde.
+- Le bandeau de statut de clôture devient une **pastille compacte** (icône +
+  texte tronqué, détail au survol) — le blocage reste visible en permanence.
+- Libellés des boutons masqués sous `md` (icônes + tooltip) pour les petits
+  écrans type iPad.
+- Fichier : `caisse/JournalCaisseFilters.tsx`.
+- Vérifié : TypeScript OK, ESLint OK, JournalCaisse.test 5/5, build + déploiement
+  frontend OK (HTTP 200).
+
+## 2026-10-13 — UX Lot 5A : modales de caisse standardisées
+
+- **Clôture du Journal de caisse** : remplacement du `<dialog>` natif et de
+  l’écouteur clavier manuel par le `Dialog` shadcn/Radix (focus trap, Escape,
+  overlay, blocage du scroll et attributs ARIA natifs).
+- **Historique des clôtures** : migration des modales Détail de clôture et Détail
+  de session vers le même composant shadcn, avec `DialogTitle` et
+  `DialogDescription` sémantiques.
+- Aucun `<dialog>` HTML natif ne subsiste dans `src/`.
+- Le test Journal de caisse vérifie désormais le rôle `dialog` et la fermeture
+  par Escape.
+- Fichiers : `JournalCaisseClosingModal.tsx`, `HistoriqueClotures.tsx`,
+  `JournalCaisse.test.tsx`.
+- Vérifié : TypeScript OK, ESLint ciblé OK, test Journal de caisse 5/5 OK ;
+  suite complète 462/463 avec un timeout ponctuel de `ProduitShadcn`, puis test
+  de routes relancé seul 66/66 OK.
+
+## 2026-10-13 — UX Lot 4A : contraintes de caisse visibles
+
+- **Facturation** : l’action Encaisser affiche maintenant en permanence pourquoi
+  elle est indisponible (vérification en cours, aucun poste sélectionné ou aucune
+  caisse ouverte) et reste désactivée tant que la contrainte n’est pas levée.
+- **Clôture** : le Journal de caisse indique avant l’ouverture du dialogue si un
+  caissier doit être sélectionné, si sa session active bloque la clôture ou si la
+  clôture est disponible.
+- **Dialogue de clôture** : la raison bloquante reste visible près de l’action de
+  confirmation (session active ou montant réel/billetage manquant), avec un état
+  positif lorsque toutes les informations requises sont présentes.
+- Traductions fr/en ajoutées dans `facturation.json` et `cash_journal.json`.
+- Fichiers principaux : `useFacturationState.ts`, `ActionButtons.tsx`,
+  `FacturationRightPanel.tsx`, `JournalCaisseFilters.tsx` et
+  `JournalCaisseClosingModal.tsx`.
+- Vérifié : TypeScript OK, ESLint ciblé OK, 13 tests ciblés OK et 463 tests
+  Vitest OK.
+
+## 2026-10-13 — 🗂️ UX Lot 3C : hubs Stock et Rapports
+
+- **Pages hub** : `hubs/FeatureHub.tsx` affiche les fonctionnalités d’un domaine
+  en tuiles regroupées par sous-section, filtrées selon les permissions.
+- **Nouvelles routes** : `/app/stock` (Centre Stock) et `/app/rapports`
+  (Centre de Rapports), protégées par `PermissionRoute`.
+- **Entrées « Vue d’ensemble »** en tête des sous-menus Stock et Statistiques.
+- **Logique partagée** : `filterNavItemsForUser` et `groupNavSubMenus` exportés
+  de `navConfig.tsx` — sidebar et hubs utilisent la même source.
+- Hubs indexés dans `APP_PAGES` (Omnisearch + titre de page) et traduits fr/en.
+- Fichiers : `hubs/FeatureHub.tsx`, `navConfig.tsx`, `routes.tsx`,
+  `appPages.ts`, `Sidebar.tsx`, locales `sidebar` fr/en.
+- Vérifié : TypeScript OK, ESLint ciblé OK, 462 tests Vitest OK, build
+  production OK, déploiement frontend OK (HTTP 200).
+
+## 2026-10-13 — 🧭 UX Lot 3A/3B : navigation centralisée et regroupée
+
+- **Config unique** : `src/config/navConfig.tsx` centralise les entrées de la
+  sidebar (chemin, clé i18n, permission, catégorie, icône, alias hérités,
+  groupes). `Sidebar.tsx` consomme cette carte au lieu d’une liste inline.
+- **Permissions data-driven** : `aliasPermissions` et `adminOnly` remplacent les
+  cas codés en dur ; le comportement d’accès existant est préservé.
+- **Commandes fusionnées** : « Commandes Locales » et « Commandes Directes »
+  deviennent un parent unique **Commandes** avec sous-sections
+  « Locales (Grossistes) » et « Directes (Étranger) ». Chemins et clés de
+  permission inchangés.
+- **Regroupement des sous-menus** : Stock (12 entrées) en « Opérations » /
+  « Pilotage & Analyse », Statistiques (10 entrées) en « Ventes & Performance » /
+  « Finance & Produits ». En-têtes affichés en mode étendu et dans les menus
+  flottants du mode réduit.
+- Fichiers : `navConfig.tsx`, `Sidebar.tsx`, locales `sidebar` fr/en.
+- Vérifié : TypeScript OK, ESLint ciblé OK, 461 tests Vitest OK, build
+  production OK, déploiement frontend OK (HTTP 200). Reste 3C : hubs
+  Stock/Rapports.
+
+## 2026-10-13 — 🔗 UX Lot 2B : alertes actionnables et liens 360°
+
+- **Deep-link produit fiable** : une fiche produit demandée depuis un autre module
+  est chargée directement par identifiant, même hors page courante. Les actions
+  `edit`, `adjust` et `movements` sont exécutées après ouverture.
+- **Commandes** : les actions Modifier, Ajuster et Mouvements de la modale produit
+  renvoient maintenant vers la fiche Produits au lieu de rester sans effet.
+- **Alertes dashboard** : ruptures, stock dormant, surstock, lots expirants et
+  promis ouvrent le produit ou l’écran métier correspondant.
+- **Péremption** : les toasts gagnent une action « Voir », les alertes ouvrent
+  produit/fournisseur, et les tables Périmés proposent les mêmes liens contextuels.
+- **Fournisseurs** : le catalogue fournisseur permet d’ouvrir directement chaque
+  fiche produit.
+- **API** : `stock-lots/alerts_expiration` retourne `fournisseur_id` pour éviter
+  une recherche supplémentaire.
+- **Correctif runtime** : les toasts de péremption sont montés dans `Layout`,
+  à l’intérieur du routeur, pour conserver la navigation SPA. Le bouton « Voir »
+  ouvre directement `/app/perimes?tab=list&expired=false&days=30` (Lots à risque,
+  « Déjà périmés » décoché).
+- Fichiers principaux : `useProduitPage.ts`, `Commandes.tsx`,
+  `StockIntelligence.tsx`, `ExpirationAlertsWidget.tsx`, `ExpirationAlertToast.tsx`,
+  `Perimes.tsx`, `FournisseurDetails.tsx`, `stock_lots.py` et locales `dashboard`,
+  `stock`, `providers`.
+- Vérifié : TypeScript OK, ESLint ciblé OK, 7 tests Django périmés OK, assertion
+  Vitest de lien produit ajoutée, 461 tests Vitest OK, déploiement frontend + backend OK.
+
+## 2026-10-13 — ✨ UX Lot 2A : accès rapide à l’information
+
+- **Recherche globale** : le header affiche maintenant un déclencheur visible
+  « Rechercher produits, clients, pages… Ctrl K », partagé avec l’Omnisearch via
+  `OmnisearchContext`.
+- **Contexte de page** : le header indique la catégorie et le titre de l’écran
+  courant, avec affichage compact sur petit écran.
+- **Pages recherchables** : `APP_PAGES` centralise chemin, titre, catégorie,
+  permissions et synonymes ; l’Omnisearch filtre les fonctionnalités accessibles
+  et ajoute un aperçu de page.
+- Traductions FR/EN ajoutées pour la recherche, les pages et les nouveaux titres.
+- Fichiers principaux : `Layout.tsx`, `OmnisearchContext.tsx`, `appPages.ts`,
+  `GlobalSearchTrigger.tsx`, `PageTitle.tsx`, `useOmnisearch.ts`,
+  `OmnisearchResults.tsx`, `OmnisearchPreview.tsx`, locales `common`/`sidebar`.
+
+## 2026-10-13 — 🛠️ UX Lot 1 complément : périmés et fournisseurs
+
+- **Stock périmé** : la sortie individuelle conserve le dialogue quantité ; la sortie
+  groupée demande maintenant une confirmation récapitulant lots et quantité totale
+  avant validation sudo `can_manage_perimes`.
+- **Restauration périmée** : nouvel endpoint `stock-adjustments/{id}/restaurer_sortie_perimee/`
+  et action Historique **Ramener en stock**. L’opération est transactionnelle,
+  verrouillée, limitée aux sorties `PERIME`, idempotente (409 au second essai) et
+  trace un ajustement inverse + un mouvement `RETOUR` + audit sudo.
+- **Fournisseurs** : `include_inactive=false` exclut réellement les fournisseurs
+  inactifs/supprimés ; une fiche devenue inactive disparaît de la sélection ; la
+  suppression individuelle et groupée ignorent les enregistrements déjà supprimés.
+- **Produits** : le filtre de rangement **Fournisseur** est remplacé par **Forme** ;
+  Rayon et Forme peuvent être combinés selon l’organisation de la pharmacie.
+- Vérifié : `manage.py check` OK, 11 tests Django ciblés OK, TypeScript et ESLint
+  ciblés OK, 461 tests Vitest OK, build production OK.
+- Fichiers principaux : `Perimes.tsx`, `adjustments.py`, `inventory.py`,
+  `fournisseurs.py`, `ProductListPanel.tsx`, `produitService.ts`,
+  `test_expired_lot_handling.py`, `test_fournisseur_visibility.py`,
+  `catalog.ts`, locales `stock`/`products`, rapport UX.
+
+## 2026-10-13 — ✨ UX Lot 1 : confiance, cohérence et accès sécurisé
+
+- **Produits** : suppression de la sélection multiple sans action ; filtres Rayon et
+  Fournisseur rendus accessibles ; dialogues shadcn validés à la place des `prompt()`
+  pour les étiquettes et le transfert réserve→rayon.
+- **Stock périmé** : sortie de lot via le même dialogue quantité accessible avant la
+  validation sudo, avec borne maximale visible.
+- **Commandes / Facturation** : action Imprimer inopérante retirée ; faux raccourci
+  `Esc` retiré d’Annuler (Escape conserve son rôle de fermeture contextuelle).
+- **Omnisearch** : fournisseur → fiche Fournisseur ; actions, liens et groupes de
+  résultats filtrés selon les permissions ; `Ctrl/Cmd+K` fonctionne depuis un champ.
+- **Sidebar** : permissions Planning/Maintenance/Corbeille alignées avec les routes ;
+  sous-menus avec états ARIA et accès clavier en mode réduit ; traductions fr/en.
+- Vérifié : TypeScript et ESLint ciblé OK, build production OK, 461 tests Vitest OK.
+  Lint global : 29 erreurs préexistantes hors périmètre.
+- Fichiers principaux : `ProductListPanel.tsx`, `useProduitPage.ts`,
+  `QuantityInputDialog.tsx`, `Perimes.tsx`, `CommandeList.tsx`,
+  `OmnisearchResults.tsx`, `useOmnisearch.ts`, `ActionButtons.tsx`, `Sidebar.tsx`,
+  locales `products`/`sidebar`, rapport UX.
+
+## 2026-10-13 — 🔍 Audit UX des workflows et de l’accès à l’information
+
+- Audit en lecture seule mené en parallèle sur quatre axes : vente/caisse,
+  produits-stock-commandes, navigation globale et cohérence transversale.
+- Principaux constats : navigation trop dense (~50 destinations), recherche globale
+  peu découvrable, ventes suspendues locales au navigateur, encaissement caisse non
+  atomique, actions/filtres visibles mais inopérants, dialogues natifs dans des flux
+  métier et liens contextuels incomplets entre entités.
+- Priorisation P0/P1/P2, architecture cible, workflows cibles et feuille de route
+  enregistrés dans `docs/AUDIT_UX_2026-10-13.md` ; aucune modification fonctionnelle.
+- Fichiers touchés : `docs/AUDIT_UX_2026-10-13.md`, `CHANGELOG.md`.
+
 ## 2026-10-12 — 🐛 Fix : les services déclenchaient le modal promis
 
 - **Symptôme** : vendre un service (`type_produit = SERVICE`, stock non géré)
