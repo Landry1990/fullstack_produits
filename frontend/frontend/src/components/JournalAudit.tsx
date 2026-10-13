@@ -15,6 +15,7 @@ import { Badge } from './shadcn/badge';
 import { Select } from './shadcn/select';
 import { Input } from './shadcn/input';
 import { Card } from './shadcn/card';
+import { ErrorState } from './ui/ErrorState';
 import {
   Dialog,
   DialogContent,
@@ -28,7 +29,7 @@ import {
   ClipboardList, Search, Download, RotateCcw, ChevronDown, ChevronUp,
   TrendingUp, Shield, PackagePlus, PackageMinus, Loader2, XCircle, Trash2,
   CheckCircle2, Boxes, ArrowDownToLine, BadgeAlert, Edit, LogIn, FileOutput,
-  Settings, AlertTriangle, Activity, Filter,
+  Settings, Activity, Filter,
 } from 'lucide-react';
 
 interface LogDetails {
@@ -209,7 +210,7 @@ const JournalAudit: React.FC = () => {
         <Button variant="outline" size="sm" onClick={() => setShowFilters(v => !v)}><Filter className="size-3.5" />{t('filters.button')}{hasActiveFilters && <span className="size-1.5 rounded-full bg-orange-400" />}</Button>
       </div>
     </div>
-    {error && <div className="flex gap-2 p-3 rounded-xl bg-red-50 border border-red-200 mb-4 text-sm text-red-700"><AlertTriangle className="size-4" />{t('messages.load_error')}</div>}
+    {error && <ErrorState error={t('messages.load_error')} onRetry={fetchAll} className="mb-4" />}
     {statistics && <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">{[
       ['stats.total', formatNumber(statistics.total_logs), 'stats.all_time'], ['stats.last_24h', statistics.recent_activity.last_24h, 'stats.today'],
       ['stats.last_7d', statistics.recent_activity.last_7d, 'stats.this_week'], ['stats.last_30d', statistics.recent_activity.last_30d, 'stats.this_month'],
