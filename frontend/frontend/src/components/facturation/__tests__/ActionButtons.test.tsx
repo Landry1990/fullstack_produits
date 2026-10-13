@@ -78,6 +78,14 @@ describe('ActionButtons', () => {
     expect(screen.getByText(/Suspendre la vente/i).closest('button')).toBeDisabled()
   })
 
+  it('affiche la raison et désactive l’encaissement quand la caisse est indisponible', () => {
+    render(<ActionButtons {...defaultProps} unavailableReason="Aucune caisse ouverte" />)
+
+    expect(screen.getByRole('status')).toHaveTextContent('Aucune caisse ouverte')
+    expect(screen.getAllByRole('button', { name: /Valider/i })[0]).toBeDisabled()
+    expect(mockOnPayment).not.toHaveBeenCalled()
+  })
+
   // Supprimé car pendingCount n'existe plus dans ActionButtonsProps
   /*
   it('n\'affiche pas le bouton En attente quand pendingCount est 0', () => {

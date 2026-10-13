@@ -413,6 +413,13 @@ export function useFacturationState() {
   const isPosteCaisseActive = Boolean(multiCaisse.myActivePoste)
   const hasActiveCaisse = multiCaisse.activePostesVente.some((p) => !!p.caisse)
   const hasMyActivePoste = multiCaisse.activePostesVente.some((p) => p.vendeur === user?.id)
+  const paymentUnavailableReason = multiCaisse.multiCaisseLoading
+    ? t('facturation:messages.checking_cash_register')
+    : !isPosteCaisseActive
+      ? t('facturation:messages.no_active_sales_station')
+      : multiCaisse.centralizedCashRegister && !hasActiveCaisse
+        ? t('facturation:messages.no_cash_register_open')
+        : null
 
   // --- Complete Sale Handler ---
   const handleCompleteSale = async (sudoCredentials?: { validatorId: number, password: string }) => {
@@ -814,6 +821,7 @@ export function useFacturationState() {
     activePoste: multiCaisse.myActivePoste,
     isPosteCaisseActive,
     hasMyActivePoste,
+    paymentUnavailableReason,
     allPostes: multiCaisse.postesCaisses,
     lignesFacture: cart.lignesFacture,
     sortedLignes,

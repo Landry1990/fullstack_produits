@@ -76,7 +76,7 @@ export default function UserHeader() {
 
   return (
     <>
-      <header className="flex items-center justify-end w-full">
+      <header className="flex items-center justify-end">
         <div className="flex items-center gap-2">
           
           {/* Notifications / Messages Bell */}

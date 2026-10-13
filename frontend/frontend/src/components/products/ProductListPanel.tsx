@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Package, Search, X } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import type { ProduitModel } from '../../types';
+import type { ProduitModel, Rayon, Forme } from '../../types';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -30,16 +30,18 @@ interface ProductListPanelProps {
   onShowInStockOnlyChange: (v: boolean) => void;
   showInactive: boolean;
   onShowInactiveChange: (v: boolean) => void;
+  filterRayon: string;
+  onFilterRayonChange: (v: string) => void;
+  filterForme: string;
+  onFilterFormeChange: (v: string) => void;
+  rayons: Rayon[];
+  formes: Forme[];
   hasActiveFilters: boolean;
   hasFilterRayon: boolean;
-  hasFilterFournisseur: boolean;
+  hasFilterForme: boolean;
   onResetFilters: () => void;
   selectedProduit: ProduitModel | null;
   onSelectProduit: (p: ProduitModel) => void;
-  selectedIds: number[];
-  setSelectedIds: React.Dispatch<React.SetStateAction<number[]>>;
-  isAllSelected: boolean;
-  isPartial: boolean;
   totalCount: number;
   lowStockCount: number;
   outOfStockCount: number;
@@ -54,16 +56,16 @@ export const ProductListPanel: React.FC<ProductListPanelProps> = ({
   searchQuery, onSearchChange,
   showInStockOnly, onShowInStockOnlyChange,
   showInactive, onShowInactiveChange,
-  hasActiveFilters, hasFilterRayon, hasFilterFournisseur, onResetFilters,
+  filterRayon, onFilterRayonChange,
+  filterForme, onFilterFormeChange,
+  rayons, formes,
+  hasActiveFilters, hasFilterRayon, hasFilterForme, onResetFilters,
   selectedProduit, onSelectProduit,
-  selectedIds, setSelectedIds,
-  isAllSelected, isPartial,
   totalCount, lowStockCount, outOfStockCount,
   page, totalPages, onPageChange,
   onNewProduct,
 }) => {
   const { t } = useTranslation(['products', 'common']);
-  const selectedSet = new Set(selectedIds);
 
   return (
     <>
@@ -79,6 +81,27 @@ export const ProductListPanel: React.FC<ProductListPanelProps> = ({
             className="pl-10"
             autoFocus
           />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
+          <select
+            value={filterRayon}
+            onChange={e => onFilterRayonChange(e.target.value)}
+            aria-label={t('products:filters.rayon')}
+            className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700"
+          >
+            <option value="">{t('products:filters.all_rayons')}</option>
+            {rayons.map(rayon => <option key={rayon.id} value={rayon.id}>{rayon.name}</option>)}
+          </select>
+          <select
+            value={filterForme}
+            onChange={e => onFilterFormeChange(e.target.value)}
+            aria-label={t('products:filters.forme')}
+            className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700"
+          >
+            <option value="">{t('products:filters.all_formes')}</option>
+            {formes.map(forme => <option key={forme.id} value={forme.id}>{forme.nom}</option>)}
+          </select>
         </div>
 
         <div className="flex flex-wrap items-center gap-3 mt-3">
@@ -101,7 +124,7 @@ export const ProductListPanel: React.FC<ProductListPanelProps> = ({
         {hasActiveFilters && (
           <div className="flex flex-wrap gap-1.5 mt-2">
             {hasFilterRayon && <Badge variant="secondary" size="sm">{t('products:filters.rayon_active')}</Badge>}
-            {hasFilterFournisseur && <Badge variant="warning" size="sm">{t('products:filters.provider_active')}</Badge>}
+            {hasFilterForme && <Badge variant="warning" size="sm">{t('products:filters.forme_active')}</Badge>}
             {showInactive && <Badge variant="ghost" size="sm">{t('products:filters.inactive_only')}</Badge>}
             {showInStockOnly && <Badge variant="success" size="sm">{t('products:filters.in_stock_only', { defaultValue: 'En stock' })}</Badge>}
           </div>
@@ -113,7 +136,6 @@ export const ProductListPanel: React.FC<ProductListPanelProps> = ({
         {/* Table Header */}
         <div className="shrink-0 px-4 py-3 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-            <Checkbox size="sm" checked={isAllSelected} indeterminate={isPartial} onChange={() => setSelectedIds(prev => prev.length === produits.length ? [] : produits.map(p => p.id))} aria-label={t('products:table.select_all')} />
             <span>{t('products:table.cip')}</span>
             <span className="ml-6">{t('products:table.product', { defaultValue: 'Produit' })}</span>
           </div>
@@ -141,7 +163,6 @@ export const ProductListPanel: React.FC<ProductListPanelProps> = ({
                 {produits.map(produit => {
                   const stock = produit.stock ?? 0
                   const isSelected = selectedProduit?.id === produit.id
-                  const isChecked = selectedSet.has(produit.id)
                   return (
                     <tr
                       key={produit.id}
@@ -157,15 +178,10 @@ export const ProductListPanel: React.FC<ProductListPanelProps> = ({
                         }
                       }}
                       className={`cursor-pointer transition-colors ${
-                        isSelected ? 'bg-emerald-50 border-l-2 border-l-emerald-500' :
-                        isChecked ? 'bg-emerald-50/50' :
-                        'hover:bg-slate-50'
+                        isSelected ? 'bg-emerald-50 border-l-2 border-l-emerald-500' : 'hover:bg-slate-50'
                       }`}
                     >
-                      <td className="py-2 px-4 w-10" onClick={e => e.stopPropagation()}>
-                        <Checkbox size="sm" checked={isChecked} aria-label={produit.name} onChange={() => setSelectedIds(prev => { const s = new Set(prev); return s.has(produit.id) ? prev.filter(id => id !== produit.id) : [...prev, produit.id]; })} />
-                      </td>
-                      <td className="py-2 px-2 w-36">
+                      <td className="py-2 px-4 w-36">
                         <div className="font-mono text-xs text-slate-500">
                           {[produit.cip1, produit.cip2, produit.cip3, produit.cip4].filter(Boolean).join(' • ') || '-'}
                         </div>

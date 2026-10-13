@@ -22,6 +22,7 @@ export default function Omnisearch() {
     factures,
     commandes,
     fournisseurs,
+    searchablePages,
     onSelectLink,
     onSelectAction,
     onSelectProduit,
@@ -72,6 +73,7 @@ export default function Omnisearch() {
                 factures={factures}
                 commandes={commandes}
                 fournisseurs={fournisseurs}
+                searchablePages={searchablePages}
                 onSelectAction={onSelectAction}
                 onSelectLink={onSelectLink}
                 onSelectProduit={onSelectProduit}

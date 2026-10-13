@@ -19,6 +19,7 @@ import type { TFunction } from 'i18next';
 import { Card, CardContent } from '../shadcn/card';
 import { Badge } from '../shadcn/badge';
 import type { ProduitModel, Client, Facture, Commande, Fournisseur } from '../../types';
+import type { AppPage } from '../../config/appPages';
 import { formatDate } from '../../utils/dateUtils';
 
 interface SelectedItem {
@@ -59,6 +60,8 @@ export default function OmnisearchPreview({ selectedItem }: Props) {
       return <CommandePreview data={selectedItem.data as Commande | undefined} t={t} />;
     case 'fournisseur':
       return <FournisseurPreview data={selectedItem.data as Fournisseur | undefined} t={t} />;
+    case 'page':
+      return <PagePreview data={selectedItem.data as AppPage | undefined} t={t} />;
     default:
       return <EmptyPreview t={t} />;
   }
@@ -366,6 +369,37 @@ function FournisseurPreview({ data, t }: { data?: Fournisseur; t: TFunction }) {
           <span className={`text-micro ${fieldLabel}`}>{t('omnisearch.preview.address')}</span>
           <p className="text-sm font-semibold leading-relaxed">{data.address || '-'}</p>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/* ==================== PAGE PREVIEW ==================== */
+function PagePreview({ data, t }: { data?: AppPage; t: TFunction }) {
+  if (!data) return <EmptyPreview t={t} />;
+
+  return (
+    <div className="p-8 space-y-8 h-full flex flex-col">
+      <div className="space-y-4">
+        <div className={previewIcon}>
+          <LayoutDashboard className="size-10 text-emerald-600" />
+        </div>
+        <div>
+          <h3 className={previewTitle}>{t(`sidebar:${data.titleKey}`)}</h3>
+          <div className="flex flex-wrap gap-2 mt-3">
+            <Badge variant="secondary" className="text-xs font-semibold">
+              {t(`sidebar:categories.${data.category}`)}
+            </Badge>
+            <Badge variant="outline" className="text-xs font-semibold">
+              {data.path}
+            </Badge>
+          </div>
+        </div>
+      </div>
+      <div className="mt-auto p-4 bg-emerald-50/50 rounded-2xl border border-emerald-200">
+        <p className="text-caption font-semibold text-emerald-700/70 uppercase tracking-wide">
+          {t('omnisearch.preview.open_page', 'Entrée pour ouvrir cette page')}
+        </p>
       </div>
     </div>
   );

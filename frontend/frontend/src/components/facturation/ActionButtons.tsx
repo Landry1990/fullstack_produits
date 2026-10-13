@@ -18,6 +18,7 @@ interface BaseActionProps {
   setIsFactureA4?: (v: boolean) => void
   onScanOrdonnance?: () => void
   loading?: boolean
+  unavailableReason?: string | null
 }
 
 interface ActionButtonsProps extends BaseActionProps {
@@ -37,6 +38,7 @@ function SidebarActions({
   setIsFactureA4,
   onScanOrdonnance,
   loading = false,
+  unavailableReason,
 }: BaseActionProps) {
   const { t } = useTranslation(['facturation', 'common'])
 
@@ -92,9 +94,16 @@ function SidebarActions({
       </div>
 
       {/* Primary Payment Action */}
+      {unavailableReason && (
+        <div role="status" className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
+          <CreditCard className="mt-0.5 size-4 shrink-0" />
+          <span>{unavailableReason}</span>
+        </div>
+      )}
       <Button
         onClick={onPayment}
-        disabled={!isValid || loading}
+        disabled={!isValid || loading || !!unavailableReason}
+        title={unavailableReason || t('facturation:actions.pay_tooltip')}
         className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20 relative"
       >
         <div className="flex items-center justify-center gap-2 pr-10">
@@ -114,7 +123,7 @@ function SidebarActions({
         onClick={onCancel}
         className="h-8 text-xs text-slate-400 hover:text-red-600 hover:bg-red-50 uppercase font-semibold tracking-wide"
       >
-        {t('facturation:actions.cancel')} (Esc)
+        {t('facturation:actions.cancel')}
       </Button>
     </div>
   )
@@ -133,6 +142,7 @@ function FooterActions({
   setIsFactureA4,
   onScanOrdonnance,
   loading = false,
+  unavailableReason,
 }: ActionButtonsProps) {
   const { t } = useTranslation(['facturation', 'common'])
 
@@ -206,17 +216,23 @@ function FooterActions({
             >
               <X className="size-4" />
               <span className="text-xs uppercase font-semibold">{t('facturation:actions.cancel')}</span>
-              <kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-micro font-mono text-slate-600 ml-auto">Esc</kbd>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
         {/* PRIMARY ACTION: PAYMENT */}
+        <div className="flex flex-1 max-w-md flex-col gap-1">
+        {unavailableReason && (
+          <div role="status" className="flex items-center gap-1.5 text-caption font-medium text-amber-700">
+            <CreditCard className="size-3.5 shrink-0" />
+            <span>{unavailableReason}</span>
+          </div>
+        )}
         <Button
           onClick={onPayment}
-          disabled={!isValid || loading}
-          className="flex-1 max-w-md h-10 sm:h-11 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20 hover:shadow-emerald-600/30 transition-all active:scale-95"
-          title={t('facturation:actions.pay_tooltip')}
+          disabled={!isValid || loading || !!unavailableReason}
+          className="w-full h-10 sm:h-11 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20 hover:shadow-emerald-600/30 transition-all active:scale-95"
+          title={unavailableReason || t('facturation:actions.pay_tooltip')}
         >
           {loading ? (
             <span className="size-4 sm:size-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -226,6 +242,7 @@ function FooterActions({
           <span className="font-bold text-xs sm:text-base uppercase tracking-wider">{t('facturation:actions.pay')}</span>
           <kbd className="hidden sm:flex px-2 py-0.5 bg-emerald-700 rounded text-caption font-mono text-white/80">F9</kbd>
         </Button>
+        </div>
       </div>
     </div>
   )

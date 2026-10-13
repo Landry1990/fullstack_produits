@@ -14,6 +14,7 @@ import { usePharmacySettings, useDocumentLocale } from '../hooks/usePharmacySett
 import { useAuth } from '../context/AuthContext'
 import { Button } from './shadcn/button'
 import { Badge } from './shadcn/badge'
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from './shadcn/dialog'
 import { cn } from '../lib/utils'
 import PaginationControls from './ui/PaginationControls'
 
@@ -1173,18 +1174,18 @@ export default function HistoriqueClotures() {
       </div>
 
       {/* Modal détails */}
+      <Dialog open={!!selectedCloture} onOpenChange={(open) => !open && setSelectedCloture(null)}>
       {selectedCloture && (
-        <dialog open aria-labelledby="cloture-detail-title" onKeyDown={(e) => { if (e.key === 'Escape') setSelectedCloture(null) }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm w-full h-full p-0 m-0 border-none">
-          <div className="w-full max-w-xl p-0 overflow-hidden rounded-2xl bg-white shadow-2xl max-h-[90vh] flex flex-col">
+          <DialogContent hideCloseButton size="lg" className="p-0 gap-0 overflow-hidden rounded-2xl bg-white shadow-2xl max-h-[90vh] flex flex-col">
             <div className="bg-emerald-600 p-6 text-white shrink-0">
-              <h3 id="cloture-detail-title" className="font-bold text-xl flex items-center gap-3">
+              <DialogTitle className="font-bold text-xl flex items-center gap-3">
                 <Banknote className="size-6" />
                 {t('modal.title')}
-              </h3>
-              <p className="opacity-80 text-sm mt-1 pb-1">
+              </DialogTitle>
+              <DialogDescription className="text-emerald-100 text-sm mt-1 pb-1">
                 {t('modal.cash_of', { name: selectedCloture.user_name || selectedCloture.username || t('common:unknown') })}
                 {selectedCloture.cloture_par_name && t('modal.closed_by', { name: selectedCloture.cloture_par_name })}
-              </p>
+              </DialogDescription>
             </div>
 
             <div className="p-6 space-y-6 overflow-y-auto">
@@ -1358,24 +1359,24 @@ export default function HistoriqueClotures() {
                 {t('modal.close')}
               </Button>
             </div>
-          </div>
-        </dialog>
+          </DialogContent>
       )}
+      </Dialog>
         </>
       )}
 
       {/* Modal Détail Session de Caisse */}
+      <Dialog open={!!selectedSession} onOpenChange={(open) => !open && setSelectedSession(null)}>
       {selectedSession && (
-        <dialog open aria-labelledby="session-detail-title" onKeyDown={(e) => { if (e.key === 'Escape') setSelectedSession(null) }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm w-full h-full p-0 m-0 border-none">
-          <div className="w-full max-w-lg p-0 overflow-hidden rounded-2xl bg-white shadow-2xl max-h-[90vh] flex flex-col">
-            <div className={cn("p-6 shrink-0", selectedSession.est_actif ? 'bg-emerald-600 text-white' : 'bg-emerald-600 text-white')}>
-              <h3 id="session-detail-title" className="font-bold text-xl flex items-center gap-3">
+          <DialogContent hideCloseButton size="md" className="p-0 gap-0 overflow-hidden rounded-2xl bg-white shadow-2xl max-h-[90vh] flex flex-col">
+            <div className="p-6 shrink-0 bg-emerald-600 text-white">
+              <DialogTitle className="font-bold text-xl flex items-center gap-3">
                 <Clock className="size-6" />
                 {t('sessions.modal.title')}
-              </h3>
-              <p className="opacity-80 text-sm mt-1">
+              </DialogTitle>
+              <DialogDescription className="text-emerald-100 text-sm mt-1">
                 {selectedSession.poste_nom} — {selectedSession.ouvert_par_name}
-              </p>
+              </DialogDescription>
             </div>
 
             <div className="p-6 space-y-5 overflow-y-auto">
@@ -1447,9 +1448,9 @@ export default function HistoriqueClotures() {
                 {t('modal.close')}
               </Button>
             </div>
-          </div>
-        </dialog>
+          </DialogContent>
       )}
+      </Dialog>
     </div>
   )
 }

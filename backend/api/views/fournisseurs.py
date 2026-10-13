@@ -46,7 +46,8 @@ class FournisseurViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        if not self.request.query_params.get('include_inactive'):
+        include_inactive = self.request.query_params.get('include_inactive', '').lower() in {'1', 'true', 'yes'}
+        if not include_inactive:
             queryset = queryset.filter(is_active=True)
         return annotate_supplier_debt(queryset)
 
@@ -366,7 +367,7 @@ class FournisseurViewSet(viewsets.ModelViewSet):
             
         try:
             with transaction.atomic():
-                fournisseurs = Fournisseur.objects.filter(id__in=ids)
+                fournisseurs = Fournisseur.objects.filter(id__in=ids, is_active=True)
                 names = list(fournisseurs.values_list('name', flat=True))
                 count = fournisseurs.count()
                 fournisseurs.update(is_active=False, deleted_at=timezone.now(), deleted_by=validation_user)

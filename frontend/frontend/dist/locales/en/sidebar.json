@@ -1,4 +1,5 @@
 {
+    "navigation_label": "Main navigation",
     "dashboard": "Dashboard",
     "manager_sidebar": "Manager Dashboard",
     "teams_report_sidebar": "Team Report",
@@ -43,6 +44,7 @@
     "creances": "Debts",
     "stock": {
         "title": "Stock",
+        "overview": "Overview",
         "inventaire": {
             "title": "Inventory"
         },
@@ -56,6 +58,7 @@
         "reappro": {
             "title": "Shelf Restocking"
         },
+        "reappro_history": "Restocking History",
         "ruptures": {
             "title": "Shortage Tracking"
         },
@@ -91,6 +94,7 @@
     "audit": "Audit Log",
     "statistiques": {
         "title": "Statistics",
+        "overview": "Overview",
         "rapports": "Report Center",
         "abc": "ABC Analysis",
         "marges_produit": "Margins by Product",
@@ -122,6 +126,7 @@
         "admin_system": "System Administration"
     },
     "maintenance": "Maintenance",
+    "import_dci": "DCI Import",
     "sauvegardes": "Backups",
     "corbeille": "Recycle Bin",
     "aide_formation": "Help and Training",
@@ -134,6 +139,7 @@
     "divers": {
         "title": "Miscellaneous",
         "ca": "Misc Revenue",
+        "stock": "Misc Stock",
         "commandes": "Misc Orders"
     },
     "changelog": "What's new?",
@@ -146,6 +152,20 @@
         "stock": "Stock & Inventory",
         "rapports": "Reports & Analytics",
         "parametres": "Settings & Admin"
+    },
+    "hub": {
+        "stock_title": "Stock Center",
+        "stock_subtitle": "All stock operations and analyses in one place",
+        "rapports_title": "Reports Center",
+        "rapports_subtitle": "Statistics, finance and activity analytics"
+    },
+    "menu_groups": {
+        "commandes_locales": "Local (Wholesalers)",
+        "commandes_directes": "Direct (Import)",
+        "stock_operations": "Operations",
+        "stock_pilotage": "Steering & Analysis",
+        "stats_ventes": "Sales & Performance",
+        "stats_finance": "Finance & Products"
     },
     "toggle_menu": "Toggle menu",
     "close_menu": "Close menu",

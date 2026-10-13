@@ -1,5 +1,5 @@
-import React from 'react';
-import { ArrowUpRight, ArrowDownRight, Banknote, CreditCard, Wallet } from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowUpRight, ArrowDownRight, Banknote, CreditCard, Wallet, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatCurrency, normalizeNumberInput } from '../../utils/formatters';
 import type { useJournalCaisse } from '../../hooks/useJournalCaisse';
 import { cn } from '../../lib/utils';
@@ -11,6 +11,13 @@ interface Props {
 
 export default function JournalCaisseStats({ state }: Props) {
   const { t, serverTotals, totauxParMode, canViewCashTotals } = state;
+  const [showFlowDetails, setShowFlowDetails] = useState(
+    () => localStorage.getItem('journal_caisse_show_flow') === '1'
+  );
+  const toggleFlowDetails = () => setShowFlowDetails(v => {
+    localStorage.setItem('journal_caisse_show_flow', v ? '0' : '1');
+    return !v;
+  });
 
   if (!canViewCashTotals) {
     return null;
@@ -90,9 +97,19 @@ export default function JournalCaisseStats({ state }: Props) {
         </div>
       </div>
 
-      {/* Adaptive Details Bar */}
+      {/* Adaptive Details Bar — replié par défaut (doublon des cartes + modale de clôture) */}
+      <button
+        type="button"
+        onClick={toggleFlowDetails}
+        aria-expanded={showFlowDetails}
+        className="inline-flex w-fit items-center gap-1.5 px-2.5 py-1 rounded-md border border-slate-200 bg-white text-caption font-black uppercase text-slate-400 hover:text-slate-600 hover:border-slate-300 transition-colors"
+      >
+        {t('stats.flow_details')}
+        {showFlowDetails ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
+      </button>
+
+      {showFlowDetails && (
       <div className="flex flex-wrap gap-2 items-center min-h-[28px]">
-        <span className="text-caption font-black uppercase text-slate-400 mr-2">{t('stats.flow_details')}</span>
 
         {/* Part 1: All payments breakdown (Sales + Recoveries) */}
         {Object.entries(serverTotals?.details || totauxParMode.global_par_mode).map(([mode, value]) => {
@@ -157,6 +174,7 @@ export default function JournalCaisseStats({ state }: Props) {
           </div>
         </div>
       </div>
+      )}
     </>
   );
 }

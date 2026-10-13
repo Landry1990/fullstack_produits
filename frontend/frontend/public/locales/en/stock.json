@@ -914,6 +914,8 @@
         "risk_lots": "At-Risk Lots",
         "no_result": "No at-risk lot found",
         "view_all_lots": "View all {{count}} lots →",
+        "view_product": "Open the {{name}} product sheet",
+        "view_supplier": "Open the {{name}} supplier sheet",
         "history": {
             "print": "Print",
             "excel": "Excel",
@@ -948,7 +950,18 @@
             "exit_title": "Stock Exit - Expired",
             "exit_message": "Confirm exit of <strong>{{qty}} units</strong> of product <strong>{{product}}</strong> (Lot {{lot}})?<br/><br/>This action is irreversible.",
             "bulk_exit_title": "Bulk Exit - Expired",
-            "bulk_exit_message": "Do you want to exit <strong>{{count}} lots</strong> from stock?<br/>Their stock will be set to 0."
+            "bulk_exit_message": "Do you want to exit <strong>{{count}} lots</strong> from stock?<br/>Their stock will be set to 0.",
+            "bulk_exit_summary": "You are about to empty {{count}} lot(s), totaling {{quantity}} unit(s). Confirm the stock exit?"
+        },
+        "restore": {
+            "title": "Return this exit to stock?",
+            "message": "{{quantity}} unit(s) of {{product}}, lot {{lot}}, will be returned to stock. This operation will be audited.",
+            "action": "Return to stock",
+            "restored": "Returned to stock",
+            "success": "The exit was returned to stock.",
+            "error": "Unable to return this exit to stock.",
+            "sudo_title": "Authorization required",
+            "sudo_message": "This operation changes stock and requires authorized validation."
         },
         "prompt": {
             "qty": "How many units do you want to exit from stock for lot {{lot}}? (Max: {{max}})"
@@ -1516,6 +1529,8 @@
         "days_filter": "{{days}}d",
         "view_all": "View all expired",
         "manage_perimes": "Manage expired products",
+        "open_product": "Open the {{name}} product sheet",
+        "open_supplier": "Open the {{name}} supplier sheet",
         "total_value": "{{count}} alert(s) • {{value}}"
     },
     "etats": {

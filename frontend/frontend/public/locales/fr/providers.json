@@ -82,6 +82,7 @@
         "search_placeholder": "Rechercher un produit dans le catalogue...",
         "no_result": "Aucun produit trouvé dans le catalogue",
         "empty": "Le catalogue de ce fournisseur est vide",
+        "open_product": "Ouvrir la fiche de {{name}}",
         "headers": {
             "cip": "CIP",
             "product": "Produit",

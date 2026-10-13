@@ -431,6 +431,7 @@
         "cancel": "Annuler"
     },
     "omnisearch": {
+        "trigger": "Rechercher produits, clients, pages…",
         "placeholder": "Rechercher (produits, clients, navigation)...",
         "empty": "Aucun résultat trouvé.",
         "searching": "Recherche en cours…",
@@ -439,6 +440,7 @@
         "groups": {
             "actions": "Actions Rapides",
             "navigation": "Navigation Rapide",
+            "pages": "Pages et fonctionnalités",
             "products": "Produits",
             "clients": "Clients",
             "invoices": "Factures / Ventes",
@@ -499,7 +501,8 @@
             "date": "Date",
             "unit": "unité",
             "more_items": "...et {{count}} article(s) supplémentaire(s)",
-            "open_detail_hint": "Cliquez ou appuyez sur Entrée pour ouvrir le détail"
+            "open_detail_hint": "Cliquez ou appuyez sur Entrée pour ouvrir le détail",
+            "open_page": "Entrée pour ouvrir cette page"
         }
     },
     "licence_toast": {

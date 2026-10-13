@@ -116,6 +116,8 @@
         "risk_lots": "Lots à Risque",
         "no_result": "Aucun lot à risque trouvé",
         "view_all_lots": "Voir tous les {{count}} lots →",
+        "view_product": "Ouvrir la fiche de {{name}}",
+        "view_supplier": "Ouvrir la fiche du fournisseur {{name}}",
         "history": {
             "print": "Imprimer",
             "excel": "Excel",
@@ -150,7 +152,18 @@
             "exit_title": "Sortie de stock - Périmés",
             "exit_message": "Confirmer la sortie de <strong>{{qty}} unités</strong> du produit <strong>{{product}}</strong> (Lot {{lot}}) ?<br/><br/>Cette action est irréversible.",
             "bulk_exit_title": "Sortie Groupée - Périmés",
-            "bulk_exit_message": "Voulez-vous sortir <strong>{{count}} lots</strong> du stock ?<br/>Leur stock passera à 0."
+            "bulk_exit_message": "Voulez-vous sortir <strong>{{count}} lots</strong> du stock ?<br/>Leur stock passera à 0.",
+            "bulk_exit_summary": "Vous allez vider entièrement {{count}} lot(s), soit {{quantity}} unité(s). Confirmer la sortie du stock ?"
+        },
+        "restore": {
+            "title": "Ramener cette sortie en stock ?",
+            "message": "{{quantity}} unité(s) de {{product}}, lot {{lot}}, seront remises en stock. Cette opération sera tracée.",
+            "action": "Ramener en stock",
+            "restored": "Ramené en stock",
+            "success": "La sortie a été ramenée en stock.",
+            "error": "Impossible de ramener cette sortie en stock.",
+            "sudo_title": "Validation requise",
+            "sudo_message": "Cette opération modifie le stock et nécessite une validation autorisée."
         },
         "prompt": {
             "qty": "Combien d'unités voulez-vous sortir du stock pour le lot {{lot}} ? (Max: {{max}})"
@@ -1516,6 +1529,8 @@
         "days_filter": "{{days}}j",
         "view_all": "Voir tous les périmés",
         "manage_perimes": "Gérer les produits périmés",
+        "open_product": "Ouvrir la fiche de {{name}}",
+        "open_supplier": "Ouvrir la fiche du fournisseur {{name}}",
         "total_value": "{{count}} alerte(s) • {{value}}"
     },
     "etats": {

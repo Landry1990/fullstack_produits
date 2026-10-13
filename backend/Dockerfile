@@ -57,8 +57,12 @@ COPY requirements.txt .
 # --mount=type=cache : le cache pip persiste sur l'hôte entre les builds,
 # évitant de tout re-télécharger depuis PyPI à chaque rebuild (utile si
 # la connexion internet du serveur est instable).
-RUN --mount=type=cache,target=/root/.cache/pip pip install -r requirements.txt
-RUN --mount=type=cache,target=/root/.cache/pip pip install gunicorn python-dotenv cython
+# --timeout/--retries élevés : même logique que les curl --retry ci-dessus,
+# évite qu'un ReadTimeout sur files.pythonhosted.org fasse échouer le build.
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --timeout 300 --retries 30 -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --timeout 300 --retries 30 gunicorn python-dotenv cython
 
 # Clé temporaire pour le build (sera remplacée au runtime)
 ENV DJANGO_SECRET_KEY=build-temp-key-not-for-production

@@ -1,10 +1,13 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useDebounce } from 'use-debounce';
 
 import omnisearchService, { type GlobalSearchResponse } from '../services/omnisearchService';
 import type { ProduitModel, Client, Facture, Commande, Fournisseur } from '../types';
+import { useAuth } from '../context/AuthContext';
+import { useOmnisearchOpen } from '../context/OmnisearchContext';
+import { APP_PAGES, type AppPage } from '../config/appPages';
 import { logger } from '../utils/logger'
 
 interface CacheEntry {
@@ -17,12 +20,16 @@ const MAX_CACHE_SIZE = 30;          // plus petit = moins de mémoire
 const MIN_SEARCH_LENGTH = 2;        // ne pas chercher avant 2 caractères
 const DEBOUNCE_MS = 300;
 
+const normalizeSearchText = (value: string) =>
+  value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
 export default function useOmnisearch() {
-  const [open, setOpen] = useState(false);
+  const { open, setOpen } = useOmnisearchOpen();
+  const { user } = useAuth();
   const [search, setSearch] = useState('');
   const [activeValue, setActiveValue] = useState<string | undefined>(undefined);
   const [debouncedSearch] = useDebounce(search, DEBOUNCE_MS);
-  const { t } = useTranslation('common');
+  const { t } = useTranslation(['common', 'sidebar']);
   const navigate = useNavigate();
 
   const [produits, setProduits] = useState<ProduitModel[]>([]);
@@ -39,14 +46,38 @@ export default function useOmnisearch() {
   // Ref pour suivre le dernier debouncedSearch traité et éviter les race conditions
   const lastProcessedRef = useRef<string>('');
 
+  const canAccessPage = useCallback((page: AppPage) => {
+    if (page.adminOnly) return Boolean(user?.is_superuser);
+    return Boolean(
+      user?.is_superuser ||
+      page.permissions.some((permission) => user?.allowed_menus?.includes(permission))
+    );
+  }, [user]);
+
+  const searchablePages = useMemo(() => {
+    const term = normalizeSearchText(search.trim());
+    if (!term) return [];
+
+    return APP_PAGES
+      .filter(canAccessPage)
+      .filter((page) => {
+        const title = normalizeSearchText(t(`sidebar:${page.titleKey}`));
+        const category = normalizeSearchText(t(`sidebar:categories.${page.category}`));
+        return (
+          title.includes(term) ||
+          category.includes(term) ||
+          page.keywords.some((keyword) => normalizeSearchText(keyword).includes(term))
+        );
+      })
+      .slice(0, 8);
+  }, [search, canAccessPage, t]);
+
   // Toggle au clavier (Ctrl+K ou Cmd+K) + fermeture par Escape
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       const activeElement = document.activeElement;
       const isInModal = activeElement?.closest('[role="dialog"]') !== null;
-      const isTyping = activeElement?.tagName === 'INPUT' || activeElement?.tagName === 'TEXTAREA';
-
-      if (e.code === 'KeyK' && (e.metaKey || e.ctrlKey) && !isTyping) {
+      if (e.code === 'KeyK' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         if (!isInModal || open) {
           setOpen((prev) => !prev);
@@ -60,7 +91,7 @@ export default function useOmnisearch() {
 
     document.addEventListener('keydown', down);
     return () => document.removeEventListener('keydown', down);
-  }, [open]);
+  }, [open, setOpen]);
 
   // Nettoyer les résultats quand on ferme
   useEffect(() => {
@@ -169,7 +200,7 @@ export default function useOmnisearch() {
 
   // Synchronisation auto de la sélection
   useEffect(() => {
-    if (!open || (!produits.length && !clients.length && !factures.length && !commandes.length && !fournisseurs.length)) {
+    if (!open || (!produits.length && !clients.length && !factures.length && !commandes.length && !fournisseurs.length && !searchablePages.length)) {
       setActiveValue(undefined);
       return;
     }
@@ -197,7 +228,9 @@ export default function useOmnisearch() {
           itemStillExists = fournisseurs.some((s) => s.id.toString() === currentId);
           break;
         default:
-          itemStillExists = !!activeValue?.startsWith('action-') || !!activeValue?.startsWith('nav-');
+          itemStillExists = activeValue?.startsWith('action-')
+            ? true
+            : searchablePages.some((page) => page.value === activeValue);
       }
     }
 
@@ -207,15 +240,16 @@ export default function useOmnisearch() {
       else if (factures.length > 0) setActiveValue(`facture-${factures[0].id}`);
       else if (commandes.length > 0) setActiveValue(`commande-${commandes[0].id}`);
       else if (fournisseurs.length > 0) setActiveValue(`fournisseur-${fournisseurs[0].id}`);
+      else if (searchablePages.length > 0) setActiveValue(searchablePages[0].value);
     }
-  }, [produits, clients, factures, commandes, fournisseurs, open, activeValue]);
+  }, [produits, clients, factures, commandes, fournisseurs, searchablePages, open, activeValue]);
 
   const onSelectLink = useCallback(
     (path: string) => {
       setOpen(false);
       navigate(path);
     },
-    [navigate]
+    [navigate, setOpen]
   );
 
   const onSelectAction = useCallback(
@@ -237,7 +271,7 @@ export default function useOmnisearch() {
         navigate('/app/cadencier');
       }
     },
-    [navigate]
+    [navigate, setOpen]
   );
 
   const onSelectProduit = useCallback(
@@ -245,7 +279,7 @@ export default function useOmnisearch() {
       setOpen(false);
       navigate('/app/produits', { state: { searchProduitId: id } });
     },
-    [navigate]
+    [navigate, setOpen]
   );
 
   const onSelectClient = useCallback(
@@ -253,7 +287,7 @@ export default function useOmnisearch() {
       setOpen(false);
       navigate('/app/clients', { state: { selectedClientId: id } });
     },
-    [navigate]
+    [navigate, setOpen]
   );
 
   const onSelectFacture = useCallback(
@@ -261,7 +295,7 @@ export default function useOmnisearch() {
       setOpen(false);
       navigate('/app/ventes', { state: { selectedFactureId: id } });
     },
-    [navigate]
+    [navigate, setOpen]
   );
 
   const onSelectCommande = useCallback(
@@ -269,15 +303,15 @@ export default function useOmnisearch() {
       setOpen(false);
       navigate('/app/commandes', { state: { selectedCommandeId: id } });
     },
-    [navigate]
+    [navigate, setOpen]
   );
 
   const onSelectFournisseur = useCallback(
     (id: number) => {
       setOpen(false);
-      navigate('/app/commandes', { state: { selectedFournisseurId: id } });
+      navigate('/app/fournisseurs', { state: { selectedSupplierId: id } });
     },
-    [navigate]
+    [navigate, setOpen]
   );
 
   const getSelectedData = useCallback(() => {
@@ -302,8 +336,11 @@ export default function useOmnisearch() {
       const id = parseInt(activeValue.split('-')[1]);
       return { type: 'fournisseur' as const, data: fournisseurs.find((s) => s.id === id) };
     }
+    if (activeValue.startsWith('nav-')) {
+      return { type: 'page' as const, data: searchablePages.find((page) => page.value === activeValue) };
+    }
     return { type: 'action' as const, id: activeValue };
-  }, [activeValue, produits, clients, factures, commandes, fournisseurs]);
+  }, [activeValue, produits, clients, factures, commandes, fournisseurs, searchablePages]);
 
   const selectedItem = getSelectedData();
 
@@ -312,7 +349,8 @@ export default function useOmnisearch() {
     clients.length > 0 ||
     factures.length > 0 ||
     commandes.length > 0 ||
-    fournisseurs.length > 0;
+    fournisseurs.length > 0 ||
+    searchablePages.length > 0;
 
   return {
     open,
@@ -328,6 +366,7 @@ export default function useOmnisearch() {
     factures,
     commandes,
     fournisseurs,
+    searchablePages,
     selectedItem,
     hasResults,
     onSelectLink,

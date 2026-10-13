@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { gooeyToast } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { useExpirationAlerts, type ExpirationAlert } from '../hooks/useExpirationAlerts';
 
 const LEVEL_PRIORITY: Record<string, number> = {
@@ -28,7 +29,8 @@ function getHighestLevel(items: ExpirationAlert[]): ExpirationAlert['level'] {
  */
 export function ExpirationAlertToasts() {
   const hasShownRef = useRef(false);
-  const { t } = useTranslation('stock');
+  const { t } = useTranslation(['stock', 'common']);
+  const navigate = useNavigate();
 
   const { data, isSuccess } = useExpirationAlerts({
     days: 30,
@@ -74,8 +76,13 @@ export function ExpirationAlertToasts() {
           : t('perimes.toasts.months', { count, months: monthBucket });
 
       const showToast = () => {
+        const action = {
+          label: t('common:view'),
+          onClick: () => navigate('/app/perimes?tab=list&expired=false&days=30'),
+        };
+
         if (level === 'critical') {
-          gooeyToast.error(message, { duration: Infinity });
+          gooeyToast.error(message, { duration: Infinity, action });
           try {
             const audio = new Audio('/sounds/alert-critical.mp3');
             audio.volume = 0.4;
@@ -84,9 +91,9 @@ export function ExpirationAlertToasts() {
             // Ignorer les erreurs audio
           }
         } else if (level === 'warning') {
-          gooeyToast.warning(message, { duration: 10000 });
+          gooeyToast.warning(message, { duration: 10000, action });
         } else {
-          gooeyToast.info(message, { duration: 5000 });
+          gooeyToast.info(message, { duration: 5000, action });
         }
       };
 
@@ -102,7 +109,7 @@ export function ExpirationAlertToasts() {
     return () => {
       timers.forEach(clearTimeout);
     };
-  }, [isSuccess, data, t]);
+  }, [isSuccess, data, t, navigate]);
 
   // Ce composant ne rend rien visuellement
   return null;

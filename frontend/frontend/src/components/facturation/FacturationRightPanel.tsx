@@ -82,6 +82,7 @@ export default function FacturationRightPanel({ hook }: FacturationRightPanelPro
             setIsFactureA4={hook.setIsFactureA4}
             onScanOrdonnance={() => hook.ui.setIsScannerModalOpen(true)}
             loading={hook.loading}
+            unavailableReason={hook.paymentUnavailableReason}
             isSidebarStyle={true}
           />
         </div>

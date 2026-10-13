@@ -396,6 +396,7 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
                 'produit_id': lot.produit_id,
                 'produit_nom': lot.produit_nom or (lot.produit.name if lot.produit else 'Inconnu'),
                 'lot_numero': lot.lot,
+                'fournisseur_id': lot.fournisseur_id,
                 'fournisseur_nom': lot.fournisseur_nom or (lot.fournisseur.name if lot.fournisseur else None),
                 'quantity_remaining': lot.quantity_remaining,
                 'date_expiration': lot.date_expiration.isoformat() if lot.date_expiration else None,

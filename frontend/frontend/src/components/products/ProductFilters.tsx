@@ -8,8 +8,8 @@ interface ProductFiltersProps {
   setSearchQuery: (query: string) => void;
   filterRayon: string;
   setFilterRayon: (rayon: string) => void;
-  filterFournisseur: string;
-  setFilterFournisseur: (fournisseur: string) => void;
+  filterForme: string;
+  setFilterForme: (forme: string) => void;
   filterExclusive: boolean;
   setFilterExclusive: (exclusive: boolean) => void;
   showInactive: boolean;
@@ -24,8 +24,8 @@ export const ProductFilters: React.FC<ProductFiltersProps> = (props) => {
     setSearchQuery,
     filterRayon,
     setFilterRayon,
-    filterFournisseur,
-    setFilterFournisseur,
+    filterForme,
+    setFilterForme,
     filterExclusive,
     setFilterExclusive,
     showInactive,
@@ -40,7 +40,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = (props) => {
   const resetFilters = () => {
     setSearchQuery('');
     setFilterRayon('');
-    setFilterFournisseur('');
+    setFilterForme('');
     setFilterExclusive(false);
     setShowInactive(false);
     setShowInStockOnly(false);
@@ -82,14 +82,14 @@ export const ProductFilters: React.FC<ProductFiltersProps> = (props) => {
             </span>
           </label>
         </div>
-        {(filterRayon || filterFournisseur || filterExclusive || showInactive || showInStockOnly) && (
+        {(filterRayon || filterForme || filterExclusive || showInactive || showInStockOnly) && (
           <div className="mt-2 flex items-center gap-2">
             <button className="text-xs text-error hover:text-error font-medium" onClick={resetFilters}>
               {t('products:filters.reset')}
             </button>
             <div className="flex gap-1 flex-wrap">
               {filterRayon && <span className="inline-flex items-center px-2 py-0.5 rounded-md text-caption font-medium bg-info/10 text-info border border-blue-100">{t('products:filters.rayon_active')}</span>}
-              {filterFournisseur && <span className="inline-flex items-center px-2 py-0.5 rounded-md text-caption font-medium bg-warning/10 text-warning border border-amber-100">{t('products:filters.provider_active')}</span>}
+              {filterForme && <span className="inline-flex items-center px-2 py-0.5 rounded-md text-caption font-medium bg-warning/10 text-warning border border-amber-100">{t('products:filters.forme_active')}</span>}
               {filterExclusive && <span className="inline-flex items-center px-2 py-0.5 rounded-md text-caption font-medium bg-primary/10 text-primary border border-indigo-100">{t('products:filters.exclusive_only')}</span>}
               {showInactive && <span className="inline-flex items-center px-2 py-0.5 rounded-md text-caption font-medium bg-base-200 text-base-content/70 border border-base-300">{t('products:filters.inactive_only')}</span>}
               {showInStockOnly && <span className="inline-flex items-center px-2 py-0.5 rounded-md text-caption font-medium bg-success/10 text-success border border-emerald-100">{t('products:filters.in_stock_only')}</span>}

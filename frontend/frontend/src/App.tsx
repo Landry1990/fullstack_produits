@@ -15,7 +15,6 @@ import 'goey-toast/styles.css'
 import ErrorBoundary from './components/ErrorBoundary'
 import { LicenceNotifications } from './components/LicenceNotifications'
 import { ClockSyncAlert } from './components/ClockSyncAlert'
-import { ExpirationAlertToasts } from './components/ExpirationAlertToast'
 import ForcePasswordChangeGuard from './components/auth/ForcePasswordChangeGuard'
 import { useAuth } from './context/AuthContext'
 import { router } from './routes'
@@ -133,12 +132,7 @@ function StockRealtime() {
 function GlobalAlerts() {
   const { isAuthenticated, loading } = useAuth();
   if (loading || !isAuthenticated) return null;
-  return (
-    <>
-      <ExpirationAlertToasts />
-      <StockRealtime />
-    </>
-  );
+  return <StockRealtime />;
 }
 
 /**

@@ -335,3 +335,72 @@ class ExpiredLotHandlingTestCase(TestCase):
             ).count(), 2,
             'Un MouvementStock AVOIR doit être créé par lot',
         )
+
+    def test_restore_expired_adjustment_restores_lot_and_stock_once(self):
+        produit = self.factory.create_produit(stock=0, use_lot_management=True)
+        lot = self.factory.create_stock_lot(
+            produit=produit, quantity=12, lot_name='LOT-RESTORE',
+            date_expiration=timezone.now().date() - timedelta(days=10),
+        )
+        produit.calculate_stock_from_lots()
+        disposal = self.client.post(
+            reverse('stocklot-sortir-perimes', kwargs={'pk': lot.pk}),
+            {'quantity': 7, 'reason': 'Erreur de ligne'}, format='json',
+        )
+        self.assertEqual(disposal.status_code, status.HTTP_200_OK)
+        adjustment = StockAdjustment.objects.filter(
+            stock_lot=lot, reason_type=StockAdjustment.ReasonType.PERIME,
+            quantity_change=-7,
+        ).latest('created_at')
+
+        url = reverse('stockadjustment-restaurer-sortie-perimee', kwargs={'pk': adjustment.pk})
+        response = self.client.post(url, {}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        lot.refresh_from_db()
+        produit.refresh_from_db()
+        self.assertEqual(lot.quantity_remaining, 12)
+        self.assertEqual(produit.stock, 12)
+        self.assertTrue(StockAdjustment.objects.filter(
+            stock_lot=lot, quantity_change=7,
+            reason_detail=f'Annulation sortie périmée #{adjustment.id}',
+        ).exists())
+        self.assertTrue(MouvementStock.objects.filter(
+            produit=produit, type_mouvement=MouvementStock.TypeMouvement.RETOUR,
+            quantite=7,
+        ).exists())
+
+        duplicate = self.client.post(url, {}, format='json')
+        self.assertEqual(duplicate.status_code, status.HTTP_409_CONFLICT)
+        lot.refresh_from_db()
+        self.assertEqual(lot.quantity_remaining, 12)
+
+    def test_restore_rejects_non_expired_adjustment(self):
+        produit = self.factory.create_produit(stock=3)
+        adjustment = StockAdjustment.objects.create(
+            produit=produit, user=self.user,
+            quantity_before=0, quantity_after=3, quantity_change=3,
+            reason_type=StockAdjustment.ReasonType.INVENTAIRE,
+        )
+        response = self.client.post(
+            reverse('stockadjustment-restaurer-sortie-perimee', kwargs={'pk': adjustment.pk}),
+            {}, format='json',
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_expiration_alert_exposes_product_and_supplier_ids(self):
+        fournisseur = self.factory.create_fournisseur(name='Fournisseur Alert')
+        produit = self.factory.create_produit(fournisseur=fournisseur)
+        self.factory.create_stock_lot(
+            produit=produit,
+            fournisseur=fournisseur,
+            quantity=4,
+            lot_name='LOT-LINK-001',
+            date_expiration=timezone.now().date() + timedelta(days=5),
+        )
+
+        response = self.client.get(reverse('stocklot-alerts-expiration'), {'days': 7})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        alert = next(item for item in response.data['alerts'] if item['lot_numero'] == 'LOT-LINK-001')
+        self.assertEqual(alert['produit_id'], produit.id)
+        self.assertEqual(alert['fournisseur_id'], fournisseur.id)

@@ -13,6 +13,7 @@ import {
   Package,
   AlertTriangle,
   TrendingUp,
+  Compass,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -26,7 +27,9 @@ import {
 import { Badge } from '../shadcn/badge';
 import { ProductResultContent, type SearchResult } from '../common/ProductSearch';
 import type { ProduitModel, Client, Facture, Commande, Fournisseur } from '../../types';
+import type { AppPage } from '../../config/appPages';
 import { formatDate } from '../../utils/dateUtils';
+import { useAuth } from '../../context/AuthContext';
 
 interface Props {
   search: string;
@@ -36,6 +39,7 @@ interface Props {
   factures: Facture[];
   commandes: Commande[];
   fournisseurs: Fournisseur[];
+  searchablePages: AppPage[];
   onSelectAction: (action: string) => void;
   onSelectLink: (path: string) => void;
   onSelectProduit: (id: number) => void;
@@ -53,6 +57,7 @@ export default function OmnisearchResults({
   factures,
   commandes,
   fournisseurs,
+  searchablePages,
   onSelectAction,
   onSelectLink,
   onSelectProduit,
@@ -62,6 +67,9 @@ export default function OmnisearchResults({
   onSelectFournisseur,
 }: Props) {
   const { t } = useTranslation('common');
+  const { user } = useAuth();
+  const allowedMenus = new Set(user?.allowed_menus || []);
+  const canAccess = (...permissions: string[]) => Boolean(user?.is_superuser || permissions.some(permission => allowedMenus.has(permission)));
 
   const itemClass =
     'flex items-center px-3 py-2.5 rounded-lg cursor-pointer hover:bg-slate-100 text-slate-800 aria-selected:bg-emerald-50 aria-selected:text-emerald-700 transition-all group';
@@ -74,23 +82,23 @@ export default function OmnisearchResults({
   const navChipSelected = 'bg-slate-100 text-slate-500 group-aria-selected:bg-emerald-100 group-aria-selected:text-emerald-600';
 
   const quickActions = [
-    { action: 'NEW_SALE', value: 'action-new-sale', icon: Zap, chip: 'bg-emerald-100 text-emerald-600', label: t('omnisearch.actions.new_sale'), desc: t('omnisearch.actions.new_sale_desc') },
-    { action: 'NEW_PRODUCT', value: 'action-new-product', icon: PlusCircle, chip: 'bg-slate-100 text-slate-600', label: t('omnisearch.actions.new_product'), desc: t('omnisearch.actions.new_product_desc') },
-    { action: 'NEW_CLIENT', value: 'action-new-client', icon: Users, chip: 'bg-slate-100 text-slate-600', label: t('omnisearch.actions.new_client'), desc: t('omnisearch.actions.new_client_desc') },
-    { action: 'NEW_ORDER', value: 'action-new-order', icon: ShoppingCart, chip: 'bg-slate-100 text-slate-600', label: t('omnisearch.actions.new_order'), desc: t('omnisearch.actions.new_order_desc') },
-    { action: 'OPEN_PRODUCTS', value: 'action-open-products', icon: Package, chip: 'bg-slate-100 text-slate-600', label: t('omnisearch.actions.open_products'), desc: t('omnisearch.actions.open_products_desc') },
-    { action: 'OPEN_PERIMES', value: 'action-open-perimes', icon: AlertTriangle, chip: 'bg-red-100 text-red-600', label: t('omnisearch.actions.open_perimes'), desc: t('omnisearch.actions.open_perimes_desc') },
-    { action: 'OPEN_CADENCIER', value: 'action-open-cadencier', icon: TrendingUp, chip: 'bg-slate-100 text-slate-600', label: t('omnisearch.actions.open_cadencier'), desc: t('omnisearch.actions.open_cadencier_desc') },
-  ];
+    { action: 'NEW_SALE', value: 'action-new-sale', icon: Zap, chip: 'bg-emerald-100 text-emerald-600', label: t('omnisearch.actions.new_sale'), desc: t('omnisearch.actions.new_sale_desc'), visible: canAccess('facturation') },
+    { action: 'NEW_PRODUCT', value: 'action-new-product', icon: PlusCircle, chip: 'bg-slate-100 text-slate-600', label: t('omnisearch.actions.new_product'), desc: t('omnisearch.actions.new_product_desc'), visible: canAccess('produits') },
+    { action: 'NEW_CLIENT', value: 'action-new-client', icon: Users, chip: 'bg-slate-100 text-slate-600', label: t('omnisearch.actions.new_client'), desc: t('omnisearch.actions.new_client_desc'), visible: canAccess('clients') },
+    { action: 'NEW_ORDER', value: 'action-new-order', icon: ShoppingCart, chip: 'bg-slate-100 text-slate-600', label: t('omnisearch.actions.new_order'), desc: t('omnisearch.actions.new_order_desc'), visible: canAccess('commandes', 'commandes_loc', 'commandes_dir') },
+    { action: 'OPEN_PRODUCTS', value: 'action-open-products', icon: Package, chip: 'bg-slate-100 text-slate-600', label: t('omnisearch.actions.open_products'), desc: t('omnisearch.actions.open_products_desc'), visible: canAccess('produits') },
+    { action: 'OPEN_PERIMES', value: 'action-open-perimes', icon: AlertTriangle, chip: 'bg-red-100 text-red-600', label: t('omnisearch.actions.open_perimes'), desc: t('omnisearch.actions.open_perimes_desc'), visible: canAccess('inventaire', 'inventaire_perimes', 'perimes') },
+    { action: 'OPEN_CADENCIER', value: 'action-open-cadencier', icon: TrendingUp, chip: 'bg-slate-100 text-slate-600', label: t('omnisearch.actions.open_cadencier'), desc: t('omnisearch.actions.open_cadencier_desc'), visible: canAccess('inventaire', 'inventaire_cadencier') },
+  ].filter(action => action.visible);
 
   const navLinks = [
-    { path: '/app/rapports-mensuels', value: 'nav-rapport-mensuel', icon: BarChart3, chip: navChipSelected, label: t('omnisearch.nav.monthly_report') },
-    { path: '/app/facturation', value: 'nav-facturation', icon: WalletCards, chip: navChipSelected, label: t('omnisearch.nav.billing') },
-    { path: '/app/ventes', value: 'nav-ventes', icon: FileText, chip: navChipSelected, label: t('omnisearch.nav.sales_list') },
-    { path: '/app/journal-caisse', value: 'nav-journal-caisse', icon: ClipboardList, chip: navChipSelected, label: t('omnisearch.nav.cash_journal') },
-    { path: '/app/clients', value: 'nav-clients', icon: Users, chip: navChipSelected, label: t('omnisearch.nav.clients') },
-    { path: '/app/dashboard', value: 'nav-dashboard', icon: LayoutDashboard, chip: navChipSelected, label: t('omnisearch.nav.dashboard') },
-  ];
+    { path: '/app/rapports-mensuels', value: 'nav-rapport-mensuel', icon: BarChart3, chip: navChipSelected, label: t('omnisearch.nav.monthly_report'), visible: canAccess('statistiques', 'statistiques_mensuels') },
+    { path: '/app/facturation', value: 'nav-facturation', icon: WalletCards, chip: navChipSelected, label: t('omnisearch.nav.billing'), visible: canAccess('facturation') },
+    { path: '/app/ventes', value: 'nav-ventes', icon: FileText, chip: navChipSelected, label: t('omnisearch.nav.sales_list'), visible: canAccess('ventes', 'ventes_consultation') },
+    { path: '/app/journal-caisse', value: 'nav-journal-caisse', icon: ClipboardList, chip: navChipSelected, label: t('omnisearch.nav.cash_journal'), visible: canAccess('ventes', 'ventes_journal') },
+    { path: '/app/clients', value: 'nav-clients', icon: Users, chip: navChipSelected, label: t('omnisearch.nav.clients'), visible: canAccess('clients', 'clients_consultation') },
+    { path: '/app/dashboard', value: 'nav-dashboard', icon: LayoutDashboard, chip: navChipSelected, label: t('omnisearch.nav.dashboard'), visible: canAccess('dashboard') },
+  ].filter(link => link.visible);
 
   return (
     <CommandList className="flex-1 overflow-y-auto p-2 cmdk-list">
@@ -140,7 +148,29 @@ export default function OmnisearchResults({
         <CommandSeparator />
       </>)}
 
-      {search && produits.length > 0 && (<>
+      {search && searchablePages.length > 0 && (<>
+        <CommandGroup
+          heading={t('omnisearch.groups.pages', 'Pages et fonctionnalités')}
+          className={groupHeadingClass}
+        >
+          {searchablePages.map((page) => (
+            <CommandItem key={page.value} value={page.value} onSelect={() => onSelectLink(page.path)} className={itemClassNav}>
+              <div className={`${navChip} ${navChipSelected}`}>
+                <Compass className="size-3.5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <span className="font-medium">{t(`sidebar:${page.titleKey}`)}</span>
+                <span className="block text-caption text-slate-400 truncate">
+                  {t(`sidebar:categories.${page.category}`)}
+                </span>
+              </div>
+            </CommandItem>
+          ))}
+        </CommandGroup>
+        <CommandSeparator />
+      </>)}
+
+      {search && canAccess('produits') && produits.length > 0 && (<>
         <CommandGroup
           heading={t('omnisearch.groups.products')}
           className={groupHeadingClass}
@@ -175,7 +205,7 @@ export default function OmnisearchResults({
         <CommandSeparator />
       </>)}
 
-      {search && clients.length > 0 && (<>
+      {search && canAccess('clients', 'clients_consultation') && clients.length > 0 && (<>
         <CommandGroup
           heading={t('omnisearch.groups.clients')}
           className={groupHeadingClass}
@@ -200,7 +230,7 @@ export default function OmnisearchResults({
         <CommandSeparator />
       </>)}
 
-      {search && factures.length > 0 && (<>
+      {search && canAccess('ventes', 'ventes_consultation') && factures.length > 0 && (<>
         <CommandGroup
           heading={t('omnisearch.groups.invoices')}
           className={groupHeadingClass}
@@ -230,7 +260,7 @@ export default function OmnisearchResults({
         <CommandSeparator />
       </>)}
 
-      {search && commandes.length > 0 && (<>
+      {search && canAccess('commandes', 'commandes_loc', 'commandes_dir') && commandes.length > 0 && (<>
         <CommandGroup
           heading={t('omnisearch.groups.procurements')}
           className={groupHeadingClass}
@@ -257,7 +287,7 @@ export default function OmnisearchResults({
         <CommandSeparator />
       </>)}
 
-      {search && fournisseurs.length > 0 && (<>
+      {search && canAccess('fournisseurs') && fournisseurs.length > 0 && (<>
         <CommandGroup
           heading={t('omnisearch.groups.suppliers')}
           className={groupHeadingClass}

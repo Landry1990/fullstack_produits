@@ -1,19 +1,24 @@
 import io
 
-from django.db.models import Count, DecimalField, ExpressionWrapper, F, Q, Sum, Value
-from django.db.models.functions import Abs, Coalesce
+from django.db import transaction
+from django.db.models import CharField, Count, DecimalField, Exists, ExpressionWrapper, F, OuterRef, Q, Sum, Value
+from django.db.models.functions import Abs, Cast, Coalesce, Concat
 from django.http import HttpResponse
 from django_filters import rest_framework as django_filters
 from django_filters.rest_framework import DjangoFilterBackend
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font
 from openpyxl.utils import get_column_letter
-from rest_framework import filters, permissions, viewsets
+from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from ...models import StockAdjustment
+from ...audit_helpers import log_audit
+from ...models import AuditLog, MouvementStock, Produit, StockAdjustment, StockLot
 from ...pagination import StandardResultsSetPagination
+from ...services.realtime import notify_stock_changed
+from ...services.stock_obligation_service import StockObligationService
+from ...sudo_utils import validate_sudo_mode
 from ...search_mixins import MultiTermSearchMixin
 from ...serializers import StockAdjustmentSerializer
 from ...utils.dates import day_bounds
@@ -45,7 +50,13 @@ class StockAdjustmentViewSet(MultiTermSearchMixin, viewsets.ReadOnlyModelViewSet
     API endpoint pour consulter l'historique des ajustements de stock.
     Lecture seule - les ajustements sont créés via l'action 'adjust_stock' de ProduitViewSet.
     """
-    queryset = StockAdjustment.objects.select_related('produit', 'user', 'stock_lot').order_by('-created_at')
+    queryset = StockAdjustment.objects.select_related('produit', 'user', 'stock_lot').annotate(
+        restored=Exists(
+            StockAdjustment.objects.filter(
+                reason_detail=Concat(Value('Annulation sortie périmée #'), Cast(OuterRef('pk'), CharField()))
+            )
+        )
+    ).order_by('-created_at')
     serializer_class = StockAdjustmentSerializer
     pagination_class = StandardResultsSetPagination
     permission_classes = [permissions.IsAuthenticated]
@@ -74,6 +85,73 @@ class StockAdjustmentViewSet(MultiTermSearchMixin, viewsets.ReadOnlyModelViewSet
             'positive_sum': stats['positive_sum'] or 0,
             'negative_sum': stats['negative_sum'] or 0
         })
+
+    @action(detail=True, methods=['post'])
+    @transaction.atomic
+    def restaurer_sortie_perimee(self, request, pk=None):
+        try:
+            adjustment = StockAdjustment.objects.select_for_update().get(pk=pk)
+        except StockAdjustment.DoesNotExist:
+            return Response({'detail': 'Ajustement introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if adjustment.reason_type != StockAdjustment.ReasonType.PERIME or adjustment.quantity_change >= 0:
+            return Response({'detail': "Seule une sortie de périmé peut être ramenée en stock."}, status=status.HTTP_400_BAD_REQUEST)
+        if not adjustment.stock_lot_id or not adjustment.produit_id:
+            return Response({'detail': 'Le lot ou le produit associé est introuvable.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        reversal_detail = f'Annulation sortie périmée #{adjustment.id}'
+        if StockAdjustment.objects.filter(reason_detail=reversal_detail).exists():
+            return Response({'detail': 'Cette sortie a déjà été ramenée en stock.'}, status=status.HTTP_409_CONFLICT)
+
+        validation_user, error_response = validate_sudo_mode(request, permission_attr='can_manage_perimes')
+        if error_response:
+            return error_response
+
+        lot = StockLot.objects.select_for_update().get(pk=adjustment.stock_lot_id)
+        produit = Produit.objects.select_for_update().get(pk=adjustment.produit_id)
+        quantity = -adjustment.quantity_change
+        quantity_before = lot.quantity_remaining
+
+        lot.quantity_remaining = F('quantity_remaining') + quantity
+        lot.save(update_fields=['quantity_remaining'])
+        lot.refresh_from_db()
+        if produit.use_lot_management:
+            produit.calculate_stock_from_lots()
+        else:
+            produit.stock = F('stock') + quantity
+            produit.save(update_fields=['stock'])
+        StockObligationService.reapply_pending_obligations([produit.id])
+        produit.refresh_from_db()
+
+        reversal = StockAdjustment.objects.create(
+            produit=produit,
+            stock_lot=lot,
+            user=validation_user,
+            quantity_before=quantity_before,
+            quantity_after=lot.quantity_remaining,
+            quantity_change=quantity,
+            reason_type=StockAdjustment.ReasonType.PERIME,
+            reason_detail=reversal_detail,
+        )
+        MouvementStock.objects.create(
+            produit=produit,
+            type_mouvement=MouvementStock.TypeMouvement.RETOUR,
+            quantite=quantity,
+            stock_apres=produit.total_stock,
+            user=validation_user,
+            description=f'Annulation sortie périmés - Lot {lot.lot} - ajustement #{adjustment.id}',
+        )
+        log_audit(
+            user=validation_user,
+            action=AuditLog.Action.STOCK_ADJUST,
+            model_name='StockAdjustment',
+            object_id=adjustment.id,
+            description=f'Annulation sortie périmée: {quantity} unités ramenées dans le lot {lot.lot}',
+            details={'adjustment_id': adjustment.id, 'reversal_id': reversal.id, 'lot_id': lot.id, 'produit_id': produit.id, 'quantity': quantity},
+            request=request,
+        )
+        notify_stock_changed([produit.id])
+        return Response({'detail': 'La sortie périmée a été ramenée en stock.', 'quantity': quantity, 'reversal_id': reversal.id})
 
     @action(detail=False, methods=['get'])
     def export_excel(self, request):

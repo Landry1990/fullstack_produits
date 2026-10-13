@@ -1,8 +1,9 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { Printer, Plus, Trash2, User as UserIcon, Banknote } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Printer, Plus, Trash2, User as UserIcon, Banknote, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { normalizeNumberInput } from '../../utils/formatters';
 import type { useJournalCaisse } from '../../hooks/useJournalCaisse';
 import { Button } from '../shadcn/button';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '../shadcn/dialog';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../context/AuthContext';
 import { getPaymentModeLabel } from '../../config/paymentModes';
@@ -64,24 +65,13 @@ export default function JournalCaisseClosingModal({ state }: Props) {
     setManualMovements(prev => prev.filter(m => m.id !== id));
   };
 
-  useEffect(() => {
-    if (!isClosingModalOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setIsClosingModalOpen(false);
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isClosingModalOpen, setIsClosingModalOpen]);
-
-  if (!isClosingModalOpen) return null;
-
   return (
-    <dialog open aria-modal="true" aria-labelledby="closing-modal-title" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm w-full h-full p-0 m-0 border-none">
-      <div className="w-full max-w-lg p-0 overflow-hidden rounded-2xl border border-slate-200 shadow-2xl max-h-[90vh] flex flex-col bg-white">
+    <Dialog open={isClosingModalOpen} onOpenChange={setIsClosingModalOpen}>
+      <DialogContent hideCloseButton size="md" className="p-0 gap-0 overflow-hidden rounded-2xl border border-slate-200 shadow-2xl max-h-[90vh] flex flex-col bg-white">
         {/* Header */}
         <div className="bg-emerald-600 p-5 text-white shrink-0">
-          <h3 id="closing-modal-title" className="font-black text-xl tracking-tight">{t('closing.title')}</h3>
-          <p className="text-emerald-100 text-xs mt-1 font-bold uppercase tracking-widest">{t('closing.security')}</p>
+          <DialogTitle className="font-black text-xl tracking-tight">{t('closing.title')}</DialogTitle>
+          <DialogDescription className="text-emerald-100 text-xs mt-1 font-bold uppercase tracking-widest">{t('closing.security')}</DialogDescription>
         </div>
 
         {/* Content */}
@@ -347,13 +337,26 @@ export default function JournalCaisseClosingModal({ state }: Props) {
 
         {/* Footer */}
         <div className="p-5 border-t border-slate-200 bg-white shrink-0 space-y-3">
-          {detectedShift?.hasActiveSession && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-center">
-              <p className="text-xs font-bold text-red-600">
-                {t('closing.active_session_blocked', { defaultValue: 'Ce caissier a une session active. Fermez d\'abord la caisse avant de clôturer.' })}
-              </p>
-            </div>
-          )}
+          <div
+            role="status"
+            className={cn(
+              "flex items-start gap-2 rounded-xl border p-3 text-xs font-bold",
+              detectedShift?.hasActiveSession || !actualAmount
+                ? "border-amber-200 bg-amber-50 text-amber-800"
+                : "border-emerald-200 bg-emerald-50 text-emerald-800"
+            )}
+          >
+            {detectedShift?.hasActiveSession || !actualAmount
+              ? <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+              : <CheckCircle2 className="mt-0.5 size-4 shrink-0" />}
+            <span>
+              {detectedShift?.hasActiveSession
+                ? t('closing.active_session_blocked')
+                : !actualAmount
+                  ? t('closing.real_amount_required')
+                  : t('closing.ready_to_confirm')}
+            </span>
+          </div>
           <Button
             size="lg"
             className="w-full rounded-xl font-black shadow-lg shadow-emerald-200 bg-emerald-600 hover:bg-emerald-700"
@@ -371,7 +374,6 @@ export default function JournalCaisseClosingModal({ state }: Props) {
             </Button>
           </div>
         </div>
-      </div>
 
       {/* === SOUS-MODAL DE BILLETAGE === */}
       <CashBreakdownModal
@@ -380,6 +382,7 @@ export default function JournalCaisseClosingModal({ state }: Props) {
         onConfirm={(bd) => { setActualAmount(String(bd.total)); setBreakdown(bd); setBilletage(bd as unknown as Record<string, unknown>); }}
         formatCurrency={formatCurrencyLocal}
       />
-    </dialog>
+      </DialogContent>
+    </Dialog>
   );
 }

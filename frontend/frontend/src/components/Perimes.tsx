@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import api from '../services/api'
 import { gooeyToast } from 'goey-toast'
 import { useTranslation } from 'react-i18next'
@@ -16,13 +17,16 @@ import {
   PieChart,
   Check,
   Printer,
-  FileSpreadsheet
+  FileSpreadsheet,
+  RotateCcw,
+  ExternalLink
 } from 'lucide-react'
 import type { StockLot } from '../types'
 import { formatCurrency } from '../utils/formatters'
 import { formatDate, toApiDateEnd } from '../utils/dateUtils'
 import SudoValidationModal from './common/SudoValidationModal'
 import { useSudo } from '../hooks/useSudo'
+import { useConfirm } from '../hooks/useConfirm'
 import usePrint from '../hooks/usePrint'
 import { useDocumentLocale } from '../hooks/usePharmacySettings'
 import type { StockAdjustment } from '../types'
@@ -32,6 +36,7 @@ import { Badge } from './shadcn/badge'
 import { Tabs, TabsList, TabsTrigger } from './shadcn/tabs'
 import { Checkbox } from './shadcn/checkbox'
 import { LocalizedDateInput } from './LocalizedDateInput'
+import { QuantityInputDialog } from './products/modals/QuantityInputDialog'
 import {
   Table,
   TableBody,
@@ -126,6 +131,10 @@ const isExpiredByEndOfMonth = (dateString: string) => {
 
 export default function Perimes() {
   const { t } = useTranslation(['stock', 'common'])
+  const navigate = useNavigate()
+  const openProduct = (productId: number) => navigate('/app/produits', { state: { searchProduitId: productId } })
+  const openSupplier = (supplierId: number) => navigate('/app/fournisseurs', { state: { selectedSupplierId: supplierId } })
+  const [searchParams] = useSearchParams()
   // Langue des documents imprimés (PharmacySettings.locale), découplée de l'UI.
   const { lang: docLang, locale: docLocale } = useDocumentLocale()
   const { t: docT } = useTranslation(['stock', 'common'], { lng: docLang })
@@ -134,12 +143,26 @@ export default function Perimes() {
   const [loading, setLoading] = useState(false)
   const [loadingStats, setLoadingStats] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [filterDays, setFilterDays] = useState<number>(30)
-  const [showExpiredOnly, setShowExpiredOnly] = useState<boolean>(true)
+  const [filterDays, setFilterDays] = useState<number>(() => {
+    const days = Number(searchParams.get('days'))
+    return [30, 60, 90, 180].includes(days) ? days : 30
+  })
+  const [showExpiredOnly, setShowExpiredOnly] = useState<boolean>(() => searchParams.get('expired') !== 'false')
   const [selectedLotIds, setSelectedLotIds] = useState<Set<number>>(new Set())
   const [adjustments, setAdjustments] = useState<StockAdjustment[]>([])
   const [loadingAdjustments, setLoadingAdjustments] = useState(false)
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'list' | 'history'>('dashboard')
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'list' | 'history'>(() => {
+    const tab = searchParams.get('tab')
+    return tab === 'list' || tab === 'history' ? tab : 'dashboard'
+  })
+
+  useEffect(() => {
+    const tab = searchParams.get('tab')
+    setActiveTab(tab === 'list' || tab === 'history' ? tab : 'dashboard')
+    setShowExpiredOnly(searchParams.get('expired') !== 'false')
+    const days = Number(searchParams.get('days'))
+    setFilterDays([30, 60, 90, 180].includes(days) ? days : 30)
+  }, [searchParams])
   
   const [dateDebut, setDateDebut] = useState<string>(() => {
     const d = new Date()
@@ -149,7 +172,9 @@ export default function Perimes() {
   const [dateFin, setDateFin] = useState<string>(() => new Date().toISOString().split('T')[0])
 
   const { sudoState, requireSudo, closeSudo } = useSudo()
+  const confirm = useConfirm()
   const [processing, setProcessing] = useState(false)
+  const [pendingExitLot, setPendingExitLot] = useState<StockLot | null>(null)
 
 
 
@@ -237,17 +262,12 @@ export default function Perimes() {
     }
   }
 
-  const handleSortirStock = async (lot: StockLot) => {
-    const quantity = prompt(t('perimes.prompt.qty', { lot: lot.lot, max: lot.quantity_remaining }), String(lot.quantity_remaining))
-    
-    if (!quantity) return
-    
-    const qty = parseInt(quantity, 10)
-    if (isNaN(qty) || qty <= 0 || qty > lot.quantity_remaining) {
-      gooeyToast.error(t('perimes.messages.invalid_qty'))
-      return
-    }
+  const handleSortirStock = (lot: StockLot) => setPendingExitLot(lot)
 
+  const confirmSortirStock = (qty: number) => {
+    if (!pendingExitLot) return
+    const lot = pendingExitLot
+    setPendingExitLot(null)
     requireSudo(async (validatorId, password) => {
       try {
         setProcessing(true)
@@ -269,12 +289,53 @@ export default function Perimes() {
       }
     }, {
       title: t('perimes.confirm.exit_title'),
-      message: t('perimes.confirm.exit_message', { qty, product: lot.produit_nom, lot: lot.lot })
+      message: t('perimes.confirm.exit_message', { qty, product: lot.produit_nom, lot: lot.lot }),
+      permission: 'can_manage_perimes'
     });
+  }
+
+  const handleRestoreAdjustment = async (adjustment: StockAdjustment) => {
+    const quantity = Math.abs(adjustment.quantity_change)
+    const confirmed = await confirm({
+      title: t('perimes.restore.title'),
+      message: t('perimes.restore.message', { product: adjustment.produit_name, lot: adjustment.lot_number, quantity }),
+      confirmText: t('perimes.restore.action')
+    })
+    if (!confirmed) return
+
+    requireSudo(async (validatorId, password) => {
+      try {
+        setProcessing(true)
+        await api.post(`stock-adjustments/${adjustment.id}/restaurer_sortie_perimee/`, {
+          validated_by_id: validatorId,
+          sudo_password: password
+        })
+        gooeyToast.success(t('perimes.restore.success'))
+        await Promise.all([fetchAdjustments(), fetchLots(), fetchStats()])
+      } catch (err) {
+        gooeyToast.error(getApiErrorDetail(err, t('perimes.restore.error')))
+        throw err
+      } finally {
+        setProcessing(false)
+      }
+    }, {
+      title: t('perimes.restore.sudo_title'),
+      message: t('perimes.restore.sudo_message'),
+      permission: 'can_manage_perimes'
+    })
   }
 
   const handleBulkSortir = async () => {
       if (selectedLotIds.size === 0) return
+      const selectedLots = lots.filter(lot => selectedLotIds.has(lot.id))
+      const totalQuantity = selectedLots.reduce((sum, lot) => sum + lot.quantity_remaining, 0)
+      const confirmed = await confirm({
+        title: t('perimes.confirm.bulk_exit_title'),
+        message: t('perimes.confirm.bulk_exit_summary', { count: selectedLots.length, quantity: totalQuantity }),
+        variant: 'danger',
+        confirmText: t('perimes.table.exit_btn')
+      })
+      if (!confirmed) return
 
       requireSudo(async (validatorId, password) => {
           try {
@@ -297,7 +358,8 @@ export default function Perimes() {
           }
       }, {
           title: t('perimes.confirm.bulk_exit_title'),
-          message: t('perimes.confirm.bulk_exit_message', { count: selectedLotIds.size })
+          message: t('perimes.confirm.bulk_exit_message', { count: selectedLotIds.size }),
+          permission: 'can_manage_perimes'
       })
   }
 
@@ -532,7 +594,17 @@ export default function Perimes() {
                           <TableBody>
                             {stats.perimes.details.slice(0, 10).map((item) => (
                               <TableRow key={item.lot_id} className="hover:bg-slate-50 transition-colors">
-                                <TableCell className="font-medium px-4 py-2.5 text-slate-700">{item.produit_nom}</TableCell>
+                                <TableCell className="font-medium px-4 py-2.5 text-slate-700">
+                                  <button
+                                    type="button"
+                                    onClick={() => openProduct(item.produit_id)}
+                                    className="inline-flex max-w-full items-center gap-1.5 rounded-sm text-left font-medium text-emerald-700 hover:text-emerald-800 hover:underline focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                                    aria-label={t('perimes.view_product', { name: item.produit_nom })}
+                                  >
+                                    <span className="truncate">{item.produit_nom}</span>
+                                    <ExternalLink className="size-3.5 shrink-0" />
+                                  </button>
+                                </TableCell>
                                 <TableCell className="font-mono text-xs px-4 py-2.5 text-slate-500">{item.lot_numero || '-'}</TableCell>
                                 <TableCell className="px-4 py-2.5">
                                   <Badge variant="outline" className="bg-red-50 text-red-500 border-red-200">{item.date_expiration ? formatDate(item.date_expiration) : '-'}</Badge>
@@ -677,7 +749,15 @@ export default function Perimes() {
                           />
                         </TableCell>
                         <TableCell className="py-2.5 px-4">
-                          <div className="font-bold text-sm text-slate-800">{lot.produit_nom}</div>
+                          <button
+                            type="button"
+                            onClick={() => openProduct(lot.produit)}
+                            className="inline-flex max-w-full items-center gap-1.5 rounded-sm text-left font-bold text-sm text-emerald-700 hover:text-emerald-800 hover:underline focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                            aria-label={t('perimes.view_product', { name: lot.produit_nom })}
+                          >
+                            <span className="truncate">{lot.produit_nom}</span>
+                            <ExternalLink className="size-3.5 shrink-0" />
+                          </button>
                           <div className="text-caption font-mono text-slate-400">#{lot.produit}</div>
                         </TableCell>
                         <TableCell className="py-2.5 px-4 text-center font-mono text-label font-bold text-slate-500">
@@ -690,7 +770,17 @@ export default function Perimes() {
                           </Badge>
                         </TableCell>
                         <TableCell className="py-2.5 px-4 text-xs font-semibold text-slate-500 truncate max-w-[140px]" title={lot.fournisseur_nom}>
-                          {lot.fournisseur_nom}
+                          {lot.fournisseur ? (
+                            <button
+                              type="button"
+                              onClick={() => openSupplier(lot.fournisseur)}
+                              className="inline-flex max-w-full items-center gap-1.5 rounded-sm text-blue-600 hover:text-blue-700 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                              aria-label={t('perimes.view_supplier', { name: lot.fournisseur_nom })}
+                            >
+                              <span className="truncate">{lot.fournisseur_nom}</span>
+                              <ExternalLink className="size-3 shrink-0" />
+                            </button>
+                          ) : lot.fournisseur_nom}
                         </TableCell>
                         <TableCell className="py-2.5 px-4 text-right">
                           <div className={cn("font-black text-sm", lot.quantity_remaining > 0 ? 'text-slate-800' : 'text-slate-300')}>
@@ -818,6 +908,7 @@ export default function Perimes() {
                          <TableHead className="text-right px-4 py-3 text-caption font-black uppercase tracking-widest text-slate-400">{t('perimes.history.table.value')}</TableHead>
                          <TableHead className="text-left px-4 py-3 text-caption font-black uppercase tracking-widest text-slate-400">{t('perimes.history.table.user')}</TableHead>
                          <TableHead className="text-left px-4 py-3 text-caption font-black uppercase tracking-widest text-slate-400">{t('perimes.history.table.details')}</TableHead>
+                         <TableHead className="text-right px-4 py-3 text-caption font-black uppercase tracking-widest text-slate-400">{t('common:actions_title')}</TableHead>
                        </TableRow>
                      </TableHeader>
                      <TableBody>
@@ -835,6 +926,21 @@ export default function Perimes() {
                            <TableCell className="text-xs truncate max-w-[150px] px-4 py-2.5 text-slate-500" title={adj.reason_detail}>
                              {t(`stock:ajustements.filters.reasons.${adj.reason_type}`, { defaultValue: adj.reason_type_display })} {adj.reason_detail ? `- ${adj.reason_detail}` : ''}
                            </TableCell>
+                           <TableCell className="text-right px-4 py-2.5">
+                             {adj.reason_type === 'PERIME' && adj.quantity_change < 0 && !adj.restored && (
+                               <Button
+                                 variant="outline"
+                                 size="sm"
+                                 className="gap-1 text-emerald-700 border-emerald-200 hover:bg-emerald-50"
+                                 onClick={() => handleRestoreAdjustment(adj)}
+                                 disabled={processing}
+                               >
+                                 <RotateCcw className="size-3.5" />
+                                 {t('perimes.restore.action')}
+                               </Button>
+                             )}
+                             {adj.restored && <Badge variant="outline">{t('perimes.restore.restored')}</Badge>}
+                           </TableCell>
                          </TableRow>
                        ))}
                      </TableBody>
@@ -847,12 +953,23 @@ export default function Perimes() {
         )}
       </div>
 
+      <QuantityInputDialog
+        open={Boolean(pendingExitLot)}
+        title={t('perimes.confirm.exit_title')}
+        description={t('perimes.prompt.qty', { lot: pendingExitLot?.lot || '', max: pendingExitLot?.quantity_remaining ?? 0 })}
+        initialValue={pendingExitLot?.quantity_remaining ?? 1}
+        max={pendingExitLot?.quantity_remaining}
+        onClose={() => setPendingExitLot(null)}
+        onConfirm={confirmSortirStock}
+      />
       <SudoValidationModal
         isOpen={sudoState.isOpen}
         onClose={closeSudo}
         onValidate={sudoState.onValidate}
         title={sudoState.title}
         message={sudoState.message}
+        permission={sudoState.permission}
+        forceCurrentUser={sudoState.forceCurrentUser}
         saving={sudoState.isValidating}
       />
     </div>

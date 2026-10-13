@@ -128,7 +128,10 @@
         "manual_movements": "Mouvements manuels ({{count}})",
         "theoretical_amount": "MONTANT THÉORIQUE",
         "theoretical_formula": "Ventes + Entrées - Sorties + Fond de caisse",
-        "active_session_blocked": "Ce caissier a une session active. Fermez d'abord la caisse avant de clôturer."
+        "active_session_blocked": "Ce caissier a une session active. Fermez d'abord son poste de caisse avant de clôturer.",
+        "ready_to_close": "Clôture disponible : caissier sélectionné et aucune session active.",
+        "real_amount_required": "Renseignez le montant réel ou effectuez le billetage pour continuer.",
+        "ready_to_confirm": "Tous les éléments requis sont renseignés. La clôture peut être confirmée."
     },
     "modes": {
         "especes": "Espèces",

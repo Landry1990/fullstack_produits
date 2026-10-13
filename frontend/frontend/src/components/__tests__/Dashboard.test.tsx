@@ -152,7 +152,7 @@ describe('Dashboard Component', () => {
     ];
 
     const mockExpiringLots = [
-        { id: 1, produit_nom: 'Sirop', lot: 'LOT123', date_expiration: new Date(Date.now() + 86400000).toISOString() }
+        { id: 1, produit: 7, produit_nom: 'Sirop', lot: 'LOT123', date_expiration: new Date(Date.now() + 86400000).toISOString() }
     ];
 
     const mockHourlyTraffic = [
@@ -335,7 +335,7 @@ describe('Dashboard Component', () => {
                     <StockIntelligence
                         stats={mockStats}
                         lowStockItems={mockLowStock}
-                        expiringLots={[{ id: 1, produit_nom: 'Sirop', lot: 'LOT123', date_expiration: new Date(Date.now() + 86400000).toISOString() }]}
+                        expiringLots={[{ id: 1, produit: 7, produit_nom: 'Sirop', lot: 'LOT123', date_expiration: new Date(Date.now() + 86400000).toISOString() }]}
                         promisDisponibles={mockPromis}
                         expirationMonths={1}
                         setExpirationMonths={vi.fn()}
@@ -347,7 +347,8 @@ describe('Dashboard Component', () => {
                 </MemoryRouter>
             </QueryClientProvider>
         );
-        expect(screen.getByText(/Sirop/i)).toBeInTheDocument();
+        const productLink = screen.getByText(/Sirop/i).closest('a');
+        expect(productLink).toHaveAttribute('href', '/app/produits');
     });
 
     it('renders UG statistics table', () => {
@@ -386,7 +387,7 @@ describe('Dashboard Component', () => {
                     <StockIntelligence
                         stats={mockStats}
                         lowStockItems={mockLowStock}
-                        expiringLots={[{ id: 1, produit_nom: 'Sirop', lot: 'LOT123', date_expiration: new Date(Date.now() + 86400000).toISOString() }]}
+                        expiringLots={[{ id: 1, produit: 7, produit_nom: 'Sirop', lot: 'LOT123', date_expiration: new Date(Date.now() + 86400000).toISOString() }]}
                         promisDisponibles={mockPromis}
                         expirationMonths={1}
                         setExpirationMonths={setExpirationMonths}

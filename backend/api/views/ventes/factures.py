@@ -242,16 +242,42 @@ class FactureViewSet(
             | Q(numero_facture__iexact=f'FAC-{numero_clean}')
             | Q(numero_facture__iexact=numero_clean)
         )
-        facture = Facture.objects.filter(q_exact, is_active=True).first()
+        candidates = list(
+            Facture.objects.filter(q_exact, is_active=True).order_by('-date')[:10]
+        )
 
-        # Si non trouvé, recherche contient les derniers caractères (zéros initiaux, formats variables)
-        if not facture and numero_clean:
+        # Sinon, recherche contient les derniers caractères (zéros initiaux, formats variables)
+        # ou si les candidats exacts sont tous finalisés (payés/annulés) — un
+        # homonyme modifiable peut exister sous un autre préfixe (DEV-, PV-…).
+        if numero_clean and (
+            not candidates
+            or all(f.status in (Facture.Status.PAYEE, Facture.Status.ANNULEE)
+                   for f in candidates)
+        ):
             q_contains = Q(numero_facture__icontains=numero_clean) | Q(numero_facture__icontains=numero)
-            facture = Facture.objects.filter(q_contains, is_active=True).order_by('-date').first()
+            seen_ids = {f.id for f in candidates}
+            candidates += [
+                f for f in Facture.objects.filter(q_contains, is_active=True)
+                .order_by('-date')[:10]
+                if f.id not in seen_ids
+            ]
 
-        # Si toujours pas trouvé, chercher par ID numérique
-        if not facture and numero_clean.isdigit():
-            facture = Facture.objects.filter(id=int(numero_clean), is_active=True).first()
+        # Si toujours rien, chercher par ID numérique
+        if not candidates and numero_clean.isdigit():
+            candidates = list(
+                Facture.objects.filter(id=int(numero_clean), is_active=True)
+            )
+
+        # Le rappel vise une facture à modifier : plusieurs documents peuvent
+        # partager le même numéro/suffixe (ex: DEV-025489 proforma modifiable
+        # + FAC-025489 payée, ou ancienne facture annulée). Préférer le
+        # candidat MODIFIABLE (ni payé ni annulé) ; sinon garder le plus
+        # récent pour le message d'erreur « déjà payée ou annulée ».
+        modifiable = [
+            f for f in candidates
+            if f.status not in (Facture.Status.PAYEE, Facture.Status.ANNULEE)
+        ]
+        facture = modifiable[0] if modifiable else (candidates[0] if candidates else None)
 
         if not facture:
             logger.warning('Facture introuvable pour rappel : numero=%s numero_clean=%s', numero, numero_clean)

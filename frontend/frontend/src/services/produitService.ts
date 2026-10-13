@@ -16,6 +16,7 @@ export interface ProduitFilters {
     search?: string;
     page?: number;
     rayon?: string;
+    forme?: string;
     fournisseur?: string;
     include_inactive?: boolean;
     page_size?: number;
@@ -48,6 +49,7 @@ const produitService = {
         if (filters.page) params.append('page', filters.page.toString());
         if (filters.page_size) params.append('page_size', filters.page_size.toString());
         if (filters.rayon) params.append('rayon', filters.rayon);
+        if (filters.forme) params.append('forme', filters.forme);
         if (filters.fournisseur) params.append('fournisseur', filters.fournisseur);
         if (filters.include_inactive) params.append('include_inactive', 'true');
         if (filters.dormant_months) params.append('dormant_months', filters.dormant_months.toString());
