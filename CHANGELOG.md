@@ -2,6 +2,16 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-10-14 — UX Lots 5B/5D : états standardisés, DaisyUI confirmé absent
+
+- `JournalAudit` : bannière d’erreur ad hoc remplacée par `ErrorState` + Réessayer.
+- Audit précis : aucune classe DaisyUI réelle en JSX ; dépendance déjà retirée de
+  `package.json`. Il ne reste que des sélecteurs morts dans le thème
+  `.theme-midnight` (`index.css`), sans impact.
+- Reste 5C (standardisation des ~55 tables) : à traiter écran par écran.
+- Fichier : `JournalAudit.tsx`.
+- Vérifié : TypeScript, ESLint, 18 tests ciblés OK.
+
 ## 2026-10-13 — UX : « Détails flux » replié par défaut
 
 - La barre Détails flux (puces par mode, activité intervalle, solde opérationnel)

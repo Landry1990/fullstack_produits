@@ -41,6 +41,10 @@ BEFORE_HASH=$(git rev-parse HEAD)
 # s'applique qu'aux rebases, pas aux merges. On le réinitialise, le pull
 # ramène la version commitée.
 git checkout -- frontend/frontend/dist/ 2>/dev/null || true
+# Idem pour les fichiers NON trackés dans dist/ (assets hashés générés
+# localement) : s'ils entrent en collision avec le merge ("untracked
+# working tree files would be overwritten"), le pull avorterait aussi.
+git clean -fdq frontend/frontend/dist/ 2>/dev/null || true
 
 git pull --autostash
 
