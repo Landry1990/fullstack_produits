@@ -14,6 +14,7 @@ import {
     DropdownMenuSeparator,
 } from '../shadcn/dropdown-menu';
 import { cn } from '../../lib/utils';
+import { Table, TableBody, TableHeader } from '../shadcn/table';
 
 const menuItemClass = 'gap-2.5 px-3 py-2 rounded-md cursor-pointer';
 const menuItemDangerClass = cn(menuItemClass, 'text-red-600 font-semibold focus:bg-red-50 focus:text-red-600 dark:focus:bg-red-950/50');
@@ -176,8 +177,8 @@ export const SalesTable: React.FC<SalesTableProps> = ({
 
     return (
         <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0">
-            <table className="w-full table-fixed border-separate border-spacing-0">
-                <thead className="sticky top-0 z-30">
+            <Table containerClassName="overflow-visible rounded-none border-0" className="table-fixed border-separate border-spacing-0">
+                <TableHeader className="sticky top-0 z-30">
                     <tr className="bg-slate-100 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">
                         <th className="w-12 px-3 py-2 text-center sticky top-0 bg-slate-100 border-b border-slate-200">
                             <input
@@ -226,8 +227,8 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                             </>
                         )}
                     </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200">
+                </TableHeader>
+                <TableBody className="divide-y divide-slate-200">
                     {factures.map((facture) => {
                         const selectedSet = new Set(selectedIds);
                         return (
@@ -354,8 +355,8 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                         </tr>
                         );
                     })}
-                </tbody>
-            </table>
+                </TableBody>
+            </Table>
         </div>
     );
 };

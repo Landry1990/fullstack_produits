@@ -183,8 +183,8 @@ class FactureSalesMixin:
     # ------------------------------------------------------------------
 
     @action(detail=False, methods=['post'])
-    @transaction.atomic
     @idempotent_action
+    @transaction.atomic
     def finaliser(self, request):
         """Action ATOMIQUE pour finaliser une vente complète via SalesService."""
         data, image_file = self._parse_finaliser_data(request)
@@ -331,6 +331,7 @@ class FactureSalesMixin:
             return Response({'detail': "Une erreur interne est survenue lors de la finalisation."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=True, methods=['post'])
+    @idempotent_action
     @transaction.atomic
     def valider(self, request, pk=None, facture=None):
         """
@@ -516,6 +517,7 @@ class FactureSalesMixin:
             return Response({'detail': "Une erreur est survenue lors de la modification."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=True, methods=['post'])
+    @idempotent_action
     @transaction.atomic
     def marquer_payee(self, request, pk=None):
         """
@@ -531,6 +533,7 @@ class FactureSalesMixin:
         return Response({'status': 'Facture marquée comme payée.'})
 
     @action(detail=False, methods=['post'], url_path='mobile')
+    @idempotent_action
     @transaction.atomic
     def sync_mobile(self, request):
         """

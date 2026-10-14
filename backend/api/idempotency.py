@@ -10,6 +10,7 @@ Principe :
 Durée de rétention : 24h (configurable via IDEMPOTENCY_TTL_SECONDS).
 Stockage : Django cache (Redis recommandé en production).
 """
+import hashlib
 import json
 import logging
 import time
@@ -36,17 +37,40 @@ _WAIT_TIMEOUT = 30         # durée max d'attente du résultat concurrent
 _WAIT_INTERVAL = 0.1
 
 
-def _cache_key(user_id: int | str, idempotency_key: str) -> str:
-    """Clé de cache scopée par utilisateur pour éviter les collisions inter-users."""
-    return f"idempotency:u{user_id}:{idempotency_key}"
+def _cache_key(user_id: int | str, endpoint: str, idempotency_key: str) -> str:
+    endpoint_hash = hashlib.sha256(endpoint.encode()).hexdigest()[:16]
+    return f"idempotency:u{user_id}:e{endpoint_hash}:{idempotency_key}"
+
+
+def _payload_fingerprint(request) -> str:
+    data = request.data
+    if hasattr(data, 'lists'):
+        normalized = {
+            key: values if len(values) > 1 else values[0]
+            for key, values in data.lists()
+            if key != 'idempotency_key'
+        }
+    elif isinstance(data, dict):
+        normalized = {key: value for key, value in data.items() if key != 'idempotency_key'}
+    else:
+        normalized = data
+    serialized = json.dumps(normalized, sort_keys=True, separators=(',', ':'), default=str)
+    return hashlib.sha256(serialized.encode()).hexdigest()
+
+
+def _payload_conflict(cached, fingerprint):
+    return isinstance(cached, dict) and cached.get('fingerprint') not in (None, fingerprint)
 
 
 def get_idempotency_key(request) -> str | None:
     """Extrait l'Idempotency-Key depuis les headers de la requête."""
+    data = request.data if hasattr(request.data, 'get') else {}
     return (
         request.META.get(IDEMPOTENCY_HEADER)
         or request.META.get(IDEMPOTENCY_HEADER_ALT)
-        or request.data.get('idempotency_key')
+        or data.get('idempotency_key')
+        or data.get('mobile_uuid')
+        or data.get('uuid')
     )
 
 
@@ -57,8 +81,8 @@ def idempotent_action(func):
     Usage sur une action ViewSet :
 
         @action(detail=False, methods=['post'])
-        @transaction.atomic
         @idempotent_action
+        @transaction.atomic
         def finaliser(self, request):
             ...
 
@@ -76,6 +100,11 @@ def idempotent_action(func):
             # Pas de clé fournie → exécution normale sans déduplication
             return func(self, request, *args, **kwargs)
 
+        if not isinstance(idem_key, str) or not idem_key.strip():
+            return Response(
+                {'detail': 'Idempotency-Key doit être une chaîne non vide.'},
+                status=http_status.HTTP_400_BAD_REQUEST
+            )
         if len(idem_key) > 128:
             return Response(
                 {'detail': 'Idempotency-Key trop longue (max 128 caractères).'},
@@ -83,16 +112,22 @@ def idempotent_action(func):
             )
 
         user_id = request.user.id if request.user.is_authenticated else 'anon'
-        cache_key = _cache_key(user_id, idem_key)
+        fingerprint = _payload_fingerprint(request)
+        cache_key = _cache_key(user_id, request.path, idem_key)
+        sentinel = {'state': _IN_PROGRESS, 'fingerprint': fingerprint}
 
-        # Verrou atomique : seule la première requête réclame la clé.
-        # Une requête concurrente avec la même clé attend le résultat de la
-        # première — sinon les deux s'exécuteraient en parallèle (TOCTOU).
-        if not cache.add(cache_key, _IN_PROGRESS, timeout=_IN_PROGRESS_TTL):
+        if not cache.add(cache_key, sentinel, timeout=_IN_PROGRESS_TTL):
             deadline = time.monotonic() + _WAIT_TIMEOUT
             while time.monotonic() < deadline:
                 cached = cache.get(cache_key)
-                if cached is None or cached == _IN_PROGRESS:
+                if _payload_conflict(cached, fingerprint):
+                    return Response(
+                        {'detail': "Cette Idempotency-Key a déjà été utilisée avec un contenu différent."},
+                        status=http_status.HTTP_409_CONFLICT
+                    )
+                if cached is None or cached == _IN_PROGRESS or (
+                    isinstance(cached, dict) and cached.get('state') == _IN_PROGRESS
+                ):
                     time.sleep(_WAIT_INTERVAL)
                     continue
                 try:
@@ -103,10 +138,11 @@ def idempotent_action(func):
                     return Response(json.loads(cached['data']), status=cached['status'])
                 except (KeyError, json.JSONDecodeError, TypeError, AttributeError):
                     logger.warning("[Idempotency] Cache corrompu pour key=%s, ré-exécution.", idem_key)
+                    cache.delete(cache_key)
+                    if not cache.add(cache_key, sentinel, timeout=_IN_PROGRESS_TTL):
+                        continue
                     break
             else:
-                # La première requête dépasse _WAIT_TIMEOUT ou est morte sans
-                # libérer le sentinel → refus explicite (le client peut retenter).
                 logger.warning("[Idempotency] Attente expirée pour key=%s user=%s", idem_key, user_id)
                 return Response(
                     {'detail': "Une requête identique est déjà en cours de traitement. Veuillez patienter."},
@@ -131,6 +167,7 @@ def idempotent_action(func):
                     {
                         'data': json.dumps(response.data, default=str),
                         'status': response.status_code,
+                        'fingerprint': fingerprint,
                     },
                     timeout=IDEMPOTENCY_TTL
                 )

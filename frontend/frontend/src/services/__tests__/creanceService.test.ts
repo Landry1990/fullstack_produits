@@ -62,7 +62,7 @@ describe('creanceService - Bulk Payment with Partial Amount', () => {
             const result = await creanceService.bulkPaiement(payload)
 
             // Vérifier que l'API est appelée avec le bon payload
-            expect(api.post).toHaveBeenCalledWith('creances/bulk_paiement/', payload)
+            expect(api.post).toHaveBeenCalledWith('creances/bulk_paiement/', payload, expect.objectContaining({ headers: expect.objectContaining({ 'Idempotency-Key': expect.any(String) }) }))
             
             // Vérifier la réponse
             expect(result.total_amount).toBe('13000.00')
@@ -124,7 +124,7 @@ describe('creanceService - Bulk Payment with Partial Amount', () => {
 
             const result = await creanceService.bulkPaiement(payload)
 
-            expect(api.post).toHaveBeenCalledWith('creances/bulk_paiement/', payload)
+            expect(api.post).toHaveBeenCalledWith('creances/bulk_paiement/', payload, expect.objectContaining({ headers: expect.objectContaining({ 'Idempotency-Key': expect.any(String) }) }))
             expect(result.total_amount).toBe('15000.00')
             expect(result.reste_a_payer).toBe('0.00')
             expect(result.paiements.every(p => p.est_soldee)).toBe(true)
@@ -180,7 +180,7 @@ describe('creanceService - Bulk Payment with Partial Amount', () => {
 
             const result = await creanceService.ajouterPaiement(1, payload)
 
-            expect(api.post).toHaveBeenCalledWith('creances/1/ajouter_paiement/', payload)
+            expect(api.post).toHaveBeenCalledWith('creances/1/ajouter_paiement/', payload, expect.objectContaining({ headers: expect.objectContaining({ 'Idempotency-Key': expect.any(String) }) }))
             expect(result.paiement_id).toBe(456)
             expect(result.creance.id).toBe(1)
         })

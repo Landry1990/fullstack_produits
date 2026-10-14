@@ -82,8 +82,6 @@ class CaisseViewSet(CaisseReportingMixin, CaisseClotureMixin, BaseViewSetConfig,
         return queryset
 
 
-    @idempotent_action
-    @transaction.atomic
     def _check_poste_vente(self, request):
         """Bloquer l'encaissement si l'utilisateur n'a pas de point de vente actif."""
         from ...models import PosteVente
@@ -187,6 +185,8 @@ class CaisseViewSet(CaisseReportingMixin, CaisseClotureMixin, BaseViewSetConfig,
                 pass
         return data
 
+    @idempotent_action
+    @transaction.atomic
     def create(self, request, *args, **kwargs):
         try:
             montant = Decimal(str(request.data.get('montant', 0)))
@@ -224,6 +224,7 @@ class CaisseViewSet(CaisseReportingMixin, CaisseClotureMixin, BaseViewSetConfig,
         return super().create(request, *args, **kwargs)
 
     @action(detail=False, methods=['post'])
+    @idempotent_action
     @transaction.atomic
     def bulk_create(self, request):
         """Enregistre plusieurs paiements en une seule requête (mêmes règles que create)."""
@@ -249,7 +250,17 @@ class CaisseViewSet(CaisseReportingMixin, CaisseClotureMixin, BaseViewSetConfig,
         if error_res:
             return error_res
 
-        created = []
+        facture_ids = {
+            item.get('facture') or item.get('facture_id')
+            for item in items
+            if item.get('facture') or item.get('facture_id')
+        }
+        if len(facture_ids) > 1:
+            return Response(
+                {'detail': "Un encaissement groupé ne peut concerner qu'une seule facture."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         for item in items:
             error_res = self._check_facture_encaissable(item)
             if error_res:
@@ -257,6 +268,27 @@ class CaisseViewSet(CaisseReportingMixin, CaisseClotureMixin, BaseViewSetConfig,
             error_res = self._check_depot_solde(item)
             if error_res:
                 return error_res
+            validation_data = item.copy()
+            if 'facture' not in validation_data and validation_data.get('facture_id') is not None:
+                validation_data['facture'] = validation_data['facture_id']
+            self.get_serializer(data=validation_data).is_valid(raise_exception=True)
+
+        ticket = request.data.get('ticket') if isinstance(request.data, dict) else None
+        ticket_values = None
+        if ticket is not None:
+            if not isinstance(ticket, dict):
+                return Response({'detail': "Le format des informations ticket est invalide."}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                montant_verse = Decimal(str(ticket.get('montant_verse', 0)))
+                montant_rendu = Decimal(str(ticket.get('montant_rendu', 0)))
+            except (InvalidOperation, TypeError, ValueError):
+                return Response({'detail': "Les montants du ticket sont invalides."}, status=status.HTTP_400_BAD_REQUEST)
+            if not montant_verse.is_finite() or not montant_rendu.is_finite() or montant_verse < 0 or montant_rendu < 0:
+                return Response({'detail': "Les montants du ticket doivent être positifs et finis."}, status=status.HTTP_400_BAD_REQUEST)
+            ticket_values = (montant_verse, montant_rendu)
+
+        created = []
+        for item in items:
             data = item.copy()
             # Alias : le frontend envoie historiquement facture_id
             if 'facture' not in data and data.get('facture_id') is not None:
@@ -266,6 +298,21 @@ class CaisseViewSet(CaisseReportingMixin, CaisseClotureMixin, BaseViewSetConfig,
             serializer.is_valid(raise_exception=True)
             self.perform_create(serializer)
             created.append(serializer.data)
+
+        facture_id = next(iter(facture_ids), None)
+        coupon_numero = request.data.get('coupon_numero') if isinstance(request.data, dict) else None
+        if coupon_numero and facture_id:
+            from ...models import Facture
+            from ...services.sale_finalizer import SaleFinalizer
+            facture = Facture.objects.select_for_update().get(pk=facture_id)
+            SaleFinalizer._handle_coupon(coupon_numero, facture, request.user)
+
+        if facture_id and ticket_values:
+            from ...models import Facture
+            facture = Facture.objects.select_for_update().get(pk=facture_id)
+            facture.montant_verse, facture.montant_rendu = ticket_values
+            facture.save(update_fields=['montant_verse', 'montant_rendu'])
+
         return Response(created, status=status.HTTP_201_CREATED)
 
     def perform_create(self, serializer):

@@ -6,6 +6,7 @@ import { Package, Plus } from 'lucide-react';
 import { Checkbox } from '../ui/Checkbox';
 import { EmptyState } from '../ui/EmptyState';
 import SkeletonTable from '../ui/SkeletonTable';
+import { Table, TableBody, TableHeader } from '../shadcn/table';
 
 interface ProductTableProps {
   products: ProduitModel[];
@@ -65,8 +66,8 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
         <>
           {/* DESKTOP VIEW (Table) */}
           <div className="hidden md:block overflow-x-auto w-full">
-            <table className="min-w-full divide-y divide-base-200">
-              <thead className="bg-base-200 text-base-content/60 border-b border-base-200">
+            <Table containerClassName="overflow-visible rounded-none border-0" className="min-w-full divide-y divide-base-200">
+              <TableHeader className="sticky top-0 z-20 bg-base-200 text-base-content/60 border-b border-base-200">
                 <tr>
                   <th scope="col" className="py-2.5 px-4 w-10">
                     <Checkbox
@@ -80,8 +81,8 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
                   <th scope="col" className="py-2.5 px-3 text-left text-caption font-semibold uppercase tracking-wider w-32">{t('products:table.cip')}</th>
                   <th scope="col" className="py-2.5 px-3 text-left text-caption font-semibold uppercase tracking-wider">{t('products:table.product', { defaultValue: 'Produit' })}</th>
                 </tr>
-              </thead>
-              <tbody className="bg-base-100 divide-y divide-base-200">
+              </TableHeader>
+              <TableBody className="bg-base-100 divide-y divide-base-200">
                 {products.map((produit) => {
                   const stock = produit.stock ?? 0;
                   const isSelected = selectedProduit?.id === produit.id;
@@ -147,8 +148,8 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
                     </tr>
                   );
                 })}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
 
           {/* MOBILE POP-UP LIST (Cards) */}

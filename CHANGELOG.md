@@ -2,6 +2,34 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-10-14 — Fiabilité Lot 4D : encaissement atomique et idempotent
+
+- Idempotence renforcée : clé scopée utilisateur + endpoint, empreinte du payload,
+  conflit `409` si une clé est réutilisée avec un contenu différent.
+- Cache de succès publié après la transaction SQL (ordre des décorateurs corrigé).
+- Caisse centralisée : coupon + paiements mixtes + statut + montants ticket dans
+  une seule transaction `caisse/bulk_create`; validation complète avant écriture.
+- Idempotence ajoutée à validation facture, marquage payé, sync mobile (UUID),
+  paiements caisse unitaires/groupés et recouvrements de créances.
+- Correction : `_check_poste_vente` était décoré par erreur à la place des
+  endpoints caisse.
+- Frontend : une requête groupée remplace la chaîne de POST partiellement
+  validables ; clés ajoutées aux paiements de créances.
+- Tests : backend financier 33/33, TypeScript/ESLint, frontend 462 + routes 66/66.
+- 4B/4C abandonnés définitivement à la demande produit.
+
+## 2026-10-14 — UX Lot 5C : tables prioritaires standardisées
+
+- `shadcn/table.tsx` accepte `containerClassName` pour les zones scrollables et
+  en-têtes fixes sans conteneur ou bordure en double.
+- Journal de caisse, Produits et Ventes migrés sur le même socle sémantique
+  `Table` / `TableHeader` / `TableBody`, sans modifier la logique métier.
+- En-tête Produits désormais fixe ; vue mobile, clavier, sélection, états et
+  pagination existants préservés.
+- Inventaires et Fournisseurs sont déjà des listes/cartes responsives, donc ne
+  nécessitent pas de conversion artificielle en tableau.
+- Vérifié : TypeScript, ESLint, JournalCaisse 5/5, build production OK.
+
 ## 2026-10-14 — UX Lots 5B/5D : états standardisés, DaisyUI confirmé absent
 
 - `JournalAudit` : bannière d’erreur ad hoc remplacée par `ErrorState` + Réessayer.
