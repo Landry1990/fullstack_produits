@@ -1,5 +1,7 @@
 import { Suspense, useEffect } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { MotionConfig, motion } from 'framer-motion'
+import { pageFade } from '../lib/motion'
 import { Loader2, Clock } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import Sidebar from './Sidebar'
@@ -60,7 +62,9 @@ function LayoutContent() {
               <Loader2 className="size-8 animate-spin text-primary" />
             </div>
           }>
-            <Outlet />
+            <motion.div key={location.pathname} variants={pageFade} initial="hidden" animate="show" className="h-full">
+              <Outlet />
+            </motion.div>
           </Suspense>
         </main>
       </div>
@@ -69,6 +73,7 @@ function LayoutContent() {
 
   return (
     <OmnisearchProvider>
+      <MotionConfig reducedMotion="user">
       <div className={`flex flex-col h-dvh ${isZenithMode ? 'bg-base-100' : 'bg-base-200'} ${isMidnightTheme ? 'theme-midnight' : ''} transition-colors duration-300 relative overflow-hidden`}>
         <LicenceExpirationBanner />
         <div className="flex flex-1 relative overflow-hidden">
@@ -106,12 +111,15 @@ function LayoutContent() {
                 <Loader2 className="size-8 animate-spin text-primary" />
               </div>
             }>
-              <Outlet />
+              <motion.div key={location.pathname} variants={pageFade} initial="hidden" animate="show" className="flex-1 flex flex-col min-h-0">
+                <Outlet />
+              </motion.div>
             </Suspense>
           </div>
         </main>
       </div>
       </div>
+      </MotionConfig>
     </OmnisearchProvider>
   )
 }

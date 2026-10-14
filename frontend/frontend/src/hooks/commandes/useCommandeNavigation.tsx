@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { gooeyToast } from 'goey-toast';
-import { useTranslation, type TFunction } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { Package } from 'lucide-react';
 import { useCommandesStore } from '../../stores/useCommandesStore';
 import { normalizeNumberInput } from '../../utils/formatters';

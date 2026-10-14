@@ -6,6 +6,8 @@ import {
     RefreshCw, Award
 } from 'lucide-react';
 import { Skeleton } from '../ui/Skeleton';
+import { motion } from 'framer-motion';
+import { fadeInUp, staggerContainer, staggerFadeContainer } from '../../lib/motion';
 import { useRecharts } from '../../hooks/useRecharts';
 import { useVendeurStats } from '../../hooks/useDashboard';
 import { formatDistanceToNow, parseISO } from 'date-fns';
@@ -84,10 +86,10 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
 
 
     return (
-        <div className="space-y-5">
+        <motion.div className="space-y-5" variants={staggerContainer} initial="hidden" animate="show">
 
             {/* ── Header vendeur ──────────────────────────────────────────── */}
-            <div className="flex items-center justify-between">
+            <motion.div variants={fadeInUp} className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <div className="size-11 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-lg shadow-lg">
                         {data.vendeur[0]?.toUpperCase() ?? '?'}
@@ -105,11 +107,11 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
                 >
                     <RefreshCw className="size-4" />
                 </button>
-            </div>
+            </motion.div>
 
             {/* ── Objectif du jour ─────────────────────────────────────────── */}
             {data.objectif_jour_perso > 0 && (
-                <div className={`rounded-2xl p-4 border ${data.progression_perso >= 100 ? 'bg-emerald-50 border-emerald-200' : 'bg-white border-slate-200'}`}>
+                <motion.div variants={fadeInUp} className={`rounded-2xl p-4 border ${data.progression_perso >= 100 ? 'bg-emerald-50 border-emerald-200' : 'bg-white border-slate-200'}`}>
                     <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                             <Target className={`size-4 ${data.progression_perso >= 100 ? 'text-emerald-600' : 'text-indigo-500'}`} />
@@ -140,11 +142,11 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
                         </div>
                     </div>
                     <ProgressBar value={data.progression_perso} color={progressColor} />
-                </div>
+                </motion.div>
             )}
 
             {/* ── KPI Cards ────────────────────────────────────────────────── */}
-            <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+            <motion.div variants={staggerFadeContainer} className="grid grid-cols-2 xl:grid-cols-4 gap-3">
                 {[
                     {
                         label: t('vendeur.this_week'),
@@ -180,19 +182,19 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
                         custom: <RangBadge rang={data.rang} total={data.total_vendeurs} />,
                     },
                 ].map((kpi, _i) => (
-                    <div key={kpi.label} className="bg-white border border-slate-200 rounded-2xl p-4">
+                    <motion.div variants={fadeInUp} key={kpi.label} className="bg-white border border-slate-200 rounded-2xl p-4">
                         <div className={`inline-flex p-1.5 rounded-lg ${kpi.bg} mb-2`}>
                             <kpi.icon className={`size-3.5 ${kpi.color}`} />
                         </div>
                         <p className="text-caption font-black uppercase tracking-widest text-slate-400 mb-0.5">{kpi.label}</p>
                         {kpi.custom ?? <p className="text-xl font-black text-slate-800">{kpi.value}</p>}
                         <p className="text-caption text-slate-400 font-medium mt-0.5">{kpi.sub}</p>
-                    </div>
+                    </motion.div>
                 ))}
-            </div>
+            </motion.div>
 
             {/* ── Sparkline 7 jours ────────────────────────────────────────── */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-4">
+            <motion.div variants={fadeInUp} className="bg-white border border-slate-200 rounded-2xl p-4">
                 <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                         <Zap className="size-3.5 text-indigo-500" />
@@ -236,11 +238,11 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
                         </div>
                     ))}
                 </div>
-            </div>
+            </motion.div>
 
             {/* ── Top produits perso ───────────────────────────────────────── */}
             {data.top_produits.length > 0 && (
-                <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+                <motion.div variants={fadeInUp} className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
                     <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-2">
                         <Star className="size-3.5 text-amber-500" />
                         <span className="text-caption font-black uppercase tracking-widest text-slate-400">{t('vendeur.top_products_month')}</span>
@@ -268,12 +270,12 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
                             );
                         })}
                     </div>
-                </div>
+                </motion.div>
             )}
 
             {/* ── Dernière vente ───────────────────────────────────────────── */}
             {data.derniere_vente && (
-                <div className="flex items-center gap-3 px-4 py-3 bg-slate-50 rounded-2xl border border-slate-200">
+                <motion.div variants={fadeInUp} className="flex items-center gap-3 px-4 py-3 bg-slate-50 rounded-2xl border border-slate-200">
                     <Clock className="size-4 text-slate-400 shrink-0" />
                     <div className="flex-1 min-w-0">
                         <p className="text-xs font-black text-slate-600">
@@ -284,8 +286,8 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
                         </p>
                     </div>
                     <p className="text-sm font-black text-slate-700 shrink-0">{formatCurrencyLocal(data.derniere_vente.montant)}</p>
-                </div>
+                </motion.div>
             )}
-        </div>
+        </motion.div>
     );
 }

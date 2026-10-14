@@ -257,12 +257,12 @@ class MockResizeObserver {
 }
 window.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
 
-// Mock for requestAnimationFrame (jsdom doesn't execute it automatically)
+// Mock for requestAnimationFrame — asynchrone via setTimeout :
+// un callback synchrone provoque une récursion infinie avec framer-motion.
 window.requestAnimationFrame = vi.fn((callback: FrameRequestCallback) => {
-  callback(0);
-  return 0;
+  return setTimeout(() => callback(performance.now()), 0) as unknown as number;
 });
-window.cancelAnimationFrame = vi.fn();
+window.cancelAnimationFrame = vi.fn((id: number) => clearTimeout(id));
 
 // Mock for html2pdf/jspdf if needed for environment stability
 vi.mock('jspdf', () => ({

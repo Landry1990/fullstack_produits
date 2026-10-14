@@ -1,19 +1,13 @@
 import csv
-import io
 
 from django.http import HttpResponse
-from reportlab.graphics.barcode import code128
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.response import Response
 
 from ...models import Forme, Groupe, Produit, Rayon
 
 
 class ProduitExportMixin:
-    """Mixin pour les exports CSV et génération PDF/Etiquettes des produits."""
+    """Mixin pour les exports CSV des produits."""
 
     @action(detail=False, methods=['get'])
     def export_csv(self, request):
@@ -65,60 +59,4 @@ class ProduitExportMixin:
                 str(p.tva).replace('.', ',')
             ])
             
-        return response
-
-    @action(detail=False, methods=['post'])
-    def generate_labels(self, request):
-        products_data = request.data.get('products', [])
-        if not products_data:
-            return Response({'error': 'No products provided'}, status=status.HTTP_400_BAD_REQUEST)
-
-        buffer = io.BytesIO()
-        c = canvas.Canvas(buffer, pagesize=letter)
-        w, h = letter
-        
-        col_width = w / 3
-        row_height = h / 8
-        margin = 10
-        
-        x = 0
-        y = h - row_height
-        
-        for item in products_data:
-            try:
-                produit = Produit.objects.get(pk=item.get('id'))
-                qty = item.get('quantity', 1)
-                
-                for _ in range(qty):
-                    c.rect(x + margin, y + margin, col_width - 2*margin, row_height - 2*margin)
-                    c.setFont("Helvetica-Bold", 10)
-                    c.drawString(x + margin + 5, y + row_height - margin - 15, produit.name[:25])
-                    c.setFont("Helvetica-Bold", 14)
-                    c.drawRightString(x + col_width - margin - 5, y + row_height - margin - 15, f"{produit.selling_price:.0f} F")
-                    
-                    code_value = produit.cip1 or str(produit.id).zfill(8)
-                    barcode = code128.Code128(code_value, barHeight=20, barWidth=1.2)
-                    barcode.drawOn(c, x + margin + 10, y + margin + 15)
-                    
-                    c.setFont("Helvetica", 8)
-                    c.drawCentredString(x + col_width/2, y + margin + 5, code_value)
-                    
-                    x += col_width
-                    if x >= w - 10:
-                        x = 0
-                        y -= row_height
-                        
-                    if y < 0:
-                        c.showPage()
-                        y = h - row_height
-                        x = 0
-                        
-            except Produit.DoesNotExist:
-                continue
-                
-        c.save()
-        buffer.seek(0)
-        
-        response = HttpResponse(buffer, content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename="etiquettes.pdf"'
         return response

@@ -9,6 +9,8 @@ import FeedbackModal from './FeedbackModal';
 import { Bell, ChevronDown, LogOut, Moon, Sun, MessageSquare, User as UserIcon, MessageCircle, Key } from 'lucide-react';
 import { playNotificationSound } from '../../utils/audio';
 import { logger } from '../../utils/logger'
+import { AnimatePresence, motion } from 'framer-motion';
+import { popover } from '../../lib/motion';
 
 export default function UserHeader() {
   const { t, i18n } = useTranslation(['messaging', 'sidebar', 'common']);
@@ -162,8 +164,15 @@ export default function UserHeader() {
             </button>
 
             {/* Dropdown Menu */}
+            <AnimatePresence>
             {isMenuOpen && (
-              <div className="absolute top-full right-0 mt-2 w-64 bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200 z-50">
+              <motion.div
+                variants={popover}
+                initial="hidden"
+                animate="show"
+                exit="exit"
+                className="absolute top-full right-0 mt-2 w-64 bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden z-50"
+              >
                 <div className="p-4 border-b border-slate-100 bg-slate-50">
                   <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">{t('common:account')}</p>
                   <div className="flex items-center gap-3">
@@ -229,8 +238,9 @@ export default function UserHeader() {
                     <span className="font-semibold">{t('common:logout')}</span>
                   </button>
                 </div>
-              </div>
+              </motion.div>
             )}
+            </AnimatePresence>
           </div>
         </div>
       </header>

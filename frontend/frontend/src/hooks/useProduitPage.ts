@@ -233,18 +233,6 @@ export function useProduitPage() {
 
   const handleGenerateLabels = (produit: ProduitModel) => setLabelProduct(produit)
 
-  const confirmGenerateLabels = async (quantity: number) => {
-    if (!labelProduct) return
-    try {
-      const resp = await api.post('produits/generate_labels/', { products: [{ id: labelProduct.id, quantity }] }, { responseType: 'blob' })
-      const url = window.URL.createObjectURL(new Blob([resp.data]))
-      const link = document.createElement('a'); link.href = url; link.setAttribute('download', `etiquettes_${labelProduct.name}.pdf`)
-      document.body.appendChild(link); link.click(); link.remove()
-      window.URL.revokeObjectURL(url)
-      setLabelProduct(null)
-    } catch (err) { gooeyToast.error(getApiErrorDetail(err, t('products:messages.generation_error'))) }
-  }
-
   const handleTransferToRayon = (produit: ProduitModel) => {
     if (produit.has_reserve_storage && (produit.stock_reserve ?? 0) > 0) setTransferProduct(produit)
   }
@@ -413,7 +401,7 @@ export function useProduitPage() {
     labelProduct, setLabelProduct, transferProduct, setTransferProduct,
     /* handlers */
     handleDelete, handleStockAdjustmentSubmit, handleOpenAdjust,
-    handleToggleActive, handleGenerateLabels, confirmGenerateLabels,
+    handleToggleActive, handleGenerateLabels,
     handleTransferToRayon, confirmTransferToRayon,
     handleMovementClick, handleOpenEdit,
     queryClient,

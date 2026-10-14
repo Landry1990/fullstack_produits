@@ -26,6 +26,8 @@ import {
 } from '../hooks/useDashboard';
 
 import { useTranslation } from 'react-i18next';
+import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
+import { popover, tabContent } from '../lib/motion';
 import { formatCurrency } from '../utils/formatters';
 import { useAuth } from '../context/AuthContext';
 import { useLicence } from '../context/LicenceContext';
@@ -213,6 +215,7 @@ export default function DashboardShadcn() {
   }
 
   return (
+    <MotionConfig reducedMotion="user">
     <div className="h-full flex flex-col bg-slate-50 font-sans overflow-hidden">
       {/* ── HEADER ── */}
       <div className="shrink-0 z-30 bg-white/70 backdrop-blur-md border-b border-slate-200/60 px-4 py-2.5">
@@ -258,8 +261,16 @@ export default function DashboardShadcn() {
               >
                 <MoreHorizontal className="size-5 text-slate-500" />
               </Button>
+              <AnimatePresence>
               {menuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-200 p-1 z-50" role="menu">
+                <motion.div
+                  variants={popover}
+                  initial="hidden"
+                  animate="show"
+                  exit="exit"
+                  className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-200 p-1 z-50"
+                  role="menu"
+                >
                   <button
                     type="button"
                     role="menuitem"
@@ -302,8 +313,9 @@ export default function DashboardShadcn() {
                     )}
                     {t('actions.send_inventory')}
                   </button>
-                </div>
+                </motion.div>
               )}
+              </AnimatePresence>
             </div>
           </div>
         </div>
@@ -335,47 +347,55 @@ export default function DashboardShadcn() {
 
       {/* ── TAB CONTENT ── */}
       <div className="p-3 flex-1 overflow-y-auto">
-        {isVendeur && (
-          <DashboardVendeur formatCurrencyLocal={formatCurrencyLocal} />
-        )}
-        {!isVendeur && activeTab === 'overview' && (
-          <PerformanceOverview
-            stats={mergedStats}
-            revenueChart={revenueChart}
-            hourlyTraffic={hourlyTraffic}
-            reapproStats={reapproStats}
-            supplierDebts={supplierDebts}
-            frequentStockouts={frequentStockouts}
-            t={t}
-            formatCurrencyLocal={formatCurrencyLocal}
-          />
-        )}
-        {!isVendeur && activeTab === 'stock' && (
-          <div className="space-y-6">
-            <StockIntelligence
-              stats={mergedStats}
-              lowStockItems={lowStockItems}
-              expiringLots={expiringLots}
-              promisDisponibles={promisDisponibles}
-              expirationMonths={expirationMonths}
-              setExpirationMonths={setExpirationMonths}
-              getServerDate={getServerDate}
-              reapproStats={reapproStats}
-              t={t}
-              formatCurrencyLocal={formatCurrencyLocal}
-            />
-          </div>
-        )}
-        {!isVendeur && activeTab === 'finance' && (
-          <FinancialSummary
-            stats={mergedStats}
-            ugStats={ugStats}
-            echeances={echeances}
-            t={t}
-            formatCurrencyLocal={formatCurrencyLocal}
-          />
-        )}
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={isVendeur ? 'vendeur' : activeTab}
+            variants={tabContent}
+            initial="hidden"
+            animate="show"
+            exit="exit"
+          >
+            {isVendeur ? (
+              <DashboardVendeur formatCurrencyLocal={formatCurrencyLocal} />
+            ) : activeTab === 'overview' ? (
+              <PerformanceOverview
+                stats={mergedStats}
+                revenueChart={revenueChart}
+                hourlyTraffic={hourlyTraffic}
+                reapproStats={reapproStats}
+                supplierDebts={supplierDebts}
+                frequentStockouts={frequentStockouts}
+                t={t}
+                formatCurrencyLocal={formatCurrencyLocal}
+              />
+            ) : activeTab === 'stock' ? (
+              <div className="space-y-6">
+                <StockIntelligence
+                  stats={mergedStats}
+                  lowStockItems={lowStockItems}
+                  expiringLots={expiringLots}
+                  promisDisponibles={promisDisponibles}
+                  expirationMonths={expirationMonths}
+                  setExpirationMonths={setExpirationMonths}
+                  getServerDate={getServerDate}
+                  reapproStats={reapproStats}
+                  t={t}
+                  formatCurrencyLocal={formatCurrencyLocal}
+                />
+              </div>
+            ) : (
+              <FinancialSummary
+                stats={mergedStats}
+                ugStats={ugStats}
+                echeances={echeances}
+                t={t}
+                formatCurrencyLocal={formatCurrencyLocal}
+              />
+            )}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
+    </MotionConfig>
   );
 }

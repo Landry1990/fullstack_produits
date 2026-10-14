@@ -137,8 +137,6 @@
     },
     "quantity_dialog": {
         "label": "Quantity",
-        "labels_title": "Print labels",
-        "labels_description": "Enter the number of labels to generate for {{name}}.",
         "transfer_title": "Transfer to shelf",
         "transfer_description": "{{name}} — reserve: {{reserve}}, shelf capacity: {{capacity}}.",
         "max_error": "Enter a whole number between 1 and {{max}}."
@@ -337,7 +335,6 @@
         "password_confirm_import_title": "Confirm product import",
         "password_confirm_import_body": "This action is sensitive. Please enter your password to confirm the product import.",
         "invalid_quantity": "Invalid quantity",
-        "generation_error": "Error during label generation",
         "access_denied_delete": "Access denied: You do not have permission to delete products.",
         "access_denied_adjust": "Access denied",
         "input_quantity_error": "Please enter the new quantity",

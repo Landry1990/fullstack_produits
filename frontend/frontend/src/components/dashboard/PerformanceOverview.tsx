@@ -18,6 +18,8 @@ import { useRecharts } from '../../hooks/useRecharts';
 import { Link } from 'react-router-dom';
 import { formatCurrency } from '../../utils/formatters';
 import { Skeleton } from '../ui/Skeleton';
+import { motion } from 'framer-motion';
+import { fadeInUp, staggerContainer, staggerFadeContainer } from '../../lib/motion';
 import type { TFunction } from 'i18next';
 import type { DashboardStats, RevenueChartData, HourlyTrafficData, SupplierDebtsResponse, FrequentStockoutItem } from '../../hooks/useDashboard';
 
@@ -127,10 +129,10 @@ export default function PerformanceOverview({
   const { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } = Recharts;
 
   return (
-    <div className="space-y-5">
+    <motion.div className="space-y-5" variants={staggerContainer} initial="hidden" animate="show">
 
       {/* ── KPI CARDS ──────────────────────────────────────── */}
-      <div className={`grid gap-3 ${
+      <motion.div variants={staggerFadeContainer} className={`grid gap-3 ${
         isVendeur
           ? 'grid-cols-1 sm:grid-cols-2'
           : 'grid-cols-2 md:grid-cols-3 xl:grid-cols-5'
@@ -167,16 +169,17 @@ export default function PerformanceOverview({
           );
 
           return (
-            <div key={card.title} className={`bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden transition-all ${card.link ? 'hover:shadow-md hover:-translate-y-0.5 cursor-pointer active:scale-[0.98]' : ''}`}>
+            <motion.div variants={fadeInUp} key={card.title} className={`bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden transition-all ${card.link ? 'hover:shadow-md hover:-translate-y-0.5 cursor-pointer active:scale-[0.98]' : ''}`}>
               {card.link ? <Link to={card.link} className="block h-full">{inner}</Link> : inner}
-            </div>
+            </motion.div>
           );
         })}
-      </div>
+      </motion.div>
 
       {/* ── REAPPRO ALERT ──────────────────────────────────── */}
       {reapproStats && reapproStats.product_count > 0 && (
-        <div
+        <motion.div
+          variants={fadeInUp}
           className="flex items-center justify-between p-4 sm:p-5 bg-cyan-700 rounded-2xl shadow-lg shadow-cyan-700/20 cursor-pointer hover:bg-cyan-800 transition-all group"
           onClick={() => navigate('/app/reappro-rayon')}
           role="button"
@@ -198,14 +201,14 @@ export default function PerformanceOverview({
           <div className="size-8 rounded-full bg-white/10 flex items-center justify-center shrink-0 group-hover:translate-x-1 transition-transform border border-white/20 ml-3">
             <ArrowRight className="size-4 text-white" />
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* ── CHARTS ─────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+      <motion.div variants={staggerFadeContainer} className="grid grid-cols-1 xl:grid-cols-2 gap-5">
 
         {/* Revenue Bar Chart */}
-        <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
+        <motion.div variants={fadeInUp} className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
           <div className="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-slate-100">
             <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg">
               <TrendingUp className="size-4" />
@@ -267,10 +270,10 @@ export default function PerformanceOverview({
               </div>
             )}
           </div>
-        </div>
+        </motion.div>
 
         {/* Hourly Traffic Chart */}
-        <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
+        <motion.div variants={fadeInUp} className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
           <div className="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-slate-100">
             <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
               <History className="size-4" />
@@ -308,16 +311,16 @@ export default function PerformanceOverview({
               </div>
             )}
           </div>
-        </div>
+        </motion.div>
 
-      </div>
+      </motion.div>
 
       {/* ── P&L HISTORY + FREQUENT STOCKOUTS (same grid as charts) ── */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+      <motion.div variants={staggerFadeContainer} className="grid grid-cols-1 xl:grid-cols-2 gap-5">
 
       {/* ── 7-DAY P&L HISTORY TABLE ─────────────────────────── */}
       {revenueChart && revenueChart.labels && revenueChart.couts && revenueChart.marges && (
-        <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
+        <motion.div variants={fadeInUp} className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
           <div className="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-slate-100">
             <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg">
               <Receipt className="size-4" />
@@ -385,12 +388,12 @@ export default function PerformanceOverview({
               </tfoot>
             </table>
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* ── FREQUENT STOCKOUTS ─────────────────────────────── */}
       {frequentStockouts && frequentStockouts.length > 0 && (
-        <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
+        <motion.div variants={fadeInUp} className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
           <div className="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-slate-100">
             <div className="p-2 bg-red-100 text-red-600 rounded-lg">
               <AlertTriangle className="size-4" />
@@ -441,11 +444,11 @@ export default function PerformanceOverview({
               </tbody>
             </table>
           </div>
-        </div>
+        </motion.div>
       )}
 
-      </div>
+      </motion.div>
 
-    </div>
+    </motion.div>
   );
 }

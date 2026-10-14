@@ -1,6 +1,8 @@
 {
     "modal_title": "Label Printing",
     "subtitle": "Order: {{numero}}",
+    "subtitle_product": "Product: {{name}}",
+    "subtitle_products": "{{count}} products",
     "format_label": "Label Format",
     "format_standard": "Standard Format (40x20mm)",
     "format_compact": "Compact Format (30x15mm)",

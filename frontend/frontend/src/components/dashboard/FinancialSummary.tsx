@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import type { Echeance, DashboardStats, UgStatsResponse, UgStatItem } from '../../hooks/useDashboard';
 import { formatDate } from '../../utils/dateUtils';
+import { motion } from 'framer-motion';
+import { fadeInUp, staggerContainer, staggerFadeContainer } from '../../lib/motion';
 import type { TFunction } from 'i18next';
 
 interface FinancialSummaryProps {
@@ -29,12 +31,12 @@ export default function FinancialSummary({
   const showUG = ugStats && ugStats.results && stats?.role !== 'VENDEUR' && stats?.role !== 'CAISSIER';
 
   return (
-    <div className="space-y-6">
+    <motion.div className="space-y-6" variants={staggerContainer} initial="hidden" animate="show">
       {/* Row: UG (left) + Echéances (right) */}
-      <div className="grid grid-cols-1 2xl:grid-cols-2 gap-6">
+      <motion.div variants={staggerFadeContainer} className="grid grid-cols-1 2xl:grid-cols-2 gap-6">
         {/* Section Unités Gratuites (UG) */}
         {showUG && (
-          <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden">
+          <motion.div variants={fadeInUp} className="bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden">
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
@@ -96,12 +98,12 @@ export default function FinancialSummary({
                 </table>
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* Echéances Widget */}
         {echeances.length > 0 && (
-          <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden">
+          <motion.div variants={fadeInUp} className="bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden">
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
@@ -179,9 +181,9 @@ export default function FinancialSummary({
                 </table>
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

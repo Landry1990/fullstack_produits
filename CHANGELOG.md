@@ -2,6 +2,54 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-10-14 — Motion design subtil sur le dashboard (framer-motion)
+
+- Première utilisation de `framer-motion` (déjà installé) : variants partagés
+  créés dans `src/lib/motion.ts` (`fadeInUp`, `staggerContainer`,
+  `staggerFadeContainer`, `tabContent`, `popover`) — fade + slide-up ~300 ms,
+  stagger ~50-60 ms, style discret adapté à une app métier.
+- `DashboardShadcn` : `MotionConfig reducedMotion="user"` (respecte
+  `prefers-reduced-motion`), transition `AnimatePresence` entre les onglets,
+  menu d'actions animé (pop).
+- `PerformanceOverview` : cascade d'entrée sur les cartes KPI, alerte réappro,
+  graphiques et tables. `DashboardVendeur` : même traitement (header, objectif,
+  KPI, sparkline, top produits). `FinancialSummary` et `StockIntelligence` :
+  fade-in échelonné des cartes.
+- Navigation globale : `Layout` enveloppe l'app dans `MotionConfig
+  reducedMotion="user"` + fondu (`pageFade`, 200 ms, sans déplacement) à chaque
+  changement de route ; `Sidebar` anime les groupes/items en cascade au
+  chargement ; dropdown de `UserHeader` animé (remplace les classes
+  `animate-in` mortes — `tailwindcss-animate` n'est pas installé).
+- Page Produits : entrée échelonnée header + panneaux liste/détail, fondu à la
+  sélection d'un produit (clé `selectedProduit.id`) et au changement d'onglet
+  de la fiche (`ProductTabsContent`).
+- Fix : le mock `requestAnimationFrame` synchrone de `src/test/setup.ts`
+  provoquait une récursion infinie avec le frameloop de framer-motion →
+  passé en `setTimeout(..., 0)`.
+- Fix au passage : imports `TFunction` déplacés de `react-i18next` vers
+  `i18next` (v16 ne ré-exporte plus les types) et cast `as unknown as` pour
+  l'interop `bwip-js` dans `SimplePrintLabelsModal.tsx`.
+- Vérifié : `tsc --noEmit` OK, ESLint OK, build prod OK, tests frontend
+  463/463 (Ventes skippés hors scope).
+
+## 2026-10-14 — Étiquettes fiche produit unifiées avec le module commandes
+
+- La fiche produit ouvre désormais `SimplePrintLabelsModal` (même modale que les
+  commandes) au lieu de télécharger un PDF A4 basique : formats 40×20/30×15 mm,
+  champs configurables, CODE128 ou GS1 Datamatrix, aperçu fidèle.
+- Mode « produit » de la modale : prop `produits` sans `commande` ; quantité
+  fixe par produit (pas d'unités reçues) ; champs N° commande/facture masqués ;
+  lot/péremption/date d'entrée/fournisseur remplis depuis le lot FEFO
+  (`stock_lots`) ou la fiche produit ; sous-titre = nom du produit.
+- Formateurs de dates mutualisés (`toMMYY`, `toShortDate`) entre les deux modes.
+- Endpoint backend `POST produits/generate_labels/` (PDF reportlab) supprimé ;
+  dialogue quantité et clés i18n orphelines retirés.
+- Fichiers : `SimplePrintLabelsModal.tsx`, `ProduitShadcn.tsx`,
+  `useProduitPage.ts`, `produit_actions/export.py`, locales `labels`/`products`
+  fr/en.
+- Vérifié : TypeScript OK, ESLint ciblé OK, `manage.py check` OK, Commandes 6/6
+  et routes 66/66, build production OK.
+
 ## 2026-10-14 — Fiabilité Lot 4D : encaissement atomique et idempotent
 
 - Idempotence renforcée : clé scopée utilisateur + endpoint, empreinte du payload,
