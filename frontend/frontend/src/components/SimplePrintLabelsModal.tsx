@@ -2,7 +2,8 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { Loader2, Info } from 'lucide-react'
 import JsBarcode from 'jsbarcode'
 import PremiumModal from './common/PremiumModal'
-import { useTranslation, type TFunction } from 'react-i18next'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { Button } from './shadcn/button'
 import { Badge } from './ui/Badge'
 import { EmptyState } from './ui/EmptyState'
@@ -37,10 +38,11 @@ interface LabelData {
 }
 
 interface SimplePrintLabelsModalProps {
-  commandeNumero: string
+  commandeNumero?: string
   commande?: Commande
   produitsList?: ProduitModel[]
   selectedRows?: Set<number>
+  produits?: ProduitModel[]
   onClose: () => void
 }
 
@@ -105,6 +107,24 @@ function loadFormat(): '40x20' | '30x15' {
   return '40x20'
 }
 
+// Champs liés à une commande : masqués en mode produit
+const PRODUCT_MODE_HIDDEN_FIELDS = new Set(['orderNumber', 'invoiceNumber'])
+
+function toMMYY(raw: string | null | undefined): string {
+  if (!raw) return ''
+  if (/^\d{2}\/\d{2}$/.test(raw)) return raw
+  const d = new Date(raw)
+  if (isNaN(d.getTime())) return raw
+  return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`
+}
+
+function toShortDate(raw: string | null | undefined, locale: string): string {
+  if (!raw) return ''
+  const d = new Date(raw)
+  if (isNaN(d.getTime())) return ''
+  return d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: '2-digit' })
+}
+
 /* ═══════════════════════════════════════════
    BARCODE COMPONENTS
    ═══════════════════════════════════════════ */
@@ -160,8 +180,8 @@ function DatamatrixCanvas({ cip, lot, expiration, size }: { cip: string; lot: st
     import('bwip-js')
       .then((mod) => {
         if (cancelled) return
-        const bwip = (mod as { default?: typeof import('bwip-js') }).default || mod
-        ;(bwip as typeof import('bwip-js')).toCanvas(canvasRef.current!, {
+        const bwip = (mod as unknown as { default?: typeof import('bwip-js') }).default || mod
+        bwip.toCanvas(canvasRef.current!, {
           bcid: 'datamatrix',
           text: gs1Data,
           scale: 2,
@@ -405,10 +425,12 @@ export default function SimplePrintLabelsModal({
   commande,
   produitsList = EMPTY_PRODUCTS_LIST,
   selectedRows,
+  produits,
   onClose,
 }: SimplePrintLabelsModalProps) {
   const { t, i18n } = useTranslation(['labels', 'common'])
   const { settings: pharmacySettings } = usePharmacySettings()
+  const isProductMode = !commande
 
   // Initialize and merge fields with current language
   const [fields, setFields] = useState<LabelField[]>(() => {
@@ -431,7 +453,7 @@ export default function SimplePrintLabelsModal({
 
   const [labelFormat, setLabelFormat] = useState<'40x20' | '30x15'>(loadFormat)
   const [barcodeType, setBarcodeType] = useState<'CODE128' | 'DATAMATRIX'>(loadBarcodeType)
-  const [qtyMode, setQtyMode] = useState<'received' | 'fixed'>('received')
+  const [qtyMode, setQtyMode] = useState<'received' | 'fixed'>(commande ? 'received' : 'fixed')
   const [fixedQty, setFixedQty] = useState(1)
   const [printing, setPrinting] = useState(false)
 
@@ -493,19 +515,53 @@ export default function SimplePrintLabelsModal({
     setDragOverIndex(null)
   }
 
-  /* ─── Build label data from commande ─── */
+  /* ─── Build label data (mode produit : hors commande) ─── */
   const labelsData: LabelData[] = (() => {
+    const pharmacyName = pharmacySettings?.pharmacy_name || 'PHARMACIE'
+    const dateLocale = i18n.language.startsWith('en') ? 'en-GB' : 'fr-FR'
+
+    if (isProductMode) {
+      const result: LabelData[] = []
+      for (const p of produits ?? []) {
+        const cip = p.cip1 || p.cip2 || p.cip3 || p.cip4 || ''
+
+        // Lot FEFO : péremption la plus proche avec stock restant
+        const lot = [...(p.stock_lots ?? [])]
+          .filter(l => (l.quantity_remaining ?? 0) > 0)
+          .sort((a, b) => (a.date_expiration || '9999-12-31').localeCompare(b.date_expiration || '9999-12-31'))[0]
+
+        const label: LabelData = {
+          productName: p.name,
+          cip,
+          rayon: p.rayon_name || '',
+          barcode: cip || String(p.id).padStart(8, '0'),
+          sellingPrice: p.selling_price ? parseFloat(p.selling_price) : 0,
+          pharmacyName,
+          orderNumber: '',
+          lot: lot?.lot || '',
+          invoiceNumber: '',
+          dateEntree: toShortDate(lot?.date_reception, dateLocale),
+          dateExpiration: toMMYY(lot?.date_expiration || p.next_expiring_date || p.expire_date),
+          fournisseur: lot?.fournisseur_nom || p.fournisseur_name || '',
+          quantity: 1,
+        }
+        for (let i = 0; i < fixedQty; i++) result.push(label)
+      }
+      return result
+    }
+
+    /* ─── Mode commande ─── */
     if (!commande?.produits) return []
 
     const result: LabelData[] = []
     const produitsMap = new Map(produitsList.map(p => [p.id, p]))
 
     // Si des produits sont sélectionnés (checkbox), ne générer que pour ceux-là
-    const produits = selectedRows && selectedRows.size > 0
+    const commandeProduits = selectedRows && selectedRows.size > 0
       ? commande.produits.filter((_, idx) => selectedRows.has(idx))
       : commande.produits
 
-    for (const item of produits) {
+    for (const item of commandeProduits) {
       const isObj = item.produit && typeof item.produit === 'object'
       const produitObj = isObj ? (item.produit as ProduitModel) : null
       const produitId = isObj ? produitObj!.id : (item.produit as number)
@@ -538,37 +594,14 @@ export default function SimplePrintLabelsModal({
 
       const lot = item.lot || ''
       // Date de péremption — forcer le format MM/YY
-      const dateExpiration = (() => {
-        const raw = item.date_expiration || ''
-        if (!raw) return ''
-        // Si c'est déjà MM/YY (ex: 03/27), on garde
-        if (/^\d{2}\/\d{2}$/.test(raw)) return raw
-        // Sinon essaye de parser (ISO YYYY-MM-DD)
-        try {
-          const d = new Date(raw)
-          if (isNaN(d.getTime())) return raw
-          const mm = String(d.getMonth() + 1).padStart(2, '0')
-          const yy = String(d.getFullYear()).slice(-2)
-          return `${mm}/${yy}`
-        } catch {
-          return raw
-        }
-      })()
+      const dateExpiration = toMMYY(item.date_expiration)
 
       const orderNumber = `#${commande.id}`
       const invoiceNumber = commande.numero_facture || ''
-      const pharmacyName = pharmacySettings?.pharmacy_name || 'PHARMACIE'
 
       // Date d'entrée = date de clôture de la commande (réception effective) ou date du jour
       const refDate = (commande as Commande & { date_cloture?: string }).date_cloture || commande.date || new Date().toISOString()
-      const dateEntree = (() => {
-        try {
-          const d = new Date(refDate)
-          return d.toLocaleDateString(i18n.language.startsWith('en') ? 'en-GB' : 'fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' })
-        } catch {
-          return ''
-        }
-      })()
+      const dateEntree = toShortDate(refDate, dateLocale)
 
       // Fournisseur
       const fournisseur =
@@ -620,7 +653,7 @@ export default function SimplePrintLabelsModal({
     if (barcodeType === 'DATAMATRIX') {
       try {
         const mod = await import('bwip-js')
-        bwipToSVG = ((mod as { default?: typeof import('bwip-js') }).default || mod).toSVG
+        bwipToSVG = ((mod as unknown as { default?: typeof import('bwip-js') }).default || mod).toSVG
       } catch { /* ignore */ }
     }
 
@@ -741,7 +774,7 @@ export default function SimplePrintLabelsModal({
 <html>
 <head>
   <meta charset="utf-8">
-  <title>${t('modal_title')} - ${commandeNumero}</title>
+  <title>${t('modal_title')} - ${commandeNumero || labelsData[0]?.productName || ''}</title>
   <style>
     /* Local Fonts (Offline Support) */
     @font-face {
@@ -844,14 +877,21 @@ ${labelsHTML}
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [labelsData, fields, labelFormat, barcodeType, commandeNumero, onClose])
 
-  const enabledFieldsCount = fields.filter(f => f.enabled).length
+  const visibleFields = isProductMode ? fields.filter(f => !PRODUCT_MODE_HIDDEN_FIELDS.has(f.key)) : fields
+  const enabledFieldsCount = visibleFields.filter(f => f.enabled).length
+
+  const subtitle = commande
+    ? t('subtitle', { numero: commandeNumero })
+    : produits && produits.length === 1
+      ? t('subtitle_product', { name: produits[0].name })
+      : t('subtitle_products', { count: produits?.length ?? 0 })
 
   return (
     <PremiumModal
       isOpen={true}
       onClose={onClose}
       title={t('modal_title')}
-      subtitle={t('subtitle', { numero: commandeNumero })}
+      subtitle={subtitle}
       icon={
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
@@ -945,7 +985,7 @@ ${labelsHTML}
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
               <span className="font-bold text-sm">{t('info_title')}</span>
-              <Badge variant="primary" size="sm" className="font-mono">{enabledFieldsCount}/{fields.length}</Badge>
+              <Badge variant="primary" size="sm" className="font-mono">{enabledFieldsCount}/{visibleFields.length}</Badge>
             </div>
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -962,16 +1002,18 @@ ${labelsHTML}
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" /></svg>
                 {t('drag_info')}
               </div>
-              {fields.map((field, index) => (
+              {visibleFields.map((field, index) => {
+                const realIndex = fields.indexOf(field)
+                return (
                 <div
                   key={field.key}
                   draggable
-                  onDragStart={() => handleDragStart(index)}
-                  onDragOver={(e) => handleDragOver(e, index)}
-                  onDrop={(e) => handleDrop(e, index)}
+                  onDragStart={() => handleDragStart(realIndex)}
+                  onDragOver={(e) => handleDragOver(e, realIndex)}
+                  onDrop={(e) => handleDrop(e, realIndex)}
                   onDragEnd={handleDragEnd}
                   className={`flex items-center gap-2 p-2 rounded-lg transition-all select-none ${
-                    dragOverIndex === index
+                    dragOverIndex === realIndex
                       ? 'border-2 border-primary border-dashed bg-primary/10 scale-[1.02]'
                       : field.enabled
                         ? 'bg-primary/5 border border-primary/15'
@@ -997,7 +1039,8 @@ ${labelsHTML}
                   </span>
                   <span className="text-caption text-base-content/25 font-mono shrink-0">{index + 1}</span>
                 </div>
-              ))}
+                )
+              })}
               
               {/* Reset button */}
               <div className="pt-1.5 flex justify-end">
@@ -1038,6 +1081,7 @@ ${labelsHTML}
           <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40">{t('quantity_label', { defaultValue: 'Quantité d\'étiquettes' })}</label>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {!isProductMode && (
             <label className={`flex items-start cursor-pointer gap-3 border rounded-xl p-3 h-full transition-all ${qtyMode === 'received' ? 'border-primary bg-primary/5 shadow-sm' : 'hover:bg-base-200'}`}>
               <input
                 type="radio"
@@ -1051,6 +1095,7 @@ ${labelsHTML}
                 <p className="text-caption text-base-content/50 mt-0.5 leading-snug whitespace-normal">{t('qty.received_desc', { defaultValue: 'Total unités + gratuits' })}</p>
               </div>
             </label>
+            )}
 
             <label className={`flex items-start cursor-pointer gap-3 border rounded-xl p-3 h-full transition-all ${qtyMode === 'fixed' ? 'border-primary bg-primary/5 shadow-sm' : 'hover:bg-base-200'}`}>
               <input
@@ -1143,7 +1188,9 @@ ${labelsHTML}
             variant="base"
             icon={<Info className="size-8" />}
             title={t('no_data_title', { defaultValue: 'Aucune donnée produit disponible' })}
-            description={t('no_data_desc', { defaultValue: 'Les données de la commande doivent être chargées pour générer les étiquettes.' })}
+            description={isProductMode
+              ? t('no_data_desc_product', { defaultValue: 'Définissez une quantité supérieure à zéro pour générer les étiquettes.' })
+              : t('no_data_desc', { defaultValue: 'Les données de la commande doivent être chargées pour générer les étiquettes.' })}
           />
         )}
 

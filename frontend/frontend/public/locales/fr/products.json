@@ -137,8 +137,6 @@
     },
     "quantity_dialog": {
         "label": "Quantité",
-        "labels_title": "Imprimer des étiquettes",
-        "labels_description": "Indiquez le nombre d’étiquettes à générer pour {{name}}.",
         "transfer_title": "Transférer vers le rayon",
         "transfer_description": "{{name}} — réserve : {{reserve}}, capacité du rayon : {{capacity}}.",
         "max_error": "Saisissez une quantité entière comprise entre 1 et {{max}}."
@@ -337,7 +335,6 @@
         "password_confirm_import_title": "Confirmer l'import de produits",
         "password_confirm_import_body": "Cette action est sensible. Veuillez saisir votre mot de passe pour confirmer l'import des produits.",
         "invalid_quantity": "Quantité invalide",
-        "generation_error": "Erreur lors de la génération des étiquettes",
         "access_denied_delete": "Accès refusé : Vous n'avez pas la permission de supprimer des produits.",
         "access_denied_adjust": "Accès refusé",
         "input_quantity_error": "Veuillez saisir la nouvelle quantité",

@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { gooeyToast } from 'goey-toast';
 import { AlertTriangle, RefreshCw, Trash2 } from 'lucide-react';
-import type { TFunction } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { useCommandesStore } from '../../stores/useCommandesStore';
 import { useConfirm } from '../useConfirm';
 import { normalizeNumberInput } from '../../utils/formatters';

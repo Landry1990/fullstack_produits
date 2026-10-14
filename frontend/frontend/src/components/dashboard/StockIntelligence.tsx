@@ -14,6 +14,8 @@ import api from '../../services/api';
 import type { TFunction } from 'i18next';
 import { formatDate } from '../../utils/dateUtils';
 import { EmptyState } from '../ui/EmptyState';
+import { motion } from 'framer-motion';
+import { fadeInUp, staggerContainer } from '../../lib/motion';
 
 interface StockStats {
   low_stock?: { value?: number };
@@ -139,9 +141,9 @@ export default function StockIntelligence({
   }, []);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6 auto-rows-fr">
+    <motion.div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6 auto-rows-fr" variants={staggerContainer} initial="hidden" animate="show">
         {/* Expiring Lots (Alertes Périssables) - Swapped to first position */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col">
+        <motion.div variants={fadeInUp} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col">
           <div className="p-6 flex flex-col h-full">
             <div className="flex items-center justify-between mb-4 shrink-0">
               <div
@@ -244,10 +246,10 @@ export default function StockIntelligence({
               </Link>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Dormant Stock (Rossignols) */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col">
+        <motion.div variants={fadeInUp} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col">
           <div className="p-6 flex flex-col h-full">
             <div className="flex items-center justify-between mb-6 shrink-0">
               <div className="flex items-center gap-3">
@@ -302,10 +304,10 @@ export default function StockIntelligence({
               </Link>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Surstock (Excédents) */}
-        <div className="bg-white rounded-xl shadow-sm border border-orange-200 overflow-hidden h-full flex flex-col">
+        <motion.div variants={fadeInUp} className="bg-white rounded-xl shadow-sm border border-orange-200 overflow-hidden h-full flex flex-col">
           <div className="p-6 flex flex-col h-full">
             <div className="flex items-center justify-between mb-6 shrink-0">
               <div
@@ -378,11 +380,11 @@ export default function StockIntelligence({
               </Link>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Promis Disponibles Alert */}
         {promisDisponibles.length > 0 && (
-          <div className="bg-emerald-50 rounded-xl shadow-sm border border-emerald-100 overflow-hidden h-full flex flex-col">
+          <motion.div variants={fadeInUp} className="bg-emerald-50 rounded-xl shadow-sm border border-emerald-100 overflow-hidden h-full flex flex-col">
             <div className="p-6 flex flex-col h-full">
               <div
                 className="flex items-center justify-between mb-4 cursor-pointer hover:opacity-80 transition-opacity shrink-0"
@@ -428,12 +430,12 @@ export default function StockIntelligence({
                 </Link>
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* Reappro Rayon Alert */}
         {reapproStats && reapproStats.product_count > 0 && (
-          <div className="bg-cyan-50 rounded-xl shadow-sm border border-blue-100 overflow-hidden h-full flex flex-col">
+          <motion.div variants={fadeInUp} className="bg-cyan-50 rounded-xl shadow-sm border border-blue-100 overflow-hidden h-full flex flex-col">
             <div className="p-6 flex flex-col h-full">
               <div
                 className="flex items-center justify-between mb-4 cursor-pointer hover:opacity-80 transition-opacity shrink-0"
@@ -479,11 +481,11 @@ export default function StockIntelligence({
                 </Link>
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* Stock Alerts */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col">
+        <motion.div variants={fadeInUp} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col">
           <div className="p-6 flex flex-col h-full">
             <div className="flex items-center justify-between mb-4 shrink-0">
               <div
@@ -570,8 +572,8 @@ export default function StockIntelligence({
               </Link>
             </div>
           </div>
-        </div>
+        </motion.div>
 
-    </div>
+    </motion.div>
   );
 }

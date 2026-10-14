@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
 import { gooeyToast } from 'goey-toast'
 import { Package, Upload, RefreshCw } from 'lucide-react'
@@ -5,6 +6,8 @@ import { Package, Upload, RefreshCw } from 'lucide-react'
 import type { ProduitModel } from '../types'
 import type { Groupe } from '../types/catalog'
 import { cn } from '../lib/utils'
+import { motion } from 'framer-motion'
+import { fadeInUp, pageFade, staggerContainer, staggerGrid } from '../lib/motion'
 import { useProduitPage } from '../hooks/useProduitPage'
 import type { ActiveTab } from '../hooks/useProduitPage'
 
@@ -16,6 +19,9 @@ import { ProductDetailHeader } from './products/ProductDetailHeader'
 import { ProduitPageModals } from './products/ProduitPageModals'
 import { ProductTabsContent } from './products/ProductTabsContent'
 import { QuantityInputDialog } from './products/modals/QuantityInputDialog'
+import { LoadingScreen } from './common/LoadingScreen'
+
+const SimplePrintLabelsModal = lazy(() => import('./SimplePrintLabelsModal'))
 
 /* ------------------------------------------------------------------ */
 /*  Component — orchestrateur : layout + composition                    */
@@ -49,17 +55,17 @@ export default function ProduitShadcn() {
     editForm, adjustForm, setAdjustForm, adjustStockMutation, transferLoading,
     labelProduct, setLabelProduct, transferProduct, setTransferProduct,
     handleDelete, handleStockAdjustmentSubmit, handleOpenAdjust,
-    handleToggleActive, handleGenerateLabels, confirmGenerateLabels,
+    handleToggleActive, handleGenerateLabels,
     handleTransferToRayon, confirmTransferToRayon,
     handleMovementClick, handleOpenEdit,
     queryClient,
   } = state
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden bg-slate-50">
+    <motion.div className="flex-1 flex flex-col overflow-hidden bg-slate-50" variants={staggerContainer} initial="hidden" animate="show">
 
       {/* ── Header ── */}
-      <header className="px-6 py-4 border-b border-slate-200 bg-white shrink-0 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <motion.header variants={fadeInUp} className="px-6 py-4 border-b border-slate-200 bg-white shrink-0 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-emerald-50 rounded-xl">
             <Package className="size-5 text-emerald-600" />
@@ -88,17 +94,17 @@ export default function ProduitShadcn() {
             {t('products:import.title', { defaultValue: 'Importer' })}
           </Button>
         </div>
-      </header>
+      </motion.header>
 
       {/* ── Error Banner ── */}
       <ErrorState error={error} onRetry={() => refetch()} retrying={isLoading} className="mx-6 mt-4" />
 
       {/* ── Main Content ── */}
       <main className="flex-1 p-4 min-h-0 overflow-hidden">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-full min-h-0 w-full overflow-hidden">
+        <motion.div variants={staggerGrid} className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-full min-h-0 w-full overflow-hidden">
 
           {/* ═════ Left Panel : List ═════ */}
-          <section className={cn('lg:col-span-5 flex flex-col h-full min-h-0 min-w-0 gap-3', selectedProduit && 'max-lg:hidden')}>
+          <motion.section variants={fadeInUp} className={cn('lg:col-span-5 flex flex-col h-full min-h-0 min-w-0 gap-3', selectedProduit && 'max-lg:hidden')}>
             <ProductListPanel
               produits={produits}
               isLoading={isLoading}
@@ -128,11 +134,18 @@ export default function ProduitShadcn() {
               onPageChange={setPage}
               onNewProduct={() => setIsCreateOpen(true)}
             />
-          </section>
+          </motion.section>
 
           {/* ═════ Right Panel : Details ═════ */}
-          <section className={cn('lg:col-span-7 h-full min-h-0 min-w-0', !selectedProduit && 'max-lg:hidden')}>
+          <motion.section variants={fadeInUp} className={cn('lg:col-span-7 h-full min-h-0 min-w-0', !selectedProduit && 'max-lg:hidden')}>
             <Card variant="default" padding="none" className="h-full flex flex-col overflow-hidden">
+              <motion.div
+                key={selectedProduit?.id ?? 'empty'}
+                variants={pageFade}
+                initial="hidden"
+                animate="show"
+                className="flex-1 flex flex-col min-h-0"
+              >
               {selectedProduit ? (
                 <>
                   <ProductDetailHeader
@@ -164,20 +177,21 @@ export default function ProduitShadcn() {
                   <p className="text-sm font-medium">{t('products:detail.select_hint')}</p>
                 </div>
               )}
+              </motion.div>
             </Card>
-          </section>
-        </div>
+          </motion.section>
+        </motion.div>
       </main>
 
       {/* ── Modals ── */}
-      <QuantityInputDialog
-        open={Boolean(labelProduct)}
-        title={t('products:quantity_dialog.labels_title')}
-        description={t('products:quantity_dialog.labels_description', { name: labelProduct?.name || '' })}
-        initialValue={1}
-        onClose={() => setLabelProduct(null)}
-        onConfirm={confirmGenerateLabels}
-      />
+      {labelProduct && (
+        <Suspense fallback={<LoadingScreen size="sm" overlay={false} />}>
+          <SimplePrintLabelsModal
+            produits={[labelProduct]}
+            onClose={() => setLabelProduct(null)}
+          />
+        </Suspense>
+      )}
       <QuantityInputDialog
         open={Boolean(transferProduct)}
         title={t('products:quantity_dialog.transfer_title')}
@@ -230,6 +244,6 @@ export default function ProduitShadcn() {
         formes={formes}
         groupes={groupes as unknown as Groupe[]}
       />
-    </div>
+    </motion.div>
   )
 }

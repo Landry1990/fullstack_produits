@@ -1,6 +1,8 @@
 {
     "modal_title": "Impression d'Étiquettes",
     "subtitle": "Commande: {{numero}}",
+    "subtitle_product": "Produit : {{name}}",
+    "subtitle_products": "{{count}} produits",
     "format_label": "Format des étiquettes",
     "format_standard": "Format standard (40x20mm)",
     "format_compact": "Format compact (30x15mm)",
