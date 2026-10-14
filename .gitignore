@@ -98,3 +98,16 @@ NUL
 # (téléchargés à la main — voir backend/vendor/README.md)
 backend/vendor/docker-compose
 backend/vendor/docker-*.tgz
+
+# ============== Données locales — JAMAIS dans le repo ==============
+# Données PostgreSQL brutes (le volume Docker est externalisé : fullstack_postgres_data_protected)
+postgres_data/
+postgres_wal_archive/
+pg_wal/
+
+# Couverture de tests, rapports d'import générés, scratch REST client
+.coverage
+coverage.xml
+backend/rapports/
+*.rest
+eslint_errors.json
