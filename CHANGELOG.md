@@ -2,6 +2,25 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-10-14 — Nettoyage du repo git + réécriture d'historique
+
+- `git rm --cached` sur 1951 fichiers non essentiels : `postgres_data/`
+  (données PostgreSQL brutes, 81 MB), `backend/rapports/`, `db.sqlite3`,
+  `.coverage`, `.idea/`, `*.so` compilés, `frontend/.env`,
+  `eslint_errors.json`, `tests.rest` — tous conservés sur disque.
+- `.gitignore` complété : `postgres_data/`, `postgres_wal_archive/`, `pg_wal/`,
+  `.coverage`, `coverage.xml`, `backend/rapports/`, `*.rest`,
+  `eslint_errors.json`.
+- Historique réécrit via `git filter-repo` : purge de `postgres_data/`,
+  `backups/*.sql` (~80 MB × 15 dumps), `node_modules/`, `lint_report.json`,
+  `unified_meds.txt` et des artefacts ci-dessus dans **tous** les commits.
+  `.git` : 199 MB → 152 MB (le reste = `donnees mysql`, `fic_cis_cip`,
+  `dci_data.json`, fixtures — conservés volontairement).
+- ⚠️ Après réécriture : `git push --force-with-lease origin main` requis ;
+  les autres clones doivent être re-clonés ; les branches distantes
+  `feature/vitrine-publique` et `fix-crashes-*` gardent l'ancien historique
+  tant qu'elles ne sont pas supprimées/rewrites.
+
 ## 2026-10-14 — Motion design subtil sur le dashboard (framer-motion)
 
 - Première utilisation de `framer-motion` (déjà installé) : variants partagés
