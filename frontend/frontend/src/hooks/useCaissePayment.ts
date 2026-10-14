@@ -6,6 +6,7 @@ import api from '../services/api'
 import type { Facture, TicketCaisse, CouponMonnaie, PaymentDetails } from '../types'
 import { getApiErrorDetail } from '../utils/errorHandling'
 import { logger } from '../utils/logger'
+import { generateUUID } from '../utils/uuid'
 
 interface PaymentState {
   selectedFacture: Facture | null
@@ -17,58 +18,58 @@ interface PaymentState {
   fetchFacturesEnAttente: () => Promise<void>
   fetchSessionRecap: () => Promise<void>
   fetchCoupons: () => Promise<void>
-  utiliserCouponApresEncaissement: (couponId: number, factureId: number) => Promise<void>
   onSuccess?: () => void
 }
 
-const processCouponPayment = async (factureId: number, coupon: CouponMonnaie): Promise<void> => {
-  const couponPayload = {
-    facture: factureId,
-    mode_paiement: 'coupon',
-    montant: coupon.montant,
-    reference: `COUPON-${coupon.numero}`,
-    statut: 'completee',
-  }
-  await api.post('caisse/', couponPayload)
-}
-
-const processRegularPayments = async (
+const buildPaymentPayloads = (
   factureId: number,
   paiements: { mode: string; montant: number }[],
   montantAEncaisser: number,
-  hasTiersPayant: boolean
-): Promise<void> => {
+  hasTiersPayant: boolean,
+  coupon?: CouponMonnaie
+) => {
+  const items: Array<{
+    facture: number;
+    mode_paiement: string;
+    montant: number;
+    reference: string | null;
+    statut: string;
+    part_patient?: number;
+    part_assurance?: number;
+  }> = []
   let resteAEnregistrer = montantAEncaisser
+
+  if (coupon && resteAEnregistrer > 0) {
+    const montantCoupon = Math.min(Number(coupon.montant), resteAEnregistrer)
+    items.push({
+      facture: factureId,
+      mode_paiement: 'coupon',
+      montant: montantCoupon,
+      reference: `COUPON-${coupon.numero}`,
+      statut: 'completee',
+    })
+    resteAEnregistrer -= montantCoupon
+  }
 
   for (const paiement of paiements) {
     if (resteAEnregistrer <= 0) break
-
     const montantReel = Math.min(paiement.montant, resteAEnregistrer)
-
-    const paiementPayload: {
-      facture: number;
-      mode_paiement: string;
-      montant: number;
-      reference: string | null;
-      statut: string;
-      part_patient?: number;
-      part_assurance?: number;
-    } = {
+    const item: (typeof items)[number] = {
       facture: factureId,
       mode_paiement: paiement.mode,
       montant: montantReel,
       reference: null,
       statut: 'completee',
     }
-
     if (hasTiersPayant) {
-      paiementPayload.part_patient = montantReel
-      paiementPayload.part_assurance = 0
+      item.part_patient = montantReel
+      item.part_assurance = 0
     }
-
-    await api.post('caisse/', paiementPayload)
+    items.push(item)
     resteAEnregistrer -= montantReel
   }
+
+  return items
 }
 
 const createTicketData = (
@@ -116,7 +117,6 @@ export const useCaissePayment = ({
   fetchFacturesEnAttente,
   fetchSessionRecap,
   fetchCoupons,
-  utiliserCouponApresEncaissement,
   onSuccess
 }: PaymentState) => {
   const { t } = useTranslation('caisse')
@@ -145,10 +145,15 @@ export const useCaissePayment = ({
     setLoading(true)
 
     try {
+      const idempotencyKey = generateUUID()
       // 1. Valider la facture si nécessaire
       let factureValidee = selectedFacture
       if (selectedFacture.status !== 'VAL' && selectedFacture.status !== 'VALIDEE') {
-        const { data } = await api.post<Facture>(`factures/${selectedFacture.id}/valider/`, {})
+        const { data } = await api.post<Facture>(
+          `factures/${selectedFacture.id}/valider/`,
+          {},
+          { headers: { 'Idempotency-Key': idempotencyKey } }
+        )
         factureValidee = data
       }
 
@@ -159,22 +164,24 @@ export const useCaissePayment = ({
             ? Number(factureValidee.part_client)
             : Number(factureValidee.total_ttc))
 
-      // 3. Traiter le coupon si présent
+      // 3. Enregistrer atomiquement coupon, paiements mixtes et informations ticket
       const couponUtilise = couponsParFacture[factureValidee.id]
-      if (couponUtilise) {
-        await processCouponPayment(factureValidee.id, couponUtilise)
-      }
-
-      // 4. Traiter les paiements réguliers
       const hasTiersPayant = factureValidee.part_client !== null && Number(factureValidee.part_client) >= 0
-      await processRegularPayments(factureValidee.id, paiementsValides, montantAEncaisser, hasTiersPayant)
-
-      // 5. Mettre à jour le statut et stocker les infos ticket
-      await api.patch(`factures/${factureValidee.id}/`, {
-          status: 'PAY',
+      const items = buildPaymentPayloads(
+        factureValidee.id,
+        paiementsValides,
+        montantAEncaisser,
+        hasTiersPayant,
+        couponUtilise
+      )
+      await api.post('caisse/bulk_create/', {
+        items,
+        coupon_numero: couponUtilise?.numero,
+        ticket: {
           montant_verse: montantTotal.toString(),
           montant_rendu: (montantTotal - montantAEncaisser).toString(),
-      });
+        },
+      }, { headers: { 'Idempotency-Key': idempotencyKey } })
 
       // 6. Récupérer la facture finale
       const { data: factureFinale } = await api.get<Facture>(`factures/${factureValidee.id}/`)
@@ -192,9 +199,9 @@ export const useCaissePayment = ({
       fetchSessionRecap()
       queryClient.invalidateQueries({ queryKey: ['products'] })
 
-      // 10. Marquer le coupon comme utilisé
+      // 10. Le coupon a été consommé dans la transaction d'encaissement
       if (couponUtilise) {
-        await utiliserCouponApresEncaissement(couponUtilise.id, factureFinale.id)
+        await fetchCoupons()
         setCouponsParFacture(prev => {
           const updated = { ...prev }
           delete updated[factureFinale.id]
@@ -221,7 +228,6 @@ export const useCaissePayment = ({
     fetchFacturesEnAttente,
     fetchSessionRecap,
     fetchCoupons,
-    utiliserCouponApresEncaissement,
     setCouponsParFacture,
     onSuccess,
     queryClient

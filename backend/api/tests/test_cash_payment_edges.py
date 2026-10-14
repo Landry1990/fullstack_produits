@@ -159,6 +159,77 @@ class CancelledInvoicePaymentGuardTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertTrue(Caisse.objects.filter(facture=facture).exists())
 
+    def test_bulk_payment_same_key_creates_payments_and_uses_coupon_once(self):
+        facture = TestDataFactory.create_facture(
+            status=Facture.Status.VALIDEE,
+            total_ttc=Decimal('1000.00'),
+        )
+        coupon = CouponMonnaie.objects.create(
+            numero='CPN-IDEM-1', montant=Decimal('200.00'), cree_par=self.user,
+        )
+        payload = {
+            'items': [
+                {'facture': facture.id, 'mode_paiement': 'coupon', 'montant': '200', 'statut': 'completee'},
+                {'facture': facture.id, 'mode_paiement': 'especes', 'montant': '800', 'statut': 'completee'},
+            ],
+            'coupon_numero': coupon.numero,
+            'ticket': {'montant_verse': '800', 'montant_rendu': '0'},
+        }
+        headers = {'HTTP_IDEMPOTENCY_KEY': 'cash-bulk-idem-1'}
+
+        response1 = self.client.post(reverse('caisse-bulk-create'), payload, format='json', **headers)
+        response2 = self.client.post(reverse('caisse-bulk-create'), payload, format='json', **headers)
+
+        self.assertEqual(response1.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response2.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Caisse.objects.filter(facture=facture).count(), 2)
+        coupon.refresh_from_db()
+        facture.refresh_from_db()
+        self.assertEqual(coupon.status, CouponMonnaie.Status.UTILISE)
+        self.assertEqual(coupon.facture_utilisation, facture)
+        self.assertEqual(facture.status, Facture.Status.PAYEE)
+        self.assertEqual(facture.montant_verse, Decimal('800'))
+
+    def test_bulk_payment_rolls_back_all_items_when_one_is_invalid(self):
+        facture = TestDataFactory.create_facture(
+            status=Facture.Status.VALIDEE,
+            total_ttc=Decimal('1000.00'),
+        )
+        payload = {'items': [
+            {'facture': facture.id, 'mode_paiement': 'especes', 'montant': '500', 'statut': 'completee'},
+            {'facture': facture.id, 'mode_paiement': 'momo', 'montant': '-1', 'statut': 'completee'},
+        ]}
+
+        response = self.client.post(
+            reverse('caisse-bulk-create'), payload, format='json',
+            HTTP_IDEMPOTENCY_KEY='cash-bulk-rollback-1',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(Caisse.objects.filter(facture=facture).exists())
+
+    def test_bulk_payment_invalid_ticket_writes_nothing(self):
+        facture = TestDataFactory.create_facture(
+            status=Facture.Status.VALIDEE,
+            total_ttc=Decimal('1000.00'),
+        )
+        payload = {
+            'items': [
+                {'facture': facture.id, 'mode_paiement': 'especes', 'montant': '1000', 'statut': 'completee'},
+            ],
+            'ticket': {'montant_verse': 'NaN', 'montant_rendu': '0'},
+        }
+
+        response = self.client.post(
+            reverse('caisse-bulk-create'), payload, format='json',
+            HTTP_IDEMPOTENCY_KEY='cash-bulk-invalid-ticket-1',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(Caisse.objects.filter(facture=facture).exists())
+        facture.refresh_from_db()
+        self.assertEqual(facture.status, Facture.Status.VALIDEE)
+
 
 class SplitBillingIdempotencyTests(APITestCase):
     def test_auto_credit_is_created_only_once(self):

@@ -1,5 +1,6 @@
 import api from './api';
 import type { Creance } from '../types';
+import { generateUUID } from '../utils/uuid';
 
 export interface CreanceFilters {
     client_id?: string;
@@ -38,7 +39,9 @@ const creanceService = {
     },
 
     ajouterPaiement: async (id: number, payload: AjouterPaiementPayload): Promise<{ detail: string; paiement_id: number; creance?: unknown }> => {
-        const response = await api.post(`creances/${id}/ajouter_paiement/`, payload);
+        const response = await api.post(`creances/${id}/ajouter_paiement/`, payload, {
+            headers: { 'Idempotency-Key': generateUUID() },
+        });
         return response.data;
     },
 
@@ -59,7 +62,9 @@ const creanceService = {
             est_soldee: boolean;
         }>;
     }> => {
-        const response = await api.post('creances/bulk_paiement/', payload);
+        const response = await api.post('creances/bulk_paiement/', payload, {
+            headers: { 'Idempotency-Key': generateUUID() },
+        });
         return response.data;
     },
 

@@ -23,6 +23,7 @@ import PaginationControls from '../ui/PaginationControls';
 import { ErrorState } from '../ui/ErrorState';
 import SkeletonTable from '../ui/SkeletonTable';
 import { cn } from '../../lib/utils';
+import { Table, TableBody, TableHeader } from '../shadcn/table';
 
 interface Props {
   state: ReturnType<typeof useJournalCaisse>;
@@ -128,8 +129,8 @@ export default function JournalCaisseTable({ state }: Props) {
             </div>
 
             {/* Vue Desktop */}
-            <table className="hidden md:table w-full min-w-[920px] table-fixed border-collapse text-sm border-separate border-spacing-0">
-              <thead className="sticky top-0 z-30 bg-slate-100 opacity-100">
+            <Table containerClassName="hidden md:block overflow-visible rounded-none border-0" className="min-w-[920px] table-fixed border-separate border-spacing-0">
+              <TableHeader className="sticky top-0 z-30 bg-slate-100 opacity-100">
                 <tr className="border-b border-slate-200">
                   <th scope="col" className="w-36 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2">{t('table.date_time')}</th>
                   <th scope="col" className="w-28 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2">{t('table.cashier')}</th>
@@ -140,8 +141,8 @@ export default function JournalCaisseTable({ state }: Props) {
                   <th scope="col" className="w-24 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2">{t('table.mode')}</th>
                   <th scope="col" className="w-24 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2 text-right">{t('table.status')}</th>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 bg-white">
+              </TableHeader>
+              <TableBody className="divide-y divide-slate-100 bg-white">
                 {groupedItems.map((item: unknown) => {
                   if (item._kind === 'mouvement') {
                     const mouv = item as MouvementCaisse;
@@ -315,8 +316,8 @@ export default function JournalCaisseTable({ state }: Props) {
                     </React.Fragment>
                   );
                 })}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </>
         )}
       </div>

@@ -121,8 +121,7 @@ const _navigate = useNavigate()
     handleGenererCoupon,
     handleRechercherCoupon: handleRechercherCouponBase,
     handleAppliquerCouponAFacture: handleAppliquerCouponBase,
-    handleRetirerCouponDeFacture,
-    utiliserCouponApresEncaissement
+    handleRetirerCouponDeFacture
   } = useCaisseCoupons({
     coupons,
     setCoupons,
@@ -273,7 +272,6 @@ const _navigate = useNavigate()
     fetchFacturesEnAttente,
     fetchSessionRecap,
     fetchCoupons,
-    utiliserCouponApresEncaissement,
     onSuccess: () => gooeyToast.success(t('messages.modification_success'))
   })
 

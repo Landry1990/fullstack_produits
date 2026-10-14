@@ -530,9 +530,16 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
             // Le backend n'autorise le passage en PAY que si les encaissements
             // couvrent le total : les paiements doivent être enregistrés AVANT.
             if (paiementPayloads.length > 0) {
-                await api.post('caisse/bulk_create/', { items: paiementPayloads });
+                const idempotencyKey = generateUUID();
+                await api.post('caisse/bulk_create/', {
+                    items: paiementPayloads,
+                    ticket: {
+                        montant_verse: totalVerse.toString(),
+                        montant_rendu: (totalVerse - montantADevoir).toString(),
+                    },
+                }, { headers: { 'Idempotency-Key': idempotencyKey } });
             }
-            const updatedFacture = await venteService.update(facture.id, { status: 'PAY' });
+            const updatedFacture = await venteService.getById(facture.id);
 
             const rendu = totalVerse - Number(updatedFacture.total_ttc);
 

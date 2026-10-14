@@ -178,6 +178,22 @@ class DoubleFinalizationSequentialTests(_DoubleFinalizationBase, APITestCase):
         self.produit.refresh_from_db()
         self.assertEqual(self.produit.stock, self.INITIAL_STOCK - self.QUANTITY)
 
+    def test_same_idempotency_key_with_different_payload_is_rejected(self):
+        url = reverse('facture-finaliser')
+        headers = {'HTTP_IDEMPOTENCY_KEY': 'payload-conflict-0001'}
+
+        response1 = self.client.post(url, self._payload(), format='json', **headers)
+        self.assertEqual(response1.status_code, status.HTTP_201_CREATED)
+
+        changed_payload = self._payload(montant_verse='2000')
+        response2 = self.client.post(url, changed_payload, format='json', **headers)
+
+        self.assertEqual(response2.status_code, status.HTTP_409_CONFLICT)
+        self.assertIn('contenu différent', response2.json()['detail'])
+        self.assertEqual(Facture.objects.count(), 1)
+        self.produit.refresh_from_db()
+        self.assertEqual(self.produit.stock, self.INITIAL_STOCK - self.QUANTITY)
+
 
 @override_settings(CACHES=LOCMEM_CACHES)
 class DoubleFinalizationConcurrentTests(_DoubleFinalizationBase, TransactionTestCase):

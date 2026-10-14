@@ -20,6 +20,7 @@ from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 
 from ...audit_helpers import log_audit
+from ...idempotency import idempotent_action
 from ...models import AuditLog, Caisse, Facture, FactureProduit, InvoiceSettings, RelevePaiement
 from ...pagination import StandardResultsSetPagination
 from ...security_utils import build_safe_content_disposition
@@ -496,6 +497,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         return response
 
     @action(detail=True, methods=['post'])
+    @idempotent_action
     def ajouter_paiement(self, request, pk=None):
         """
         Ajoute un paiement avec Optimistic Locking (pas de select_for_update).
@@ -706,6 +708,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         })
 
     @action(detail=False, methods=['post'])
+    @idempotent_action
     @transaction.atomic
     def bulk_paiement(self, request):
         validation_user, error_response = validate_sudo_mode(request, permission_attr='can_cash_out')
