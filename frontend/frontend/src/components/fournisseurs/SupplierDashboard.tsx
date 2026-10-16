@@ -11,6 +11,7 @@ import {
   Clock
 } from 'lucide-react';
 import { useRecharts } from '../../hooks/useRecharts';
+import { chartTooltipProps, chartPieProps } from '../../lib/chartTheme';
 import { formatCurrency } from '../../utils/formatters';
 import { useSupplierDashboard } from '../../hooks/useSupplierDashboard';
 import { Skeleton } from '../ui/Skeleton';
@@ -187,8 +188,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
                   width={40}
                 />
                 <Tooltip 
-                  contentStyle={{ border: 'none', borderRadius: '16px', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px' }}
-                  labelStyle={{ fontSize: '10px', fontWeight: 'bold', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '4px' }}
+                  {...chartTooltipProps}
                   formatter={(v: number) => [formatCurrency(v), t('providers:dashboard.kpis.total_debt')]}
                 />
                 <Area 
@@ -227,17 +227,18 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
                     cy="50%"
                     innerRadius={60}
                     outerRadius={80}
-                    paddingAngle={5}
                     dataKey="value"
+                    nameKey="name"
                     animationDuration={1500}
+                    {...chartPieProps}
                   >
                     {stats.repartition_dette.map((entry, index) => (
                       <Cell key={`cell-${entry.name}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip 
+                     {...chartTooltipProps}
                      formatter={(v: number) => formatCurrency(v)}
-                     contentStyle={{ border: 'none', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                   />
                 </PieChart>
               </ResponsiveContainer>

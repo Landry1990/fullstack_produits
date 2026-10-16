@@ -4,6 +4,7 @@ import { useRecharts } from '../hooks/useRecharts';
 import { usePeakHours, useDailyComparison, useSeasonality } from '../hooks/useTemporalAnalysis';
 import { formatCurrency, formatNumber } from '../utils/formatters';
 import { ReportTableHead } from './common/ReportTableHead';
+import { chartTooltipContentStyle, chartTooltipItemStyle, chartTooltipLabelStyle, chartBarCursor, chartLineCursor } from '../lib/chartTheme';
 
 const TABS = [
   { id: 'hours', labelKey: 'stock:temporal_analysis.peak_hours' },
@@ -11,7 +12,7 @@ const TABS = [
   { id: 'seasons', labelKey: 'stock:temporal_analysis.seasonality' },
 ] as const;
 
-const TOOLTIP_CONTENT_STYLE = { borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' };
+const TOOLTIP_CONTENT_STYLE = chartTooltipContentStyle;
 
 function ChartLoading() {
   return (
@@ -147,12 +148,15 @@ export default function AnalyseTemporelle() {
                           <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                      <XAxis dataKey="hour" tick={{ fontSize: 12 }} />
-                      <YAxis yAxisId="left" tick={{ fontSize: 12 }} tickFormatter={(val: number) => `${val/1000}k`} />
-                      <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                      <XAxis dataKey="hour" tick={{ fontSize: 11, fontWeight: 700, fill: '#64748b' }} axisLine={false} tickLine={false} dy={8} />
+                      <YAxis yAxisId="left" tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} axisLine={false} tickLine={false} tickFormatter={(val: number) => `${val/1000}k`} />
+                      <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                       <Tooltip
+                        cursor={chartLineCursor}
                         contentStyle={TOOLTIP_CONTENT_STYLE}
+                        itemStyle={chartTooltipItemStyle}
+                        labelStyle={chartTooltipLabelStyle}
                         formatter={(value: number, name: string) => [
                           name === 'revenue' || name === 'avg_basket' ? `${formatCurrency(Math.round(value))}` : formatNumber(value),
                           name === 'revenue' ? t('stock:temporal_analysis.columns.avg_revenue') : name === 'sales_count' ? t('stock:temporal_analysis.columns.avg_sales') : t('stock:temporal_analysis.columns.avg_basket')
@@ -214,16 +218,18 @@ export default function AnalyseTemporelle() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div className="h-80 w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={dailyData?.data || []}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                        <XAxis dataKey="day" tick={{ fontSize: 12 }} />
-                        <YAxis tick={{ fontSize: 12 }} tickFormatter={(val: number) => `${val/1000}k`} />
+                      <BarChart data={dailyData?.data || []} barCategoryGap="25%">
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                        <XAxis dataKey="day" tick={{ fontSize: 11, fontWeight: 700, fill: '#64748b' }} axisLine={false} tickLine={false} dy={8} />
+                        <YAxis tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} axisLine={false} tickLine={false} tickFormatter={(val: number) => `${val/1000}k`} />
                         <Tooltip
-                          cursor={{fill: 'transparent'}}
+                          cursor={chartBarCursor}
                           contentStyle={TOOLTIP_CONTENT_STYLE}
+                          itemStyle={chartTooltipItemStyle}
+                          labelStyle={chartTooltipLabelStyle}
                         formatter={(value: number) => [`${formatCurrency(Math.round(value))}`, t('stock:temporal_analysis.columns.avg_revenue')]}
                         />
-                        <Bar dataKey="revenue" fill="#10b981" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="revenue" fill="#10b981" radius={[6, 6, 0, 0]} maxBarSize={42} animationDuration={900} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -287,11 +293,14 @@ export default function AnalyseTemporelle() {
                     <h4 className="text-sm font-bold uppercase text-slate-400 mb-2">{t('stock:temporal_analysis.global_revenue_evolution')}</h4>
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={seasonalityData?.monthly_trends || []}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                        <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                        <YAxis tick={{ fontSize: 12 }} tickFormatter={(val: number) => `${val/1000000}M`} />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                        <XAxis dataKey="month" tick={{ fontSize: 11, fontWeight: 700, fill: '#64748b' }} axisLine={false} tickLine={false} dy={8} />
+                        <YAxis tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} axisLine={false} tickLine={false} tickFormatter={(val: number) => `${val/1000000}M`} />
                         <Tooltip
+                          cursor={chartLineCursor}
                           contentStyle={TOOLTIP_CONTENT_STYLE}
+                          itemStyle={chartTooltipItemStyle}
+                          labelStyle={chartTooltipLabelStyle}
                           formatter={(value: number) => [`${formatCurrency(Math.round(value))}`, t('stock:temporal_analysis.columns.avg_revenue')]}
                         />
                         <Line type="monotone" dataKey="revenue" stroke="#f97316" strokeWidth={3} dot={{ r: 4 }} />
