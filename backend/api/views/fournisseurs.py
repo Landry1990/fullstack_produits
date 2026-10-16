@@ -120,9 +120,11 @@ class FournisseurViewSet(viewsets.ModelViewSet):
         )
         
         product_ids = [item['produit'] for item in catalogue_data]
+        # 'cip4' est lu plus bas (fallback CIP) : absent du only(), chaque
+        # accès déclencherait une requête deferred → N+1 sur le catalogue.
         products_map = {
             p.id: p for p in Produit.objects.filter(id__in=product_ids).only(
-                'id', 'name', 'cip1', 'cip2', 'cip3', 'selling_price', 'stock'
+                'id', 'name', 'cip1', 'cip2', 'cip3', 'cip4', 'selling_price', 'stock'
             )
         }
         

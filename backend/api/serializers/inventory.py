@@ -243,14 +243,21 @@ class StockAdjustmentSerializer(serializers.ModelSerializer):
         if standard_label:
             return standard_label
 
-        # Sinon chercher dans les options de configuration
+        # Sinon chercher dans les options de configuration.
+        # Mémoïsation par code sur le serializer (partagé entre les lignes
+        # quand many=True) — sinon 1 requête par ligne à motif custom (N+1).
         from ..models import ConfigurationOption
-        config_opt = ConfigurationOption.objects.filter(
-            type=ConfigurationOption.Type.STOCK_ADJUSTMENT_REASON,
-            code=obj.reason_type
-        ).first()
+        cache = getattr(self, '_custom_reason_cache', None)
+        if cache is None:
+            cache = self._custom_reason_cache = {}
+        if obj.reason_type not in cache:
+            config_opt = ConfigurationOption.objects.filter(
+                type=ConfigurationOption.Type.STOCK_ADJUSTMENT_REASON,
+                code=obj.reason_type
+            ).first()
+            cache[obj.reason_type] = config_opt.label if config_opt else obj.reason_type
 
-        return config_opt.label if config_opt else obj.reason_type
+        return cache[obj.reason_type]
 
     def get_valorisation(self, obj):
         if obj.stock_lot:

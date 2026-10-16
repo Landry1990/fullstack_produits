@@ -6,9 +6,9 @@ from rest_framework.response import Response
 
 from ...audit_helpers import log_audit
 from ...cache_utils import SearchCache
-from ...models import AuditLog, Produit
+from ...models import AuditLog, Produit, StockLot
 from ...serializers_optimized import ProduitListSerializer
-from django.db.models import Q
+from django.db.models import Prefetch, Q
 
 
 class ProduitBulkMixin:
@@ -47,10 +47,18 @@ class ProduitBulkMixin:
         if len(product_ids) > 200:
             return Response({'detail': 'Trop d\'IDs (max 200).'}, status=status.HTTP_400_BAD_REQUEST)
 
+        # StockLotSerializer lit produit.name et fournisseur.name :
+        # select_related dans le Prefetch évite 2 requêtes par lot sérialisé.
         produits = (
             self.get_queryset()
             .filter(id__in=product_ids)
-            .prefetch_related('stock_lots', 'promotions')
+            .prefetch_related(
+                Prefetch(
+                    'stock_lots',
+                    queryset=StockLot.objects.select_related('produit', 'fournisseur'),
+                ),
+                'promotions',
+            )
         )
         serializer = self.detail_serializer_class(produits, many=True, context={'request': request})
         return Response(serializer.data)

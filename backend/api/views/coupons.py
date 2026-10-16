@@ -19,7 +19,9 @@ class CouponMonnaieViewSet(viewsets.ModelViewSet):
     """
     ViewSet pour gérer les coupons de monnaie (bons de reste).
     """
-    queryset = CouponMonnaie.objects.all()
+    # cree_par / utilise_par : lus par CouponMonnaieSerializer
+    # (cree_par_nom, utilise_par_nom) — N+1 sans select_related.
+    queryset = CouponMonnaie.objects.select_related('cree_par', 'utilise_par')
     serializer_class = CouponMonnaieSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = StandardResultsSetPagination

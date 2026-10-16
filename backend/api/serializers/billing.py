@@ -244,6 +244,11 @@ class FactureSerializer(serializers.ModelSerializer):
         return obj.produits.filter(free_quantity__gt=0).exists()
 
     def get_avoirs_clients(self, obj):
+        # Prefetch filtré (to_attr) posé par FactureViewSet.get_queryset —
+        # un .filter() sur le manager ignorerait le cache prefetch (N+1).
+        prefetched = getattr(obj, 'avoirs_clients_valides', None)
+        if prefetched is not None:
+            return [avoir.numero for avoir in prefetched]
         return list(
             obj.avoirs_clients.filter(statut='VALIDEE')
             .values_list('numero', flat=True)
@@ -397,6 +402,12 @@ class CreanceSerializer(serializers.ModelSerializer):
         return 'Client de passage'
 
     def get_montant_paye(self, obj):
+        # 'paid_amount' est annoté par CreanceViewSet.get_queryset (même
+        # sémantique : paiements 'completee' hors 'en_compte'). Un
+        # .filter().aggregate() ici ignorerait le prefetch de 'paiements' → N+1.
+        annotated = getattr(obj, 'paid_amount', None)
+        if annotated is not None:
+            return annotated
         total = obj.paiements.filter(
             statut='completee'
         ).exclude(

@@ -19,7 +19,12 @@ logger = logging.getLogger(__name__)
 
 class CommandeProduitViewSet(viewsets.ModelViewSet):
     """API endpoint for commande produits."""
-    queryset = CommandeProduit.objects.select_related('produit', 'commande', 'commande__fournisseur').order_by('-created_at')
+    # 'stock_lot' (reverse FK StockLot.commande_produit) : lu par
+    # CommandeProduitSerializer.to_representation pour les commandes CLOT —
+    # sans prefetch c'est une requête par ligne (N+1).
+    queryset = CommandeProduit.objects.select_related(
+        'produit', 'commande', 'commande__fournisseur'
+    ).prefetch_related('stock_lot').order_by('-created_at')
     serializer_class = CommandeProduitSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ['produit']
