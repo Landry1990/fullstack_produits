@@ -324,13 +324,18 @@ class StockLotListSerializer(serializers.ModelSerializer):
     """
     produit_nom = serializers.CharField(source='produit.name', read_only=True)
     fournisseur_nom = serializers.CharField(source='fournisseur.name', read_only=True)
-    
+    # Classification du produit — regroupement de collecte (péremptions).
+    produit_rayon = serializers.CharField(source='produit.rayon.name', read_only=True)
+    produit_forme = serializers.CharField(source='produit.forme.nom', read_only=True)
+
     class Meta:
         model = StockLot
         fields = [
             'id', 'produit', 'produit_nom', 'fournisseur_nom',
+            'produit_rayon', 'produit_forme',
             'lot', 'date_expiration', 'quantity_remaining', 'quantity_initial',
-            'price_cost', 'selling_price', 'date_reception', 'is_divers'
+            'price_cost', 'selling_price', 'date_reception', 'is_divers',
+            'deplace_peremption_le'
         ]
 
 

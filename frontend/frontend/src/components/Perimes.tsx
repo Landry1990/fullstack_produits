@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import api from '../services/api'
 import { gooeyToast } from 'goey-toast'
@@ -19,7 +19,9 @@ import {
   Printer,
   FileSpreadsheet,
   RotateCcw,
-  ExternalLink
+  ExternalLink,
+  Pin,
+  PinOff
 } from 'lucide-react'
 import type { StockLot } from '../types'
 import { formatCurrency } from '../utils/formatters'
@@ -28,7 +30,8 @@ import SudoValidationModal from './common/SudoValidationModal'
 import { useSudo } from '../hooks/useSudo'
 import { useConfirm } from '../hooks/useConfirm'
 import usePrint from '../hooks/usePrint'
-import { useDocumentLocale } from '../hooks/usePharmacySettings'
+import { useDocumentLocale, usePharmacySettings } from '../hooks/usePharmacySettings'
+import { exportToExcel } from '../utils/excelExport'
 import type { StockAdjustment } from '../types'
 import { Button } from './shadcn/button'
 import { Card, CardContent, CardHeader, CardTitle } from './shadcn/card'
@@ -138,6 +141,7 @@ export default function Perimes() {
   // Langue des documents imprimés (PharmacySettings.locale), découplée de l'UI.
   const { lang: docLang, locale: docLocale } = useDocumentLocale()
   const { t: docT } = useTranslation(['stock', 'common'], { lng: docLang })
+  const { settings: pharmacySettings } = usePharmacySettings()
   const [lots, setLots] = useState<StockLot[]>([])
   const [stats, setStats] = useState<PerimesStats | null>(null)
   const [loading, setLoading] = useState(false)
@@ -148,17 +152,26 @@ export default function Perimes() {
     return [30, 60, 90, 180].includes(days) ? days : 30
   })
   const [showExpiredOnly, setShowExpiredOnly] = useState<boolean>(() => searchParams.get('expired') !== 'false')
+  // Classement de la liste pour la collecte physique : chronologique,
+  // ou groupé par rayon / forme puis alphabétique (« Non classé » en fin).
+  const [groupMode, setGroupMode] = useState<'date' | 'rayon' | 'forme'>('rayon')
   const [selectedLotIds, setSelectedLotIds] = useState<Set<number>>(new Set())
+  // Étagère physique « proches péremption » : lots marqués manuellement
+  // (StockLot.deplace_peremption_le non nul). Liste dédiée, distincte de la
+  // liste de collecte qui garde tous les lots avec un simple badge.
+  const [shelfLots, setShelfLots] = useState<StockLot[]>([])
+  const [loadingShelf, setLoadingShelf] = useState(false)
+  const [selectedShelfIds, setSelectedShelfIds] = useState<Set<number>>(new Set())
   const [adjustments, setAdjustments] = useState<StockAdjustment[]>([])
   const [loadingAdjustments, setLoadingAdjustments] = useState(false)
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'list' | 'history'>(() => {
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'list' | 'shelf' | 'history'>(() => {
     const tab = searchParams.get('tab')
-    return tab === 'list' || tab === 'history' ? tab : 'dashboard'
+    return tab === 'list' || tab === 'shelf' || tab === 'history' ? tab : 'dashboard'
   })
 
   useEffect(() => {
     const tab = searchParams.get('tab')
-    setActiveTab(tab === 'list' || tab === 'history' ? tab : 'dashboard')
+    setActiveTab(tab === 'list' || tab === 'shelf' || tab === 'history' ? tab : 'dashboard')
     setShowExpiredOnly(searchParams.get('expired') !== 'false')
     const days = Number(searchParams.get('days'))
     setFilterDays([30, 60, 90, 180].includes(days) ? days : 30)
@@ -188,6 +201,8 @@ export default function Perimes() {
   useEffect(() => {
     if (activeTab === 'list') {
       fetchLots()
+    } else if (activeTab === 'shelf') {
+      fetchShelf()
     } else if (activeTab === 'history') {
       fetchAdjustments()
     }
@@ -259,6 +274,64 @@ export default function Perimes() {
       setError(t('perimes.messages.error_loading'))
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchShelf = async () => {
+    setLoadingShelf(true)
+    setSelectedShelfIds(new Set())
+    try {
+      const response = await api.get<StockLot[]>('stock-lots/', {
+        params: { en_rayon_peremption: 'true', page_size: 500 }
+      })
+      const data: unknown = response.data
+      setShelfLots(Array.isArray(data) ? data : (data.results || []))
+    } catch (err) {
+      logger.error('Erreur chargement étagère péremption:', err)
+      gooeyToast.error(t('perimes.shelf.error_loading'))
+    } finally {
+      setLoadingShelf(false)
+    }
+  }
+
+  // Marquage manuel « étagère proches péremption » — non destructif,
+  // aucune quantité ne bouge, donc pas de sudo (tracé en audit backend).
+  const markShelf = async (lotIds: number[], deplace: boolean) => {
+    if (lotIds.length === 0) return
+    try {
+      setProcessing(true)
+      await api.post('stock-lots/marquer_rayon_peremption/', { lot_ids: lotIds, deplace })
+      gooeyToast.success(
+        deplace
+          ? t('perimes.shelf.marked', { count: lotIds.length })
+          : t('perimes.shelf.unmarked', { count: lotIds.length })
+      )
+      setSelectedLotIds(new Set())
+      setSelectedShelfIds(new Set())
+      fetchLots()
+      fetchShelf()
+    } catch (err) {
+      logger.error('Erreur marquage étagère péremption:', err)
+      gooeyToast.error(getApiErrorDetail(err, t('perimes.shelf.error_marking')))
+    } finally {
+      setProcessing(false)
+    }
+  }
+
+  const toggleShelfSelection = (id: number) => {
+    setSelectedShelfIds(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(id)) newSet.delete(id)
+      else newSet.add(id)
+      return newSet
+    })
+  }
+
+  const toggleAllShelfSelection = () => {
+    if (selectedShelfIds.size === shelfLots.length) {
+      setSelectedShelfIds(new Set())
+    } else {
+      setSelectedShelfIds(new Set(shelfLots.map(l => l.id)))
     }
   }
 
@@ -363,6 +436,30 @@ export default function Perimes() {
       })
   }
 
+  // Export Excel de la liste telle qu'affichée : en mode groupé, l'ordre
+  // suit les en-têtes rayon/forme (utile comme feuille de collecte).
+  const handleExportLots = () => {
+    if (lots.length === 0) return
+    const rows = displayRows
+      .filter((r): r is { kind: 'lot'; key: number; lot: StockLot } => r.kind === 'lot')
+      .map(({ lot }) => ({
+        [docT('stock:perimes.col_rayon')]: lot.produit_rayon ?? '',
+        [docT('stock:perimes.col_forme')]: lot.produit_forme ?? '',
+        [docT('stock:perimes.col_shelf')]: lot.deplace_peremption_le ? '✓' : '',
+        [docT('stock:perimes.table.product')]: lot.produit_nom,
+        [docT('stock:perimes.table.lot')]: lot.lot ?? '',
+        [docT('stock:perimes.table.expiration')]: lot.date_expiration ? formatDate(lot.date_expiration, docLocale) : '',
+        [docT('stock:perimes.table.provider')]: lot.fournisseur_nom ?? '',
+        [docT('stock:perimes.table.qty')]: lot.quantity_remaining,
+        [docT('stock:perimes.table.value_cost')]: Math.round(Number(lot.price_cost || 0) * lot.quantity_remaining),
+      }))
+    exportToExcel(rows, pharmacySettings, {
+      sheetName: 'Périmés',
+      filename: `perimes_${toLocalISODate(new Date())}.xlsx`,
+      title: docT('stock:perimes.risk_lots'),
+    })
+  }
+
   const toggleLotSelection = (id: number) => {
       setSelectedLotIds(prev => {
           const newSet = new Set(prev);
@@ -385,6 +482,49 @@ export default function Perimes() {
   }
 
   const { printWithTemplate } = usePrint()
+
+  // Affichage du tableau : en mode date = ordre serveur (chronologique) ;
+  // sinon en-têtes de groupe (alpha, « Non classé » en dernier) puis lots
+  // alphabétiques par produit puis par date d'expiration (FEFO).
+  type DisplayRow =
+    | { kind: 'header'; key: string; label: string; count: number }
+    | { kind: 'lot'; key: number; lot: StockLot }
+  const displayRows = useMemo<DisplayRow[]>(() => {
+    if (groupMode === 'date') return lots.map((lot) => ({ kind: 'lot', key: lot.id, lot }))
+    const field = groupMode === 'rayon' ? 'produit_rayon' : 'produit_forme'
+    const noGroupLabel = t('perimes.no_group')
+    const groups = new Map<string, StockLot[]>()
+    for (const lot of lots) {
+      const label = lot[field] || noGroupLabel
+      const arr = groups.get(label)
+      if (arr) arr.push(lot)
+      else groups.set(label, [lot])
+    }
+    const labels = [...groups.keys()].sort((a, b) => {
+      if (a === noGroupLabel) return 1
+      if (b === noGroupLabel) return -1
+      return a.localeCompare(b, 'fr')
+    })
+    const rows: DisplayRow[] = []
+    for (const label of labels) {
+      const groupLots = groups.get(label)!.sort((a, b) =>
+        a.produit_nom.localeCompare(b.produit_nom, 'fr') ||
+        (a.date_expiration ?? '9999').localeCompare(b.date_expiration ?? '9999')
+      )
+      rows.push({ kind: 'header', key: `h-${label}`, label, count: groupLots.length })
+      for (const lot of groupLots) rows.push({ kind: 'lot', key: lot.id, lot })
+    }
+    return rows
+  }, [lots, groupMode, t])
+
+  // Étagère dédiée : alphabétique produit puis FEFO (même logique de
+  // collecte que les groupes rayon/forme de la liste principale).
+  const shelfRows = useMemo(() =>
+    [...shelfLots].sort((a, b) =>
+      a.produit_nom.localeCompare(b.produit_nom, 'fr') ||
+      (a.date_expiration ?? '9999').localeCompare(b.date_expiration ?? '9999')
+    ),
+  [shelfLots])
 
   const handlePrintHistory = () => {
     if (adjustments.length === 0) return
@@ -464,6 +604,11 @@ export default function Perimes() {
               <TabsTrigger value="list" className="gap-1.5 text-xs" aria-label={t('perimes.tabs.list')}>
                 <List className="size-3.5" aria-hidden="true" />
                 <span className="hidden sm:inline font-semibold">{t('perimes.tabs.list')}</span>
+              </TabsTrigger>
+              <TabsTrigger value="shelf" className="gap-1.5 text-xs" aria-label={t('perimes.tabs.shelf')}>
+                <Pin className="size-3.5" aria-hidden="true" />
+                <span className="hidden sm:inline font-semibold">{t('perimes.tabs.shelf')}</span>
+                {shelfLots.length > 0 && <Badge variant="secondary" className="bg-amber-100 text-amber-700">{shelfLots.length}</Badge>}
               </TabsTrigger>
               <TabsTrigger value="history" className="gap-1.5 text-xs" aria-label={t('perimes.tabs.history')}>
                 <History className="size-3.5" aria-hidden="true" />
@@ -649,8 +794,15 @@ export default function Perimes() {
                              <Badge variant="destructive" className="bg-red-500">{selectedLotIds.size}</Badge>
                            </Button>
                          </DropdownMenuTrigger>
-                         <DropdownMenuContent align="start" className="w-48">
+                         <DropdownMenuContent align="start" className="w-56">
                            <DropdownMenuLabel>{t('common:bulk_actions')}</DropdownMenuLabel>
+                           <DropdownMenuSeparator />
+                           <DropdownMenuItem onClick={() => markShelf(Array.from(selectedLotIds), true)}>
+                             <Pin className="size-4 mr-2" /> {t('perimes.shelf.mark')}
+                           </DropdownMenuItem>
+                           <DropdownMenuItem onClick={() => markShelf(Array.from(selectedLotIds), false)}>
+                             <PinOff className="size-4 mr-2" /> {t('perimes.shelf.unmark')}
+                           </DropdownMenuItem>
                            <DropdownMenuSeparator />
                            <DropdownMenuItem onClick={handleBulkSortir} className="text-red-500 focus:bg-red-50 focus:text-red-600">
                              <Trash2 className="size-4 mr-2" /> {t('perimes.table.exit_btn')}
@@ -699,6 +851,28 @@ export default function Perimes() {
                                  <option value={180}>{t('common:count_days', { count: 180 })}</option>
                                </select>
                              )}
+                             <div className="h-4 w-px bg-slate-200 mx-1"></div>
+                             <select
+                               className="rounded-lg border border-slate-200 bg-white h-7 px-2 text-label font-bold text-slate-700 focus:outline-none focus:border-red-400 transition-all"
+                               aria-label={t('perimes.group_by')}
+                               value={groupMode}
+                               onChange={(e) => setGroupMode(e.target.value as typeof groupMode)}
+                             >
+                               <option value="date">{t('perimes.group_date')}</option>
+                               <option value="rayon">{t('perimes.group_rayon')}</option>
+                               <option value="forme">{t('perimes.group_forme')}</option>
+                             </select>
+                             <Button
+                               variant="outline"
+                               size="sm"
+                               onClick={handleExportLots}
+                               disabled={lots.length === 0}
+                               className="gap-2"
+                               aria-label={t('perimes.export_excel')}
+                             >
+                               <FileSpreadsheet className="size-4" />
+                               {t('perimes.export_excel')}
+                             </Button>
                            </div>
                         </div>
                      </>
@@ -737,14 +911,190 @@ export default function Perimes() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {lots.map((lot) => (
-                      <TableRow key={lot.id} className={cn("hover:bg-slate-50 transition-colors group", lot.quantity_remaining <= 0 && 'opacity-50', selectedLotIds.has(lot.id) && 'bg-red-50/40')}>
+                    {displayRows.map((row) => row.kind === 'header' ? (
+                      <TableRow key={row.key} className="bg-slate-100/80 hover:bg-slate-100/80">
+                        <TableCell colSpan={8} className="py-1.5 px-4 text-caption font-black uppercase tracking-widest text-slate-500">
+                          {row.label} · {row.count}
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      <TableRow key={row.key} className={cn("hover:bg-slate-50 transition-colors group", row.lot.quantity_remaining <= 0 && 'opacity-50', selectedLotIds.has(row.lot.id) && 'bg-red-50/40')}>
                         <TableCell className="py-2.5 px-4 text-center">
                           <Checkbox
-                            checked={selectedLotIds.has(lot.id)}
-                            onCheckedChange={() => toggleLotSelection(lot.id)}
-                            disabled={lot.quantity_remaining <= 0}
+                            checked={selectedLotIds.has(row.lot.id)}
+                            onCheckedChange={() => toggleLotSelection(row.lot.id)}
+                            disabled={row.lot.quantity_remaining <= 0}
                             className="data-[state=checked]:bg-red-500 data-[state=checked]:border-red-500"
+                            aria-label={t('stock:reappro.select_product_aria', { name: row.lot.produit_nom })}
+                          />
+                        </TableCell>
+                        <TableCell className="py-2.5 px-4">
+                          <button
+                            type="button"
+                            onClick={() => openProduct(row.lot.produit)}
+                            className="inline-flex max-w-full items-center gap-1.5 rounded-sm text-left font-bold text-sm text-emerald-700 hover:text-emerald-800 hover:underline focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                            aria-label={t('perimes.view_product', { name: row.lot.produit_nom })}
+                          >
+                            <span className="truncate">{row.lot.produit_nom}</span>
+                            <ExternalLink className="size-3.5 shrink-0" />
+                          </button>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-caption font-mono text-slate-400">#{row.lot.produit}</span>
+                            {row.lot.deplace_peremption_le && (
+                              <Badge variant="outline" className="gap-1 bg-amber-50 text-amber-700 border-amber-300 text-caption">
+                                <Pin className="size-3" />
+                                {t('perimes.shelf.badge')}
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-2.5 px-4 text-center font-mono text-label font-bold text-slate-500">
+                          {row.lot.lot || '-'}
+                        </TableCell>
+                        <TableCell className="py-2.5 px-4 text-center">
+                          <Badge variant="outline" className={cn("gap-1.5", row.lot.date_expiration && isExpiredByEndOfMonth(row.lot.date_expiration) ? 'bg-red-50 text-red-500 border-red-200' : 'bg-amber-50 text-amber-600 border-amber-200')}>
+                            <Calendar className="size-3" />
+                            {formatDate(row.lot.date_expiration || '')}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="py-2.5 px-4 text-xs font-semibold text-slate-500 truncate max-w-[140px]" title={row.lot.fournisseur_nom}>
+                          {row.lot.fournisseur ? (
+                            <button
+                              type="button"
+                              onClick={() => openSupplier(row.lot.fournisseur)}
+                              className="inline-flex max-w-full items-center gap-1.5 rounded-sm text-blue-600 hover:text-blue-700 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                              aria-label={t('perimes.view_supplier', { name: row.lot.fournisseur_nom })}
+                            >
+                              <span className="truncate">{row.lot.fournisseur_nom}</span>
+                              <ExternalLink className="size-3 shrink-0" />
+                            </button>
+                          ) : row.lot.fournisseur_nom}
+                        </TableCell>
+                        <TableCell className="py-2.5 px-4 text-right">
+                          <div className={cn("font-black text-sm", row.lot.quantity_remaining > 0 ? 'text-slate-800' : 'text-slate-300')}>
+                            {row.lot.quantity_remaining}
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-2.5 px-4 text-right text-red-500 font-mono font-black text-xs">
+                          {formatCurrency(Number(row.lot.price_cost || 0) * row.lot.quantity_remaining)}
+                        </TableCell>
+                        <TableCell className="py-2.5 px-4 text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            {row.lot.quantity_remaining > 0 && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className={cn("size-7", row.lot.deplace_peremption_le ? 'text-amber-600 hover:bg-amber-50' : 'text-slate-400 hover:text-amber-600 hover:bg-amber-50 opacity-0 group-hover:opacity-100')}
+                                onClick={() => markShelf([row.lot.id], !row.lot.deplace_peremption_le)}
+                                disabled={processing}
+                                title={row.lot.deplace_peremption_le ? t('perimes.shelf.unmark') : t('perimes.shelf.mark')}
+                                aria-label={row.lot.deplace_peremption_le ? t('perimes.shelf.unmark') : t('perimes.shelf.mark')}
+                              >
+                                {row.lot.deplace_peremption_le ? <PinOff className="size-3.5" /> : <Pin className="size-3.5" />}
+                              </Button>
+                            )}
+                            {row.lot.quantity_remaining > 0 ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="gap-1 border-red-200 bg-red-50 text-red-500 hover:bg-red-100 opacity-0 group-hover:opacity-100"
+                                onClick={() => handleSortirStock(row.lot)}
+                                disabled={processing}
+                              >
+                                <Trash2 className="size-3.5" />
+                                {t('perimes.table.exit_btn')}
+                              </Button>
+                            ) : (
+                            <span className="text-caption font-black text-slate-400 uppercase tracking-widest flex items-center justify-center gap-1">
+                              <Check className="size-3" />
+                              {t('perimes.table.sorti')}
+                            </span>
+                          )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        ) : activeTab === 'shelf' ? (
+          /* ========== SHELF VIEW (étagère « proches péremption ») ========== */
+          <Card className="flex flex-col h-full overflow-hidden">
+            <CardHeader className="p-2 lg:p-4 border-b border-slate-100 space-y-0 shrink-0">
+              <div className="flex flex-wrap justify-between items-center gap-2 min-h-10 py-1">
+                {selectedShelfIds.size > 0 ? (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="gap-2"
+                      onClick={() => markShelf(Array.from(selectedShelfIds), false)}
+                      disabled={processing}
+                    >
+                      <PinOff className="size-4" />
+                      {t('perimes.shelf.unmark')}
+                      <Badge variant="secondary">{selectedShelfIds.size}</Badge>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedShelfIds(new Set())}
+                      className="gap-2"
+                    >
+                      <X className="size-4" />
+                      {t('common:cancel')}
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 lg:p-2 bg-amber-50 text-amber-600 rounded-lg"><Pin className="size-4 lg:size-5" /></div>
+                    <h2 className="font-bold text-base lg:text-lg tracking-tight text-slate-800">{t('perimes.shelf.title')}</h2>
+                    <Badge variant="secondary" className="bg-slate-100 text-slate-500">{shelfLots.length}</Badge>
+                    <p className="text-xs text-slate-400 hidden lg:block">{t('perimes.shelf.hint')}</p>
+                  </div>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="p-0 flex-1 overflow-auto">
+              {loadingShelf ? (
+                <SkeletonTable rows={8} columns={8} />
+              ) : shelfRows.length === 0 ? (
+                <EmptyState
+                  icon={<Pin className="size-8" />}
+                  title={t('perimes.shelf.empty')}
+                  className="h-64"
+                />
+              ) : (
+                <Table className="w-full text-xs">
+                  <TableHeader className="bg-slate-50 sticky top-0 z-30 border-b border-slate-100">
+                    <TableRow className="text-slate-400 uppercase text-caption tracking-widest font-black hover:bg-slate-50">
+                      <TableHead className="py-3 px-4 w-12 text-center">
+                        <Checkbox
+                          checked={selectedShelfIds.size === shelfLots.length && shelfLots.length > 0}
+                          onCheckedChange={toggleAllShelfSelection}
+                          className="data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-500"
+                          aria-label={t('stock:cadencier.select_all')}
+                        />
+                      </TableHead>
+                      <TableHead className="py-3 px-4 text-left">{t('perimes.table.product')}</TableHead>
+                      <TableHead className="py-3 px-4 text-center">{t('perimes.table.lot')}</TableHead>
+                      <TableHead className="py-3 px-4 text-center">{t('perimes.table.expiration')}</TableHead>
+                      <TableHead className="py-3 px-4 text-left">{t('perimes.table.provider')}</TableHead>
+                      <TableHead className="py-3 px-4 text-right">{t('perimes.table.stock')}</TableHead>
+                      <TableHead className="py-3 px-4 text-center">{t('perimes.shelf.moved_at')}</TableHead>
+                      <TableHead className="py-3 px-4 text-center">{t('perimes.table.actions')}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {shelfRows.map((lot) => (
+                      <TableRow key={lot.id} className={cn("hover:bg-slate-50 transition-colors", selectedShelfIds.has(lot.id) && 'bg-amber-50/40')}>
+                        <TableCell className="py-2.5 px-4 text-center">
+                          <Checkbox
+                            checked={selectedShelfIds.has(lot.id)}
+                            onCheckedChange={() => toggleShelfSelection(lot.id)}
+                            className="data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-500"
                             aria-label={t('stock:reappro.select_product_aria', { name: lot.produit_nom })}
                           />
                         </TableCell>
@@ -770,44 +1120,27 @@ export default function Perimes() {
                           </Badge>
                         </TableCell>
                         <TableCell className="py-2.5 px-4 text-xs font-semibold text-slate-500 truncate max-w-[140px]" title={lot.fournisseur_nom}>
-                          {lot.fournisseur ? (
-                            <button
-                              type="button"
-                              onClick={() => openSupplier(lot.fournisseur)}
-                              className="inline-flex max-w-full items-center gap-1.5 rounded-sm text-blue-600 hover:text-blue-700 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                              aria-label={t('perimes.view_supplier', { name: lot.fournisseur_nom })}
-                            >
-                              <span className="truncate">{lot.fournisseur_nom}</span>
-                              <ExternalLink className="size-3 shrink-0" />
-                            </button>
-                          ) : lot.fournisseur_nom}
+                          {lot.fournisseur_nom}
                         </TableCell>
                         <TableCell className="py-2.5 px-4 text-right">
                           <div className={cn("font-black text-sm", lot.quantity_remaining > 0 ? 'text-slate-800' : 'text-slate-300')}>
                             {lot.quantity_remaining}
                           </div>
                         </TableCell>
-                        <TableCell className="py-2.5 px-4 text-right text-red-500 font-mono font-black text-xs">
-                          {formatCurrency(Number(lot.price_cost || 0) * lot.quantity_remaining)}
+                        <TableCell className="py-2.5 px-4 text-center text-xs text-slate-500">
+                          {lot.deplace_peremption_le ? formatDate(lot.deplace_peremption_le) : '-'}
                         </TableCell>
                         <TableCell className="py-2.5 px-4 text-center">
-                          {lot.quantity_remaining > 0 ? (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="gap-1 border-red-200 bg-red-50 text-red-500 hover:bg-red-100 opacity-0 group-hover:opacity-100"
-                              onClick={() => handleSortirStock(lot)}
-                              disabled={processing}
-                            >
-                              <Trash2 className="size-3.5" />
-                              {t('perimes.table.exit_btn')}
-                            </Button>
-                          ) : (
-                            <span className="text-caption font-black text-slate-400 uppercase tracking-widest flex items-center justify-center gap-1">
-                              <Check className="size-3" />
-                              {t('perimes.table.sorti')}
-                            </span>
-                          )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-1 border-amber-200 bg-amber-50 text-amber-600 hover:bg-amber-100"
+                            onClick={() => markShelf([lot.id], false)}
+                            disabled={processing}
+                          >
+                            <PinOff className="size-3.5" />
+                            {t('perimes.shelf.unmark')}
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}

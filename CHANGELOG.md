@@ -2,6 +2,118 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-10-16 — Étagère « proches péremption » (marquage par lot)
+
+- Nouveau workflow terrain : le pharmacien déplace physiquement les lots
+  en fin de vie sur une étagère dédiée devant pour qu'ils partent en
+  premier — la fréquence de collecte reste libre (filtre existant par
+  période). Choix de modèle : marquage **au niveau du lot**
+  (`StockLot.deplace_peremption_le`, DateTime nullable — NULL = en rayon
+  normal, timestamp = moment du déplacement), PAS un rayon produit :
+  seule une partie du stock d'un produit est déplacée.
+- Backend : `POST /stock-lots/marquer_rayon_peremption/`
+  `{lot_ids: [...], deplace: bool}` — bulk, non destructif (quantités
+  inchangées) → pas de sudo, tracé en `AuditLog`. Filtre de liste
+  `?en_rayon_peremption=true/false` + `ordering_fields` étendu. Champ
+  exposé dans `StockLotListSerializer`. Migration 0274 : `AddField`
+  sans index + `CREATE INDEX CONCURRENTLY` (`atomic=False`, convention
+  prod).
+- Web `Perimes.tsx` : 4ᵉ onglet « Étagère » (compteur, colonne
+  « Déplacé le », retrait unitaire ou groupé via sélection), dans la
+  liste de collecte les lots marqués **restent visibles** avec badge
+  ambre « Étagère » sous le produit, bouton épingle par ligne
+  (marquer/retirer), actions groupées dans le menu de sélection,
+  colonne « Étagère » (✓) dans l'export Excel.
+- Mobile `PeremptionScreen` : puce « Étagère » → liste dédiée
+  alpha/FEFO, bouton épingle par ligne (marquer/retirer, mise à jour
+  locale immédiate), badge ambre sur les lots marqués en vue collecte.
+- i18n fr/en : `stock.perimes.shelf.*` + `peremption.shelf_*` (mobile).
+- Vérifié en Docker : migration OK, marquage/démarquage OK, lot marqué
+  toujours présent dans `expiring_within_days`, quantité inchangée,
+  filtre dédié OK. Builds web + typecheck mobile propres.
+
+## 2026-10-15 — Web produits : création pré-remplie depuis la recherche
+
+- Page « Gestion des produits » : le bouton « Créer un produit » de
+  l'état vide (aucun résultat) ouvre désormais le modal de création avec
+  le champ **Nom** pré-rempli par le texte recherché — plus besoin de
+  retaper le libellé d'un produit absent. `useProduitPage` expose
+  `handleOpenCreate(name?)` + `createInitialData` (passé en
+  `initialData` à `ProduitFormModal`, déjà supporté) ; le bouton
+  « Nouveau » de l'en-tête ouvre un formulaire vierge comme avant.
+- `ProduitFormModal` : le champ « Stock initial » passe à **0 grisé**
+  (non saisissable, hint « mis à jour via les entrées en stock »,
+  i18n fr/en) — le stock initial se saisit par les entrées en stock,
+  pas par la fiche produit.
+
+## 2026-10-15 — Mobile : stock temps réel via ws/stock/
+
+- `mobile-facturation` se connecte au broadcast Channels `stock_updates`
+  (endpoint backend déjà en place — aucun changement backend) : à chaque
+  `{type:'stock_update', produits:[...]}` le stock affiché se met à jour
+  en direct — fini le « je dis au client c'est dispo → à l'envoi c'est
+  parti » quand une vente passe sur un autre poste entre-temps.
+- Nouveau `useStockStore` (overrides par produit, cap 2000) + hook
+  `useStockRealtime` (port du web : ping 30 s, reconnect 3 s, pas de
+  boucle sur 4001/4401, cleanup au logout, monté dans `App.tsx`).
+- `useCartStore.patchStocks` met à jour `product.stock` des lignes du
+  panier → pré-check promis/forçage sur du frais ; les lots des lignes
+  concernées sont re-fetchés en débouncé 500 ms (badge FEFO exact,
+  `quantity_remaining` absent du broadcast). `addProduct` applique
+  l'override (`effectiveStock`).
+- `ProductRow` (les 4 écrans), fiches produit ajustement/signalement et
+  méta `EntreeStockLineModal` affichent l'override temps réel.
+- `CartItemRow` affiche désormais « Stock: X » par ligne (masqué pour
+  les services) — vert / ambre < 5 / rouge ≤ 0 comme le web, et rouge
+  aussi quand la quantité demandée dépasse le stock disponible.
+- Exactitude renforcée : resync des produits du panier à chaque
+  (re)connexion WS (comble les updates ratées + brouillon restauré),
+  relecture du stock de chaque ligne avant le modal promis quand le
+  flux est coupé (`refreshCartStocks`), indicateur `StockLiveIndicator`
+  (Wifi/WifiOff) dans l'en-tête de tous les écrans.
+- Nouvel écran `PeremptionScreen` (carte accueil) : lots proches de la
+  péremption via `GET /stock-lots/?expiring_within_days=N` (backend
+  existant), horizons 30/60/90/180 j, synthèse « N lots · valeur en
+  jeu », badge J-N coloré par urgence, périmés inclus en tête de liste.
+- Péremptions mobile : puces d'horizon affichées en **mois** (1/2/3/6)
+  au lieu de jours — `expiring_within_days` reste le paramètre API ;
+  badge des lignes en mois aussi (« Expiré » / « J-N » ≤ 30 j /
+  « N mois » au-delà).
+- Logout mobile : libération des postes POS actifs du vendeur
+  (`mes_actives` → `fermer` pour chaque `mode_pos` sans caisse,
+  fire-and-forget avant de vider la session). Limite : `fermer` refuse
+  s'il reste des ventes impayées sur le poste → assouplissement backend
+  à évaluer selon les tests terrain.
+- Ajustement mobile : déblocage du bouton « Appliquer » — 1er lot FEFO
+  pré-coché, mode « nouveau lot » auto quand aucun lot, ligne d'aide
+  expliquant ce qui manque sous le bouton, motifs custom dédupliqués,
+  lots resynchronisés après envoi. Édition rayon/forme depuis la fiche
+  produit (`OptionPickerModal` + `PATCH /produits/{id}/`).
+- Péremptions : classement Date / Rayon / Forme (mobile + web
+  `Perimes.tsx`) pour la collecte physique — groupes alpha avec
+  en-têtes, lots alpha + FEFO, « Non classé » en dernier. Backend :
+  `StockLotListSerializer` expose `produit_rayon`/`produit_forme`
+  (select_related élargi, pas de N+1). Redémarrage backend requis.
+- Périmés web : bouton « Excel » dans l'onglet Liste — export via
+  `exportToExcel` (en-tête pharmacie) des lots dans l'ordre affiché,
+  colonnes Rayon/Forme/Produit/Lot/Expiration/Fournisseur/Qté/Valeur —
+  feuille de collecte prête à imprimer.
+
+## 2026-10-14 — Thème visuel unifié pour tous les graphiques Recharts
+
+- Nouveau `src/lib/chartTheme.ts` : props partagés (tooltip carte blanche
+  arrondie + ombre, axes épurés sans lignes, grille horizontale discrète,
+  barres arrondies `radius 6` + `maxBarSize`, donut `cornerRadius` +
+  séparation blanche, légende uppercase, curseurs barres/lignes).
+- `StatistiquesFournisseur` : histogramme CA/marge avec dégradés, axe Y en
+  notation compacte (`1,2 M`), noms tronqués ; donut avec `nameKey` +
+  segments arrondis.
+- `ModuleFinancier` (4 graphiques), `ClassementVendeurs` (2), `AnalyseTemporelle`
+  (3), `SupplierDashboard` (donut répartition dette, `nameKey` ajouté),
+  `InventaireAudit` (barres horizontales) : même thème appliqué.
+- Fichiers contenant uniquement des icônes lucide `PieChart`/`BarChart`
+  identifiés et exclus du scan.
+
 ## 2026-10-14 — Nettoyage du repo git + réécriture d'historique
 
 - `git rm --cached` sur 1951 fichiers non essentiels : `postgres_data/`
