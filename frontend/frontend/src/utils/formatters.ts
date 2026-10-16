@@ -65,6 +65,13 @@ export const formatCurrency = (amount: number, locale: string = 'fr-FR', symbol:
     }).format(amount) + '\u00a0' + symbol;
 }
 
+export const formatCompact = (value: number, locale: string = 'fr-FR') => {
+    return getFormatter(locale, {
+        notation: 'compact',
+        maximumFractionDigits: 1,
+    }).format(value);
+}
+
 export const formatNumber = (value: number, decimals: number = 0, locale: string = 'fr-FR') => {
     return getFormatter(locale, {
         minimumFractionDigits: decimals,
