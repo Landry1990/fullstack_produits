@@ -28,7 +28,8 @@ from ..centralized_configs import (
     CommonOrderingFields,
     CommonSearchFields,
 )
-from ..models import CommandeProduit, Produit, Promis, StockLot, StockObligation
+from ..audit_helpers import log_audit
+from ..models import AuditLog, CommandeProduit, Produit, Promis, StockLot, StockObligation
 from ..search_mixins import MultiTermSearchMixin
 from ..serializer_mixins import OptimizedSerializerMixin
 from ..serializers import ProduitSerializer, ProduitUpdateSerializer
@@ -262,6 +263,24 @@ class ProduitViewSet(
             )
              
         return queryset
+
+    @transaction.atomic
+    def perform_create(self, serializer):
+        produit = serializer.save()
+        SearchCache.invalidate_all_products()
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.CREATE,
+            model_name='Produit',
+            object_id=produit.id,
+            description=f"Création du produit « {produit.name} »",
+            details={
+                'name': produit.name,
+                'type_produit': produit.type_produit,
+                'selling_price': str(produit.selling_price),
+            },
+            request=self.request,
+        )
 
     @transaction.atomic
     def perform_update(self, serializer):
