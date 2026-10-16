@@ -21,6 +21,13 @@ export interface StockLot {
     id: number
     produit: number
     produit_nom: string
+    // Classification produit (StockLotListSerializer) — regroupement
+    // de collecte des péremptions. Absents sur les autres serializers.
+    produit_rayon?: string | null
+    produit_forme?: string | null
+    // Étagère « proches péremption » : non nul si le lot a été déplacé
+    // manuellement dessus (moment du déplacement).
+    deplace_peremption_le?: string | null
     fournisseur: number
     fournisseur_nom: string
     quantity_initial: number

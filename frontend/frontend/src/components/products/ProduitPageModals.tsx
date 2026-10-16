@@ -31,6 +31,7 @@ interface ProduitPageModalsProps {
   passwordMessage: string;
   /* Création */
   isCreateOpen: boolean;
+  createInitialData: Record<string, unknown>;
   onCreateClose: () => void;
   onCreated: (p: ProduitModel) => void;
   /* Import */
@@ -56,7 +57,7 @@ export const ProduitPageModals: React.FC<ProduitPageModalsProps> = ({
   isEditOpen, editForm, onEditClose, onEditSuccess,
   isAdjustOpen, onAdjustClose, selectedProduit, adjustForm, setAdjustForm, onAdjustSubmit, isAdjusting,
   isPasswordOpen, onPasswordClose, onPasswordConfirm, passwordTitle, passwordMessage,
-  isCreateOpen, onCreateClose, onCreated,
+  isCreateOpen, createInitialData, onCreateClose, onCreated,
   isImportOpen, onImportClose, onImportSuccess,
   showSalesModal, onSalesClose, selectedFacture, loadingFacture,
   showAvoirModal, onAvoirClose, selectedAvoirId,
@@ -92,6 +93,7 @@ export const ProduitPageModals: React.FC<ProduitPageModalsProps> = ({
       onClose={onCreateClose}
       onCreated={onCreated}
       produitsEndpoint={'produits/'}
+      initialData={createInitialData}
       rayons={rayons}
       fournisseurs={fournisseurs}
       formes={formes}

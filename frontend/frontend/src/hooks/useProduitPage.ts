@@ -72,6 +72,7 @@ export function useProduitPage() {
 
   /* ── Forms ── */
   const [editForm, setEditForm] = useState<Record<string, unknown>>({})
+  const [createInitialData, setCreateInitialData] = useState<Record<string, unknown>>({})
   const [adjustForm, setAdjustForm] = useState<AdjustForm>({
     new_quantity: '',
     new_reserve_quantity: '',
@@ -113,6 +114,7 @@ export function useProduitPage() {
 
   useEffect(() => {
     if (location.state?.action === 'NEW_PRODUCT') {
+      setCreateInitialData({})
       setIsCreateOpen(true)
       navigate(location.pathname, { replace: true, state: {} })
       return
@@ -208,6 +210,13 @@ export function useProduitPage() {
     pendingActionRef.current = handleStockAdjustment
     setIsPasswordOpen(true)
   }
+
+  // Ouverture du modal de création — pré-remplit le nom avec le texte
+  // recherché quand l'utilisateur crée depuis l'état vide (« produit absent »).
+  const handleOpenCreate = useCallback((initialName = '') => {
+    setCreateInitialData(initialName.trim() ? { name: initialName.trim() } : {})
+    setIsCreateOpen(true)
+  }, [])
 
   const handleOpenAdjust = useCallback((produit: ProduitModel) => {
     setAdjustForm({
@@ -397,10 +406,10 @@ export function useProduitPage() {
     showAvoirModal, setShowAvoirModal, selectedAvoirId, setSelectedAvoirId,
     pendingActionRef,
     /* forms */
-    editForm, adjustForm, setAdjustForm, adjustStockMutation, transferLoading,
+    editForm, createInitialData, adjustForm, setAdjustForm, adjustStockMutation, transferLoading,
     labelProduct, setLabelProduct, transferProduct, setTransferProduct,
     /* handlers */
-    handleDelete, handleStockAdjustmentSubmit, handleOpenAdjust,
+    handleDelete, handleStockAdjustmentSubmit, handleOpenAdjust, handleOpenCreate,
     handleToggleActive, handleGenerateLabels,
     handleTransferToRayon, confirmTransferToRayon,
     handleMovementClick, handleOpenEdit,
