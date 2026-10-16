@@ -23,13 +23,14 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from ..audit_helpers import log_audit
+from ..audit_mixins import AuditedViewSetMixin
 from ..models import AuditLog, Produit, Rayon
 from ..pagination import StandardResultsSetPagination
 from ..serializers import RayonSerializer
 from .category_merge import merge_category
 
 
-class CategorieViewSet(viewsets.ModelViewSet):
+class CategorieViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
     """API endpoint for categories (rayons) - Fresh implementation."""
     queryset = Rayon.objects.annotate(produits_count=Count('produit')).order_by('name')
     serializer_class = RayonSerializer
@@ -56,7 +57,22 @@ class CategorieViewSet(viewsets.ModelViewSet):
         
         if exclude_zero:
             produits = produits.exclude(stock=0)
-        
+
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.EXPORT,
+            model_name='Rapport',
+            object_id=rayon.pk,
+            description=f"Export PDF état de stock du rayon « {rayon.name} »",
+            details={
+                'type': 'imprimer_etat_stock',
+                'rayon_id': rayon.pk,
+                'exclude_zero': exclude_zero,
+                'count': produits.count(),
+            },
+            request=request,
+        )
+
         response = HttpResponse(content_type='application/pdf')
         filename = f"stock_{rayon.name}_{datetime.now().strftime('%Y%m%d')}.pdf"
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
@@ -133,7 +149,21 @@ class CategorieViewSet(viewsets.ModelViewSet):
         
         if exclude_zero:
             produits = produits.exclude(stock=0)
-            
+
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.EXPORT,
+            model_name='Rapport',
+            object_id=0,
+            description="Export PDF état de stock des produits sans rayon",
+            details={
+                'type': 'imprimer_sans_rayon',
+                'exclude_zero': exclude_zero,
+                'count': produits.count(),
+            },
+            request=request,
+        )
+
         response = HttpResponse(content_type='application/pdf')
         filename = f"stock_sans_rayon_{datetime.now().strftime('%Y%m%d')}.pdf"
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
@@ -273,7 +303,6 @@ class CategoriesDetailView(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
         rayon_name = str(rayon)
         rayon_pk = rayon.pk
-        rayon.delete()
         log_audit(
             user=request.user,
             action=AuditLog.Action.DELETE,
@@ -282,4 +311,5 @@ class CategoriesDetailView(APIView):
             description=f"Suppression rayon: {rayon_name}",
             request=request,
         )
+        rayon.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

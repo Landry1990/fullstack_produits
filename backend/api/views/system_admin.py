@@ -15,6 +15,9 @@ from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 
+from ..audit_helpers import log_audit
+from ..models import AuditLog
+
 
 # Racines autorisées pour l'explorateur de chemins de sauvegarde
 _ALLOWED_BROWSE_ROOTS = ('/', '/mnt', '/media', '/opt', '/backups', '/opt/zenith-pharma')
@@ -166,6 +169,14 @@ class SystemAdminViewSet(ViewSet):
         err = StringIO()
 
         try:
+            log_audit(
+                user=request.user,
+                action=AuditLog.Action.OTHER,
+                model_name='SystemAdmin',
+                object_id=0,
+                description="Backup manuel de la base de données lancé",
+                request=request,
+            )
             call_command('backup_database', stdout=out, stderr=err)
             output = out.getvalue()
             err.getvalue()
@@ -223,6 +234,15 @@ class SystemAdminViewSet(ViewSet):
                 results.append({'container': name, 'success': False, 'error': str(e)})
 
         all_ok = all(r['success'] for r in results)
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.OTHER,
+            model_name='SystemAdmin',
+            object_id=0,
+            description=f"Politique de redémarrage Docker 'unless-stopped' appliquée ({sum(1 for r in results if r['success'])}/{len(results)} conteneurs)",
+            details={'results': results},
+            request=request,
+        )
         return Response({
             'results': results,
             'message': 'Politique de redémarrage appliquée' if all_ok else 'Erreurs partielles',
@@ -283,6 +303,21 @@ class SystemAdminViewSet(ViewSet):
                     {'detail': 'Fournissez un fichier (file) ou un nom de backup (filename)'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
+
+            # Tracé AVANT la restauration : l'opération écrase toute la base et
+            # peut interrompre la requête elle-même — la tentative doit rester visible.
+            log_audit(
+                user=request.user,
+                action=AuditLog.Action.OTHER,
+                model_name='SystemAdmin',
+                object_id=0,
+                description=f"Restauration de la base de données depuis « {filename or (uploaded_file.name if uploaded_file else '?')} »",
+                details={
+                    'filename': filename,
+                    'uploaded': bool(uploaded_file),
+                },
+                request=request,
+            )
 
             # Capturer la sortie de la commande
             out = StringIO()
@@ -385,6 +420,14 @@ class SystemAdminViewSet(ViewSet):
         err = StringIO()
 
         try:
+            log_audit(
+                user=request.user,
+                action=AuditLog.Action.OTHER,
+                model_name='SystemAdmin',
+                object_id=0,
+                description="Base backup PostgreSQL (pg_basebackup) lancé",
+                request=request,
+            )
             call_command('base_backup', stdout=out, stderr=err)
             output = out.getvalue()
             errors = err.getvalue()
@@ -434,6 +477,17 @@ class SystemAdminViewSet(ViewSet):
         err = StringIO()
 
         try:
+            # Tracé AVANT la restauration PITR (réécriture complète de la base).
+            target_info = f" jusqu'à {target_time}" if target_time else ''
+            log_audit(
+                user=request.user,
+                action=AuditLog.Action.OTHER,
+                model_name='SystemAdmin',
+                object_id=0,
+                description=f"Restauration PITR de la base — base backup « {base_backup_dir} »{target_info}",
+                details={'base_backup_dir': base_backup_dir, 'target_time': target_time},
+                request=request,
+            )
             cmd_args = [base_backup_dir]
             if target_time:
                 cmd_args.append(f'--target-time={target_time}')
@@ -520,6 +574,20 @@ class SystemAdminViewSet(ViewSet):
 
         local_commit = _get_local_commit()
         remote_commit = _get_remote_commit()
+
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.OTHER,
+            model_name='SystemAdmin',
+            object_id=0,
+            description="Vérification des mises à jour disponibles",
+            details={
+                'local_commit': local_commit[:8] if local_commit else None,
+                'remote_commit': remote_commit[:8] if remote_commit else None,
+                'update_available': bool(remote_commit) and local_commit != remote_commit,
+            },
+            request=request,
+        )
 
         if not remote_commit:
             return Response({
@@ -660,6 +728,16 @@ class SystemAdminViewSet(ViewSet):
         thread = threading.Thread(target=_run_update, daemon=True)
         thread.start()
 
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.OTHER,
+            model_name='SystemAdmin',
+            object_id=0,
+            description=f"Mise à jour de l'application lancée (script {os.path.basename(script_path)})",
+            details={'script': script_path},
+            request=request,
+        )
+
         return Response({
             'success': True,
             'message': 'Mise à jour lancée — l\'application reste accessible pendant la mise à jour',
@@ -756,6 +834,14 @@ class SystemAdminViewSet(ViewSet):
                     'true"'
                 ], capture_output=True, text=True, timeout=60)
                 if result.returncode == 0:
+                    log_audit(
+                        user=request.user,
+                        action=AuditLog.Action.OTHER,
+                        model_name='SystemAdmin',
+                        object_id=0,
+                        description="Mise à jour automatique désactivée (timer systemd/cron hôte arrêté)",
+                        request=request,
+                    )
                     return Response({
                         'success': True,
                         'message': 'Mise à jour automatique désactivée. Vous devrez lancer les mises à jour manuellement.',
@@ -803,6 +889,15 @@ class SystemAdminViewSet(ViewSet):
             ], capture_output=True, text=True, timeout=90)
 
             if result.returncode == 0:
+                log_audit(
+                    user=request.user,
+                    action=AuditLog.Action.OTHER,
+                    model_name='SystemAdmin',
+                    object_id=0,
+                    description=f"Planification de la mise à jour automatique fixée à {update_time}",
+                    details={'update_time': update_time},
+                    request=request,
+                )
                 return Response({
                     'success': True,
                     'update_time': update_time,

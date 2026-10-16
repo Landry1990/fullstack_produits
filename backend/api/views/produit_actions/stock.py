@@ -665,4 +665,14 @@ class ProduitStockMixin:
             if session.total_products > 0: session.save(update_fields=['total_products', 'total_units'])
             else: session.delete()
 
+        log_audit(
+            user=request.user, action=AuditLog.Action.STOCK_ADJUST,
+            model_name='Produit', object_id='BULK',
+            description=f"Réappro groupée réserve → rayon : {session.total_products} produit(s), {session.total_units} unité(s) (session #{session.id or 'supprimée'})",
+            details={
+                'total_products': session.total_products, 'total_units': session.total_units,
+                'ids': transferred_ids, 'validator': validation_user.username,
+                'is_sudo': validation_user != request.user,
+            }, request=request
+        )
         return Response({'detail': f"{len([r for r in results if r['success']])} produits réapprovisionnés.", 'results': results, 'session_id': session.id if getattr(session, 'id', None) else None})

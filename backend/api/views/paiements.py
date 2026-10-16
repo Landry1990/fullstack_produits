@@ -5,8 +5,9 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from ..audit_helpers import log_audit
 from ..idempotency import idempotent_action
-from ..models import PaiementFournisseur
+from ..models import AuditLog, PaiementFournisseur
 from ..utils.validation import parse_date_param, parse_id
 from ..pagination import StandardResultsSetPagination
 from ..serializers import PaiementFournisseurSerializer
@@ -42,7 +43,21 @@ class PaiementFournisseurViewSet(viewsets.ModelViewSet):
         return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
+        paiement = serializer.save(created_by=self.request.user)
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.CREATE,
+            model_name='PaiementFournisseur',
+            object_id=paiement.pk,
+            description=f"Création paiement fournisseur #{paiement.pk} — {paiement.montant} ({paiement.mode_paiement})",
+            details={
+                'montant': str(paiement.montant),
+                'mode_paiement': paiement.mode_paiement,
+                'fournisseur_id': paiement.fournisseur_id,
+                'reference': paiement.reference,
+            },
+            request=self.request,
+        )
 
     @action(detail=False, methods=['get'])
     def par_fournisseur(self, request):
@@ -117,8 +132,37 @@ class PaiementFournisseurViewSet(viewsets.ModelViewSet):
 
     @transaction.atomic
     def perform_update(self, serializer):
-        serializer.save()
+        paiement = serializer.save()
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='PaiementFournisseur',
+            object_id=paiement.pk,
+            description=f"Modification paiement fournisseur #{paiement.pk} — {paiement.montant} ({paiement.mode_paiement})",
+            details={
+                'montant': str(paiement.montant),
+                'mode_paiement': paiement.mode_paiement,
+                'fournisseur_id': paiement.fournisseur_id,
+                'fields': sorted(serializer.validated_data.keys()),
+            },
+            request=self.request,
+        )
 
     @transaction.atomic
     def perform_destroy(self, instance):
+        # Tracé AVANT suppression : un paiement supprimé = mouvement d'argent perdu
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.DELETE,
+            model_name='PaiementFournisseur',
+            object_id=instance.pk,
+            description=f"Suppression paiement fournisseur #{instance.pk} — {instance.montant} ({instance.mode_paiement})",
+            details={
+                'montant': str(instance.montant),
+                'mode_paiement': instance.mode_paiement,
+                'fournisseur_id': instance.fournisseur_id,
+                'reference': instance.reference,
+            },
+            request=self.request,
+        )
         instance.delete()

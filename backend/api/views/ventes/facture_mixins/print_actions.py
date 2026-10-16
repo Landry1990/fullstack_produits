@@ -33,6 +33,16 @@ class FacturePrintMixin:
 
         buffer = generate_invoice_pdf(facture, settings, is_proforma)
 
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.EXPORT,
+            model_name='Facture',
+            object_id=facture.id,
+            description=f"Export PDF facture {facture.numero_facture or facture.id}{' (proforma)' if is_proforma else ''}",
+            details={'numero_facture': facture.numero_facture, 'proforma': is_proforma},
+            request=request
+        )
+
         from django.http import HttpResponse
         response = HttpResponse(content_type='application/pdf')
         filename = f"facture_{facture.numero_facture or facture.id}.pdf"

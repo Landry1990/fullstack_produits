@@ -234,6 +234,16 @@ class StockAdjustmentViewSet(MultiTermSearchMixin, viewsets.ReadOnlyModelViewSet
         wb.save(output)
         output.seek(0)
 
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.EXPORT,
+            model_name='StockAdjustment',
+            object_id=0,
+            description="Export Excel du journal des ajustements de stock",
+            details={'params': request.query_params.dict()},
+            request=request,
+        )
+
         response = HttpResponse(
             output.read(),
             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'

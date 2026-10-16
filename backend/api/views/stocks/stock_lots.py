@@ -81,7 +81,57 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
             raise ValidationError(
                 f"« {produit.name} » est un service : un service n'a pas de lots de stock."
             )
-        serializer.save()
+        lot = serializer.save()
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.CREATE,
+            model_name='StockLot',
+            object_id=lot.id,
+            description=f"Création du lot « {lot.lot} » — {produit.name if produit else 'produit inconnu'} (+{lot.quantity_remaining} unités)",
+            details={
+                'lot': lot.lot,
+                'produit_id': lot.produit_id,
+                'quantite': lot.quantity_remaining,
+                'date_expiration': lot.date_expiration.isoformat() if lot.date_expiration else None,
+            },
+            request=self.request,
+        )
+
+    def perform_update(self, serializer):
+        fields = sorted(serializer.validated_data.keys())
+        lot = serializer.save()
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='StockLot',
+            object_id=lot.id,
+            description=f"Modification du lot « {lot.lot} » — {lot.produit.name if lot.produit else 'produit inconnu'}",
+            details={
+                'fields': fields,
+                'lot': lot.lot,
+                'produit_id': lot.produit_id,
+                'date_expiration': lot.date_expiration.isoformat() if lot.date_expiration else None,
+            },
+            request=self.request,
+        )
+
+    def perform_destroy(self, instance):
+        # Tracé avant suppression : le lot peut encore contenir du stock.
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.DELETE,
+            model_name='StockLot',
+            object_id=instance.id,
+            description=f"Suppression du lot « {instance.lot} » — {instance.produit.name if instance.produit else 'produit inconnu'} ({instance.quantity_remaining} unités restantes)",
+            details={
+                'lot': instance.lot,
+                'produit_id': instance.produit_id,
+                'quantity_remaining': instance.quantity_remaining,
+                'date_expiration': instance.date_expiration.isoformat() if instance.date_expiration else None,
+            },
+            request=self.request,
+        )
+        super().perform_destroy(instance)
 
     @action(detail=True, methods=['post'])
     @transaction.atomic

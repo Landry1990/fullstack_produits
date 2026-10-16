@@ -1,7 +1,8 @@
 from rest_framework import mixins, permissions, viewsets
 from rest_framework.response import Response
 
-from ..models import ConfigurationObjectifs
+from ..audit_helpers import log_audit
+from ..models import AuditLog, ConfigurationObjectifs
 from ..serializers import ConfigurationObjectifsSerializer
 
 
@@ -30,4 +31,13 @@ class ConfigurationObjectifsViewSet(mixins.RetrieveModelMixin, mixins.UpdateMode
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='ConfigurationObjectifs',
+            object_id=instance.pk,
+            description="Mise à jour de la configuration des objectifs commerciaux",
+            details={'fields': sorted(serializer.validated_data.keys())},
+            request=request,
+        )
         return Response(serializer.data)

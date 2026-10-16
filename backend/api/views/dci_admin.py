@@ -12,7 +12,8 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 
-from ..models import MedicamentReference, Produit, Substance
+from ..audit_helpers import log_audit
+from ..models import AuditLog, MedicamentReference, Produit, Substance
 from ..utils.validation import parse_id, parse_int
 
 
@@ -86,6 +87,16 @@ class DCIAdminViewSet(viewsets.ViewSet):
                         else:
                             skipped += 1
 
+            log_audit(
+                user=request.user,
+                action=AuditLog.Action.OTHER,
+                model_name='Substance',
+                object_id='BULK',
+                description=f"Import composition DCI « {file.name} » : {created} substance(s) créées, {skipped} existantes",
+                details={'filename': file.name, 'created': created, 'skipped': skipped},
+                request=request,
+            )
+
             return Response({
                 'created': created,
                 'skipped': skipped,
@@ -122,6 +133,20 @@ class DCIAdminViewSet(viewsets.ViewSet):
             Q(substances__isnull=False) | Q(dci_reference__isnull=False),
             is_active=True
         ).distinct().count()
+
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.OTHER,
+            model_name='Produit',
+            object_id='BULK',
+            description=f"Auto-match DCI lancé : {linked} nouveau(x) lien(s), {linked_total} produit(s) lié(s) au total",
+            details={
+                'newly_linked': linked,
+                'total_linked': linked_total,
+                'total_produits': total,
+            },
+            request=request,
+        )
 
         return Response({
             'output': output,
@@ -209,6 +234,19 @@ class DCIAdminViewSet(viewsets.ViewSet):
         if dci_reference_id:
             produit.dci_reference_id = parse_id(dci_reference_id, field='dci_reference_id')
             produit.save(update_fields=['dci_reference'])
+
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='Produit',
+            object_id=produit.pk,
+            description=f"Liaison DCI manuelle du produit « {produit.name} » (#{produit.pk})",
+            details={
+                'substance_ids': substance_ids,
+                'dci_reference_id': produit.dci_reference_id,
+            },
+            request=request,
+        )
 
         return Response({
             'success': True,

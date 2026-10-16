@@ -21,8 +21,10 @@ from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from ...audit_helpers import log_audit
 from ...idempotency import idempotent_action
 from ...models import (
+    AuditLog,
     Inventaire,
     LigneInventaire,
     Produit,
@@ -155,10 +157,35 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
 
 
     def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
+        inventaire = serializer.save(created_by=self.request.user)
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.INVENTORY_CREATE,
+            model_name='Inventaire',
+            object_id=inventaire.id,
+            description=f"Création de l'inventaire #{inventaire.id} — {inventaire.description or inventaire.inventory_type}",
+            details={
+                'description': inventaire.description,
+                'inventory_type': inventaire.inventory_type,
+            },
+            request=self.request,
+        )
 
     def perform_destroy(self, instance):
         from django.utils import timezone
+        # Tracé avant le soft-delete (un inventaire supprimé emporte ses lignes)
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.DELETE,
+            model_name='Inventaire',
+            object_id=instance.id,
+            description=f"Suppression de l'inventaire #{instance.id} — {instance.description or ''}",
+            details={
+                'status': instance.status,
+                'nb_lignes': instance.lignes.count(),
+            },
+            request=self.request,
+        )
         instance.is_active = False
         instance.deleted_by = self.request.user
         instance.deleted_at = timezone.now()
@@ -228,12 +255,28 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
                     pmp_snapshot=produit.pmp or produit.cost_price or 0
                 ))
         
+        lignes_filtered = []
         if lignes_a_creer:
             # On évite les doublons si déjà cliqué
             existing_prod_ids = set(inventaire.lignes.values_list('produit_id', flat=True))
             lignes_filtered = [l for l in lignes_a_creer if l.produit_id not in existing_prod_ids]
             LigneInventaire.objects.bulk_create(lignes_filtered)
-            
+
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.OTHER,
+            model_name='Inventaire',
+            object_id=inventaire.id,
+            description=f"Pré-remplissage de l'inventaire #{inventaire.id} — {len(lignes_filtered)} lignes créées",
+            details={
+                'lignes_creees': len(lignes_filtered),
+                'rayon_id': rayon_id,
+                'groupe_id': groupe_id,
+                'forme_id': forme_id,
+            },
+            request=request,
+        )
+
         return Response({'status': 'Pre-population terminee', 'count': len(lignes_a_creer)})
 
     @action(detail=True, methods=['post'])
@@ -284,6 +327,8 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
             try:
                 data = request.data.copy()
                 data['inventaire'] = inventaire.id
+                # Traçage : l'ajout de ligne peut créer un StockLot « à la volée »
+                nouveau_lot_id = None
 
                 # Garde-fou : 'produit' est requis dans tous les modes
                 # (sinon KeyError plus bas → 500 au lieu de 400).
@@ -327,6 +372,7 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
                         )
                         data['stock_lot'] = new_lot.id
                         data['stock_theorique'] = 0
+                        nouveau_lot_id = new_lot.id
                     
                     if 'quantite_physique' not in data:
                         data['quantite_physique'] = data.get('quantite_comptee', 0)
@@ -379,14 +425,41 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
                         )
                     existing_ligne.quantite_physique += new_qte
                     existing_ligne.save() # Le ecart est calculé dans save() du modèle
-                    
+
+                    log_audit(
+                        user=request.user,
+                        action=AuditLog.Action.UPDATE,
+                        model_name='LigneInventaire',
+                        object_id=existing_ligne.id,
+                        description=f"Fusion ligne inventaire #{existing_ligne.id} — +{new_qte} unité(s) comptée(s) (inventaire #{inventaire.id})",
+                        details={
+                            'inventaire_id': inventaire.id,
+                            'produit_id': existing_ligne.produit_id,
+                            'quantite_ajoutee': new_qte,
+                        },
+                        request=request,
+                    )
                     serializer = LigneInventaireSerializer(existing_ligne)
                     return Response(serializer.data, status=status.HTTP_200_OK)
-                
+
                 # Sinon, création normale
                 serializer = LigneInventaireSerializer(data=data)
                 if serializer.is_valid():
-                    serializer.save()
+                    ligne = serializer.save()
+                    log_audit(
+                        user=request.user,
+                        action=AuditLog.Action.CREATE,
+                        model_name='LigneInventaire',
+                        object_id=ligne.id,
+                        description=f"Ajout ligne inventaire #{ligne.id} (inventaire #{inventaire.id})",
+                        details={
+                            'inventaire_id': inventaire.id,
+                            'produit_id': ligne.produit_id,
+                            'stock_lot_id': ligne.stock_lot_id,
+                            'nouveau_lot_id': nouveau_lot_id,
+                        },
+                        request=request,
+                    )
                     return Response(serializer.data, status=status.HTTP_201_CREATED)
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
                 
@@ -429,7 +502,17 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         """
         inventaire = self.get_object()
         lignes_data = request.data.get('lignes', [])
-        return bulk_lignes_inventaire(inventaire, lignes_data)
+        response = bulk_lignes_inventaire(inventaire, lignes_data)
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.OTHER,
+            model_name='Inventaire',
+            object_id=inventaire.id,
+            description=f"Import groupé de {len(lignes_data)} lignes dans l'inventaire #{inventaire.id}",
+            details={'nb_lignes': len(lignes_data)},
+            request=request,
+        )
+        return response
 
     @action(detail=True, methods=['post'], url_path='import-csv')
     @transaction.atomic
@@ -443,7 +526,17 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         if 'file' not in request.FILES:
             return Response({'error': 'Aucun fichier fourni.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        return import_csv_inventaire(inventaire, request.FILES['file'])
+        response = import_csv_inventaire(inventaire, request.FILES['file'])
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.OTHER,
+            model_name='Inventaire',
+            object_id=inventaire.id,
+            description=f"Import CSV de lignes dans l'inventaire #{inventaire.id} — {request.FILES['file'].name}",
+            details={'filename': request.FILES['file'].name},
+            request=request,
+        )
+        return response
 
     @action(detail=True, methods=['post'])
     @transaction.atomic
@@ -464,7 +557,16 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         Doublon défini par : même produit et même lot (ou pas de lot).
         """
         inventaire = self.get_object()
-        return merge_duplicate_lines(inventaire)
+        response = merge_duplicate_lines(inventaire)
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.OTHER,
+            model_name='Inventaire',
+            object_id=inventaire.id,
+            description=f"Fusion des lignes en doublon de l'inventaire #{inventaire.id}",
+            request=request,
+        )
+        return response
 
     @action(detail=True, methods=['post'])
     def lock(self, request, pk=None):
@@ -546,6 +648,14 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         Génère un PDF listant uniquement les écarts.
         """
         inventaire = self.get_object()
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.EXPORT,
+            model_name='Inventaire',
+            object_id=inventaire.id,
+            description=f"Export PDF écarts de l'inventaire #{inventaire.id}",
+            request=request,
+        )
         return generate_ecarts_pdf(inventaire)
 
     @action(detail=True, methods=['get'])
@@ -569,6 +679,14 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         Génère un PDF de l'état d'inventaire groupé par rayon.
         """
         inventaire = self.get_object()
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.EXPORT,
+            model_name='Inventaire',
+            object_id=inventaire.id,
+            description=f"Export PDF état de l'inventaire #{inventaire.id}",
+            request=request,
+        )
         return generate_etat_pdf(inventaire)
 
     @action(detail=False, methods=['get'], url_path='listing-json')
@@ -626,6 +744,23 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         filter_id = parse_id(filter_id_str, field='filter_id', required=False)
         inventaire_id = parse_id(inventaire_id_str, field='inventaire_id', required=False)
 
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.EXPORT,
+            model_name='Inventaire',
+            object_id=inventaire_id or 0,
+            description="Export Excel listing de stock",
+            details={
+                'group_by': group_by,
+                'stock_filter': stock_filter,
+                'filter_id': filter_id,
+                'inventaire_id': inventaire_id,
+                'blind': blind,
+                'stock_location': stock_location,
+            },
+            request=request,
+        )
+
         return generate_listing_excel(
             group_by=group_by,
             stock_filter=stock_filter,
@@ -662,6 +797,8 @@ class LigneInventaireViewSet(viewsets.ModelViewSet):
         Sinon, utilise le stock global du produit (backward compatibility).
         """
         data = request.data.copy()
+        # Traçage : la création de ligne peut créer un StockLot « à la volée »
+        nouveau_lot_id = None
         
         if data.get('stock_lot'):
             # Mode LOT EXISTANT: Utiliser l'ID du lot fourni
@@ -715,6 +852,7 @@ class LigneInventaireViewSet(viewsets.ModelViewSet):
                 )
                 data['stock_lot'] = new_lot.id
                 data['stock_theorique'] = 0
+                nouveau_lot_id = new_lot.id
             
             if 'quantite_physique' not in data:
                  data['quantite_physique'] = 0 # Default if not provided
@@ -742,9 +880,57 @@ class LigneInventaireViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.CREATE,
+            model_name='LigneInventaire',
+            object_id=serializer.instance.id,
+            description=f"Ajout ligne inventaire #{serializer.instance.id} — {serializer.instance.produit.name if serializer.instance.produit else 'Produit'}",
+            details={
+                'inventaire_id': serializer.instance.inventaire_id,
+                'produit_id': serializer.instance.produit_id,
+                'stock_lot_id': serializer.instance.stock_lot_id,
+                'nouveau_lot_id': nouveau_lot_id,
+            },
+            request=request,
+        )
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-    
+
+    def perform_update(self, serializer):
+        fields = sorted(serializer.validated_data.keys())
+        ligne = serializer.save()
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='LigneInventaire',
+            object_id=ligne.id,
+            description=f"Modification ligne inventaire #{ligne.id} — quantité comptée {ligne.quantite_physique} (écart {ligne.ecart})",
+            details={
+                'fields': fields,
+                'inventaire_id': ligne.inventaire_id,
+                'produit_id': ligne.produit_id,
+            },
+            request=self.request,
+        )
+
+    def perform_destroy(self, instance):
+        # Tracé avant suppression (produit + quantités de la ligne détruite)
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.DELETE,
+            model_name='LigneInventaire',
+            object_id=instance.id,
+            description=f"Suppression ligne inventaire #{instance.id} — {instance.produit.name if instance.produit else 'Produit'}",
+            details={
+                'inventaire_id': instance.inventaire_id,
+                'produit_id': instance.produit_id,
+                'stock_lot_id': instance.stock_lot_id,
+            },
+            request=self.request,
+        )
+        super().perform_destroy(instance)
+
     def perform_create(self, serializer):
         # Capture theoretical stock at time of creation
         produit = serializer.validated_data['produit']

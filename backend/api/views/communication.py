@@ -10,7 +10,10 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
+from ..audit_helpers import log_audit
+from ..audit_mixins import AuditedViewSetMixin
 from ..models import (
+    AuditLog,
     Client,
     InternalMessage,
     MessageTemplate,
@@ -33,7 +36,7 @@ from ..services.sms import SmsService
 from ..utils.validation import parse_id
 
 
-class SmsViewSet(viewsets.ModelViewSet):
+class SmsViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
     """
     Gestion des SMS: Historique et Envoi.
     """
@@ -100,13 +103,29 @@ class SmsViewSet(viewsets.ModelViewSet):
             user=request.user,
             context=context
         )
-        
+
+        # Envoi réel de SMS (coût externe) : trace succès comme échec
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.OTHER,
+            model_name='SmsLog',
+            object_id=0,
+            description=f"Envoi SMS {'réussi' if success else 'échoué'} à {recipient} ({context_type})",
+            details={
+                'recipient': recipient,
+                'context_type': context_type,
+                'context_id': context_id,
+                'success': success,
+            },
+            request=request,
+        )
+
         if success:
             return Response({"message": result, "status": "success"})
         else:
             return Response({"error": result}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-class SmsTemplateViewSet(viewsets.ModelViewSet):
+class SmsTemplateViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
     queryset = SmsTemplate.objects.filter(is_active=True)
     serializer_class = SmsTemplateSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -173,9 +192,6 @@ class TelegramLogViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=False, methods=['get'])
     def export_csv(self, request):
         """Exporte les logs Telegram filtrés au format CSV (max 10 000 lignes)."""
-        from ..audit_helpers import log_audit
-        from ..models import AuditLog
-
         qs = self.get_queryset()[:10000]
 
         output = io.StringIO()
@@ -213,7 +229,7 @@ class TelegramLogViewSet(viewsets.ReadOnlyModelViewSet):
         return response
 
 
-class InternalMessageViewSet(viewsets.ModelViewSet):
+class InternalMessageViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
     """
     Messagerie interne entre utilisateurs.
     """
@@ -288,7 +304,15 @@ class InternalMessageViewSet(viewsets.ModelViewSet):
         ).distinct()
 
     def perform_create(self, serializer):
-        serializer.save(sender=self.request.user)
+        message = serializer.save(sender=self.request.user)
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.CREATE,
+            model_name='InternalMessage',
+            object_id=message.pk,
+            description=f"Message interne envoyé à {message.recipient or 'tous'} (#{message.pk})",
+            request=self.request,
+        )
 
     def update(self, request, *args, **kwargs):
         if not request.user.is_staff:
@@ -344,7 +368,7 @@ class InternalMessageViewSet(viewsets.ModelViewSet):
         return Response({'count': count})
 
 
-class MessageTemplateViewSet(viewsets.ModelViewSet):
+class MessageTemplateViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
     """
     Modèles de messages prédéfinis.
     """
@@ -358,4 +382,12 @@ class MessageTemplateViewSet(viewsets.ModelViewSet):
         return super().get_permissions()
 
     def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
+        template = serializer.save(created_by=self.request.user)
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.CREATE,
+            model_name='MessageTemplate',
+            object_id=template.pk,
+            description=f"Création modèle de message « {template.title} » (#{template.pk})",
+            request=self.request,
+        )

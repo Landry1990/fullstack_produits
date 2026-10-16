@@ -10,8 +10,9 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from ...audit_helpers import log_audit
 from ...centralized_configs import StandardResultsSetPagination
-from ...models import Commande, CommandeProduit, Produit, StockLot
+from ...models import AuditLog, Commande, CommandeProduit, Produit, StockLot
 from ...serializers import CommandeProduitSerializer
 
 logger = logging.getLogger(__name__)
@@ -53,8 +54,40 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
             commande_produit = serializer.save()
             if selling_price is not None and commande_produit.produit_id:
                 produit = commande_produit.produit
+                old_price = produit.selling_price
                 produit.selling_price = selling_price
                 produit.save(update_fields=['selling_price'])
+                if old_price != selling_price:
+                    # Le prix de vente de la fiche produit a été réécrit par la
+                    # ligne de commande → tracé PRICE_CHG avec ancien/nouveau.
+                    log_audit(
+                        user=self.request.user,
+                        action=AuditLog.Action.PRICE_CHANGE,
+                        model_name='Produit',
+                        object_id=produit.id,
+                        description=f"Prix de vente de « {produit.name} » modifié via commande : {old_price} → {selling_price} F",
+                        details={
+                            'old_price': str(old_price),
+                            'new_price': str(selling_price),
+                            'commande_id': commande_produit.commande_id,
+                            'commande_produit_id': commande_produit.id,
+                        },
+                        request=self.request,
+                    )
+            log_audit(
+                user=self.request.user,
+                action=AuditLog.Action.CREATE,
+                model_name='CommandeProduit',
+                object_id=commande_produit.id,
+                description=f"Ajout ligne commande #{commande_produit.id} — {commande_produit.produit.name if commande_produit.produit else 'Produit'} x{commande_produit.quantity} (commande #{commande_produit.commande_id})",
+                details={
+                    'commande_id': commande_produit.commande_id,
+                    'produit_id': commande_produit.produit_id,
+                    'quantity': commande_produit.quantity,
+                    'price': str(commande_produit.price),
+                },
+                request=self.request,
+            )
 
     def _check_commande_not_closed(self, instance):
         """Lève une erreur si la commande associée est clôturée."""
@@ -78,6 +111,40 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         self._check_commande_not_closed(instance)
         return super().destroy(request, *args, **kwargs)
+
+    def perform_update(self, serializer):
+        fields = sorted(serializer.validated_data.keys())
+        ligne = serializer.save()
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='CommandeProduit',
+            object_id=ligne.id,
+            description=f"Modification ligne commande #{ligne.id} (commande #{ligne.commande_id})",
+            details={
+                'commande_id': ligne.commande_id,
+                'produit_id': ligne.produit_id,
+                'fields': fields,
+            },
+            request=self.request,
+        )
+
+    def perform_destroy(self, instance):
+        # Tracé avant suppression (produit + quantité de la ligne détruite)
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.DELETE,
+            model_name='CommandeProduit',
+            object_id=instance.id,
+            description=f"Suppression ligne commande #{instance.id} — {instance.produit.name if instance.produit else 'Produit'} x{instance.quantity} (commande #{instance.commande_id})",
+            details={
+                'commande_id': instance.commande_id,
+                'produit_id': instance.produit_id,
+                'quantity': instance.quantity,
+            },
+            request=self.request,
+        )
+        super().perform_destroy(instance)
 
     @action(detail=False, methods=['post'])
     @transaction.atomic
@@ -191,10 +258,14 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
                 product_ids_in_payload.add(_pid)
         product_rows = list(
             Produit.objects.filter(id__in=product_ids_in_payload)
-            .values('id', 'tva', 'name', 'type_produit')
+            .values('id', 'tva', 'name', 'type_produit', 'selling_price', 'cost_price')
         )
         product_tva_map = {r['id']: r['tva'] for r in product_rows}
         service_products = {r['id']: r['name'] for r in product_rows if r['type_produit'] == 'SERVICE'}
+        # Snapshot des anciennes valeurs produit (TVA/prix) : la sync réécrit
+        # la fiche produit — on trace les changements de prix en PRICE_CHG.
+        product_old_map = {r['id']: r for r in product_rows}
+        price_changes = []
         # Fetch existing items for this order to know what to update vs create
         existing_qs = CommandeProduit.objects.filter(commande=commande)
         existing_items = {item.id: item for item in existing_qs}
@@ -317,9 +388,29 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
                 if new_cost is not None and new_cost >= 0:
                     update_kwargs['cost_price'] = new_cost
                 if update_kwargs:
+                    old_row = product_old_map.get(p_id) or {}
                     Produit.objects.filter(id=p_id).update(**update_kwargs)
+                    changed_prices = {
+                        field: {'old': str(old_row.get(field)), 'new': str(val)}
+                        for field, val in update_kwargs.items()
+                        if field in ('selling_price', 'cost_price') and old_row.get(field) != val
+                    }
+                    if changed_prices:
+                        price_changes.append({'produit_id': p_id, 'changes': changed_prices})
                 p_obj = Produit.objects.get(id=p_id)
                 p_obj.save(update_fields=['taux_marge', 'pourcentage_marge'])
+
+        # Tracé des prix produits modifiés par la sync (un PRICE_CHG par produit)
+        for pc in price_changes:
+            log_audit(
+                user=request.user,
+                action=AuditLog.Action.PRICE_CHANGE,
+                model_name='Produit',
+                object_id=pc['produit_id'],
+                description=f"Prix du produit #{pc['produit_id']} modifié via sync commande #{commande.id}",
+                details={'commande_id': commande.id, 'changes': pc['changes']},
+                request=request,
+            )
         
         # Delete items that are no longer in the payload
         ids_to_delete = existing_ids - payload_ids
@@ -349,7 +440,22 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
                 
                 error_msg = "Certains produits ne peuvent pas être retirés car ils sont déjà utilisés dans : " + ", ".join(set(protected_elements))
                 return Response({'error': error_msg}, status=status.HTTP_400_BAD_REQUEST)
-        
+
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='Commande',
+            object_id=commande.id,
+            description=f"Synchronisation groupée de la commande #{commande.id} : {len(items_to_create)} créée(s), {len(items_to_update)} mise(s) à jour, {deleted_count} supprimée(s)",
+            details={
+                'created': len(items_to_create),
+                'updated': len(items_to_update),
+                'deleted': deleted_count,
+                'nb_price_changes': len(price_changes),
+                'warnings': warnings_list,
+            },
+            request=request,
+        )
         return Response({
             'status': 'success',
             'created': len(items_to_create),
@@ -399,6 +505,22 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
                 pass
             except StockLot.MultipleObjectsReturned:
                 pass
+
+        # Correction possible même sur commande clôturée → tracé explicite.
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='CommandeProduit',
+            object_id=instance.id,
+            description=f"Correction du lot de la ligne commande #{instance.id} — lot « {instance.lot} » (commande #{instance.commande_id})",
+            details={
+                'commande_id': instance.commande_id,
+                'produit_id': instance.produit_id,
+                'lot': instance.lot,
+                'date_expiration': instance.date_expiration.isoformat() if instance.date_expiration else None,
+            },
+            request=request,
+        )
 
         return Response({
             'status': 'success',

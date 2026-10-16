@@ -2,12 +2,13 @@ from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from ..audit_mixins import AuditedViewSetMixin
 from ..models import ObjectifCommercial
 from ..pagination import StandardResultsSetPagination
 from ..serializers import ObjectifCommercialSerializer
 
 
-class ObjectifViewSet(viewsets.ModelViewSet):
+class ObjectifViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
     """
     ViewSet pour la gestion des objectifs commerciaux.
     """

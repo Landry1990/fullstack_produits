@@ -8,7 +8,9 @@ from rest_framework import permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from ..audit_helpers import log_audit
 from ..models import (
+    AuditLog,
     CompteComptable,
     EcritureComptable,
     ExerciceComptable,
@@ -47,14 +49,39 @@ class CompteComptableViewSet(viewsets.ModelViewSet):
 
     @transaction.atomic
     def perform_create(self, serializer):
-        serializer.save()
+        instance = serializer.save()
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.CREATE,
+            model_name='CompteComptable',
+            object_id=instance.pk,
+            description=f"Création compte comptable « {instance} » (#{instance.pk})",
+            request=self.request,
+        )
 
     @transaction.atomic
     def perform_update(self, serializer):
-        serializer.save()
+        instance = serializer.save()
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='CompteComptable',
+            object_id=instance.pk,
+            description=f"Modification compte comptable « {instance} » (#{instance.pk})",
+            details={'fields': sorted(serializer.validated_data.keys())},
+            request=self.request,
+        )
 
     @transaction.atomic
     def perform_destroy(self, instance):
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.DELETE,
+            model_name='CompteComptable',
+            object_id=instance.pk,
+            description=f"Suppression compte comptable « {instance} » (#{instance.pk})",
+            request=self.request,
+        )
         instance.delete()
 
 class JournalComptableViewSet(viewsets.ModelViewSet):
@@ -64,14 +91,39 @@ class JournalComptableViewSet(viewsets.ModelViewSet):
 
     @transaction.atomic
     def perform_create(self, serializer):
-        serializer.save()
+        instance = serializer.save()
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.CREATE,
+            model_name='JournalComptable',
+            object_id=instance.pk,
+            description=f"Création journal comptable « {instance} » (#{instance.pk})",
+            request=self.request,
+        )
 
     @transaction.atomic
     def perform_update(self, serializer):
-        serializer.save()
+        instance = serializer.save()
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='JournalComptable',
+            object_id=instance.pk,
+            description=f"Modification journal comptable « {instance} » (#{instance.pk})",
+            details={'fields': sorted(serializer.validated_data.keys())},
+            request=self.request,
+        )
 
     @transaction.atomic
     def perform_destroy(self, instance):
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.DELETE,
+            model_name='JournalComptable',
+            object_id=instance.pk,
+            description=f"Suppression journal comptable « {instance} » (#{instance.pk})",
+            request=self.request,
+        )
         instance.delete()
 
 class ExerciceComptableViewSet(viewsets.ModelViewSet):
@@ -81,14 +133,42 @@ class ExerciceComptableViewSet(viewsets.ModelViewSet):
 
     @transaction.atomic
     def perform_create(self, serializer):
-        serializer.save()
+        instance = serializer.save()
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.CREATE,
+            model_name='ExerciceComptable',
+            object_id=instance.pk,
+            description=f"Création exercice comptable « {instance.nom} » (#{instance.pk})",
+            request=self.request,
+        )
 
     @transaction.atomic
     def perform_update(self, serializer):
-        serializer.save()
+        instance = serializer.save()
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='ExerciceComptable',
+            object_id=instance.pk,
+            description=f"Modification exercice comptable « {instance.nom} » (#{instance.pk})",
+            details={
+                'fields': sorted(serializer.validated_data.keys()),
+                'est_cloture': instance.est_cloture,
+            },
+            request=self.request,
+        )
 
     @transaction.atomic
     def perform_destroy(self, instance):
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.DELETE,
+            model_name='ExerciceComptable',
+            object_id=instance.pk,
+            description=f"Suppression exercice comptable « {instance.nom} » (#{instance.pk})",
+            request=self.request,
+        )
         instance.delete()
 
 from ..filters import EcritureComptableFilter
@@ -380,7 +460,17 @@ class EcritureComptableViewSet(viewsets.ModelViewSet):
         for c in Commande.objects.filter(status='CLOT'):
             generer_ecriture_achat(None, c, False)
             count += 1
-            
+
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.OTHER,
+            model_name='EcritureComptable',
+            object_id='BULK',
+            description=f"Initialisation de l'historique comptable : {count} pièce(s) regénérée(s)",
+            details={'entries_processed': count},
+            request=request,
+        )
+
         return Response({'status': 'success', 'entries_processed': count})
 
     @action(detail=False, methods=['get'], url_path='grand_livre_tiers')
@@ -522,7 +612,24 @@ class EcritureComptableViewSet(viewsets.ModelViewSet):
         # Associer les lignes
         lettrage.lignes.set(lignes)
         lettrage.save()
-        
+
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.OTHER,
+            model_name='Lettrage',
+            object_id=lettrage.pk,
+            description=f"Création lettrage {lettrage.code} sur compte {compte.numero} ({len(ligne_ids)} ligne(s))",
+            details={
+                'code': lettrage.code,
+                'compte_id': compte.pk,
+                'compte_numero': compte.numero,
+                'ligne_ids': ligne_ids,
+                'est_equilibre': lettrage.est_equilibre,
+                'montant_total': str(lettrage.montant_total),
+            },
+            request=request,
+        )
+
         return Response({
             'id': lettrage.pk,  # type: ignore[attr-defined]
             'code': lettrage.code,
@@ -533,12 +640,47 @@ class EcritureComptableViewSet(viewsets.ModelViewSet):
 
     @transaction.atomic
     def perform_create(self, serializer):
-        serializer.save()
+        instance = serializer.save()
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.CREATE,
+            model_name='EcritureComptable',
+            object_id=instance.pk,
+            description=f"Création écriture comptable « {instance.numero_piece or instance.reference} » (#{instance.pk})",
+            details={
+                'numero_piece': instance.numero_piece,
+                'journal_id': instance.journal_id,
+                'reference': instance.reference,
+            },
+            request=self.request,
+        )
 
     @transaction.atomic
     def perform_update(self, serializer):
-        serializer.save()
+        instance = serializer.save()
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='EcritureComptable',
+            object_id=instance.pk,
+            description=f"Modification écriture comptable « {instance.numero_piece or instance.reference} » (#{instance.pk})",
+            details={'fields': sorted(serializer.validated_data.keys())},
+            request=self.request,
+        )
 
     @transaction.atomic
     def perform_destroy(self, instance):
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.DELETE,
+            model_name='EcritureComptable',
+            object_id=instance.pk,
+            description=f"Suppression écriture comptable « {instance.numero_piece or instance.reference} » (#{instance.pk})",
+            details={
+                'numero_piece': instance.numero_piece,
+                'journal_id': instance.journal_id,
+                'reference': instance.reference,
+            },
+            request=self.request,
+        )
         instance.delete()

@@ -5,13 +5,14 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 
+from ..audit_mixins import AuditedViewSetMixin
 from ..models import Forme
 from ..pagination import StandardResultsSetPagination
 from ..serializers_forme import FormeSerializer
 from .category_merge import merge_category
 
 
-class FormeViewSet(viewsets.ModelViewSet):
+class FormeViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
     """
     ViewSet pour gérer les formes pharmaceutiques.
     """

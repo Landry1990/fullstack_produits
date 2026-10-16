@@ -4,8 +4,9 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from ...audit_helpers import log_audit
 from ...cache_utils import SearchCache
-from ...models import Produit
+from ...models import AuditLog, Produit
 from ...serializers import ProduitSerializer
 
 
@@ -27,7 +28,14 @@ class ProduitStatusMixin:
             
         produit.save(update_fields=['is_active', 'name'])
         SearchCache.invalidate_all_products()
-        
+
+        log_audit(
+            user=request.user, action=AuditLog.Action.UPDATE,
+            model_name='Produit', object_id=produit.id,
+            description=f"Produit « {produit.name} » {'réactivé' if produit.is_active else 'désactivé'}",
+            details={'is_active': produit.is_active},
+            request=request
+        )
         return Response({
             'status': 'success',
             'is_active': produit.is_active,
@@ -41,7 +49,14 @@ class ProduitStatusMixin:
         produit.is_public = not produit.is_public
         produit.save(update_fields=['is_public'])
         SearchCache.invalidate_all_products()
-        
+
+        log_audit(
+            user=request.user, action=AuditLog.Action.UPDATE,
+            model_name='Produit', object_id=produit.id,
+            description=f"Produit « {produit.name} » rendu {'public' if produit.is_public else 'privé'}",
+            details={'is_public': produit.is_public},
+            request=request
+        )
         return Response({
             'status': 'success', 
             'is_public': produit.is_public,

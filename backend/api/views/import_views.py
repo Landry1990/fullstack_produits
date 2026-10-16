@@ -9,7 +9,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from ..models import Produit
+from ..audit_helpers import log_audit
+from ..models import AuditLog, Produit
 
 logger = logging.getLogger(__name__)
 business_logger = logging.getLogger('api.business')
@@ -242,6 +243,21 @@ class ProductImportView(APIView):
                         errors.append("... trop d'erreurs, arrêt du rapport.")
                         break
             
+            log_audit(
+                user=request.user,
+                action=AuditLog.Action.CREATE,
+                model_name='Produit',
+                object_id='BULK',
+                description=f"Import produits « {file_obj.name} » : {created_count} créés, {updated_count} mis à jour, {len(errors)} erreur(s)",
+                details={
+                    'filename': file_obj.name,
+                    'created': created_count,
+                    'updated': updated_count,
+                    'errors_count': len(errors),
+                },
+                request=request,
+            )
+
             return Response({
                 'message': 'Import terminé',
                 'created': created_count,

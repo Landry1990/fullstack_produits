@@ -6,8 +6,10 @@ from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from ...audit_helpers import log_audit
+from ...audit_mixins import AuditedViewSetMixin
 from ...centralized_configs import StandardResultsSetPagination
-from ...models import OrderSchedule
+from ...models import AuditLog, OrderSchedule
 from ...serializers import OrderScheduleSerializer
 from ...services.auto_order import (
     create_order_from_suggestions,
@@ -18,7 +20,7 @@ from ...utils.validation import parse_id
 logger = logging.getLogger(__name__)
 
 
-class OrderScheduleViewSet(viewsets.ModelViewSet):
+class OrderScheduleViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
     """ViewSet for managing automated order schedules."""
     queryset = OrderSchedule.objects.all().order_by('-created_at')
     serializer_class = OrderScheduleSerializer
@@ -73,6 +75,22 @@ class OrderScheduleViewSet(viewsets.ModelViewSet):
         schedule.save(update_fields=['last_run'])
 
         logger.info(f"trigger_now: commande #{commande.id} créée pour {schedule.fournisseur.name} par {request.user}")
+
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.OTHER,
+            model_name='OrderSchedule',
+            object_id=schedule.id,
+            description=f"Déclenchement manuel du planning #{schedule.id} — commande #{commande.id} créée",
+            details={
+                'commande_id': commande.id,
+                'numero_facture': commande.numero_facture,
+                'fournisseur': schedule.fournisseur.name,
+                'nb_produits': nb_created,
+                'total_ht': float(total_ht),
+            },
+            request=request,
+        )
 
         return Response({
             'commande_id': commande.id,

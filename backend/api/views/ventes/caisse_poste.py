@@ -9,7 +9,9 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 
-from ...models import Caisse, Facture, PosteCaisse, PosteVente
+from ...audit_helpers import log_audit
+from ...audit_mixins import AuditedViewSetMixin
+from ...models import AuditLog, Caisse, Facture, PosteCaisse, PosteVente
 from ...serializers import (
     PosteCaisseSerializer,
     PosteVenteSerializer,
@@ -25,7 +27,7 @@ from ...utils.validation import (
 logger = logging.getLogger(__name__)
 
 
-class PosteCaisseViewSet(viewsets.ModelViewSet):
+class PosteCaisseViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
     """
     API endpoint pour la gestion des caisses physiques (matériel).
     """
@@ -106,7 +108,7 @@ class PosteCaisseViewSet(viewsets.ModelViewSet):
         return super().destroy(request, *args, **kwargs)
 
 
-class PosteVenteViewSet(viewsets.ModelViewSet):
+class PosteVenteViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
     """
     API endpoint pour la gestion des postes de vente (sessions logiques).
     """
@@ -149,6 +151,15 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         poste = PosteVente.objects.create(nom=nom, est_actif=False)
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.CREATE,
+            model_name='PosteVente',
+            object_id=poste.id,
+            description=f"Création du point de vente « {poste.nom} »",
+            details={'nom': poste.nom},
+            request=request,
+        )
         serializer = self.get_serializer(poste)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -222,6 +233,18 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
         poste.montant_total_encaisse = None
         poste.save()
 
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.OTHER,
+            model_name='PosteVente',
+            object_id=poste.id,
+            description=f"Activation du point de vente « {poste.nom} » (mode POS) par {request.user.username}",
+            details={
+                'fond_de_caisse': float(fond_decimal) if fond_decimal else None,
+            },
+            request=request,
+        )
+
         return Response(self.get_serializer(poste).data)
 
     @action(detail=True, methods=['post'])
@@ -276,6 +299,19 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
             mode_pos=False
         )
 
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.OTHER,
+            model_name='PosteVente',
+            object_id=poste.id,
+            description=f"Ouverture de la caisse « {caisse.nom} » par {request.user.username}",
+            details={
+                'poste_caisse_id': caisse.id,
+                'fond_de_caisse': float(fond_decimal) if fond_decimal else None,
+            },
+            request=request,
+        )
+
         return Response(self.get_serializer(poste).data)
 
     @action(detail=True, methods=['post'])
@@ -320,6 +356,20 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
         poste.date_fermeture = timezone.now()
         poste.montant_total_encaisse = montant_encaisse
         poste.save()
+
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.OTHER,
+            model_name='PosteVente',
+            object_id=poste.id,
+            description=f"Fermeture du point de vente « {poste.nom} » par {request.user.username}",
+            details={
+                'poste_caisse_id': poste.caisse_id,
+                'montant_encaisse': float(montant_encaisse),
+                'fond_de_caisse': float(poste.fond_de_caisse) if poste.fond_de_caisse else 0,
+            },
+            request=request,
+        )
 
         from api.models import PharmacySettings
         pharmacy_settings = PharmacySettings.objects.first()
@@ -494,6 +544,8 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
             )
 
         poste = self.get_object()
+        etait_actif = poste.est_actif
+        montant_encaisse = Decimal(0)
 
         if poste.est_actif:
             if poste.date_ouverture:
@@ -507,6 +559,20 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
             poste.date_fermeture = timezone.now()
             poste.montant_total_encaisse = montant_encaisse
             poste.save()
+
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.OTHER,
+            model_name='PosteVente',
+            object_id=poste.id,
+            description=f"Fermeture forcée du point de vente « {poste.nom} » par {request.user.username} (admin)",
+            details={
+                'etait_actif': etait_actif,
+                'vendeur_id': poste.vendeur_id,
+                'montant_encaisse': float(poste.montant_total_encaisse or 0),
+            },
+            request=request,
+        )
 
         return Response({
             'detail': f'Le point de vente {poste.nom} a été fermé forcément.',

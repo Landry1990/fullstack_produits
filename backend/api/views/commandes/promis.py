@@ -10,8 +10,10 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from ...audit_helpers import log_audit
 from ...idempotency import idempotent_action
 from ...models import (
+    AuditLog,
     FactureProduit,
     FactureProduitAllocation,
     MouvementStock,
@@ -208,6 +210,21 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         if created and not promis.facture_id:
             self._reserve_stock_for_promis(promis)
         serializer.instance = promis
+        if created:
+            log_audit(
+                user=self.request.user,
+                action=AuditLog.Action.CREATE,
+                model_name='Promis',
+                object_id=promis.id,
+                description=f"Création du promis #{promis.id} — {promis.produit.name if promis.produit else 'Produit'} x{promis.quantite} ({promis.client_display})",
+                details={
+                    'produit_id': promis.produit_id,
+                    'quantite': promis.quantite,
+                    'facture_id': promis.facture_id,
+                    'stock_reserve': not promis.facture_id,
+                },
+                request=self.request,
+            )
         return promis
 
     @idempotent_action
@@ -244,11 +261,37 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
                 created.append(promis)
         except ValueError as e:
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.CREATE,
+            model_name='Promis',
+            object_id='BULK',
+            description=f"Création groupée de {len(created)} promis (stock réservé)",
+            details={
+                'ids': [p.id for p in created],
+                'quantites': {str(p.id): p.quantite for p in created},
+            },
+            request=request,
+        )
         return Response(self.get_serializer(created, many=True).data, status=status.HTTP_201_CREATED)
 
     @transaction.atomic
     def perform_destroy(self, instance):
         from django.utils import timezone
+        # Tracé avant le soft-delete (quantité + client du promis supprimé)
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.DELETE,
+            model_name='Promis',
+            object_id=instance.id,
+            description=f"Suppression du promis #{instance.id} — {instance.client_display}",
+            details={
+                'produit_id': instance.produit_id,
+                'quantite': instance.quantite,
+                'status': instance.status,
+            },
+            request=self.request,
+        )
         instance.is_active = False
         instance.deleted_by = self.request.user
         instance.deleted_at = timezone.now()
@@ -275,6 +318,18 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
 
         notify_stock_changed([promis.produit_id])
         promis.refresh_from_db()
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='Promis',
+            object_id=promis.id,
+            description=f"Promis #{promis.id} délivré — {promis.client_display}",
+            details={
+                'produit_id': promis.produit_id,
+                'quantite': promis.quantite,
+            },
+            request=request,
+        )
         return Response({
             'detail': f'Promis #{promis.id} marqué comme délivré.',
             'promis': PromisSerializer(promis).data
@@ -327,6 +382,20 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         promis.save(update_fields=['status', 'notes'])
 
         notify_stock_changed([promis.produit_id])
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.STOCK_ADJUST,
+            model_name='Promis',
+            object_id=promis.id,
+            description=f"Annulation du promis #{promis.id} — réintégration de {stock_reintegre} unité(s) en stock",
+            details={
+                'produit_id': promis.produit_id,
+                'produit_nom': produit.name if produit else None,
+                'quantite_reintegree': stock_reintegre,
+                'client': promis.client_display,
+            },
+            request=request,
+        )
         return Response({
             'detail': f'Promis #{promis.id} annulé. {stock_reintegre} unité(s) réintégrée(s) au stock de {produit.name if produit else "Produit inconnu"}.',
             'promis': PromisSerializer(promis).data,
@@ -360,6 +429,15 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         notify_stock_changed(promis.produit_id for promis in promis_list)
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='Promis',
+            object_id='BULK',
+            description=f"Livraison groupée de {count} promis",
+            details={'ids': [p.id for p in promis_list], 'count': count},
+            request=request,
+        )
         return Response({
             'detail': f'{count} promis marqué(s) comme délivré(s).',
             'count': count
@@ -428,6 +506,19 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         )
 
         notify_stock_changed(product_ids)
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.STOCK_ADJUST,
+            model_name='Promis',
+            object_id='BULK',
+            description=f"Annulation groupée de {count} promis — réintégration du stock",
+            details={
+                'ids': [p.id for p in promis_list],
+                'count': count,
+                'reintegrated': reintegrated,
+            },
+            request=request,
+        )
         return Response({
             'detail': f'{count} promis annulé(s) et stock réintégré.',
             'count': count,
@@ -525,8 +616,17 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         
         c.showPage()
         c.save()
-        
+
         buffer.seek(0)
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.EXPORT,
+            model_name='Promis',
+            object_id=promis.id,
+            description=f"Export PDF ticket promis #{promis.id} — {promis.client_display}",
+            details={'client': promis.client_display},
+            request=request,
+        )
         response = HttpResponse(buffer, content_type='application/pdf')
         response['Content-Disposition'] = f'inline; filename="ticket_promis_{promis.id}.pdf"'
         return response
@@ -622,6 +722,15 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         pdf = buffer.getvalue()
         buffer.close()
         response.write(pdf)
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.EXPORT,
+            model_name='Promis',
+            object_id='BULK',
+            description=f"Export PDF ticket groupé de {len(promis_ids)} promis — {client_name}",
+            details={'ids': promis_ids, 'client': client_name},
+            request=request,
+        )
         return response
 
     @action(detail=False, methods=['get'])

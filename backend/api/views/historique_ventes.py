@@ -19,7 +19,8 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from ..models import Caisse, Facture, FactureProduit
+from ..audit_helpers import log_audit
+from ..models import AuditLog, Caisse, Facture, FactureProduit
 from ..utils.dates import day_bounds, day_start
 from ..utils.validation import parse_date_param
 from .rapports.tz_utils import parse_api_datetime
@@ -286,6 +287,19 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
             ca_ttc=Sum('total_ttc'),  # INCLUT is_divers
             tva=Sum('total_tva')
         ).order_by('-jour')
+
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.EXPORT,
+            model_name='Rapport',
+            object_id=0,
+            description=f"Export Excel historique des ventes — {date_debut or 'début'} → {date_fin or 'fin'}",
+            details={
+                'type': 'historique_ventes_excel',
+                'params': request.query_params.dict(),
+            },
+            request=request,
+        )
 
         wb = openpyxl.Workbook()
         ws = wb.active

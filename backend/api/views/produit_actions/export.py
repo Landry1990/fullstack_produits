@@ -3,7 +3,8 @@ import csv
 from django.http import HttpResponse
 from rest_framework.decorators import action
 
-from ...models import Forme, Groupe, Produit, Rayon
+from ...audit_helpers import log_audit
+from ...models import AuditLog, Forme, Groupe, Produit, Rayon
 
 
 class ProduitExportMixin:
@@ -58,5 +59,14 @@ class ProduitExportMixin:
                 str(p.selling_price).replace('.', ','),
                 str(p.tva).replace('.', ',')
             ])
-            
+
+        log_audit(
+            user=request.user, action=AuditLog.Action.EXPORT,
+            model_name='Produit', object_id=0,
+            description=f"Export CSV des produits ({len(products)} lignes) — {filename}",
+            details={
+                'count': len(products), 'filename': filename,
+                'rayon_id': rayon_id, 'forme_id': forme_id, 'groupe_id': groupe_id,
+            }, request=request
+        )
         return response

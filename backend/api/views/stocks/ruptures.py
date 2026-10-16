@@ -11,6 +11,8 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from ...audit_helpers import log_audit
+from ...models import AuditLog
 from ...models.stock import RuptureFournisseur
 from ...serializers import RuptureFournisseurSerializer
 from ...utils.validation import parse_int
@@ -33,7 +35,49 @@ class RuptureFournisseurViewSet(viewsets.ModelViewSet):
             raise ValidationError(
                 f"« {produit.name} » est un service : pas de rupture fournisseur sur un service."
             )
-        serializer.save(utilisateur=self.request.user)
+        rupture = serializer.save(utilisateur=self.request.user)
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.CREATE,
+            model_name='RuptureFournisseur',
+            object_id=rupture.id,
+            description=f"Déclaration rupture fournisseur — {produit.name if produit else 'Produit'} ({rupture.fournisseur.name if rupture.fournisseur else 'fournisseur inconnu'})",
+            details={
+                'produit_id': rupture.produit_id,
+                'fournisseur_id': rupture.fournisseur_id,
+            },
+            request=self.request,
+        )
+
+    def perform_update(self, serializer):
+        fields = sorted(serializer.validated_data.keys())
+        rupture = serializer.save()
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='RuptureFournisseur',
+            object_id=rupture.id,
+            description=f"Modification rupture fournisseur #{rupture.id} — {rupture.produit.name if rupture.produit else 'Produit'}",
+            details={'fields': fields},
+            request=self.request,
+        )
+
+    def perform_destroy(self, instance):
+        # Tracé avant suppression (produit + fournisseur de la rupture détruite)
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.DELETE,
+            model_name='RuptureFournisseur',
+            object_id=instance.id,
+            description=f"Suppression rupture fournisseur #{instance.id} — {instance.produit.name if instance.produit else 'Produit'}",
+            details={
+                'produit_id': instance.produit_id,
+                'fournisseur_id': instance.fournisseur_id,
+                'est_resolu': instance.est_resolu,
+            },
+            request=self.request,
+        )
+        super().perform_destroy(instance)
 
     @action(detail=True, methods=['post'])
     @transaction.atomic
@@ -41,10 +85,22 @@ class RuptureFournisseurViewSet(viewsets.ModelViewSet):
         rupture = self.get_object()
         if rupture.est_resolu:
             return Response({'error': 'Cette rupture est déjà marquée comme résolue.'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         rupture.est_resolu = True
         rupture.date_fin = timezone.now()
         rupture.save(update_fields=['est_resolu', 'date_fin'])
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='RuptureFournisseur',
+            object_id=rupture.id,
+            description=f"Rupture fournisseur #{rupture.id} résolue — {rupture.produit.name if rupture.produit else 'Produit'}",
+            details={
+                'produit_id': rupture.produit_id,
+                'fournisseur_id': rupture.fournisseur_id,
+            },
+            request=request,
+        )
         return Response({'status': 'Rupture marquée comme résolue'})
 
     def _get_frequency_stats(self, days=None):
@@ -92,5 +148,14 @@ class RuptureFournisseurViewSet(viewsets.ModelViewSet):
         writer.writerow(['ID Produit', 'Nom Produit', 'Nombre de Ruptures'])
         for item in data:
             writer.writerow([item['produit_id'], item['produit_name'], item['total_ruptures']])
-            
+
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.EXPORT,
+            model_name='RuptureFournisseur',
+            object_id=0,
+            description=f"Export CSV fréquence des ruptures fournisseurs ({len(data)} produits)",
+            details={'days': days, 'count': len(data)},
+            request=request,
+        )
         return response

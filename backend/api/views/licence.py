@@ -8,6 +8,8 @@ from rest_framework.response import Response
 from rest_framework.throttling import SimpleRateThrottle
 from rest_framework.views import APIView
 
+from api.audit_helpers import log_audit
+from api.models import AuditLog
 from api.models.licence import Licence, LicenceNotification
 from api.utils_licence import (
     CLE_PUBLIQUE,
@@ -196,6 +198,23 @@ class LicenceStatusView(APIView):
         if not est_valide:
             return Response({"detail": f"Clé rejetée : {message}"}, status=400)
 
+        payload = payload or {}
+        # Le sudo custom (_validate_admin_sudo) ne logue rien : trace métier ici.
+        log_audit(
+            user=admin_user,
+            action=AuditLog.Action.OTHER,
+            model_name='Licence',
+            object_id=0,
+            description=f"Installation d'une nouvelle licence ({payload.get('pharmacie_nom') or '?'} — plan {payload.get('plan') or '?'})",
+            details={
+                'pharmacie_nom': payload.get('pharmacie_nom'),
+                'plan': payload.get('plan'),
+                'hardware_id': hw_id,
+                'via_keyday': bool(request.data.get('keyday')),
+            },
+            request=request,
+        )
+
         return Response({"detail": "Licence activée avec succès ! Bienvenue."})
 
     def delete(self, request):
@@ -204,6 +223,17 @@ class LicenceStatusView(APIView):
         if error:
             return error
 
+        # Le sudo custom (_validate_admin_sudo) ne logue rien : trace métier ici,
+        # AVANT la suppression (opération destructive).
+        log_audit(
+            user=admin_user,
+            action=AuditLog.Action.OTHER,
+            model_name='Licence',
+            object_id=0,
+            description="Suppression de la licence système — le système est verrouillé",
+            details={'via_keyday': bool(request.data.get('keyday'))},
+            request=request,
+        )
         Licence.objects.all().delete()
         cache.delete('system_licence_validation')
         return Response({"detail": "Licence supprimée. Le système est à nouveau verrouillé."})

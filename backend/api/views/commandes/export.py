@@ -12,7 +12,8 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
-from api.models import Commande, CommandeProduit
+from api.audit_helpers import log_audit
+from api.models import AuditLog, Commande, CommandeProduit
 
 
 class ExportCommandeView(APIView):
@@ -73,6 +74,20 @@ class ExportCommandeView(APIView):
                 })
         
         # Générer la réponse
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.EXPORT,
+            model_name='Commande',
+            object_id=commande.id,
+            description=f"Export {'TXT' if export_format == 'txt' and produits_sans_cip else 'CSV'} de la commande #{commande.id} ({cip_field.upper()})",
+            details={
+                'cip_field': cip_field,
+                'format': export_format,
+                'nb_avec_cip': len(produits_avec_cip),
+                'nb_sans_cip': len(produits_sans_cip),
+            },
+            request=request,
+        )
         if export_format == 'txt' and produits_sans_cip:
             # Fichier texte avec les produits sans CIP
             return self._generate_txt_file(produits_sans_cip, commande, cip_field)

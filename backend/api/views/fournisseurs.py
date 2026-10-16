@@ -51,12 +51,47 @@ class FournisseurViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(is_active=True)
         return annotate_supplier_debt(queryset)
 
+    @transaction.atomic
+    def perform_create(self, serializer):
+        fournisseur = serializer.save()
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.CREATE,
+            model_name='Fournisseur',
+            object_id=fournisseur.id,
+            description=f"Création fournisseur: {fournisseur.name}",
+            details={'name': fournisseur.name},
+            request=self.request
+        )
+
+    @transaction.atomic
+    def perform_update(self, serializer):
+        fournisseur = serializer.save()
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='Fournisseur',
+            object_id=fournisseur.id,
+            description=f"Mise à jour fournisseur: {fournisseur.name}",
+            details={'fields': sorted(serializer.validated_data.keys())},
+            request=self.request
+        )
+
     @action(detail=True, methods=['post'])
     def toggle_active(self, request, pk=None):
         """Bascule le statut actif/inactif d'un fournisseur."""
         fournisseur = self.get_object()
         fournisseur.is_active = not fournisseur.is_active
         fournisseur.save(update_fields=['is_active'])
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='Fournisseur',
+            object_id=fournisseur.id,
+            description=f"{'Activation' if fournisseur.is_active else 'Désactivation'} fournisseur: {fournisseur.name}",
+            details={'is_active': fournisseur.is_active},
+            request=request
+        )
         return Response({
             'status': 'success',
             'is_active': fournisseur.is_active,

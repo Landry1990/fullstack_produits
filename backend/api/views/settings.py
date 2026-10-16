@@ -73,6 +73,18 @@ class ConfigurationOptionViewSet(viewsets.ModelViewSet):
             request=self.request
         )
 
+    def perform_destroy(self, instance):
+        # Tracé AVANT suppression
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.DELETE,
+            model_name='ConfigurationOption',
+            object_id=instance.pk,
+            description=f"Suppression option {instance.type}: {instance.label}",
+            request=self.request
+        )
+        instance.delete()
+
 
 class LoyaltySettingViewSet(viewsets.ModelViewSet):
     """
@@ -128,6 +140,18 @@ class LoyaltySettingViewSet(viewsets.ModelViewSet):
             details=serializer.data,
             request=self.request
         )
+
+    def perform_destroy(self, instance):
+        # Tracé AVANT suppression
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.DELETE,
+            model_name='LoyaltySetting',
+            object_id=instance.pk,
+            description="Suppression des paramètres de fidélité",
+            request=self.request
+        )
+        instance.delete()
 
     def get_object(self):
         # Always return the first object (singleton pattern)

@@ -7,7 +7,8 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from api.models import Produit
+from api.audit_helpers import log_audit
+from api.models import AuditLog, Produit
 from api.services.realtime import notify_stock_changed
 
 
@@ -206,6 +207,22 @@ class ProduitImportViewSet(viewsets.ViewSet):
                         continue
 
             notify_stock_changed(stock_changed_ids)
+
+            log_audit(
+                user=request.user,
+                action=AuditLog.Action.CREATE,
+                model_name='Produit',
+                object_id='BULK',
+                description=f"Import CSV produits « {uploaded_file.name} » : {created_count} créés, {updated_count} mis à jour (stock), {len(errors)} erreur(s)",
+                details={
+                    'filename': uploaded_file.name,
+                    'created': created_count,
+                    'updated': updated_count,
+                    'errors_count': len(errors),
+                },
+                request=request,
+            )
+
             # Rapport final
             return Response({
                 'success': True,

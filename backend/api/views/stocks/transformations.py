@@ -11,6 +11,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from ...audit_helpers import log_audit
+from ...audit_mixins import AuditedViewSetMixin
 from ...models import (
     AuditLog,
     HistoriqueTransformation,
@@ -31,7 +32,7 @@ from ...serializers import (
 )
 
 
-class RelationTransformationViewSet(viewsets.ModelViewSet):
+class RelationTransformationViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
     queryset = RelationTransformation.objects.all()
     serializer_class = RelationTransformationSerializer
     permission_classes = [IsAuthenticated]
