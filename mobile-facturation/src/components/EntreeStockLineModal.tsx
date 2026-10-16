@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronDown, X } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { applyLinkedField, type EntreeEditableField } from '../stores/useEntreeStockStore';
+import { useStockStore } from '../stores/useStockStore';
 import { theme } from '../config/theme';
 import { moderateScale as ms } from '../utils/scale';
 import type { EntreeStockLine } from '../types';
@@ -55,6 +56,8 @@ export function EntreeStockLineModal({ visible, line, isNew, tvaOptions, onChang
   const insets = useSafeAreaInsets();
   const [expDraft, setExpDraft] = useState('');
   const [tvaOpen, setTvaOpen] = useState(false);
+  // Stock temps réel (ws/stock/) pour la méta affichée sous le nom.
+  const stockLive = useStockStore((s) => (line ? s.overrides[line.product.id] : undefined));
 
   // Resynchronise le brouillon d'expiration à l'ouverture d'une ligne.
   useEffect(() => {
@@ -109,7 +112,7 @@ export function EntreeStockLineModal({ visible, line, isNew, tvaOptions, onChang
             <Text style={styles.productName} numberOfLines={2}>{p.name}</Text>
             <Text style={styles.productMeta}>
               {t('entree.line_meta', {
-                stock: p.stock,
+                stock: stockLive ?? p.stock,
                 cost: p.cost_price ?? '-',
               })}
             </Text>

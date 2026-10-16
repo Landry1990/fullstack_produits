@@ -4,6 +4,7 @@ import { ArrowLeft, TrendingUp, TrendingDown, ShoppingBag, Receipt, BarChart3 } 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { getDashboardStats, type DashboardStats } from '../services/api';
+import { StockLiveIndicator } from '../components/StockLiveIndicator';
 import { theme } from '../config/theme';
 import { moderateScale as ms } from '../utils/scale';
 
@@ -64,6 +65,7 @@ export function DashboardScreen({ onBack }: { onBack: () => void }) {
           <ArrowLeft size={ms(20)} color={theme.text} />
         </TouchableOpacity>
         <Text style={styles.title}>{t('dashboard.title')}</Text>
+        <StockLiveIndicator />
       </View>
 
       <ScrollView

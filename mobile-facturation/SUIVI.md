@@ -10,6 +10,99 @@
 
 ## ✅ Déjà en place
 
+- [x] **Étagère « proches péremption »** (2026-10-16) : marquage manuel
+  **au niveau du lot** (`StockLot.deplace_peremption_le`, timestamp NULL
+  = en rayon normal) — pas un rayon produit : seule une partie du stock
+  part devant. Backend : `POST /stock-lots/marquer_rayon_peremption/`
+  `{lot_ids, deplace}` (bulk, non destructif → pas de sudo, tracé en
+  audit) + filtre `?en_rayon_peremption=true/false`. Mobile : puce
+  « Étagère » (icône Pin) → liste dédiée alpha/FEFO ; chaque ligne a un
+  bouton épingle (marquer/démarquer) ; les lots marqués **restent** dans
+  la liste de collecte avec badge ambre « Étagère ». Web : 4e onglet
+  « Étagère » dans Périmés (compteur, colonne « Déplacé le », retrait
+  unitaire/groupé), actions groupées dans le menu de sélection, badge
+  sous le nom produit, colonne « Étagère » dans l'export Excel.
+  Migration 0274 (index `CONCURRENTLY`).
+- [x] **Péremptions : classement par rayon/forme** (2026-10-15) : puces
+  « Date / Rayon / Forme » — groupé = en-têtes de section alpha (« Non
+  classé » en dernier) puis lots alpha par produit + FEFO, pour la
+  collecte physique en rayon. Backend : `StockLotListSerializer` expose
+  `produit_rayon`/`produit_forme` (select_related `produit__rayon`,
+  `produit__forme` → pas de N+1). Transposé à l'identique sur le web
+  (`Perimes.tsx`, sélecteur dans la barre de filtres, en-têtes de groupe
+  dans le tableau). **Redémarrage backend requis** (pas de --reload).
+- [x] **Ajustement : déblocage bouton + rayon/forme** (2026-10-15) :
+  le bouton « Appliquer » semblait « toujours bloqué » — le motif et
+  (produits gérés par lot) la puce lot étaient requis sans explication.
+  Le 1er lot FEFO est désormais **pré-coché** ; produit sans lot →
+  bascule auto en saisie « nouveau lot » ; une ligne d'aide sous le
+  bouton dit exactement ce qui manque (lot / n° / quantité / motif /
+  stock insuffisant). Motifs custom dédupliqués par code (clés React).
+  Après envoi, les lots affichés sont resynchronisés depuis la réponse.
+  Nouveau : édition **rayon / forme** depuis la fiche produit
+  (`OptionPickerModal` générique + `PATCH /produits/{id}/` — champs FK
+  inscriptibles, `IsAuthenticated`, aucun changement backend), option
+  « Aucun » pour retirer la valeur.
+- [x] **Libération du poste au logout** (2026-10-15) : `useAuthStore.logout`
+  ferme en fire-and-forget tous les postes POS actifs du vendeur
+  (`GET /postes-ventes/mes_actives/` → `POST …/fermer/` pour chaque
+  `mode_pos` sans caisse) avant de vider la session — un poste « Mobile »
+  resté ouvert bloquait les autres terminaux. Jamais de `mode_pos=false`
+  (poste-caisse = vraie session avec clôture). Limite backend connue :
+  `fermer` refuse (400) s'il reste des ventes impayées sur le poste —
+  cas fréquent puisque tout part en caisse non encaissée ; le poste
+  reste alors ouvert et est réutilisé silencieusement au prochain
+  login (`ensurePosteVente`). Si le blocage se confirme en terrain :
+  assouplir `fermer` pour les postes `mode_pos` (ventes déjà routées en
+  caisse centralisée, rien à perdre) — chantier backend à valider.
+- [x] **Péremptions en mois** (2026-10-15) : les puces d'horizon
+  affichent 1/2/3/6 **mois** (habitude pharmacien) au lieu de
+  30/60/90/180 jours — l'API reçoit toujours `expiring_within_days`.
+  Badge des lignes aussi en mois : « Expiré » si passé, « J-N » en
+  jours ≤ 30 j (urgence), « N mois » au-delà (ambre ≤ 2 mois, bleu > 2).
+- [x] **Écran Péremptions** (2026-10-15) : `PeremptionScreen` (carte
+  accueil « Péremptions », icône CalendarClock) — liste des lots en
+  fin de vie via `GET /stock-lots/?expiring_within_days=N` (déjà
+  existant, aucun changement backend ; les lots DÉJÀ périmés sont
+  inclus, affichés en premier). Chips d'horizon 30/60/90/180 j, bandeau
+  de synthèse « N lots · valeur en jeu » (Σ qté × prix d'achat du lot),
+  ligne = produit + lot + qté + expiration MM/AA + badge J-N coloré
+  (rouge périmé/≤30 j, ambre ≤60 j, bleu au-delà). Lecture seule —
+  la sortie de périmés (`sortir_perimes`, sudo `can_manage_perimes`)
+  reste un chantier possible. i18n fr/en (`peremption.*`, `common.retry`).
+- [x] **Indicateur temps réel partagé** (2026-10-15) : composant
+  `StockLiveIndicator` (Wifi vert / WifiOff ambre) dans l'en-tête de
+  TOUS les écrans (accueil, vente, historique, dashboard, ajustement,
+  signalement, entrée stock, péremptions).
+- [x] **Stock temps réel via `ws/stock/`** (2026-10-15) : connexion au
+  broadcast Channels `stock_updates` (endpoint backend déjà existant —
+  aucun changement backend). `useStockRealtime` (port du hook web) :
+  `ws(s)://<serverUrl>/ws/stock/?token=`, ping 30 s, reconnect 3 s, pas
+  de boucle sur refus d'auth (4001/4401), monté dans `App.tsx` quand
+  `isAuthenticated`. `useStockStore` = overrides par produit lus par
+  `ProductRow` (vente, ajustement, signalement, entrée stock), les
+  fiches produit ajustement/signalement et la méta
+  `EntreeStockLineModal`. `patchStocks` met à jour `product.stock` des
+  lignes du panier → pré-check promis/forçage (`lineDeficit`) sur du
+  frais ; `addProduct`/`addScanResult` appliquent l'override
+  (`effectiveStock`). Stock visible dans le panier : `CartItemRow`
+  affiche « Stock: X » par ligne (masqué pour les services) — coloré
+  comme le web (vert / ambre < 5 / rouge ≤ 0) **et rouge aussi quand la
+  quantité de la ligne dépasse le dispo** (réponse directe au besoin
+  « puis-je vendre cette quantité ? »). Lots : `quantity_remaining`
+  absent du broadcast →
+  refetch débouncé (500 ms) des lignes du panier dont les lots sont
+  chargés (badge FEFO exact).
+  **Exactitude renforcée** (même journée) : à chaque (re)connexion WS,
+  resync des produits du panier via `getProductById` (stock + lots —
+  comble les updates ratées pendant une coupure et le brouillon
+  restauré) ; quand le flux n'est PAS connecté, `ensureStockResolution`
+  relit le stock de chaque ligne avant le modal promis (`refreshCartStocks`)
+  — la décision promis/réduire/forcer se fait sur du vrai stock. Indicateur
+  discret en en-tête de vente : `Wifi` vert (temps réel actif) /
+  `WifiOff` ambre (flux coupé → affichage potentiellement périmé).
+  NB : `stock_reserve` = stock physique en réserve (arrière-boutique),
+  PAS une réservation par poste — le vendable reste `stock` (rayon).
 - [x] **Services exclus du modal promis** (2026-10-12) : un produit
   `type_produit = SERVICE` (stock non géré) déclenchait `StockResolutionModal`
   à l'envoi dès que `quantite > stock` (stock souvent 0). `lineDeficit`
@@ -457,18 +550,12 @@ le client, pas à implémenter sans décision) :
 - Encaissement mobile et états « Payée » côté mobile.
 - Fuzzy search (tolérance aux fautes) : chantier backend si demandé.
 
-### P1 — Stock temps réel sur le mobile (à faire)
+### P1 — Stock temps réel sur le mobile (fait 2026-10-15)
 
-- [ ] **Souscription `ws/stock/`** : le web dispose (2026-10-08) d'un
-  broadcast Channels `stock_updates` — chaque opération de stock (vente
-  validée, réception, ajustement, annulation…) pousse
-  `{type:'stock_update', produits:[{id,stock,stock_reserve}]}` post-commit.
-  Le mobile doit s'y connecter (`?token=<authToken>`), rafraîchir le stock
-  affiché dans la recherche produit / fiche / panier, et gérer la
-  reconnexion + ping (mêmes conventions que `useCaisseRealtime` web).
-  Besoin né : « je cherche un produit → stock OK → je dis au client c'est
-  là → à la validation c'est plus là » (vente faite sur un autre poste
-  entre-temps). Le contrôle à la validation reste l'autorité finale.
+- [x] **Souscription `ws/stock/`** : implémenté — voir « Déjà en place ».
+  Affichage en direct (overrides `useStockStore`), panier patché
+  (`patchStocks` + refetch lots débouncé), reconnexion + ping conformes
+  au web. Le contrôle à la validation reste l'autorité finale.
 
 ### P1 — Lots : parité avec la fusion FEFO web (2026-10-09, à discuter)
 
@@ -559,3 +646,5 @@ App.tsx           ← après login : menu « Vente » | « Inventaire »
 | Verrouillage PIN (sans biométrie) | ✅ | 2026-10-05 |
 | Facturation clients pro (AD fix, majoration, remise auto, tiers payant, plafond) | ✅ | 2026-10-06 |
 | Choix de la caisse destinataire en multi-caisses (picker + `poste_caisse_id`) | ✅ | 2026-10-06 |
+| Stock temps réel ws/stock/ (overrides affichage + patch panier) | ✅ | 2026-10-15 |
+| Étagère « proches péremption » (marquage lot, web + mobile) | ✅ | 2026-10-16 |

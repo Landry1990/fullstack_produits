@@ -66,7 +66,7 @@ export function PendingEntreeModal({ visible, entreeEmpty, onRestore, onMerge, o
 
           <FlatList
             data={entries}
-            keyExtractor={(e) => e.id}
+            keyExtractor={(e, idx) => `${e.id}-${idx}`}
             style={styles.list}
             ListEmptyComponent={
               <Text style={styles.empty}>{t('pendingEntree.empty')}</Text>

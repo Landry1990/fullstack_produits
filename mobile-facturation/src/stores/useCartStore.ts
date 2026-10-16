@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { Platform } from 'react-native';
 import Storage from 'expo-sqlite/kv-store';
 import { useAuthStore } from './useAuthStore';
+import { effectiveStock, type StockUpdateItem } from './useStockStore';
 import type { CartLine, Product, StockLot, Client, AyantDroit, SudoCreds } from '../types';
 
 // Brouillon persisté (kv-store). ⚠️ Les creds Sudo (mots de passe
@@ -41,6 +42,10 @@ interface CartState {
   setProductLots: (productId: number, lots: StockLot[]) => void;
   setLinePromis: (productId: number, promisQty: number, phone?: string) => void;
   clearLinePromis: (productId: number) => void;
+  // ws/stock/ : patch le stock des lignes (pré-check promis sur du frais).
+  // Retourne les ids produit des lignes dont les lots sont chargés → à
+  // re-fetcher pour garder le badge FEFO exact.
+  patchStocks: (updates: StockUpdateItem[]) => number[];
 
   // Remise globale + validations superviseur
   setRemiseGlobale: (value: number, mode: 'taux' | 'montant') => void;
@@ -102,6 +107,9 @@ export const useCartStore = create<CartState>((set, get) => ({
   totalArticles: () => get().lines.reduce((sum, l) => sum + l.quantite, 0),
 
   addProduct: (product, qty = 1) => {
+    // Stock effectif : l'override ws/stock/ prime sur la valeur du
+    // serializer (résultat de recherche potentiellement périmé).
+    const freshStock = effectiveStock(product);
     const existing = get().lines.find((l) => l.product.id === product.id);
     if (existing) {
       set((s) => ({
@@ -109,6 +117,7 @@ export const useCartStore = create<CartState>((set, get) => ({
           l.product.id === product.id
             ? calcLine({
                 ...l,
+                product: { ...l.product, stock: freshStock },
                 quantite: l.quantite + qty,
                 isPromis: false,
                 promisQuantity: 0,
@@ -119,7 +128,7 @@ export const useCartStore = create<CartState>((set, get) => ({
       }));
     } else {
       const newLine = calcLine({
-        product,
+        product: { ...product, stock: freshStock },
         quantite: qty,
         // Majoration pro appliquée au prix catalogue (comme le web) ;
         // les scans datamatrix sur-écrivent ensuite avec le prix du lot.
@@ -197,6 +206,25 @@ export const useCartStore = create<CartState>((set, get) => ({
           : l
       ),
     })),
+
+  // ws/stock/ : met à jour product.stock des lignes concernées — le
+  // pré-check promis/forçage (StockResolutionModal, useSendSale) lit
+  // alors une valeur fraîche au lieu du stock du moment de l'ajout.
+  patchStocks: (updates) => {
+    const byId = new Map(updates.map((u) => [u.id, u.stock]));
+    const { lines } = get();
+    if (!lines.some((l) => byId.has(l.product.id))) return [];
+    set({
+      lines: lines.map((l) =>
+        byId.has(l.product.id)
+          ? { ...l, product: { ...l.product, stock: byId.get(l.product.id)! } }
+          : l
+      ),
+    });
+    return lines
+      .filter((l) => byId.has(l.product.id) && l.product.stock_lots?.length)
+      .map((l) => l.product.id);
+  },
 
   // Recherche manuelle : le serializer liste ne renvoie pas stock_lots →
   // chargés à la demande pour l'aperçu FEFO du badge lot (parité scan).

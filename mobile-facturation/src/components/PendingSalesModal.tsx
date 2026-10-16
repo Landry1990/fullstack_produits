@@ -67,7 +67,7 @@ export function PendingSalesModal({ visible, cartEmpty, onRestore, onMerge, onDe
 
           <FlatList
             data={sales}
-            keyExtractor={(s) => s.id}
+            keyExtractor={(s, idx) => `${s.id}-${idx}`}
             style={styles.list}
             ListEmptyComponent={
               <Text style={styles.empty}>{t('pending.empty')}</Text>

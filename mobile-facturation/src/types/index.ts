@@ -18,6 +18,11 @@ export interface Product {
   // SERVICE = prestation facturable, stock non géré (jamais de promis/force).
   type_produit?: 'PRODUIT' | 'SERVICE';
   is_service?: boolean;
+  // Classification (détail seulement) — ids FK + libellés read-only.
+  rayon?: number | null;
+  rayon_name?: string | null;
+  forme?: number | null;
+  forme_nom?: string | null;
   // 5 premiers lots non vides triés FEFO (SerializerMethodField du
   // ProduitSerializer — présent sur list/retrieve/by-cip).
   stock_lots?: StockLot[];

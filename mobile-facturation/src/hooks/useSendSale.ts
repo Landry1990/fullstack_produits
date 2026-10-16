@@ -3,7 +3,8 @@ import { Alert } from 'react-native';
 import i18n from '../i18n';
 import { useCartStore } from '../stores/useCartStore';
 import { useAuthStore } from '../stores/useAuthStore';
-import { sendSaleToCaisse, createAyantDroit, tiersPayantSplit, getCaissesOuvertes } from '../services/api';
+import { sendSaleToCaisse, createAyantDroit, tiersPayantSplit, getCaissesOuvertes, getProductById } from '../services/api';
+import { useStockStore } from '../stores/useStockStore';
 import { addHistoriqueItem } from '../services/historique';
 import { ensureClientDivers } from '../services/clientDivers';
 import { drfError } from '../utils/drfError';
@@ -120,13 +121,40 @@ export function useSendSale({
     return eff > 0 && (l.product.stock ?? 0) < eff;
   };
 
+  // Relecture du stock du panier juste avant la résolution : appelée
+  // seulement quand le flux ws/stock/ n'est PAS connecté (les updates
+  // ratées pendant une coupure ne sont pas rejouées — le modal promis/
+  // réduire/forcer déciderait sinon sur des valeurs périmées). Quand le
+  // WS est connecté, patchStocks maintient déjà le panier à jour.
+  const refreshCartStocks = async () => {
+    if (useStockStore.getState().connected) return;
+    const ids = [...new Set(useCartStore.getState().lines.map((l) => l.product.id))];
+    if (!ids.length) return;
+    const results = await Promise.allSettled(ids.map((id) => getProductById(id)));
+    const updates = [];
+    for (const r of results) {
+      if (r.status !== 'fulfilled' || !r.value) continue;
+      updates.push({ id: r.value.id, stock: r.value.stock });
+      if (r.value.stock_lots) {
+        useCartStore.getState().setProductLots(r.value.id, r.value.stock_lots);
+      }
+    }
+    if (updates.length) {
+      useStockStore.getState().apply(updates);
+      useCartStore.getState().patchStocks(updates);
+    }
+  };
+
   // Résolution des ruptures à l'envoi — parité avec le StockResolutionModal
   // web : par ligne en déficit, « Promis » (part manquante due au client,
   // livrée à la prochaine réception — sans sudo), « Réduire » (qté ramenée
   // au stock) ou « Forcer » (sudo can_sell_negative_stock). Le backend
   // reste source de vérité : un stock devenu insuffisant entre-temps est
   // rattrapé par le retry 403 dans sendToCashier.
-  const ensureStockResolution = (after: () => void) => {
+  const ensureStockResolution = async (after: () => void) => {
+    // Réseau/WS en échec → la relecture n'aboutit pas, on continue sur
+    // les valeurs locales (le backend tranchera à la validation).
+    try { await refreshCartStocks(); } catch {}
     const state = useCartStore.getState();
     // Promis devenus inutiles : le stock couvre désormais toute la ligne
     // (quantité baissée, réception entre-temps, brouillon restauré).

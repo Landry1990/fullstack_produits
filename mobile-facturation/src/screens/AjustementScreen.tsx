@@ -3,18 +3,22 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView,
   FlatList, Alert, ActivityIndicator, Platform, Keyboard,
 } from 'react-native';
-import { ArrowLeft, Search, ScanBarcode, Minus, Plus, PackageCheck, PackagePlus } from 'lucide-react-native';
+import { ArrowLeft, Search, ScanBarcode, Minus, Plus, PackageCheck, PackagePlus, ChevronRight } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import {
   searchProducts, getProductById, getLots, getStockAdjustmentReasons, adjustStock,
-  type AdjustmentReason, type AdjustStockPayload,
+  getRayons, getFormes, patchProduitClassification,
+  type AdjustmentReason, type AdjustStockPayload, type Rayon, type Forme,
 } from '../services/api';
 import { useProductSearch } from '../hooks/useProductSearch';
 import { useSudo } from '../hooks/useSudo';
 import { ProductRow } from '../components/ProductRow';
 import { ScanBarcodeModal } from '../components/ScanBarcodeModal';
 import { SudoModal } from '../components/SudoModal';
+import { OptionPickerModal } from '../components/OptionPickerModal';
+import { useStockStore } from '../stores/useStockStore';
+import { StockLiveIndicator } from '../components/StockLiveIndicator';
 import { theme } from '../config/theme';
 import { moderateScale as ms } from '../utils/scale';
 import type { Product, StockLot } from '../types';
@@ -61,6 +65,13 @@ export function AjustementScreen({ onBack }: { onBack: () => void }) {
   const [submitting, setSubmitting] = useState(false);
   const pendingPayload = useRef<AdjustStockPayload | null>(null);
 
+  // Classification produit (rayon / forme) — édition rapide depuis la
+  // fiche de l'ajustement, indépendante de la correction de stock.
+  const [rayons, setRayons] = useState<Rayon[]>([]);
+  const [formes, setFormes] = useState<Forme[]>([]);
+  const [metaPicker, setMetaPicker] = useState<'rayon' | 'forme' | null>(null);
+  const [metaSaving, setMetaSaving] = useState(false);
+
   // Recherche produit débouncée (même pattern que FacturationScreen).
   useEffect(() => {
     const timer = setTimeout(async () => {
@@ -91,26 +102,37 @@ export function AjustementScreen({ onBack }: { onBack: () => void }) {
     // Détail complet : stock frais + lots (le serializer liste est partiel).
     const full = await getProductById(p.id).catch(() => p);
     setProduct(full);
+    // Référentiels pour l'édition rayon/forme (une fois par session).
+    if (!rayons.length) void getRayons().then(setRayons).catch(() => {});
+    if (!formes.length) void getFormes().then(setFormes).catch(() => {});
     if (full.use_lot_management) {
       const productLots: StockLot[] = full.stock_lots ?? (await getLots(full.id).catch(() => []));
-      setLots(productLots.filter((l) => l.quantity_remaining > 0));
-      setLotId(preselectLot?.id ?? null);
+      const filtered = productLots.filter((l) => l.quantity_remaining > 0);
+      setLots(filtered);
+      // Déblocage UX : le 1er lot FEFO est pré-coché ; sans lot en stock,
+      // bascule directe en saisie « nouveau lot » (il ne reste que le n°).
+      setLotId(preselectLot?.id ?? filtered[0]?.id ?? null);
+      if (filtered.length === 0 && !preselectLot) setNewLotMode(true);
     } else {
       setLots([]);
       setLotId(null);
     }
-  }, []);
+  }, [rayons.length, formes.length]);
 
   const qtyNum = parseInt(qty, 10) || 0;
   const lotManaged = !!product?.use_lot_management;
   const selectedLot = lots.find((l) => l.id === lotId) ?? null;
+  // Stock temps réel (ws/stock/) pour l'affichage et l'aperçu — la
+  // re-lecture juste avant l'envoi reste l'autorité finale.
+  const stockLive = useStockStore((s) => (product ? s.overrides[product.id] : undefined));
+  const stockNow = product ? (stockLive ?? product.stock) : 0;
 
   // Aperçu : l'ajustement porte sur le LOT — le stock global est
   // reconstitué en appliquant le même delta (parité backend : le
   // produit et le lot bougent de la même quantité).
   const signedDelta = newLotMode ? qtyNum : qtyNum * (mode === 'remove' ? -1 : 1);
   const lotTarget = selectedLot ? selectedLot.quantity_remaining + signedDelta : null;
-  const target = product ? product.stock + signedDelta : 0;
+  const target = product ? stockNow + signedDelta : 0;
 
   const lotMissing = lotManaged && !selectedLot && !newLotMode;
   const newLotIncomplete = newLotMode && !newLotNumber.trim();
@@ -119,10 +141,22 @@ export function AjustementScreen({ onBack }: { onBack: () => void }) {
     lotMissing || newLotIncomplete ||
     (lotTarget !== null && lotTarget < 0) ||
     (!lotManaged && target < 0);
+  // Pourquoi le bouton est grisé — affiché sous le bouton pour lever
+  // l'impasse « toujours bloqué » (ordre = action la plus naturelle).
+  const disabledHint = !product ? null :
+    lotMissing ? t('ajustement.hint_lot') :
+    newLotIncomplete ? t('ajustement.hint_lot_number') :
+    qtyNum <= 0 ? t('ajustement.hint_qty') :
+    !reason ? t('ajustement.hint_reason') :
+    (lotTarget !== null && lotTarget < 0) || (!lotManaged && target < 0)
+      ? t('ajustement.hint_negative') : null;
 
   const applySuccess = useCallback((updated: Product) => {
     pendingPayload.current = null;
     setProduct(updated);
+    // Resynchronise les lots affichés — l'ajustement vient de modifier
+    // la quantité du lot, garder l'ancienne liste afficherait un faux.
+    setLots((updated.stock_lots ?? []).filter((l) => l.quantity_remaining > 0));
     setLotId(null);
     setNewLotMode(false);
     setNewLotNumber('');
@@ -229,10 +263,26 @@ export function AjustementScreen({ onBack }: { onBack: () => void }) {
     }
   };
 
+  // Motifs standards + personnalisés, dédupliqués par code (un custom
+  // backend peut reprendre un code standard → clés React dupliquées).
   const allReasons: AdjustmentReason[] = [
     ...STANDARD_REASONS.map((code) => ({ code, label: t(`ajustement.reason_${code.toLowerCase()}`) })),
-    ...reasons,
+    ...reasons.filter((r) => !STANDARD_REASONS.includes(r.code as typeof STANDARD_REASONS[number])),
   ];
+
+  const handleMetaPick = async (id: number | null) => {
+    if (!product || metaPicker === null) return;
+    const field = metaPicker;
+    setMetaPicker(null);
+    setMetaSaving(true);
+    try {
+      setProduct(await patchProduitClassification(product.id, { [field]: id }));
+    } catch {
+      Alert.alert(t('common.error'), t('ajustement.error_meta'));
+    } finally {
+      setMetaSaving(false);
+    }
+  };
 
   return (
     <View style={[styles.container, {
@@ -245,6 +295,7 @@ export function AjustementScreen({ onBack }: { onBack: () => void }) {
           <ArrowLeft size={ms(20)} color={theme.text} />
         </TouchableOpacity>
         <Text style={styles.title}>{t('ajustement.title')}</Text>
+        <StockLiveIndicator />
       </View>
 
       {/* Recherche / scan produit */}
@@ -287,11 +338,31 @@ export function AjustementScreen({ onBack }: { onBack: () => void }) {
             <View style={{ flex: 1 }}>
               <Text style={styles.productName} numberOfLines={2}>{product.name}</Text>
               <Text style={styles.productStock}>
-                {t('ajustement.current_stock', { count: product.stock })}
+                {t('ajustement.current_stock', { count: stockNow })}
               </Text>
             </View>
             <TouchableOpacity onPress={() => { setProduct(null); setReason(null); }} style={styles.changeBtn}>
               <Text style={styles.changeBtnText}>{t('facturation.edit')}</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Classification produit — correction rayon/forme depuis le
+              terrain, sans passer par la fiche web. */}
+          <View style={styles.metaCard}>
+            {metaSaving && <ActivityIndicator color={theme.primary} style={{ position: 'absolute', right: ms(10), top: ms(10) }} />}
+            <TouchableOpacity style={styles.metaRow} onPress={() => setMetaPicker('rayon')}>
+              <Text style={styles.metaLabel}>{t('ajustement.rayon')}</Text>
+              <Text style={[styles.metaValue, !product.rayon_name && { color: theme.textMuted }]} numberOfLines={1}>
+                {product.rayon_name ?? t('ajustement.none_value')}
+              </Text>
+              <ChevronRight size={ms(16)} color={theme.textMuted} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.metaRow} onPress={() => setMetaPicker('forme')}>
+              <Text style={styles.metaLabel}>{t('ajustement.forme')}</Text>
+              <Text style={[styles.metaValue, !product.forme_nom && { color: theme.textMuted }]} numberOfLines={1}>
+                {product.forme_nom ?? t('ajustement.none_value')}
+              </Text>
+              <ChevronRight size={ms(16)} color={theme.textMuted} />
             </TouchableOpacity>
           </View>
 
@@ -436,6 +507,9 @@ export function AjustementScreen({ onBack }: { onBack: () => void }) {
               </>
             )}
           </TouchableOpacity>
+          {submitDisabled && disabledHint && (
+            <Text style={styles.hintCenter}>{disabledHint}</Text>
+          )}
         </ScrollView>
       )}
 
@@ -456,6 +530,19 @@ export function AjustementScreen({ onBack }: { onBack: () => void }) {
         permission={sudoState.permission}
         onValidate={sudoState.onValidate}
         onClose={closeSudo}
+      />
+      <OptionPickerModal
+        visible={metaPicker !== null}
+        title={t(metaPicker === 'forme' ? 'ajustement.pick_forme' : 'ajustement.pick_rayon')}
+        options={[
+          { id: null, label: t('ajustement.none_value') },
+          ...(metaPicker === 'forme'
+            ? formes.map((f) => ({ id: f.id, label: f.nom }))
+            : rayons.map((r) => ({ id: r.id, label: r.name }))),
+        ]}
+        selectedId={metaPicker === 'forme' ? (product?.forme ?? null) : (product?.rayon ?? null)}
+        onPick={(id) => void handleMetaPick(id)}
+        onClose={() => setMetaPicker(null)}
       />
     </View>
   );
@@ -509,6 +596,21 @@ const styles = StyleSheet.create({
     borderColor: theme.border,
   },
   changeBtnText: { fontSize: ms(12), fontWeight: '600', color: theme.textSecondary },
+  metaCard: {
+    backgroundColor: theme.bgElevated,
+    borderRadius: ms(theme.radiusMd),
+    borderWidth: 1,
+    borderColor: theme.border,
+    paddingHorizontal: ms(14),
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: ms(8),
+    paddingVertical: ms(10),
+  },
+  metaLabel: { fontSize: ms(12), fontWeight: '600', color: theme.textMuted, width: ms(52) },
+  metaValue: { flex: 1, fontSize: ms(13), fontWeight: '600', color: theme.text },
   block: {
     backgroundColor: theme.bgElevated,
     borderRadius: ms(theme.radiusMd),
@@ -595,4 +697,11 @@ const styles = StyleSheet.create({
     marginTop: ms(4),
   },
   submitText: { color: '#fff', fontSize: ms(15), fontWeight: '700' },
+  hintCenter: {
+    textAlign: 'center',
+    fontSize: ms(12),
+    color: theme.warning,
+    fontWeight: '600',
+    marginTop: ms(2),
+  },
 });

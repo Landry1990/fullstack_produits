@@ -7,6 +7,7 @@ import i18n from '../i18n';
 import { getHistorique } from '../services/historique';
 import { getFactureStatuses, getMe } from '../services/api';
 import { useAuthStore } from '../stores/useAuthStore';
+import { StockLiveIndicator } from '../components/StockLiveIndicator';
 import { theme } from '../config/theme';
 import { moderateScale as ms } from '../utils/scale';
 import type { HistoriqueItem } from '../types';
@@ -83,10 +84,11 @@ export function HistoriqueScreen({ onBack }: { onBack: () => void }) {
           <ArrowLeft size={ms(20)} color={theme.text} />
         </TouchableOpacity>
         <Text style={styles.title}>{t('historique.title')}</Text>
+        <StockLiveIndicator />
       </View>
       <FlatList
         data={items}
-        keyExtractor={(i) => i.id}
+        keyExtractor={(i, idx) => `${i.id}-${idx}`}
         contentContainerStyle={styles.list}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />}
         ListEmptyComponent={
