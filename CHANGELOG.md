@@ -2,6 +2,61 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-10-16 — Perf backend : correction de 19 N+1 sur les listes
+
+- Audit ORM des ViewSets les plus consultés ; ajouts de `select_related` /
+  `prefetch_related` (avec `Prefetch` filtré + `to_attr` quand le serializer
+  applique son propre filtre) :
+  - `GET /factures/` : + `remise_validated_by`/`prix_validated_by`, prefetch
+    `avoirs_clients` filtré `VALIDEE` consommé par `get_avoirs_clients`
+    (fallback intact).
+  - Layout `omnisearch` factures/commandes : `get_produits_details` n'appelle
+    plus `.select_related()` sur un manager préfetché (clonait le queryset →
+    1 requête/facture).
+  - `GET /clients/` : `prefetch ayants_droit` en list (COUNT par client avant).
+  - `GET /clotures-caisse/` : `user`/`cloture_par`/`poste_caisse`.
+  - `GET /creances/` : `get_montant_paye` consomme l'annotation `paid_amount`.
+  - `GET /commande-produits/` : prefetch `stock_lot` ; `GET /facture-produits/` :
+    prefetch `allocations__stock_lot`.
+  - `GET /fournisseurs/{id}/catalogue/` : `.only()` complété (`cip4` manquant →
+    requête deferred par produit).
+  - `GET /produits/{id}/` + `bulk-detail` : prefetch `stock_lots` avec
+    `select_related('produit','fournisseur')` ; `get_stock_lots` consomme
+    `active_lots` (tri Python équivalent, NULLS LAST préservé).
+  - `GET /inventaires/{id}/` + `/lignes-inventaire/` : prefetch `lignes` +
+    `produit`/`rayon`/`stock_lot` (N+1 massif sur gros inventaires).
+  - `GET /avoirs/`, `/promotions/`, `/coupons/`, `/reappro-sessions/` :
+    relations sérialisées couvertes.
+  - `stock-adjustments` : mémoïsation des motifs custom `ConfigurationOption`.
+- Suspects restants documentés pour plus tard : `sessions-caisses`
+  (agrégat ventilation/session), export Excel `historique-ventes` (1 requête
+  paiements/jour), `bulk_check_unpaid` (boucle métier POST).
+- Zones sensibles non touchées : `caisse/bulk_create`, `ventes/finaliser`,
+  validateurs de vente. 0 migration.
+- Vérifié : `manage.py check` OK, 202 tests backend Docker OK (facturation,
+  créances, clôtures, inventaires, promotions, mouvements…).
+
+## 2026-10-16 — Découpage god components (Maintenance, HistoriqueClotures)
+
+- `Maintenance.tsx` : 1919 → 176 lignes. Nouveau dossier
+  `components/maintenance/` (24 fichiers : hooks `usePurgeTables`,
+  `usePharmacySettings`, `useRetention`, `useProductsMaintenance`,
+  `useBackupRestore`, `useManualUpdate` + cartes/onglets/dialogues typés).
+- `HistoriqueClotures.tsx` : 1456 → 43 lignes. Nouveau dossier
+  `components/caisse/clotures/` (types, utils, header, sessions, stats,
+  tables, 2 dialogues) + hook `hooks/caisse/useHistoriqueClotures.ts`
+  (pattern identique à `useJournalCaisse`).
+- Comportement identique (JSX verbatim, même ordre d'effets de mount, clés
+  localStorage inchangées), API publique inchangée (lazy routes OK).
+- `utils/formatters.ts` : nouveau `formatCompact` (notation compacte via le
+  cache `getFormatter`) utilisé dans `ClassementVendeurs` et
+  `StatistiquesFournisseur` — fin des `Intl.NumberFormat` recréés par tick.
+- Vérifié : `tsc --noEmit` OK, ESLint OK, build prod OK (53 s), tests
+  JournalCaisse 5/5 + routes 66/66.
+- Hygiène repo : suppression `NUL` (artefact `> nul`), `temp_check_syntax*.py`,
+  `temp_edit_hook.py`, branches mortes `feature/vitrine-publique` (mergée) et
+  `fix-crashes-*` (ancien historique pré-rewrite).
+
 ## 2026-10-16 — Étagère « proches péremption » (marquage par lot)
 
 - Nouveau workflow terrain : le pharmacien déplace physiquement les lots
