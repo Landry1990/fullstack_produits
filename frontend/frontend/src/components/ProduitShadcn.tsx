@@ -52,9 +52,9 @@ export default function ProduitShadcn() {
     showSalesModal, setShowSalesModal, selectedFacture, setSelectedFacture, loadingFacture,
     showAvoirModal, setShowAvoirModal, selectedAvoirId, setSelectedAvoirId,
     pendingActionRef,
-    editForm, adjustForm, setAdjustForm, adjustStockMutation, transferLoading,
+    editForm, createInitialData, adjustForm, setAdjustForm, adjustStockMutation, transferLoading,
     labelProduct, setLabelProduct, transferProduct, setTransferProduct,
-    handleDelete, handleStockAdjustmentSubmit, handleOpenAdjust,
+    handleDelete, handleStockAdjustmentSubmit, handleOpenAdjust, handleOpenCreate,
     handleToggleActive, handleGenerateLabels,
     handleTransferToRayon, confirmTransferToRayon,
     handleMovementClick, handleOpenEdit,
@@ -80,7 +80,7 @@ export default function ProduitShadcn() {
           <Button variant="ghost" size="sm" onClick={() => refetch()} disabled={isLoading} leftIcon={isLoading ? <RefreshCw className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}>
             {t('common:actions.refresh', { defaultValue: 'Rafraîchir' })}
           </Button>
-          <Button variant="primary" size="sm" leftIcon={<Package className="size-4" />} onClick={() => setIsCreateOpen(true)}>
+          <Button variant="primary" size="sm" leftIcon={<Package className="size-4" />} onClick={() => handleOpenCreate()}>
             {t('products:actions.new', { defaultValue: 'Nouveau' })}
           </Button>
           <Button variant="outline" size="sm" leftIcon={<Upload className="size-4" />} onClick={() => {
@@ -132,7 +132,7 @@ export default function ProduitShadcn() {
               page={page}
               totalPages={totalPages}
               onPageChange={setPage}
-              onNewProduct={() => setIsCreateOpen(true)}
+              onNewProduct={() => handleOpenCreate(searchQuery)}
             />
           </motion.section>
 
@@ -227,6 +227,7 @@ export default function ProduitShadcn() {
         passwordTitle={passwordConfig.title}
         passwordMessage={passwordConfig.message}
         isCreateOpen={isCreateOpen}
+        createInitialData={createInitialData}
         onCreateClose={() => setIsCreateOpen(false)}
         onCreated={(produit: ProduitModel) => { refetch(); setIsCreateOpen(false); setSelectedProduit(produit); gooeyToast.success(t('products:messages.create_success_named', { name: produit.name })); }}
         isImportOpen={isImportOpen}

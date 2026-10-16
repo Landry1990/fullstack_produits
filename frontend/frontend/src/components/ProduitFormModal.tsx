@@ -53,7 +53,7 @@ export default function ProduitFormModal({
   const { tvaList, loading: loadingTVA } = useTVA();
 
   const [form, setForm] = useState<ProduitForm>({
-    name: '', type_produit: 'PRODUIT', stock: '', cost_price: '', selling_price: '', cip1: '', cip2: '', cip3: '', cip4: '',
+    name: '', type_produit: 'PRODUIT', stock: '0', cost_price: '', selling_price: '', cip1: '', cip2: '', cip3: '', cip4: '',
     expire_date: '', stock_alert: '', stock_minimum: '', stock_maximum: '', tva: '19.25',
     rayon: '', fournisseur: '', description: '', unite_mesure: '', is_perissable: false,
     forme: '', groupe: '',
@@ -97,7 +97,7 @@ export default function ProduitFormModal({
         ? Math.round(htPrice * (1 + initialTva / 100)).toString()
         : initialData?.selling_price ?? '';
       setForm({
-        name: '', type_produit: 'PRODUIT', stock: '', cost_price: '', cip1: '', cip2: '', cip3: '', cip4: '',
+        name: '', type_produit: 'PRODUIT', stock: '0', cost_price: '', cip1: '', cip2: '', cip3: '', cip4: '',
         expire_date: '', stock_alert: '', stock_minimum: '', stock_maximum: '', tva: '19.25',
         rayon: '', fournisseur: '', description: '', unite_mesure: '', is_perissable: false,
         forme: '', groupe: '',
@@ -462,7 +462,8 @@ export default function ProduitFormModal({
               {!isEditMode && !isService && (
                 <div>
                   <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.initial_stock')}</label>
-                  <Input type="number" className={inputBase} aria-label={t('products:form.initial_stock')} value={form.stock} onChange={(e) => setForm((p) => ({ ...p, stock: e.target.value }))} min={0} step={1} required />
+                  <Input type="number" className={`${inputBase} bg-slate-100 text-slate-400 cursor-not-allowed`} aria-label={t('products:form.initial_stock')} value={form.stock} disabled />
+                  <p className="text-caption text-slate-400 mt-1">{t('products:form.initial_stock_hint')}</p>
                 </div>
               )}
               <div>
