@@ -293,6 +293,15 @@ class WhatsAppTestView(APIView):
             logger.info(f"[WhatsApp Test] ← HTTP {resp.status_code} | {data}")
 
             if resp.status_code == 200:
+                log_audit(
+                    user=request.user,
+                    action=AuditLog.Action.OTHER,
+                    model_name='WhatsAppTest',
+                    object_id=0,
+                    description=f"Message test WhatsApp envoyé au {clean_number}",
+                    details={'recipient': clean_number},
+                    request=request,
+                )
                 return Response({'status': 'ok', 'message': 'Message envoyé avec succès ✅', 'detail': data})
 
             meta_error = data.get('error', {})
@@ -370,6 +379,14 @@ class TelegramTestView(APIView):
         )
 
         if success:
+            log_audit(
+                user=request.user,
+                action=AuditLog.Action.OTHER,
+                model_name='TelegramTest',
+                object_id=0,
+                description=f"Message test Telegram envoyé (chat {chat_id})",
+                request=request,
+            )
             return Response({'status': 'ok', 'message': message})
         return Response({'status': 'error', 'message': message}, status=status.HTTP_502_BAD_GATEWAY)
 

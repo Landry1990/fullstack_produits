@@ -108,6 +108,63 @@ class FinaliserVenteTests(APITestCase):
         # No payment should be recorded at the point of sale
         self.assertEqual(Caisse.objects.filter(facture=facture).count(), 0)
 
+    def test_finaliser_centralized_sudo_sets_vendeur_to_validator(self):
+        """
+        En caisse centralisée, aucune permission n'est exigée mais le vendeur
+        confirme son identité via sudo : created_by doit être le validateur,
+        pas le compte connecté (vendeur_name affiché sur la facture).
+        """
+        TestDataFactory.create_stock_lot(
+            produit=self.produit, quantity=50, lot_name='LOT-SUDO-001'
+        )
+        validator = TestDataFactory.create_user(
+            username='vendeur_sudo', password='vendeurpass'
+        )
+
+        url = reverse('facture-finaliser')
+        payload = self._finaliser_payload(
+            centralized_cash_register=True,
+            sudo={'validated_by_id': validator.id, 'sudo_password': 'vendeurpass'},
+        )
+        response = self.client.post(url, payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        facture = Facture.objects.order_by('-id').first()
+        self.assertEqual(facture.created_by, validator)
+        self.assertEqual(facture.validated_by, validator)
+        self.assertEqual(response.data['vendeur_name'], validator.username)
+
+    def test_finaliser_centralized_sudo_wrong_password_rejected(self):
+        """Un mot de passe sudo invalide doit rejeter la vente."""
+        TestDataFactory.create_stock_lot(
+            produit=self.produit, quantity=50, lot_name='LOT-SUDO-002'
+        )
+        validator = TestDataFactory.create_user(
+            username='vendeur_sudo2', password='vendeurpass'
+        )
+
+        url = reverse('facture-finaliser')
+        payload = self._finaliser_payload(
+            centralized_cash_register=True,
+            sudo={'validated_by_id': validator.id, 'sudo_password': 'mauvais'},
+        )
+        response = self.client.post(url, payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertIsNone(Facture.objects.order_by('-id').first())
+
+    def test_finaliser_centralized_no_sudo_keeps_connected_user(self):
+        """Sans credentials sudo (ex: mobile), le vendeur reste le compte connecté."""
+        TestDataFactory.create_stock_lot(
+            produit=self.produit, quantity=50, lot_name='LOT-SUDO-003'
+        )
+        url = reverse('facture-finaliser')
+        payload = self._finaliser_payload(centralized_cash_register=True)
+        response = self.client.post(url, payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        facture = Facture.objects.order_by('-id').first()
+        self.assertEqual(facture.created_by, self.user)
+
     def test_finaliser_non_centralized_validates(self):
         """
         With centralized_cash_register=False, finaliser validates the invoice,

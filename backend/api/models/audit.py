@@ -47,6 +47,8 @@ class AuditLog(models.Model):
         ORDER_RECEIVE = 'ORD_RECV', 'Réception commande'
         ORDER_CANCEL = 'ORD_CNCL', 'Annulation réception'
         SUDO_VALIDATION = 'SUDO_VAL', 'Validation Sudo'
+        VALIDATE = 'VALIDATE', 'Validation'
+        AUTO_VALIDATE = 'AUTO_VAL', 'Validation automatique'
 
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)

@@ -9,6 +9,7 @@ import UserHeader from './common/UserHeader'
 import Omnisearch from './common/Omnisearch'
 import PageTitle from './common/PageTitle'
 import GlobalSearchTrigger from './common/GlobalSearchTrigger'
+import HeaderClock from './common/HeaderClock'
 import { Button } from './shadcn/button'
 import { Badge } from './shadcn/badge'
 import TransformationAlertListener from './common/TransformationAlertListener'
@@ -48,6 +49,7 @@ function LayoutContent() {
             )}
             {isLoading && <Loader2 className="size-3 animate-spin" />}
           </div>
+          <HeaderClock className="text-emerald-50" />
           <Button
             type="button"
             onClick={() => closePoste()}
@@ -90,6 +92,7 @@ function LayoutContent() {
                   <GlobalSearchTrigger />
                 </div>
                 <div className="flex min-w-0 items-center justify-end gap-2">
+                  <HeaderClock className="text-base-content/70" />
                   {/* Badge jours restants licence — toujours visible */}
                   {daysRemaining !== null && (
                     <Badge

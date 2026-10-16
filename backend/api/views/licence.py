@@ -299,6 +299,15 @@ class LicenceNotificationsView(APIView):
             notification.dismissed_at = timezone.now()
             notification.save()
 
+            log_audit(
+                user=request.user,
+                action=AuditLog.Action.UPDATE,
+                model_name='LicenceNotification',
+                object_id=notification.id,
+                description=f"Notification licence #{notification.id} ignorée",
+                request=request,
+            )
+
             return Response({
                 "detail": "Notification ignorée",
                 "notification_id": notification_id
