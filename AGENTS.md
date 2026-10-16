@@ -61,7 +61,8 @@ cd backend && python manage.py <cmd>
 # Tests backend — --noinput OBLIGATOIRE (sinon EOFError)
 docker exec fullstack_produits-backend-1 python manage.py test api.tests.test_<module> -v 2 --noinput
 # Déploiement dev (sans rebuild) : all | all-full | frontend | backend | backend-full
-.\deploy.ps1 -Target all        # -BackupDB, -Rebuild disponibles
+# ⚠️ Lancer avec pwsh (PS7) — powershell 5.1 casse les templates `docker inspect`
+pwsh -File .\deploy.ps1 -Target all        # -BackupDB, -Rebuild disponibles
 # Code keyday du jour (dev)
 docker exec fullstack_produits-backend-1 python manage.py shell -c "from api.keyday import get_today_keyday; print(get_today_keyday())"
 ```
