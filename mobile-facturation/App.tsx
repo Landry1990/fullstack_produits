@@ -12,12 +12,14 @@ import { DashboardScreen } from './src/screens/DashboardScreen';
 import { AjustementScreen } from './src/screens/AjustementScreen';
 import { SignalementScreen } from './src/screens/SignalementScreen';
 import { EntreeStockScreen } from './src/screens/EntreeStockScreen';
+import { PeremptionScreen } from './src/screens/PeremptionScreen';
 import { LockScreen } from './src/components/LockScreen';
 import { useAuthStore } from './src/stores/useAuthStore';
 import { useSettingsStore } from './src/stores/useSettingsStore';
 import { useLockStore } from './src/stores/useLockStore';
 import { useCartStore, type CartDraft } from './src/stores/useCartStore';
 import { usePendingStore } from './src/stores/usePendingStore';
+import { useStockRealtime } from './src/hooks/useStockRealtime';
 import { getMe, ensurePosteVente } from './src/services/api';
 import { ensureClientDivers } from './src/services/clientDivers';
 import { theme } from './src/config/theme';
@@ -29,6 +31,10 @@ export default function App() {
   const { isAuthenticated } = useAuthStore();
   const locked = useLockStore((s) => s.locked);
   const [restoring, setRestoring] = useState(true);
+
+  // Stock temps réel (ws/stock/) — ne se connecte que si une session
+  // existe ; cleanup automatique au logout.
+  useStockRealtime();
 
   // Brouillon panier : une seule hydration par vendeur (draft.cart.<user>).
   // La promesse est partagée : le boot et l'effet ci-dessous peuvent
@@ -186,6 +192,9 @@ export default function App() {
               </Stack.Screen>
               <Stack.Screen name="EntreeStock">
                 {(props) => <EntreeStockScreen {...props} onBack={props.navigation.goBack} />}
+              </Stack.Screen>
+              <Stack.Screen name="Peremption">
+                {(props) => <PeremptionScreen {...props} onBack={props.navigation.goBack} />}
               </Stack.Screen>
             </>
           )}

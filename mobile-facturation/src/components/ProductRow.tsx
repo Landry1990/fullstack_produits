@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { theme } from '../config/theme';
 import { moderateScale as ms } from '../utils/scale';
+import { useStockStore } from '../stores/useStockStore';
 import type { Product } from '../types';
 
 interface Props {
@@ -16,11 +17,14 @@ export function ProductRow({ product, onPress }: Props) {
     minimumFractionDigits: 0,
   });
   const cip = product.cip1 || product.cip2 || product.cip3 || product.cip4 || '';
-  // Lisibilité stock dans les résultats — double signal (poids + couleur,
-  // le gras seul passait inaperçu sur tablette) : en stock = nom extra-gras
-  // + compteur vert, sans stock = nom atténué gris, négatif = rouge.
-  const stockNeg = product.stock < 0;
-  const stockZero = product.stock === 0;
+  // Stock temps réel (ws/stock/) si un update a été reçu, sinon la valeur
+  // du serializer. Lisibilité — double signal (poids + couleur, le gras
+  // seul passait inaperçu sur tablette) : en stock = nom extra-gras +
+  // compteur vert, sans stock = nom atténué gris, négatif = rouge.
+  const stockLive = useStockStore((s) => s.overrides[product.id]);
+  const stock = stockLive ?? product.stock;
+  const stockNeg = stock < 0;
+  const stockZero = stock === 0;
 
   return (
     <TouchableOpacity style={styles.row} onPress={() => onPress(product)} activeOpacity={0.7}>
@@ -44,7 +48,7 @@ export function ProductRow({ product, onPress }: Props) {
             !stockZero && !stockNeg && styles.stockOk,
             stockNeg && styles.stockNeg,
           ]}>
-            {t('lot.stock', { count: product.stock })}
+            {t('lot.stock', { count: stock })}
           </Text>
           <Text style={styles.prix}>{prix} F</Text>
         </View>

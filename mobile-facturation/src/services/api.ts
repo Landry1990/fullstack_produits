@@ -60,6 +60,34 @@ export const getProductById = async (id: number) => {
   return res.data as Product;
 };
 
+// Référentiels de classification produit — listes complètes pour les
+// pickers rayon/forme de l'ajustement (CategorieViewSet / FormeViewSet,
+// lecture pour tout compte authentifié).
+export interface Rayon { id: number; name: string }
+export const getRayons = async () => {
+  const res = await api.get('/rayons/', { params: { page_size: 500 } });
+  const data = res.data;
+  return (Array.isArray(data) ? data : (data.results ?? [])) as Rayon[];
+};
+
+export interface Forme { id: number; nom: string }
+export const getFormes = async () => {
+  const res = await api.get('/formes/', { params: { page_size: 500 } });
+  const data = res.data;
+  return (Array.isArray(data) ? data : (data.results ?? [])) as Forme[];
+};
+
+// PATCH /produits/<id>/ : mise à jour de la classification (rayon/forme)
+// depuis la fiche mobile. Le backend accepte les ids FK en écriture
+// (ProduitUpdateSerializer — stock/pmp restent read-only). null = retirer.
+export const patchProduitClassification = async (
+  produitId: number,
+  patch: { rayon?: number | null; forme?: number | null },
+) => {
+  const res = await api.patch(`/produits/${produitId}/`, patch);
+  return res.data as Product;
+};
+
 // ─── Scan datamatrix GS1 ──────────────────────────────────
 // GET /stock-lots/by-datamatrix/?cip=<cip>&lot=<lot> — même endpoint que le
 // scan datamatrix de la facturation web : résout produit + lot exact.
@@ -89,6 +117,49 @@ export const getLots = async (produitId: number) => {
   });
   const data = res.data;
   return Array.isArray(data) ? data : (data.results ?? []);
+};
+
+// Lots proches de la péremption (StockLotListSerializer). Le filtre
+// expiring_within_days n'a pas de borne basse → les lots DÉJÀ périmés
+// sont inclus (affichés en premier, tri date_expiration).
+export interface ExpiringLot {
+  id: number;
+  produit: number;
+  produit_nom: string;
+  fournisseur_nom?: string | null;
+  // Classification produit — regroupement de collecte (ajout backend
+  // 2026-10-15 ; absent → lot classé dans le groupe « non classé »).
+  produit_rayon?: string | null;
+  produit_forme?: string | null;
+  // Étagère « proches péremption » : non nul = lot déplacé manuellement
+  // (timestamp du déplacement). Reste dans la liste de collecte (badge).
+  deplace_peremption_le?: string | null;
+  lot: string | null;
+  date_expiration: string | null;
+  quantity_remaining: number;
+  price_cost?: string;
+  selling_price?: string;
+}
+export const getExpiringLots = async (days: number) => {
+  const res = await api.get('/stock-lots/', {
+    params: { expiring_within_days: days, ordering: 'date_expiration', page_size: 300 },
+  });
+  const data = res.data;
+  return (Array.isArray(data) ? data : (data.results ?? [])) as ExpiringLot[];
+};
+
+// Liste dédiée : lots posés sur l'étagère physique « proches péremption ».
+export const getShelfLots = async () => {
+  const res = await api.get('/stock-lots/', {
+    params: { en_rayon_peremption: 'true', ordering: 'date_expiration', page_size: 300 },
+  });
+  const data = res.data;
+  return (Array.isArray(data) ? data : (data.results ?? [])) as ExpiringLot[];
+};
+
+// Marquage manuel lors de la collecte — non destructif (pas de sudo).
+export const markShelfLots = async (lotIds: number[], deplace: boolean) => {
+  await api.post('/stock-lots/marquer_rayon_peremption/', { lot_ids: lotIds, deplace });
 };
 
 // ─── Clients ──────────────────────────────────────────────

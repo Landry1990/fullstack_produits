@@ -14,6 +14,8 @@ import {
 import { useProductSearch } from '../hooks/useProductSearch';
 import { ProductRow } from '../components/ProductRow';
 import { ScanBarcodeModal } from '../components/ScanBarcodeModal';
+import { useStockStore } from '../stores/useStockStore';
+import { StockLiveIndicator } from '../components/StockLiveIndicator';
 import { theme } from '../config/theme';
 import { moderateScale as ms } from '../utils/scale';
 import type { Product } from '../types';
@@ -46,6 +48,8 @@ export function SignalementScreen({ onBack }: { onBack: () => void }) {
   const [scanVisible, setScanVisible] = useState(false);
 
   const [product, setProduct] = useState<Product | null>(null);
+  // Stock temps réel (ws/stock/) sur la fiche du produit sélectionné.
+  const stockLive = useStockStore((s) => (product ? s.overrides[product.id] : undefined));
   const [qty, setQty] = useState('');
   const [note, setNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -154,6 +158,7 @@ export function SignalementScreen({ onBack }: { onBack: () => void }) {
           <ArrowLeft size={ms(20)} color={theme.text} />
         </TouchableOpacity>
         <Text style={styles.title}>{t('signalement.title')}</Text>
+        <StockLiveIndicator />
       </View>
 
       <ScrollView
@@ -193,7 +198,7 @@ export function SignalementScreen({ onBack }: { onBack: () => void }) {
               <View style={{ flex: 1 }}>
                 <Text style={styles.productName} numberOfLines={2}>{product.name}</Text>
                 <Text style={styles.productStock}>
-                  {t('ajustement.current_stock', { count: product.stock })}
+                  {t('ajustement.current_stock', { count: stockLive ?? product.stock })}
                 </Text>
               </View>
               <TouchableOpacity onPress={() => setProduct(null)} style={styles.changeBtn}>

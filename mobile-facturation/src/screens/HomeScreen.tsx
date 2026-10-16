@@ -1,10 +1,11 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform, Alert, ScrollView, useWindowDimensions } from 'react-native';
-import { ShoppingCart, PackagePlus, PackageX, PackageCheck, BarChart3, LogOut, Store } from 'lucide-react-native';
+import { ShoppingCart, PackagePlus, PackageX, PackageCheck, BarChart3, LogOut, Store, CalendarClock } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useSettingsStore } from '../stores/useSettingsStore';
+import { StockLiveIndicator } from '../components/StockLiveIndicator';
 import { theme } from '../config/theme';
 import { moderateScale as ms } from '../utils/scale';
 import i18n from '../i18n';
@@ -67,6 +68,15 @@ export function HomeScreen({ navigation }: Props) {
       bg: theme.dangerWash,
     },
     {
+      key: 'peremption',
+      icon: CalendarClock,
+      label: t('home.menu_peremption'),
+      desc: t('home.menu_peremption_desc'),
+      screen: 'Peremption',
+      accent: theme.warning,
+      bg: theme.warningWash,
+    },
+    {
       key: 'dashboard',
       icon: BarChart3,
       label: t('home.menu_dashboard'),
@@ -93,6 +103,7 @@ export function HomeScreen({ navigation }: Props) {
             <Text style={[styles.posteText, !posteVente && { color: theme.textMuted }]} numberOfLines={1}>
               {posteVente?.nom ?? t('poste.none')}
             </Text>
+            <StockLiveIndicator />
           </View>
         </View>
         <TouchableOpacity

@@ -4,6 +4,7 @@ import { Pencil } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { theme } from '../config/theme';
 import { moderateScale as ms } from '../utils/scale';
+import { useStockStore } from '../stores/useStockStore';
 import { getFEFOPreview } from '../utils/fefo';
 import { expiryInfo } from '../utils/format';
 import type { CartLine } from '../types';
@@ -21,6 +22,23 @@ export function CartItemRow({ line, onIncrement, onDecrement, onRemove, onOpenLo
   const { t } = useTranslation();
   const prix = line.prix_unitaire.toLocaleString('fr-FR', { minimumFractionDigits: 0 });
   const total = line.total_ttc.toLocaleString('fr-FR', { minimumFractionDigits: 0 });
+
+  // Stock affiché dans la ligne (comme le web) : override temps réel
+  // (ws/stock/, le panier est aussi patché par patchStocks) sinon la
+  // valeur du produit. Les services n'ont pas de stock géré → masqué.
+  const isService = line.product.is_service || line.product.type_produit === 'SERVICE';
+  const stockLive = useStockStore((s) => s.overrides[line.product.id]);
+  const stock = stockLive ?? line.product.stock;
+  // Rouge quand la quantité demandée dépasse le dispo (ou stock ≤ 0) :
+  // la ligne ne pourra pas partir sans promis/réduction/force.
+  const stockShort = !isService && line.quantite > Math.max(0, stock);
+  const stockStyle = isService
+    ? null
+    : stock <= 0 || stockShort
+      ? styles.stockDanger
+      : stock < 5
+        ? styles.stockWarn
+        : styles.stockOk;
 
   // Badge lot : lot choisi manuellement, sinon « SANS LOT » quand aucun
   // lot n'est prélevable, ou aperçu FEFO (« FEFO · LOT-X · exp ») quand
@@ -52,6 +70,11 @@ export function CartItemRow({ line, onIncrement, onDecrement, onRemove, onOpenLo
             <Text style={styles.prix}>{prix} F</Text>
             <Pencil size={ms(12)} color={theme.textMuted} />
           </TouchableOpacity>
+          {!isService && (
+            <Text style={[styles.stock, stockStyle]} numberOfLines={1}>
+              {t('lot.stock', { count: stock })}
+            </Text>
+          )}
           {line.remise > 0 && (
             <Text style={styles.remise}>-{line.remise}%</Text>
           )}
@@ -105,6 +128,10 @@ const styles = StyleSheet.create({
   subRow: { flexDirection: 'row', alignItems: 'center', gap: ms(8) },
   prixBtn: { flexDirection: 'row', alignItems: 'center', gap: ms(4) },
   prix: { fontSize: ms(11), color: theme.textSecondary },
+  stock: { fontSize: ms(11), fontWeight: '700' },
+  stockOk: { color: theme.primary },
+  stockWarn: { color: theme.warning },
+  stockDanger: { color: theme.danger },
   remise: { fontSize: ms(11), color: theme.warning, fontWeight: '700' },
   promis: { fontSize: ms(11), color: theme.info, fontWeight: '700' },
   lotBadge: {

@@ -31,6 +31,7 @@ import { PinLockModal } from '../components/PinLockModal';
 import { PostePickerModal } from '../components/PostePickerModal';
 import { CaissePickerModal } from '../components/CaissePickerModal';
 import { StockResolutionModal } from '../components/StockResolutionModal';
+import { StockLiveIndicator } from '../components/StockLiveIndicator';
 import { ClientModal } from '../components/ClientModal';
 import { AyantDroitSection } from '../components/AyantDroitSection';
 import { styles } from './FacturationScreen.styles';
@@ -45,10 +46,11 @@ export function FacturationScreen({ navigation }: { navigation?: { navigate: (sc
   const insets = useSafeAreaInsets();
 
   // Recherche produit + scan caméra/douchette (hook extrait).
+  const searchInputRef = useRef<TextInput>(null);
   const {
     searchQuery, setSearchQuery, results, searching, isSearching,
     handleAddProduct, resolveBarcode, addScanResult, handleSearchSubmit,
-  } = useProductSearch();
+  } = useProductSearch({ onAdded: () => searchInputRef.current?.focus() });
 
   const [lotModalVisible, setLotModalVisible] = useState(false);
   const [lotModalProduct, setLotModalProduct] = useState<Product | null>(null);
@@ -523,6 +525,7 @@ export function FacturationScreen({ navigation }: { navigation?: { navigate: (sc
             <Text style={[styles.headerSubtitleText, !posteVente && { color: theme.textMuted }]} numberOfLines={1}>
               {posteVente?.nom ?? t('poste.none')} • {t('common.articles_count', { count: cart.totalArticles() })}
             </Text>
+            <StockLiveIndicator />
           </TouchableOpacity>
         </View>
         <View style={styles.headerRight}>
@@ -570,6 +573,7 @@ export function FacturationScreen({ navigation }: { navigation?: { navigate: (sc
       <View style={[styles.searchBar, compactVert && styles.searchBarCompact]}>
         <Search size={ms(18)} color={theme.textMuted} />
         <TextInput
+          ref={searchInputRef}
           style={styles.searchInput}
           placeholder={t('facturation.search_placeholder')}
           placeholderTextColor={theme.textMuted}

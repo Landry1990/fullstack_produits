@@ -23,6 +23,7 @@ import { ScanBarcodeModal } from '../components/ScanBarcodeModal';
 import { FournisseurPickerModal } from '../components/FournisseurPickerModal';
 import { PendingEntreeModal } from '../components/PendingEntreeModal';
 import { EntreeStockLineModal, isValidExpiryMMYY } from '../components/EntreeStockLineModal';
+import { StockLiveIndicator } from '../components/StockLiveIndicator';
 import { parseGS1Datamatrix } from '../utils/gs1Parser';
 import { theme } from '../config/theme';
 import { moderateScale as ms } from '../utils/scale';
@@ -447,6 +448,7 @@ export function EntreeStockScreen({ onBack }: { onBack: () => void }) {
           <ArrowLeft size={ms(20)} color={theme.text} />
         </TouchableOpacity>
         <Text style={styles.title}>{t('entree.title')}</Text>
+        <StockLiveIndicator />
         <TouchableOpacity onPress={() => setPendingModalVisible(true)} style={styles.iconBtn}>
           <Clock size={ms(19)} color={theme.textMuted} />
           {pendingCount > 0 && (

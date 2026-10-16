@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Alert, Keyboard } from 'react-native';
+import { Alert } from 'react-native';
 import i18n from '../i18n';
 import { useCartStore } from '../stores/useCartStore';
 import {
@@ -11,7 +11,7 @@ import type { Product, ScanResult } from '../types';
 // Recherche produit + résolution de codes scannés (caméra ou douchette) :
 // état query/results, debounce 300 ms, ajout au panier avec chargement des
 // lots à la demande (serializer liste sans stock_lots → aperçu FEFO).
-export function useProductSearch() {
+export function useProductSearch(opts?: { onAdded?: () => void }) {
   const cart = useCartStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [results, setResults] = useState<Product[]>([]);
@@ -37,9 +37,9 @@ export function useProductSearch() {
     cart.addProduct(product);
     setSearchQuery('');
     setResults([]);
-    // Referme le clavier : le panier complet réapparaît (les sections
-    // basses étaient masquées pendant la recherche).
-    Keyboard.dismiss();
+    // Le produit vient d'entrer dans le panier : le focus revient dans
+    // le champ recherche pour enchaîner le produit suivant (flux caisse).
+    opts?.onAdded?.();
     // Le serializer liste (recherche) ne renvoie pas stock_lots → chargés
     // à la demande pour l'aperçu FEFO du badge lot (parité avec le scan).
     if (!product.stock_lots) {
@@ -126,6 +126,7 @@ export function useProductSearch() {
       addScanResult(result, 1);
       setSearchQuery('');
       setResults([]);
+      opts?.onAdded?.();
     }
   };
 

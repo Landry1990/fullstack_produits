@@ -7,6 +7,30 @@ const KEY_TOKEN = 'session.token';
 const KEY_USERNAME = 'session.username';
 const KEY_SERVER_URL = 'session.serverUrl';
 
+// Libère les postes POS actifs du vendeur au logout : un poste « Mobile »
+// resté ouvert bloque les autres terminaux (disponibles/ ne le propose
+// plus). Fire-and-forget — la session se vide sans attendre le réseau.
+// Seuls les postes mode_pos SANS caisse sont fermés : un poste-caisse
+// est une vraie session de caisse (fond, clôture), pas au mobile d'y
+// toucher. Le token voyage dans les headers même si l'état est déjà vidé.
+function releasePostesPos(token: string, serverUrl: string) {
+  const headers = { Authorization: `Token ${token}` };
+  fetch(`${serverUrl}/api/postes-ventes/mes_actives/`, { headers })
+    .then((r) => (r.ok ? r.json() : []))
+    .then((data) => {
+      const rows = Array.isArray(data) ? data : (data?.results ?? []);
+      for (const p of rows as { id: number; mode_pos?: boolean; caisse?: number | null }[]) {
+        if (p.mode_pos && p.caisse == null) {
+          fetch(`${serverUrl}/api/postes-ventes/${p.id}/fermer/`, {
+            method: 'POST',
+            headers,
+          }).catch(() => {});
+        }
+      }
+    })
+    .catch(() => {});
+}
+
 interface AuthState {
   token: string | null;
   username: string | null;
@@ -86,6 +110,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: () => {
+    // Libération du poste AVANT de vider la session — le token et
+    // l'URL serveur sont lus depuis l'état courant.
+    const { token, serverUrl } = get();
+    if (token && serverUrl) releasePostesPos(token, serverUrl);
     set({ token: null, username: null, userId: null, isAuthenticated: false, maxDiscountRate: 0, posteVente: null, clientDivers: null, clientDiversLoaded: false });
     [KEY_TOKEN, KEY_USERNAME, KEY_SERVER_URL].forEach((k) => {
       secureStore.deleteItemAsync(k).catch(() => {});
