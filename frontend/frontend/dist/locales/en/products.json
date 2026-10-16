@@ -11,7 +11,8 @@
     "form": {
         "general_info": "General Information",
         "name": "Product Name *",
-        "initial_stock": "Initial Stock *",
+        "initial_stock": "Initial stock",
+        "initial_stock_hint": "Set to 0 — updated via stock entries",
         "rayon": "Shelf",
         "select_rayon": "Select a shelf",
         "cip1": "CIP1",

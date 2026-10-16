@@ -11,7 +11,8 @@
     "form": {
         "general_info": "Informations Générales",
         "name": "Nom du Produit *",
-        "initial_stock": "Stock Initial *",
+        "initial_stock": "Stock initial",
+        "initial_stock_hint": "Fixé à 0 — mis à jour via les entrées en stock",
         "rayon": "Rayon",
         "select_rayon": "Sélectionner un rayon",
         "cip1": "CIP1",
