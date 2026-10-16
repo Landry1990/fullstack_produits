@@ -2,6 +2,19 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-10-16 — Audit : création produit tracée dans le journal
+
+- `ProduitViewSet.perform_create` ajouté : `POST /produits/` écrit
+  désormais un `AuditLog` `CREATE` (utilisateur, IP, nom, type, prix de
+  vente) — avant, seules les actions bulk étaient tracées, la création
+  unitaire passait sous le radar.
+- Bonus : `SearchCache.invalidate_all_products()` appelé à la création
+  (comme update/delete) — un nouveau produit apparaît immédiatement dans
+  les recherches au lieu d'attendre le TTL du cache.
+- ⚠️ Reste non tracés : `perform_update` et `perform_destroy` (soft delete)
+  du même ViewSet — à compléter si besoin.
+- Vérifié : création via API → 201 + `AuditLog` CREATE écrit ; déployé.
+
 ## 2026-10-16 — Perf backend : correction de 19 N+1 sur les listes
 
 - Audit ORM des ViewSets les plus consultés ; ajouts de `select_related` /
