@@ -111,11 +111,15 @@ class ProduitViewSet(
         
         # OPTIMISATION: Prefetch des lots actifs pour éviter N+1 dans get_stock_lots
         # Seulement pour les actions qui ont besoin des lots (retrieve, pas list)
+        # select_related('produit', 'fournisseur') : StockLotSerializer lit
+        # produit.name et fournisseur.name — sinon 2 requêtes par lot.
         if self.action in ['retrieve', 'update', 'partial_update']:
             queryset = queryset.prefetch_related(
                 Prefetch(
                     'stock_lots',
-                    queryset=StockLot.objects.filter(quantity_remaining__gt=0).order_by('date_expiration'),
+                    queryset=StockLot.objects.filter(quantity_remaining__gt=0)
+                        .select_related('produit', 'fournisseur')
+                        .order_by('date_expiration'),
                     to_attr='active_lots'
                 )
             )

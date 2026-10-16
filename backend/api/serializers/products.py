@@ -126,9 +126,23 @@ class ProduitSerializer(UppercaseSerializerMixin, serializers.ModelSerializer):
         fields = '__all__'
 
     def get_stock_lots(self, obj):
-        # Limiter à 5 lots les plus récents pour la vue liste
-        # Le frontend peut charger tous les lots via un endpoint dédié si besoin
-        lots = obj.stock_lots.filter(quantity_remaining__gt=0).order_by('date_expiration')[:5]
+        # Limiter à 5 lots les plus proches de la péremption pour la vue liste
+        # Le frontend peut charger tous les lots via un endpoint dédié si besoin.
+        # Utilise les lots déjà préchargés quand disponibles (Prefetch to_attr
+        # 'active_lots' du ViewSet, ou prefetch 'stock_lots' de bulk_detail) —
+        # un .filter() ici ignorerait le cache prefetch → N+1.
+        prefetched_active = getattr(obj, 'active_lots', None)
+        if prefetched_active is not None:
+            lots = prefetched_active[:5]
+        elif 'stock_lots' in getattr(obj, '_prefetched_objects_cache', {}):
+            # Même sémantique que le .filter() ci-dessous : lots non vides,
+            # triés par date d'expiration (NULLS LAST, comme PostgreSQL en ASC).
+            lots = sorted(
+                (lot for lot in obj.stock_lots.all() if (lot.quantity_remaining or 0) > 0),
+                key=lambda lot: (lot.date_expiration is None, lot.date_expiration),
+            )[:5]
+        else:
+            lots = obj.stock_lots.filter(quantity_remaining__gt=0).order_by('date_expiration')[:5]
         return StockLotSerializer(lots, many=True).data
 
     def get_active_promotion(self, obj):

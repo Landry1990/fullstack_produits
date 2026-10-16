@@ -20,7 +20,11 @@ logger = logging.getLogger(__name__)
 
 
 class AvoirViewSet(viewsets.ModelViewSet):
-    queryset = Avoir.objects.filter(is_active=True).select_related('fournisseur', 'created_by').prefetch_related('produits__produit')
+    # validated_by / produits__stock_lot : lus par AvoirSerializer et le
+    # nested LigneAvoirSerializer (lot_numero, lot_expiration…) — N+1 sinon.
+    queryset = Avoir.objects.filter(is_active=True).select_related(
+        'fournisseur', 'created_by', 'validated_by'
+    ).prefetch_related('produits__produit', 'produits__stock_lot')
     serializer_class = AvoirSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = StandardResultsSetPagination
@@ -400,7 +404,8 @@ class AvoirViewSet(viewsets.ModelViewSet):
 
 
 class LigneAvoirViewSet(viewsets.ModelViewSet):
-    queryset = LigneAvoir.objects.all().select_related('avoir', 'produit')
+    # 'stock_lot' : lu par LigneAvoirSerializer (lot_numero, lot_expiration…)
+    queryset = LigneAvoir.objects.all().select_related('avoir', 'produit', 'stock_lot')
     serializer_class = LigneAvoirSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend]

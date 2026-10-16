@@ -6,6 +6,7 @@ from django.db.models import (
     Case,
     DecimalField,
     F,
+    Prefetch,
     Q,
     Sum,
     Value,
@@ -74,7 +75,20 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset().filter(is_active=True)
-        
+
+        if self.action in ['retrieve', 'update', 'partial_update']:
+            # InventaireSerializer itère obj.lignes + ligne.produit/stock_lot
+            # (nested LigneInventaireSerializer et get_total_*) — sans prefetch
+            # c'est un N+1 par ligne d'inventaire.
+            queryset = queryset.prefetch_related(
+                Prefetch(
+                    'lignes',
+                    queryset=LigneInventaire.objects.select_related(
+                        'produit', 'produit__rayon', 'stock_lot'
+                    ),
+                )
+            )
+
         if self.action == 'list':
             from django.db.models import OuterRef, Subquery
             
@@ -623,7 +637,11 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
 
 
 class LigneInventaireViewSet(viewsets.ModelViewSet):
-    queryset = LigneInventaire.objects.all().order_by('id')
+    # produit/produit__rayon/stock_lot : lus par LigneInventaireSerializer
+    # (produit_nom, produit_cip, produit_rayon, lot_*) — N+1 sans select_related.
+    queryset = LigneInventaire.objects.select_related(
+        'produit', 'produit__rayon', 'stock_lot'
+    ).order_by('id')
     serializer_class = LigneInventaireSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = StandardResultsSetPagination

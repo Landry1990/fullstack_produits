@@ -352,7 +352,11 @@ class ClotureCaisseViewSet(BaseViewSetConfig, viewsets.ReadOnlyModelViewSet):
     serializer_class = ClotureCaisseSerializer
 
     def get_queryset(self):
-        queryset = ClotureCaisse.objects.select_related('user').order_by('-date')
+        # cloture_par / poste_caisse : lus par ClotureCaisseSerializer
+        # (get_cloture_par_name, poste_caisse_nom) — N+1 sans select_related.
+        queryset = ClotureCaisse.objects.select_related(
+            'user', 'cloture_par', 'poste_caisse'
+        ).order_by('-date')
         # DRF Request type - ignore Pyright not recognizing DRF's Request
         drf_request = self.request  # type: ignore[attr-defined]
         date_debut = drf_request.query_params.get('date_debut')  # type: ignore[attr-defined]

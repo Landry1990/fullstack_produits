@@ -93,8 +93,11 @@ class ClientViewSet(SimpleListCacheMixin, OptimizedSerializerMixin, viewsets.Mod
         # Optimisation: select_related pour les clés étrangères
         qs = qs.select_related()
         
-        # En mode détail, prefetch les ayants droit pour éviter N+1
-        if self.action in ['retrieve', 'update', 'partial_update']:
+        # Prefetch les ayants droit pour éviter N+1 :
+        # - détail : champ nested 'ayants_droit' du ClientSerializer
+        # - liste : 'ayants_droit_count' (source='ayants_droit.count') du
+        #   ClientListSerializer — .count() est servi depuis le cache prefetch.
+        if self.action in ['list', 'retrieve', 'update', 'partial_update']:
             qs = qs.prefetch_related('ayants_droit')
         
         # Par défaut, ne montrer que les clients actifs SEULEMENT pour la liste

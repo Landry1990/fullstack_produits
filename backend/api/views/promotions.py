@@ -14,9 +14,13 @@ class PromotionViewSet(viewsets.ModelViewSet):
     - SQL annotations for product/rayon counts (avoids N+1 queries)
     """
     # OPTIMISATION: Annotate with counts to avoid N+1 in serializer
+    # prefetch products/rayons/pack_items__product : sérialisés par
+    # PromotionSerializer (M2M en PK + nested pack_items avec product.name).
     queryset = Promotion.objects.annotate(
         products_count=Count('products', distinct=True),
         rayons_count=Count('rayons', distinct=True)
+    ).prefetch_related(
+        'products', 'rayons', 'pack_items__product'
     ).order_by('-priority', '-created_at')
     serializer_class = PromotionSerializer
     permission_classes = [IsAdminOrMenuAllowed] # Lecture pour tous (caisse), écriture admin ou menu autorisé

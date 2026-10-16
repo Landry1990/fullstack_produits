@@ -17,7 +17,12 @@ logger = logging.getLogger(__name__)
 
 class FactureProduitViewSet(viewsets.ModelViewSet):
     """API endpoint for facture produits."""
-    queryset = FactureProduit.objects.select_related('produit', 'facture', 'stock_lot').order_by('-created_at')
+    # 'allocations__stock_lot' : le nested FactureProduitAllocationSerializer lit
+    # alloc.stock_lot.lot/.date_expiration — sans prefetch c'est 2 requêtes
+    # par ligne (allocations puis chaque stock_lot) → N+1.
+    queryset = FactureProduit.objects.select_related('produit', 'facture', 'stock_lot').prefetch_related(
+        'allocations__stock_lot'
+    ).order_by('-created_at')
     serializer_class = FactureProduitSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ['produit', 'facture']

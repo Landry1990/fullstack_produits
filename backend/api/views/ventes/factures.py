@@ -1,7 +1,7 @@
 import logging
 from decimal import Decimal, InvalidOperation
 
-from django.db.models import Count, DecimalField, OuterRef, Q, Subquery, Sum, Value
+from django.db.models import Count, DecimalField, OuterRef, Prefetch, Q, Subquery, Sum, Value
 from django.db.models.functions import Coalesce
 from django_filters import rest_framework as django_filters
 from django_filters.rest_framework import DjangoFilterBackend
@@ -16,6 +16,7 @@ from api.cache_mixins import SimpleListCacheMixin
 from api.centralized_configs import BaseViewSetConfig
 from api.models import (
     AuditLog,
+    AvoirClient,
     Caisse,
     Facture,
 )
@@ -118,8 +119,29 @@ class FactureViewSet(
         return super().list(request, *args, **kwargs)
     
     def get_queryset(self):
-        # Base optimization for all views: select related foreign keys
-        queryset = Facture.objects.select_related('client', 'ayant_droit', 'created_by', 'validated_by').filter(is_active=True).order_by('-date').distinct()
+        # Base optimization for all views: select related foreign keys.
+        # remise_validated_by / prix_validated_by : lus par FactureListSerializer
+        # (get_remise_validated_by_name / get_prix_validated_by_name) — sans
+        # select_related c'est 2 requêtes par ligne (N+1).
+        # avoirs_clients : le serializer fait .filter(statut='VALIDEE') qui
+        # ignorerait un prefetch simple → Prefetch filtré + to_attr.
+        queryset = (
+            Facture.objects
+            .select_related(
+                'client', 'ayant_droit', 'created_by', 'validated_by',
+                'remise_validated_by', 'prix_validated_by',
+            )
+            .prefetch_related(
+                Prefetch(
+                    'avoirs_clients',
+                    queryset=AvoirClient.objects.filter(statut=AvoirClient.Statut.VALIDEE),
+                    to_attr='avoirs_clients_valides',
+                )
+            )
+            .filter(is_active=True)
+            .order_by('-date')
+            .distinct()
+        )
         
         # FIX BUG: Utilisation de Subquery pour éviter le produit cartésien (multiplication des montants par le nombre d'articles)
         from api.models import Caisse

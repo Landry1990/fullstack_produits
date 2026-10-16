@@ -168,6 +168,11 @@ class FactureListSerializer(serializers.ModelSerializer):
         return ''
 
     def get_avoirs_clients(self, obj):
+        # Prefetch filtré (to_attr) posé par FactureViewSet.get_queryset —
+        # un .filter() sur le manager ignorerait le cache prefetch (N+1).
+        prefetched = getattr(obj, 'avoirs_clients_valides', None)
+        if prefetched is not None:
+            return [avoir.numero for avoir in prefetched]
         return list(
             obj.avoirs_clients.filter(statut='VALIDEE')
             .values_list('numero', flat=True)
@@ -278,14 +283,20 @@ class FactureOmnisearchSerializer(FactureListSerializer):
         fields = FactureListSerializer.Meta.fields + ['produits_details']
 
     def get_produits_details(self, obj):
-        # Use prefetch_related('produits__produit') in the view to avoid N+1
+        # Use prefetch_related('produits__produit') in the view to avoid N+1.
+        # NB: appeler .select_related() sur le manager préfetché créerait un
+        # nouveau queryset sans le cache (1 requête par facture) — on ne
+        # l'applique donc qu'en l'absence de prefetch.
+        lignes = obj.produits.all()
+        if 'produits' not in getattr(obj, '_prefetched_objects_cache', {}):
+            lignes = lignes.select_related('produit')
         return [
             {
                 'nom': p.produit.name if p.produit else p.produit_nom,
                 'quantite': p.quantity,
                 'prix': str(p.selling_price)
             }
-            for p in obj.produits.all().select_related('produit')
+            for p in lignes
         ]
 
 
@@ -300,14 +311,20 @@ class CommandeOmnisearchSerializer(CommandeListSerializer):
         fields = CommandeListSerializer.Meta.fields + ['produits_details']
 
     def get_produits_details(self, obj):
-        # Use prefetch_related('produits__produit') in the view to avoid N+1
+        # Use prefetch_related('produits__produit') in the view to avoid N+1.
+        # NB: appeler .select_related() sur le manager préfetché créerait un
+        # nouveau queryset sans le cache (1 requête par commande) — on ne
+        # l'applique donc qu'en l'absence de prefetch.
+        lignes = obj.produits.all()
+        if 'produits' not in getattr(obj, '_prefetched_objects_cache', {}):
+            lignes = lignes.select_related('produit')
         return [
             {
                 'nom': p.produit.name if p.produit else p.produit_nom,
                 'quantite': p.quantity + p.unites_gratuites,
                 'prix': str(p.price)
             }
-            for p in obj.produits.all().select_related('produit')
+            for p in lignes
         ]
 
 
