@@ -399,14 +399,43 @@ export default function StatistiquesFournisseur() {
                 <CardTitle className="text-lg font-bold mb-4">{t('sales_tab.chart.title')}</CardTitle>
                 <div className="h-80">
                     <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={stats} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="nom" />
-                        <YAxis />
-                        <Tooltip formatter={(value: number | string) => `${formatCurrency(Number(value), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}`} />
-                        <Legend />
-                        <Bar dataKey="ca_ttc" name={t('sales_tab.chart.ca')} fill="#10b981" />
-                        <Bar dataKey="marge_brute" name={t('sales_tab.chart.margin')} fill="#f59e0b" />
+                    <BarChart data={stats} margin={{ top: 20, right: 10, left: 0, bottom: 5 }} barCategoryGap="25%" barGap={4}>
+                        <defs>
+                            <linearGradient id="gradCa" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="#10b981" />
+                                <stop offset="100%" stopColor="#059669" />
+                            </linearGradient>
+                            <linearGradient id="gradMarge" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="#fbbf24" />
+                                <stop offset="100%" stopColor="#d97706" />
+                            </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                        <XAxis
+                            dataKey="nom"
+                            tick={{ fontSize: 11, fontWeight: 700, fill: '#64748b' }}
+                            axisLine={false}
+                            tickLine={false}
+                            dy={8}
+                            tickFormatter={(v: string) => v.length > 14 ? `${v.slice(0, 13)}…` : v}
+                        />
+                        <YAxis
+                            tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }}
+                            axisLine={false}
+                            tickLine={false}
+                            width={70}
+                            tickFormatter={(v: number) => Intl.NumberFormat(i18n.language === 'fr' ? 'fr-FR' : 'en-GB', { notation: 'compact', maximumFractionDigits: 1 }).format(v)}
+                        />
+                        <Tooltip
+                            formatter={(value: number | string, name: string) => [`${formatCurrency(Number(value), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}`, name]}
+                            cursor={{ fill: '#f1f5f9' }}
+                            contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', boxShadow: '0 10px 25px -5px rgba(0,0,0,.2)', padding: '10px 14px' }}
+                            itemStyle={{ fontSize: 12, fontWeight: 700, color: '#334155' }}
+                            labelStyle={{ fontSize: 10, fontWeight: 900, color: '#94a3b8', marginBottom: 4 }}
+                        />
+                        <Legend wrapperStyle={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', paddingTop: 8 }} />
+                        <Bar dataKey="ca_ttc" name={t('sales_tab.chart.ca')} fill="url(#gradCa)" radius={[6, 6, 0, 0]} maxBarSize={42} animationDuration={900} />
+                        <Bar dataKey="marge_brute" name={t('sales_tab.chart.margin')} fill="url(#gradMarge)" radius={[6, 6, 0, 0]} maxBarSize={42} animationDuration={900} />
                     </BarChart>
                     </ResponsiveContainer>
                 </div>
@@ -634,16 +663,26 @@ export default function StatistiquesFournisseur() {
                                             data={repartitionAchats?.data}
                                             cx="50%"
                                             cy="50%"
-                                            innerRadius={60}
+                                            innerRadius={62}
                                             outerRadius={100}
-                                            paddingAngle={5}
+                                            paddingAngle={2}
+                                            cornerRadius={6}
+                                            stroke="#ffffff"
+                                            strokeWidth={2}
                                             dataKey="value"
+                                            nameKey="nom"
+                                            animationDuration={900}
                                         >
                                             {repartitionAchats?.data.map((entry, index) => (
                                                 <Cell key={entry.nom} fill={COLORS[index % COLORS.length]} />
                                             ))}
                                         </Pie>
-                                         <Tooltip formatter={(value: number | string) => `${formatCurrency(Number(value), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}`} />
+                                         <Tooltip
+                                            formatter={(value: number | string, name: string) => [`${formatCurrency(Number(value), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}`, name]}
+                                            contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', boxShadow: '0 10px 25px -5px rgba(0,0,0,.2)', padding: '10px 14px' }}
+                                            itemStyle={{ fontSize: 12, fontWeight: 700, color: '#334155' }}
+                                            labelStyle={{ fontSize: 10, fontWeight: 900, color: '#94a3b8', marginBottom: 4 }}
+                                         />
                                     </PieChart>
                                 </ResponsiveContainer>
                             </div>

@@ -6,6 +6,7 @@ import {
     Calendar, ArrowLeft, AlertTriangle, ChevronUp, ChevronDown
 } from 'lucide-react';
 import { useRecharts } from '../../../hooks/useRecharts';
+import { chartTooltipProps, chartBarCursor } from '../../../lib/chartTheme';
 import { useInventaireAudit } from '../../../hooks/inventaire/useInventaireAudit';
 import { LocalizedDateInput } from '../../LocalizedDateInput';
 import { EmptyState } from '../../ui/EmptyState';
@@ -243,25 +244,29 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
                                     layout="vertical"
                                     margin={{ left: 40, right: 40 }}
                                 >
-                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
                                     <XAxis type="number" hide />
                                     <YAxis
                                         dataKey={groupBy === 'RAYON' ? "produit__rayon__name" : "produit__groupe__name"}
                                         type="category"
                                         tick={{ fontSize: 10, fontWeight: 'bold' }}
+                                        axisLine={false}
+                                        tickLine={false}
                                         width={120}
                                         tickFormatter={(val: string) => val || t('common:not_available')}
                                     />
                                     <Tooltip
+                                        cursor={chartBarCursor}
+                                        {...chartTooltipProps}
                                         formatter={(value: number) => [
                                             metric === 'VALEUR' ? formatCurrency(Math.abs(value)) : `${value} ${t('common:times')}`,
                                             metric === 'VALEUR' ? t('inventaire.detail.col_gap') : t('inventaire.audit.table.col_occurrences')
                                         ]}
-                                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -10px rgb(0 0 0 / 0.1)' }}
                                     />
                                     <Bar
                                         dataKey={metric === 'VALEUR' ? "total_valeur" : "nombre_lignes"}
-                                        radius={[0, 4, 4, 0]}
+                                        radius={[0, 6, 6, 0]}
+                                        maxBarSize={28}
                                         animationDuration={1500}
                                     >
                                         {(groupBy === 'RAYON' ? data?.par_rayon : data?.par_groupe)?.map((entry: AuditChartDatum) => (

@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRecharts } from '../hooks/useRecharts';
+import { chartGridProps, chartXAxisProps, chartYAxisProps, chartTooltipProps, chartLegendProps, chartBarCursor, chartLineCursor, chartPieProps } from '../lib/chartTheme';
 import {
   useCAEvolution,
   useMargesEvolution,
@@ -395,11 +396,11 @@ export default function ModuleFinancier() {
                         <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                    <XAxis dataKey="name" fontSize={12} />
-                    <YAxis tickFormatter={formatMoney} fontSize={12} />
-                    <Tooltip formatter={tooltipFormatterMoney} />
-                    <Legend />
+                    <CartesianGrid {...chartGridProps} />
+                    <XAxis dataKey="name" {...chartXAxisProps} />
+                    <YAxis tickFormatter={formatMoney} {...chartYAxisProps} width={70} />
+                    <Tooltip cursor={chartLineCursor} {...chartTooltipProps} formatter={tooltipFormatterMoney} />
+                    <Legend {...chartLegendProps} />
                     <Area
                       type="monotone"
                       dataKey="current"
@@ -441,13 +442,13 @@ export default function ModuleFinancier() {
               ) : (
                 <ResponsiveContainer width="100%" height={350}>
                   <BarChart data={margesChartData}>
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                    <XAxis dataKey="name" fontSize={12} />
-                    <YAxis yAxisId="left" tickFormatter={formatMoney} fontSize={12} />
-                    <YAxis yAxisId="right" orientation="right" unit="%" fontSize={12} />
-                    <Tooltip formatter={tooltipFormatterPercent} />
-                    <Legend />
-                    <Bar yAxisId="left" dataKey="marge" name={t('margin', 'Marge Brute')} fill="#3B82F6" radius={[4, 4, 0, 0]} />
+                    <CartesianGrid {...chartGridProps} />
+                    <XAxis dataKey="name" {...chartXAxisProps} />
+                    <YAxis yAxisId="left" tickFormatter={formatMoney} {...chartYAxisProps} width={70} />
+                    <YAxis yAxisId="right" orientation="right" unit="%" {...chartYAxisProps} />
+                    <Tooltip cursor={chartBarCursor} {...chartTooltipProps} formatter={tooltipFormatterPercent} />
+                    <Legend {...chartLegendProps} />
+                    <Bar yAxisId="left" dataKey="marge" name={t('margin', 'Marge Brute')} fill="#3B82F6" radius={[6, 6, 0, 0]} maxBarSize={42} animationDuration={900} />
                     <Line yAxisId="right" type="monotone" dataKey="taux" name={t('margin_rate', 'Taux %')} stroke="#F59E0B" strokeWidth={2} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -481,11 +482,11 @@ export default function ModuleFinancier() {
               ) : (
                 <ResponsiveContainer width="100%" height={350}>
                   <LineChart data={predictionsChartData}>
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                    <XAxis dataKey="name" fontSize={12} />
-                    <YAxis tickFormatter={formatMoney} fontSize={12} />
-                    <Tooltip formatter={tooltipFormatterOptional} />
-                    <Legend />
+                    <CartesianGrid {...chartGridProps} />
+                    <XAxis dataKey="name" {...chartXAxisProps} />
+                    <YAxis tickFormatter={formatMoney} {...chartYAxisProps} width={70} />
+                    <Tooltip cursor={chartLineCursor} {...chartTooltipProps} formatter={tooltipFormatterOptional} />
+                    <Legend {...chartLegendProps} />
                     <Line 
                       type="monotone" 
                       dataKey="historique" 
@@ -546,12 +547,13 @@ export default function ModuleFinancier() {
                     dataKey="ca"
                     nameKey="name"
                     label={pieLabelFormatter}
+                    {...chartPieProps}
                   >
                     {pieChartData.map((entry, index) => (
                       <Cell key={entry.name} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={tooltipFormatterMoney} />
+                  <Tooltip {...chartTooltipProps} formatter={tooltipFormatterMoney} />
                 </PieChart>
               </ResponsiveContainer>
             ) : (

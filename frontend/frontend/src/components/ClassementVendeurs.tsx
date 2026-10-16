@@ -4,6 +4,7 @@ import api from '../services/api';
 import { gooeyToast } from 'goey-toast';
 import { formatCurrency } from '../utils/formatters';
 import { useRecharts } from '../hooks/useRecharts';
+import { chartGridProps, chartXAxisProps, chartYAxisProps, chartTooltipProps, chartLegendProps, chartBarCursor, chartLineCursor } from '../lib/chartTheme';
 import { logger } from '../utils/logger'
 import i18n from '../i18n';
 
@@ -42,6 +43,12 @@ interface EvolutionSeries {
 const formatMoney = (value: number, currencySymbol: string) => {
   return formatCurrency(value, i18n.language.startsWith('en') ? 'en-GB' : 'fr-FR', currencySymbol);
 };
+
+const compactMoney = (v: number) =>
+  Intl.NumberFormat(i18n.language.startsWith('en') ? 'en-GB' : 'fr-FR', {
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(v);
 
 const getMedal = (rang: number) => {
   switch (rang) {
@@ -276,11 +283,11 @@ export default function ClassementVendeurs() {
           {chartData.length > 0 ? (
             <ResponsiveContainer width="100%" height={280}>
               <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                <XAxis dataKey="label" fontSize={11} />
-                <YAxis tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} fontSize={11} />
-                <Tooltip formatter={(value: number) => formatMoney(value, t('common:currency'))} />
-                <Legend />
+                <CartesianGrid {...chartGridProps} />
+                <XAxis dataKey="label" {...chartXAxisProps} />
+                <YAxis tickFormatter={compactMoney} domain={['auto', 'auto']} {...chartYAxisProps} />
+                <Tooltip cursor={chartLineCursor} {...chartTooltipProps} formatter={(value: number) => formatMoney(value, t('common:currency'))} />
+                <Legend {...chartLegendProps} />
                 {evolutionData.map((series, index) => (
                   <Line 
                     key={series.vendeur_id}
@@ -311,11 +318,11 @@ export default function ClassementVendeurs() {
           </h3>
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={ranking.data.slice(0, 5)} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                <XAxis type="number" tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} />
-                <YAxis type="category" dataKey="vendeur" width={100} fontSize={12} />
-                <Tooltip formatter={(value: number) => formatMoney(value, t('common:currency'))} />
-                <Bar dataKey="chiffre_affaires" name={t('sellers:ranking.revenue')} radius={[0, 4, 4, 0]}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
+                <XAxis type="number" tickFormatter={compactMoney} domain={[0, 'auto']} {...chartXAxisProps} />
+                <YAxis type="category" dataKey="vendeur" width={100} tick={{ fontSize: 11, fontWeight: 700, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                <Tooltip cursor={chartBarCursor} {...chartTooltipProps} formatter={(value: number) => formatMoney(value, t('common:currency'))} />
+                <Bar dataKey="chiffre_affaires" name={t('sellers:ranking.revenue')} radius={[0, 6, 6, 0]} maxBarSize={28} animationDuration={900}>
                   {ranking.data.slice(0, 5).map((entry) => (
                     <Cell key={entry.vendeur} fill={entry.vendeur_id === selectedVendeur ? '#10B981' : '#CBD5E1'} />
                   ))}
