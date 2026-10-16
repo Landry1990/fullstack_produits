@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../services/api';
 import { gooeyToast } from 'goey-toast';
-import { formatCurrency } from '../utils/formatters';
+import { formatCompact, formatCurrency } from '../utils/formatters';
 import { useRecharts } from '../hooks/useRecharts';
 import { chartGridProps, chartXAxisProps, chartYAxisProps, chartTooltipProps, chartLegendProps, chartBarCursor, chartLineCursor } from '../lib/chartTheme';
 import { logger } from '../utils/logger'
@@ -45,10 +45,7 @@ const formatMoney = (value: number, currencySymbol: string) => {
 };
 
 const compactMoney = (v: number) =>
-  Intl.NumberFormat(i18n.language.startsWith('en') ? 'en-GB' : 'fr-FR', {
-    notation: 'compact',
-    maximumFractionDigits: 1,
-  }).format(v);
+  formatCompact(v, i18n.language.startsWith('en') ? 'en-GB' : 'fr-FR');
 
 const getMedal = (rang: number) => {
   switch (rang) {

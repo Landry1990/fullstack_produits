@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Loader2, Download, AlertTriangle, Building2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import api from '../services/api';
-import { formatCurrency } from '../utils/formatters';
+import { formatCompact, formatCurrency } from '../utils/formatters';
 import { formatDate as formatDateDisplay } from '../utils/dateUtils';
 import { useRecharts } from '../hooks/useRecharts';
 import {
@@ -424,7 +424,7 @@ export default function StatistiquesFournisseur() {
                             axisLine={false}
                             tickLine={false}
                             width={70}
-                            tickFormatter={(v: number) => Intl.NumberFormat(i18n.language === 'fr' ? 'fr-FR' : 'en-GB', { notation: 'compact', maximumFractionDigits: 1 }).format(v)}
+                            tickFormatter={(v: number) => formatCompact(v, i18n.language === 'fr' ? 'fr-FR' : 'en-GB')}
                         />
                         <Tooltip
                             formatter={(value: number | string, name: string) => [`${formatCurrency(Number(value), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}`, name]}
