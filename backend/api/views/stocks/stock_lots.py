@@ -28,11 +28,15 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
     - List view: Lightweight serializer (8 fields)
     - Detail view: Complete serializer with all information
     """
-    queryset = StockLot.objects.select_related('produit', 'fournisseur').order_by('date_reception')
+    # produit__rayon / produit__forme : alimente produit_rayon/produit_forme
+    # du StockLotListSerializer (regroupement péremptions) sans N+1.
+    queryset = StockLot.objects.select_related(
+        'produit', 'produit__rayon', 'produit__forme', 'fournisseur'
+    ).order_by('date_reception')
     serializer_class = StockLotSerializer
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
     filterset_fields = ['produit', 'fournisseur']
-    ordering_fields = ['date_expiration', 'date_reception']
+    ordering_fields = ['date_expiration', 'date_reception', 'deplace_peremption_le']
     
     # Serializers optimisés
     list_serializer_class = StockLotListSerializer
@@ -63,7 +67,12 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
         include_empty = self.request.query_params.get('include_empty', 'false')
         if include_empty.lower() != 'true':
             qs = qs.filter(quantity_remaining__gt=0)
-            
+
+        # Étagère « proches péremption » : ?en_rayon_peremption=true/false
+        en_rayon = self.request.query_params.get('en_rayon_peremption')
+        if en_rayon is not None:
+            qs = qs.filter(deplace_peremption_le__isnull=en_rayon.lower() != 'true')
+
         return qs
 
     def perform_create(self, serializer):
@@ -177,6 +186,37 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
 
         notify_stock_changed([produit.id] if produit else [])
         return Response({'status': f'Lot mis à jour. {quantity_to_remove} unités sorties.', 'validated_by': validation_user.username})
+
+    @action(detail=False, methods=['post'])
+    def marquer_rayon_peremption(self, request):
+        """
+        Marque/démarque des lots comme « déplacés sur l'étagère proches
+        péremption ». Body : {lot_ids: [...], deplace: true|false}.
+        Non destructif (rien ne sort du stock) → pas de sudo ; chaque
+        collecte est tracée en audit.
+        """
+        lot_ids = request.data.get('lot_ids', [])
+        if not lot_ids or not isinstance(lot_ids, (list, tuple)):
+            return Response({'detail': 'Aucun lot sélectionné.'}, status=status.HTTP_400_BAD_REQUEST)
+        lot_ids = [parse_id(v, field='lot_ids') for v in lot_ids]
+        deplace = bool(request.data.get('deplace', True))
+
+        updated = StockLot.objects.filter(pk__in=lot_ids).update(
+            deplace_peremption_le=timezone.now() if deplace else None
+        )
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='StockLot',
+            object_id=','.join(map(str, lot_ids[:50])),
+            description=(
+                f"{updated} lot(s) {'déplacés sur' if deplace else 'retirés de'} "
+                f"l'étagère péremption par {request.user.username}"
+            ),
+            details={'lot_ids': lot_ids, 'deplace': deplace},
+            request=request,
+        )
+        return Response({'updated': updated})
 
     @action(detail=False, methods=['post'])
     @transaction.atomic

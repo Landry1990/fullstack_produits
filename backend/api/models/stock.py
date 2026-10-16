@@ -175,6 +175,13 @@ class StockLot(models.Model):
     date_expiration = models.DateField(blank=True, null=True)
     date_reception = models.DateTimeField(help_text="Date de réception du lot (pour FIFO)")
     is_divers = models.BooleanField(default=False, db_index=True, help_text="Lot provenant d'une commande diverse")
+    # Étagère physique « proches péremption » : le pharmacien y déplace les
+    # lots en fin de vie lors de ses collectes périodiques (fréquence libre).
+    # null = lot encore en rayon normal ; date = moment du déplacement.
+    deplace_peremption_le = models.DateTimeField(
+        null=True, blank=True,
+        help_text="Lot déplacé sur l'étagère « proches péremption »"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -207,6 +214,10 @@ class StockLot(models.Model):
                 fields=['produit'],
                 condition=~models.Q(quantity_reserved=0),
                 name='stocklot_qtyreserved_idx',
+            ),
+            models.Index(
+                fields=['deplace_peremption_le'],
+                name='stocklot_deplace_per_idx',
             ),
         ]
         constraints = [

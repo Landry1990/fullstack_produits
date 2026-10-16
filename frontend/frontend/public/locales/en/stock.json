@@ -895,7 +895,21 @@
         "tabs": {
             "dashboard": "Dashboard",
             "list": "List",
+            "shelf": "Shelf",
             "history": "History"
+        },
+        "shelf": {
+            "title": "\"Near-expiry\" shelf",
+            "hint": "Lots physically moved to the front shelf for priority clearance",
+            "badge": "Shelf",
+            "mark": "Move to shelf",
+            "unmark": "Remove from shelf",
+            "marked": "{{count}} lot(s) moved to the shelf.",
+            "unmarked": "{{count}} lot(s) removed from the shelf.",
+            "empty": "No lot on the shelf",
+            "moved_at": "Moved on",
+            "error_loading": "Unable to load the expiry shelf",
+            "error_marking": "Error while marking the shelf"
         },
         "stats": {
             "valeur_perimes": "Losses (Cost)",
@@ -981,6 +995,15 @@
             "exit_btn": "Exit"
         },
         "filters_label": "Filters",
+        "group_by": "Grouping",
+        "group_date": "By date",
+        "group_rayon": "By section",
+        "group_forme": "By form",
+        "no_group": "Unclassified",
+        "col_rayon": "Section",
+        "col_forme": "Form",
+        "col_shelf": "Shelf",
+        "export_excel": "Excel",
         "show_expired_only": "Already expired",
         "no_data": "No data available",
         "history_print_generated": "Document generated on",

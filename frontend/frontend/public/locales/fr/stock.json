@@ -97,7 +97,21 @@
         "tabs": {
             "dashboard": "Dashboard",
             "list": "Liste",
+            "shelf": "Étagère",
             "history": "Historique"
+        },
+        "shelf": {
+            "title": "Étagère « proches péremption »",
+            "hint": "Lots déplacés physiquement devant pour écouler en priorité",
+            "badge": "Étagère",
+            "mark": "Mettre sur l'étagère",
+            "unmark": "Retirer de l'étagère",
+            "marked": "{{count}} lot(s) placé(s) sur l'étagère.",
+            "unmarked": "{{count}} lot(s) retiré(s) de l'étagère.",
+            "empty": "Aucun lot sur l'étagère",
+            "moved_at": "Déplacé le",
+            "error_loading": "Impossible de charger l'étagère péremption",
+            "error_marking": "Erreur lors du marquage de l'étagère"
         },
         "stats": {
             "valeur_perimes": "Pertes (Coût)",
@@ -183,6 +197,15 @@
             "exit_btn": "Sortir"
         },
         "filters_label": "Filtres",
+        "group_by": "Classement",
+        "group_date": "Par date",
+        "group_rayon": "Par rayon",
+        "group_forme": "Par forme",
+        "no_group": "Non classé",
+        "col_rayon": "Rayon",
+        "col_forme": "Forme",
+        "col_shelf": "Étagère",
+        "export_excel": "Excel",
         "show_expired_only": "Déjà périmés",
         "no_data": "Aucune donnée disponible",
         "history_print_generated": "Document généré le",
