@@ -21,7 +21,9 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from api.audit_helpers import log_audit
 from api.models import (
+    AuditLog,
     CommandeProduit,
     Facture,
     FactureProduit,
@@ -144,6 +146,19 @@ class RapportInventoryMixin:
 
         if export_format == 'csv':
             import csv
+            log_audit(
+                user=request.user,
+                action=AuditLog.Action.EXPORT,
+                model_name='Rapport',
+                object_id=0,
+                description="Export CSV stocks morts",
+                details={
+                    'type': 'stocks_morts',
+                    'params': request.query_params.dict(),
+                    'count': len(results),
+                },
+                request=request,
+            )
             response = HttpResponse(content_type='text/csv')
             response['Content-Disposition'] = f'attachment; filename="stocks_morts_{timezone.localtime(timezone.now()).date()}.csv"'
             response.write('\ufeff'.encode('utf8'))
@@ -171,6 +186,16 @@ class RapportInventoryMixin:
         # datetime.combine(None, ...) levait un TypeError → 500. parse_date_param → 400.
         date_debut = datetime.combine(parse_date_param(db_param, field='date_debut'), time.min)
         date_fin = datetime.combine(parse_date_param(df_param, field='date_fin'), time.max)
+
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.EXPORT,
+            model_name='Rapport',
+            object_id=0,
+            description=f"Export Excel balance des stocks — {db_param} → {df_param}",
+            details={'type': 'balance_stock_excel', 'params': request.query_params.dict()},
+            request=request,
+        )
 
         produits = Produit.objects.filter(is_active=True).only('id', 'name', 'cip1', 'stock', 'stock_reserve')
         stock_initial_dict = {item['produit_id']: item['total'] or 0 for item in MouvementStock.objects.filter(date__lt=date_debut).values('produit_id').annotate(total=Sum('quantite'))}
@@ -393,6 +418,20 @@ class RapportInventoryMixin:
             type_suffix = ""
 
         is_pmp = data['is_pmp']
+
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.EXPORT,
+            model_name='Rapport',
+            object_id=0,
+            description=f"Export PDF récapitulatif valeur du stock ({valorisation}, type {stock_type})",
+            details={
+                'type': 'valeur_stock_pdf',
+                'valorisation': valorisation,
+                'stock_type': stock_type,
+            },
+            request=request,
+        )
 
         # 2. Construction du PDF
         buffer = BytesIO()

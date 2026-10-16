@@ -345,6 +345,22 @@ class PurgeViewSet(ViewSet):
         if not tables:
             return Response({'detail': 'Veuillez sélectionner au moins une table.'}, status=status.HTTP_400_BAD_REQUEST)
 
+        from api.audit_helpers import log_audit
+        from api.models.audit import AuditLog
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.EXPORT,
+            model_name='Purge',
+            object_id=0,
+            description=f"Export ZIP des données avant purge : {', '.join(tables)}",
+            details={
+                'tables': tables,
+                'date_from': request.data.get('date_from'),
+                'date_to': request.data.get('date_to'),
+            },
+            request=request,
+        )
+
         registry = _get_purge_registry()
 
         zip_buffer = io.BytesIO()
@@ -617,28 +633,27 @@ class PurgeViewSet(ViewSet):
                 tmp.write(chunk)
             tmp_path = tmp.name
 
+        # Tracé AVANT la restauration : écrasement complet de la base —
+        # la tentative doit rester visible même si le process est interrompu.
+        from api.audit_helpers import log_audit
+        from api.models.audit import AuditLog
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.OTHER,
+            model_name='Backup',
+            object_id=0,
+            description=f"Restauration de la base de données depuis {file_obj.name}",
+            request=request,
+        )
+
         try:
             self.stdout = StringIO()
             # Call the restoration command
             call_command('restore_database', tmp_path, no_confirm=True, stdout=self.stdout)
             output = self.stdout.getvalue()
-            
+
             # Clean up
             os.unlink(tmp_path)
-
-            try:
-                from api.audit_helpers import log_audit
-                from api.models.audit import AuditLog
-                log_audit(
-                    user=request.user,
-                    action=AuditLog.Action.OTHER,
-                    model_name='Backup',
-                    object_id=0,
-                    description=f"Restauration de la base de données depuis {file_obj.name}",
-                    request=request,
-                )
-            except Exception:
-                pass
 
             return Response({
                 'message': 'Base de données restaurée avec succès.',
@@ -779,6 +794,18 @@ class PurgeViewSet(ViewSet):
         t = threading.Thread(target=run_import, daemon=True)
         t.start()
 
+        from api.audit_helpers import log_audit
+        from api.models.audit import AuditLog
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.CREATE,
+            model_name='Produit',
+            object_id='BULK',
+            description=f"Import produits lancé depuis « {file_obj.name} » (job {job_id})",
+            details={'filename': file_obj.name, 'size': file_obj.size, 'job_id': job_id},
+            request=request,
+        )
+
         return Response({'job_id': job_id, 'message': 'Import lancé en arrière-plan.'}, status=status.HTTP_202_ACCEPTED)
 
     @action(detail=False, methods=['get'])
@@ -811,6 +838,17 @@ class PurgeViewSet(ViewSet):
         from django.http import HttpResponse
 
         from api.models import Produit
+
+        from api.audit_helpers import log_audit
+        from api.models.audit import AuditLog
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.EXPORT,
+            model_name='Produit',
+            object_id='BULK',
+            description="Export Excel du catalogue produits",
+            request=request,
+        )
 
         wb = openpyxl.Workbook()
         ws = wb.active or wb.create_sheet()
@@ -890,6 +928,23 @@ class PurgeViewSet(ViewSet):
         total_avant = Produit.objects.count()
         deleted, _ = qs.delete()
 
+        from api.audit_helpers import log_audit
+        from api.models.audit import AuditLog
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.DELETE,
+            model_name='Produit',
+            object_id='BULK',
+            description=f"Purge des produits : {deleted} supprimé(s), {conserves} conservé(s){' (produits sans ventes uniquement)' if sans_ventes else ''}",
+            details={
+                'deleted': deleted,
+                'conserves': conserves,
+                'total_avant': total_avant,
+                'sans_ventes': sans_ventes,
+            },
+            request=request,
+        )
+
         return Response({
             'deleted': deleted,
             'conserves': conserves,
@@ -907,6 +962,18 @@ class PurgeViewSet(ViewSet):
         path = os.path.join(settings.REPORTS_DIR, filename)
         if not os.path.exists(path):
             return Response({'detail': 'Fichier non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        from api.audit_helpers import log_audit
+        from api.models.audit import AuditLog
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.EXPORT,
+            model_name='Rapport',
+            object_id=0,
+            description=f"Téléchargement du rapport d'import « {filename} »",
+            details={'filename': filename},
+            request=request,
+        )
         return FileResponse(open(path, 'rb'), as_attachment=True, filename=filename)
 
     # ── Helpers : changelog + mise à jour manuelle ─────────────────────────
@@ -1066,6 +1133,18 @@ class PurgeViewSet(ViewSet):
 
         t = threading.Thread(target=self._run_update_thread, args=(script_path,), daemon=True)
         t.start()
+
+        from api.audit_helpers import log_audit
+        from api.models.audit import AuditLog
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.OTHER,
+            model_name='Maintenance',
+            object_id=0,
+            description=f"Mise à jour manuelle lancée (script {script_path.name})",
+            details={'script': str(script_path)},
+            request=request,
+        )
 
         return Response({
             'status': 'running',

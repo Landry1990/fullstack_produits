@@ -21,9 +21,11 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from ..audit_helpers import log_audit
+from ..audit_mixins import AuditedViewSetMixin
 from ..cache_mixins import SimpleListCacheMixin
 from ..cache_utils import ClientDebtCache
-from ..models import AyantDroit, Caisse, Client, DepotClient, Facture
+from ..models import AuditLog, AyantDroit, Caisse, Client, DepotClient, Facture
 from ..pagination import StandardResultsSetPagination
 from ..serializer_mixins import OptimizedSerializerMixin
 from ..serializers import AyantDroitSerializer, ClientSerializer, DepotClientSerializer
@@ -115,6 +117,15 @@ class ClientViewSet(SimpleListCacheMixin, OptimizedSerializerMixin, viewsets.Mod
         client.is_active = not client.is_active
         client.save(update_fields=['is_active'])
         self._invalidate_cache()
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='Client',
+            object_id=client.pk,
+            description=f"{'Activation' if client.is_active else 'Désactivation'} du client « {client.name} » (#{client.pk})",
+            details={'is_active': client.is_active},
+            request=request,
+        )
         return Response({
             'status': 'success',
             'is_active': client.is_active,
@@ -123,11 +134,29 @@ class ClientViewSet(SimpleListCacheMixin, OptimizedSerializerMixin, viewsets.Mod
 
     @transaction.atomic
     def perform_create(self, serializer):
-        serializer.save()
+        client = serializer.save()
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.CREATE,
+            model_name='Client',
+            object_id=client.pk,
+            description=f"Création client « {client.name} » (#{client.pk})",
+            details={'name': client.name, 'client_type': client.client_type},
+            request=self.request,
+        )
 
     @transaction.atomic
     def perform_update(self, serializer):
-        serializer.save()
+        client = serializer.save()
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='Client',
+            object_id=client.pk,
+            description=f"Modification client « {client.name} » (#{client.pk})",
+            details={'fields': sorted(serializer.validated_data.keys())},
+            request=self.request,
+        )
 
     @transaction.atomic
     def perform_destroy(self, instance):
@@ -136,6 +165,16 @@ class ClientViewSet(SimpleListCacheMixin, OptimizedSerializerMixin, viewsets.Mod
         from django.utils import timezone
         logger = logging.getLogger(__name__)
         logger.info(f'[ClientViewSet] Soft deleting client {instance.id} - {instance.name}')
+        # Tracé AVANT le soft-delete
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.DELETE,
+            model_name='Client',
+            object_id=instance.pk,
+            description=f"Mise à la corbeille du client « {instance.name} » (#{instance.pk})",
+            details={'name': instance.name},
+            request=self.request,
+        )
         instance.is_active = False
         instance.deleted_by = self.request.user
         instance.deleted_at = timezone.now()
@@ -280,6 +319,18 @@ class ClientViewSet(SimpleListCacheMixin, OptimizedSerializerMixin, viewsets.Mod
             blocking = bool(blocking)
         client.blocking_alerte = blocking
         client.save(update_fields=['message_alerte', 'blocking_alerte'])
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='Client',
+            object_id=client.pk,
+            description=f"Mise à jour de l'alerte du client « {client.name} » (#{client.pk})",
+            details={
+                'blocking_alerte': client.blocking_alerte,
+                'has_message': bool(client.message_alerte),
+            },
+            request=request,
+        )
         return Response({
             'message_alerte': client.message_alerte,
             'blocking_alerte': client.blocking_alerte,
@@ -326,7 +377,23 @@ class ClientViewSet(SimpleListCacheMixin, OptimizedSerializerMixin, viewsets.Mod
                 notes=data.get('notes', ''),
                 created_by=request.user
             )
-            
+
+            # Mouvement d'argent : dépôt/retrait sur le compte dépôt du client
+            log_audit(
+                user=request.user,
+                action=AuditLog.Action.OTHER,
+                model_name='DepotClient',
+                object_id=depot.pk,
+                description=f"{depot.get_type_display()} de {amount} sur le compte dépôt du client « {client.name} » (#{client.pk})",
+                details={
+                    'type': depot_type,
+                    'montant': str(amount),
+                    'mode_paiement': depot.mode_paiement,
+                    'client_id': client.pk,
+                },
+                request=request,
+            )
+
             return Response(DepotClientSerializer(depot).data, status=201)
         except Exception as e:
             return Response({'detail': str(e)}, status=400)
@@ -343,7 +410,17 @@ class ClientViewSet(SimpleListCacheMixin, OptimizedSerializerMixin, viewsets.Mod
                 clients = Client.objects.filter(id__in=ids)
                 count = clients.count()
                 clients.update(is_active=False, deleted_at=timezone.now(), deleted_by=request.user)
-                
+
+                log_audit(
+                    user=request.user,
+                    action=AuditLog.Action.DELETE,
+                    model_name='Client',
+                    object_id='BULK',
+                    description=f"Mise à la corbeille en masse : {count} client(s)",
+                    details={'ids': ids[:200], 'count': count},
+                    request=request,
+                )
+
                 return Response({
                     'status': 'success',
                     'message': f'{count} clients mis en corbeille avec succès.'
@@ -509,6 +586,17 @@ class ClientViewSet(SimpleListCacheMixin, OptimizedSerializerMixin, viewsets.Mod
         try:
             target, result = merge_clients(pk, target_id)
             self._invalidate_cache()
+            # Fusion irréversible : toutes les données du client source sont
+            # rattachées au client cible.
+            log_audit(
+                user=request.user,
+                action=AuditLog.Action.OTHER,
+                model_name='Client',
+                object_id=target.pk,
+                description=f"Fusion du client #{pk} dans le client « {target.name} » (#{target.pk})",
+                details={'source_id': str(pk), 'target_id': target.pk},
+                request=request,
+            )
             serializer = ClientDetailSerializer(target)
             return Response({**result, 'client': serializer.data})
         except Client.DoesNotExist:
@@ -518,7 +606,7 @@ class ClientViewSet(SimpleListCacheMixin, OptimizedSerializerMixin, viewsets.Mod
         except Exception as e:
             return Response({'detail': str(e)}, status=500)
 
-class AyantDroitViewSet(viewsets.ModelViewSet):
+class AyantDroitViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
     """API endpoint for ayants droit."""
     queryset = AyantDroit.objects.select_related('client').order_by('nom')
     serializer_class = AyantDroitSerializer

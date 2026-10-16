@@ -9,7 +9,7 @@ from rest_framework.response import Response
 
 from ...audit_helpers import log_audit
 from ...idempotency import idempotent_action
-from ...models import Avoir, LigneAvoir, MouvementStock, Produit, StockLot, StockObligation
+from ...models import AuditLog, Avoir, LigneAvoir, MouvementStock, Produit, StockLot, StockObligation
 from ...services.realtime import notify_stock_changed
 from ...services.stock_obligation_service import StockObligationService
 from ...pagination import StandardResultsSetPagination
@@ -34,13 +34,53 @@ class AvoirViewSet(viewsets.ModelViewSet):
     ordering = ['-date', '-created_at']
     
     def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
-    
+        avoir = serializer.save(created_by=self.request.user)
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.CREATE,
+            model_name='Avoir',
+            object_id=avoir.id,
+            description=f"Création de l'avoir {avoir.numero or avoir.id} — {avoir.fournisseur.name if avoir.fournisseur else (avoir.fournisseur_nom or 'Sans fournisseur')}",
+            details={
+                'numero': avoir.numero,
+                'fournisseur_id': avoir.fournisseur_id,
+                'type_avoir': avoir.type_avoir,
+            },
+            request=self.request
+        )
+
+    def perform_update(self, serializer):
+        fields = sorted(serializer.validated_data.keys())
+        avoir = serializer.save()
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='Avoir',
+            object_id=avoir.id,
+            description=f"Modification de l'avoir {avoir.numero or avoir.id}",
+            details={'fields': fields, 'status': avoir.status},
+            request=self.request
+        )
+
     def perform_destroy(self, instance):
         from django.utils import timezone
         if instance.status == 'VALIDEE':
             from rest_framework.exceptions import ValidationError
             raise ValidationError("Impossible de supprimer un avoir validé.")
+        # Tracé avant le soft-delete (numéro + fournisseur de l'avoir détruit)
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.DELETE,
+            model_name='Avoir',
+            object_id=instance.id,
+            description=f"Suppression de l'avoir {instance.numero or instance.id}",
+            details={
+                'numero': instance.numero,
+                'status': instance.status,
+                'fournisseur_id': instance.fournisseur_id,
+            },
+            request=self.request
+        )
         instance.is_active = False
         instance.deleted_by = self.request.user
         instance.deleted_at = timezone.now()
@@ -418,6 +458,39 @@ class LigneAvoirViewSet(viewsets.ModelViewSet):
             return LigneAvoirUpdateSerializer
         return super().get_serializer_class()
 
+    def perform_create(self, serializer):
+        ligne = serializer.save()
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.CREATE,
+            model_name='LigneAvoir',
+            object_id=ligne.id,
+            description=f"Ajout ligne avoir #{ligne.id} — {ligne.produit.name if ligne.produit else (ligne.produit_nom or 'Produit')} x{ligne.quantity} (Avoir {ligne.avoir.numero if ligne.avoir else '?'})",
+            details={
+                'avoir_id': ligne.avoir_id,
+                'produit_id': ligne.produit_id,
+                'quantity': ligne.quantity,
+            },
+            request=self.request
+        )
+
+    def perform_destroy(self, instance):
+        # Tracé avant suppression (avoir + produit de la ligne détruite)
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.DELETE,
+            model_name='LigneAvoir',
+            object_id=instance.id,
+            description=f"Suppression ligne avoir #{instance.id} — {instance.produit.name if instance.produit else (instance.produit_nom or 'Produit')} x{instance.quantity}",
+            details={
+                'avoir_id': instance.avoir_id,
+                'produit_id': instance.produit_id,
+                'quantity': instance.quantity,
+            },
+            request=self.request
+        )
+        super().perform_destroy(instance)
+
     @action(detail=False, methods=['post'])
     @transaction.atomic
     def bulk_create(self, request):
@@ -430,7 +503,19 @@ class LigneAvoirViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(data=items, many=True)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        lignes = serializer.save()
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.CREATE,
+            model_name='LigneAvoir',
+            object_id='BULK',
+            description=f"Création groupée de {len(lignes)} lignes d'avoir",
+            details={
+                'count': len(lignes),
+                'avoir_ids': sorted({ligne.avoir_id for ligne in lignes}),
+            },
+            request=request
+        )
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=['post'])
@@ -441,11 +526,30 @@ class LigneAvoirViewSet(viewsets.ModelViewSet):
         if not ids or not isinstance(ids, list):
             return Response({'detail': "Une liste d'IDs est requise."}, status=status.HTTP_400_BAD_REQUEST)
         deleted, _ = LigneAvoir.objects.filter(id__in=ids).delete()
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.DELETE,
+            model_name='LigneAvoir',
+            object_id='BULK',
+            description=f"Suppression groupée de {deleted} ligne(s) d'avoir",
+            details={'ids': ids, 'deleted': deleted},
+            request=request
+        )
         return Response({'deleted': deleted})
 
     def perform_update(self, serializer):
         with transaction.atomic():
+            fields = sorted(serializer.validated_data.keys())
             ligne = serializer.save()
+            log_audit(
+                user=self.request.user,
+                action=AuditLog.Action.UPDATE,
+                model_name='LigneAvoir',
+                object_id=ligne.id,
+                description=f"Modification ligne avoir #{ligne.id} (Avoir {ligne.avoir.numero if ligne.avoir else '?'})",
+                details={'fields': fields, 'avoir_id': ligne.avoir_id},
+                request=self.request
+            )
             avoir = ligne.avoir
             if avoir.status == 'BROUILLON' and avoir.produits.exists():
                 all_closed = not avoir.produits.filter(est_cloture=False).exists()

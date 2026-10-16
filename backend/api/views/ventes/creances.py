@@ -393,6 +393,21 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         wb.save(output)
         output.seek(0)
 
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.EXPORT,
+            model_name='Creance',
+            object_id=0,
+            description="Export Excel des créances",
+            details={
+                'client_id': client_id,
+                'date_debut': date_debut,
+                'date_fin': date_fin,
+                'history': history,
+            },
+            request=request
+        )
+
         response = HttpResponse(
             output.read(),
             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
@@ -494,6 +509,20 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         doc.build(story)
         buffer.seek(0)
         response.write(buffer.getvalue())
+
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.EXPORT,
+            model_name='Facture',
+            object_id=facture.id,
+            description=f"Impression reçu paiement #{paiement.id} — facture {facture.numero_facture or facture.id}",
+            details={
+                'paiement_id': paiement.id,
+                'numero_facture': facture.numero_facture,
+                'montant': float(paiement.montant),
+            },
+            request=request
+        )
         return response
 
     @action(detail=True, methods=['post'])
@@ -883,13 +912,28 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         # filtre ORM lèverait ValueError → 500.
         facture_id = parse_int(facture_id, field='facture')
 
-        FactureProduit.objects.filter(facture_id=facture_id).delete()
-        
+        deleted_count, _ = FactureProduit.objects.filter(facture_id=facture_id).delete()
+
+        facture = None
         try:
             facture = Facture.objects.get(id=facture_id)
             facture.calculate_totals()
             facture.save()
         except Facture.DoesNotExist:
             pass
+
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.DELETE,
+            model_name='FactureProduit',
+            object_id='BULK',
+            description=f"Vidage des lignes de la facture {facture.numero_facture if facture else '#' + str(facture_id)} ({deleted_count} élément(s) supprimé(s))",
+            details={
+                'facture_id': facture_id,
+                'numero_facture': facture.numero_facture if facture else None,
+                'lignes_supprimees': deleted_count,
+            },
+            request=request
+        )
 
         return Response({'detail': 'Contenu de la facture vidé.'})

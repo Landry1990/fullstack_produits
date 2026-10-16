@@ -8,7 +8,8 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from ...models import CommandeProduit, FactureProduit, LigneAvoirClient, Produit
+from ...audit_helpers import log_audit
+from ...models import AuditLog, CommandeProduit, FactureProduit, LigneAvoirClient, Produit
 from ...utils.validation import parse_id, parse_int
 
 
@@ -151,7 +152,14 @@ class ProduitStatsMixin:
             if produits_to_update:
                 with transaction.atomic():
                     Produit.objects.bulk_update(produits_to_update, ['rotation_moyenne'], batch_size=1000)
-                    
+
+            log_audit(
+                user=request.user, action=AuditLog.Action.OTHER,
+                model_name='Produit', object_id='BULK',
+                description=f"Recalcul global de la rotation moyenne — {len(produits_to_update)} produit(s) mis à jour",
+                details={'updated': len(produits_to_update), 'total': produits.count()},
+                request=request
+            )
             return Response({'message': f'Rotation recalculée. {len(produits_to_update)} produits mis à jour sur {produits.count()}.'})
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

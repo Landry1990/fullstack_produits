@@ -61,6 +61,37 @@ class AvoirClientViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(date__lte=parse_date_param(date_fin, field='date_fin'))
         return queryset
 
+    def perform_update(self, serializer):
+        fields = sorted(serializer.validated_data.keys())
+        avoir = serializer.save()
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='AvoirClient',
+            object_id=avoir.id,
+            description=f"Modification avoir client {avoir.numero or avoir.id}",
+            details={'fields': fields},
+            request=self.request
+        )
+
+    def perform_destroy(self, instance):
+        # Tracé avant suppression (montant + statut de l'avoir détruit)
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.DELETE,
+            model_name='AvoirClient',
+            object_id=instance.id,
+            description=f"Suppression avoir client {instance.numero or instance.id} ({instance.montant_total} F)",
+            details={
+                'numero': instance.numero,
+                'montant': float(instance.montant_total or 0),
+                'statut': instance.statut,
+                'client_id': instance.client_id,
+            },
+            request=self.request
+        )
+        super().perform_destroy(instance)
+
     def create(self, request, *args, **kwargs):
         validation_user, error_response = validate_sudo_mode(
             request, permission_attr='can_create_client_credit'
@@ -340,4 +371,14 @@ class AvoirClientViewSet(viewsets.ModelViewSet):
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         response['Content-Disposition'] = 'attachment; filename="avoirs_clients.xlsx"'
         wb.save(response)
+
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.EXPORT,
+            model_name='AvoirClient',
+            object_id=0,
+            description=f"Export Excel de {len(avoirs)} avoirs clients",
+            details={'count': len(avoirs), 'params': request.query_params.dict()},
+            request=request
+        )
         return response

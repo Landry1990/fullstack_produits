@@ -2,6 +2,53 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-10-16 — Audit : instrumentation massive des endpoints (`views/`)
+
+- Tracé `AuditLog` ajouté sur quasiment tous les endpoints d'écriture et
+  d'export du backend — suivi détaillé dans `AUDIT_JOURNAL.md`.
+- Nouveau `backend/api/audit_mixins.py` : `AuditedViewSetMixin` journalise
+  create/update/destroy automatiquement sur les ViewSets sans `perform_*`
+  custom ; logs explicites `log_audit` dans les méthodes existantes sinon.
+- **Ventes / caisse** : `marquer_payee`, `perform_create`/`perform_update`
+  factures, `creances/vider`, `facture-produits`, cycle de vie des postes
+  (`PosteVenteViewSet` activer/ouvrir/fermer/forcer-fermeture +
+  `PosteCaisseViewSet` CRUD via mixin), `AvoirClientViewSet` update/destroy.
+- **Stock / inventaire** : `StockLotViewSet` CRUD, `PromisViewSet`
+  (create/delivrer/annuler+réintégration en `STOCK_ADJ`/bulk/destroy),
+  `InventaireViewSet` create → **`INVENTORY_CREATE` enfin utilisé** +
+  destroy/pre_populate/lignes/import-csv/merge-duplicates,
+  `LigneInventaireViewSet`, `RelationTransformationViewSet`, ruptures,
+  signalements besoins, `bulk_transfer_to_shelf`, toggles actif/public,
+  `recalculate_rotation`.
+- **Commandes / prix** : `CommandeViewSet` CRUD + merge + ajout produits,
+  `CommandeProduitViewSet` (create/`bulk_sync` → **`PRICE_CHG` quand
+  `selling_price`/`cost_price`/`tva` réécrits**), `correct_lot`,
+  `OrderScheduleViewSet` + trigger-now, `AvoirViewSet`/`LigneAvoirViewSet`.
+- **Produit** : `perform_update` (→ `PRICE_CHG` si prix modifié) et
+  `perform_destroy` (soft-delete) tracés — complète le `perform_create`.
+- **Financier / admin** : `paiements.py` (montant+mode en détails),
+  `comptabilite.py` (4 ViewSets CRUD + `initialiser_historique` +
+  `creer_lettrage`), `system_admin.py` (restore, pitr_restore, run_update,
+  schedules, backups, check_update), `licence.py` (install/delete),
+  `code_backup.py` (restore tracé AVANT extraction du ZIP sur le code source),
+  `purge.py` (purge produits en masse, import, maj, exports).
+- **Imports / prix** : `import_views.py`, `produit_import.py` (CREATE BULK +
+  compteurs), `margin_views.py` (`PRICE_CHG` sur recalcul marges).
+- **Métier** : `clients.py` (CRUD + `add_depot` argent + `merge` + bulk_delete),
+  `users.py` (`LOGIN` sur connexion réussie + logout + TeamViewSet),
+  `fournisseurs.py` (create/update + toggle_active), `coupons.py` (utiliser),
+  `promotions.py`, `objectifs.py`, `configuration_objectifs.py`,
+  `categories.py`, `formes.py`, `groupes.py`, `substances.py`,
+  `planning.py` (shifts + congés approve/reject), `dci_admin.py`,
+  `interactions.py`, `settings.py`, `communication.py` (envoi SMS tracé).
+- **Exports** (`Action.EXPORT`) : `etat_inventaire.py` (PDF),
+  `historique_ventes.py` (xlsx), `rapports/inventory.py` (stocks morts CSV,
+  balance stock xlsx, valeur stock pdf), `categories.py` (2 PDF),
+  `code_backup.py` (ZIP code source), `purge.py` (3 exports).
+- Convention : `AuditedViewSetMixin` pour les ViewSets sans `perform_*` custom,
+  logs explicites sinon ; `object_id='BULK'` + compteurs pour les opérations
+  en masse ; tracé AVANT suppression ; `log_audit` ne bloque jamais la requête.
+
 ## 2026-10-16 — Audit : création produit tracée dans le journal
 
 - `ProduitViewSet.perform_create` ajouté : `POST /produits/` écrit
@@ -11,8 +58,8 @@
 - Bonus : `SearchCache.invalidate_all_products()` appelé à la création
   (comme update/delete) — un nouveau produit apparaît immédiatement dans
   les recherches au lieu d'attendre le TTL du cache.
-- ⚠️ Reste non tracés : `perform_update` et `perform_destroy` (soft delete)
-  du même ViewSet — à compléter si besoin.
+- ✅ `perform_update` (avec `PRICE_CHG` si le prix change) et
+  `perform_destroy` tracés depuis — voir entrée « instrumentation massive ».
 - Vérifié : création via API → 201 + `AuditLog` CREATE écrit ; déployé.
 
 ## 2026-10-16 — Perf backend : correction de 19 N+1 sur les listes
@@ -3728,6 +3775,34 @@ Couvre les 18 endpoints du mixin finance :
   `sort_by`, conditions.
 - **Exports** : `export_comptable_csv` (contenu CSV, montants format FR),
   `export_sage_i7` (journaux VT/CA, comptes 411100/701100/571100, libellé
+  `Regl Espèces` — régression du fix `get_mode_paiement_display`),
+  `livre_caisse_excel` (2 feuilles, solde jour = espèces + entrées − sorties),
+  `rapport_remises_excel`, `rapport_remises_details_excel`,
+  `rapport_general_excel`, `rapport_mensuel_pdf`, `rapport_par_dates_pdf`.
+- **Fiscal** : `rapport_fiscal_mensuel` — accompte droit commun réel
+  (CA HT × 2% + CAC 10%), marge administrée (marge brute × 14%), erreurs
+  sans settings/dates.
+- **Sécurité** : 401 non authentifié, 403 sans menu `statistiques`.
+
+### Tests morts réactivés (13 de plus)
+
+- `test_rapport_modular.py` + `test_rapport_dynamique_robustness.py` :
+  classes pytest pures sans `TestCase` → **jamais découvertes par le runner
+  Django** (ni erreur ni exécution). Converties en `TestCase` — 9 tests.
+- `test_stats_discrepancy.py` : 2 échecs 403 pré-existants — le test créait
+  un pharmacien sans `allowed_menus`, refusé à juste titre par
+  `CanAccessReports`. Ajout du menu `statistiques` dans le setup.
+
+### Vérification
+
+- 99/99 tests rapports passent (43 finance + 9 réactivés + marges +
+  créances + suggestions + discrepancy), `manage.py check` propre.
+
+### Reste à couvrir
+
+`purge.py` (13%), `backup_views.py` (16%), `commandes/commande_produits.py`
+(18%), `interactions.py` (24%), `consumers.py`/signals (0%).
+
   `Regl Espèces` — régression du fix `get_mode_paiement_display`),
   `livre_caisse_excel` (2 feuilles, solde jour = espèces + entrées − sorties),
   `rapport_remises_excel`, `rapport_remises_details_excel`,

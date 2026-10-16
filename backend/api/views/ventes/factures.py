@@ -318,8 +318,17 @@ class FactureViewSet(
         return Response(serializer.data)
 
     def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
+        facture = serializer.save(created_by=self.request.user)
         self._invalidate_cache()
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.CREATE,
+            model_name='Facture',
+            object_id=facture.id,
+            description=f"Création facture brouillon {facture.numero_facture or facture.id}",
+            details={'numero_facture': facture.numero_facture, 'status': facture.status},
+            request=self.request
+        )
 
     def perform_update(self, serializer):
         instance = serializer.instance
@@ -336,8 +345,18 @@ class FactureViewSet(
                 raise ValidationError({
                     'status': "Impossible de marquer cette facture comme payée : le montant encaissé ne couvre pas le total TTC."
                 })
-        serializer.save()
+        fields = sorted(serializer.validated_data.keys())
+        facture = serializer.save()
         self._invalidate_cache()
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='Facture',
+            object_id=facture.id,
+            description=f"Modification facture {facture.numero_facture or facture.id}",
+            details={'fields': fields, 'status': facture.status},
+            request=self.request
+        )
 
     def destroy(self, request, *args, **kwargs):
         """

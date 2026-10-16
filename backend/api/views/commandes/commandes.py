@@ -11,8 +11,10 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from ...audit_helpers import log_audit
 from ...cache_mixins import SimpleListCacheMixin
 from ...models import (
+    AuditLog,
     Commande,
     CommandeProduit,
     FactureProduitAllocation,
@@ -184,6 +186,35 @@ class CommandeViewSet(
 
 
 
+    def perform_create(self, serializer):
+        commande = serializer.save()
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.CREATE,
+            model_name='Commande',
+            object_id=commande.id,
+            description=f"Création de la commande #{commande.id} — {commande.fournisseur.name if commande.fournisseur else (commande.fournisseur_nom or 'Sans fournisseur')}",
+            details={
+                'numero_facture': commande.numero_facture,
+                'fournisseur_id': commande.fournisseur_id,
+                'type': commande.type,
+            },
+            request=self.request,
+        )
+
+    def perform_update(self, serializer):
+        fields = sorted(serializer.validated_data.keys())
+        commande = serializer.save()
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='Commande',
+            object_id=commande.id,
+            description=f"Modification de la commande #{commande.id} ({commande.numero_facture or 'sans n°'})",
+            details={'fields': fields, 'status': commande.status},
+            request=self.request,
+        )
+
     def perform_destroy(self, instance):
         from django.utils import timezone
         # Vérification manuelle avant soft delete
@@ -191,7 +222,22 @@ class CommandeViewSet(
         if FactureProduitAllocation.objects.filter(stock_lot__in=lots).exists():
              from rest_framework.exceptions import ValidationError
              raise ValidationError("Impossible de supprimer : Des lots de cette commande ont déjà été vendus ou utilisés.")
-        
+
+        # Tracé avant le soft-delete (statut + fournisseur de la commande)
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.DELETE,
+            model_name='Commande',
+            object_id=instance.id,
+            description=f"Suppression de la commande #{instance.id} ({instance.numero_facture or 'sans n°'})",
+            details={
+                'numero_facture': instance.numero_facture,
+                'status': instance.status,
+                'fournisseur_id': instance.fournisseur_id,
+            },
+            request=self.request,
+        )
+
         with transaction.atomic():
             instance.is_active = False
             instance.deleted_by = self.request.user

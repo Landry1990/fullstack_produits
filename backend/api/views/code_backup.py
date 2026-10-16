@@ -11,6 +11,9 @@ from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 
+from ..audit_helpers import log_audit
+from ..models import AuditLog
+
 
 class CodeBackupViewSet(ViewSet):
     permission_classes = [IsAdminUser]
@@ -33,6 +36,15 @@ class CodeBackupViewSet(ViewSet):
         """
         Create a ZIP of the source code.
         """
+        # Export très sensible : archive complète du code source du backend.
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.EXPORT,
+            model_name='CodeBackup',
+            object_id=0,
+            description="Export ZIP du code source (backend)",
+            request=request,
+        )
         project_root = settings.BASE_DIR
         buffer = io.BytesIO()
         
@@ -77,7 +89,19 @@ class CodeBackupViewSet(ViewSet):
             return Response({'detail': 'Le fichier doit être un .zip.'}, status=status.HTTP_400_BAD_REQUEST)
 
         project_root = settings.BASE_DIR
-        
+
+        # Tracé AVANT extraction : le ZIP est décompressé directement sur le
+        # code source — même une tentative (archive malveillante) doit être visible.
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.OTHER,
+            model_name='CodeBackup',
+            object_id=0,
+            description=f"Restauration du code source depuis le ZIP « {file_obj.name} »",
+            details={'filename': file_obj.name, 'size': file_obj.size},
+            request=request,
+        )
+
         try:
             with zipfile.ZipFile(file_obj, 'r') as zf:
                 unsafe_members = [m.filename for m in zf.infolist() if not self._is_safe_zip_member(m.filename, project_root)]

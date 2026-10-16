@@ -4,6 +4,8 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from ...audit_helpers import log_audit
+from ...models import AuditLog
 from ...models.stock import SignalementBesoin
 from ...serializers import SignalementBesoinSerializer
 
@@ -22,7 +24,45 @@ class SignalementBesoinViewSet(viewsets.ModelViewSet):
     search_fields = ['produit__name', 'note']
 
     def perform_create(self, serializer):
-        serializer.save(utilisateur=self.request.user)
+        signalement = serializer.save(utilisateur=self.request.user)
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.CREATE,
+            model_name='SignalementBesoin',
+            object_id=signalement.id,
+            description=f"Signalement besoin #{signalement.id} — {signalement.produit.name if signalement.produit else 'Produit'}",
+            details={'produit_id': signalement.produit_id},
+            request=self.request,
+        )
+
+    def perform_update(self, serializer):
+        fields = sorted(serializer.validated_data.keys())
+        signalement = serializer.save()
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='SignalementBesoin',
+            object_id=signalement.id,
+            description=f"Modification signalement besoin #{signalement.id}",
+            details={'fields': fields},
+            request=self.request,
+        )
+
+    def perform_destroy(self, instance):
+        # Tracé avant suppression (produit + statut du signalement détruit)
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.DELETE,
+            model_name='SignalementBesoin',
+            object_id=instance.id,
+            description=f"Suppression signalement besoin #{instance.id} — {instance.produit.name if instance.produit else 'Produit'}",
+            details={
+                'produit_id': instance.produit_id,
+                'statut': instance.statut,
+            },
+            request=self.request,
+        )
+        super().perform_destroy(instance)
 
     def _set_statut(self, pk, statut, err_msg):
         signalement = self.get_object()
@@ -30,6 +70,15 @@ class SignalementBesoinViewSet(viewsets.ModelViewSet):
             return Response({'error': err_msg}, status=status.HTTP_400_BAD_REQUEST)
         signalement.statut = statut
         signalement.save(update_fields=['statut'])
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='SignalementBesoin',
+            object_id=signalement.id,
+            description=f"Signalement besoin #{signalement.id} passé à « {signalement.get_statut_display()} » — {signalement.produit.name if signalement.produit else 'Produit'}",
+            details={'statut': statut, 'produit_id': signalement.produit_id},
+            request=self.request,
+        )
         return Response(SignalementBesoinSerializer(signalement).data)
 
     @action(detail=True, methods=['post'])
@@ -61,4 +110,13 @@ class SignalementBesoinViewSet(viewsets.ModelViewSet):
                 SignalementBesoin.Statut.IGNORE,
             ]
         ).delete()
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.DELETE,
+            model_name='SignalementBesoin',
+            object_id='BULK',
+            description=f"Purge de {deleted} signalement(s) de besoin traités",
+            details={'deleted': deleted},
+            request=request,
+        )
         return Response({'deleted': deleted})

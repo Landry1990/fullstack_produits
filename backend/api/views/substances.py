@@ -1,11 +1,12 @@
 from django.db.models import Count
 from rest_framework import filters, viewsets
 
+from ..audit_mixins import AuditedViewSetMixin
 from ..models import Substance
 from ..serializers import SubstanceSerializer
 
 
-class SubstanceViewSet(viewsets.ModelViewSet):
+class SubstanceViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
     queryset = Substance.objects.all().annotate(produits_count=Count('produits')).order_by('nom')
     serializer_class = SubstanceSerializer
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]

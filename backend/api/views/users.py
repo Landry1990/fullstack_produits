@@ -40,6 +40,7 @@ from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 
 from ..audit_helpers import log_audit
+from ..audit_mixins import AuditedViewSetMixin
 from ..centralized_configs import BaseViewSetConfig, StandardResultsSetPagination
 from ..models import AuditLog, Facture, FactureProduit, Profile, Team, UserDailySession
 from ..utils.dates import day_start
@@ -176,6 +177,17 @@ class CustomAuthToken(ObtainAuthToken):
         # (entrypoint, secours, essai) sont tous superusers avec un profil.
         profile = getattr(user, 'profile', None)
         must_change_password = bool(profile and profile.must_change_password)
+
+        # Audit : connexion réussie (les échecs sont loggés plus haut)
+        log_audit(
+            user=user,
+            action=AuditLog.Action.LOGIN,
+            model_name='Auth',
+            object_id=user.pk,
+            description=f"Connexion réussie : {user.username}",
+            details={'username': user.username, 'workstation': workstation, 'path': request.path},
+            request=request,
+        )
 
         return Response({
             'token': token.key,
@@ -540,7 +552,17 @@ class UserViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         # Révocation explicite des tokens pour invalider immédiatement la session API.
         # Idempotent: delete() retourne 0 si aucun token n'existe, sans erreur.
         Token.objects.filter(user=request.user).delete()
-        
+
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.OTHER,
+            model_name='Auth',
+            object_id=request.user.pk,
+            description=f"Déconnexion de {request.user.username} — token révoqué",
+            details={'username': request.user.username},
+            request=request,
+        )
+
         try:
             session = UserDailySession.objects.get(user=request.user, date=today)
             session.last_logout = datetime.datetime.now()
@@ -697,7 +719,7 @@ class UserDailySessionViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(users_stats)
 
 
-class TeamViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
+class TeamViewSet(AuditedViewSetMixin, BaseViewSetConfig, viewsets.ModelViewSet):
     """API endpoint pour les équipes d'opérateurs."""
     queryset = Team.objects.prefetch_related('members').order_by('ordering', 'name')
     serializer_class = TeamSerializer

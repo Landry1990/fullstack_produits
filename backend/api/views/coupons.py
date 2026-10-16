@@ -134,8 +134,23 @@ class CouponMonnaieViewSet(viewsets.ModelViewSet):
         if coupon.status != CouponMonnaie.Status.UTILISE:
             logger.error(f"ERREUR: Le coupon #{coupon.numero} n'a pas été correctement mis à jour (Statut: {coupon.status})")
             return Response(
-                {'detail': 'Erreur lors de la mise à jour du statut du coupon'}, 
+                {'detail': 'Erreur lors de la mise à jour du statut du coupon'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-        
+
+        # Consommation du coupon = remise encaissée (mouvement financier)
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.OTHER,
+            model_name='CouponMonnaie',
+            object_id=coupon.id,
+            description=f"Utilisation coupon #{coupon.numero}: {coupon.montant} F{f' sur facture {facture.id}' if facture else ''}",
+            details={
+                'numero': coupon.numero,
+                'montant': float(coupon.montant),
+                'facture_id': facture.id if facture else None,
+            },
+            request=request
+        )
+
         return Response(self.get_serializer(coupon).data)

@@ -284,12 +284,49 @@ class ProduitViewSet(
 
     @transaction.atomic
     def perform_update(self, serializer):
-        super().perform_update(serializer)
+        old_selling = serializer.instance.selling_price
+        old_cost = serializer.instance.cost_price
+        produit = serializer.save()
         SearchCache.invalidate_all_products()
+
+        fields = sorted(serializer.validated_data.keys())
+        price_changed = (
+            ('selling_price' in serializer.validated_data and produit.selling_price != old_selling)
+            or ('cost_price' in serializer.validated_data and produit.cost_price != old_cost)
+        )
+        details = {'fields': fields}
+        if price_changed:
+            details.update({
+                'old_selling_price': str(old_selling),
+                'new_selling_price': str(produit.selling_price),
+                'old_cost_price': str(old_cost),
+                'new_cost_price': str(produit.cost_price),
+            })
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.PRICE_CHANGE if price_changed else AuditLog.Action.UPDATE,
+            model_name='Produit',
+            object_id=produit.id,
+            description=(
+                f"Changement de prix du produit « {produit.name} »"
+                if price_changed else f"Modification du produit « {produit.name} »"
+            ),
+            details=details,
+            request=self.request,
+        )
 
     @transaction.atomic
     def perform_destroy(self, instance):
         from django.utils import timezone
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.DELETE,
+            model_name='Produit',
+            object_id=instance.id,
+            description=f"Suppression (corbeille) du produit « {instance.name} »",
+            details={'name': instance.name},
+            request=self.request,
+        )
         instance.is_active = False
         instance.deleted_by = self.request.user
         instance.deleted_at = timezone.now()

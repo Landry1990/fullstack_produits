@@ -9,7 +9,8 @@ from rest_framework import permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from api.models import Produit
+from api.audit_helpers import log_audit
+from api.models import AuditLog, Produit
 from api.services.margin_service import MarginService
 from api.utils.validation import parse_decimal, parse_id
 
@@ -44,6 +45,15 @@ class MarginViewSet(viewsets.ViewSet):
         Met à jour toutes les marges des produits
         """
         count = MarginService.update_product_margins()
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.PRICE_CHANGE,
+            model_name='Produit',
+            object_id='BULK',
+            description=f"Recalcul des marges sur tout le catalogue : {count} produit(s) mis à jour",
+            details={'count': count},
+            request=request,
+        )
         return Response({
             'message': f'{count} produits mis à jour',
             'count': count
@@ -64,6 +74,15 @@ class MarginViewSet(viewsets.ViewSet):
         product_ids = [parse_id(pid, field='product_ids') for pid in product_ids]
 
         count = MarginService.update_product_margins(product_ids)
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.PRICE_CHANGE,
+            model_name='Produit',
+            object_id='BULK',
+            description=f"Recalcul des marges sur {count} produit(s) sélectionné(s)",
+            details={'count': count, 'product_ids': product_ids[:200]},
+            request=request,
+        )
         return Response({
             'message': f'{count} produits mis à jour',
             'count': count

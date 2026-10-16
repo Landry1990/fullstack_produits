@@ -140,7 +140,14 @@ class ProduitBulkMixin:
         
         updated_count = Produit.objects.filter(id__in=ids).update(is_public=is_public)
         SearchCache.invalidate_all_products()
-        
+
+        log_audit(
+            user=request.user, action=AuditLog.Action.UPDATE,
+            model_name='Produit', object_id='BULK',
+            description=f"Mise à jour groupée de la visibilité publique : {updated_count} produit(s) → {'public' if is_public else 'privé'}",
+            details={'ids': ids, 'is_public': is_public, 'updated_count': updated_count},
+            request=request
+        )
         return Response({
             'status': 'success',
             'updated_count': updated_count,

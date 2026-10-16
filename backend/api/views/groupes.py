@@ -3,13 +3,14 @@ from rest_framework import filters, permissions, viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from ..audit_mixins import AuditedViewSetMixin
 from ..models import Groupe
 from ..pagination import StandardResultsSetPagination
 from ..serializers import GroupeSerializer
 from .category_merge import merge_category
 
 
-class GroupeViewSet(viewsets.ModelViewSet):
+class GroupeViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
     """
     ViewSet for viewing and editing Groupes.
     Allows standard CRUD operations.

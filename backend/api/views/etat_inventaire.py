@@ -17,7 +17,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from ..models import Forme, Groupe, Produit, Rayon, StockLot
+from ..audit_helpers import log_audit
+from ..models import AuditLog, Forme, Groupe, Produit, Rayon, StockLot
 from ..utils.validation import parse_id, parse_int
 
 
@@ -111,6 +112,24 @@ class EtatInventairePDFView(APIView):
         is_truncated = total_produits > MAX_PRODUITS
         if is_truncated:
             produits = produits[:MAX_PRODUITS]
+
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.EXPORT,
+            model_name='Rapport',
+            object_id=0,
+            description=f"Export état d'inventaire ({group_by}, {stock_display})",
+            details={
+                'type': 'etat_inventaire',
+                'group_by': group_by,
+                'stock_display': stock_display,
+                'filter_id': filter_id,
+                'format': request.query_params.get('format', 'pdf'),
+                'count': total_produits,
+                'truncated': is_truncated,
+            },
+            request=request,
+        )
 
         # Grouper les produits
         grouped_data = {}

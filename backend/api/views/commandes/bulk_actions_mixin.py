@@ -94,7 +94,23 @@ class CommandeBulkActionsMixin:
             msg = f"Quantité mise à jour dans la commande #{commande.id}"
         else:
             msg = f"Produit ajouté à la commande #{commande.id}"
-            
+
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.CREATE,
+            model_name='CommandeProduit',
+            object_id=item.id,
+            description=f"Ajout auto de « {produit.name} » x{quantity} à la commande #{commande.id}",
+            details={
+                'commande_id': commande.id,
+                'produit_id': produit.id,
+                'quantity': quantity,
+                'commande_created': created,
+                'line_created': item_created,
+            },
+            request=request,
+        )
+
         return Response({
             'status': 'success',
             'message': msg,
@@ -197,7 +213,23 @@ class CommandeBulkActionsMixin:
         message = f"Opération terminée : {summary['added']} produits ajoutés, {summary['updated']} mis à jour."
         if summary['errors']:
             message += f" ({len(summary['errors'])} erreurs)"
-            
+
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.CREATE,
+            model_name='CommandeProduit',
+            object_id='BULK',
+            description=f"Ajout groupé de produits aux commandes fournisseurs : {summary['added']} ajouté(s), {summary['updated']} mis à jour",
+            details={
+                'orders_involved': summary['orders_involved'],
+                'added': summary['added'],
+                'updated': summary['updated'],
+                'errors': summary['errors'],
+                'quantity': quantity,
+            },
+            request=request,
+        )
+
         return Response({
             'status': 'success',
             'message': message,
@@ -367,7 +399,22 @@ class CommandeBulkActionsMixin:
         # Supprimer les lignes fusionnées restées dans la source, puis la commande
         source_commande.produits.all().delete()
         source_commande.delete()
-        
+
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.OTHER,
+            model_name='Commande',
+            object_id=target_commande.id,
+            description=f"Fusion de la commande #{source_id} dans la commande #{target_commande.id} — source supprimée",
+            details={
+                'source_commande_id': source_id,
+                'target_commande_id': target_commande.id,
+                'lines_moved': lines_moved,
+                'lines_merged': lines_merged,
+            },
+            request=request,
+        )
+
         return Response({
             'status': 'success',
             'message': f'Fusion réussie : {lines_moved} lignes déplacées, {lines_merged} lignes fusionnées.',

@@ -11,7 +11,10 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 
+from ..audit_helpers import log_audit
+from ..audit_mixins import AuditedViewSetMixin
 from ..centralized_configs import BaseViewSetConfig
+from ..models import AuditLog
 from ..models.communication import InternalMessage
 from ..models.planning import LeaveRequest, ShiftAssignment, ShiftConfig, ShiftSchedule
 from ..models.users import Profile, Team
@@ -315,7 +318,7 @@ def _build_assignments(schedule, config, start_day):
     return assignments
 
 
-class ShiftConfigViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
+class ShiftConfigViewSet(AuditedViewSetMixin, BaseViewSetConfig, viewsets.ModelViewSet):
     """Configuration des règles de rotation (singleton — 1 seule instance)."""
     queryset = ShiftConfig.objects.all()
     serializer_class = ShiftConfigSerializer
@@ -345,6 +348,16 @@ class ShiftConfigViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         if schedule:
             self._regenerate_from_day(schedule, obj, today.day)
 
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.CREATE if _created else AuditLog.Action.UPDATE,
+            model_name='ShiftConfig',
+            object_id=obj.pk,
+            description=f"{'Création' if _created else 'Mise à jour'} de la configuration du planning (rotation/gardes){' — planning du mois régénéré' if schedule else ''}",
+            details={'fields': sorted(request.data.keys()), 'regenerated': bool(schedule)},
+            request=request,
+        )
+
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @staticmethod
@@ -358,7 +371,7 @@ class ShiftConfigViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
             ShiftAssignment.objects.bulk_create(assignments)
 
 
-class ShiftScheduleViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
+class ShiftScheduleViewSet(AuditedViewSetMixin, BaseViewSetConfig, viewsets.ModelViewSet):
     """Planning mensuel + affectations."""
     queryset = ShiftSchedule.objects.all()
     serializer_class = ShiftScheduleSerializer
@@ -367,7 +380,15 @@ class ShiftScheduleViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
     filterset_fields = ['month', 'is_published']
 
     def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
+        schedule = serializer.save(created_by=self.request.user)
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.CREATE,
+            model_name='ShiftSchedule',
+            object_id=schedule.pk,
+            description=f"Création du planning {schedule.month.strftime('%m/%Y')} (#{schedule.pk})",
+            request=self.request,
+        )
 
     @action(detail=True, methods=['post'], permission_classes=[IsAdminUser])
     def generate(self, request, pk=None):
@@ -421,6 +442,20 @@ class ShiftScheduleViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
 
         ShiftAssignment.objects.bulk_create(assignments)
 
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.OTHER,
+            model_name='ShiftSchedule',
+            object_id=schedule.pk,
+            description=f"Génération des affectations du planning {schedule.month.strftime('%m/%Y')} — {len(assignments)} affectation(s) à partir du jour {start_day}",
+            details={
+                'month': schedule.month.isoformat()[:7],
+                'from_day': start_day,
+                'count': len(assignments),
+            },
+            request=request,
+        )
+
         # Recharger avec les relations
         schedule.refresh_from_db()
         serializer = self.get_serializer(schedule)
@@ -432,6 +467,15 @@ class ShiftScheduleViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         schedule = self.get_object()
         schedule.is_published = True
         schedule.save()
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='ShiftSchedule',
+            object_id=schedule.pk,
+            description=f"Publication du planning {schedule.month.strftime('%m/%Y')} (#{schedule.pk})",
+            details={'month': schedule.month.isoformat()[:7]},
+            request=request,
+        )
         serializer = self.get_serializer(schedule)
         return Response(serializer.data)
 
@@ -462,6 +506,20 @@ class ShiftScheduleViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         obj, created = ShiftAssignment.objects.update_or_create(
             schedule=schedule, user=user, date=date,
             defaults={'shift_type': shift_type, 'notes': notes}
+        )
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='ShiftAssignment',
+            object_id=obj.pk,
+            description=f"Affectation {shift_type} pour {user.username} le {date_str} (planning {schedule.month.strftime('%m/%Y')})",
+            details={
+                'user_id': user.id,
+                'date': date_str,
+                'shift_type': shift_type,
+                'created': created,
+            },
+            request=request,
         )
         serializer = ShiftAssignmentSerializer(obj)
         return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
@@ -526,13 +584,22 @@ class ShiftScheduleViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
             ))
 
         InternalMessage.objects.bulk_create(messages)
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.OTHER,
+            model_name='ShiftSchedule',
+            object_id=schedule.pk,
+            description=f"Envoi du planning {month_label} aux opérateurs ({len(messages)} message(s) interne(s))",
+            details={'sent': len(messages), 'month': month_label},
+            request=request,
+        )
         return Response({
             'sent': len(messages),
             'month': month_label,
         })
 
 
-class LeaveRequestViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
+class LeaveRequestViewSet(AuditedViewSetMixin, BaseViewSetConfig, viewsets.ModelViewSet):
     """Demandes de congé."""
     queryset = LeaveRequest.objects.all()
     serializer_class = LeaveRequestSerializer
@@ -549,7 +616,16 @@ class LeaveRequestViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         return qs
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        leave = serializer.save(user=self.request.user)
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.CREATE,
+            model_name='LeaveRequest',
+            object_id=leave.pk,
+            description=f"Demande de congé de {self.request.user.username} ({leave.start_date} → {leave.end_date})",
+            details={'leave_type': leave.leave_type},
+            request=self.request,
+        )
 
     @action(detail=True, methods=['patch'], permission_classes=[IsAdminUser])
     def approve(self, request, pk=None):
@@ -559,6 +635,15 @@ class LeaveRequestViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         leave.approved_by = request.user
         leave.approved_at = datetime.datetime.now()
         leave.save()
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='LeaveRequest',
+            object_id=leave.pk,
+            description=f"Demande de congé #{leave.pk} approuvée ({leave.user.username})",
+            details={'decision': 'APPROVED', 'user_id': leave.user_id},
+            request=request,
+        )
         serializer = self.get_serializer(leave)
         return Response(serializer.data)
 
@@ -570,6 +655,15 @@ class LeaveRequestViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         leave.approved_by = request.user
         leave.approved_at = datetime.datetime.now()
         leave.save()
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='LeaveRequest',
+            object_id=leave.pk,
+            description=f"Demande de congé #{leave.pk} refusée ({leave.user.username})",
+            details={'decision': 'REJECTED', 'user_id': leave.user_id},
+            request=request,
+        )
         serializer = self.get_serializer(leave)
         return Response(serializer.data)
 

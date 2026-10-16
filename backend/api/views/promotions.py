@@ -2,13 +2,14 @@ from django.db.models import Count
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, viewsets
 
+from ..audit_mixins import AuditedViewSetMixin
 from ..models import Promotion
 from ..pagination import StandardResultsSetPagination
 from ..serializers import PromotionSerializer
 from .settings import IsAdminOrMenuAllowed
 
 
-class PromotionViewSet(viewsets.ModelViewSet):
+class PromotionViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
     """
     API endpoint for promotions with optimizations:
     - SQL annotations for product/rayon counts (avoids N+1 queries)

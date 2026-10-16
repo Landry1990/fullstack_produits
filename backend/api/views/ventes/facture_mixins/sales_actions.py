@@ -530,6 +530,19 @@ class FactureSalesMixin:
         facture.status = Facture.Status.PAYEE
         facture.save(update_fields=['status'])
 
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='Facture',
+            object_id=facture.id,
+            description=f"Facture {facture.numero_facture or facture.id} marquée payée ({facture.total_ttc:,.0f} F)",
+            details={
+                'numero_facture': facture.numero_facture,
+                'total_ttc': float(facture.total_ttc),
+            },
+            request=request
+        )
+
         return Response({'status': 'Facture marquée comme payée.'})
 
     @action(detail=False, methods=['post'], url_path='mobile')

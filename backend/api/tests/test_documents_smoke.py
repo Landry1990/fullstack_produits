@@ -217,10 +217,6 @@ GET_DOCUMENT_ROUTES = {
 
 # Endpoints POST qui génèrent un document (payload isolé, sans effet de bord)
 POST_DOCUMENT_ROUTES = {
-    'produit-generate-labels': {
-        'payload': lambda s: {'products': [{'id': s.produit.pk, 'quantity': 1}]},
-        'expect': 'pdf',
-    },
     'promis-imprimer-ticket-groupe': {
         'payload': lambda s: {'ids': [s.promis.pk]},
         'expect': 'pdf',

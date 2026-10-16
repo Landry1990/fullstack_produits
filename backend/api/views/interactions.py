@@ -17,8 +17,9 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from ..audit_helpers import log_audit
 from ..centralized_configs import StandardResultsSetPagination
-from ..models import DrugInteraction, Substance
+from ..models import AuditLog, DrugInteraction, Substance
 from ..serializers import DrugInteractionSerializer
 from ..utils.validation import parse_id
 
@@ -162,6 +163,22 @@ class DrugInteractionViewSet(viewsets.ModelViewSet):
                 else:
                     updated += 1
 
+            log_audit(
+                user=request.user,
+                action=AuditLog.Action.CREATE,
+                model_name='DrugInteraction',
+                object_id='BULK',
+                description=f"Import CSV interactions « {file.name} » : {created} créées, {updated} mises à jour, {skipped} ignorées",
+                details={
+                    'filename': file.name,
+                    'created': created,
+                    'updated': updated,
+                    'skipped': skipped,
+                    'errors_count': len(errors),
+                },
+                request=request,
+            )
+
             return Response({
                 'created': created,
                 'updated': updated,
@@ -184,7 +201,20 @@ class DrugInteractionViewSet(viewsets.ModelViewSet):
             substance_a=pair_a, substance_b=pair_b
         ).exists():
             raise ValidationError("Cette paire de substances a déjà une interaction.")
-        serializer.save(substance_a=pair_a, substance_b=pair_b)
+        instance = serializer.save(substance_a=pair_a, substance_b=pair_b)
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.CREATE,
+            model_name='DrugInteraction',
+            object_id=instance.pk,
+            description=f"Création interaction {pair_a.nom} ↔ {pair_b.nom} ({instance.gravity})",
+            details={
+                'substance_a_id': pair_a.id,
+                'substance_b_id': pair_b.id,
+                'gravity': instance.gravity,
+            },
+            request=self.request,
+        )
 
     def perform_update(self, serializer):
         sub_a = serializer.validated_data.get('substance_a', serializer.instance.substance_a)
@@ -197,4 +227,29 @@ class DrugInteractionViewSet(viewsets.ModelViewSet):
             substance_a=pair_a, substance_b=pair_b
         ).exclude(pk=serializer.instance.pk).exists():
             raise ValidationError("Cette paire de substances a déjà une interaction.")
-        serializer.save(substance_a=pair_a, substance_b=pair_b)
+        instance = serializer.save(substance_a=pair_a, substance_b=pair_b)
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='DrugInteraction',
+            object_id=instance.pk,
+            description=f"Modification interaction {pair_a.nom} ↔ {pair_b.nom} ({instance.gravity})",
+            details={
+                'fields': sorted(serializer.validated_data.keys()),
+                'gravity': instance.gravity,
+            },
+            request=self.request,
+        )
+
+    def perform_destroy(self, instance):
+        # Tracé AVANT suppression
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.DELETE,
+            model_name='DrugInteraction',
+            object_id=instance.pk,
+            description=f"Suppression interaction {instance.substance_a.nom} ↔ {instance.substance_b.nom}",
+            details={'gravity': instance.gravity},
+            request=self.request,
+        )
+        instance.delete()

@@ -29,6 +29,23 @@ class FactureProduitViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     http_method_names = ['get', 'post', 'head', 'options']
 
+    def perform_create(self, serializer):
+        ligne = serializer.save()
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.CREATE,
+            model_name='FactureProduit',
+            object_id=ligne.id,
+            description=f"Ajout ligne facture #{ligne.id} — {ligne.produit.name if ligne.produit else ligne.produit_nom} x{ligne.quantity}",
+            details={
+                'facture_id': ligne.facture_id,
+                'produit_id': ligne.produit_id,
+                'quantity': ligne.quantity,
+                'selling_price': str(ligne.selling_price),
+            },
+            request=self.request
+        )
+
     @action(detail=False, methods=['post'])
     @transaction.atomic
     def bulk_create(self, request):
@@ -45,7 +62,19 @@ class FactureProduitViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(data=items, many=True)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        lignes = serializer.save()
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.CREATE,
+            model_name='FactureProduit',
+            object_id='BULK',
+            description=f"Création groupée de {len(lignes)} lignes de facture",
+            details={
+                'count': len(lignes),
+                'facture_ids': sorted({ligne.facture_id for ligne in lignes}),
+            },
+            request=request
+        )
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['post'])
