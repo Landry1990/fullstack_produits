@@ -267,7 +267,16 @@ class FactureSalesMixin:
             required_permissions = [p for p in required_permissions if p != 'can_modify_price']
 
         validation_user = user
-        if required_permissions:
+        # En caisse centralisée aucune permission n'est exigée, mais le
+        # vendeur confirme quand même son identité via sudo : si des
+        # credentials sont fournis, le validateur devient le vendeur
+        # (created_by = validation_user dans SaleFinalizer).
+        sudo_data = data.get('sudo')
+        sudo_creds_provided = bool(
+            data.get('validated_by_id') or data.get('sudo_password')
+            or (isinstance(sudo_data, dict) and (sudo_data.get('validated_by_id') or sudo_data.get('sudo_password')))
+        )
+        if required_permissions or sudo_creds_provided:
             try:
                 validation_user, error_res = validate_sudo_mode(
                     request,

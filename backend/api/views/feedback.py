@@ -8,7 +8,8 @@ from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from ..models import Feedback
+from ..audit_helpers import log_audit
+from ..models import AuditLog, Feedback
 from ..services.email_service import email_service
 
 
@@ -41,6 +42,15 @@ class FeedbackListView(APIView):
         serializer = FeedbackSerializer(data=request.data)
         if serializer.is_valid():
             feedback = serializer.save(user=request.user)
+            log_audit(
+                user=request.user,
+                action=AuditLog.Action.CREATE,
+                model_name='Feedback',
+                object_id=feedback.id,
+                description=f"Feedback « {feedback.subject} » ({feedback.category}/{feedback.priority})",
+                details={'category': feedback.category, 'priority': feedback.priority},
+                request=request,
+            )
             # Envoi SMTP en thread daemon : ne pas bloquer la réponse si le
             # serveur mail est lent ou non configuré (fréquent chez les clients).
             threading.Thread(

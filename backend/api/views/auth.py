@@ -5,6 +5,9 @@ from rest_framework.response import Response
 
 from api.menu_hierarchy import MENU_HIERARCHY, get_all_menu_keys, get_admin_only_keys
 
+from ..audit_helpers import log_audit
+from ..models import AuditLog
+
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -18,9 +21,25 @@ def verify_password(request):
 
     user = request.user
     if user.check_password(password):
+        log_audit(
+            user=user,
+            action=AuditLog.Action.OTHER,
+            model_name='User',
+            object_id=user.id,
+            description=f"Vérification du mot de passe réussie pour {user.username}",
+            request=request,
+        )
         return Response({'success': True}, status=status.HTTP_200_OK)
-    else:
-        return Response({'success': False, 'error': 'Mot de passe incorrect'}, status=status.HTTP_403_FORBIDDEN)
+    log_audit(
+        user=user,
+        action=AuditLog.Action.OTHER,
+        model_name='User',
+        object_id=user.id,
+        description=f"Échec de vérification du mot de passe pour {user.username}",
+        details={'result': 'denied'},
+        request=request,
+    )
+    return Response({'success': False, 'error': 'Mot de passe incorrect'}, status=status.HTTP_403_FORBIDDEN)
 
 
 @api_view(['GET'])

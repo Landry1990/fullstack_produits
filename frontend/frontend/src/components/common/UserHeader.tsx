@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import communicationService from '../../services/communicationService';
 import MessagingModal from './MessagingModal';
 import FeedbackModal from './FeedbackModal';
-import { Bell, ChevronDown, LogOut, Moon, Sun, MessageSquare, User as UserIcon, MessageCircle, Key } from 'lucide-react';
+import { ChevronDown, LogOut, Moon, Sun, MessageSquare, User as UserIcon, MessageCircle, Key } from 'lucide-react';
 import { playNotificationSound } from '../../utils/audio';
 import { logger } from '../../utils/logger'
 import { AnimatePresence, motion } from 'framer-motion';
@@ -80,64 +80,6 @@ export default function UserHeader() {
     <>
       <header className="flex items-center justify-end">
         <div className="flex items-center gap-2">
-          
-          {/* Notifications / Messages Bell */}
-          <button
-            onClick={() => setIsMessagingOpen(true)}
-            className="relative p-2 rounded-full hover:bg-emerald-50 transition-colors"
-            title={t('common:messaging')}
-            aria-label={t('common:messaging')}
-          >
-            <Bell size={16} className="text-slate-500" />
-            {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold min-w-5 h-5 px-1 flex items-center justify-center rounded-full">
-                {unreadCount}
-              </span>
-            )}
-          </button>
-
-          {/* Feedback Button — réservé aux admins */}
-          {user?.is_superuser && (
-            <button
-              onClick={() => setIsFeedbackOpen(true)}
-              className="p-2 rounded-full hover:bg-emerald-50 transition-colors"
-              title={t('common:feedback.label')}
-              aria-label={t('common:feedback.label')}
-            >
-              <MessageCircle size={16} className="text-slate-500" />
-            </button>
-          )}
-
-          {/* Language Switcher — toujours visible */}
-          <div className="flex items-center gap-0.5 bg-slate-100 rounded-lg p-0.5">
-            <button
-              onClick={() => switchLanguage('fr')}
-              className={`px-2 py-1 rounded-md text-xs font-bold transition-all ${
-                i18n.language === 'fr' || i18n.language.startsWith('fr')
-                  ? 'bg-emerald-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-700'
-              }`}
-              title={t('common:french')}
-              aria-pressed={i18n.language === 'fr' || i18n.language.startsWith('fr')}
-            >
-              FR
-            </button>
-            <button
-              onClick={() => switchLanguage('en')}
-              className={`px-2 py-1 rounded-md text-xs font-bold transition-all ${
-                i18n.language === 'en' || i18n.language.startsWith('en')
-                  ? 'bg-emerald-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-700'
-              }`}
-              title={t('common:english')}
-              aria-pressed={i18n.language === 'en' || i18n.language.startsWith('en')}
-            >
-              EN
-            </button>
-          </div>
-
-          <div className="h-6 w-[1px] bg-gray-300 mx-0.5"></div>
-
           {/* User Profile Area */}
           <div className="relative">
             <button
@@ -149,8 +91,15 @@ export default function UserHeader() {
               aria-expanded={isMenuOpen}
               aria-haspopup="true"
             >
-              <div className="size-7 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shadow-md ring-2 ring-gray-200 overflow-hidden">
-                {user.username.charAt(0).toUpperCase()}
+              <div className="relative">
+                <div className="size-7 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shadow-md ring-2 ring-gray-200 overflow-hidden">
+                  {user.username.charAt(0).toUpperCase()}
+                </div>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-caption font-bold min-w-4 h-4 px-1 flex items-center justify-center rounded-full ring-2 ring-white">
+                    {unreadCount}
+                  </span>
+                )}
               </div>
               <div className="hidden sm:block text-left mr-1">
                 <p className="text-sm font-semibold text-slate-700 leading-none mb-1">
@@ -188,7 +137,7 @@ export default function UserHeader() {
 
                 <div className="p-2">
                   <button 
-                    onClick={() => setIsMessagingOpen(true)}
+                    onClick={() => { setIsMenuOpen(false); setIsMessagingOpen(true); }}
                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm hover:bg-emerald-50 hover:text-emerald-600 transition-colors text-left"
                   >
                     <MessageSquare size={18} />
@@ -203,6 +152,17 @@ export default function UserHeader() {
                     {isMidnightTheme ? <Sun size={18} className="text-amber-500" /> : <Moon size={18} className="text-emerald-600" />}
                     <span>{isMidnightTheme ? t('common:light_mode') : t('common:dark_mode')}</span>
                   </button>
+
+                  {/* Feedback — réservé aux admins */}
+                  {user?.is_superuser && (
+                    <button
+                      onClick={() => { setIsMenuOpen(false); setIsFeedbackOpen(true); }}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm hover:bg-emerald-50 hover:text-emerald-600 transition-colors text-left"
+                    >
+                      <MessageCircle size={18} />
+                      <span>{t('common:feedback.label')}</span>
+                    </button>
+                  )}
 
                   <div className="flex items-center gap-2 p-2 mt-1">
                     <button

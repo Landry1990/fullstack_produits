@@ -215,7 +215,13 @@ export function buildTicketEscpos(
   parts.push(esc.line(settings.ticket_footer_message || t('ticket.visit_thanks')));
   if (barcodeValue) {
     parts.push(esc.barcodeCODE128(barcodeValue));
+    // Le HRI est désactivé (GS H 0) — on imprime le numéro en clair sous le
+    // code-barres comme dans l'aperçu HTML, avec de l'air autour.
+    parts.push(esc.lf(), esc.lf());
+    parts.push(esc.line(barcodeValue));
+    parts.push(esc.lf());
   }
+  parts.push(esc.line('ZENITH POS SYSTEM'));
   parts.push(esc.lf(), esc.lf());
   parts.push(esc.left());
 

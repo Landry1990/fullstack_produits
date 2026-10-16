@@ -2,6 +2,54 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-10-16 — Fix vendeur sudo ignoré en caisse centralisée
+
+- **Régression corrigée** : depuis le commit POS mobile (`2dc17d18`),
+  `validate_sudo_mode` n'était appelé dans `finaliser` que si
+  `required_permissions` était non vide — or en caisse centralisée il est
+  vide pour une vente normale. Les credentials sudo envoyés par le frontend
+  (le vendeur confirme son identité à chaque vente) étaient donc ignorés →
+  `created_by` = compte connecté au lieu du vendeur.
+- `sales_actions.py` : `validate_sudo_mode` est maintenant aussi appelé
+  quand des credentials sudo sont fournis sans permission requise —
+  vendeur = validateur sudo à nouveau ; sans credentials (mobile), le
+  vendeur reste le compte connecté.
+- 3 tests de non-régression ajoutés (`test_facturation.py`) : sudo →
+  vendeur = validateur, mauvais mot de passe → 403, sans sudo → vendeur =
+  compte connecté. 11/11 OK.
+
+## 2026-10-16 — Audit : derniers items + fix actions hors choices
+
+- `AUDIT_JOURNAL.md` intégralement traité — 5 items restants bouclés.
+- **Bug silencieux corrigé** : `avoirs.py` loguait `'AUTO_VALIDATE'` (13
+  caractères) dans un champ `max_length=10` → les lignes étaient rejetées
+  par PostgreSQL en silence (log_audit avale l'erreur). Choices
+  `VALIDATE`/`AUTO_VAL` ajoutés à `AuditLog.Action` + migration 0275.
+- Nouveaux tracés : `feedback` post (CREATE), `licence` dismiss
+  (UPDATE), `qz` sign (OTHER — usage clé privée serveur), `auth`
+  verify_password (OTHER succès **et** échec — signal de sécurité),
+  tests WhatsApp/Telegram (OTHER sur envoi réel).
+- `lock`/`unlock` commandes/inventaires **exclus volontairement** :
+  verrous Redis éphémères 30 s sur ouverture de formulaire, aucune
+  donnée modifiée — documenté dans `AUDIT_JOURNAL.md`.
+- Pattern sudo : convention désormais systématique — log métier +
+  `SUDO_VAL` distincts.
+
+## 2026-10-16 — UI : horloge permanente dans la barre du haut
+
+- Nouveau `components/common/HeaderClock.tsx` : date complète + heure
+  (`16/10/2026 · 14:32`, `formatDate`/`formatTime`, locale fr/en),
+  `text-base font-semibold`, tick aligné sur le changement de minute
+  (pas de polling), `tabular-nums` anti-jitter, tooltip `title`.
+- Affichée dans le header principal (avant le badge licence) et dans la
+  barre du mode POS (emerald).
+- `GlobalSearchTrigger` légèrement réduit (h-9→h-8, sm:w-80→w-64,
+  lg:w-96→w-80) pour laisser la place sans chevauchement sur petit écran.
+- `UserHeader` : tout regroupé dans le dropdown utilisateur — la barre
+  ne garde que l'avatar (badge de messages non lus déplacé sur l'avatar).
+  Dropdown : Messages (badge), Mode sombre, Feedback (admins), FR/EN,
+  Licence (admins), Déconnexion.
+
 ## 2026-10-16 — Audit : instrumentation massive des endpoints (`views/`)
 
 - Tracé `AuditLog` ajouté sur quasiment tous les endpoints d'écriture et

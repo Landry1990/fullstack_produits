@@ -102,7 +102,7 @@ class AvoirViewSet(viewsets.ModelViewSet):
 
                 log_audit(
                     user=request.user,
-                    action='VALIDATE',
+                    action=AuditLog.Action.VALIDATE,
                     model_name='Avoir',
                     object_id=avoir.numero,
                     description=f"Validation administrative Avoir {avoir.numero} par {request.user.username}",
@@ -559,7 +559,7 @@ class LigneAvoirViewSet(viewsets.ModelViewSet):
                     avoir.save(update_fields=['status', 'validated_by'])
                     log_audit(
                         user=self.request.user,
-                        action='AUTO_VALIDATE',
+                        action=AuditLog.Action.AUTO_VALIDATE,
                         model_name='Avoir',
                         object_id=avoir.numero,
                         description=f"Validation automatique Avoir {avoir.numero} (toutes lignes clôturées)",

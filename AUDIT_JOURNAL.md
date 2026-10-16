@@ -104,10 +104,10 @@
 ## 🟡 Mineur
 
 - [x] `produits` `bulk_toggle_public` + `toggle_public` (`produit_actions/bulk_ops.py:129`, `status_ops.py:39`)
-- [ ] `commandes`/`inventaires` `lock`/`unlock` — verrou Redis seul
+- [x] `commandes`/`inventaires` `lock`/`unlock` — **exclu volontairement** : verrous Redis éphémères (TTL 30 s) appelés à chaque ouverture de formulaire, aucune donnée modifiée → tracerait du bruit
 - [x] `communication.py` — `SmsViewSet` CRUD+send, `SmsTemplateViewSet`, `InternalMessageViewSet`, `MessageTemplateViewSet`
-- [ ] `settings.py` — endpoints test WhatsApp/Telegram (effet externe)
-- [ ] `feedback.py` post, `licence.py` dismiss, `qz.py` sign, `auth.py` verify_password
+- [x] `settings.py` — endpoints test WhatsApp/Telegram (`OTHER` sur envoi réussi, destinataire/chat en details)
+- [x] `feedback.py` post (CREATE), `licence.py` dismiss (UPDATE), `qz.py` sign (OTHER — signature clé privée), `auth.py` verify_password (OTHER succès + échec)
 
 ## 📤 Exports non tracés (`Action.EXPORT` existe mais inutilisé ici)
 
@@ -136,8 +136,8 @@
 ## Constats transverses
 
 - [x] `AuditLog.Action.LOGIN` et `INVENTORY_CREATE` définis mais jamais appelés *(INVENTORY_CREATE désormais utilisé ; LOGIN reste à faire — hors périmètre ventes/commandes/stocks/produit_actions)*
-- [ ] `avoirs.py` utilise `'VALIDATE'` / `'AUTO_VALIDATE'` hors choices (`avoirs.py:65,458`)
-- [ ] Pattern sudo : l'action métier n'est pas décrite quand un tiers valide
+- [x] `avoirs.py` utilise `'VALIDATE'` / `'AUTO_VALIDATE'` hors choices (`avoirs.py:65,458`) — **fix** : choices `VALIDATE`/`AUTO_VAL` ajoutés ; `'AUTO_VALIDATE'` (13 car.) dépassait `max_length=10` → ces lignes échouaient silencieusement en base
+- [x] Pattern sudo : l'action métier n'est pas décrite quand un tiers valide — **résolu par convention** : le log métier est désormais toujours écrit en plus du `SUDO_VAL`
 
 ## Plan de mise en œuvre proposé
 

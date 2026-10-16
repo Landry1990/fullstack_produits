@@ -55,13 +55,27 @@ async function configureSecurity(qz: QzApi): Promise<void> {
   };
 
   security.setCertificatePromise((resolve, reject) => {
-    fetch('/api/qz/certificate/')
-      .then((res) => {
-        if (!res.ok) throw new Error(`Certificat QZ HTTP ${res.status}`);
-        return res.text();
-      })
-      .then(resolve)
-      .catch(reject);
+    // Sans certificat, QZ Tray connecte en « anonymous » : la fenêtre de
+    // confiance ne peut alors PAS être mémorisée (Allow grisé avec
+    // « Remember »). On retente donc le fetch avant d'abandonner — un backend
+    // qui redémarre ou un coup de latence ne doit pas dégrader la session
+    // en anonyme jusqu'à la fermeture de la page.
+    const attempt = (remaining: number) => {
+      fetch('/api/qz/certificate/')
+        .then((res) => {
+          if (!res.ok) throw new Error(`Certificat QZ HTTP ${res.status}`);
+          return res.text();
+        })
+        .then(resolve)
+        .catch((err) => {
+          if (remaining > 0) {
+            setTimeout(() => attempt(remaining - 1), 500);
+          } else {
+            reject(err);
+          }
+        });
+    };
+    attempt(2);
   });
 
   security.setSignaturePromise((toSign) => (resolve, reject) => {
