@@ -203,17 +203,31 @@ class CommandeViewSet(
         )
 
     def perform_update(self, serializer):
-        fields = sorted(serializer.validated_data.keys())
-        commande = serializer.save()
-        log_audit(
-            user=self.request.user,
-            action=AuditLog.Action.UPDATE,
-            model_name='Commande',
-            object_id=commande.id,
-            description=f"Modification de la commande #{commande.id} ({commande.numero_facture or 'sans n°'})",
-            details={'fields': fields, 'status': commande.status},
-            request=self.request,
-        )
+        with transaction.atomic():
+            # Verrouiller la commande pour éviter un lost update concurrent avec
+            # cloturer/annuler_reception. Une requête PATCH peut lire l'ancien
+            # statut, attendre le verrou, puis écraser le nouveau statut CLOT.
+            commande = Commande.objects.select_for_update().get(pk=serializer.instance.pk)
+            if commande.status == Commande.Status.CLOTUREE:
+                from rest_framework.exceptions import ValidationError
+                raise ValidationError(
+                    "Une commande clôturée ne peut plus être modifiée. "
+                    "Utilisez l'action d'annulation de réception pour la rouvrir."
+                )
+            # Re-attacher l'instance verrouillée au serializer pour que save()
+            # ne réécrive pas une version obsolète en mémoire.
+            serializer.instance = commande
+            commande = serializer.save()
+            fields = sorted(serializer.validated_data.keys())
+            log_audit(
+                user=self.request.user,
+                action=AuditLog.Action.UPDATE,
+                model_name='Commande',
+                object_id=commande.id,
+                description=f"Modification de la commande #{commande.id} ({commande.numero_facture or 'sans n°'})",
+                details={'fields': fields, 'status': commande.status},
+                request=self.request,
+            )
 
     def perform_destroy(self, instance):
         from django.utils import timezone

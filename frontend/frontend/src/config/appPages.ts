@@ -48,7 +48,6 @@ export const APP_PAGES: AppPage[] = [
   page('/app/catalog-dci', 'nav-catalog-dci', 'catalog_dci', 'catalogue', ['produits'], ['dci', 'generique', 'substitution']),
   page('/app/vitrine', 'nav-vitrine', 'vitrine', 'catalogue', ['vitrine'], ['site web', 'boutique', 'web']),
 
-  page('/app/commandes', 'nav-commandes', 'commandes.title', 'achats', ['commandes', 'commandes_loc', 'commandes_dir'], ['achats', 'approvisionnement', 'fournisseurs']),
   page('/app/commandes/locales', 'nav-commandes-locales', 'commandes.local_title', 'achats', ['commandes', 'commandes_loc'], ['commande locale', 'grossiste', 'achats']),
   page('/app/commandes/directes', 'nav-commandes-directes', 'commandes.direct_title', 'achats', ['commandes', 'commandes_dir'], ['commande directe', 'import', 'etranger', 'achats']),
   page('/app/historique-achats', 'nav-historique-achats', 'commandes.history', 'achats', ['commandes_loc_history', 'commandes_dir_history'], ['achats', 'receptions', 'commandes cloturees']),

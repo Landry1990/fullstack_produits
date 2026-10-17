@@ -258,8 +258,21 @@ class CommandeSerializer(serializers.ModelSerializer):
     def validate_status(self, value):
         """
         Le statut CLOT doit être géré par l'action dédiée /cloturer/.
+        Une commande déjà clôturée ne peut pas être repassée en PREP/ATT
+        via l'API standard : cela laisserait des lots de stock orphelins.
+        Utiliser l'action /annuler_reception/.
         """
-        # On autorise les transitions vers PREP ou ATT
+        # On autorise les transitions vers PREP ou ATT, sauf si déjà clôturée.
+        if (
+            self.instance
+            and self.instance.status == Commande.Status.CLOTUREE
+            and value != Commande.Status.CLOTUREE
+        ):
+            raise serializers.ValidationError(
+                "Une commande clôturée ne peut pas être modifiée manuellement. "
+                "Utilisez l'action d'annulation de réception."
+            )
+
         if value == Commande.Status.CLOTUREE:
             raise serializers.ValidationError(
                 "Le statut 'Clôturée' ne peut pas être défini manuellement. "

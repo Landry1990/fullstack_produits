@@ -274,7 +274,7 @@ export function useProduitPage() {
         setLoadingFacture(false)
       }
     } else if (item.commande) {
-      navigate('/app/commandes', { state: { openDetailsId: item.commande } })
+      navigate('/app/commandes/locales', { state: { openDetailsId: item.commande } })
     } else if (item.avoir) {
       const numero = item.avoir_client_numero || item.avoir_numero || String(item.avoir)
       try {

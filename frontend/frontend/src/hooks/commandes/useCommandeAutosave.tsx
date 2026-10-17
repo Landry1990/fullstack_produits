@@ -41,6 +41,7 @@ export function useCommandeAutosave({ state, setSaving, handleSaveCommande }: Us
   // — évite la perte de suppressions/modifications si l'utilisateur recharge avant le prochain cycle
   useEffect(() => {
     if (state.viewMode !== 'CREATE' && state.viewMode !== 'EDIT') return;
+    if (state.selectedCommande?.status === 'CLOT') return;
     if (state.commandeProduits.length === 0 || !state.newCommandeFournisseurId) return;
     if (state.isImporting) return;
     if (state.isMiseEnPlace && !state.payeALaCloture && !state.delaiPaiementNegocieJours.trim()) return;
@@ -80,6 +81,7 @@ export function useCommandeAutosave({ state, setSaving, handleSaveCommande }: Us
       const s = autoSaveStateRef.current;
       if (s.isImporting) return;
       if (s.viewMode !== 'CREATE' && s.viewMode !== 'EDIT') return;
+      if (s.selectedCommande?.status === 'CLOT') return;
       if (s.commandeProduits.length === 0 || !s.newCommandeFournisseurId) return;
       // Ne pas autosauvegarder une mise en place sans délai renseigné (backend rejette)
       // sauf si elle est réglée au comptant (paye_a_la_cloture) — pas de délai requis.

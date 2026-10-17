@@ -10,9 +10,17 @@ from api.utils.dates import day_bounds, day_end
 def build_sales_statistics(queryset, date_gte=None, date_lte=None):
     today = timezone.localtime(timezone.now()).date()
     valid_statuses = [Facture.Status.VALIDEE, Facture.Status.PAYEE]
-    invoices = queryset.filter(status__in=valid_statuses).annotate(num_paiements=Count('paiements')).exclude(status=Facture.Status.VALIDEE, num_paiements=0)
-    sellers = queryset.filter(status__in=valid_statuses).annotate(num_paiements=Count('paiements')).exclude(status=Facture.Status.VALIDEE, num_paiements=0).select_related('created_by')
-    products = FactureProduit.objects.filter(facture__status__in=valid_statuses).annotate(num_paiements=Count('facture__paiements')).exclude(facture__status=Facture.Status.VALIDEE, num_paiements=0).select_related('produit')
+    # Exclure les VALIDEE sans paiement (envoyées à la caisse centralisée).
+    # NE PAS utiliser annotate(num_paiements=Count('paiements')) ici : le
+    # JOIN multiplie les lignes et gonfle les Sum() suivants (top vendeur /
+    # top produit comptaient les montants × nombre de paiements).
+    invoices = queryset.filter(status__in=valid_statuses).exclude(
+        status=Facture.Status.VALIDEE, paiements__isnull=True
+    )
+    sellers = invoices.select_related('created_by')
+    products = FactureProduit.objects.filter(facture__status__in=valid_statuses).exclude(
+        facture__status=Facture.Status.VALIDEE, facture__paiements__isnull=True
+    ).select_related('produit')
 
     if date_gte:
         invoices = invoices.filter(date__gte=date_gte)

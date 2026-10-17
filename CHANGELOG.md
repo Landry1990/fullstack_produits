@@ -2,6 +2,71 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-10-17 — Fix clôture commande : éviter lots orphelins
+
+- `api/serializers/orders.py` : `validate_status` bloque désormais le passage
+  d'une commande `CLOTURÉE` vers `PREP`/`ATT` via l'API standard. Seule
+  l'action `/annuler_reception/` peut ressortir une commande de l'état clôturé.
+- `api/views/commandes/commandes.py` : `perform_update` verrouille la commande
+  avec `select_for_update()` et interdit toute modification (`PATCH`) d'une
+  commande déjà `CLOTURÉE` (correction du lost update à l'origine du bug #104).
+- `api/views/commandes/cloture_mixin.py` : `cloturer` détecte les lots déjà
+  présents pour une commande non clôturée et renvoie un message métier clair
+  au lieu d'une erreur 500 `unique_produit_lot`.
+- `frontend/frontend/src/hooks/commandes/useCommandeNavigation.tsx` :
+  `openEditView` refuse désormais d'ouvrir une commande `CLOTURÉE` en mode
+  édition et bascule sur les détails.
+- `frontend/frontend/src/hooks/commandes/useCommandeAutosave.tsx` : l'auto-save
+  ne déclenche plus sur une commande `CLOTURÉE`.
+- `frontend/frontend/src/components/Commandes/CommandeForm.tsx` : sécurité
+  défensive — le formulaire passe en lecture seule si une commande `CLOTURÉE`
+  y parvient (champs et tableau désactivés, sauvegarde bloquée).
+- `api/tests/test_commande_cloture_status.py` : tests de non-régression pour
+  `PATCH status` et `PATCH` autre champ sur commande `CLOTURÉE`.
+- `frontend/frontend/src/hooks/commandes/useCommandeCsv.tsx` : l'import CSV est
+  bloqué sur une commande `CLOTURÉE`, limité aux modes `CREATE`/`EDIT`, limité
+  à 2 Mo, et protégé par un `try/catch` global pour éviter les plantages silencieux.
+- `frontend/frontend/src/utils/commandes/csvImportHelpers.ts` : suppression de
+  `calculateNameScore` (dead code non utilisé).
+- `frontend/frontend/public/locales/{fr,en}/orders.json` : nouvelles traductions
+  pour les erreurs d'import CSV (commande clôturée, mode invalide, taille, erreur
+  inattendue).
+- Correction de l'affichage des taux de marge en orange après import CSV :
+  `taux_marge` stocké avec une virgule (ex. `"1,5"`) n'était pas reconnu par
+  `Number()` → `NaN`. Tous les points de création/édition de lignes normalisent
+  désormais la valeur avec `normalizeNumberInput` ; `CommandeProductRow` utilise
+  aussi cette normalisation pour la comparaison au seuil.
+- `frontend/frontend/src/routes.tsx` : suppression de la route `/app/commandes`
+  générique. Elle redirige désormais vers `/app/commandes/locales`.
+- `frontend/frontend/src/config/appPages.ts` : retrait de l'entrée `/app/commandes`
+  de la recherche globale.
+- Mise à jour des liens internes (`useOmnisearch`, `useProduitPage`,
+  `StockHealthDashboard`) pour pointer sur `/app/commandes/locales`.
+- Commande #104 : statut remis en `CLOTURÉE` (lots déjà créés, stock cohérent,
+  aucune vente).
+
+## 2026-10-16 — UI/impression : stats ventes 1 ligne + fixes modals & ticket
+
+- **Ventes.tsx — `SalesQuickStats` en une ligne** : les 5 cartes (CA, encaissé,
+  dettes, top vendeur, top produit) deviennent une bande compacte
+  `flex`/`divide-x` avec défilement horizontal sur petit écran.
+- **Formule corrigée** : CA = `total_ttc` (avant : `total_regle +
+  total_en_compte` → sous-estimé sur les ventes partiellement réglées) ;
+  dettes = `total_ttc - total_regle` (avant : `total_en_compte` seul, qui
+  ne compte que les paiements explicitement tagués `en_compte`).
+- **Bouton « Facture A4 » cassé** : `ClientNameModal` (div inline z-50)
+  s'ouvrait derrière le Dialog Radix du ticket et était incliquable
+  (pointer-events lock). Converti en `PremiumModal` (portail Radix).
+- **Ticket ESC/POS** : numéro en clair + « ZENITH POS SYSTEM » imprimés
+  après le code-barres (HRI reste désactivé), espacement.
+- **QZ Tray** : retry ×3 sur le fetch certificat — un échec transitoire ne
+  dégrade plus la connexion en « anonymous » (Remember/Allow grisé).
+- **stats_jour : top vendeur/produit gonflés** — `annotate(Count('paiements'))`
+  créait un JOIN qui multipliait les lignes → `Sum(montant_regle)` comptait
+  chaque facture × son nombre de paiements (mesuré : 510 697 F affichés vs
+  359 662 F réels, 55 « ventes » vs 42). Remplacé par `exclude(paiements
+  __isnull=True)` — NOT EXISTS, aucune multiplication.
+
 ## 2026-10-16 — Fix vendeur sudo ignoré en caisse centralisée
 
 - **Régression corrigée** : depuis le commit POS mobile (`2dc17d18`),

@@ -183,7 +183,7 @@ const StockHealthDashboard: React.FC = () => {
                         </div>
 
                         <button
-                            onClick={() => navigate('/app/commandes', { state: { action: 'OPEN_SUGGESTIONS', mode: 'optimise' } })}
+                            onClick={() => navigate('/app/commandes/locales', { state: { action: 'OPEN_SUGGESTIONS', mode: 'optimise' } })}
                             className="inline-flex items-center justify-center h-8 px-3 text-caption font-bold bg-red-500 text-white hover:bg-red-600 rounded-xl gap-2 shadow-lg shadow-red-500/20 hover:scale-105 active:scale-95 transition-all w-full md:w-auto"
                         >
                             <ShoppingCart className="size-4" />

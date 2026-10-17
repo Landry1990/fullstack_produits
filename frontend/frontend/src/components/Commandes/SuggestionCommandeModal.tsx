@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { gooeyToast } from 'goey-toast'
-import { formatPrice } from '../../utils/formatters'
+import { formatPrice, normalizeNumberInput } from '../../utils/formatters'
 import type { Fournisseur, ProduitModel, CommandeProduit } from '../../types'
 import {
   Dialog,
@@ -221,7 +221,7 @@ export default function SuggestionCommandeModal({
         unites_gratuites: 0,
         price: String(item.prix_achat || productStub.cost_price || 0),
         tva: item.tva ?? productStub.tva ?? '0',
-        marge: item.taux_marge ?? productStub.taux_marge ?? '1.3',
+        marge: String(normalizeNumberInput(item.taux_marge ?? productStub.taux_marge ?? '1.3')),
         selling_price: String(item.prix_vente ?? productStub.selling_price ?? 0),
         lot: '',
         date_expiration: '',

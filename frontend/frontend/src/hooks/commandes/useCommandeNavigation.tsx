@@ -267,6 +267,16 @@ export function useCommandeNavigation({
   }
 
   async function openEditView(commande: Commande) {
+    if (commande.status === 'CLOT') {
+      // Une commande clôturée n'est plus éditable : afficher ses détails.
+      gooeyToast.error(t('orders:messages.cannot_edit_closed_order'));
+      setSelectedCommande(commande);
+      setCommandeProduits(commande.produits || []);
+      setViewMode('DETAILS');
+      navigate(location.pathname, { replace: true, state: { viewState: { mode: 'DETAILS', commandeId: commande.id } } });
+      return;
+    }
+
     setNewCommandeFournisseurId(commande.fournisseur ? String(commande.fournisseur) : '');
     setNumeroFacture(commande.numero_facture || '');
     setIsMiseEnPlace(commande.is_mise_en_place || false);
@@ -321,7 +331,7 @@ export function useCommandeNavigation({
         price: p.price || (fullProduct?.cost_price || '0'),
         selling_price: p.selling_price || (fullProduct?.selling_price || '0'),
         tva: p.tva || (fullProduct?.tva || '0'),
-        marge: tauxMarge,
+        marge: String(normalizeNumberInput(tauxMarge)),
         lot: p.lot || '',
         date_expiration: formatDateToMMYY(p.date_expiration || ''),
       };

@@ -160,7 +160,9 @@ export const router = createBrowserRouter([
           { path: 'vitrine', ...perm('vitrine', Vitrine) },
 
           // ── Commandes ──
-          { path: 'commandes', ...perm(['commandes', 'commandes_loc', 'commandes_dir'], Commandes) },
+          // La route générique /app/commandes n'est plus accessible directement ;
+          // elle redirige vers les commandes locales, seule entrée utilisée en pratique.
+          { path: 'commandes', element: <Navigate to="/app/commandes/locales" replace /> },
           { path: 'commandes/locales', ...perm(['commandes', 'commandes_loc'], Commandes, { forcedType: 'LOC' }) },
           { path: 'commandes/directes', ...perm(['commandes', 'commandes_dir'], Commandes, { forcedType: 'DIR' }) },
 
