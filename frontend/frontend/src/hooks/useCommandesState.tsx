@@ -212,6 +212,8 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
     produitsList,
     fileInputRef,
     setIsImporting,
+    selectedCommande,
+    viewMode,
   });
   const isCreateProduitModalOpen = useCommandesStore((s) => s.isCreateProduitModalOpen);
   const setIsCreateProduitModalOpen = useCommandesStore((s) => s.setIsCreateProduitModalOpen);

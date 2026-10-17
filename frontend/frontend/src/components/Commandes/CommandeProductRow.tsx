@@ -97,7 +97,7 @@ export function CommandeProductRow({
         : (_buyHT > 0 && _sellTTC > 0 ? effectiveMarge.toFixed(2) : (p.marge || ''));
     const margeForComparison = _buyHT > 0 && _sellTTC > 0
         ? Number(effectiveMarge.toFixed(2))
-        : Number((Number(p.marge || 0)).toFixed(2));
+        : Number(normalizeNumberInput(String(p.marge || 0)).toFixed(2));
 
     return (
         <React.Fragment key={p.id || `row-${index}`}>

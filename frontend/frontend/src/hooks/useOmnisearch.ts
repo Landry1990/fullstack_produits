@@ -262,7 +262,7 @@ export default function useOmnisearch() {
       } else if (action === 'NEW_CLIENT') {
         navigate('/app/clients', { state: { action } });
       } else if (action === 'NEW_ORDER') {
-        navigate('/app/commandes', { state: { action } });
+        navigate('/app/commandes/locales', { state: { action } });
       } else if (action === 'OPEN_PRODUCTS') {
         navigate('/app/produits');
       } else if (action === 'OPEN_PERIMES') {
@@ -301,7 +301,7 @@ export default function useOmnisearch() {
   const onSelectCommande = useCallback(
     (id: number) => {
       setOpen(false);
-      navigate('/app/commandes', { state: { selectedCommandeId: id } });
+      navigate('/app/commandes/locales', { state: { selectedCommandeId: id } });
     },
     [navigate, setOpen]
   );

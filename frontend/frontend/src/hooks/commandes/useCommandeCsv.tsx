@@ -2,10 +2,11 @@ import type React from 'react';
 import { gooeyToast } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle } from 'lucide-react';
-import type { CommandeProduit, ProduitModel } from '../../types';
+import type { Commande, CommandeProduit, ProduitModel } from '../../types';
 import { normalizeNumberInput } from '../../utils/formatters';
 import { parseCsvPrice } from '../../utils/commandes/csvImportHelpers';
 import produitService from '../../services/produitService';
+import { logger } from '../../utils/logger';
 
 export interface UseCommandeCsvProps {
     commandeProduits: CommandeProduit[];
@@ -15,6 +16,8 @@ export interface UseCommandeCsvProps {
     produitsList: ProduitModel[];
     fileInputRef: React.RefObject<HTMLInputElement | null>;
     setIsImporting: (v: boolean) => void;
+    selectedCommande?: Commande | null;
+    viewMode?: string;
 }
 
 export interface UseCommandeCsvResult {
@@ -30,24 +33,53 @@ export function useCommandeCsv({
     produitsList,
     fileInputRef,
     setIsImporting,
+    selectedCommande,
+    viewMode,
 }: UseCommandeCsvProps): UseCommandeCsvResult {
     const { t } = useTranslation(['orders', 'common']);
+
+    const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 Mo
+
+    const resetFileInput = () => {
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    };
 
     const handleCsvImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
 
+        // Une commande clôturée n'est plus éditable, même par import CSV.
+        if (selectedCommande?.status === 'CLOT') {
+            gooeyToast.error(t('orders:messages.cannot_import_closed_order'));
+            resetFileInput();
+            return;
+        }
+
+        // L'import ne fait sens qu'en création ou édition.
+        if (viewMode && viewMode !== 'CREATE' && viewMode !== 'EDIT') {
+            gooeyToast.error(t('orders:messages.import_requires_edit_mode'));
+            resetFileInput();
+            return;
+        }
+
+        if (file.size > MAX_FILE_SIZE) {
+            gooeyToast.error(t('orders:messages.import_file_too_large', { size: '2 Mo' }));
+            resetFileInput();
+            return;
+        }
+
         setIsImporting(true);
 
         const reader = new FileReader();
         reader.onload = async (e) => {
-            const text = (e.target?.result as string).replace(/^\uFEFF/, '');
-            if (!text) {
-                setIsImporting(false);
-                return;
-            }
+            try {
+                const text = (e.target?.result as string).replace(/^\uFEFF/, '');
+                if (!text) {
+                    setIsImporting(false);
+                    return;
+                }
 
-            const lines = text.split(/\r\n|\n/);
+                const lines = text.split(/\r\n|\n/);
 
             // Détecter le séparateur (';' | ',' | tab) depuis la première ligne non vide
             const firstNonEmpty = lines.find(l => l.trim()) ?? '';
@@ -169,7 +201,7 @@ export function useCommandeCsv({
                             price: finalPrice,
                             price_cost: finalPriceCost,
                             tva: product.tva || '0',
-                            marge: product.taux_marge || '1.3',
+                            marge: String(normalizeNumberInput(product.taux_marge || '1.3')),
                             selling_price: finalSellingPrice,
                             lot: '',
                             date_expiration: '',
@@ -204,8 +236,13 @@ export function useCommandeCsv({
                 gooeyToast.success(t('orders:messages.csv_import_success', { count: productsFound }));
             }
 
-            if (fileInputRef.current) fileInputRef.current.value = '';
-            setIsImporting(false);
+            } catch (err) {
+                logger.error('Erreur import CSV commande:', err);
+                gooeyToast.error(t('orders:messages.import_unexpected_error'));
+            } finally {
+                resetFileInput();
+                setIsImporting(false);
+            }
         };
         reader.readAsText(file);
     };

@@ -65,6 +65,28 @@ class CommandeClotureMixin:
                     if commande.status == Commande.Status.CLOTUREE:
                         return Response({'detail': 'Cette commande est déjà clôturée.'}, status=status.HTTP_400_BAD_REQUEST)
 
+                    # Protection contre un état incohérent : des lots de stock liés à
+                    # cette commande existent déjà alors que le statut n'est pas CLOTUREE.
+                    # Cela peut arriver si une clôture a partiellement réussi ou si le
+                    # statut a été réécrit par une synchronisation après la clôture.
+                    existing_lots_count = StockLot.objects.filter(
+                        commande_produit__commande=commande
+                    ).count()
+                    if existing_lots_count:
+                        business_logger.warning(
+                            f"[COMMANDE] Cloture refusee #{commande.id} - {existing_lots_count} lot(s) orphelin(s) existent (statut={commande.status})"
+                        )
+                        return Response(
+                            {
+                                'detail': (
+                                    f"Cette commande possède déjà {existing_lots_count} lot(s) de stock "
+                                    f"alors que son statut est '{commande.get_status_display()}'. "
+                                    "L'état est incohérent : annulez la réception proprement ou contactez un administrateur."
+                                )
+                            },
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+
                     # Validation Sudo
                     _validation_user, error_res = validate_sudo_mode(request, permission_attr='can_close_commande')
                     if error_res:

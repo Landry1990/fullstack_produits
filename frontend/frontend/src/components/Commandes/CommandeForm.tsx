@@ -183,6 +183,9 @@ export default function CommandeForm({
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const [datamatrixEnabled, setDatamatrixEnabled] = useState(true);
 
+    // Sécurité : une commande clôturée ne doit jamais être éditable depuis le formulaire.
+    const isClosedOrder = selectedCommande?.status === 'CLOT';
+
     const handleNotFound = useCallback(() => {
         searchInputRef.current?.focus();
     }, [searchInputRef]);
@@ -264,6 +267,7 @@ export default function CommandeForm({
                       id="fournisseur-select"
                       value={newCommandeFournisseurId}
                       onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNewCommandeFournisseurId(e.target.value)}
+                      disabled={isClosedOrder}
                       className="h-9 text-sm bg-slate-100 border-slate-200 py-1 px-2 pr-6"
                     >
                       <option value="" disabled>{t('orders:form.provider_placeholder')}</option>
@@ -283,6 +287,7 @@ export default function CommandeForm({
                       className="w-full h-9 bg-slate-100 border-slate-200 text-sm"
                       value={numeroFacture}
                       onChange={(e) => setNumeroFacture(e.target.value.toUpperCase())}
+                      disabled={isClosedOrder}
                     />
                   </div>
 
@@ -293,6 +298,7 @@ export default function CommandeForm({
                         id="mise-en-place"
                         checked={isMiseEnPlace}
                         onCheckedChange={(checked) => setIsMiseEnPlace(checked === true)}
+                        disabled={isClosedOrder}
                         className="data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
                       />
                       <label htmlFor="mise-en-place" className="text-xs font-semibold text-slate-600 whitespace-nowrap cursor-pointer select-none">
@@ -314,6 +320,7 @@ export default function CommandeForm({
                           className="w-24 h-7 text-sm px-2"
                           value={delaiPaiementNegocieJours}
                           onChange={(e) => setDelaiPaiementNegocieJours(e.target.value)}
+                          disabled={isClosedOrder}
                         />
                       </div>
                     )}
@@ -323,6 +330,7 @@ export default function CommandeForm({
                           id="paye-a-la-cloture"
                           checked={payeALaCloture}
                           onCheckedChange={(checked) => setPayeALaCloture(checked === true)}
+                          disabled={isClosedOrder}
                           className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
                         />
                         <label htmlFor="paye-a-la-cloture" className="text-xs font-semibold text-emerald-700 whitespace-nowrap cursor-pointer select-none">
@@ -337,11 +345,11 @@ export default function CommandeForm({
                     <div className="flex items-center gap-2 border-l border-slate-200 pl-2">
                       <div className="flex flex-col">
                         <span className="text-caption font-semibold text-blue-600 uppercase">{t('orders:form.rate_short')}</span>
-                        <Input type="number" step="0.001" className="w-20 h-7 text-sm px-2" value={tauxChange} onChange={(e) => setTauxChange(e.target.value)} aria-label={t('orders:form.rate_short')} />
+                        <Input type="number" step="0.001" className="w-20 h-7 text-sm px-2" value={tauxChange} onChange={(e) => setTauxChange(e.target.value)} aria-label={t('orders:form.rate_short')} disabled={isClosedOrder} />
                       </div>
                       <div className="flex flex-col">
                         <span className="text-caption font-semibold text-blue-600 uppercase">{t('orders:form.coeff_short')}</span>
-                        <Input type="number" step="0.01" className="w-14 h-7 text-sm px-2" value={fraisCoefficient} onChange={(e) => setFraisCoefficient(e.target.value)} aria-label={t('orders:form.coefficient')} />
+                        <Input type="number" step="0.01" className="w-14 h-7 text-sm px-2" value={fraisCoefficient} onChange={(e) => setFraisCoefficient(e.target.value)} aria-label={t('orders:form.coefficient')} disabled={isClosedOrder} />
                       </div>
                     </div>
                   )}
@@ -378,15 +386,16 @@ export default function CommandeForm({
                         }
                         setIsExportModalOpen(true);
                       }}
+                      disabled={isClosedOrder}
                       title={t('orders:form.export_btn')}
                       aria-label={t('orders:form.export_btn')}
                     >
                       <FileDown className="size-4" />
                     </Button>
-                    <Button type="button" variant="ghost" size="icon" className="size-9 text-slate-500" onClick={() => fileInputRef.current?.click()} title={t('orders:import_btn')} aria-label={t('orders:import_btn')}>
+                    <Button type="button" variant="ghost" size="icon" className="size-9 text-slate-500" onClick={() => fileInputRef.current?.click()} disabled={isClosedOrder} title={t('orders:import_btn')} aria-label={t('orders:import_btn')}>
                       <FolderOpen className="size-4" />
                     </Button>
-                    <Button type="button" variant="ghost" size="icon" className="size-9 text-slate-500" onClick={() => setIsCreateProduitModalOpen(true)} title={t('orders:new_product_btn')} aria-label={t('orders:new_product_btn')}>
+                    <Button type="button" variant="ghost" size="icon" className="size-9 text-slate-500" onClick={() => setIsCreateProduitModalOpen(true)} disabled={isClosedOrder} title={t('orders:new_product_btn')} aria-label={t('orders:new_product_btn')}>
                       <Plus className="size-4" />
                     </Button>
 
@@ -416,7 +425,7 @@ export default function CommandeForm({
                 produitsList={produitsList}
                 selectedRows={selectedRows}
                 commandeType={commandeType}
-                viewMode={viewMode === 'CREATE' ? 'CREATE' : 'EDIT'}
+                viewMode={isClosedOrder ? 'DETAILS' : (viewMode === 'CREATE' ? 'CREATE' : 'EDIT')}
                 selectedCommande={selectedCommande}
                 saving={saving}
                 fieldsConfig={fieldsConfig}
@@ -514,7 +523,7 @@ export default function CommandeForm({
                   type="button"
                   size="sm"
                   className="gap-2 bg-emerald-600 hover:bg-emerald-700"
-                  disabled={saving || !newCommandeFournisseurId}
+                  disabled={saving || !newCommandeFournisseurId || isClosedOrder}
                   onClick={handleSaveCommande}
                 >
                   {!saving && <Save className="size-4" />}

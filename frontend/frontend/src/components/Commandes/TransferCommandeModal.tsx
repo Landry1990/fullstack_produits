@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import api from '../../services/api';
 import { gooeyToast } from 'goey-toast';
 import type { Commande, CommandeProduit, Fournisseur, ProduitModel } from '../../types';
-import { formatCurrency } from '../../utils/formatters';
+import { formatCurrency, normalizeNumberInput } from '../../utils/formatters';
 import { Button } from '../shadcn/button';
 import { logger } from '../../utils/logger';
 import {
@@ -139,7 +139,7 @@ export default function TransferCommandeModal({
                     selling_price: parseFloat(String(p.selling_price || 0)).toFixed(0),
                     prix_euro: p.prix_euro ? parseFloat(String(p.prix_euro)).toFixed(0) : null,
                     tva: parseFloat(String(p.tva || 0)).toFixed(0),
-                    marge: parseFloat(String(p.marge || 1.3)).toFixed(4),
+                    marge: normalizeNumberInput(String(p.marge || 1.3)).toFixed(4),
                     lot: p.lot || null,
                     date_expiration: p.date_expiration || null,
                 };

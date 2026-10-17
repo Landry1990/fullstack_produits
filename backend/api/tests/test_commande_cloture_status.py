@@ -99,3 +99,32 @@ class CommandeClotureStatusTestCase(APITestCase):
         # Le statut reste CLOT, pas de changement
         commande.refresh_from_db()
         self.assertEqual(commande.status, 'CLOT')
+
+    def test_commande_clot_ne_peut_pas_repasser_prep(self):
+        """Une commande CLOT ne peut pas être repassée en PREP via l'API standard."""
+        commande = TestDataFactory.create_commande(
+            fournisseur=self.fournisseur,
+            status='CLOT',
+        )
+        url = reverse('commande-detail', kwargs={'pk': commande.pk})
+        response = self.client.patch(url, {'status': 'PREP'})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        commande.refresh_from_db()
+        # Le statut reste CLOT
+        self.assertEqual(commande.status, 'CLOT')
+
+    def test_commande_clot_ne_peut_pas_etre_modifiee(self):
+        """Une commande CLOT ne peut plus recevoir de PATCH sur d'autres champs."""
+        commande = TestDataFactory.create_commande(
+            fournisseur=self.fournisseur,
+            status='CLOT',
+            numero_facture='FAC-123',
+        )
+        url = reverse('commande-detail', kwargs={'pk': commande.pk})
+        response = self.client.patch(url, {'numero_facture': 'FAC-999'})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        commande.refresh_from_db()
+        # Le numéro de facture reste inchangé
+        self.assertEqual(commande.numero_facture, 'FAC-123')

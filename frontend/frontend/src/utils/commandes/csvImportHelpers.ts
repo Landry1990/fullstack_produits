@@ -31,68 +31,8 @@ export function normalizeText(value: string | null | undefined): string {
         .trim();                            // Espaces
 }
 
-// Calcule le score de similarité entre deux noms (0-100%)
-// Basé sur les tokens/mots communs avec vérification stricte
-function calculateNameScore(csvName: string, dbName: string): number {
-    // Ignorer les codes/numéros (CIP, dosage, etc.)
-    const csvTokens = normalizeText(csvName)
-        .split(/\s+/)
-        .filter(t => t.length >= 3 && !/^\d/.test(t) && !/^(mg|ml|g|mcg|ui|cp|cpr|inj|sol)$/.test(t));
-    const dbTokens = normalizeText(dbName)
-        .split(/\s+/)
-        .filter(t => t.length >= 3 && !/^\d/.test(t) && !/^(mg|ml|g|mcg|ui|cp|cpr|inj|sol)$/.test(t));
+// NOTE: un score de similarité par tokens était présent ici mais n'était pas
+// utilisé. Le matching CSV repose actuellement sur les CIPs (produitService.getByCips).
+// Si un fallback par nom est nécessaire, il faudra implémenter et exporter une
+// fonction testée avec des seuils clairs.
 
-    if (csvTokens.length === 0 || dbTokens.length === 0) return 0;
-
-    let exactMatches = 0;     // Match exact (prioritaire)
-    let partialMatches = 0;   // Match partiel (début de mot)
-    const usedDbTokens = new Set<number>();
-
-    for (const csvToken of csvTokens) {
-        let found = false;
-
-        for (let i = 0; i < dbTokens.length; i++) {
-            if (usedDbTokens.has(i)) continue;
-            const dbToken = dbTokens[i];
-
-            // Correspondance EXACTE (poids fort) : "loolip" = "loolip"
-            if (csvToken === dbToken) {
-                exactMatches++;
-                usedDbTokens.add(i);
-                found = true;
-                break;
-            }
-        }
-
-        if (found) continue;
-
-        // Correspondance PARTIELLE (poids faible) : "lool" dans "loolip"
-        for (let i = 0; i < dbTokens.length; i++) {
-            if (usedDbTokens.has(i)) continue;
-            const dbToken = dbTokens[i];
-
-            // Minimum 4 caractères pour un match partiel (évite "cp" qui match tout)
-            if (csvToken.length >= 4 && dbToken.startsWith(csvToken)) {
-                partialMatches += 0.5;  // Demi-point pour partiel
-                usedDbTokens.add(i);
-                break;
-            }
-            if (dbToken.length >= 4 && csvToken.startsWith(dbToken)) {
-                partialMatches += 0.5;
-                usedDbTokens.add(i);
-                break;
-            }
-        }
-    }
-
-    // Score pondéré : exact = 1.0, partiel = 0.5
-    const totalScore = exactMatches + partialMatches;
-    const maxPossible = csvTokens.length;
-    const percentage = (totalScore / maxPossible) * 100;
-
-    // Pénalité si peu de tokens CSV (risque de faux positif)
-    if (csvTokens.length === 1 && exactMatches < 1) return 0;      // 1 token doit être exact
-    if (csvTokens.length === 2 && exactMatches < 1) return 0;        // 2 tokens : au moins 1 exact
-
-    return percentage;
-}
