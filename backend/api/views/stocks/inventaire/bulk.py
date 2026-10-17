@@ -10,6 +10,7 @@ from rest_framework.response import Response
 
 from api.audit_helpers import log_audit
 from api.models import AuditLog, Inventaire, LigneInventaire, Produit, StockLot
+from api.serializers import LigneInventaireSerializer
 from api.utils.validation import parse_id, validation_error_message
 
 
@@ -134,7 +135,12 @@ def bulk_lignes_inventaire(
         if lid is not None
     }
 
-    produits_map = {p.id: p for p in Produit.objects.filter(id__in=produit_ids)}
+    # select_related('rayon') : produit.rayon.name est lu lors de la
+    # sérialisation des lignes retournées — sans lui, un lazy-load par produit.
+    produits_map = {
+        p.id: p
+        for p in Produit.objects.filter(id__in=produit_ids).select_related('rayon')
+    }
     lots_map = {l.id: l for l in StockLot.objects.filter(id__in=lot_ids)}
 
     # Pour les recherches par numéro de lot
@@ -145,11 +151,24 @@ def bulk_lignes_inventaire(
     }
     existing_lots_by_num: dict[tuple[int, str], StockLot] = {}
     if lot_tuples:
-        for l in StockLot.objects.filter(produit_id__in=produit_ids):
+        lot_nums = {num for _, num in lot_tuples}
+        for l in StockLot.objects.filter(produit_id__in=produit_ids, lot__in=lot_nums):
             existing_lots_by_num[(l.produit_id, l.lot)] = l
+
+    # Pré-chargement des lignes déjà présentes pour cet inventaire :
+    # une seule requête au lieu d'un .filter().first() par ligne du payload.
+    # select_related pour la sérialisation de la réponse (évite le lazy-load).
+    existing_lignes_map: dict[tuple[int, int | None], LigneInventaire] = {
+        (l.produit_id, l.stock_lot_id): l
+        for l in LigneInventaire.objects
+        .filter(inventaire=inventaire, produit_id__in=produit_ids)
+        .select_related('produit', 'produit__rayon', 'stock_lot')
+    }
 
     # Groupement par (produit_id, lot_id) pour fusionner avant bulk_create
     lignes_finales: dict[tuple[int, int | None], LigneInventaire] = {}
+    # Lignes existantes mises à jour (collectées pour un seul bulk_update)
+    lignes_maj: dict[tuple[int, int | None], LigneInventaire] = {}
 
     for index, data in enumerate(lignes_data):
         try:
@@ -160,7 +179,9 @@ def bulk_lignes_inventaire(
                 produits_map=produits_map,
                 lots_map=lots_map,
                 existing_lots_by_num=existing_lots_by_num,
-                lignes_finales=lignes_finales
+                existing_lignes_map=existing_lignes_map,
+                lignes_finales=lignes_finales,
+                lignes_maj=lignes_maj
             )
             if result:
                 imported_count += result
@@ -170,11 +191,19 @@ def bulk_lignes_inventaire(
 
     if lignes_finales:
         LigneInventaire.objects.bulk_create(lignes_finales.values())
+    if lignes_maj:
+        LigneInventaire.objects.bulk_update(lignes_maj.values(), ['quantite_physique', 'ecart'])
+
+    # Les lignes créées/mises à jour sont renvoyées sérialisées : le client
+    # peut fusionner sa copie locale sans recharger tout l'inventaire (GET lignes).
+    affected = [*lignes_maj.values(), *lignes_finales.values()]
+    lignes_payload = LigneInventaireSerializer(affected, many=True).data
 
     return Response({
         'status': 'Import terminé',
         'imported': imported_count,
-        'errors': errors
+        'errors': errors,
+        'lignes': lignes_payload,
     }, status=status.HTTP_201_CREATED if imported_count > 0 else status.HTTP_400_BAD_REQUEST)
 
 
@@ -185,7 +214,9 @@ def _process_bulk_line(
     produits_map: dict[int, Produit],
     lots_map: dict[int, StockLot],
     existing_lots_by_num: dict[tuple[int, str], StockLot],
-    lignes_finales: dict[tuple[int, int | None], LigneInventaire]
+    existing_lignes_map: dict[tuple[int, int | None], LigneInventaire],
+    lignes_finales: dict[tuple[int, int | None], LigneInventaire],
+    lignes_maj: dict[tuple[int, int | None], LigneInventaire]
 ) -> int:
     """
     Traite une ligne d'import bulk et retourne 1 si une ligne est créée/modifiée, 0 sinon.
@@ -197,7 +228,9 @@ def _process_bulk_line(
         produits_map: Cache des produits
         lots_map: Cache des lots par ID
         existing_lots_by_num: Cache des lots par (produit_id, lot_numero)
+        existing_lignes_map: Cache des lignes existantes par (produit_id, lot_id)
         lignes_finales: Dict des lignes à créer (modifié par effet de bord)
+        lignes_maj: Dict des lignes existantes à mettre à jour (modifié par effet de bord)
 
     Returns:
         1 si ligne traitée avec succès, 0 sinon
@@ -289,28 +322,27 @@ def _process_bulk_line(
             lignes_finales[merge_key].quantite_physique - stock_theorique
         )
         return 1
-    else:
-        # On vérifie s'il existe déjà une ligne en base pour cet inventaire
-        existing_in_db = LigneInventaire.objects.filter(
-            inventaire=inventaire, produit=produit, stock_lot=target_lot
-        ).first()
 
-        if existing_in_db:
-            if replace_quantity:
-                existing_in_db.quantite_physique = qte_saisie
-            else:
-                existing_in_db.quantite_physique += qte_saisie
-            existing_in_db.ecart = existing_in_db.quantite_physique - stock_theorique
-            existing_in_db.save()
-            return 1
+    # Ligne déjà en base ? (pré-chargée — pas de requête ici)
+    # On la regarde d'abord dans lignes_maj : un merge_key déjà traité dans
+    # ce payload doit cumuler sur la même instance en mémoire.
+    existing_in_db = lignes_maj.get(merge_key) or existing_lignes_map.get(merge_key)
+    if existing_in_db is not None:
+        if replace_quantity:
+            existing_in_db.quantite_physique = qte_saisie
         else:
-            lignes_finales[merge_key] = LigneInventaire(
-                inventaire=inventaire,
-                produit=produit,
-                stock_lot=target_lot,
-                stock_theorique=stock_theorique,
-                quantite_physique=qte_saisie,
-                ecart=qte_saisie - stock_theorique,
-                pmp_snapshot=produit.pmp or produit.cost_price or 0
-            )
-            return 1
+            existing_in_db.quantite_physique += qte_saisie
+        existing_in_db.ecart = existing_in_db.quantite_physique - stock_theorique
+        lignes_maj[merge_key] = existing_in_db
+        return 1
+
+    lignes_finales[merge_key] = LigneInventaire(
+        inventaire=inventaire,
+        produit=produit,
+        stock_lot=target_lot,
+        stock_theorique=stock_theorique,
+        quantite_physique=qte_saisie,
+        ecart=qte_saisie - stock_theorique,
+        pmp_snapshot=produit.pmp or produit.cost_price or 0
+    )
+    return 1

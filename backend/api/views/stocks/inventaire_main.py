@@ -214,14 +214,21 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         if forme_id:
             filters &= Q(forme_id=forme_id)
             
-        products = Produit.objects.filter(filters).prefetch_related('stock_lots')
-        
+        # Prefetch filtré : un `produit.stock_lots.filter(...)` dans la boucle
+        # ignorerait le cache du prefetch et refaireait une requête par produit (N+1).
+        products = Produit.objects.filter(filters).prefetch_related(
+            Prefetch(
+                'stock_lots',
+                queryset=StockLot.objects.filter(
+                    Q(quantity_remaining__gt=0) | Q(quantity_reserved__gt=0)
+                ),
+            )
+        )
+
         lignes_a_creer = []
         for produit in products:
             if produit.use_lot_management:
-                lots = produit.stock_lots.filter(
-                    Q(quantity_remaining__gt=0) | Q(quantity_reserved__gt=0)
-                )
+                lots = produit.stock_lots.all()
                 for lot in lots:
                     # Déterminer le stock théorique selon le type d'inventaire
                     stock_th = lot.quantity_remaining

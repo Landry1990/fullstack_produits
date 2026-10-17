@@ -722,6 +722,8 @@
             "not_found_toast_one": "{{count}} produit non reconnu. Fichier rapport téléchargé.",
             "not_found_toast_other": "{{count}} produits non reconnus. Fichier rapport téléchargé.",
             "no_valid_product": "Aucun produit valide trouvé dans le fichier.",
+            "errors_count_one": "{{count}} ligne ignorée (erreur de format).",
+            "errors_count_other": "{{count}} lignes ignorées (erreur de format).",
             "bulk_send_error": "Erreur lors de l'enregistrement des lignes importées.",
             "reader_error": "Erreur de lecture du fichier.",
             "success": "{{count}} produits importés ({{lines}} lignes)."

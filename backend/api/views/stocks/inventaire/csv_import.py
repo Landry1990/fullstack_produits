@@ -1,28 +1,93 @@
 """
 Import CSV pour les inventaires.
+
+Résolution des CIP côté serveur (normalisation identique à l'ancien import
+web : suppression espaces/tirets/points, majuscules, variante sans zéros de
+tête) puis délégation à `bulk_lignes_inventaire` — fusion avec les lignes
+existantes, une seule passe en base, et lignes affectées renvoyées pour que
+le client mette à jour son état sans recharger tout l'inventaire.
 """
 import csv
 import io as csv_io
+import re
 from typing import Any
 
-from django.db.models import Q
 from rest_framework import status
 from rest_framework.response import Response
 
-from api.models import Inventaire, LigneInventaire, Produit
+from api.models import Inventaire, Produit
+from .bulk import bulk_lignes_inventaire
+
+_CIP_HEADERS = {'cip', 'cip1', 'cip13', 'code', 'barcode', 'ean', 'ean13'}
+_QTY_HEADERS = {'quantite', 'quantité', 'qte', 'qty', 'quantity', 'quantite_physique'}
+
+_CIP_STRIP_RE = re.compile(r'[\s\-.]')
+
+
+def _normalize_cip(cip: str) -> str:
+    """Normalisation miroir du frontend (InventaireEditor)."""
+    return _CIP_STRIP_RE.sub('', cip.strip()).upper()
+
+
+def _is_numeric(value: str) -> bool:
+    try:
+        float(str(value).replace(',', '.'))
+        return True
+    except (TypeError, ValueError):
+        return False
+
+
+def _build_cip_map() -> dict[str, int]:
+    """
+    Indexe tous les CIP produits (normalisés + variante sans zéros de tête)
+    en une seule requête — évite un lookup SQL par ligne du fichier.
+    """
+    cip_map: dict[str, int] = {}
+    rows = Produit.objects.filter(is_active=True).values_list(
+        'id', 'cip1', 'cip2', 'cip3', 'cip4'
+    )
+    for pid, cip1, cip2, cip3, cip4 in rows:
+        for raw in (cip1, cip2, cip3, cip4):
+            normalized = _normalize_cip(raw or '')
+            if not normalized:
+                continue
+            cip_map[normalized] = pid  # dernier gagne, comme le frontend
+            stripped = normalized.lstrip('0')
+            if stripped and stripped not in cip_map:
+                cip_map[stripped] = pid
+    return cip_map
+
+
+def _parse_int_quantity(value: str, row_num: int) -> int:
+    """Quantité entière >= 0 ou lève ValueError avec message métier."""
+    value = str(value).strip()
+    if not value:
+        raise ValueError("Quantité manquante.")
+    try:
+        quantite = float(value.replace(',', '.'))
+    except ValueError:
+        raise ValueError(f"Quantité invalide '{value}'.")
+    # Rejette 'nan', 'inf', les décimaux non entiers ('1.5') et les négatifs
+    if not quantite.is_integer():
+        raise ValueError(f"Quantité invalide '{value}' (nombre entier attendu).")
+    quantite = int(quantite)
+    if quantite < 0:
+        raise ValueError(f"Quantité négative interdite '{value}'.")
+    return quantite
 
 
 def import_csv_inventaire(inventaire: Inventaire, uploaded_file) -> Response:
     """
     Importe des lignes d'inventaire depuis un fichier CSV.
-    Format attendu: cip;quantite (cip obligatoire, quantite obligatoire)
 
-    Args:
-        inventaire: Instance de l'inventaire cible
-        uploaded_file: Fichier CSV uploadé
+    Formats acceptés :
+      - avec en-têtes : colonnes cip|code|barcode|ean + quantite|qte|qty
+      - sans en-tête : positionnel `cip;quantite` (ou virgule)
 
     Returns:
-        Response DRF avec le résultat de l'import
+        Response DRF : status, imported, errors, lignes (sérialisées via le
+        bulk), not_found (CIP non reconnus pour rapport téléchargeable),
+        total_rows_processed
     """
     if inventaire.status != Inventaire.Status.EN_COURS:
         return Response(
@@ -37,67 +102,91 @@ def import_csv_inventaire(inventaire: Inventaire, uploaded_file) -> Response:
             uploaded_file.seek(0)
             decoded_file = uploaded_file.read().decode('latin-1')
 
-        # Plus de robustesse pour la détection du dialecte
-        content_sample = decoded_file[:1024]
-        try:
-            if not content_sample.strip():
-                return Response(
-                    {'error': 'Le fichier est vide.'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            csv.Sniffer().sniff(content_sample, delimiters=";,")
-        except Exception:
-            # Fallback si le sniffer échoue (souvent le cas avec très peu de lignes)
-            if ';' in content_sample:
-                pass
-            else:
-                pass
-
-        # On utilise DictReader avec un séparateur explicite
-        delimiter = ';' if ';' in content_sample else ','
-        csv_reader = csv.DictReader(
-            csv_io.StringIO(decoded_file),
-            delimiter=delimiter
-        )
-
-        # Nettoyage des en-têtes (strip, minuscule, suppression BOM)
-        if csv_reader.fieldnames:
-            csv_reader.fieldnames = [
-                field.strip().lower().replace('\ufeff', '')
-                for field in csv_reader.fieldnames
-            ]
-        else:
+        if not decoded_file.strip():
             return Response(
-                {'error': 'En-têtes CSV manquants.'},
+                {'error': 'Le fichier est vide.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        imported_count = 0
-        errors: list[str] = []
-        lignes_a_creer: list[LigneInventaire] = []
-        row_num = 0
+        # Détection du délimiteur (le sniffer échoue souvent sur 1-2 lignes)
+        content_sample = decoded_file[:1024]
+        delimiter = ';' if ';' in content_sample else ','
 
-        for row_num, row in enumerate(csv_reader, start=2):
+        rows = [
+            row for row in csv.reader(csv_io.StringIO(decoded_file), delimiter=delimiter)
+            if row and any(str(c).strip() for c in row)
+        ]
+        if not rows:
+            return Response(
+                {'error': 'Le fichier est vide.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # En-tête présent si un nom de colonne connu est trouvé, ou si la
+        # 2ᵉ colonne de la 1ʳᵉ ligne n'est pas numérique (ex: « quantite »).
+        header = [
+            str(c).strip().lower().replace('﻿', '')
+            for c in rows[0]
+        ]
+        cip_idx = next((i for i, h in enumerate(header) if h in _CIP_HEADERS), -1)
+        qty_idx = next((i for i, h in enumerate(header) if h in _QTY_HEADERS), -1)
+        has_header = (
+            cip_idx >= 0 or qty_idx >= 0
+            or (len(rows[0]) >= 2 and not _is_numeric(rows[0][1]))
+        )
+        data_rows = rows[1:] if has_header else rows
+
+        cip_map = _build_cip_map()
+        lignes_data: list[dict[str, Any]] = []
+        errors: list[str] = []
+        not_found: list[dict[str, Any]] = []
+        processed = 0
+
+        for offset, row in enumerate(data_rows):
+            row_num = (2 if has_header else 1) + offset
+            processed += 1
             try:
-                result = _process_csv_row(row, inventaire, row_num)
-                if result:
-                    lignes_a_creer.append(result)
-                    imported_count += 1
+                if has_header:
+                    cip_val = row[cip_idx] if 0 <= cip_idx < len(row) else ''
+                    qty_val = row[qty_idx] if 0 <= qty_idx < len(row) else ''
                 else:
-                    # result is None when there's an error already logged
-                    pass
+                    cip_val = row[0]
+                    qty_val = row[1] if len(row) > 1 else '1'
+
+                cip = str(cip_val).strip()
+                if not cip:
+                    raise ValueError("Colonne 'cip' ou 'code' manquante.")
+                quantite = _parse_int_quantity(qty_val, row_num)
+
+                normalized = _normalize_cip(cip)
+                produit_id = cip_map.get(normalized)
+                if produit_id is None:
+                    stripped = normalized.lstrip('0')
+                    produit_id = cip_map.get(stripped) if stripped else None
+
+                if produit_id is None:
+                    not_found.append({'cip': cip, 'quantite': quantite})
+                else:
+                    lignes_data.append({
+                        'produit': produit_id,
+                        'quantite_physique': quantite,
+                        'stock_lot': None,
+                    })
+            except ValueError as e:
+                errors.append(f"Ligne {row_num}: {e!s}")
             except Exception as e:
                 errors.append(f"Ligne {row_num}: Erreur inattendue: {e!s}")
 
-        if lignes_a_creer:
-            LigneInventaire.objects.bulk_create(lignes_a_creer)
+        # Fusion + persistance via le bulk optimisé (retourne les lignes
+        # sérialisées pour mise à jour client sans refetch).
+        bulk_response = bulk_lignes_inventaire(inventaire, lignes_data)
+        data = dict(bulk_response.data) if isinstance(bulk_response.data, dict) else {}
+        data['status'] = 'Import CSV terminé'
+        data['errors'] = errors + list(data.get('errors') or [])
+        data['not_found'] = not_found
+        data['total_rows_processed'] = processed
 
-        return Response({
-            'status': 'Import CSV terminé',
-            'imported': imported_count,
-            'errors': errors,
-            'total_rows_processed': row_num - 1 if row_num > 0 else 0
-        }, status=status.HTTP_201_CREATED if imported_count > 0 else status.HTTP_400_BAD_REQUEST)
+        return Response(data, status=bulk_response.status_code)
 
     except csv.Error as e:
         return Response(
@@ -109,70 +198,3 @@ def import_csv_inventaire(inventaire: Inventaire, uploaded_file) -> Response:
             {'error': f'Erreur lors du traitement: {e!s}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
-
-
-def _process_csv_row(
-    row: dict[str, Any],
-    inventaire: Inventaire,
-    row_num: int
-) -> LigneInventaire | None:
-    """
-    Traite une ligne du CSV et retourne une LigneInventaire ou None si erreur.
-
-    Args:
-        row: Dictionnaire représentant une ligne CSV
-        inventaire: Instance de l'inventaire cible
-        row_num: Numéro de ligne pour les messages d'erreur
-
-    Returns:
-        LigneInventaire instance ou None si la ligne doit être ignorée
-
-    Raises:
-        Exception: Si erreur inattendue
-    """
-    # Recherche des colonnes flexibles
-    cip = row.get('cip') or row.get('code') or row.get('barcode') or ''
-    quantite_str = row.get('quantite') or row.get('qte') or row.get('qty') or ''
-
-    cip = str(cip).strip()
-    quantite_str = str(quantite_str).strip()
-
-    if not cip:
-        # On saute les lignes vides sans erreur bloquante
-        if not any(row.values()):
-            return None
-        raise ValueError("Colonne 'cip' ou 'code' manquante.")
-
-    if not quantite_str:
-        raise ValueError("Quantité manquante.")
-
-    try:
-        quantite = float(quantite_str.replace(',', '.'))
-    except ValueError:
-        raise ValueError(f"Quantité invalide '{quantite_str}'.")
-    # Rejette 'nan', 'inf', les décimaux non entiers ('1.5') et les négatifs
-    if not quantite.is_integer():
-        raise ValueError(f"Quantité invalide '{quantite_str}' (nombre entier attendu).")
-    quantite = int(quantite)
-    if quantite < 0:
-        raise ValueError(f"Quantité négative interdite '{quantite_str}'.")
-
-    produit = Produit.objects.filter(
-        Q(cip1=cip) | Q(cip2=cip) | Q(cip3=cip) | Q(cip4=cip)
-    ).first()
-
-    if not produit:
-        raise ValueError(f"Produit '{cip}' introuvable.")
-    if produit.is_service:
-        raise ValueError(f"Produit '{cip}' ({produit.name}) est un service — non concerné par l'inventaire.")
-
-    stock_theorique = produit.stock
-    return LigneInventaire(
-        inventaire=inventaire,
-        produit=produit,
-        stock_lot=None,
-        stock_theorique=stock_theorique,
-        quantite_physique=quantite,
-        ecart=quantite - stock_theorique,
-        pmp_snapshot=produit.pmp or produit.cost_price or 0
-    )
