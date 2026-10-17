@@ -2,9 +2,12 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency, normalizeNumberInput } from '../../utils/formatters';
 import { escHtml, writePrintDocument } from '../../utils/print/printHelpers';
+import { printClotureSmart } from '../../utils/print/printClotureSmart';
+import { logger } from '../../utils/logger';
 import { formatDate, formatDateTime } from '../../utils/dateUtils';
 import { getPaymentModeLabel } from '../../config/paymentModes';
 import { useDocumentLocale } from '../../context/PharmacySettingsContext';
+import type { ClotureEscposData } from '../../utils/escpos/clotureEscpos';
 import type { PharmacySettings } from '../../types';
 
 export interface ClosingPrintData {
@@ -78,11 +81,12 @@ export function useJournalCaissePrinting({
   );
 
   const handleImprimerCloture = useCallback(
-    (dataToPrint?: ClosingPrintData) => {
+    async (dataToPrint?: ClosingPrintData) => {
       const data: ClosingPrintData = dataToPrint || closingTotalsRef.current || {};
 
-      const win = window.open('about:blank', '_blank', 'width=800,height=600');
-      if (win) {
+      const printHtml = () => {
+        const win = window.open('about:blank', '_blank', 'width=800,height=600');
+        if (!win) return;
         const startStr = (data.date_debut || data.start_date)
           ? new Date((data.date_debut || data.start_date) as string).toLocaleString(docLocale)
           : '--';
@@ -223,7 +227,17 @@ export function useJournalCaissePrinting({
 
         writePrintDocument(win, '<html><head><title>' + docT('print.window_title') + '</title><style>body { font-family: monospace; padding: 0; margin: 0; } @media print { body { padding: 0; margin: 0; } }</style></head><body>' + content + '</body></html>');
         win.print();
+      };
+
+      if (pharmacySettings) {
+        try {
+          await printClotureSmart(data as unknown as ClotureEscposData, pharmacySettings, printHtml);
+          return;
+        } catch (err) {
+          logger.error('Erreur impression clôture via QZ Tray:', err);
+        }
       }
+      printHtml();
     },
     [pharmacySettings, actualAmountRef, closingTotalsRef, docLocale, docT, formatCurrencyDoc]
   );

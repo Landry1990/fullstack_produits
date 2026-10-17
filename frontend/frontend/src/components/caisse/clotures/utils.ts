@@ -9,7 +9,9 @@ import { normalizeNumberInput } from '../../../utils/formatters'
 import { logger } from '../../../utils/logger'
 import { generateClotureTemplate } from '../../../utils/print/printTemplates'
 import { writePrintDocument } from '../../../utils/print/printHelpers'
+import { printClotureSmart } from '../../../utils/print/printClotureSmart'
 import type { ClotureCaisse, CloturesViewMode, DailyAggregate } from './types'
+import type { PharmacySettings } from '../../../types'
 
 export const formatDateForApi = (date: Date): string => {
   const pad = (num: number) => num.toString().padStart(2, '0')
@@ -110,10 +112,16 @@ export async function exportCloturesExcel({ viewMode, clotures, dailyData, t }: 
   }
 }
 
-/** Impression ticket 80mm d'une clôture dans une fenêtre dédiée. */
-export function printCloture(cloture: ClotureCaisse, pharmacyName: string, title: string): void {
-  const win = window.open('about:blank', '', 'height=600,width=400')
-  if (win) {
+/** Impression ticket 80mm d'une clôture : QZ Tray d'abord, fenêtre HTML en fallback. */
+export async function printCloture(
+  cloture: ClotureCaisse,
+  settings: PharmacySettings,
+  title: string
+): Promise<void> {
+  const htmlFallback = () => {
+    const win = window.open('about:blank', '', 'height=600,width=400')
+    if (!win) return
+
     const htmlContent = generateClotureTemplate({
       ...cloture,
       montant_reel: cloture.montant_reel,
@@ -123,7 +131,7 @@ export function printCloture(cloture: ClotureCaisse, pharmacyName: string, title
       total_entrees: cloture.total_entrees,
       total_sorties: cloture.total_sorties,
       details_paiement: cloture.details_paiement,
-      pharmacy_name: pharmacyName
+      pharmacy_name: settings.pharmacy_name
     });
 
     writePrintDocument(win, `
@@ -144,15 +152,19 @@ export function printCloture(cloture: ClotureCaisse, pharmacyName: string, title
       </html>
     `)
 
-    // Wait for resources if any (none in this template currently but good practice)
     win.onload = () => {
       win.print();
-      // win.close(); // Optionnel: fermer après impression
     };
 
-    // Fallback if onload doesn't trigger
     setTimeout(() => {
       if (win) win.print();
     }, 500);
+  };
+
+  try {
+    await printClotureSmart(cloture, settings, htmlFallback);
+  } catch (err) {
+    logger.error('Erreur impression clôture:', err);
+    htmlFallback();
   }
 }

@@ -11,6 +11,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from ...audit_helpers import log_audit
+from django.core.cache import cache
+
 from ...centralized_configs import StandardResultsSetPagination
 from ...models import AuditLog, Commande, CommandeProduit, Produit, StockLot
 from ...serializers import CommandeProduitSerializer
@@ -55,39 +57,14 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
             if selling_price is not None and commande_produit.produit_id:
                 produit = commande_produit.produit
                 old_price = produit.selling_price
-                produit.selling_price = selling_price
-                produit.save(update_fields=['selling_price'])
                 if old_price != selling_price:
-                    # Le prix de vente de la fiche produit a été réécrit par la
-                    # ligne de commande → tracé PRICE_CHG avec ancien/nouveau.
-                    log_audit(
-                        user=self.request.user,
-                        action=AuditLog.Action.PRICE_CHANGE,
-                        model_name='Produit',
-                        object_id=produit.id,
-                        description=f"Prix de vente de « {produit.name} » modifié via commande : {old_price} → {selling_price} F",
-                        details={
-                            'old_price': str(old_price),
-                            'new_price': str(selling_price),
-                            'commande_id': commande_produit.commande_id,
-                            'commande_produit_id': commande_produit.id,
-                        },
-                        request=self.request,
-                    )
-            log_audit(
-                user=self.request.user,
-                action=AuditLog.Action.CREATE,
-                model_name='CommandeProduit',
-                object_id=commande_produit.id,
-                description=f"Ajout ligne commande #{commande_produit.id} — {commande_produit.produit.name if commande_produit.produit else 'Produit'} x{commande_produit.quantity} (commande #{commande_produit.commande_id})",
-                details={
-                    'commande_id': commande_produit.commande_id,
-                    'produit_id': commande_produit.produit_id,
-                    'quantity': commande_produit.quantity,
-                    'price': str(commande_produit.price),
-                },
-                request=self.request,
-            )
+                    produit.selling_price = selling_price
+                    produit.save(update_fields=['selling_price'])
+                    # NOTE : les changements de prix sont tracés en masse par
+                    # bulk_sync pour éviter d'inonder le journal d'audit.
+            # NOTE : on ne trace plus chaque ligne CommandeProduit créée ;
+            # bulk_sync produit un résumé et les actions commande (create/update/
+            # cloture) restent tracées au niveau Commande.
 
     def _check_commande_not_closed(self, instance):
         """Lève une erreur si la commande associée est clôturée."""
@@ -113,37 +90,13 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
         return super().destroy(request, *args, **kwargs)
 
     def perform_update(self, serializer):
-        fields = sorted(serializer.validated_data.keys())
-        ligne = serializer.save()
-        log_audit(
-            user=self.request.user,
-            action=AuditLog.Action.UPDATE,
-            model_name='CommandeProduit',
-            object_id=ligne.id,
-            description=f"Modification ligne commande #{ligne.id} (commande #{ligne.commande_id})",
-            details={
-                'commande_id': ligne.commande_id,
-                'produit_id': ligne.produit_id,
-                'fields': fields,
-            },
-            request=self.request,
-        )
+        # NOTE : pas de log par ligne ici ; bulk_sync gère le résumé et les
+        # actions sur la commande restent tracées au niveau Commande.
+        serializer.save()
 
     def perform_destroy(self, instance):
-        # Tracé avant suppression (produit + quantité de la ligne détruite)
-        log_audit(
-            user=self.request.user,
-            action=AuditLog.Action.DELETE,
-            model_name='CommandeProduit',
-            object_id=instance.id,
-            description=f"Suppression ligne commande #{instance.id} — {instance.produit.name if instance.produit else 'Produit'} x{instance.quantity} (commande #{instance.commande_id})",
-            details={
-                'commande_id': instance.commande_id,
-                'produit_id': instance.produit_id,
-                'quantity': instance.quantity,
-            },
-            request=self.request,
-        )
+        # NOTE : pas de log par ligne supprimée ; la suppression est normalement
+        # réalisée via bulk_sync qui trace la commande parente.
         super().perform_destroy(instance)
 
     @action(detail=False, methods=['post'])
@@ -400,18 +353,9 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
                 p_obj = Produit.objects.get(id=p_id)
                 p_obj.save(update_fields=['taux_marge', 'pourcentage_marge'])
 
-        # Tracé des prix produits modifiés par la sync (un PRICE_CHG par produit)
-        for pc in price_changes:
-            log_audit(
-                user=request.user,
-                action=AuditLog.Action.PRICE_CHANGE,
-                model_name='Produit',
-                object_id=pc['produit_id'],
-                description=f"Prix du produit #{pc['produit_id']} modifié via sync commande #{commande.id}",
-                details={'commande_id': commande.id, 'changes': pc['changes']},
-                request=request,
-            )
-        
+        # NOTE : on ne trace plus les changements de prix produit individuellement
+        # lors d'une synchronisation groupée pour alléger le journal d'audit.
+
         # Delete items that are no longer in the payload
         ids_to_delete = existing_ids - payload_ids
         deleted_count = 0
@@ -441,21 +385,17 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
                 error_msg = "Certains produits ne peuvent pas être retirés car ils sont déjà utilisés dans : " + ", ".join(set(protected_elements))
                 return Response({'error': error_msg}, status=status.HTTP_400_BAD_REQUEST)
 
-        log_audit(
-            user=request.user,
-            action=AuditLog.Action.UPDATE,
-            model_name='Commande',
-            object_id=commande.id,
-            description=f"Synchronisation groupée de la commande #{commande.id} : {len(items_to_create)} créée(s), {len(items_to_update)} mise(s) à jour, {deleted_count} supprimée(s)",
-            details={
-                'created': len(items_to_create),
-                'updated': len(items_to_update),
-                'deleted': deleted_count,
-                'nb_price_changes': len(price_changes),
-                'warnings': warnings_list,
-            },
-            request=request,
-        )
+        # NOTE : on ne trace plus la synchronisation groupée comme un UPDATE
+        # Commande distinct. Le journal d'audit garde la création, la modification
+        # d'en-tête (CommandeViewSet.perform_update) et la clôture ; bulk_sync n'est
+        # qu'une sous-étape de persistance des lignes.
+
+        # La synchronisation des lignes modifie le total de la commande ;
+        # invalider le cache liste pour refléter immédiatement les changements.
+        try:
+            cache.delete_pattern('commandes_list:*')
+        except AttributeError:
+            pass
         return Response({
             'status': 'success',
             'created': len(items_to_create),

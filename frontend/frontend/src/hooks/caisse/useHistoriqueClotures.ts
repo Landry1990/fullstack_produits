@@ -220,8 +220,8 @@ export function useHistoriqueClotures() {
     await exportCloturesExcel({ viewMode, clotures, dailyData, t })
   }
 
-  const handlePrint = (cloture: ClotureCaisse) => {
-    printCloture(cloture, pharmacySettings.pharmacy_name, docT('modal.print_title', { id: cloture.id }))
+  const handlePrint = async (cloture: ClotureCaisse) => {
+    await printCloture(cloture, pharmacySettings, docT('modal.print_title', { id: cloture.id }))
   }
 
   return {

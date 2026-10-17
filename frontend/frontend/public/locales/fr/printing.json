@@ -169,6 +169,9 @@
   },
   "cloture": {
     "report_title": "Rapport de Clôture",
+    "pharmacy_default": "PHARMACIE",
+    "cashier_default": "N/A",
+    "id_label": "ID",
     "date": "DATE",
     "cashier": "CAISSIER",
     "closed_period": "Période Clôturée",
@@ -177,6 +180,8 @@
     "beginning": "DÉBUT",
     "now": "MAINTENANT",
     "details_by_mode": "Détails par mode",
+    "no_details": "Aucun detail",
+    "activity_summary": "ACTIVITE",
     "pharmacy_sales": "Ventes Pharmacie",
     "misc_sales": "Ventes Diverses",
     "total_sales": "Total Ventes",

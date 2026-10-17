@@ -431,6 +431,7 @@ class CommandeClotureMixin:
 
                     # 2.6 Invalider le cache
                     cache.delete('dashboard_stats')
+                    self._invalidate_cache()
 
                     # 2.7 Log d'audit — un seul log de synthèse par clôture
                     # (une commande peut contenir des centaines de lignes)
@@ -734,6 +735,7 @@ class CommandeClotureMixin:
             f"produits={len(produits_dict)} | lots_supprimes={deleted_lots_count} | user={request.user.username}"
         )
         notify_stock_changed(produits_dict.keys())
+        self._invalidate_cache()
         return Response({
             'status': 'Réception annulée avec succès.',
             'details': {
