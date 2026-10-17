@@ -2,6 +2,77 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-10-17 — Journal d'audit : doublon « Signature QZ Tray » supprimé
+
+- `api/views/qz.py` : le `log_audit` de `QzSignView` retiré. Chaque impression de
+  ticket via QZ Tray générait 2 à 3 entrées identiques « Signature d'une requête
+  QZ Tray (impression) » — QZ Tray signe **chaque** appel (`printers.find`,
+  `print`, voire `connect`), pas seulement l'impression. La signature est un
+  mécanisme interne d'authentification, pas une action utilisateur ; la
+  traçabilité réelle reste assurée par les logs métier (`imprimer_facture` →
+  EXPORT, `imprimer_recu`, etc.). Aucun test ne couvrait cette entrée.
+
+## 2026-10-17 — Inventaire Phase 2 : import CSV serveur, sans bouton Enregistrer, tableau virtualisé
+
+- `api/views/stocks/inventaire/csv_import.py` : réécriture complète. L'endpoint
+  `import-csv` fait désormais le parsing + matching CIP côté serveur —
+  normalisation identique au frontend (espaces/tirets/points, majuscules,
+  variante sans zéros de tête), index des CIP construit en **une** requête
+  (avant : 1 requête SQL par ligne CSV). Support des fichiers avec en-têtes
+  (`cip|code|barcode|ean` + `quantite|qte|qty`) **et** positionnels sans en-tête
+  (`cip;quantite`) — l'ancienne version exigeait des en-têtes et perdait la 1ʳᵉ
+  ligne des fichiers sans. La persistance est déléguée à `bulk_lignes_inventaire`
+  : **fusion avec les lignes existantes** (avant : `bulk_create` brut →
+  doublons possibles) et retour des lignes sérialisées. La réponse ajoute
+  `not_found` (CIP inconnus) pour le rapport téléchargeable côté client.
+- `useInventaireEditor.ts` : `handleImportCSV` envoie le fichier en multipart à
+  `import-csv` (fini le chargement de tout le catalogue `produits/for_import/`
+  et le parsing client) ; toasts not_found/errors/success + téléchargement du
+  rapport conservés ; merge via `applyBulkResponse`.
+- Bouton **« Enregistrer » supprimé** (`InventaireEditor.tsx`) — redondant avec
+  l'autosave (quantités : debounce 1,5 s + intervalle 30 s ; en-tête : `onBlur`).
+  `handleManualSave` retiré du hook. Le cleanup au démontage flushe désormais
+  les changements en attente (`flushPendingChanges` + `syncLocalOnlyLines(true)`)
+  avant d'annuler les timers — auparavant les modifications en cours étaient
+  perdues silencieusement.
+- Virtualisation du tableau d'inventaire au-delà de **500 lignes**
+  (`InventaireDataTab.tsx`) : fenêtre de rendu par spacers (hauteur fixe 44 px,
+  overscan 8), le DOM ne monte plus que ~40 lignes au lieu de tout l'inventaire.
+  Ligne extraite en composant mémoïsé `InventaireLineRow.tsx` ; handlers du hook
+  stabilisés (`useCallback`) pour que la saisie/scroll ne re-render que les
+  lignes concernées.
+- i18n : `inventaire.import.errors_count_{one,other}` ajouté (fr + en) pour les
+  lignes CSV ignorées.
+- `api/tests/test_inventaire_bulk.py` : +6 tests `import-csv` (headers,
+  positionnel sans en-tête, normalisation CIP, not_found + fusion, inventaire
+  validé rejeté, aucun produit valide).
+
+## 2026-10-17 — Perf inventaire : N+1 pre_populate/bulk + lignes renvoyées
+
+- `api/views/stocks/inventaire_main.py` : `pre_populate` utilisait
+  `produit.stock_lots.filter(...)` dans la boucle — le `.filter()` court-circuitait
+  le `prefetch_related('stock_lots')` et refaisait une requête par produit à lots.
+  Remplacé par un `Prefetch` avec queryset filtré (`quantity_remaining>0` ou
+  `quantity_reserved>0`) ; la boucle itère désormais sur le cache prefetch.
+- `api/views/stocks/inventaire/bulk.py` : correction du N+1 de
+  `lignes/bulk/`. Les lignes existantes de l'inventaire sont pré-chargées en une
+  requête (`select_related produit/rayon/stock_lot`) indexées par
+  `(produit_id, stock_lot_id)` ; les fusions sont collectées puis appliquées via
+  `bulk_update` au lieu d'un `.filter().first()` + `.save()` par ligne. Bonus :
+  `existing_lots_by_num` restreint au `lot__in` utile, `produits_map` avec
+  `select_related('rayon')`.
+- `lignes/bulk/` renvoie désormais `lignes` : les lignes créées/fusionnées
+  sérialisées (`LigneInventaireSerializer`). Rétrocompatible (clé ajoutée).
+- `frontend/src/hooks/inventaire/useInventaireEditor.ts` : nouveau helper
+  `mergeBulkLignes` + `applyBulkResponse` — les 4 appels bulk (sync auto des
+  lignes locales, save manuel, pré-validation, import CSV) fusionnent les lignes
+  renvoyées au lieu de re-GET toutes les lignes. Fallback refetch si `lignes`
+  absent. Effet de bord positif : l'import CSV ne perd plus les lignes
+  `isLocalOnly` non encore synchronisées.
+- `api/tests/test_inventaire_bulk.py` : 5 tests — retour des lignes sérialisées,
+  fusion des lignes existantes, merge intra-payload, et bornes de requêtes SQL
+  (anti-N+1) pour `lignes/bulk/` et `pre_populate`.
+
 ## 2026-10-17 — Fix clôture commande : éviter lots orphelins
 
 - `api/serializers/orders.py` : `validate_status` bloque désormais le passage

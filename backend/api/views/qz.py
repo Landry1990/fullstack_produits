@@ -7,9 +7,6 @@ from rest_framework.views import APIView
 
 from api.utils.qz_cert import get_certificate_pem, sign_qz_request
 
-from ..audit_helpers import log_audit
-from ..models import AuditLog
-
 
 def qz_certificate(request):
     """Retourne le certificat public utilisé pour signer les requêtes QZ Tray."""
@@ -31,12 +28,4 @@ class QzSignView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         signature = sign_qz_request(to_sign)
-        log_audit(
-            user=request.user,
-            action=AuditLog.Action.OTHER,
-            model_name='QzSign',
-            object_id=0,
-            description="Signature d'une requête QZ Tray (impression)",
-            request=request,
-        )
         return Response({"signature": signature})

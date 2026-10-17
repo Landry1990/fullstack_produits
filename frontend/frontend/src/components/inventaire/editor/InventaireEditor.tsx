@@ -4,7 +4,7 @@ import { LockBanner } from '../../common/LockBanner';
 import { useTranslation } from 'react-i18next';
 import { 
     ChevronLeft, Plus, FileText, CheckCircle2, History, 
-    Download, Save, Upload, Send, MoreHorizontal
+    Download, Upload, Send, MoreHorizontal
 } from 'lucide-react';
 import api from '../../../services/api';
 import { gooeyToast } from 'goey-toast';
@@ -72,7 +72,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
         saving, autoSaving, isReadOnly,
         selectedLines, toggleSelectAll, toggleSelectLine,
         dirtyLineIds,
-        handleSaveHeader, handleManualSave,
+        handleSaveHeader,
         handleUpdateQuantity, handleDeleteLine, handleBulkDelete,
         handleOpenValidateModal, handleImportCSV, importing,
         inventoryStats,
@@ -276,16 +276,6 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                         >
                             {importing ? <div className="animate-spin rounded-full size-4 border-b-2 border-slate-500"></div> : <Upload className="h-4 w-4" />}
                             <span className="hidden sm:inline">{t('common:import')}</span>
-                        </button>
-
-                        <button
-                            type="button"
-                            className="inline-flex items-center justify-center h-9 px-4 rounded-xl gap-2 text-sm font-bold bg-blue-600 text-white shadow-lg shadow-blue-200 hover:bg-blue-700 transition-colors disabled:opacity-60"
-                            onClick={handleManualSave}
-                            disabled={saving || importing}
-                        >
-                            {saving ? <div className="animate-spin rounded-full size-4 border-b-2 border-white"></div> : <Save className="h-4 w-4" />}
-                            {t('common:save')}
                         </button>
 
                         <button

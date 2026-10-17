@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import api from '../../services/api';
 import { gooeyToast } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
-import type { Inventaire, LigneInventaire, InventoryStats, ProduitModel } from '../../types';
+import type { Inventaire, LigneInventaire, InventoryStats } from '../../types';
 import { getProduitId } from '../../types/inventory';
 import { logger } from '../../utils/logger'
 
@@ -22,6 +22,27 @@ const buildBulkPayload = (lines: LigneInventaire[]) => ({
         lot_expiration: l.lot_expiration
     }))
 });
+
+/**
+ * Fusionne les lignes renvoyées par POST lignes/bulk/ dans l'état local.
+ * Les lignes locales synchronisées (syncedTempIds) sont remplacées par leur
+ * version persistée ; les lignes retournées dont l'id existe déjà sont mises
+ * à jour en place (merge côté backend) ; les nouvelles sont ajoutées en fin
+ * de liste — même ordre que le refetch complet qu'on évite désormais.
+ */
+const mergeBulkLignes = (
+    prev: LigneInventaire[],
+    returned: LigneInventaire[],
+    syncedTempIds: ReadonlySet<number>
+): LigneInventaire[] => {
+    const normalized = returned.map(l => ({ ...l, isLocalOnly: false }));
+    const normalizedById = new Map(normalized.map(l => [l.id, l]));
+    const kept = prev.filter(l => !(l.isLocalOnly && syncedTempIds.has(l.id)));
+    const keptIds = new Set(kept.map(l => l.id));
+    const merged = kept.map(l => normalizedById.get(l.id) ?? l);
+    const fresh = normalized.filter(l => !keptIds.has(l.id));
+    return [...merged, ...fresh];
+};
 
 function preserveFocus(): FocusInfo | null {
     const active = document.activeElement;
@@ -82,6 +103,25 @@ export const useInventaireEditor = (
     const localOnlyDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const isReadOnly = activeInventaire?.status === 'VALIDEE';
+
+    /**
+     * Applique la réponse de POST lignes/bulk/ : utilise les lignes renvoyées
+     * par le backend pour mettre à jour l'état sans GET complet.
+     * Fallback sur le refetch si le backend ne renvoie pas 'lignes'.
+     */
+    const applyBulkResponse = async (
+        inventaireId: number,
+        response: { data?: { lignes?: LigneInventaire[] } },
+        syncedTempIds: Set<number>
+    ) => {
+        if (Array.isArray(response?.data?.lignes)) {
+            const returned = response.data.lignes;
+            setLignes(prev => mergeBulkLignes(prev, returned, syncedTempIds));
+        } else {
+            const res = await api.get(`inventaires/${inventaireId}/lignes/`);
+            setLignes(res.data.map((l: LigneInventaire) => ({ ...l, isLocalOnly: false })));
+        }
+    };
 
     const handleCreate = async () => {
         // Now handled by handleCreateWithOptions, but keep default for backward compatibility if needed
@@ -191,7 +231,7 @@ export const useInventaireEditor = (
 
 
     // Ref to latest state for use inside async callbacks / intervals
-    const autoSaveInvRef = useRef({ activeInventaire, lignes, saving, flushPendingChanges: async () => {}, syncLocalOnlyLines: async (): Promise<boolean> => true });
+    const autoSaveInvRef = useRef({ activeInventaire, lignes, saving, flushPendingChanges: async () => {}, syncLocalOnlyLines: async (_force?: boolean): Promise<boolean> => true });
 
     const flushPendingChanges = async () => {
         const pending = pendingChangesRef.current;
@@ -223,7 +263,7 @@ export const useInventaireEditor = (
         }
     };
 
-    const syncLocalOnlyLines = async (): Promise<boolean> => {
+    const syncLocalOnlyLines = async (force = false): Promise<boolean> => {
         const { activeInventaire: inv, lignes: currentLignes } = autoSaveInvRef.current;
         if (!inv) return true;
         if (inv.status === 'VALIDEE') return true;
@@ -232,9 +272,10 @@ export const useInventaireEditor = (
         if (linesToSync.length === 0) return true;
 
         // Never disturb an active quantity input: defer if the user is typing
+        // (sauf si force=true, ex. flush au démontage du composant)
         const active = document.activeElement;
         const isTyping = active instanceof HTMLInputElement && active.type === 'number';
-        if (isTyping) {
+        if (isTyping && !force) {
             // Reschedule: user is still typing, wait for the next quiet window
             scheduleLocalOnlySync();
             return false;
@@ -244,9 +285,8 @@ export const useInventaireEditor = (
         setAutoSaving(true);
         try {
             const payload = buildBulkPayload(linesToSync);
-            await api.post(`inventaires/${inv.id}/lignes/bulk/`, payload);
-            const res = await api.get(`inventaires/${inv.id}/lignes/`);
-            setLignes(res.data.map((l: LigneInventaire) => ({ ...l, isLocalOnly: false })));
+            const res = await api.post(`inventaires/${inv.id}/lignes/bulk/`, payload);
+            await applyBulkResponse(inv.id, res, new Set(linesToSync.map(l => l.id)));
             return true;
         } catch (err) {
             logger.error("Auto-save local-only lines error:", err);
@@ -257,14 +297,14 @@ export const useInventaireEditor = (
         }
     };
 
-    const scheduleLocalOnlySync = () => {
+    const scheduleLocalOnlySync = useCallback(() => {
         if (localOnlyDebounceTimerRef.current) {
             clearTimeout(localOnlyDebounceTimerRef.current);
         }
         localOnlyDebounceTimerRef.current = setTimeout(() => {
-            syncLocalOnlyLines();
+            autoSaveInvRef.current.syncLocalOnlyLines();
         }, 5000);
-    };
+    }, []);
 
     const cancelPendingSyncs = () => {
         if (debounceTimerRef.current) {
@@ -277,7 +317,7 @@ export const useInventaireEditor = (
         }
     };
 
-    const handleUpdateQuantity = (lineId: number, newQty: number) => {
+    const handleUpdateQuantity = useCallback((lineId: number, newQty: number) => {
         // Optimistic update
         setLignes(prev => prev.map(l => {
             if (l.id === lineId) {
@@ -287,7 +327,7 @@ export const useInventaireEditor = (
             return l;
         }));
 
-        const line = lignes.find(l => l.id === lineId);
+        const line = autoSaveInvRef.current.lignes.find(l => l.id === lineId);
         if (line?.isLocalOnly) {
             // Local-only lines have no real ID yet; schedule a background sync
             // after the user stops typing so we don't disturb the active input.
@@ -304,11 +344,11 @@ export const useInventaireEditor = (
             clearTimeout(debounceTimerRef.current);
         }
         debounceTimerRef.current = setTimeout(() => {
-            flushPendingChanges();
+            autoSaveInvRef.current.flushPendingChanges();
         }, 1500);
-    };
+    }, [scheduleLocalOnlySync]);
 
-    const handleDeleteLine = async (lineId: number) => {
+    const handleDeleteLine = useCallback(async (lineId: number) => {
         const confirmed = await confirm({
             title: t('inventaire.lines.remove_title'),
             message: t('inventaire.lines.remove_message'),
@@ -318,7 +358,7 @@ export const useInventaireEditor = (
         if (!confirmed) return;
 
         try {
-            const line = lignes.find(l => l.id === lineId);
+            const line = autoSaveInvRef.current.lignes.find(l => l.id === lineId);
             if (line && !line.isLocalOnly) {
                 await api.delete(`lignes-inventaire/${lineId}/`);
             }
@@ -335,17 +375,19 @@ export const useInventaireEditor = (
             logger.error("Erreur suppression ligne", err);
             gooeyToast.error(t('inventaire.lines.delete_error'));
         }
-    };
+    }, [confirm, t]);
 
-    const toggleSelectLine = (id: number) => {
-        const newSet = new Set(selectedLines);
-        if (newSet.has(id)) {
-            newSet.delete(id);
-        } else {
-            newSet.add(id);
-        }
-        setSelectedLines(newSet);
-    };
+    const toggleSelectLine = useCallback((id: number) => {
+        setSelectedLines(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
+            return next;
+        });
+    }, []);
 
     const toggleSelectAll = () => {
         if (selectedLines.size === lignes.length && lignes.length > 0) {
@@ -450,9 +492,8 @@ export const useInventaireEditor = (
             setSaving(true);
             try {
                 const payload = buildBulkPayload(linesToSync);
-                await api.post(`inventaires/${activeInventaire.id}/lignes/bulk/`, payload);
-                const res = await api.get(`inventaires/${activeInventaire.id}/lignes/`);
-                setLignes(res.data.map((l: LigneInventaire) => ({ ...l, isLocalOnly: false })));
+                const res = await api.post(`inventaires/${activeInventaire.id}/lignes/bulk/`, payload);
+                await applyBulkResponse(activeInventaire.id, res, new Set(linesToSync.map(l => l.id)));
             } catch (err) {
                 logger.error("Auto-save before validate failed", err);
                 gooeyToast.error(t('inventaire.detail.save_error'));
@@ -475,136 +516,24 @@ export const useInventaireEditor = (
         );
     };
 
-    const handleManualSave = async () => {
-        if (!activeInventaire) return;
-        setSaving(true);
-        try {
-            // Cancel any pending debounce
-            cancelPendingSyncs();
-
-            // 1. Flush pending quantity changes first
-            await flushPendingChanges();
-
-            // 2. Save Header
-            await api.patch(`inventaires/${activeInventaire.id}/`, {
-                date: dateInventaire,
-                description
-            });
-            setActiveInventaire(prev => prev ? { ...prev, date: dateInventaire, description } : null);
-
-            // 3. Sync Lines
-            const linesToSync = lignes.filter(l => l.isLocalOnly);
-            if (linesToSync.length > 0) {
-                const payload = buildBulkPayload(linesToSync);
-                await api.post(`inventaires/${activeInventaire.id}/lignes/bulk/`, payload);
-                const res = await api.get(`inventaires/${activeInventaire.id}/lignes/`);
-                setLignes(res.data.map((l: LigneInventaire) => ({ ...l, isLocalOnly: false })));
-                await fetchInventoryStats(activeInventaire.id);
-            }
-
-            gooeyToast.success(t('common:messages.saved'));
-        } catch (error) {
-            logger.error("Erreur save manual", error);
-            gooeyToast.error(t('inventaire.detail.save_error'));
-        } finally {
-            setSaving(false);
-        }
-    };
-
     const handleImportCSV = async (file: File) => {
         if (!activeInventaire) return;
 
         setImporting(true);
-
-        // 1. Charger TOUS les produits pour le matching (optimisé)
-        let allProducts: ProduitModel[] = [];
         try {
-            const response = await api.get('produits/for_import/');
-            allProducts = Array.isArray(response.data) ? response.data : (response.data.results || []);
-        } catch (err) {
-            gooeyToast.error(t('inventaire.import.loading_products_error'));
-            logger.error(err);
-            setImporting(false);
-            return;
-        }
+            // Parsing + matching CIP côté backend (endpoint import-csv)
+            const formData = new FormData();
+            formData.append('file', file);
+            const res = await api.post(`inventaires/${activeInventaire.id}/import-csv/`, formData);
 
-        // Helper de normalisation CIP (identique à Commandes.tsx)
-        const normalizeCip = (cip: string | null | undefined): string => {
-            if (!cip) return '';
-            const normalized = cip.trim().replace(/[\s\-.]/g, '');
-            return normalized.toUpperCase();
-        };
+            const data = res.data || {};
+            const imported: number = data.imported ?? 0;
+            const errors: string[] = Array.isArray(data.errors) ? data.errors : [];
+            const notFound: { cip: string; quantite?: number }[] = Array.isArray(data.not_found) ? data.not_found : [];
 
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            const text = e.target?.result as string;
-            if (!text) {
-                setImporting(false);
-                return;
-            }
-
-            const lines = text.split(/\r\n|\n/);
-
-            // 1. Créer une Map d'indexation pour les produits par CIP (O(1) lookup)
-            const productByCipMap = new Map<string, ProduitModel>();
-            allProducts.forEach(p => {
-                const cips = [normalizeCip(p.cip1), normalizeCip(p.cip2), normalizeCip(p.cip3)];
-                cips.forEach(cip => {
-                    if (cip) {
-                        productByCipMap.set(cip, p);
-                        // Aussi indexer sans les zéros de tête pour plus de flexibilité
-                        const numeric = cip.replace(/^0+/, '');
-                        if (numeric && !productByCipMap.has(numeric)) {
-                            productByCipMap.set(numeric, p);
-                        }
-                    }
-                });
-            });
-
-            const importMap = new Map<number, number>(); // productId -> totalQuantity
-            let productsFoundCount = 0;
-            const notFoundItems: { cip: string; qty: string }[] = [];
-
-            // Détection du délimiteur (simple sur la première ligne significative)
-            let delimiter = ';';
-            for (const line of lines) {
-                if (line.trim() && line.includes(',')) {
-                    if (!line.includes(';')) delimiter = ',';
-                    break;
-                }
-            }
-
-            // 2. Parsing et Matching
-            lines.forEach((line, index) => {
-                if (!line.trim() || index === 0) return; // Sauter en-tête ou vide
-
-                const parts = line.split(delimiter);
-                const rawCip = parts[0]?.trim();
-                const rawQty = parts[1]?.trim() || '1';
-
-                if (!rawCip) return;
-
-                const normalizedSearchCip = normalizeCip(rawCip);
-                const numericSearch = normalizedSearchCip.replace(/^0+/, '');
-
-                // Recherche O(1) via la Map
-                const product = productByCipMap.get(normalizedSearchCip) || productByCipMap.get(numericSearch);
-
-                if (product) {
-                    const qty = parseFloat(rawQty.replace(',', '.')) || 0;
-                    if (qty > 0) {
-                        const current = importMap.get(product.id) || 0;
-                        importMap.set(product.id, current + qty);
-                        productsFoundCount++;
-                    }
-                } else {
-                    notFoundItems.push({ cip: rawCip, qty: rawQty });
-                }
-            });
-
-            // 2. Gérer les produits non trouvés
-            if (notFoundItems.length > 0) {
-                const txtContent = notFoundItems.map(item => `${item.cip}${delimiter}${item.qty}`).join('\n');
+            // Rapport téléchargeable des CIP non reconnus (même comportement qu'avant)
+            if (notFound.length > 0) {
+                const txtContent = notFound.map(item => `${item.cip};${item.quantite ?? ''}`).join('\n');
                 const blob = new Blob([txtContent], { type: 'text/plain;charset=utf-8;' });
                 const link = document.createElement('a');
                 const objectUrl = URL.createObjectURL(blob);
@@ -616,57 +545,44 @@ export const useInventaireEditor = (
                 document.body.removeChild(link);
                 URL.revokeObjectURL(objectUrl);
 
-                gooeyToast.error(t('inventaire.import.not_found_toast', { count: notFoundItems.length }));
+                gooeyToast.error(t('inventaire.import.not_found_toast', { count: notFound.length }));
             }
 
-            if (importMap.size === 0) {
-                gooeyToast.error(t('inventaire.import.no_valid_product'));
-                setImporting(false);
-                return;
+            if (errors.length > 0) {
+                gooeyToast.error(t('inventaire.import.errors_count', { count: errors.length }));
             }
 
-            // 3. Envoyer les données matchées au backend via bulk
-            try {
-                const payload = {
-                    lignes: Array.from(importMap.entries()).map(([productId, qty]) => ({
-                        produit: productId,
-                        quantite_physique: qty,
-                        stock_lot: null // L'import CSV standard ne gère pas encore les lots explicitement
-                    }))
-                };
-
-                await api.post(`inventaires/${activeInventaire.id}/lignes/bulk/`, payload);
-
-                gooeyToast.success(t('inventaire.import.success', { count: importMap.size, lines: productsFoundCount }));
-
-                // Recharger les lignes et stats
-                const res = await api.get(`inventaires/${activeInventaire.id}/lignes/`);
-                setLignes(res.data.map((l: LigneInventaire) => ({ ...l, isLocalOnly: false })));
-                await fetchInventoryStats(activeInventaire.id);
-            } catch (error: unknown) {
-                logger.error("Erreur lors de l'envoi bulk", error);
-                const err = error as { response?: { data?: { detail?: string } } };
-                gooeyToast.error(err.response?.data?.detail || t('inventaire.import.bulk_send_error'));
-            } finally {
-                setImporting(false);
+            if (imported > 0) {
+                gooeyToast.success(t('inventaire.import.success', { count: imported, lines: data.total_rows_processed ?? imported }));
             }
-        };
 
-        reader.onerror = () => {
-            gooeyToast.error(t('inventaire.import.reader_error'));
+            // Fusionner les lignes renvoyées (évite un rechargement complet)
+            await applyBulkResponse(activeInventaire.id, res, new Set());
+            await fetchInventoryStats(activeInventaire.id);
+        } catch (error: unknown) {
+            logger.error("Erreur lors de l'import CSV", error);
+            const err = error as { response?: { data?: { error?: string; detail?: string; errors?: string[] } } };
+            gooeyToast.error(
+                err.response?.data?.error
+                || err.response?.data?.errors?.[0]
+                || err.response?.data?.detail
+                || t('inventaire.import.bulk_send_error')
+            );
+        } finally {
             setImporting(false);
-        };
-
-        reader.readAsText(file);
+        }
     };
 
     useEffect(() => {
         autoSaveInvRef.current = { activeInventaire, lignes, saving, flushPendingChanges, syncLocalOnlyLines };
     });
 
-    // Cleanup debounce timers on unmount
+    // Cleanup debounce timers on unmount — avec flush de dernière chance :
+    // le bouton « Enregistrer » n'existe plus, l'autosave couvre tout.
     useEffect(() => {
         return () => {
+            autoSaveInvRef.current.flushPendingChanges();
+            autoSaveInvRef.current.syncLocalOnlyLines(true);
             cancelPendingSyncs();
         };
     }, []);
@@ -701,7 +617,7 @@ export const useInventaireEditor = (
         selectedLines, setSelectedLines,
         dirtyLineIds,
         handleCreate, handleEdit, handleCreateWithOptions,
-        handleSaveHeader, handleManualSave, handleImportCSV,
+        handleSaveHeader, handleImportCSV,
         handleUpdateQuantity, handleDeleteLine,
         toggleSelectLine, toggleSelectAll, handleBulkDelete,
         handleOpenValidateModal,

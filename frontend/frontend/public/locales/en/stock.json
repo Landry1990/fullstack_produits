@@ -288,6 +288,8 @@
             "not_found_toast_one": "{{count}} product not recognized. Report file downloaded.",
             "not_found_toast_other": "{{count}} products not recognized. Report file downloaded.",
             "no_valid_product": "No valid product found in the file.",
+            "errors_count_one": "{{count}} line skipped (format error).",
+            "errors_count_other": "{{count}} lines skipped (format error).",
             "bulk_send_error": "Error saving imported lines.",
             "reader_error": "Error reading file.",
             "success": "{{count}} products imported ({{lines}} lines)."

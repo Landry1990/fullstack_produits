@@ -2,10 +2,16 @@ import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Trash2, PackageX, ArrowUp, ArrowDown, AlertTriangle } from 'lucide-react';
 import { formatCurrency, normalizeNumberInput } from '../../../utils/formatters';
-import { formatDate } from '../../../utils/dateUtils';
 import type { LigneInventaire } from '../../../types';
 import { getProduitName } from '../../../types/inventory';
 import { EmptyState } from '../../ui/EmptyState';
+import { InventaireLineRow } from './InventaireLineRow';
+
+// Virtualisation au-delà de 500 lignes : fenêtre rendue autour du scroll,
+// hauteur de ligne fixe (px) pour le calcul des spacers.
+const VIRTUALIZE_THRESHOLD = 500;
+const ROW_HEIGHT = 44;
+const OVERSCAN_ROWS = 8;
 
 interface InventaireDataTabProps {
     lignes: LigneInventaire[];
@@ -119,6 +125,34 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
         }, { promis: 0, forced: 0 });
     }, [lignes]);
 
+    // --- Virtualisation (> 500 lignes) ---
+    const virtualize = sortedLines.length > VIRTUALIZE_THRESHOLD;
+    const scrollRef = React.useRef<HTMLDivElement>(null);
+    const headerRef = React.useRef<HTMLDivElement>(null);
+    const [scrollTop, setScrollTop] = useState(0);
+    const [viewportH, setViewportH] = useState(0);
+
+    React.useEffect(() => {
+        if (!virtualize) return;
+        const el = scrollRef.current;
+        if (!el) return;
+        const update = () => setViewportH(el.clientHeight);
+        update();
+        const ro = new ResizeObserver(update);
+        ro.observe(el);
+        return () => ro.disconnect();
+    }, [virtualize]);
+
+    const headerH = headerRef.current?.offsetHeight ?? 0;
+    const firstIdx = virtualize
+        ? Math.max(0, Math.floor(Math.max(0, scrollTop - headerH) / ROW_HEIGHT) - OVERSCAN_ROWS)
+        : 0;
+    const visibleCount = virtualize
+        ? Math.ceil((viewportH || 600) / ROW_HEIGHT) + OVERSCAN_ROWS * 2
+        : sortedLines.length;
+    const lastIdx = Math.min(sortedLines.length, firstIdx + visibleCount);
+    const visibleLines = virtualize ? sortedLines.slice(firstIdx, lastIdx) : sortedLines;
+
     if (sortedLines.length === 0) {
         return (
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 animate-in fade-in">
@@ -195,9 +229,13 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
             </div>
 
             {/* Table Header */}
-            <div className="overflow-x-auto overflow-y-auto flex-1 w-full">
+            <div
+                className="overflow-x-auto overflow-y-auto flex-1 w-full"
+                ref={scrollRef}
+                onScroll={virtualize ? (e) => setScrollTop(e.currentTarget.scrollTop) : undefined}
+            >
                <div className="min-w-[640px] md:min-w-[980px]">
-                    <div className={`grid ${!isReadOnly ? "grid-cols-[32px_1fr_70px_60px_60px_50px] md:grid-cols-[36px_minmax(160px,1.4fr)_100px_90px_100px_minmax(90px,1fr)_85px_65px_65px_60px_44px]" : "grid-cols-[1fr_70px_60px_60px_50px] md:grid-cols-[minmax(180px,1.4fr)_100px_90px_100px_minmax(90px,1fr)_85px_65px_65px_60px]"} gap-1 md:gap-2 p-2 px-2 md:px-4 border-b border-slate-100 bg-slate-50/50 text-caption md:text-xs font-bold uppercase tracking-wider text-slate-400`}>
+                    <div ref={headerRef} className={`grid ${!isReadOnly ? "grid-cols-[32px_1fr_70px_60px_60px_50px] md:grid-cols-[36px_minmax(160px,1.4fr)_100px_90px_100px_minmax(90px,1fr)_85px_65px_65px_60px_44px]" : "grid-cols-[1fr_70px_60px_60px_50px] md:grid-cols-[minmax(180px,1.4fr)_100px_90px_100px_minmax(90px,1fr)_85px_65px_65px_60px]"} gap-1 md:gap-2 p-2 px-2 md:px-4 border-b border-slate-100 bg-slate-50/50 text-caption md:text-xs font-bold uppercase tracking-wider text-slate-400`}>
                         {!isReadOnly && (
                             <div className="flex items-center justify-center">
                                 <input
@@ -221,202 +259,34 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                         {!isReadOnly && <div className="hidden md:block text-right">{t('inventaire.detail.col_actions')}</div>}
                     </div>
 
-                    {/* Grouped Table Body */}
+                    {/* Grouped Table Body — virtualisé au-delà de 500 lignes */}
                     <div className="divide-y divide-slate-50">
-                        {sortedLines.map((l) => {
-                            const currentEcart = (l.quantite_physique || 0) - (l.stock_theorique || 0);
-                            const ecartClass = currentEcart > 0 ? "text-emerald-600 bg-emerald-50 border-emerald-100"
-                                            : currentEcart < 0 ? "text-red-500 bg-red-50 border-red-100"
-                                            : "text-slate-300 bg-white border-transparent";
-                            const rayonName = l.produit_rayon || '-';
-
-                            const isDirty = dirtyLineIds?.has(l.id);
-                            const cip = l.produit_cip;
-                            const lotNumero = l.lot_numero;
-                            const lotExpiration = l.lot_expiration;
+                        {virtualize && firstIdx > 0 && (
+                            <div style={{ height: firstIdx * ROW_HEIGHT }} aria-hidden="true" />
+                        )}
+                        {visibleLines.map((l, i) => {
+                            const idx = firstIdx + i;
                             return (
-                                <div key={l.id} style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 40px' }} className={`grid ${!isReadOnly ? "grid-cols-[32px_1fr_70px_60px_60px_50px] md:grid-cols-[36px_minmax(160px,1.4fr)_100px_90px_100px_minmax(90px,1fr)_85px_65px_65px_60px_44px]" : "grid-cols-[1fr_70px_60px_60px_50px] md:grid-cols-[minmax(180px,1.4fr)_100px_90px_100px_minmax(90px,1fr)_85px_65px_65px_60px]"} gap-1 md:gap-2 py-1.5 px-2 md:px-4 items-center hover:bg-slate-50 transition-colors ${l.isLocalOnly ? 'bg-amber-50/50 border-l-[2px] border-l-amber-400' : ''} ${isDirty ? 'bg-blue-50/30 border-l-[2px] border-l-blue-400' : ''}`}>
-                                    {!isReadOnly && (
-                                        <div className="flex items-center justify-center">
-                                            <input
-                                                type="checkbox"
-                                                className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
-                                                checked={selectedLines.has(l.id)}
-                                                onChange={() => toggleSelectLine(l.id)}
-                                                aria-label={t('stock:reappro.select_product_aria', { name: l.produit_nom || getProduitName(l.produit) })}
-                                            />
-                                        </div>
-                                    )}
-
-                                    {/* Product Info — nom seul en desktop (CIP/Lot/Péremption en colonnes dédiées), tout inline sur mobile */}
-                                    <div className="min-w-0">
-                                        <div className="md:hidden flex items-baseline gap-2 min-w-0">
-                                            <span className="font-bold text-xs text-slate-800 truncate shrink-0 max-w-[55%]" title={l.produit_nom || getProduitName(l.produit)}>
-                                                {l.produit_nom || getProduitName(l.produit)}
-                                            </span>
-                                            {isDirty && (
-                                                <span className="w-2 h-2 rounded-full bg-blue-400 shrink-0" title={t('common:unsaved')} />
-                                            )}
-                                            {(l.pending_promis ?? 0) > 0 && (
-                                                <span className="text-caption rounded px-1.5 font-bold bg-amber-100 text-amber-700 shrink-0" title={t('inventaire.detail.badge_promis_title')}>
-                                                    {t('inventaire.detail.badge_promis', { count: l.pending_promis })}
-                                                </span>
-                                            )}
-                                            {(l.pending_force ?? 0) > 0 && (
-                                                <span className="text-caption rounded px-1.5 font-bold bg-rose-100 text-rose-700 shrink-0" title={t('inventaire.detail.badge_forced_title')}>
-                                                    {t('inventaire.detail.badge_forced', { count: l.pending_force })}
-                                                </span>
-                                            )}
-                                            <span className="text-caption font-mono text-slate-400 truncate">{cip}</span>
-                                            {lotNumero && (
-                                                <span className="text-caption font-mono text-emerald-600 font-bold truncate shrink-0">
-                                                    {t('inventaire.detail.lot_label')} {lotNumero}
-                                                </span>
-                                            )}
-                                            {lotExpiration && (
-                                                <span className="text-caption font-mono text-slate-400 shrink-0">
-                                                    {formatDate(lotExpiration)}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <div className="hidden md:flex items-center gap-1 font-bold text-sm text-slate-800 truncate" title={l.produit_nom || getProduitName(l.produit)}>
-                                            <span className="truncate">{l.produit_nom || getProduitName(l.produit)}</span>
-                                            {isDirty && (
-                                                <span className="w-2 h-2 rounded-full bg-blue-400 shrink-0" title={t('common:unsaved')} />
-                                            )}
-                                            {(l.pending_promis ?? 0) > 0 && (
-                                                <span className="text-caption rounded px-1.5 font-bold bg-amber-100 text-amber-700 shrink-0" title={t('inventaire.detail.badge_promis_title')}>
-                                                    {t('inventaire.detail.badge_promis', { count: l.pending_promis })}
-                                                </span>
-                                            )}
-                                            {(l.pending_force ?? 0) > 0 && (
-                                                <span className="text-caption rounded px-1.5 font-bold bg-rose-100 text-rose-700 shrink-0" title={t('inventaire.detail.badge_forced_title')}>
-                                                    {t('inventaire.detail.badge_forced', { count: l.pending_force })}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* CIP Column - hidden on mobile */}
-                                    <div className="hidden md:block truncate text-xs font-mono text-slate-500">
-                                        {cip || '-'}
-                                    </div>
-
-                                    {/* Lot Column - hidden on mobile */}
-                                    <div className="hidden md:block truncate text-xs font-mono font-bold text-emerald-600">
-                                        {lotNumero || '-'}
-                                    </div>
-
-                                    {/* Péremption Column - hidden on mobile */}
-                                    <div className="hidden md:block truncate text-xs font-mono text-slate-500">
-                                        {lotExpiration ? formatDate(lotExpiration) : '-'}
-                                    </div>
-
-                                    {/* Rayon Column - hidden on mobile */}
-                                    <div className="hidden md:block truncate text-xs font-medium text-slate-500">
-                                        {rayonName}
-                                    </div>
-
-                                    <div className="text-right text-caption md:text-xs font-medium text-slate-600">
-                                        {formatCurrency(normalizeNumberInput(String(l.pmp_snapshot || l.produit_cost_price || '0')))}
-                                    </div>
-
-                                    {/* Stock Théorique */}
-                                    <div className="flex justify-center">
-                                        <div className="bg-slate-50 px-1 md:px-2 py-0.5 rounded border border-slate-200 min-w-[35px] md:min-w-[45px] text-center">
-                                            <span className="font-mono font-bold text-caption md:text-xs text-slate-400">{l.stock_theorique}</span>
-                                        </div>
-                                    </div>
-
-                                    {/* Stock Physique (Input) */}
-                                    <div className="flex justify-center">
-                                        {isReadOnly ? (
-                                            <div className="bg-slate-50 px-1 md:px-2 py-1 rounded border border-slate-200 min-w-[35px] md:min-w-[45px] text-center">
-                                                <span className="font-mono font-bold text-caption md:text-xs text-slate-700">{l.quantite_physique}</span>
-                                            </div>
-                                        ) : (
-                                            <input
-                                                id={`qty-input-${l.id}`}
-                                                type="number"
-                                                className="h-7 md:h-8 px-1 md:px-2 w-12 md:w-16 text-center font-mono font-bold text-xs md:text-sm rounded-lg border border-slate-200 bg-slate-50/30 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 outline-none transition-all"
-                                                value={l.quantite_physique}
-                                                onChange={e => {
-                                                    const val = e.target.value;
-                                                    if (val === '') {
-                                                        handleUpdateQuantity(l.id, 0);
-                                                    } else {
-                                                        handleUpdateQuantity(l.id, normalizeNumberInput(val));
-                                                    }
-                                                }}
-                                                onKeyDown={e => {
-                                                    if (e.key === 'Enter') {
-                                                        if (l.isLocalOnly) {
-                                                            // For manual entry: focus search
-                                                            if (onQtyEnter) onQtyEnter();
-                                                        } else {
-                                                            // For pre-populated: focus next line
-                                                            e.preventDefault();
-                                                            const currentIdx = sortedLines.indexOf(l);
-                                                            const nextLigne = sortedLines[currentIdx + 1];
-                                                            if (nextLigne) {
-                                                                const nextInput = document.getElementById(`qty-input-${nextLigne.id}`);
-                                                                if (nextInput) (nextInput as HTMLInputElement).focus();
-                                                            } else if (onQtyEnter) {
-                                                                // If last line: fallback to search
-                                                                onQtyEnter();
-                                                            }
-                                                        }
-                                                    } else if (e.key === 'ArrowDown') {
-                                                        e.preventDefault();
-                                                        const currentIdx = sortedLines.indexOf(l);
-                                                        const nextLigne = sortedLines[currentIdx + 1];
-                                                        if (nextLigne) {
-                                                            const nextInput = document.getElementById(`qty-input-${nextLigne.id}`);
-                                                            if (nextInput) (nextInput as HTMLInputElement).focus();
-                                                        }
-                                                    } else if (e.key === 'ArrowUp') {
-                                                        e.preventDefault();
-                                                        const currentIdx = sortedLines.indexOf(l);
-                                                        const prevLigne = sortedLines[currentIdx - 1];
-                                                        if (prevLigne) {
-                                                            const prevInput = document.getElementById(`qty-input-${prevLigne.id}`);
-                                                            if (prevInput) (prevInput as HTMLInputElement).focus();
-                                                        } else if (onQtyEnter) {
-                                                            onQtyEnter();
-                                                        }
-                                                    }
-                                                }}
-                                                disabled={saving}
-                                                min="0"
-                                            />
-                                        )}
-                                    </div>
-
-                                    {/* Ecart */}
-                                    <div className="flex justify-center">
-                                        <div className={`px-1 md:px-2 py-0.5 rounded border font-mono font-bold text-caption md:text-xs min-w-[32px] md:min-w-[40px] text-center ${ecartClass}`}>
-                                            {currentEcart > 0 ? '+' : ''}{currentEcart}
-                                        </div>
-                                    </div>
-
-                                    {/* Actions - hidden on mobile */}
-                                    {!isReadOnly && (
-                                        <div className="hidden md:flex justify-end pr-1">
-                                            <button
-                                                type="button"
-                                                className="inline-flex items-center justify-center size-7 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-40"
-                                                onClick={() => handleDeleteLine(l.id)}
-                                                disabled={saving}
-                                                title={t('common:remove')}
-                                                aria-label={t('common:remove')}
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
+                                <InventaireLineRow
+                                    key={l.id}
+                                    line={l}
+                                    isReadOnly={isReadOnly}
+                                    isDirty={!!dirtyLineIds?.has(l.id)}
+                                    isSelected={selectedLines.has(l.id)}
+                                    saving={saving}
+                                    nextLineId={sortedLines[idx + 1]?.id}
+                                    prevLineId={sortedLines[idx - 1]?.id}
+                                    onToggleSelect={toggleSelectLine}
+                                    onUpdateQuantity={handleUpdateQuantity}
+                                    onDeleteLine={handleDeleteLine}
+                                    onQtyEnter={onQtyEnter}
+                                    style={virtualize ? { height: ROW_HEIGHT } : undefined}
+                                />
                             );
                         })}
+                        {virtualize && lastIdx < sortedLines.length && (
+                            <div style={{ height: (sortedLines.length - lastIdx) * ROW_HEIGHT }} aria-hidden="true" />
+                        )}
                     </div>
                </div>
             </div>
@@ -442,3 +312,4 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
         </div>
     );
 };
+
