@@ -228,6 +228,9 @@ class CommandeViewSet(
                 details={'fields': fields, 'status': commande.status},
                 request=self.request,
             )
+        # Invalider le cache liste des commandes pour que le changement de statut/
+        # montant soit visible immédiatement dans la liste.
+        self._invalidate_cache()
 
     def perform_destroy(self, instance):
         from django.utils import timezone

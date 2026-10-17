@@ -320,6 +320,9 @@ class CommandeBulkActionsMixin:
             request=request
         )
 
+        # Invalider le cache liste pour que la suppression soit visible immédiatement.
+        self._invalidate_cache()
+
         return Response({
             'status': 'success',
             'message': f'{len(deleted_ids)} commandes supprimées avec succès.',
@@ -414,6 +417,9 @@ class CommandeBulkActionsMixin:
             },
             request=request,
         )
+
+        # Invalider le cache liste pour que la fusion soit visible immédiatement.
+        self._invalidate_cache()
 
         return Response({
             'status': 'success',

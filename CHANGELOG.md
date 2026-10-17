@@ -42,6 +42,23 @@
   de la recherche globale.
 - Mise à jour des liens internes (`useOmnisearch`, `useProduitPage`,
   `StockHealthDashboard`) pour pointer sur `/app/commandes/locales`.
+- Correction du rafraîchissement de la liste des commandes : le cache backend
+  liste (`SimpleListCacheMixin`, TTL 120s) n'était pas invalidé lors des
+  modifications car `CommandeViewSet.perform_update` avait été surchargé sans
+  appeler `self._invalidate_cache()`. Ajout de l'invalidation dans
+  `perform_update`, `bulk_sync`, `cloturer` et `annuler_reception`.
+- Allègement du journal d'audit lors de la validation/édition d'une commande :
+  suppression des logs `CREATE`/`UPDATE`/`DELETE` `CommandeProduit` et des
+  `PRICE_CHANGE` individuels dans `bulk_sync`. Le journal conserve la
+  création, la modification d'en-tête et la clôture au niveau `Commande`.
+- Correction du rafraîchissement après suppression groupée et fusion de
+  commandes : invalidation du cache liste `commandes_list:*` dans
+  `CommandeBulkActionsMixin.bulk_delete` et `merge`.
+- Impression des rapports de clôture via QZ Tray : création d’un générateur
+  ESC/POS (`clotureEscpos.ts`) et d’une fonction `printClotureSmart` qui
+  essaie QZ Tray en priorité puis fallback HTML. Branché sur le journal de
+  caisse et l’historique des clôtures. Les duplicatas de tickets de caisse
+  utilisaient déjà QZ Tray via `printTicketSmart`.
 - Commande #104 : statut remis en `CLOTURÉE` (lots déjà créés, stock cohérent,
   aucune vente).
 
