@@ -201,6 +201,7 @@
         "cip": "CIP",
         "tabs": {
             "general": "General",
+            "pharma": "Pharmaco",
             "price": "Price",
             "purchases": "Purchases",
             "lots": "Lots",
@@ -306,6 +307,39 @@
                 "UG": "Free Unit"
             }
         }
+    },
+    "pharma": {
+        "tab_pharma": "Pharmaco",
+        "tab_posology": "Posology",
+        "tab_interactions": "Interactions",
+        "tab_principles": "Active ingredients",
+        "tab_classes": "Classes",
+        "tab_generics": "Generics",
+        "loading": "Loading pharmacological data...",
+        "no_data": "No pharmacological data available for this product.",
+        "no_posology": "No posology decoded for this product.",
+        "no_interactions": "No known interaction.",
+        "no_principles": "No active ingredient extracted.",
+        "no_classes": "No therapeutic class.",
+        "no_generics": "No substitutable generic in stock.",
+        "indications": "Indications",
+        "conservation": "Storage",
+        "stock": "Stock: {{count}}",
+        "field_voie": "Route",
+        "field_terrain": "Population",
+        "field_indication": "Indication",
+        "field_posology": "Posology",
+        "field_dose_min": "Min dose",
+        "field_dose_max": "Max dose",
+        "field_freq_min": "Min freq.",
+        "field_freq_max": "Max freq.",
+        "field_duration": "Duration",
+        "gravity_CONTRE_INDIQUE": "Contraindicated",
+        "gravity_DECONSEILLE": "Not recommended",
+        "gravity_PRECAUTION": "Precaution",
+        "gravity_A_PRENDRE_EN_COMPTE": "Consider",
+        "unknown_substance": "Unidentified substance",
+        "interaction_with": "With {{name}}"
     },
     "messages": {
         "loading": "Loading products...",

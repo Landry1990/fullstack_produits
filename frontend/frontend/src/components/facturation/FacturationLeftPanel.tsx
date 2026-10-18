@@ -1,5 +1,7 @@
 import ClientSection from './ClientSection'
 import ProductSearchSection from './ProductSearchSection'
+import ProductPharmaPanel from '../products/ProductPharmaPanel'
+import { useProductPharmaData } from '../../hooks/useProductPharmaData'
 import type { FacturationState } from '../../hooks/useFacturationState'
 import type { useDatamatrixScan } from '../../hooks/useDatamatrixScan'
 
@@ -12,6 +14,16 @@ interface FacturationLeftPanelProps {
 }
 
 export default function FacturationLeftPanel({ hook, datamatrixEnabled, scan }: FacturationLeftPanelProps) {
+  // Ligne explicitement sélectionnée ; sinon on affiche le dernier produit du panier
+  const explicitLine = hook.keyboardNav.selectedIndex >= 0
+    ? hook.sortedLignes[hook.keyboardNav.selectedIndex]
+    : null
+  const selectedLine = explicitLine ?? (hook.sortedLignes.length > 0
+    ? hook.sortedLignes[hook.sortedLignes.length - 1]
+    : null)
+  const selectedProductId = selectedLine?.produit?.id ?? null
+  const pharma = useProductPharmaData(selectedProductId)
+
   return (
     <div className="lg:flex-1 flex flex-col overflow-y-auto pos-discovery p-3 lg:p-4 2xl:p-6 gap-3 min-h-0 min-w-0 bg-slate-50">
 
@@ -91,28 +103,34 @@ export default function FacturationLeftPanel({ hook, datamatrixEnabled, scan }: 
         </div>
       </div>
 
-      {/* Zone vide — raccourcis */}
-      <div className="flex-1 hidden lg:flex flex-col justify-center items-center text-slate-300 hover:opacity-70 transition-opacity duration-500">
-        <div className="w-full max-w-xs rounded-2xl border-2 border-dashed border-slate-200 p-6 flex flex-col items-center gap-5 text-center bg-white/50">
-          <div className="size-12 rounded-xl bg-emerald-50 flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-            </svg>
-          </div>
-          <div>
-            <p className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">{hook.t('sales:pos.ready_for_sale')}</p>
-            <p className="text-caption text-slate-400">{hook.t('sales:pos.scan_or_search')}</p>
-          </div>
-          <div className="grid grid-cols-2 gap-2 w-full">
-            {[['F9',hook.t('facturation:shortcuts.validate')],['ENTRÉE',hook.t('facturation:shortcuts.search_enter')],['ESC',hook.t('facturation:shortcuts.cancel')],['F8',hook.t('facturation:shortcuts.pending')]].map(([k,v]) => (
-              <div key={k} className="bg-slate-100 rounded-xl p-2 flex flex-col items-center gap-1">
-                <kbd className="px-1.5 py-0.5 bg-white rounded text-slate-600 font-mono text-caption font-bold shadow-sm">{k}</kbd>
-                <span className="text-caption uppercase font-semibold text-slate-400">{v}</span>
-              </div>
-            ))}
+      {/* Zone détail pharmaco quand une ligne du panier est sélectionnée */}
+      {selectedProductId ? (
+        <div className="flex-1 hidden lg:flex flex-col min-h-0">
+          <ProductPharmaPanel data={pharma.data} loading={pharma.loading} />
+        </div>
+      ) : (
+        <div className="flex-1 hidden lg:flex flex-col justify-center items-center text-slate-300 hover:opacity-70 transition-opacity duration-500">
+          <div className="w-full max-w-xs rounded-2xl border-2 border-dashed border-slate-200 p-6 flex flex-col items-center gap-5 text-center bg-white/50">
+            <div className="size-12 rounded-xl bg-emerald-50 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">{hook.t('sales:pos.ready_for_sale')}</p>
+              <p className="text-caption text-slate-400">{hook.t('sales:pos.scan_or_search')}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2 w-full">
+              {[['F9',hook.t('facturation:shortcuts.validate')],['ENTRÉE',hook.t('facturation:shortcuts.search_enter')],['ESC',hook.t('facturation:shortcuts.cancel')],['F8',hook.t('facturation:shortcuts.pending')]].map(([k,v]) => (
+                <div key={k} className="bg-slate-100 rounded-xl p-2 flex flex-col items-center gap-1">
+                  <kbd className="px-1.5 py-0.5 bg-white rounded text-slate-600 font-mono text-caption font-bold shadow-sm">{k}</kbd>
+                  <span className="text-caption uppercase font-semibold text-slate-400">{v}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

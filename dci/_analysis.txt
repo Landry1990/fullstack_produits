@@ -1,0 +1,67 @@
+
+======================================================================
+MQ_COMMN  (4,288,680 octets)
+  strides candidats (diviseurs avec flag regulier): [120, 360, 1080, 1320, 2280, 3960]
+  -> stride retenu : 120  (35,739 records)
+  frontieres de colonnes : [0, 5, 15, 25]
+  rec#0: [0:0]'' | [0:5]'\x01\x02<NUL><NUL><NUL>' | [5:15]'0C62' | [15:25]'0C62' | [25:120]'6 MOIS < AGE < 9 MOIS                                       '
+  rec#1: [0:0]'' | [0:5]'\x01\x02<NUL><NUL><NUL>' | [5:15]'0C70' | [15:25]'0C70' | [25:120]'6 ANS < AGE < 17 ANS                                        '
+  rec#2: [0:0]'' | [0:5]'\x01\x02<NUL><NUL><NUL>' | [5:15]'A' | [15:25]'A' | [25:120]'CANCEROLOGIE-IMMUNOLOGIE                                    '
+  rec#3: [0:0]'' | [0:5]'\x01\x02<NUL><NUL><NUL>' | [5:15]'AA' | [15:25]'A' | [25:120]'CANCER                                                      '
+  rec#4: [0:0]'' | [0:5]'\x01\x02<NUL><NUL><NUL>' | [5:15]'AA1' | [15:25]'AA' | [25:120]'AFFECTION MALIGNE                                           '
+  rec#5: [0:0]'' | [0:5]'\x01\x02<NUL><NUL><NUL>' | [5:15]'AA2' | [15:25]'AA' | [25:120]'TUMEUR                                                      '
+  rec#6: [0:0]'' | [0:5]'\x01\x02<NUL><NUL><NUL>' | [5:15]'AA3' | [15:25]'AA' | [25:120]'PROCESSUS TUMORAL CONNU ET EVOLUTIF                         '
+  rec#7: [0:0]'' | [0:5]'\x01\x02<NUL><NUL><NUL>' | [5:15]'AA4' | [15:25]'AA' | [25:120]'METASTASE                                                   '
+
+======================================================================
+MQ_EQUIV  (178,698 octets)
+  strides candidats (diviseurs avec flag regulier): [26, 78, 754, 2054, 2262]
+  -> stride retenu : 26  (6,873 records)
+  frontieres de colonnes : [0, 13]
+  rec#0: [0:0]'' | [0:13]'\x01A' | [13:26]'C80.9    <NUL><NUL><NUL><NUL>'
+  rec#1: [0:0]'' | [0:13]'\x01AA' | [13:26]'C80.9    <NUL><NUL><NUL><NUL>'
+  rec#2: [0:0]'' | [0:13]'\x01AA1' | [13:26]'C80.9    <NUL><NUL><NUL><NUL>'
+  rec#3: [0:0]'' | [0:13]'\x01AA2' | [13:26]'C80.9    <NUL><NUL><NUL><NUL>'
+  rec#4: [0:0]'' | [0:13]'\x01AA3' | [13:26]'C80.9    <NUL><NUL><NUL><NUL>'
+  rec#5: [0:0]'' | [0:13]'\x01AA4' | [13:26]'C79.8    <NUL><NUL><NUL><NUL>'
+  rec#6: [0:0]'' | [0:13]'\x01AA5' | [13:26]'C80.9    <NUL><NUL><NUL><NUL>'
+  rec#7: [0:0]'' | [0:13]'\x01AA7' | [13:26]'D17.9    <NUL><NUL><NUL><NUL>'
+
+======================================================================
+MQ_CLASS  (1,370,889 octets)
+  strides candidats (diviseurs avec flag regulier): [39, 117]
+  -> stride retenu : 39  (35,151 records)
+  frontieres de colonnes : [0, 10, 19]
+  rec#0: [0:0]'' | [0:10]'\x01084005Y' | [10:19]'084005Z' | [19:39]'\x1a¼!<NUL>          <NUL><NUL><NUL><NUL><NUL><NUL>'
+  rec#1: [0:0]'' | [0:10]'\x01084005Y' | [10:19]'084005Z' | [19:39]'+¼!<NUL>          <NUL><NUL><NUL><NUL><NUL><NUL>'
+  rec#2: [0:0]'' | [0:10]'\x01084005Y' | [10:19]'084005Z' | [19:39]'1¼!<NUL>          <NUL><NUL><NUL><NUL><NUL><NUL>'
+  rec#3: [0:0]'' | [0:10]'\x01084005Y' | [10:19]'084005Z' | [19:39]'7¼!<NUL>          <NUL><NUL><NUL><NUL><NUL><NUL>'
+  rec#4: [0:0]'' | [0:10]'\x01084005Y' | [10:19]'084005Z' | [19:39]'\x01U"<NUL>          <NUL><NUL><NUL><NUL><NUL><NUL>'
+  rec#5: [0:0]'' | [0:10]'\x01084005Y' | [10:19]'084005Z' | [19:39]'s™(<NUL>          <NUL><NUL><NUL><NUL><NUL><NUL>'
+  rec#6: [0:0]'' | [0:10]'\x01084005Y' | [10:19]'084005Z' | [19:39]'d›(<NUL>          <NUL><NUL><NUL><NUL><NUL><NUL>'
+  rec#7: [0:0]'' | [0:10]'\x01084005Y' | [10:19]'084005Z' | [19:39]'c\x10*<NUL>          <NUL><NUL><NUL><NUL><NUL><NUL>'
+
+======================================================================
+MQ_INTER  (2,685,631 octets)
+  strides candidats (diviseurs avec flag regulier): [13, 247, 1079, 1703]
+  -> stride retenu : 13  (206,587 records)
+  frontieres de colonnes : [0, 5]
+  rec#0: [0:0]'' | [0:5]'\x01²õ <NUL>' | [5:13]'€igÿ<NUL><NUL><NUL><NUL>'
+  rec#1: [0:0]'' | [0:5]'\x01?ö <NUL>' | [5:13]'€igÿ<NUL><NUL><NUL><NUL>'
+  rec#2: [0:0]'' | [0:5]'\x01ëö <NUL>' | [5:13]'\x01ÖHÿ<NUL><NUL><NUL><NUL>'
+  rec#3: [0:0]'' | [0:5]'\x01ëö <NUL>' | [5:13]'rØHÿ<NUL><NUL><NUL><NUL>'
+  rec#4: [0:0]'' | [0:5]'\x01ëö <NUL>' | [5:13]'{ØHÿ<NUL><NUL><NUL><NUL>'
+  rec#5: Traceback (most recent call last):
+  File "C:\Projet Fullstack\fullstack_produits\dci\analyze_myd.py", line 123, in <module>
+    main()
+    ~~~~^^
+  File "C:\Projet Fullstack\fullstack_produits\dci\analyze_myd.py", line 119, in main
+    dump_records(path, stride, bounds)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Projet Fullstack\fullstack_produits\dci\analyze_myd.py", line 97, in dump_records
+    print(' | '.join(parts))
+    ~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\ufffd' in position 39: character maps to <undefined>
