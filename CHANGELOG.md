@@ -2,6 +2,86 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-10-17 — Performance du panneau pharmaco
+
+- Suppression du chargement massif de tous les produits à chaque appel de
+  `pharma_data` ; résolution du nom MQ via requête indexée ciblée.
+- Mise en cache Redis des réponses `pharma_data` pendant 5 minutes (passage
+  d'environ 90 ms à < 1 ms sur les appels suivants).
+- Frontend : debounce 120 ms + annulation des requêtes obsolètes dans
+  `useProductPharmaData` pour éviter les appels en rafale lors de la navigation
+  au clavier dans le panier.
+
+## 2026-10-17 — Amélioration de l'affichage du panneau pharmaco
+
+- `ProductPharmaPanel` revu : header avec principes actifs, badges, onglets
+  plus lisibles, regroupement des interactions par gravité, libellés i18n
+  des champs posologie.
+- Backend : nettoyage des noms `MQ_FORM` (suppression des métadonnées
+  binaires), parsing propre des listes d'indications, ajout de `Durée de
+  traitement` dans les blocs posologie.
+
+## 2026-10-17 — Matching par nom des produits non reconnus au CIP7
+
+- Nouvelle commande `match_mq_by_name` : pour les produits sans liaison
+  substance, elle tente un appariement par tokens du nom (marque + dosage)
+  avec `MQ_FORM`. 306 produits supplémentaires ont été liés à leurs
+  substances/ATC, portant le total à ~1 037 produits avec données
+  médicamenteuses.
+
+## 2026-10-17 — Fix traductions du panneau pharmaco
+
+- Les clés `products:pharma.*` étaient placées à tort sous `detail.pharma` dans
+  les fichiers de traduction ; elles sont maintenant au bon endroit
+  (`public/locales/{fr,en}/products.json`). Les onglets affichent désormais
+  les libellés FR/EN au lieu des clés brutes.
+
+## 2026-10-17 — Panneau pharmaco : auto-sélection du dernier produit ajouté
+
+- `FacturationLeftPanel` : si aucune ligne du panier n'est explicitement
+  sélectionnée, le panneau pharmaco affiche automatiquement le **dernier produit
+  ajouté**. Avant, il fallait cliquer sur une ligne du panier pour voir le
+  panneau.
+
+## 2026-10-17 — Panneau pharmaco en facturation et fiche produit
+
+- Nouvelle API `GET /api/produits/{id}/pharma_data/` (`api/product_pharma_service.py` +
+  action `pharma_data` dans `ProduitViewSet`) : posologie (depuis `MQ_MEMO` via
+  `MQ_MONOG`/DCI), interactions, principes actifs, classes ATC, génériques.
+- Nouveau composant `ProductPharmaPanel` avec onglets Posologie / Interactions /
+  Principes actifs / Classes / Génériques.
+- Intégration dans `FacturationLeftPanel` : quand une ligne du panier est
+  sélectionnée (clavier/souris), le panneau pharmaco remplace l'état vide
+  "Prêt pour la vente".
+- Intégration dans la fiche produit : nouvel onglet "Pharmaco" dans
+  `ProductTabsContent`/`ProductDetailsModal`.
+- Hook `useProductPharmaData` + traductions `products:pharma.*` FR/EN.
+- Les CSV exportés MQ sont copiés dans `backend/dci/export` (non versionné) pour
+  être accessibles au conteneur backend via le volume `./backend:/app`.
+
+## 2026-10-17 — Données médicamenteuses MQ importées (interactions, substances, ATC)
+
+- Analyse de la base MyISAM livrée avec l'ancien logiciel (`dci/*.MYD/.frm`) :
+  extraction des schémas records fixes (`analyze_myd.py`) et export CSV
+  (`export_dci.py`) des 9 tables (`MQ_FORM`, `MQ_MONOG`, `MQ_INTER`, `MQ_INTXT`,
+  `MQ_CLASS`, `MQ_COMMN`, `MQ_EQUIV`, `MQ_MEMO`).
+- Nouvelle commande `import_mq_data` (`api/management/commands/import_mq_data.py`)
+  qui importe dans l'app existante :
+  - substances depuis `MQ_MONOG` (noms + stubs `MQ-{id}` pour les IDs anonymes) ;
+  - interactions `MQ_INTER` → `DrugInteraction` avec gravité mappée depuis
+    `MQ_INTXT` (P1* → `A_PRENDRE_EN_COMPTE`, P2* → `PRECAUTION`,
+    D3* → `DECONSEILLE`, `CONTRE INDICATION` → `CONTRE_INDIQUE`) ;
+  - liaison `Produit.substances` via **CIP7** (`Produit.cip1` = `MQ_FORM.id` =
+    `MQ_CLASS.class_id`), avec fallback par nom normalisé ;
+  - peuplement de `Produit.code_atc` depuis `MQ_CLASS`.
+- En dev : 58 704 substances, 206 621 interactions, 702 produits liés, 765 codes
+  ATC ajoutés. Vérification de `ClinicalService.check_interactions` : alerte
+  `A_PRENDRE_EN_COMPTE` déclenchée entre `AKINETON LP 4MG CP B/30` et
+  `TUSSISEDAL SP FL/125ML`.
+- Limite / prochaine itération : les substances stubs `MQ-{id}` affichent des noms
+  techniques ; à mapper avec les noms de produits/molécules pour des libellés
+  utilisateur plus lisibles.
+
 ## 2026-10-17 — Journal d'audit : doublon « Signature QZ Tray » supprimé
 
 - `api/views/qz.py` : le `log_audit` de `QzSignView` retiré. Chaque impression de

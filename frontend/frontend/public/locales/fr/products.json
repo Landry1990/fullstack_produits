@@ -201,6 +201,7 @@
         "cip": "CIP",
         "tabs": {
             "general": "Général",
+            "pharma": "Pharmaco",
             "price": "Prix",
             "purchases": "Achats",
             "lots": "Lots",
@@ -306,6 +307,39 @@
                 "UG": "Unité Gratuite"
             }
         }
+    },
+    "pharma": {
+        "tab_pharma": "Pharmaco",
+        "tab_posology": "Posologie",
+        "tab_interactions": "Interactions",
+        "tab_principles": "Principes actifs",
+        "tab_classes": "Classes",
+        "tab_generics": "Génériques",
+        "loading": "Chargement des données médicamenteuses...",
+        "no_data": "Aucune donnée médicamenteuse disponible pour ce produit.",
+        "no_posology": "Aucune posologie décodée pour ce produit.",
+        "no_interactions": "Aucune interaction connue.",
+        "no_principles": "Aucun principe actif extrait.",
+        "no_classes": "Aucune classe thérapeutique.",
+        "no_generics": "Aucun générique substituable en stock.",
+        "indications": "Indications",
+        "conservation": "Conservation",
+        "stock": "Stock: {{count}}",
+        "field_voie": "Voie",
+        "field_terrain": "Terrain",
+        "field_indication": "Indication",
+        "field_posology": "Posologie",
+        "field_dose_min": "Dose min.",
+        "field_dose_max": "Dose max.",
+        "field_freq_min": "Fréq. min.",
+        "field_freq_max": "Fréq. max.",
+        "field_duration": "Durée",
+        "gravity_CONTRE_INDIQUE": "Contre-indiqué",
+        "gravity_DECONSEILLE": "Déconseillé",
+        "gravity_PRECAUTION": "Précaution",
+        "gravity_A_PRENDRE_EN_COMPTE": "À prendre en compte",
+        "unknown_substance": "Substance non identifiée",
+        "interaction_with": "Avec {{name}}"
     },
     "messages": {
         "loading": "Chargement des produits...",

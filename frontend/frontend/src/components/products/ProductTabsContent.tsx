@@ -21,6 +21,8 @@ import { Check, X, Pencil, Download, TrendingUp, TrendingDown, ArrowRight } from
 import { EmptyState } from '../ui/EmptyState';
 import { Skeleton } from '../ui/Skeleton';
 import SkeletonTable from '../ui/SkeletonTable';
+import ProductPharmaPanel from './ProductPharmaPanel';
+import { useProductPharmaData } from '../../hooks/useProductPharmaData';
 import type { TFunction } from 'i18next';
 import { usePharmacySettings } from '../../hooks/usePharmacySettings';
 import { exportToExcel } from '../../utils/excelExport';
@@ -569,6 +571,7 @@ export const ProductTabsContent: React.FC<ProductTabsContentProps> = ({
   onMovementClick
 }) => {
   const { t } = useTranslation(['products', 'common']);
+  const pharma = useProductPharmaData(selectedProduit.id);
 
   return (
     <div className="flex flex-col h-full">
@@ -579,6 +582,7 @@ export const ProductTabsContent: React.FC<ProductTabsContentProps> = ({
           <TabsList className="h-auto gap-1 bg-transparent p-0">
             {[
               { id: 'general', label: t('products:detail.tabs.general') },
+              { id: 'pharma', label: t('products:pharma.tab_pharma') },
               { id: 'prix', label: t('products:detail.tabs.price') },
               { id: 'achats', label: t('products:detail.tabs.purchases') },
               { id: 'lots', label: t('products:detail.tabs.lots') },
@@ -681,6 +685,8 @@ export const ProductTabsContent: React.FC<ProductTabsContentProps> = ({
             </TableBody>
           </Table>
         )}
+
+        {activeTab === 'pharma' && <ProductPharmaPanel data={pharma.data} loading={pharma.loading} />}
 
         {activeTab === 'achats' && <PurchasesTabContent achats={achats} t={t} />}
         

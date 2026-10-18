@@ -16,7 +16,7 @@ from django.db.models import (
     Sum,
 )
 from django.db.models.functions import Coalesce
-from rest_framework import filters, viewsets
+from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
@@ -30,6 +30,7 @@ from ..centralized_configs import (
 )
 from ..audit_helpers import log_audit
 from ..models import AuditLog, CommandeProduit, Produit, Promis, StockLot, StockObligation
+from ..product_pharma_service import get_product_pharma_data
 from ..search_mixins import MultiTermSearchMixin
 from ..serializer_mixins import OptimizedSerializerMixin
 from ..serializers import ProduitSerializer, ProduitUpdateSerializer
@@ -378,6 +379,21 @@ class ProduitViewSet(
             'dcis': [s.nom for s in substances],
             'count': qs.count()
         })
+
+    @action(detail=True, methods=['get'])
+    def pharma_data(self, request, pk=None):
+        """
+        Retourne les données médicamenteuses MQ (posologie, interactions,
+        principes actifs, classes thérapeutiques, génériques) pour un produit.
+        """
+        produit = self.get_object()
+        data = get_product_pharma_data(produit)
+        if data is None:
+            return Response(
+                {'error': 'Données MQ non disponibles (dci/export introuvable).'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        return Response(data)
 
     @action(detail=False, methods=['get'])
     def sans_dci(self, request):

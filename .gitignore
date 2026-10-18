@@ -47,6 +47,10 @@ license_key.txt
 *.license
 licences_recovered.txt
 
+# Données médicamenteuses exportées MQ (fichiers clients, pas versionnés)
+dci/export/
+backend/dci/
+
 # ============== IDE ==============
 .vscode/
 .idea/
