@@ -1,5 +1,6 @@
 import { gooeyToast } from 'goey-toast';
 import type { Commande, CommandeProduit, ProduitModel } from '../../types';
+import type { ReceptionGroupBy } from '../../utils/print/printHelpers';
 import { normalizeNumberInput } from '../../utils/formatters';
 
 interface ConfirmOptions {
@@ -30,7 +31,7 @@ interface UseCommandeHandlersParams {
     handleDeleteCommande: (cmd: Commande, opts: { validated_by_id: number; sudo_password: string }) => Promise<void>;
     handleMettreEnAttente: (cmd: Commande) => void;
     handleAnnulerReception: (cmd: Commande, opts: { validated_by_id: number; sudo_password: string }) => Promise<void>;
-    handleImprimerReception: (cmd: Commande, fournisseurName: string) => void;
+    handleImprimerReception: (cmd: Commande, fournisseurName: string, groupBy?: ReceptionGroupBy) => void;
     handleBulkDelete: (ids: number[], opts: { validated_by_id: number; sudo_password: string }) => Promise<void>;
     queryClient: { invalidateQueries: (opts: { queryKey: string[] }) => void };
     confirm: (opts: ConfirmOptions) => Promise<boolean>;
@@ -200,8 +201,8 @@ export function useCommandeHandlers(params: UseCommandeHandlersParams) {
         );
     };
 
-    const onImprimer = (fournisseurName: string) => {
-        if (selectedCommande) handleImprimerReception(selectedCommande, fournisseurName);
+    const onImprimer = (fournisseurName: string, groupBy?: ReceptionGroupBy) => {
+        if (selectedCommande) handleImprimerReception(selectedCommande, fournisseurName, groupBy);
     };
 
     const onBulkDelete = () => {

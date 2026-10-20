@@ -5,6 +5,8 @@ import { gooeyToast } from 'goey-toast';
 import api from '../services/api';
 import type { Substance } from '../hooks/useSubstances';
 import InteractionsManager from './InteractionsManager';
+import GenericsManager from './GenericsManager';
+import SubstancesManager from './SubstancesManager';
 import { Button } from './shadcn/button';
 import { Badge } from './ui/Badge';
 import { EmptyState } from './ui/EmptyState';
@@ -20,6 +22,16 @@ interface StatsData {
   linked_produits: number;
   unlinked_produits: number;
   link_rate: number;
+  mq_interactions?: number;
+  products_with_atc?: number;
+}
+
+type MqAction = 'relink' | 'match' | 'resolve';
+interface MqJobState {
+  status: 'idle' | 'queued' | 'running' | 'done' | 'error';
+  jobId?: string;
+  output?: string;
+  error?: string;
 }
 
 interface UnlinkedProduct {
@@ -40,7 +52,7 @@ interface UnlinkedResponse {
 
 export default function ImportDCIPage() {
   const { t } = useTranslation(['products', 'common']);
-  const [activeTab, setActiveTab] = useState<'dci' | 'interactions'>('dci');
+  const [activeTab, setActiveTab] = useState<'dci' | 'interactions' | 'generics' | 'substances'>('dci');
   const [stats, setStats] = useState<StatsData | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
 
@@ -59,6 +71,14 @@ export default function ImportDCIPage() {
   const [unlinkedSearch, setUnlinkedSearch] = useState('');
   const [loadingUnlinked, setLoadingUnlinked] = useState(false);
   const [linkingId, setLinkingId] = useState<number | null>(null);
+
+  // Jobs MQ (base médicamenteuse)
+  const [mqJobs, setMqJobs] = useState<Record<MqAction, MqJobState>>({
+    relink: { status: 'idle' },
+    match: { status: 'idle' },
+    resolve: { status: 'idle' },
+  });
+  const mqTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   const fetchStats = useCallback(() => {
     setLoadingStats(true);
@@ -130,6 +150,46 @@ export default function ImportDCIPage() {
       .finally(() => setLinkingId(null));
   };
 
+  // --- Jobs MQ (import/match/resolve en arrière-plan) ---
+
+  const pollMqJob = useCallback((action: MqAction, jobId: string) => {
+    api.get('dci-admin/mq_job/', { params: { job_id: jobId } })
+      .then(r => {
+        const st = r.data.status as MqJobState['status'];
+        setMqJobs(prev => ({
+          ...prev,
+          [action]: { status: st, jobId, output: r.data.output, error: r.data.error },
+        }));
+        if (st === 'queued' || st === 'running') {
+          mqTimers.current[jobId] = setTimeout(() => pollMqJob(action, jobId), 2000);
+        } else if (st === 'done') {
+          fetchStats();
+          fetchUnlinked();
+        } else if (st === 'error') {
+          gooeyToast.error(r.data.error || t('products:dci.mq.error'));
+        }
+      })
+      .catch(() => {
+        setMqJobs(prev => ({ ...prev, [action]: { status: 'error', jobId } }));
+      });
+  }, [fetchStats, fetchUnlinked, t]);
+
+  const runMqJob = (action: MqAction) => {
+    setMqJobs(prev => ({ ...prev, [action]: { status: 'queued', output: '' } }));
+    api.post('dci-admin/mq_run/', { action })
+      .then(r => {
+        pollMqJob(action, r.data.job_id);
+      })
+      .catch(err => {
+        gooeyToast.error(err.response?.data?.error || t('products:dci.mq.error'));
+        setMqJobs(prev => ({ ...prev, [action]: { status: 'error' } }));
+      });
+  };
+
+  useEffect(() => () => {
+    Object.values(mqTimers.current).forEach(clearTimeout);
+  }, []);
+
   return (
     <div className="p-6 space-y-8 max-w-7xl mx-auto">
       {/* Header — épuré comme CatalogueDCI */}
@@ -151,9 +211,17 @@ export default function ImportDCIPage() {
         <a role="tab" aria-selected={activeTab === 'interactions'} tabIndex={0} className={`px-4 py-2 text-sm font-medium cursor-pointer border-b-2 transition-colors ${activeTab === 'interactions' ? 'border-primary text-primary' : 'border-transparent text-base-content/60 hover:text-base-content'}`} onClick={() => setActiveTab('interactions')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveTab('interactions'); } }}>
           {t('products:dci.tab_interactions')}
         </a>
+        <a role="tab" aria-selected={activeTab === 'generics'} tabIndex={0} className={`px-4 py-2 text-sm font-medium cursor-pointer border-b-2 transition-colors ${activeTab === 'generics' ? 'border-primary text-primary' : 'border-transparent text-base-content/60 hover:text-base-content'}`} onClick={() => setActiveTab('generics')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveTab('generics'); } }}>
+          {t('products:dci.tab_generics')}
+        </a>
+        <a role="tab" aria-selected={activeTab === 'substances'} tabIndex={0} className={`px-4 py-2 text-sm font-medium cursor-pointer border-b-2 transition-colors ${activeTab === 'substances' ? 'border-primary text-primary' : 'border-transparent text-base-content/60 hover:text-base-content'}`} onClick={() => setActiveTab('substances')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveTab('substances'); } }}>
+          {t('products:dci.tab_substances_ref')}
+        </a>
       </div>
 
       {activeTab === 'interactions' && <InteractionsManager />}
+      {activeTab === 'generics' && <GenericsManager />}
+      {activeTab === 'substances' && <SubstancesManager />}
 
       {activeTab === 'dci' && (
         <>
@@ -242,6 +310,52 @@ export default function ImportDCIPage() {
             <div className={`mt-3 text-sm font-medium ${matchResult.newly_linked > 0 ? 'text-success' : 'text-warning'}`}>
               {t('products:dci.link_result', { count: matchResult.newly_linked, total: matchResult.total_linked, total_products: matchResult.total_produits, rate: matchResult.link_rate })}
             </div>
+          )}
+        </div>
+
+        {/* Base médicamenteuse MQ */}
+        <div className="bg-base-100 rounded-3xl border border-base-200 p-6 lg:col-span-2">
+          <h2 className="font-bold text-lg flex items-center gap-2 mb-1">
+            <FlaskIcon />
+            {t('products:dci.mq.title')}
+          </h2>
+          <p className="text-sm text-base-content/50 mb-4">
+            {t('products:dci.mq.desc', {
+              interactions: stats?.mq_interactions ?? '-',
+              atc: stats?.products_with_atc ?? '-',
+            })}
+          </p>
+          <div className="flex flex-col md:flex-row gap-3">
+            <MqJobButton
+              label={t('products:dci.mq.relink')}
+              hint={t('products:dci.mq.relink_hint')}
+              job={mqJobs.relink}
+              onRun={() => runMqJob('relink')}
+            />
+            <MqJobButton
+              label={t('products:dci.mq.match')}
+              hint={t('products:dci.mq.match_hint')}
+              job={mqJobs.match}
+              onRun={() => runMqJob('match')}
+            />
+            <MqJobButton
+              label={t('products:dci.mq.resolve')}
+              hint={t('products:dci.mq.resolve_hint')}
+              job={mqJobs.resolve}
+              onRun={() => runMqJob('resolve')}
+            />
+          </div>
+          {(['relink', 'match', 'resolve'] as MqAction[]).map(a =>
+            mqJobs[a].status === 'done' || mqJobs[a].status === 'error' ? (
+              <details key={a} className="mt-3 text-xs">
+                <summary className={`cursor-pointer font-medium ${mqJobs[a].status === 'error' ? 'text-error' : 'text-success'}`}>
+                  {t(`products:dci.mq.status_${mqJobs[a].status}`)} — {t(`products:dci.mq.${a}`)}
+                </summary>
+                <pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap bg-base-200/50 rounded-xl p-3">
+                  {mqJobs[a].error || mqJobs[a].output || t('products:dci.mq.no_output')}
+                </pre>
+              </details>
+            ) : null
           )}
         </div>
       </div>
@@ -351,6 +465,31 @@ export default function ImportDCIPage() {
       </div>
       </>
       )}
+    </div>
+  );
+}
+
+// --- MqJobButton: bouton d'action MQ avec état du job en cours ---
+
+interface MqJobButtonProps {
+  label: string;
+  hint: string;
+  job: MqJobState;
+  onRun: () => void;
+}
+
+function MqJobButton({ label, hint, job, onRun }: MqJobButtonProps) {
+  const { t } = useTranslation(['products']);
+  const busy = job.status === 'queued' || job.status === 'running';
+  return (
+    <div className="flex-1 rounded-2xl border border-base-200 p-4 flex flex-col gap-2">
+      <Button variant="secondary" className="rounded-2xl w-full" disabled={busy} onClick={onRun}>
+        {busy ? <Loader2 className="size-4 animate-spin" /> : label}
+      </Button>
+      <p className="text-xs text-base-content/50">{hint}</p>
+      {busy && <p className="text-xs font-medium text-primary">{t('products:dci.mq.running')}</p>}
+      {job.status === 'done' && <p className="text-xs font-medium text-success">{t('products:dci.mq.status_done')}</p>}
+      {job.status === 'error' && <p className="text-xs font-medium text-error">{t('products:dci.mq.status_error')}</p>}
     </div>
   );
 }

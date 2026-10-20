@@ -2,6 +2,133 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-10-19 — Bon de réception : regroupement alpha/rayon/forme pour le contrôle des entrées
+
+- Bouton « Imprimer Reçu » devient un bouton split : clic = ordre de saisie,
+  chevron ▼ = menu « Regroupement » (Ordre de saisie / Alphabétique /
+  Par rayon / Par forme) — `CommandeDetails.tsx`, chaîne `onImprimer` →
+  `handleImprimerReception` → `buildReceptionPrintHtml(…, groupBy)`.
+- `buildReceptionPrintHtml` : nouveau param `groupBy`
+  (`none|alpha|rayon|forme`) ; modes rayon/forme insèrent des lignes
+  d'en-tête de groupe (`RAYON : …` / `FORME : …`, « Sans rayon/forme »
+  en dernier), tri alpha à l'intérieur de chaque groupe.
+- Backend : `CommandeProduitSerializer` expose `produit_rayon`
+  (`produit.rayon.name`) et `produit_forme` (`produit.forme.nom`) ;
+  prefetch `produits__produit__rayon/__forme` dans `CommandeViewSet`.
+- Types `CommandeProduit` + clés i18n fr/en (`orders.print_group_*`,
+  `printing.reception.group_*/no_*`).
+
+## 2026-10-19 — Bon de réception commande : lignes compactes et sans retour à la ligne
+
+- `buildReceptionPrintHtml` (`frontend/src/utils/print/printHelpers.ts`) :
+  tableau produits en `table-layout: fixed` + `colgroup` (désignation 37 %,
+  colonnes chiffrées en largeurs fixes), padding vertical des cellules
+  8 px → 4 px (en-têtes 5 px) et `line-height` 1,4 → 1,2 — lignes nettement
+  plus resserrées.
+- `white-space: nowrap` sur toutes les cellules : fini les coupures dans les
+  nombres ou CIP. Le suffixe `(TVA %)` à côté du PA HT est retiré (la TVA
+  figure déjà dans les totaux) → colonne PA HT 14 % → 10 %, désignation
+  37 % → 41 %. La cellule produit est en 2 lignes : nom pleine largeur en
+  ligne 1 (ellipse si vraiment trop long, `title` = nom complet), LOT/EXP
+  en 7 pt en ligne 2 — la date de péremption n'est plus jamais tronquée.
+- Bloc « Détails de réception » allégé : suppression des lignes « Date
+  d'émission » et « Saisie par » (restent « Imprimé le » et « Clôturée
+  par ») ; marges du haut resserrées (header 16 px → 8 px, info-grid
+  16 px → 8 px, table 12 px → 8 px).
+
+## 2026-10-18 — Résolution massive des stubs MQ via les libellés produits
+
+- `resolve_mq_stubs` reçoit une **passe de résolution directe** : l'id d'un
+  stub `MQ-<id>` est un id `MQ_FORM` → renommage avec le vrai libellé produit
+  du catalogue MQ (~18 500 stubs), avant la passe d'inférence existante.
+- **Passe de nettoyage** : les noms renommés précédemment avec des suffixes
+  `(mq-…) (mq-…)` multiples sont consolidés en `base (MQ-<id>)` (779 noms).
+  Les partenaires d'interaction ont leurs suffixes de provenance retirés
+  avant inférence (finit les noms concaténés illisibles).
+- Tronquage propre à 255 car. (max_length) : coupe au dernier espace, le
+  suffixe `(MQ-…)` est préservé — `clinical_service` le masque à l'affichage.
+- Nettoyage `form_by_id` dans `product_pharma_service` : le nom s'arrête au
+  padding fixe (3+ espaces), ce qui élimine les métadonnées binaires en queue.
+- Résultat : 37 856 → **17 903 stubs** (~20k résolus : ABILIFY, HUMALOG,
+  HARVONI, Lorazépam, Ciclosporine…). Le reste = entités-familles sans
+  libellé dans MQ → renommage manuel via l'onglet Substances.
+
+## 2026-10-18 — Renommage manuel des substances MQ (onglet « Substances »)
+
+- Nouvel onglet **Substances** dans `ImportDCIPage` (`SubstancesManager.tsx`) :
+  recherche, filtre « non résolues (MQ-…) », renommage inline — pour corriger
+  progressivement les ~37 800 stubs `MQ-…` que `resolve_mq_stubs` n'a pas pu
+  résoudre automatiquement (le nom pilote les libellés d'alertes en caisse).
+- `SubstanceViewSet` : filtre `?unresolved=1` (stubs `MQ-…`), `produits_count`
+  exposé dans le serializer, et **écriture restreinte à `IsAdminUser`** (la
+  lecture reste accessible à tout utilisateur authentifié). Le `nom` unique
+  rejette les doublons en 400 ; chaque renommage est audité.
+- `dci-admin/stats` expose `mq_stub_substances` pour suivre la progression.
+- Premier onglet renommé « Liaison produits-DCI » pour lever l'ambiguïté.
+- 6 tests ajoutés (`SubstanceRenameTest`) : permission staff, filtre, audit,
+  rejet des doublons. 30/30 verts.
+
+## 2026-10-18 — Fusion Import DCI + base MQ & gestion manuelle des génériques
+
+- **`ImportDCIPage`** : le menu « Import DCI » intègre désormais la base
+  médicamenteuse MQ — carte d'actions lançant en tâche de fond les commandes
+  existantes (`import_mq_data` relink CIP, `match_mq_by_name`, `resolve_mq_stubs`)
+  via `dci-admin/mq_run` + suivi `mq_job` (polling, sortie affichable).
+  `stats` expose `mq_interactions` et `products_with_atc`.
+- **Nouvel onglet « Génériques »** (`GenericsManager.tsx`) : sélection d'un
+  produit de référence, liste des génériques déclarés (`produit_reference`)
+  et des produits partageant une substance/DCI, ajout/retrait de liens.
+- **`dci-admin/link_generic` / `unlink_generic` / `generiques`** :
+  - le lien est **déclaré** via `produit_reference` + `is_generic` (provenance,
+    pas de nouveau modèle/migration) et les substances sont **ajoutées en union** ;
+  - refus : auto-lien, produit inactif, lien déjà déclaré vers un autre produit,
+    circularité, référence sans substance ;
+  - **garde-fou mismatch** : si le générique a déjà des substances et aucune
+    ne coïncide avec la référence → 409 `requires_confirmation` (force requis) ;
+  - `unlink_generic` n'agit **que** sur les liens déclarés — jamais sur des
+    substances issues d'import/liaison manuelle (données cliniques protégées) ;
+  - tout est audité (substances ajoutées/retirées, dci copiée/purgée).
+- **Sécurité données** : `manual_link` passe de `substances.set()` (écrasement
+  silencieux des liens MQ/ANSM) à une union additive ; ids de substances
+  validés (404 au lieu de 500). Suggestions `unlinked` ne scannent plus les
+  200 premières substances en Python (pré-filtre SQL sur mot le plus long).
+- Tests `test_dci_admin_generics` : 24 cas (validation, réversibilité, audit,
+  accès staff). Pas de migration requise.
+
+## 2026-10-18 — Détecteur d'interactions dans le panier enrichi (MQ)
+
+- `ClinicalService.check_interactions` prend désormais en compte les entités MQ
+  des produits du panier, pas seulement les `Substance` liées :
+  - stubs `MQ-<CIP7>` dérivés de `cip1`/`cip2` (CIP13 supporté) ;
+  - **groupes d'interaction MQ** (lignes `intxt_id=0` de `MQ_INTER`, ids
+    `0xFF…`) : deux produits de la même famille d'effets déclenchent une alerte
+    « produits à effets similaires ».
+- Déduplication des alertes par paire de produits (gravité la plus sévère
+  conservée) ; les libellés d'interaction résolvent les stubs `MQ-…` vers les
+  noms de produits `MQ_FORM` / substances renommées.
+- Exemple vérifié : AKINETON + TUSSISEDAL → `A_PRENDRE_EN_COMPTE` avec noms
+  lisibles ; DUPHASTON + LUTENYL → alerte famille d'effets similaires.
+
+## 2026-10-18 — Support CIP13 pour le matching MQ
+
+- `_extract_cip7` : extrait le CIP7 d'un code `34009`+CIP7+clé ; utilisé par
+  `product_pharma_service` (cip1 **et** cip2), `import_mq_data` et
+  `match_mq_by_name`. Exemple : LOXEN 20 mg (cip2 `3400932781736`) résout
+  désormais `MQ_FORM` + ATC `C08CA04`.
+- `match_mq_by_name` : précharge `MQ_CLASS` une seule fois (au lieu de recharger
+  le CSV à chaque produit) et tente l'ATC via cip2/CIP13.
+
+## 2026-10-18 — Posologie & noms des substances dans les interactions
+
+- Extraction des textes Mémo pointés par le tail binaire de `MQ_FORM.MYD`
+  (`mq_form_tail_memos.csv`) pour récupérer la posologie max / CI de certains
+  produits.
+- Commande `resolve_mq_stubs` : renomme les stubs `MQ-…` des interactions en
+  noms de substances lorsque le principe actif des produits concernés est
+  clair (ex. `MQ-428…` → `Bisoprolol`).
+- Corrigé `_resolve_other_name` : retournait `None` quand un stub n'était ni un
+  produit local ni un MQ_FORM.
+
 ## 2026-10-17 — Performance du panneau pharmaco
 
 - Suppression du chargement massif de tous les produits à chaque appel de

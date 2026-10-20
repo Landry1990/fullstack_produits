@@ -2,8 +2,9 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { useDocumentLock } from '../../hooks/useDocumentLock';
 import { LockBanner } from '../common/LockBanner';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Pencil, Pause, Play, Check, Printer, Trash2, Tag, RotateCcw, Package, Search, X, Loader2 } from 'lucide-react';
+import { ArrowLeft, Pencil, Pause, Play, Check, Printer, Trash2, Tag, RotateCcw, Package, Search, X, Loader2, ChevronDown } from 'lucide-react';
 import type { Commande, Fournisseur, ProduitModel } from '../../types';
+import type { ReceptionGroupBy } from '../../utils/print/printHelpers';
 import { formatCurrency, normalizeNumberInput } from '../../utils/formatters';
 import { formatDate } from '../../utils/dateUtils';
 import { Button } from '../shadcn/button';
@@ -19,6 +20,12 @@ import {
   TableHeader,
   TableRow,
 } from '../shadcn/table';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../shadcn/dropdown-menu';
 import { cn } from '../../lib/utils';
 import { EmptyState } from '../ui/EmptyState';
 import api from '../../services/api';
@@ -47,7 +54,7 @@ export interface CommandeDetailsProps {
 
   onDelete: () => void;
 
-  onImprimer: (fournisseurName: string) => void;
+  onImprimer: (fournisseurName: string, groupBy?: ReceptionGroupBy) => void;
 
   onAnnulerReception: () => void;
 
@@ -214,6 +221,11 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
       });
   }, [localProduits, searchDetailQuery, detailSortKey, detailSortOrder, produitsList, t]);
 
+  const handlePrint = (groupBy?: ReceptionGroupBy) => {
+    const fName = fournisseurs.find(f => f.id === selectedCommande.fournisseur)?.name ?? `ID: ${selectedCommande.fournisseur}`;
+    onImprimer(fName, groupBy);
+  };
+
 
 
   return (
@@ -285,18 +297,37 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
             {executingAction ? <Loader2 className="size-4 animate-spin text-slate-600" /> : <><Trash2 className="size-4" /> {t('orders:details.delete')}</>}
           </Button>
 
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1"
-            onClick={() => {
-              const fName = fournisseurs.find(f => f.id === selectedCommande.fournisseur)?.name ?? `ID: ${selectedCommande.fournisseur}`;
-              onImprimer(fName);
-            }}
-            disabled={selectedCommande.status !== 'CLOT' || executingAction}
-          >
-            {executingAction ? <Loader2 className="size-4 animate-spin text-slate-600" /> : <><Printer className="size-4" /> {t('orders:details.print_receipt')}</>}
-          </Button>
+          <div className="flex">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1 rounded-r-none"
+              onClick={() => handlePrint()}
+              disabled={selectedCommande.status !== 'CLOT' || executingAction}
+            >
+              {executingAction ? <Loader2 className="size-4 animate-spin text-slate-600" /> : <><Printer className="size-4" /> {t('orders:details.print_receipt')}</>}
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-l-none border-l-0 px-1.5"
+                  disabled={selectedCommande.status !== 'CLOT' || executingAction}
+                  title={t('orders:details.print_group_title')}
+                >
+                  <ChevronDown className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <div className="px-2 py-1.5 text-xs uppercase text-slate-400 font-semibold">{t('orders:details.print_group_title')}</div>
+                <DropdownMenuItem onClick={() => handlePrint('none')}>{t('orders:details.print_group_order')}</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handlePrint('alpha')}>{t('orders:details.print_group_alpha')}</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handlePrint('rayon')}>{t('orders:details.print_group_rayon')}</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handlePrint('forme')}>{t('orders:details.print_group_forme')}</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
 
           <Button
             variant="outline"

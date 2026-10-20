@@ -92,6 +92,9 @@ class CommandeProduitSerializer(serializers.ModelSerializer):
     produit_stock_maximum = serializers.SerializerMethodField()
     produit_stock_alert = serializers.SerializerMethodField()
     produit_cost_price = serializers.SerializerMethodField()
+    # Classification produit — regroupement du bon de réception (contrôle entrées).
+    produit_rayon = serializers.CharField(source='produit.rayon.name', read_only=True)
+    produit_forme = serializers.CharField(source='produit.forme.nom', read_only=True)
 
     commande_date = serializers.DateTimeField(source='commande.date', read_only=True)
     fournisseur_name = serializers.SerializerMethodField()

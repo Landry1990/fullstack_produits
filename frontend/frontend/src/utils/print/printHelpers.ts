@@ -427,10 +427,12 @@ function _computeReceptionTotals(produits: CommandeProduit[]) {
   return { totalHT, totalTVA, totalLignes, totalUnites, totalGratuites, totalMarge };
 }
 
+export type ReceptionGroupBy = 'none' | 'alpha' | 'rayon' | 'forme';
+
 /**
  * Génère le document HTML complet pour l'impression d'un bon de réception.
  */
-export function buildReceptionPrintHtml(commande: Commande, companyInfo: { name?: string; address?: string; tel?: string; niu?: string; rc?: string }, mode: 'normal' | 'inkless' = 'inkless'): string {
+export function buildReceptionPrintHtml(commande: Commande, companyInfo: { name?: string; address?: string; tel?: string; niu?: string; rc?: string }, mode: 'normal' | 'inkless' = 'inkless', groupBy: ReceptionGroupBy = 'none'): string {
   const docLang = getDocumentLanguage();
   const docLocale = getDocumentLocale();
   const docT = i18next.getFixedT(docLang, 'printing');
@@ -455,13 +457,13 @@ export function buildReceptionPrintHtml(commande: Commande, companyInfo: { name?
 
   const fournisseurName = escHtml(commande.fournisseur_nom || 'N/A');
   const ref = escHtml(commande.numero_facture || `CMD-${commande.id}`);
-  const dateEmission = commande.date ? formatDateFr(commande.date) : '';
   const dateImpression = new Date().toLocaleDateString(docLocale, { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + new Date().toLocaleTimeString(docLocale, { hour: '2-digit', minute: '2-digit' });
-  const saisiePar = escHtml(commande.created_by_name || 'N/A');
   const cloturePar = escHtml(commande.closed_by_name || docT('reception.system_admin'));
 
-  const rowsHtml = produits.map((p) => {
-    const nom = escHtml(p.produit_nom || (typeof p.produit === 'object' ? p.produit.name : docT('reception.product_fallback', { id: p.produit })) || '');
+  const nomOf = (p: CommandeProduit) => p.produit_nom || (typeof p.produit === 'object' ? p.produit.name : '') || '';
+
+  const rowFor = (p: CommandeProduit) => {
+    const nom = escHtml(nomOf(p) || docT('reception.product_fallback', { id: p.produit }));
     const lot = escHtml(p.lot || '');
     const exp = p.date_expiration ? new Date(p.date_expiration).toLocaleDateString(docLocale, { month: '2-digit', year: 'numeric' }).replace('/', '/') : '';
     const cip = escHtml(p.produit_cip || (typeof p.produit === 'object' ? p.produit.cip1 : '') || '');
@@ -476,25 +478,53 @@ export function buildReceptionPrintHtml(commande: Commande, companyInfo: { name?
     const stockAvant = p.produit_stock_avant_reception ?? (stockApresReception - (qty + free));
     // Formule du bon : stock antérieur + qté reçue + UG = stock actuel.
     const stockApres = stockAvant + qty + free;
+    const lotInfo = lot ? `${docT('reception.lot')}: ${lot}${exp ? ` | ${docT('reception.exp')}: ${exp}` : ''}` : '';
     const paHT = parseFloat(String(p.price_cost || p.price || 0));
     const totalLine = paHT * (qty + free);
-    const tvaPct = parseFloat(String(p.tva || 0));
 
     return `
       <tr>
         <td>
-          <div class="product-line"><span class="product-name">${nom}</span>${lot ? `<span class="product-lot">${docT('reception.lot')}: ${lot}${exp ? `&nbsp;|&nbsp;${docT('reception.exp')}: ${exp}` : ''}</span>` : ''}</div>
+          <div class="product-name" title="${nom}">${nom}</div>
+          ${lotInfo ? `<div class="product-lot" title="${lotInfo}">${lotInfo}</div>` : ''}
         </td>
         <td class="text-center">${cip}</td>
         <td class="text-center">${stockAvant}</td>
         <td class="text-center">${qty}</td>
         <td class="text-center">${free}</td>
         <td class="text-center">${stockApres}</td>
-        <td class="text-right">${formatMoney(paHT)}${tvaPct > 0 ? ` <span class="tva">(${tvaPct.toFixed(2)}%)</span>` : ''}</td>
+        <td class="text-right">${formatMoney(paHT)}</td>
         <td class="text-right">${formatMoney(totalLine)}</td>
       </tr>
     `;
-  }).join('');
+  };
+
+  let rowsHtml = '';
+  if (groupBy === 'rayon' || groupBy === 'forme') {
+    const groups = new Map<string | null, CommandeProduit[]>();
+    for (const p of produits) {
+      const key = (groupBy === 'rayon' ? p.produit_rayon : p.produit_forme) || null;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(p);
+    }
+    const sortedKeys = [...groups.keys()].sort((a, b) => {
+      if (a === null) return 1;
+      if (b === null) return -1;
+      return a.localeCompare(b, docLocale);
+    });
+    const groupLabel = docT(groupBy === 'rayon' ? 'reception.group_rayon' : 'reception.group_forme');
+    const noGroupLabel = docT(groupBy === 'rayon' ? 'reception.no_rayon' : 'reception.no_forme');
+    rowsHtml = sortedKeys.map((key) => {
+      const items = groups.get(key)!.slice().sort((a, b) => nomOf(a).localeCompare(nomOf(b), docLocale));
+      const header = `<tr class="group-row"><td colspan="8">${escHtml(groupLabel)} : ${key ? escHtml(key) : escHtml(noGroupLabel)}</td></tr>`;
+      return header + items.map(rowFor).join('');
+    }).join('');
+  } else {
+    const sorted = groupBy === 'alpha'
+      ? produits.slice().sort((a, b) => nomOf(a).localeCompare(nomOf(b), docLocale))
+      : produits;
+    rowsHtml = sorted.map(rowFor).join('');
+  }
 
   return `<!DOCTYPE html>
 <html lang="${docLang}">
@@ -507,25 +537,24 @@ export function buildReceptionPrintHtml(commande: Commande, companyInfo: { name?
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif; font-size: 10pt; color: ${primaryColor}; background: #fff; line-height: 1.4; }
     .page { width: 100%; max-width: 180mm; margin: 0 auto; }
     
-    .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: ${headerBorder}; padding-bottom: 10px; margin-bottom: 16px; }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: ${headerBorder}; padding-bottom: 8px; margin-bottom: 8px; }
     .company-info .name { font-size: 16pt; font-weight: 700; color: ${primaryColor}; text-transform: uppercase; }
     .company-info .meta { font-size: 9pt; color: ${lightColor}; margin-top: 4px; }
     .doc-type { border: ${totalsBorder}; padding: 8px 20px; font-size: 13pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; text-align: center; }
     .doc-ref { text-align: right; font-size: 9pt; color: ${lightColor}; margin-top: 6px; }
     
-    .info-grid { display: flex; justify-content: space-between; gap: 20px; margin-bottom: 16px; }
+    .info-grid { display: flex; justify-content: space-between; gap: 20px; margin-bottom: 8px; }
     .info-box { flex: 1; }
     .info-box h3 { font-size: 8pt; text-transform: uppercase; color: ${lightColor}; margin-bottom: 4px; letter-spacing: 0.5px; }
     .info-box .value { font-size: 11pt; font-weight: 600; color: ${primaryColor}; }
     .info-box .sub { font-size: 9pt; color: ${lightColor}; margin-top: 2px; }
     
-    table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 9pt; }
-    th { background: ${tableHeaderBg}; color: ${primaryColor}; font-weight: 600; text-transform: uppercase; font-size: 8pt; padding: 8px 6px; border-top: ${tableBorder}; border-bottom: ${tableBorder}; text-align: left; }
-    td { padding: 8px 6px; border-bottom: ${rowBorder}; vertical-align: top; }
-    .product-line { line-height: 1.25; }
-    .product-name { font-weight: 500; color: ${primaryColor}; }
-    .product-lot { margin-left: 6px; font-size: 7pt; color: ${lightColor}; white-space: nowrap; }
-    .tva { font-size: 7pt; color: ${lightColor}; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 9pt; table-layout: fixed; line-height: 1.2; }
+    th { background: ${tableHeaderBg}; color: ${primaryColor}; font-weight: 600; text-transform: uppercase; font-size: 8pt; padding: 5px 6px; border-top: ${tableBorder}; border-bottom: ${tableBorder}; text-align: left; white-space: nowrap; }
+    td { padding: 4px 6px; border-bottom: ${rowBorder}; vertical-align: middle; white-space: nowrap; }
+    .product-name { font-weight: 500; color: ${primaryColor}; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .product-lot { margin-top: 0; font-size: 7pt; line-height: 1.15; color: ${lightColor}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    tr.group-row td { padding: 4px 6px; font-size: 7.5pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: ${primaryColor}; background: ${tableHeaderBg}; border-bottom: ${rowBorder}; }
     .text-right { text-align: right; }
     .text-center { text-align: center; }
     
@@ -570,14 +599,22 @@ export function buildReceptionPrintHtml(commande: Commande, companyInfo: { name?
       </div>
       <div class="info-box" style="text-align: right;">
         <h3>${docT('reception.details')}</h3>
-        <div class="sub"><b>${docT('reception.emission_date')}:</b> ${dateEmission}</div>
         <div class="sub"><b>${docT('reception.printed_on')}:</b> ${dateImpression}</div>
-        <div class="sub"><b>${docT('reception.entered_by')}:</b> ${saisiePar}</div>
         <div class="sub"><b>${docT('reception.closed_by')}:</b> ${cloturePar}</div>
       </div>
     </div>
 
     <table>
+      <colgroup>
+        <col style="width: 41%">
+        <col style="width: 11%">
+        <col style="width: 6.5%">
+        <col style="width: 6%">
+        <col style="width: 6%">
+        <col style="width: 7%">
+        <col style="width: 10%">
+        <col style="width: 12.5%">
+      </colgroup>
       <thead>
         <tr>
           <th>${docT('reception.col_product')}</th>

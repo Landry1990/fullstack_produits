@@ -127,7 +127,9 @@ class CommandeViewSet(
         # Only prefetch products for detail views or omnisearch
         if self.action in ['retrieve', 'update', 'partial_update'] or is_omnisearch:
             qs = qs.prefetch_related(
-                'produits__produit', 
+                'produits__produit',
+                'produits__produit__rayon',
+                'produits__produit__forme',
                 'produits__commande__fournisseur',
                 'produits__stock_lot'  # Fix: Empêche N+1 sur instance.stock_lot.first()
             )

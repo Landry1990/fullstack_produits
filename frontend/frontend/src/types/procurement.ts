@@ -61,6 +61,9 @@ export interface CommandeProduit {
     produit_stock_maximum?: number
     produit_stock_alert?: number
     produit_cost_price?: string
+    // Classification produit — regroupement du bon de réception.
+    produit_rayon?: string | null
+    produit_forme?: string | null
 }
 
 export interface Commande {

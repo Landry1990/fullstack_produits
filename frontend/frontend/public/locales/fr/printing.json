@@ -165,7 +165,11 @@
     "tel": "Tél",
     "lot": "LOT",
     "exp": "EXP",
-    "product_fallback": "Produit #{{id}}"
+    "product_fallback": "Produit #{{id}}",
+    "group_rayon": "RAYON",
+    "group_forme": "FORME",
+    "no_rayon": "Sans rayon",
+    "no_forme": "Sans forme"
   },
   "cloture": {
     "report_title": "Rapport de Clôture",

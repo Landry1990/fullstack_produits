@@ -19,6 +19,8 @@ from .mixins import UppercaseSerializerMixin
 
 
 class SubstanceSerializer(UppercaseSerializerMixin, serializers.ModelSerializer):
+    produits_count = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = Substance
         fields = '__all__'

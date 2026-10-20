@@ -41,6 +41,18 @@ FALLBACK_GRAVITY = 'PRECAUTION'
 BATCH_SIZE = 1000
 
 
+def _extract_cip7(code):
+    """CIP7 direct ou extrait d'un CIP13 ``34009`` + CIP7(7) + clé."""
+    if not code:
+        return None
+    digits = re.sub(r'\D', '', str(code))
+    if len(digits) == 13 and digits.startswith('34009'):
+        return digits[5:12]
+    if len(digits) == 7:
+        return digits
+    return None
+
+
 class Command(BaseCommand):
     help = 'Import des données médicamenteuses MQ depuis dci/export'
 
@@ -335,7 +347,19 @@ class Command(BaseCommand):
             if i % 500 == 0:
                 self.stdout.write(f"   Progression {i}/{total} (liés: {linked_count}, ATC: {atc_count})")
 
-            cip = (p.cip1 or '').strip()
+            # CIP7 candidats : cip1 direct ou extrait de cip1/cip2 en CIP13
+            cips = []
+            for raw in (p.cip1, p.cip2):
+                c = _extract_cip7(raw)
+                if c and c not in cips:
+                    cips.append(c)
+            cip = ''
+            for c in cips:
+                if c in form_rows:
+                    cip = c
+                    break
+            if not cip and cips:
+                cip = cips[0]
             form_row = form_rows.get(cip)
             if not form_row:
                 # Fallback par nom normalisé (premiers 40 car.)

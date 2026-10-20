@@ -165,7 +165,11 @@
     "tel": "Tel",
     "lot": "LOT",
     "exp": "EXP",
-    "product_fallback": "Product #{{id}}"
+    "product_fallback": "Product #{{id}}",
+    "group_rayon": "SHELF",
+    "group_forme": "DOSAGE FORM",
+    "no_rayon": "No shelf",
+    "no_forme": "No dosage form"
   },
   "cloture": {
     "report_title": "Closing Report",
