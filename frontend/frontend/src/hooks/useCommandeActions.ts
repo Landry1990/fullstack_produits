@@ -7,7 +7,7 @@ import { getApiErrorDetail } from '../utils/errorHandling';
 import type { Commande, CommandeProduit, User, PaginatedResponse } from '../types';
 import commandeService, { type SudoCredentials, type TransformationDisponible } from '../services/commandeService';
 import { logger } from '../utils/logger';
-import { buildReceptionPrintHtml, writePrintDocument } from '../utils/print/printHelpers';
+import { buildReceptionPrintHtml, writePrintDocument, type ReceptionGroupBy } from '../utils/print/printHelpers';
 import { useLicence } from '../context/LicenceContext';
 import { usePharmacySettings } from '../context/PharmacySettingsContext';
 interface UseCommandeActionsProps {
@@ -281,7 +281,7 @@ export function useCommandeActions({
         }
     };
 
-    const handleImprimerReception = async (commande: Commande, _fournisseurName: string) => {
+    const handleImprimerReception = async (commande: Commande, _fournisseurName: string, groupBy: ReceptionGroupBy = 'none') => {
         if (executingAction) return;
         setExecutingAction(true);
 
@@ -305,7 +305,7 @@ export function useCommandeActions({
                 rc: pharmacySettings.registre_commerce || 'N/A',
             };
 
-            const html = buildReceptionPrintHtml(commande, companyInfo);
+            const html = buildReceptionPrintHtml(commande, companyInfo, 'inkless', groupBy);
             writePrintDocument(printWindow, html);
             printWindow.focus?.();
         } catch (err) {

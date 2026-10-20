@@ -37,6 +37,17 @@ class Command(BaseCommand):
         text = re.sub(r'[^A-Z0-9]', ' ', text.upper())
         return re.sub(r'\s+', ' ', text).strip()
 
+    def _extract_cip7(self, code):
+        """CIP7 direct ou extrait d'un CIP13 ``34009`` + CIP7(7) + clé."""
+        if not code:
+            return None
+        digits = re.sub(r'\D', '', str(code))
+        if len(digits) == 13 and digits.startswith('34009'):
+            return digits[5:12]
+        if len(digits) == 7:
+            return digits
+        return None
+
     def _active_principles(self, form_name):
         if not form_name:
             return []
@@ -93,6 +104,13 @@ class Command(BaseCommand):
             if len(parts) >= 2:
                 dci = self._normalize(parts[-1])
                 monog_by_dci.setdefault(dci, []).append(r)
+
+        # Index MQ_CLASS par class_id (CIP7)
+        class_by_cip = {}
+        for cls in self._load_csv('mq_class.csv'):
+            cid = (cls.get('class_id') or '').strip()
+            if cid:
+                class_by_cip[cid] = (cls.get('code_b') or cls.get('code_a') or '').strip()
 
         # Précharger substances
         substances_map = {self._normalize(s.nom): s for s in Substance.objects.all()}
@@ -185,16 +203,20 @@ class Command(BaseCommand):
                     p.dci_reference = matched_substances[0]
                     p.save(update_fields=['dci_reference'])
 
-            # ATC depuis MQ_CLASS si on a le CIP7 du MQ_FORM
-            if cip and not p.code_atc:
-                for cls in self._load_csv('mq_class.csv'):
-                    if (cls.get('class_id') or '').strip() == cip:
-                        atc = (cls.get('code_b') or cls.get('code_a') or '').strip()
-                        if atc:
-                            p.code_atc = atc[:20]
-                            p.save(update_fields=['code_atc'])
-                            atc_count += 1
-                            break
+            # ATC depuis MQ_CLASS : CIP7 du MQ_FORM ou extrait de cip1/cip2 (CIP13)
+            if not p.code_atc:
+                atc_cips = [cip] if cip else []
+                for raw in (p.cip1, p.cip2):
+                    c7 = self._extract_cip7(raw)
+                    if c7 and c7 not in atc_cips:
+                        atc_cips.append(c7)
+                for c in atc_cips:
+                    atc = class_by_cip.get(c)
+                    if atc:
+                        p.code_atc = atc[:20]
+                        p.save(update_fields=['code_atc'])
+                        atc_count += 1
+                        break
 
         self.stdout.write(self.style.SUCCESS(
             f"\n✅ {matched}/{total} produits matchés par nom, {atc_count} codes ATC ajoutés"
