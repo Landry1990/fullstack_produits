@@ -105,44 +105,66 @@ export function useProductSearch(options: UseProductSearchOptions = {}): UseProd
     // Buffer DataMatrix : la douchette envoie la chaîne en rafale ; on attend
     // la fin du scan avant de décider (le lot arrive après le GTIN).
     const datamatrixTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+    const pendingDatamatrix = useRef<string | null>(null)
+
+    const flushDatamatrix = useCallback(() => {
+        if (datamatrixTimer.current) {
+            clearTimeout(datamatrixTimer.current)
+            datamatrixTimer.current = null
+        }
+        const raw = pendingDatamatrix.current
+        pendingDatamatrix.current = null
+        if (!raw) return
+        const parsed = parseGS1Datamatrix(raw)
+        if (parsed.cip && parsed.lot && onDatamatrixScan) {
+            // Scan complet CIP + lot → résolution du lot (délègue l'ajout panier)
+            onDatamatrixScan(raw)
+            setSearchQuery('')
+            setWasBarcodeScanned(false)
+        } else if (parsed.cip) {
+            // DataMatrix sans lot exploitable → recherche CIP classique
+            setWasDatamatrixScanned(true)
+            setWasBarcodeScanned(true)
+            setSearchQuery(normalizeCip(parsed.cip))
+        } else {
+            // Format datamatrix détecté mais rien d'exploitable : tracer le
+            // brut pour diagnostiquer ce que la douchette envoie réellement
+            logger.warn('DataMatrix non reconnu', { raw })
+            gooeyToast.error(i18n.t('common:messages.datamatrix_unrecognized'))
+        }
+    }, [onDatamatrixScan])
 
     // Enhanced setSearchQuery that detects barcode scans
     const handleSetSearchQuery = useCallback((query: string) => {
         if (isDatamatrix(query)) {
             if (datamatrixTimer.current) clearTimeout(datamatrixTimer.current)
-            datamatrixTimer.current = setTimeout(() => {
-                datamatrixTimer.current = null
-                const parsed = parseGS1Datamatrix(query)
-                if (parsed.cip && parsed.lot && onDatamatrixScan) {
-                    // Scan complet CIP + lot → résolution du lot (délègue l'ajout panier)
-                    onDatamatrixScan(query)
-                    setSearchQuery('')
-                    setWasBarcodeScanned(false)
-                } else if (parsed.cip) {
-                    // DataMatrix sans lot exploitable → recherche CIP classique
-                    setWasDatamatrixScanned(true)
-                    setWasBarcodeScanned(true)
-                    setSearchQuery(normalizeCip(parsed.cip))
-                } else {
-                    // Format datamatrix détecté mais rien d'exploitable : tracer le
-                    // brut pour diagnostiquer ce que la douchette envoie réellement
-                    logger.warn('DataMatrix non reconnu', { raw: query })
-                    gooeyToast.error(i18n.t('common:messages.datamatrix_unrecognized'))
-                }
-            }, 250)
+            pendingDatamatrix.current = query
+            datamatrixTimer.current = setTimeout(flushDatamatrix, 250)
             return
         }
 
         if (datamatrixTimer.current) {
+            // Beaucoup de douchettes terminent le scan par Entrée/Tab : la
+            // rafale est finie → traiter le DataMatrix en attente au lieu de
+            // l'annuler et de poser la chaîne GS1 brute comme recherche.
+            const pending = pendingDatamatrix.current ?? ''
+            const isTerminator =
+                /^\s+$/.test(query) ||
+                (pending !== '' && query.startsWith(pending) && /^\s*$/.test(query.slice(pending.length)))
+            if (isTerminator) {
+                flushDatamatrix()
+                return
+            }
             clearTimeout(datamatrixTimer.current)
             datamatrixTimer.current = null
+            pendingDatamatrix.current = null
         }
 
         const looksLikeBarcode = detectBarcodeInput(query)
         setWasDatamatrixScanned(false)
         setWasBarcodeScanned(looksLikeBarcode)
         setSearchQuery(query)
-    }, [detectBarcodeInput, onDatamatrixScan])
+    }, [detectBarcodeInput, flushDatamatrix])
 
     // Reset datamatrix flag when search changes
     useEffect(() => {

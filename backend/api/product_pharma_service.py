@@ -214,6 +214,53 @@ def _active_principles(form_name):
     return found
 
 
+# Cache process code CIP → nom produit local : les mêmes stubs MQ-…
+# reviennent dans chaque alerte/produit (check_interactions boucle par paire)
+# — sans dédup c'est un N+1 par requête en caisse.
+_local_name_cache: dict[str, str | None] = {}
+_LOCAL_NAME_CACHE_MAX = 8192
+
+
+def _local_product_name(code):
+    """Nom du produit local correspondant à un code CIP (None si introuvable)."""
+    if code in _local_name_cache:
+        return _local_name_cache[code]
+    try:
+        local = Produit.objects.filter(
+            Q(cip1=code) | Q(cip2=code) | Q(cip2__icontains=code)
+        ).values_list('name', flat=True).first()
+        if not local:
+            cip7 = _extract_cip7(code)
+            if cip7 and cip7 != code:
+                local = Produit.objects.filter(
+                    cip1=cip7
+                ).values_list('name', flat=True).first()
+    except Exception:
+        local = None
+    if len(_local_name_cache) < _LOCAL_NAME_CACHE_MAX:
+        _local_name_cache[code] = local
+    return local
+
+
+def _prewarm_local_names(codes):
+    """Résout les correspondances exactes cip1/cip2 en une seule requête.
+
+    Les codes restants (icontains / CIP7 dérivé) seront résolus et cachés
+    individuellement par _local_product_name.
+    """
+    todo = {c for c in codes if c and c not in _local_name_cache}
+    if not todo:
+        return
+    rows = Produit.objects.filter(
+        Q(cip1__in=todo) | Q(cip2__in=todo)
+    ).values_list('cip1', 'cip2', 'name')
+    for cip1, cip2, name in rows:
+        if cip1 in todo and cip1 not in _local_name_cache:
+            _local_name_cache[cip1] = name
+        if cip2 in todo and cip2 not in _local_name_cache:
+            _local_name_cache[cip2] = name
+
+
 def _resolve_other_name(name, form_by_id):
     """Remplace MQ-<CIP7> par un nom lisible si possible."""
     if not name or not name.startswith('MQ-'):
@@ -227,20 +274,9 @@ def _resolve_other_name(name, form_by_id):
     form_name = form_by_id.get(cip7)
     if form_name:
         return form_name
-    # Produit local (cip1 CIP7/CIP13 ou cip2)
-    try:
-        local = Produit.objects.filter(
-            Q(cip1=code) | Q(cip2=code) | Q(cip2__icontains=code)
-        ).values_list('name', flat=True).first()
-        if local:
-            return local
-        if cip7 != code:
-            local = Produit.objects.filter(cip1=cip7).values_list('name', flat=True).first()
-            if local:
-                return local
-    except Exception:
-        pass
-    return name
+    # Produit local (cip1 CIP7/CIP13 ou cip2) — résolution cachée/batchée
+    local = _local_product_name(code)
+    return local or name
 
 
 def _interactions_for_product(produit, data, cip7s=None):
@@ -255,8 +291,15 @@ def _interactions_for_product(produit, data, cip7s=None):
         Q(substance_a_id__in=substance_ids) |
         Q(substance_b_id__in=substance_ids)
     ).select_related('substance_a', 'substance_b').distinct()
+    interactions = list(qs[:100])
+    _prewarm_local_names(
+        s.nom[3:].strip()
+        for inter in interactions
+        for s in (inter.substance_a, inter.substance_b)
+        if s.nom and s.nom.startswith('MQ-')
+    )
     alerts = []
-    for inter in qs[:100]:
+    for inter in interactions:
         a_in = (
             inter.substance_a_id in substance_ids
             or inter.substance_a.nom in cip_stubs
@@ -290,6 +333,13 @@ def _generiques_for_product(produit):
         {'id': p.id, 'name': p.name, 'selling_price': str(p.selling_price), 'stock': p.stock}
         for p in qs
     ]
+
+
+def invalidate_pharma_cache(*produit_ids):
+    """Invalide le cache du panneau pharmaco après modification des liens DCI."""
+    keys = [f'pharma_data:{pid}' for pid in produit_ids if pid]
+    if keys:
+        cache.delete_many(keys)
 
 
 def get_product_pharma_data(produit):

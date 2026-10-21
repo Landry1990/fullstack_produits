@@ -548,9 +548,27 @@ def _get_rows_from_stock(group_by: str, stock_filter: str, filter_id=None, stock
     if stock_filter == 'zero':
         # Strictement nul : les lots négatifs ont leur filtre dédié
         # ('negatif') — « Stocks nuls (= 0) » ne doit plus les masquer.
-        qs = qs.filter(quantity_reserved=0) if stock_location == 'reserve' else qs.filter(quantity_remaining=0)
+        # Le compteur produit doit aussi être à 0 : un produit approvisionné
+        # avec un simple lot vide n'est pas « en rupture ».
+        if stock_location == 'reserve':
+            qs = qs.filter(quantity_reserved=0, produit__stock_reserve=0)
+        elif stock_location == 'tous':
+            qs = qs.filter(
+                quantity_remaining=0, produit__stock=0, produit__stock_reserve=0
+            )
+        else:
+            qs = qs.filter(quantity_remaining=0, produit__stock=0)
     elif stock_filter == 'non_zero':
-        qs = qs.filter(quantity_remaining__gt=0)
+        # En réserve la quantité qui compte est quantity_reserved ; en 'tous'
+        # un lot avec du stock à l'un des deux emplacements suffit.
+        if stock_location == 'reserve':
+            qs = qs.filter(quantity_reserved__gt=0)
+        elif stock_location == 'tous':
+            qs = qs.filter(
+                Q(quantity_remaining__gt=0) | Q(quantity_reserved__gt=0)
+            )
+        else:
+            qs = qs.filter(quantity_remaining__gt=0)
     elif stock_filter == 'negatif':
         if stock_location == 'reserve':
             qs = qs.filter(quantity_reserved__lt=0)
@@ -641,8 +659,14 @@ def _get_rows_from_stock(group_by: str, stock_filter: str, filter_id=None, stock
             id__in=seen_produit_ids,
         ).select_related('rayon', 'forme', 'groupe', 'fournisseur')
 
+        # Même règle que les lignes lot : le compteur produit doit être nul,
+        # sinon des produits approvisionnés apparaîtraient comme « stock nul ».
         if stock_location == 'reserve':
-            prod_qs = prod_qs.filter(has_reserve_storage=True)
+            prod_qs = prod_qs.filter(has_reserve_storage=True, stock_reserve=0)
+        elif stock_location == 'tous':
+            prod_qs = prod_qs.filter(stock=0, stock_reserve=0)
+        else:
+            prod_qs = prod_qs.filter(stock=0)
 
         if filter_id:
             if group_by == 'rayon':
@@ -660,6 +684,7 @@ def _get_rows_from_stock(group_by: str, stock_filter: str, filter_id=None, stock
                 grouped[group_name] = []
             pmp = float(p.pmp or p.cost_price or 0)
             grouped[group_name].append({
+                'produit_id': p.id,
                 'cip': p.cip1 or '',
                 'name': p.name,
                 'forme': p.forme.nom if p.forme else '',

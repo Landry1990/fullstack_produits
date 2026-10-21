@@ -258,6 +258,11 @@ class Produit(models.Model):
         related_name='generiques',
         help_text="Produit de marque/origine de référence (si ce produit est un générique)"
     )
+    generic_link_substances = models.JSONField(
+        default=list, blank=True,
+        help_text="Ids des substances ajoutées par le lien générique déclaré "
+                  "(unlink_generic ne retire que celles-là, jamais les liens pré-existants)"
+    )
     
     # Ordonnancier - Champs pour identifier les médicaments soumis à ordonnance
     requires_prescription = models.BooleanField(
