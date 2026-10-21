@@ -50,6 +50,10 @@ licences_recovered.txt
 # Données médicamenteuses exportées MQ (fichiers clients, pas versionnés)
 dci/export/
 backend/dci/
+# Fichiers bruts MyISAM MQ (sources de l'export, trop lourds pour git)
+dci/*.MYD
+dci/*.MYI
+dci/*.FRM
 
 # ============== IDE ==============
 .vscode/
