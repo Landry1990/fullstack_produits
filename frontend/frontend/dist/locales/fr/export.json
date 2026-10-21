@@ -1,0 +1,39 @@
+{
+  "title": "Export Commande Fournisseur",
+  "select_cip": "Choisir le code CIP à exporter",
+  "cip1_desc": "Fournisseur principal",
+  "cip3_desc": "Fournisseur secondaire",
+  "buttons": {
+    "cancel": "Annuler",
+    "export_csv": "Exporter CSV",
+    "export_sans_cip": "Produits sans CIP (TXT)"
+  },
+  "stats": {
+    "total": "Total produits",
+    "avec_cip": "Avec CIP",
+    "sans_cip": "Sans CIP"
+  },
+  "alert": {
+    "sans_cip_title": "Attention: Produits sans CIP",
+    "sans_cip_desc": "Certains produits n'ont pas de CIP pour ce fournisseur. Ils apparaîtront dans une section séparée du fichier."
+  },
+  "list": {
+    "avec_cip": "Produits exportables",
+    "sans_cip": "Produits à saisir manuellement"
+  },
+  "table": {
+    "libelle": "Libellé",
+    "qte": "Qté",
+    "ug": "UG"
+  },
+  "more": "produits supplémentaires",
+  "messages": {
+    "export_success": "Export CSV téléchargé avec succès",
+    "txt_export_success": "Liste des produits sans CIP téléchargée",
+    "load_failed": "Erreur lors du chargement de l'aperçu"
+  },
+  "errors": {
+    "load_failed": "Impossible de charger l'aperçu de l'export",
+    "export_failed": "Erreur lors de l'export"
+  }
+}

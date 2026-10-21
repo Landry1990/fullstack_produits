@@ -1,0 +1,94 @@
+{
+  "title": "Recycle Bin",
+  "subtitle": "Deleted items · Restore or permanently delete",
+  "subtitle_count": "{{count}} item(s) pending deletion",
+  "date_groups": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "this_week": "This week",
+    "older": "Older"
+  },
+  "tabs": {
+    "all": "All",
+    "produits": "Products",
+    "clients": "Clients",
+    "fournisseurs": "Suppliers",
+    "commandes": "Orders",
+    "avoirs": "Credits",
+    "promis": "Promised",
+    "inventaires": "Inventories",
+    "factures": "Sales",
+    "users": "Users"
+  },
+  "search": "Search in the recycle bin...",
+  "search_placeholder": "Search...",
+  "stock_label": "Stock:",
+  "empty_state": {
+    "title": "Recycle bin is empty",
+    "subtitle": "Deleted items will appear here"
+  },
+  "table": {
+    "name": "Name",
+    "type": "Type",
+    "details": "Details",
+    "deleted_at": "Deleted At",
+    "actions": "Actions"
+  },
+  "actions": {
+    "restore": "Restore",
+    "delete_permanently": "Delete",
+    "empty_trash": "Empty Recycle Bin",
+    "empty_all": "Empty All",
+    "refresh": "Refresh",
+    "selected": "{{count}} selected",
+    "select_all": "Select all"
+  },
+  "badges": {
+    "produit": "Product",
+    "client": "Client",
+    "fournisseur": "Supplier",
+    "commande": "Order",
+    "avoir": "Credit",
+    "promis": "Promised",
+    "inventaire": "Inventory",
+    "facture": "Sale",
+    "user": "User"
+  },
+  "links": {
+    "sales": "{{count}} sale(s)",
+    "order_lines": "{{count}} order line(s)",
+    "client_credits": "{{count}} client credit note(s)",
+    "stock": "{{count}} unit(s) in stock",
+    "invoices": "{{count}} invoice(s)",
+    "statements": "{{count}} payment statement(s)",
+    "deposits": "{{count}} deposit(s)",
+    "beneficiaries": "{{count}} beneficiary(ies)",
+    "orders": "{{count}} order(s)",
+    "payments": "{{count}} payment(s)",
+    "schedules": "{{count}} schedule(s)"
+  },
+  "linked_hint": "This item is linked to existing transactions",
+  "purge_blocked_label": "Deletion blocked",
+  "purge_blocked_hint": "Protected references prevent this item from being permanently deleted",
+  "messages": {
+    "fetch_error": "Error loading recycle bin",
+    "restore_success": "{{count}} item(s) restored ✓",
+    "restore_error": "Error during restoration",
+    "purge_success": "{{count}} item(s) permanently deleted",
+    "purge_error": "Error during deletion",
+    "empty_error": "Error emptying recycle bin",
+    "purge_confirm_title": "⚠️ Permanent Deletion",
+    "purge_confirm_body": "Permanently delete {{count}} item(s)? This action is IRREVERSIBLE.",
+    "purge_confirm_btn": "Delete Permanently",
+    "purge_confirm_linked": "{{count}} item(s) have a linked history (sales, orders, payments…).",
+    "purge_confirm_cascade": "{{count}} item(s) will permanently delete linked data (payments, deposits, beneficiaries, schedules…).",
+    "purge_confirm_blocked": "{{count}} item(s) will be refused because they are referenced by protected records.",
+    "empty_confirm_title": "🗑️ Empty Recycle Bin",
+    "empty_confirm_body": "Delete ALL {{count}} items in the recycle bin? This action is IRREVERSIBLE and affects products, clients, and suppliers.",
+    "empty_confirm_btn": "Delete All"
+  },
+  "footer": {
+    "total": "Total",
+    "warning": "Permanent deletions are irreversible"
+  }
+}

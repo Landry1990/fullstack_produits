@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="fr" data-theme="corporate">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png?v=20260922" />
+    <link rel="shortcut icon" type="image/png" href="/favicon.png?v=20260922" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=20260922" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#059669" />
+    <link rel="manifest" href="/manifest.json" />
+    <!-- CSP doublée avec security-headers.conf (nginx) — garder les deux synchronisées -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: http://* https://*; connect-src 'self' http://* https://* ws://* wss://* ws://localhost:* wss://localhost:* ws://127.0.0.1:* wss://127.0.0.1:* ws://localhost.qz.io:* wss://localhost.qz.io:*; font-src 'self' data:; object-src 'self' blob:; worker-src 'self' blob:; frame-src 'self' blob:; frame-ancestors 'none';">
+    <title>Zenith</title>
+    <script type="module" crossorigin src="/assets/index-B3-CYAVO.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vendor-core-OW31VKLK.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-i18n-2tKpESFT.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-router-BZVCH4in.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-ui-kOwXddtO.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-dates-nt3glkY5.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-query-D9PQWFZW.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-http-n6NG6ckz.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-radix-I1nZFsgh.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-xlsx-CKwrMZHi.js">
+    <link rel="modulepreload" crossorigin href="/assets/feature-inventory-states-CcoQW-MW.js">
+    <link rel="modulepreload" crossorigin href="/assets/feature-inventory-editor-CdZFhJq8.js">
+    <link rel="modulepreload" crossorigin href="/assets/feature-inventory-DIP5Ydut.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-pdf-CqOB5Ldz.js">
+    <link rel="modulepreload" crossorigin href="/assets/feature-reports-DG5Fq6kJ.js">
+    <link rel="modulepreload" crossorigin href="/assets/feature-history-Mc-9GKMj.js">
+    <link rel="modulepreload" crossorigin href="/assets/feature-settings-gsFRvggz.js">
+    <link rel="modulepreload" crossorigin href="/assets/feature-commandes-DOkPG2I8.js">
+    <link rel="modulepreload" crossorigin href="/assets/feature-caisse-DxbCvRO0.js">
+    <link rel="modulepreload" crossorigin href="/assets/feature-dashboard-CrTO5bGz.js">
+    <link rel="modulepreload" crossorigin href="/assets/feature-produits-Y8ygNrpX.js">
+    <link rel="modulepreload" crossorigin href="/assets/feature-ventes-DUeoKQMH.js">
+    <link rel="stylesheet" crossorigin href="/assets/feature-caisse-B5U4kmJ6.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-PQ-lyHBQ.css">
+  <script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script></head>
+  <body>
+    <div id="root"></div>
+    <script>
+      (function() {
+        var lng = localStorage.getItem('i18nextLng') || 'fr';
+        document.documentElement.lang = lng.startsWith('en') ? 'en-US' : 'fr-FR';
+
+        var isDark = localStorage.getItem('theme-midnight') === 'true';
+        if (isDark) {
+          document.documentElement.classList.add('theme-midnight');
+          document.documentElement.setAttribute('data-theme', 'dark');
+        } else {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      })();
+    </script>
+  </body>
+</html>

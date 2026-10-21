@@ -1,0 +1,35 @@
+{
+  "title": "Configuration Options",
+  "add_option": "Add Option",
+  "inactive": "Inactive",
+  "value_label": "Val: {{value}}",
+  "empty": "No options configured",
+  "delete_confirm": "Delete {{label}}?",
+  "tabs": {
+    "STOCK_ADJ": "Stock Adjustment Reasons",
+    "SUPPLIER_RET": "Supplier Return Reasons",
+    "MONEY_DENOM": "Cash Denominations"
+  },
+  "success": {
+    "created": "Option created successfully",
+    "updated": "Option updated successfully",
+    "deleted": "Option deleted successfully"
+  },
+  "errors": {
+    "load": "Error loading options",
+    "save": "Error saving option",
+    "delete": "Error deleting option"
+  },
+  "modal": {
+    "new_title": "New Option",
+    "edit_title": "Edit Option",
+    "label": "Label (Display)",
+    "code": "Code (Technical)",
+    "value": "Value (Optional)",
+    "value_hint": "Ex: 10000",
+    "active": "Active",
+    "cancel": "Cancel",
+    "save": "Save",
+    "create": "Create"
+  }
+}
