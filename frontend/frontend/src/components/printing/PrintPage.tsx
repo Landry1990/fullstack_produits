@@ -87,8 +87,11 @@ const PrintPage: React.FC = () => {
                     const stockDisplay = searchParams.get('stock_display');
                     const filterId = searchParams.get('filter_id');
                     
+                    const stockLocation = searchParams.get('stock_location');
+
                     let url = `produits/etat-inventaire/pdf/?format=json&group_by=${groupBy}&stock_display=${stockDisplay}`;
                     if (filterId) url += `&filter_id=${filterId}`;
+                    if (stockLocation) url += `&stock_location=${stockLocation}`;
                     
                     const res = await api.get(url);
                     setInventoryData({

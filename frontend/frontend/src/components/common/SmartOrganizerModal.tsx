@@ -448,7 +448,13 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
 
             gooeyToast.success(t('stock:organisation.smart_organizer.success_message', { count: res.data.updated_count, name: targetCategory.name }));
             onSuccess();
-            onClose();
+            // Rester sur le modal pour enchaîner : champs vidés + produits rechargés
+            // (les produits déplacés affichent leur nouvelle catégorie)
+            setFromName('');
+            setToName('');
+            setContains('');
+            setExcludedIds(new Set());
+            fetchAllProducts();
         } catch (err: unknown) {
             logger.error("Error bulk categorizing:", err);
             gooeyToast.error((err as { response?: { data?: { detail?: string } } }).response?.data?.detail || t('stock:organisation.smart_organizer.bulk_error'));
@@ -652,11 +658,12 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
                             )}
                         </button>
                     </div>
-                </div>
-            </PremiumModal>
 
-            <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-                <DialogContent className="max-w-md">
+                    {/* Dialog de confirmation DANS le PremiumModal : sinon elle
+                        se portalise hors de la couche Radix et tout clic dedans
+                        ferme le modal parent (interact-outside). */}
+                    <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+                        <DialogContent className="max-w-md">
                     <DialogHeader>
                         <DialogTitle>{t('stock:organisation.smart_organizer.confirm_title')}</DialogTitle>
                         <DialogDescription>
@@ -702,8 +709,10 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
                             )}
                         </button>
                     </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                        </DialogContent>
+                    </Dialog>
+                </div>
+            </PremiumModal>
         </>
     );
 }

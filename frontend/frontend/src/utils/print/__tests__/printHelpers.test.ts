@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { escHtml, formatMoney, formatDateFr, getModeLabel, writePrintDocument } from '../printHelpers';
 
 // Helper: strip narrow no-break spaces for comparison
-const stripNbsp = (s: string) => s.replace(/[\u00A0\u202F]/g, ' ');
+const stripNbsp = (s: string) => s.replace(/[   -‏.]/g, ' ');
 
 describe('printHelpers utilities', () => {
     describe('escHtml', () => {

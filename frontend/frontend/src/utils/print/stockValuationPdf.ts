@@ -42,7 +42,7 @@ export function generateStockValuationPdf(
   const fmt = (val: number | string | undefined | null) => {
     const n = Number(val ?? 0);
     return formatCurrency(Math.round(n), currentLocale, currencySymbol)
-      .replace(/[\u00A0\u202F]/g, ' ');
+      .replace(/[\u00A0\u202F\u2000-\u200F]/g, ' ');
   };
 
   const docTitle = docT(data.is_pmp ? 'stock_valuation.doc_title_pmp' : 'stock_valuation.doc_title_vente');

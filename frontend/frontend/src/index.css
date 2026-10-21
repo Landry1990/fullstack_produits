@@ -3,9 +3,21 @@
 
 @custom-variant dark (&:where(.theme-midnight, .theme-midnight *));
 
+/* Police dédiée aux chiffres (montants, CIP, quantités) : unicode-range
+   applique Roboto Mono automatiquement aux chiffres dans tout texte, sans
+   classe à poser. L'horloge (font-mono) et le print ne sont pas affectés. */
+@font-face {
+  font-family: "Zenith Numeric";
+  src: url('/fonts/roboto-mono-var.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0030-0039;
+}
+
 @theme {
-  --font-sans: "Inter", "Roboto", "Segoe UI", sans-serif;
-  --font-heading: "Inter", "Roboto", sans-serif;
+  --font-sans: "Zenith Numeric", "Inter", "Roboto", "Segoe UI", sans-serif;
+  --font-heading: "Zenith Numeric", "Inter", "Roboto", sans-serif;
 
   /* Échelle typographique compacte (remplace text-[9/10/11px]) */
   --text-micro: 0.5625rem;    /* 9px — légendes, timestamps */

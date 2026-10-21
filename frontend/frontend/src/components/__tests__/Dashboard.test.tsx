@@ -291,13 +291,13 @@ describe('Dashboard Component', () => {
         const { container } = renderWithProviders(<Dashboard />);
         
         // Check Revenue (150 000 appears in revenue card, tolerant to Intl separators)
-        expect(container.textContent).toMatch(/150[\s\u00a0\u202f,]?000/);
+        expect(container.textContent).toMatch(/150[\s\u00a0\u202f,.]?000/);
         
         // Check Receivables
-        expect(container.textContent).toMatch(/45[\s\u00a0\u202f,]?000/);
+        expect(container.textContent).toMatch(/45[\s\u00a0\u202f,.]?000/);
         
         // Check Stock Value
-        expect(container.textContent).toMatch(/2[\s\u00a0\u202f,]?500[\s\u00a0\u202f,]?000/);
+        expect(container.textContent).toMatch(/2[\s\u00a0\u202f,.]?500[\s\u00a0\u202f,.]?000/);
     });
 
     it('displays stock product count', () => {
@@ -440,7 +440,7 @@ describe('Dashboard Component', () => {
         const { container } = renderWithProviders(<Dashboard />);
 
         // VENDEUR voit Mon Panier Moyen (avg_basket: 16667) formaté
-        expect(container.textContent).toMatch(/16[\s\xa0\u202f,]?667/);
+        expect(container.textContent).toMatch(/16[\s\xa0\u202f,.]?667/);
         // Le dashboard se rend sans crash
         expect(document.body).toBeInTheDocument();
     });

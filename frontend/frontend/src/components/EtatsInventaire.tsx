@@ -161,6 +161,7 @@ export default function EtatsInventaire() {
       stockFilter === 'negatif' ? 'NEGATIF' :
       'MACHINE';
     const params: Record<string, string> = { group_by: pdfGroupBy, stock_display: stockDisplay };
+    if (stockLocation !== 'tous') params.stock_location = stockLocation;
     // filter_id désigne une entité du groupement : invalide si repli fournisseur → RAYON
     if (selectedEntity && groupBy !== 'fournisseur') params.filter_id = String(selectedEntity);
     const qs = new URLSearchParams(params).toString();

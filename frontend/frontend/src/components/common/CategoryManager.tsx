@@ -99,6 +99,11 @@ export default function CategoryManager({
   const [isOrganizerOpen, setIsOrganizerOpen] = useState(false);
   const [organizerTarget, setOrganizerTarget] = useState<{id: number, name: string} | null>(null);
 
+  // Suppression avec produits : proposer un rangement de remplacement
+  const [deleteMoveCategory, setDeleteMoveCategory] = useState<Category | null>(null);
+  const [moveDestination, setMoveDestination] = useState('');
+  const [movingBusy, setMovingBusy] = useState(false);
+
   // Merge state
   const [mergeSource, setMergeSource] = useState<Category | null>(null);
   const [mergeTargetId, setMergeTargetId] = useState('');
@@ -279,6 +284,18 @@ export default function CategoryManager({
     });
     if (!confirmed) return;
 
+    // Catégorie contenant des produits → proposer de les déplacer avant suppression
+    const cat = flatCategories(categories).find(c => c.id === id);
+    if (cat && (cat.produits_count ?? 0) > 0) {
+      setMoveDestination('');
+      setDeleteMoveCategory(cat);
+      return;
+    }
+
+    performDelete(id, name);
+  };
+
+  const performDelete = async (id: number, name: string) => {
     const originalCategories = categories;
     const originalSelectedCategory = selectedCategory;
     const originalTotalCount = totalCount;
@@ -295,6 +312,39 @@ export default function CategoryManager({
       setTotalCount(originalTotalCount);
       setSelectedCategory(originalSelectedCategory);
       gooeyToast.error(t('common:messages.error_deleting'));
+    }
+  };
+
+  // Liste aplatie des catégories (rayons à sous-niveaux inclus)
+  const flatCategories = (cats: Category[]): Category[] =>
+    cats.flatMap(c => [c, ...(c.children ? flatCategories(c.children) : [])]);
+
+  // Confirme la suppression avec déplacement optionnel des produits
+  const handleConfirmDeleteMove = async () => {
+    const cat = deleteMoveCategory;
+    if (!cat) return;
+    const name = getCategoryName(cat);
+    setMovingBusy(true);
+    try {
+      if (moveDestination) {
+        const res = await api.get('produits/', { params: { [type]: cat.id, page_size: 9999 } });
+        const items = res.data.results || res.data;
+        const ids = items.map((p: Product) => p.id);
+        if (ids.length > 0) {
+          await api.post('produits/bulk-categorize/', {
+            ids,
+            category_type: type,
+            category_id: Number(moveDestination),
+          });
+        }
+      }
+      setDeleteMoveCategory(null);
+      await performDelete(cat.id, name);
+    } catch (err) {
+      logger.error("Error moving products before delete:", err);
+      gooeyToast.error(t('stock:organisation.category_manager.delete_move_error'));
+    } finally {
+      setMovingBusy(false);
     }
   };
 
@@ -357,17 +407,34 @@ export default function CategoryManager({
     setIsPrintModalOpen(true);
   };
 
-  const handleConfirmPrint = () => {
+  const handleConfirmPrint = async () => {
     if (!printTarget) return;
-    const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
-    let url = "";
-    if (printTarget.id === -1) {
-      url = `${baseUrl}/api/rayons/imprimer_sans_rayon/?exclude_zero=${excludeZeroStock}`;
-    } else {
-      url = `${baseUrl}${apiPath}${printTarget.id}/imprimer_etat_stock/?exclude_zero=${excludeZeroStock}`;
+    // Rayons : route front /app/printing (JSON print-data + template navigateur)
+    // — pas de 401, aperçu avant impression, choix du format papier.
+    if (printTarget.id !== -1) {
+      const stockDisplay = excludeZeroStock ? 'NON_ZERO' : 'MACHINE';
+      window.open(
+        `/app/printing/0?type=INVENTAIRE&group_by=RAYON&filter_id=${printTarget.id}&stock_display=${stockDisplay}`,
+        '_blank', 'noopener,noreferrer'
+      );
+      setIsPrintModalOpen(false);
+      return;
     }
-    window.open(url, '_blank', 'noopener,noreferrer');
-    setIsPrintModalOpen(false);
+    // « Sans rayon » : pas exprimable côté etat-inventaire → fetch authentifié
+    // en blob (un window.open direct renvoie 401, le token n'est pas envoyé).
+    try {
+      const res = await api.get('rayons/imprimer_sans_rayon/', {
+        params: { exclude_zero: excludeZeroStock },
+        responseType: 'blob',
+      });
+      const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } catch (err) {
+      logger.error("Error printing stock report:", err);
+      gooeyToast.error(t('common:messages.load_error', { defaultValue: "Erreur lors de l'impression" }));
+    } finally {
+      setIsPrintModalOpen(false);
+    }
   };
 
   const handleSearchProducts = async (term: string) => {
@@ -1090,6 +1157,66 @@ export default function CategoryManager({
           }}
         />
       )}
+
+      {/* MODAL: suppression avec produits → déplacement optionnel */}
+      <PremiumModal
+        isOpen={!!deleteMoveCategory}
+        onClose={() => !movingBusy && setDeleteMoveCategory(null)}
+        title={t('stock:organisation.category_manager.delete_move_title')}
+        icon={<Trash2 className="size-6 text-red-500" />}
+        maxWidth="max-w-md"
+      >
+        <div className="p-6 space-y-5">
+          {deleteMoveCategory && (
+            <>
+              <p className="text-sm text-slate-600">
+                {t('stock:organisation.category_manager.delete_move_msg', {
+                  name: getCategoryName(deleteMoveCategory),
+                  count: deleteMoveCategory.produits_count ?? 0,
+                  type,
+                })}
+              </p>
+              <div>
+                <label htmlFor="delete-move-destination" className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+                  {t('stock:organisation.category_manager.delete_move_destination', { type })}
+                </label>
+                <select
+                  id="delete-move-destination"
+                  className="w-full rounded-xl border border-slate-200 bg-white h-12 px-3 text-sm font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
+                  value={moveDestination}
+                  onChange={e => setMoveDestination(e.target.value)}
+                >
+                  <option value="">{t('stock:organisation.category_manager.delete_move_leave')}</option>
+                  {flatCategories(categories)
+                    .filter(c => c.id !== deleteMoveCategory.id)
+                    .map(c => (
+                      <option key={c.id} value={c.id.toString()}>{getCategoryName(c)}</option>
+                    ))}
+                </select>
+              </div>
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setDeleteMoveCategory(null)}
+                  disabled={movingBusy}
+                  className="inline-flex items-center h-9 px-5 text-slate-600 hover:bg-slate-100 rounded-xl text-sm font-medium transition-colors"
+                >
+                  {t('common:cancel')}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmDeleteMove}
+                  disabled={movingBusy}
+                  className="inline-flex items-center gap-2 h-9 px-6 bg-red-600 text-white rounded-xl text-sm font-bold hover:bg-red-700 transition-colors shadow-sm disabled:opacity-50"
+                >
+                  {movingBusy && <Loader2 className="size-4 animate-spin" />}
+                  {t('stock:organisation.category_manager.delete_move_confirm')}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </PremiumModal>
 
       {/* MODAL: MERGE */}
       <PremiumModal

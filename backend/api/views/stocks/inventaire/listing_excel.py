@@ -123,6 +123,7 @@ def generate_listing_excel(
     # ------------------------------------------------------------------
     wb = Workbook()
     ws = wb.active
+    assert ws is not None
     ws.title = T(lang, 'lx_sheet_stock') if listing_type == 'stock' else (T(lang, 'lx_sheet_inv') if listing_type == 'inventaire' else T(lang, 'lx_sheet_blind'))
 
     thin_border = _make_border('thin')
@@ -530,12 +531,24 @@ def _get_rows_from_stock(group_by: str, stock_filter: str, filter_id=None, stock
         qs = qs.filter(quantity_remaining__gt=0)
     # else 'tous' : pas de filtre supplémentaire sur l'emplacement
 
+    if stock_location == 'reserve':
+        # Seuls les produits dont la gestion de réserve est activée
+        qs = qs.filter(produit__has_reserve_storage=True)
+
     # Filtre stock (sur quantity_remaining du lot)
     produit_ids_avec_mouvement: set[int] = set()
+    if stock_filter in ('tous', 'zero'):
+        produit_ids_avec_mouvement = set(
+            MouvementStock.objects.filter(
+                type_mouvement__in=['ENTREE', 'SORTIE'],
+                produit_id__isnull=False,
+            ).values_list('produit_id', flat=True).distinct()
+        )
+
     if stock_filter == 'zero':
         # Strictement nul : les lots négatifs ont leur filtre dédié
         # ('negatif') — « Stocks nuls (= 0) » ne doit plus les masquer.
-        qs = qs.filter(quantity_remaining=0)
+        qs = qs.filter(quantity_reserved=0) if stock_location == 'reserve' else qs.filter(quantity_remaining=0)
     elif stock_filter == 'non_zero':
         qs = qs.filter(quantity_remaining__gt=0)
     elif stock_filter == 'negatif':
@@ -547,12 +560,6 @@ def _get_rows_from_stock(group_by: str, stock_filter: str, filter_id=None, stock
         # 'tous' : conserver un lot par ligne pour les lots encore en stock,
         # et ajouter UNE ligne synthétique (lot vide) par produit à stock nul
         # ayant au moins un mouvement d'achat ou vente.
-        produit_ids_avec_mouvement = set(
-            MouvementStock.objects.filter(
-                type_mouvement__in=['ENTREE', 'SORTIE'],
-                produit_id__isnull=False,
-            ).values_list('produit_id', flat=True).distinct()
-        )
         # Garder les lots avec stock restant != 0 (positif ou négatif).
         # Un stock négatif est une anomalie qu'il faut voir pour correction.
         # Les lots à 0 sont regroupés en une seule ligne synthétique par produit.
@@ -588,6 +595,9 @@ def _get_rows_from_stock(group_by: str, stock_filter: str, filter_id=None, stock
 
     for lot in qs:
         p = lot.produit
+        # Mode « stock nul » : une seule ligne par produit, sans détail de lot
+        if stock_filter == 'zero' and p.id in seen_produit_ids:
+            continue
         seen_produit_ids.add(p.id)
         group_name = _get_group_name(p, group_by, lot=lot, lang=lang)
         if group_name not in grouped:
@@ -601,7 +611,7 @@ def _get_rows_from_stock(group_by: str, stock_filter: str, filter_id=None, stock
         valeur_stock = stock_val * pmp
 
         lot_expiration = ''
-        if lot.date_expiration:
+        if lot.date_expiration and stock_filter != 'zero':
             lot_expiration = format_doc_date(lot.date_expiration, lang)
 
         grouped[group_name].append({
@@ -611,7 +621,7 @@ def _get_rows_from_stock(group_by: str, stock_filter: str, filter_id=None, stock
             'forme': p.forme.nom if p.forme else '',
             'rayon': p.rayon.name if p.rayon else '',
             'fournisseur': lot.fournisseur_nom or (p.fournisseur.name if p.fournisseur else ''),
-            'lot_numero': lot.lot or '',
+            'lot_numero': '' if stock_filter == 'zero' else (lot.lot or ''),
             'lot_expiration': lot_expiration,
             'stock': stock_val,
             'stock_reserve': stock_reserve,
@@ -620,13 +630,19 @@ def _get_rows_from_stock(group_by: str, stock_filter: str, filter_id=None, stock
             'prix_vente': float(lot.selling_price or p.selling_price or 0),
         })
 
-    # En mode "zero" : inclure aussi les produits actifs sans aucun lot (stock nul implicite)
+    # En mode "zero" : inclure aussi les produits actifs sans lot visible,
+    # mais uniquement s'ils ont eu au moins un mouvement d'achat/vente —
+    # sinon tout le catalogue non movémenté apparaîtrait comme « stock nul ».
     if stock_filter == 'zero':
         prod_qs = Produit.objects.filter(
+            id__in=produit_ids_avec_mouvement,
             is_active=True,
         ).exclude(
             id__in=seen_produit_ids,
         ).select_related('rayon', 'forme', 'groupe', 'fournisseur')
+
+        if stock_location == 'reserve':
+            prod_qs = prod_qs.filter(has_reserve_storage=True)
 
         if filter_id:
             if group_by == 'rayon':
@@ -669,6 +685,9 @@ def _get_rows_from_stock(group_by: str, stock_filter: str, filter_id=None, stock
             is_active=True,
         ).select_related('rayon', 'forme', 'groupe', 'fournisseur')
 
+        if stock_location == 'reserve':
+            prod_qs = prod_qs.filter(has_reserve_storage=True)
+
         if filter_id:
             if group_by == 'rayon':
                 prod_qs = prod_qs.filter(rayon_id=filter_id)
@@ -685,6 +704,7 @@ def _get_rows_from_stock(group_by: str, stock_filter: str, filter_id=None, stock
                 grouped[group_name] = []
             pmp = float(p.pmp or p.cost_price or 0)
             stock_val = int(p.stock or 0)
+            reserve_val = int(p.stock_reserve or 0)
             grouped[group_name].append({
                 'produit_id': p.id,
                 'cip': p.cip1 or '',
@@ -695,9 +715,9 @@ def _get_rows_from_stock(group_by: str, stock_filter: str, filter_id=None, stock
                 'lot_numero': '',
                 'lot_expiration': '',
                 'stock': stock_val,
-                'stock_reserve': 0,
+                'stock_reserve': reserve_val,
                 'pmp': round(pmp, 2),
-                'valeur_stock': round(stock_val * pmp, 0),
+                'valeur_stock': round((reserve_val if stock_location == 'reserve' else stock_val) * pmp, 0),
                 'prix_vente': float(p.selling_price or 0),
             })
 
@@ -705,12 +725,16 @@ def _get_rows_from_stock(group_by: str, stock_filter: str, filter_id=None, stock
     # alors qu'aucun lot ne reflète le négatif (vente forcée sans écriture
     # lot, divergence produit/lots) → ligne synthétique avec le vrai négatif.
     if stock_filter == 'negatif':
+        neg_kwargs = {'stock_reserve__lt': 0} if stock_location == 'reserve' else {'stock__lt': 0}
         prod_qs = Produit.objects.filter(
             is_active=True,
-            stock__lt=0,
+            **neg_kwargs,
         ).exclude(
             id__in=seen_produit_ids,
         ).select_related('rayon', 'forme', 'groupe', 'fournisseur')
+
+        if stock_location == 'reserve':
+            prod_qs = prod_qs.filter(has_reserve_storage=True)
 
         if filter_id:
             if group_by == 'rayon':
@@ -728,6 +752,7 @@ def _get_rows_from_stock(group_by: str, stock_filter: str, filter_id=None, stock
                 grouped[group_name] = []
             pmp = float(p.pmp or p.cost_price or 0)
             stock_val = int(p.stock or 0)
+            reserve_val = int(p.stock_reserve or 0) if stock_location == 'reserve' else 0
             grouped[group_name].append({
                 'produit_id': p.id,
                 'cip': p.cip1 or '',
@@ -738,9 +763,9 @@ def _get_rows_from_stock(group_by: str, stock_filter: str, filter_id=None, stock
                 'lot_numero': '',
                 'lot_expiration': '',
                 'stock': stock_val,
-                'stock_reserve': 0,
+                'stock_reserve': reserve_val,
                 'pmp': round(pmp, 2),
-                'valeur_stock': round(stock_val * pmp, 0),
+                'valeur_stock': round((reserve_val if stock_location == 'reserve' else stock_val) * pmp, 0),
                 'prix_vente': float(p.selling_price or 0),
             })
 

@@ -62,7 +62,7 @@ export function generateRelevePdfDraft(data: RelevePdfData): jsPDF {
     const docLocale = getDocumentLocale();
 
     const fmt = (val: number | string) =>
-        formatNumber(Math.round(Number(val) || 0), 0, docLocale).replace(/[\u00A0\u202F]/g, ' ');
+        formatNumber(Math.round(Number(val) || 0), 0, docLocale).replace(/[\u00A0\u202F\u2000-\u200F]/g, ' ');
 
     const fmtDate = (d?: string | null) => {
         if (!d) return docT('releve.today');

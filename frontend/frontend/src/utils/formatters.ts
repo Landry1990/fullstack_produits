@@ -22,6 +22,16 @@ const getFormatter = (locale: string, options: Intl.NumberFormatOptions) => {
     return formatter;
 };
 
+// Intl fr-FR groupe avec espace fine insécable (U+202F) — rendu aléatoire
+// selon la fonte de fallback. Convention : point en fr, virgule en en.
+const GROUP_SEPARATORS = /[\u00A0\u202F\u2000-\u200F]/g;
+const formatNumberString = (value: number, locale: string, options: Intl.NumberFormatOptions) => {
+    const formatted = getFormatter(locale, options).format(value);
+    return locale.toLowerCase().startsWith('fr')
+        ? formatted.replace(GROUP_SEPARATORS, '.')
+        : formatted.replace(GROUP_SEPARATORS, ' ');
+};
+
 export const normalizeNumberInput = (value: string | number | null | undefined, options?: { min?: number; max?: number }) => {
     let parsedValue: number
 
@@ -52,31 +62,31 @@ export const normalizeNumberInput = (value: string | number | null | undefined, 
 }
 
 export const formatPrice = (price: number, decimals: number = 0, locale: string = 'fr-FR') => {
-    return getFormatter(locale, {
+    return formatNumberString(price, locale, {
         minimumFractionDigits: decimals,
         maximumFractionDigits: decimals,
-    }).format(price);
+    });
 }
 
 export const formatCurrency = (amount: number, locale: string = 'fr-FR', symbol: string = 'F') => {
-    return getFormatter(locale, {
+    return formatNumberString(amount, locale, {
         minimumFractionDigits: 0,
         maximumFractionDigits: 0,
-    }).format(amount) + '\u00a0' + symbol;
+    }) + '\u00a0' + symbol;
 }
 
 export const formatCompact = (value: number, locale: string = 'fr-FR') => {
-    return getFormatter(locale, {
+    return formatNumberString(value, locale, {
         notation: 'compact',
         maximumFractionDigits: 1,
-    }).format(value);
+    });
 }
 
 export const formatNumber = (value: number, decimals: number = 0, locale: string = 'fr-FR') => {
-    return getFormatter(locale, {
+    return formatNumberString(value, locale, {
         minimumFractionDigits: decimals,
         maximumFractionDigits: decimals,
-    }).format(value);
+    });
 }
 
 export const safeFormatNumber = (value: unknown) => {

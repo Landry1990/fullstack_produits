@@ -5,8 +5,6 @@ import { safeStorage } from '../../utils/storage'
 import api from '../../services/api'
 import { ProductSearch, type SearchResult, type PackResult, type DciResult, type SearchMode } from '../common/ProductSearch'
 import { useFacturationSearch } from '../../hooks/product-search/useFacturationSearch'
-import DatamatrixScanField from './DatamatrixScanField'
-import type { ScanStatus } from '../../hooks/useDatamatrixScan'
 import { getRecentProducts } from '../../utils/recentProducts'
 
 interface ProductSearchSectionProps {
@@ -22,11 +20,6 @@ interface ProductSearchSectionProps {
   onCsvImport?: (file: File) => void
   user?: User | null
   onSelectOutOfStock?: (product: ProduitModel) => void
-  scanInput?: string
-  scanStatus?: ScanStatus
-  scanLastScanned?: string | null
-  onScanChange?: (v: string) => void
-  onScanKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void
 }
 
 const RECENT_PRODUCTS_KEY = 'facturation_recent_products'
@@ -46,11 +39,6 @@ const ProductSearchSection = React.memo(({
   onCsvImport,
   user,
   onSelectOutOfStock,
-  scanInput,
-  scanStatus,
-  scanLastScanned,
-  onScanChange,
-  onScanKeyDown,
 }: ProductSearchSectionProps) => {
   const [searchMode, setSearchMode] = useState<SearchMode>('products')
   const [recentVersion, setRecentVersion] = useState(0)
@@ -144,19 +132,8 @@ const ProductSearchSection = React.memo(({
     }))
   }
 
-  const hasScan = !!onScanChange
-
   return (
     <div className="flex flex-col gap-1.5">
-      {hasScan && (
-        <DatamatrixScanField
-          value={scanInput ?? ''}
-          onChange={onScanChange!}
-          onKeyDown={onScanKeyDown!}
-          status={scanStatus ?? 'idle'}
-          lastScanned={scanLastScanned ?? null}
-        />
-      )}
       <ProductSearch
       searchQuery={searchQuery}
       setSearchQuery={setSearchQuery}
