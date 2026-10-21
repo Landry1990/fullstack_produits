@@ -66,6 +66,7 @@ export default function GenericsManager() {
           t('products:dci.generics.linked', { name: r.data.generic || candidate.name })
         );
         fetchGenerics();
+        setBusyId(null);
       })
       .catch(err => {
         const data = err.response?.data;
@@ -75,14 +76,15 @@ export default function GenericsManager() {
             reference: (data.reference_substances || []).join(', ') || '-',
           });
           if (window.confirm(`${data.error}\n\n${details}\n\n${t('products:dci.generics.mismatch_confirm')}`)) {
+            // busyId reste actif : libéré à la fin de la requête forcée
             postLink(candidate, true);
             return;
           }
         } else {
           gooeyToast.error(data?.error || t('products:dci.generics.error_link'));
         }
-      })
-      .finally(() => setBusyId(null));
+        setBusyId(null);
+      });
   }, [reference, fetchGenerics, t]);
 
   const handleLink = (candidate: ProductLite) => {

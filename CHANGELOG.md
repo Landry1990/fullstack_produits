@@ -2,6 +2,33 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-10-21 — Correctifs revue de code (listing réserve, génériques, scan, N+1 pharma)
+
+- `listing_excel.py` : filtre « Stocks nuls en réserve » corrigé — le combo
+  `quantity_reserved__gt=0` + `=0` vidait le queryset lots et le fallback
+  affichait **tous** les produits à réserve avec mouvement (même approvisionnés).
+  Désormais le compteur produit fait foi (`stock_reserve`/`stock` = 0 selon
+  l'emplacement) sur les lignes lot ET le fallback — un produit approvisionné
+  avec un lot vide n'apparaît plus comme rupture. `non_zero` en réserve filtre
+  sur `quantity_reserved` (un lot réserve pleine / rayon vide n'est plus masqué) ;
+  en `tous`, un lot avec stock à l'un des deux emplacements suffit.
+- `dci_admin.py` `unlink_generic` : ne retire que les substances réellement
+  ajoutées par `link_generic` — nouvelle colonne `Produit.generic_link_substances`
+  (migration 0276, JSONField). Avant, toutes les substances communes étaient
+  retirées, y compris celles liées par import/liaison manuelle.
+- `useProductSearch.ts` : terminateur de douchette (Entrée/Tab) pendant un scan
+  DataMatrix → exécute le scan en attente au lieu de l'annuler (la chaîne GS1
+  brute ne partait plus en recherche illisible).
+- `product_pharma_service.py` / `clinical_service.py` : N+1 `_resolve_other_name`
+  corrigé — cache process par code CIP + pré-résolution batch (`_prewarm_local_names`,
+  une requête `cip1/cip2 IN`) avant les boucles d'alertes du check d'interactions.
+- Cache `pharma_data:{id}` invalidé après `manual_link`/`link_generic`/`unlink_generic`
+  (`invalidate_pharma_cache`).
+- `GenericsManager.tsx` : `busyId` restait libéré pendant le retry `force=true`
+  (double-clic possible) — libéré seulement à la fin de la requête finale.
+- Tests : `test_listing_excel_reserve.py` (3 cas filtres réserve/zero) +
+  2 tests régression `unlink_generic` dans `test_dci_admin_generics.py`.
+
 ## 2026-10-21 — Séparateur de milliers : point (fr) / virgule (en)
 
 - `Intl.NumberFormat('fr-FR')` groupe avec espace fine insécable (U+202F,

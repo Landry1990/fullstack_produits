@@ -19,6 +19,7 @@ from rest_framework.response import Response
 
 from ..audit_helpers import log_audit
 from ..models import AuditLog, DrugInteraction, MedicamentReference, Produit, Substance
+from ..product_pharma_service import invalidate_pharma_cache
 from ..utils.validation import parse_id, parse_int
 
 
@@ -300,6 +301,8 @@ class DCIAdminViewSet(viewsets.ViewSet):
             produit.dci_reference_id = parse_id(dci_reference_id, field='dci_reference_id')
             produit.save(update_fields=['dci_reference'])
 
+        invalidate_pharma_cache(produit.pk)
+
         log_audit(
             user=request.user,
             action=AuditLog.Action.UPDATE,
@@ -521,6 +524,11 @@ class DCIAdminViewSet(viewsets.ViewSet):
         to_add = [s for s in ref_substances if s.id not in existing_ids]
         if to_add:
             generic.substances.add(*to_add)
+            # Mémorise les substances ajoutées par le lien : unlink_generic ne
+            # doit retirer que celles-ci (jamais les liens pré-existants).
+            generic.generic_link_substances = sorted(
+                set(generic.generic_link_substances or []) | {s.id for s in to_add}
+            )
 
         changed = {
             'substances_added': [s.nom for s in to_add],
@@ -531,7 +539,11 @@ class DCIAdminViewSet(viewsets.ViewSet):
             changed['dci_reference_copied'] = True
         generic.produit_reference = reference
         generic.is_generic = True
-        generic.save(update_fields=['produit_reference', 'is_generic', 'dci_reference'])
+        generic.save(update_fields=[
+            'produit_reference', 'is_generic', 'dci_reference',
+            'generic_link_substances',
+        ])
+        invalidate_pharma_cache(reference.pk, generic.pk)
 
         log_audit(
             user=request.user,
@@ -559,7 +571,8 @@ class DCIAdminViewSet(viewsets.ViewSet):
         supprime jamais des substances qui auraient été liées par import
         ou liaison manuelle directe (données cliniques).
         Retire : produit_reference, is_generic, la dci_reference copiée
-        (si identique à celle de la référence) et les substances communes.
+        (si identique à celle de la référence) et uniquement les substances
+        ajoutées par le lien (tracées dans generic_link_substances).
         """
         produit_id = parse_id(request.data.get('produit_id'), field='produit_id')
         generic_id = parse_id(request.data.get('generic_id'), field='generic_id')
@@ -578,12 +591,17 @@ class DCIAdminViewSet(viewsets.ViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        shared = list(
-            generic.substances.filter(id__in=reference.substances.values('id'))
+        # Ne retire que les substances réellement ajoutées par link_generic
+        # (tracées à la liaison) — les substances pré-existantes, liées par
+        # import ou liaison manuelle, sont conservées.
+        link_added_ids = set(generic.generic_link_substances or [])
+        still_present = (
+            list(generic.substances.filter(id__in=link_added_ids))
+            if link_added_ids else []
         )
-        removed_names = [s.nom for s in shared]
-        if shared:
-            generic.substances.remove(*shared)
+        removed_names = [s.nom for s in still_present]
+        if still_present:
+            generic.substances.remove(*still_present)
 
         dci_cleared = bool(
             generic.dci_reference_id
@@ -591,9 +609,14 @@ class DCIAdminViewSet(viewsets.ViewSet):
         )
         generic.produit_reference = None
         generic.is_generic = False
+        generic.generic_link_substances = []
         if dci_cleared:
             generic.dci_reference = None
-        generic.save(update_fields=['produit_reference', 'is_generic', 'dci_reference'])
+        generic.save(update_fields=[
+            'produit_reference', 'is_generic', 'dci_reference',
+            'generic_link_substances',
+        ])
+        invalidate_pharma_cache(reference.pk, generic.pk)
 
         log_audit(
             user=request.user,

@@ -48,7 +48,8 @@ class ClinicalService:
 
         # 2. Entités MQ : stubs MQ-<CIP7> du produit (cip1/cip2, CIP13 supporté)
         from .product_pharma_service import (
-            _load_mq_data, _product_cip7s, _resolve_other_name,
+            _load_mq_data, _prewarm_local_names, _product_cip7s,
+            _resolve_other_name,
         )
         mq_data = _load_mq_data() or {}
         form_by_id = mq_data.get('form_by_id', {})
@@ -103,10 +104,24 @@ class ClinicalService:
 
         # 3. Chercher les interactions connues entre ces entités
         # On cherche A vs B OU B vs A
-        interactions = DrugInteraction.objects.filter(
+        interactions = list(DrugInteraction.objects.filter(
             substance_a__id__in=substance_ids,
             substance_b__id__in=substance_ids
-        ).select_related('substance_a', 'substance_b')
+        ).select_related('substance_a', 'substance_b'))
+
+        # Pré-résolution batch des stubs MQ-… (évite une requête par alerte
+        # dans les boucles display_name/clean_description ci-dessous)
+        _prewarm_local_names(
+            s.nom[3:].strip()
+            for inter in interactions
+            for s in (inter.substance_a, inter.substance_b)
+            if s.nom and s.nom.startswith('MQ-')
+        )
+        _prewarm_local_names(
+            info['substance'].nom[3:].strip()
+            for info in substance_map.values()
+            if info['substance'].nom and info['substance'].nom.startswith('MQ-')
+        )
 
         def display_name(substance):
             resolved = _resolve_other_name(substance.nom, form_by_id) or substance.nom

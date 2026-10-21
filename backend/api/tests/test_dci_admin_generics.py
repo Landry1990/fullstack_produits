@@ -197,6 +197,46 @@ class UnlinkGenericTest(GenericsBase):
         self.assertIsNone(self.gen.dci_reference_id)
         self.assertEqual(self.gen.substances.count(), 0)
 
+    def test_unlink_preserves_preexisting_substances(self):
+        """Une substance commune déjà liée AVANT link_generic ne doit pas
+        être retirée par unlink_generic (régression : le unlink retirait
+        toutes les substances partagées, y compris les pré-existantes)."""
+        gen2 = self.produit('GEN PREEXIST')
+        gen2.substances.add(self.paracetamol, self.ibuprofene)
+        self.api.post(reverse('dci-admin-link-generic'), {
+            'produit_id': self.ref.id, 'generic_id': gen2.id,
+        }, format='json')
+        resp = self.api.post(reverse('dci-admin-unlink-generic'), {
+            'produit_id': self.ref.id, 'generic_id': gen2.id,
+        }, format='json')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data['removed'], [])
+        gen2.refresh_from_db()
+        self.assertIsNone(gen2.produit_reference_id)
+        self.assertEqual(
+            set(gen2.substances.values_list('id', flat=True)),
+            {self.paracetamol.id, self.ibuprofene.id},
+        )
+
+    def test_unlink_removes_only_link_added_substances(self):
+        """Seules les substances réellement ajoutées par le lien sont
+        retirées ; les autres (lien manuel/import) sont conservées."""
+        gen3 = self.produit('GEN MIXTE')
+        gen3.substances.add(self.ibuprofene)
+        self.api.post(reverse('dci-admin-link-generic'), {
+            'produit_id': self.ref.id, 'generic_id': gen3.id, 'force': True,
+        }, format='json')
+        resp = self.api.post(reverse('dci-admin-unlink-generic'), {
+            'produit_id': self.ref.id, 'generic_id': gen3.id,
+        }, format='json')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data['removed'], ['PARACETAMOL'])
+        gen3.refresh_from_db()
+        self.assertEqual(
+            set(gen3.substances.values_list('id', flat=True)),
+            {self.ibuprofene.id},
+        )
+
     def test_unlink_refuses_undeclared_link(self):
         """Un produit qui partage juste une substance n'est PAS délié —
         on ne supprime jamais des données liées par import."""
