@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query'
 import type { ProduitModel, PaginatedResponse } from '../types'
 import { useProductSearchIndex } from './useProductSearchIndex'
 import { normalizeCip } from './useProductSearchIndex'
+import { logger } from '../utils/logger'
 import { parseGS1Datamatrix, isDatamatrix } from '../utils/gs1Parser'
 
 interface UseProductSearchOptions {
@@ -16,6 +17,12 @@ interface UseProductSearchOptions {
     pageSize?: number
     /** Callback when a barcode scan is detected and matches exactly one product */
     onBarcodeMatch?: (product: ProduitModel) => void
+    /**
+     * Callback quand un DataMatrix GS1 complet (CIP + lot) est détecté dans
+     * le champ de recherche — reçoit la chaîne brute du scan.
+     * Sans ce callback, le CIP est extrait et traité comme une recherche normale.
+     */
+    onDatamatrixScan?: (raw: string) => void
     /** Minimum length for barcode detection (default: 7 for CIP codes) */
     minBarcodeLength?: number
 }
@@ -51,6 +58,7 @@ export function useProductSearch(options: UseProductSearchOptions = {}): UseProd
         autoLoad = false,
         pageSize = 20,
         onBarcodeMatch,
+        onDatamatrixScan,
         minBarcodeLength = 7
     } = options
 
@@ -94,23 +102,47 @@ export function useProductSearch(options: UseProductSearchOptions = {}): UseProd
         return isNumeric && isLongEnough && avgSpeed < scanThreshold
     }, [minBarcodeLength])
 
+    // Buffer DataMatrix : la douchette envoie la chaîne en rafale ; on attend
+    // la fin du scan avant de décider (le lot arrive après le GTIN).
+    const datamatrixTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
     // Enhanced setSearchQuery that detects barcode scans
     const handleSetSearchQuery = useCallback((query: string) => {
-        let cleanedQuery = query
-
-        // Si c'est un DataMatrix, extraire le CIP pour la recherche
         if (isDatamatrix(query)) {
-            const parsed = parseGS1Datamatrix(query)
-            if (parsed.cip) {
-                cleanedQuery = normalizeCip(parsed.cip)
-            }
+            if (datamatrixTimer.current) clearTimeout(datamatrixTimer.current)
+            datamatrixTimer.current = setTimeout(() => {
+                datamatrixTimer.current = null
+                const parsed = parseGS1Datamatrix(query)
+                if (parsed.cip && parsed.lot && onDatamatrixScan) {
+                    // Scan complet CIP + lot → résolution du lot (délègue l'ajout panier)
+                    onDatamatrixScan(query)
+                    setSearchQuery('')
+                    setWasBarcodeScanned(false)
+                } else if (parsed.cip) {
+                    // DataMatrix sans lot exploitable → recherche CIP classique
+                    setWasDatamatrixScanned(true)
+                    setWasBarcodeScanned(true)
+                    setSearchQuery(normalizeCip(parsed.cip))
+                } else {
+                    // Format datamatrix détecté mais rien d'exploitable : tracer le
+                    // brut pour diagnostiquer ce que la douchette envoie réellement
+                    logger.warn('DataMatrix non reconnu', { raw: query })
+                    gooeyToast.error(i18n.t('common:messages.datamatrix_unrecognized'))
+                }
+            }, 250)
+            return
         }
 
-        const looksLikeBarcode = detectBarcodeInput(cleanedQuery)
-        setWasDatamatrixScanned(isDatamatrix(query))
-        setWasBarcodeScanned(looksLikeBarcode || cleanedQuery !== query)
-        setSearchQuery(cleanedQuery)
-    }, [detectBarcodeInput])
+        if (datamatrixTimer.current) {
+            clearTimeout(datamatrixTimer.current)
+            datamatrixTimer.current = null
+        }
+
+        const looksLikeBarcode = detectBarcodeInput(query)
+        setWasDatamatrixScanned(false)
+        setWasBarcodeScanned(looksLikeBarcode)
+        setSearchQuery(query)
+    }, [detectBarcodeInput, onDatamatrixScan])
 
     // Reset datamatrix flag when search changes
     useEffect(() => {

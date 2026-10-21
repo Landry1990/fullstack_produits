@@ -3,17 +3,12 @@ import ProductSearchSection from './ProductSearchSection'
 import ProductPharmaPanel from '../products/ProductPharmaPanel'
 import { useProductPharmaData } from '../../hooks/useProductPharmaData'
 import type { FacturationState } from '../../hooks/useFacturationState'
-import type { useDatamatrixScan } from '../../hooks/useDatamatrixScan'
-
-type ScanHook = ReturnType<typeof useDatamatrixScan>
 
 interface FacturationLeftPanelProps {
   hook: FacturationState
-  datamatrixEnabled: boolean
-  scan: ScanHook
 }
 
-export default function FacturationLeftPanel({ hook, datamatrixEnabled, scan }: FacturationLeftPanelProps) {
+export default function FacturationLeftPanel({ hook }: FacturationLeftPanelProps) {
   // Ligne explicitement sélectionnée ; sinon on affiche le dernier produit du panier
   const explicitLine = hook.keyboardNav.selectedIndex >= 0
     ? hook.sortedLignes[hook.keyboardNav.selectedIndex]
@@ -81,11 +76,6 @@ export default function FacturationLeftPanel({ hook, datamatrixEnabled, scan }: 
             onQuantityShortcut={hook.handleQuantityShortcut}
             onCsvImport={hook.handleCsvImport}
             user={hook.user}
-            scanInput={datamatrixEnabled ? scan.scanInput : undefined}
-            scanStatus={datamatrixEnabled ? scan.scanStatus : undefined}
-            scanLastScanned={datamatrixEnabled ? scan.lastScanned : undefined}
-            onScanChange={datamatrixEnabled ? scan.handleScanChange : undefined}
-            onScanKeyDown={datamatrixEnabled ? scan.handleScanKeyDown : undefined}
             onSelectOutOfStock={(p) => {
               hook.requireSudo(
                 async () => {

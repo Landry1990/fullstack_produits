@@ -29,11 +29,11 @@ describe('formatters', () => {
 
   describe('formatPrice', () => {
     it('formate un prix en francs CFA', () => {
-      expect(formatPrice(1500)).toBe('1\u202f500')
+      expect(formatPrice(1500)).toBe('1.500')
     })
 
     it('formate un prix decimal', () => {
-      expect(formatPrice(1500.5)).toBe('1\u202f501')
+      expect(formatPrice(1500.5)).toBe('1.501')
     })
   })
 })

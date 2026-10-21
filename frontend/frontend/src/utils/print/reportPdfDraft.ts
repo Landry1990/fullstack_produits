@@ -99,7 +99,7 @@ export async function generateMonthlyReportPdfDraft(
 
   const fmt = (val: number) => {
     return formatCurrency(Math.round(val), currentLocale, currencySymbol)
-      .replace(/[\u00A0\u202F]/g, ' ');
+      .replace(/[\u00A0\u202F\u2000-\u200F]/g, ' ');
   };
 
   // Header

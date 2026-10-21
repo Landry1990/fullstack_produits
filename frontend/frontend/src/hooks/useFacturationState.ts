@@ -6,6 +6,7 @@ import type { ProduitModel, Facture, LigneFacture, PaginatedResponse } from '../
 import type { SaleCompletionResult } from '../types/finance'
 import { getProduitId } from '../types/inventory'
 import { useProductSearch } from './useProductSearch'
+import { useDatamatrixScan } from './useDatamatrixScan'
 import { useCart } from './useCart'
 import { useAuth } from '../context/AuthContext'
 import { useFacturationClients } from './useFacturationClients'
@@ -147,11 +148,20 @@ export function useFacturationState() {
     }
   }, [isRetrocession, t, currentMarkup])
 
+  // Scan DataMatrix GS1 directement dans le champ de recherche :
+  // useProductSearch détecte le format et délègue ici la résolution du lot.
+  const datamatrixScan = useDatamatrixScan({
+    addProduit: (p, opts) => cart.addProduit(p, opts),
+    setLignesFacture: cart.setLignesFacture,
+    lignesFacture: cart.lignesFacture,
+  })
+
   const productSearch = useProductSearch({
     minSearchLength: 3,
     debounceMs: 400,
     pageSize: 50,
-    onBarcodeMatch: handleBarcodeMatch
+    onBarcodeMatch: handleBarcodeMatch,
+    onDatamatrixScan: (raw) => { void datamatrixScan.processScan(raw) }
   })
 
   // --- Import (CSV + Packs) ---

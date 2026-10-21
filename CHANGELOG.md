@@ -2,6 +2,127 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-10-21 — Séparateur de milliers : point (fr) / virgule (en)
+
+- `Intl.NumberFormat('fr-FR')` groupe avec espace fine insécable (U+202F,
+  rendu trop large à côté des chiffres Roboto Mono).
+- `formatters.ts` : `formatNumberString` remplace les séparateurs de groupe
+  par **`.` en fr** (comme `31.250 F`) ; en garde la virgule native.
+  Appliqué à `formatPrice`, `formatCurrency`, `formatCompact`, `formatNumber`.
+- Chemins non-navigateur : encodeur ESC/POS `encoder.ts` normalise la plage
+  U+2000–U+200F → espace (ticket + clôture QZ) ; sanitisations jsPDF
+  (`relevePdfDraft`, `reportPdfDraft`, `stockValuationPdf`) étendues.
+- Tests `formatters`/`printHelpers`/`Dashboard`/`StatistiquesFournisseur`
+  mis à jour (séparateur `.` accepté).
+
+## 2026-10-21 — Police dédiée aux chiffres (Roboto Mono via unicode-range)
+
+- Nouveau `public/fonts/roboto-mono-var.woff2` (variable 100-900, ~33 Ko).
+- `index.css` : `@font-face "Zenith Numeric"` limité à `U+0030-0039`, ajouté
+  en tête de `--font-sans`/`--font-heading` → **tous les chiffres de l'app**
+  (montants, CIP, quantités, dates) rendus en Roboto Mono automatiquement,
+  sans classe à poser. `font-mono` (horloge, badges) et le print inchangés.
+
+## 2026-10-21 — HeaderClock : rendu affiné + fix chevauchement omnisearch
+
+- `HeaderClock` : police affinée (`font-mono`, `text-xs`→`sm`, `font-medium`,
+  `tabular-nums` conservé pour les chiffres stables).
+- La **date est masquée sous `md`** (seule l'heure reste) — le texte long
+  `JJ/MM/AAAA · HH:MM` chevauchait le bouton omnisearch sur petits écrans.
+  La date complète reste au survol (title).
+
+## 2026-10-20 — Organisation : messages de suppression corrigés (pas de corbeille)
+
+- Les catégories (rayon/forme/groupe) sont supprimées en **hard delete** —
+  les textes parlaient de « corbeille/restauration » à tort.
+- `trash_confirm_msg` : précise « supprimé définitivement, produits dérangés ».
+- `delete_all_confirm_msg` : avertissement explicite « ATTENTION : tous les
+  X (N) seront supprimés définitivement, produits dérangés, irréversible » ;
+  bouton « Tout supprimer définitivement ».
+
+## 2026-10-20 — Organisation : suppression de catégorie avec déplacement des produits
+
+- Suppression d'un rayon/forme/groupe contenant des produits : nouveau modal
+  proposant une **catégorie de destination** (`produits/bulk-categorize/`)
+  ou « laisser les produits dérangés » (comportement SET_NULL existant).
+- Catégorie vide → suppression directe comme avant.
+- Clés i18n `delete_move_*` (fr/en) dans `stock.json`.
+
+## 2026-10-20 — Impression état de stock par rayon : route front /app/printing
+
+- `CategoryManager.handleConfirmPrint` ouvrait l'URL PDF via `window.open`
+  direct → pas de header `Authorization` → **401 Unauthorized**.
+- Rayons : désormais routés via `/app/printing/0?type=INVENTAIRE&group_by=RAYON
+  &filter_id=<id>&stock_display=…` → rendu `InventairePrintTemplate`, aperçu
+  print natif, choix du format papier. `exclude_zero` → `stock_display=NON_ZERO`.
+- « Sans rayon » (id -1, non exprimable côté etat-inventaire) : fetch
+  authentifié blob + `createObjectURL` conservé.
+- `etat_inventaire.py` : filtre RAYON inclut désormais les sous-rayons
+  (`rayon__parent_id`), cohérent avec `imprimer_etat_stock`.
+- `PrintPage.tsx` : forwarde `stock_location` à l'API (param ajouté hier à
+  `EtatsInventaire` mais jamais propagé).
+
+## 2026-10-20 — Organisation : rangement intelligent enchaînable + fix fermeture intempestive
+
+- **Bug** : la boîte de confirmation était un *sibling* de `PremiumModal`
+  (pas dans sa couche Radix) → tout clic dedans (dont « Confirmer ») était
+  vu comme interact-outside → le modal principal se fermait systématiquement.
+  Déplacée **à l'intérieur** de `PremiumModal` (nested layer) → plus de
+  fermeture parasite.
+- `SmartOrganizerModal` : après validation réussie, le modal **reste ouvert**
+  au lieu de se fermer — les champs De/À/Contient et les exclusions sont
+  réinitialisés et les produits rechargés (nouvelles catégories visibles).
+  Permet d'enchaîner plusieurs plages sans rouvrir le modal.
+
+## 2026-10-20 — États d'inventaire : filtre « Stock réservé » limité aux produits à réserve activée
+
+- Bug : le filtre emplacement `reserve` ne s'appliquait qu'aux lots
+  (`StockLot.quantity_reserved`), mais les lignes synthétiques de fallback
+  (produits sans lot visible en mode `tous`, `zero`, `negatif`) réinjectaient
+  tous les produits → le listing affichait tout le catalogue.
+- `listing_excel.py` : fallback `tous`/`zero`/`negatif` filtrés sur
+  `has_reserve_storage=True` quand `stock_location='reserve'` ; queryset
+  lots aussi restreint ; `stock_reserve` réel exposé (au lieu de 0 en dur) ;
+  `valeur_stock` calculée sur la réserve ; mode `negatif` compare
+  `stock_reserve__lt=0` au lieu de `stock__lt=0`.
+- Filtre `zero` (« Stocks nuls ») : les lignes synthétiques produits-sans-lot
+  sont désormais limitées aux produits ayant eu au moins un mouvement
+  ENTREE/SORTIE (avant : tout le catalogue actif apparaissait). Une seule
+  ligne par produit, sans N° de lot ni date de péremption ; en mode
+  `reserve`, le critère porte sur `quantity_reserved=0`.
+- `etat_inventaire.py` (PDF/impression) : nouveau param `stock_location`
+  (`reserve` → `has_reserve_storage=True`, lots `quantity_reserved>0`,
+  colonne stock = `quantity_reserved`/`stock_reserve`) — le frontend
+  `EtatsInventaire.tsx` le transmet désormais à l'impression.
+
+## 2026-10-20 — Facturation : scan DataMatrix fusionné dans le champ de recherche
+
+- Le champ de recherche produit intercepte désormais les scans DataMatrix GS1
+  complets (CIP + lot) : `useProductSearch` bufferise la chaîne 250 ms (le lot
+  arrive après le GTIN dans la rafale du scanner), puis délègue au nouveau
+  callback `onDatamatrixScan` qui appelle `useDatamatrixScan.processScan`
+  (résolution `stock-lots/by-datamatrix/`, lot + expiration forcés sur la ligne).
+  DataMatrix sans lot → fallback recherche CIP classique (comportement inchangé).
+- Champ dédié `DatamatrixScanField.tsx` supprimé, ainsi que le toggle
+  `datamatrixEnabled` du header (le scan est toujours actif, déjà le cas via
+  la détection CIP). `useDatamatrixScan` expose désormais `processScan` et est
+  instancié dans `useFacturationState`.
+- Fichiers : `useProductSearch.ts`, `useDatamatrixScan.ts`,
+  `useFacturationState.ts`, `Facturation.tsx`, `FacturationHeader.tsx`,
+  `FacturationLeftPanel.tsx`, `ProductSearchSection.tsx` ; clés i18n
+  `facturation:datamatrix.*` et `enable/disable_datamatrix` retirées (fr/en),
+  placeholder recherche mis à jour (« …ou scan datamatrix »).
+- Inchangé : le scan DataMatrix des Commandes (`DataMatrixScanBar`,
+  `useDataMatrixScanner`) reste autonome.
+- Correctif impression étiquettes (`SimplePrintLabelsModal`) : l'AI 17 était
+  encodé avec `new Date("MM/YY")` → Invalid Date → « NaN » dans l'aperçu et
+  péremption absente à l'impression. Nouveau helper `buildGs1DatamatrixText`
+  (MM/YY → `YYMM00`, convention GS1 fin de mois ; ISO supporté) partagé entre
+  aperçu canvas et impression SVG. Rendu DM passé de scale 1→3, taille
+  7/9 mm → 8/10 mm (lisibilité douchette sur thermique 203 dpi).
+- `useProductSearch` : scan datamatrix non parsable → `logger.warn` du brut +
+  toast `datamatrix_unrecognized` (aide au diagnostic terrain).
+
 ## 2026-10-19 — Bon de réception : regroupement alpha/rayon/forme pour le contrôle des entrées
 
 - Bouton « Imprimer Reçu » devient un bouton split : clic = ordre de saisie,

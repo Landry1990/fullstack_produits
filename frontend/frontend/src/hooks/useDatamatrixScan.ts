@@ -115,9 +115,7 @@ export function useDatamatrixScan({
             setScanStatus('success');
             setLastScanned(`${data.produit.name} — Lot ${data.lot_numero}`);
             if (data.quantity_remaining <= 0) {
-                gooeyToast(t('messages.datamatrix_lot_out_of_stock', { produit: data.produit.name }), {
-                    style: { background: '#fef3c7', color: '#92400e' },
-                });
+                gooeyToast.warning(t('messages.datamatrix_lot_out_of_stock', { produit: data.produit.name }));
             } else {
                 gooeyToast.success(t('messages.datamatrix_added', { produit: data.produit.name, lot: data.lot_numero }));
             }
@@ -155,6 +153,7 @@ export function useDatamatrixScan({
     }, [scanInput, processScan]);
 
     return {
+        processScan,
         scanInput,
         setScanInput,
         scanStatus,

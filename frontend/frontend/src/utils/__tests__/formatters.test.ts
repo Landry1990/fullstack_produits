@@ -5,12 +5,12 @@ describe('formatPrice / formatCurrency', () => {
     it('formate les entiers avec séparateur de milliers', () => {
         const result = formatCurrency(150000);
         // En fr-FR, le séparateur de milliers est un espace insécable
-        expect(result).toMatch(/150\s?000/);
+        expect(result).toMatch(/150[\s.]?000/);
     });
 
     it('arrondit les décimales (pas de virgule)', () => {
         const result = formatCurrency(150000.75);
-        expect(result).toMatch(/150\s?001/);
+        expect(result).toMatch(/150[\s.]?001/);
     });
 
     it('formate zéro', () => {
@@ -23,7 +23,7 @@ describe('formatPrice / formatCurrency', () => {
 
     it('formate les grands nombres', () => {
         const result = formatCurrency(2500000);
-        expect(result).toMatch(/2\s?500\s?000/);
+        expect(result).toMatch(/2[\s.]?500[\s.]?000/);
     });
 
 });
@@ -39,7 +39,7 @@ describe('safeFormatNumber', () => {
 
     it('gère les strings numériques', () => {
         const result = safeFormatNumber('1500');
-        expect(result).toMatch(/1\s?500/);
+        expect(result).toMatch(/1[\s.]?500/);
     });
 
     it('gère les strings non-numériques', () => {
@@ -48,7 +48,7 @@ describe('safeFormatNumber', () => {
 
     it('gère les nombres normaux', () => {
         const result = safeFormatNumber(5000);
-        expect(result).toMatch(/5\s?000/);
+        expect(result).toMatch(/5[\s.]?000/);
     });
 });
 

@@ -125,6 +125,36 @@ function toShortDate(raw: string | null | undefined, locale: string): string {
   return d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: '2-digit' })
 }
 
+/**
+ * Construit la chaîne GS1 encodée dans le DataMatrix : (01)GTIN14 (10)LOT (17)YYMMDD.
+ * - expiration accepte "MM/YY" (affichage étiquette), une date ISO ou Date-parsable.
+ *   Quand seul MM/YY est connu, DD=00 (convention GS1 = dernier jour du mois).
+ * - Retourne '' si pas de CIP (rien d'encodable).
+ */
+function buildGs1DatamatrixText(cip: string, lot: string, expiration: string): string {
+  if (!cip) return ''
+  const gtin = cip.length === 13 ? '0' + cip : cip.padStart(14, '0')
+  let s = `(01)${gtin}`
+  if (lot) s += `(10)${lot}`
+
+  let yy = '', mm = '', dd = ''
+  const mmyy = expiration.match(/^(\d{2})\/(\d{2})$/)
+  if (mmyy) {
+    mm = mmyy[1]
+    yy = mmyy[2]
+    dd = '00'
+  } else if (expiration) {
+    const d = new Date(expiration)
+    if (!isNaN(d.getTime())) {
+      yy = String(d.getFullYear()).slice(-2)
+      mm = String(d.getMonth() + 1).padStart(2, '0')
+      dd = String(d.getDate()).padStart(2, '0')
+    }
+  }
+  if (yy && mm) s += `(17)${yy}${mm}${dd}`
+  return s
+}
+
 /* ═══════════════════════════════════════════
    BARCODE COMPONENTS
    ═══════════════════════════════════════════ */
@@ -157,25 +187,10 @@ function BarcodeCanvas({ value, height, width }: { value: string; height: number
 function DatamatrixCanvas({ cip, lot, expiration, size }: { cip: string; lot: string; expiration: string; size: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
-  // Construit la chaîne GS1 Datamatrix : 01<CIP13 padded to 14> 10<LOT> 17<YYMMDD>
-  const gs1Data = (() => {
-    const gtin = cip.length === 13 ? '0' + cip : cip.padStart(14, '0')
-    let s = `(01)${gtin}`
-    if (lot) s += `(10)${lot}`
-    if (expiration) {
-      try {
-        const d = new Date(expiration)
-        const yy = String(d.getFullYear()).slice(-2)
-        const mm = String(d.getMonth() + 1).padStart(2, '0')
-        const dd = String(d.getDate()).padStart(2, '0')
-        s += `(17)${yy}${mm}${dd}`
-      } catch { /* ignore */ }
-    }
-    return s
-  })()
+  const gs1Data = buildGs1DatamatrixText(cip, lot, expiration)
 
   useEffect(() => {
-    if (!canvasRef.current || !cip) return
+    if (!canvasRef.current || !gs1Data) return
     let cancelled = false
     import('bwip-js')
       .then((mod) => {
@@ -184,7 +199,7 @@ function DatamatrixCanvas({ cip, lot, expiration, size }: { cip: string; lot: st
         bwip.toCanvas(canvasRef.current!, {
           bcid: 'datamatrix',
           text: gs1Data,
-          scale: 2,
+          scale: 3,
           height: Math.round(size / 3.78),
           width: Math.round(size / 3.78),
           parsefnc: true,
@@ -192,7 +207,7 @@ function DatamatrixCanvas({ cip, lot, expiration, size }: { cip: string; lot: st
       })
       .catch(() => { /* ignore */ })
     return () => { cancelled = true }
-  }, [gs1Data, size, cip])
+  }, [gs1Data, size])
 
   if (!cip) return null
   return <canvas ref={canvasRef} style={{ width: size, height: size }} />
@@ -666,21 +681,10 @@ export default function SimplePrintLabelsModal({
       if (isEnabled('barcode') && label.barcode) {
         if (barcodeType === 'DATAMATRIX' && bwipToSVG) {
           try {
-            const gtin = label.cip.length === 13 ? '0' + label.cip : label.cip.padStart(14, '0')
-            let gs1 = `(01)${gtin}`
-            if (label.lot) gs1 += `(10)${label.lot}`
-            if (label.dateExpiration) {
-              const d = new Date(label.dateExpiration)
-              if (!isNaN(d.getTime())) {
-                const yy = String(d.getFullYear()).slice(-2)
-                const mm = String(d.getMonth() + 1).padStart(2, '0')
-                const dd = String(d.getDate()).padStart(2, '0')
-                gs1 += `(17)${yy}${mm}${dd}`
-              }
-            }
-            const size = isCompact ? 7 : 9
-            const svgRaw = bwipToSVG({ bcid: 'datamatrix', text: gs1, scale: 1, height: size, width: size, parsefnc: true })
-            const svgMm = isCompact ? '7mm' : '9mm'
+            const gs1 = buildGs1DatamatrixText(label.cip, label.lot, label.dateExpiration)
+            const size = isCompact ? 8 : 10
+            const svgRaw = bwipToSVG({ bcid: 'datamatrix', text: gs1, scale: 3, height: size, width: size, parsefnc: true })
+            const svgMm = isCompact ? '8mm' : '10mm'
             barcodeSvg = svgRaw.replace('<svg ', `<svg style="width:${svgMm};height:${svgMm};display:block;" `)
           } catch { /* ignore */ }
         } else if (barcodeType !== 'DATAMATRIX') {
@@ -715,7 +719,7 @@ export default function SimplePrintLabelsModal({
 
       // Barcode
       if (barcodeSvg) {
-        const barcodeMaxH = barcodeType === 'DATAMATRIX' ? (isCompact ? '6mm' : '8mm') : (isCompact ? '5mm' : '7mm')
+        const barcodeMaxH = barcodeType === 'DATAMATRIX' ? (isCompact ? '8mm' : '10mm') : (isCompact ? '5mm' : '7mm')
         lines.push(`<div style="display:flex;justify-content:center;align-items:center;margin:0.1mm 0;flex-shrink:1;max-height:${barcodeMaxH};overflow:hidden;">${barcodeSvg}</div>`)
       }
 

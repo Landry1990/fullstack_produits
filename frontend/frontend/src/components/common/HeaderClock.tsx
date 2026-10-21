@@ -21,10 +21,12 @@ export default function HeaderClock({ className = '' }: { className?: string }) 
 
   return (
     <span
-      className={`whitespace-nowrap text-base font-semibold tabular-nums tracking-wide ${className}`}
+      className={`whitespace-nowrap font-mono text-xs sm:text-sm font-medium tabular-nums ${className}`}
       title={formatDateTime(now)}
     >
-      {formatDate(now)} · {formatTime(now)}
+      {/* Date masquée sur petits écrans : chevauchait l'omnisearch */}
+      <span className="hidden md:inline">{formatDate(now)} · </span>
+      {formatTime(now)}
     </span>
   );
 }

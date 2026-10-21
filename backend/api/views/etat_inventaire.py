@@ -5,7 +5,7 @@ Colonnes: ID, CIP1, Libellé, Stock, Prix de Vente, avec lignes par lot si multi
 import io
 from datetime import datetime
 
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
 from django.http import HttpResponse
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -42,6 +42,7 @@ class EtatInventairePDFView(APIView):
         lang = get_document_language()
         group_by = request.query_params.get('group_by', '').upper()
         stock_display = request.query_params.get('stock_display', 'MACHINE').upper()
+        stock_location = request.query_params.get('stock_location', 'tous').lower()
         filter_id = request.query_params.get('filter_id', None)
 
         group_labels = {
@@ -69,16 +70,29 @@ class EtatInventairePDFView(APIView):
         elif stock_display == 'NEGATIF':
             base_filter['stock__lt'] = 0
 
+        # Emplacement : 'reserve' = uniquement les produits à réserve activée,
+        # quantités issues de quantity_reserved / Produit.stock_reserve
+        is_reserve = stock_location == 'reserve'
+        if is_reserve:
+            base_filter['has_reserve_storage'] = True
+            if stock_display == 'NON_ZERO':
+                del base_filter['stock__gt']
+                base_filter['stock_reserve__gt'] = 0
+            elif stock_display == 'NEGATIF':
+                del base_filter['stock__lt']
+                base_filter['stock_reserve__lt'] = 0
+
         # Récupérer les produits actifs avec leurs lots (Prefetch filtré évite N+1)
+        lot_qty_filter = {'quantity_reserved__gt': 0} if is_reserve else {'quantity_remaining__gt': 0}
         active_lots_prefetch = Prefetch(
             'stock_lots',
-            queryset=StockLot.objects.filter(quantity_remaining__gt=0).order_by('date_expiration'),
+            queryset=StockLot.objects.filter(**lot_qty_filter).order_by('date_expiration'),
             to_attr='active_lots'
         )
         produits = Produit.objects.filter(**base_filter).select_related(
             'rayon', 'forme', 'groupe'
         ).only(
-            'id', 'cip1', 'name', 'stock', 'selling_price', 'rayon', 'forme', 'groupe'
+            'id', 'cip1', 'name', 'stock', 'stock_reserve', 'selling_price', 'rayon', 'forme', 'groupe'
         ).prefetch_related(active_lots_prefetch).order_by('name')
 
         # Filtrer par entité spécifique si filter_id est fourni
@@ -89,7 +103,8 @@ class EtatInventairePDFView(APIView):
             filter_id = parse_id(filter_id, field='filter_id')
             try:
                 if group_by == 'RAYON':
-                    produits = produits.filter(rayon_id=filter_id)
+                    # Inclure les sous-rayons (cohérent avec imprimer_etat_stock)
+                    produits = produits.filter(Q(rayon_id=filter_id) | Q(rayon__parent_id=filter_id))
                     rayon = Rayon.objects.get(id=filter_id)
                     filter_name = rayon.name
                 elif group_by == 'FORME':
@@ -151,23 +166,25 @@ class EtatInventairePDFView(APIView):
             if len(lots) > 1:
                 # Multi-lots: une ligne par lot
                 for lot in lots:
+                    lot_qty = lot.quantity_reserved if is_reserve else lot.quantity_remaining
                     grouped_data[key].append({
                         'id': produit.id,
                         'cip1': produit.cip1 or '-',
                         'name': produit.name,
                         'lot_numero': lot.lot or '-',
-                        'stock': float(lot.quantity_remaining) if stock_display in ('MACHINE', 'NON_ZERO', 'NEGATIF') else 0,
+                        'stock': float(lot_qty) if stock_display in ('MACHINE', 'NON_ZERO', 'NEGATIF') else 0,
                         'selling_price': float(produit.selling_price) if produit.selling_price else 0,
                         'is_lot_line': True,
                     })
             else:
                 # Pas de lot ou un seul lot: une seule ligne avec le stock du produit
+                produit_qty = produit.stock_reserve if is_reserve else produit.stock
                 grouped_data[key].append({
                     'id': produit.id,
                     'cip1': produit.cip1 or '-',
                     'name': produit.name,
                     'lot_numero': lots[0].lot if lots else '-',
-                    'stock': float(produit.stock) if stock_display in ('MACHINE', 'NON_ZERO', 'NEGATIF') else 0,
+                    'stock': float(produit_qty) if stock_display in ('MACHINE', 'NON_ZERO', 'NEGATIF') else 0,
                     'selling_price': float(produit.selling_price) if produit.selling_price else 0,
                     'is_lot_line': False,
                 })

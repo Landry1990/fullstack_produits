@@ -77,7 +77,7 @@
     },
     "search": {
         "label": "Rechercher un produit (F2)",
-        "placeholder": "Ex: PARACÉTAMOL (F2)",
+        "placeholder": "Ex: PARACÉTAMOL (F2) ou scan datamatrix",
         "min_chars": "Tapez au moins 2 caractères",
         "no_results": "Aucun produit trouvé",
         "out_of_stock": "Épuisé",
@@ -400,13 +400,6 @@
         "button": "Rappeler",
         "loading": "Chargement..."
     },
-    "datamatrix": {
-        "placeholder": "Scanner le datamatrix de la boîte…",
-        "enter_to_validate": "Entrée pour valider",
-        "not_found": "Produit ou lot introuvable — vérifiez le code-barres"
-    },
-    "disable_datamatrix": "Désactiver le scan Data Matrix",
-    "enable_datamatrix": "Activer le scan Data Matrix",
     "avoirs": {
         "unload_stock_title": "Retirer physiquement ces quantités du stock et enregistrer les mouvements",
         "unload_stock": "Décharger Stock",

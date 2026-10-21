@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { Eye, EyeOff, Moon, Sun, FileText, ShoppingCart, AlertTriangle, Monitor, ScanLine, Loader2 } from 'lucide-react'
+import { Eye, EyeOff, Moon, Sun, FileText, ShoppingCart, AlertTriangle, Monitor, Loader2 } from 'lucide-react'
 import { formatCurrency } from '../../utils/formatters'
 import { formatDateShort } from '../../utils/dateUtils'
 import { Button } from '../shadcn/button'
@@ -11,12 +11,10 @@ import type { FacturationState } from '../../hooks/useFacturationState'
 
 interface FacturationHeaderProps {
   hook: FacturationState
-  datamatrixEnabled: boolean
-  setDatamatrixEnabled: (updater: (prev: boolean) => boolean) => void
   setShowOpenPosteModal: (open: boolean) => void
 }
 
-export default function FacturationHeader({ hook, datamatrixEnabled, setDatamatrixEnabled, setShowOpenPosteModal }: FacturationHeaderProps) {
+export default function FacturationHeader({ hook, setShowOpenPosteModal }: FacturationHeaderProps) {
   const { t: tCaisse } = useTranslation('caisse')
 
   return (
@@ -59,21 +57,6 @@ export default function FacturationHeader({ hook, datamatrixEnabled, setDatamatr
               aria-label={hook.isMidnightTheme ? hook.t('facturation:theme_light', { defaultValue: 'Passer en thème clair' }) : hook.t('facturation:theme_dark', { defaultValue: 'Passer en thème sombre' })}
             >
               {hook.isMidnightTheme ? <Sun size={16} /> : <Moon size={16} />}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setDatamatrixEnabled(prev => !prev)}
-              className={cn(
-                "size-8 rounded-lg transition-all",
-                datamatrixEnabled
-                  ? 'bg-indigo-600 text-white hover:bg-indigo-700'
-                  : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
-              )}
-              title={datamatrixEnabled ? hook.t('facturation:disable_datamatrix') : hook.t('facturation:enable_datamatrix')}
-              aria-label={datamatrixEnabled ? hook.t('facturation:disable_datamatrix') : hook.t('facturation:enable_datamatrix')}
-            >
-              <ScanLine size={16} />
             </Button>
           </div>
 

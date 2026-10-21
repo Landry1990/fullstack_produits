@@ -132,8 +132,9 @@ export function encodeWcp1252(text: string): string {
   let out = '';
   for (const ch of String(text)) {
     const code = ch.charCodeAt(0);
-    // Espaces spéciaux (insécables, demi-cadratin…) → espace normal
-    if (code === 0x00A0 || code === 0x202F || code === 0x2009 || code === 0x2003) {
+    // Espaces spéciaux (insécable, fine, cadratin, ultra-fine…) → espace normal.
+    // La plage U+2000–U+200F regroupe tous les espaces typographiques.
+    if (code === 0x00A0 || code === 0x202F || (code >= 0x2000 && code <= 0x200F)) {
       out += ' ';
     } else if (code < 128) {
       out += ch;

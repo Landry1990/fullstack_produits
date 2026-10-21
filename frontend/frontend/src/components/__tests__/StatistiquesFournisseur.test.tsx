@@ -87,7 +87,7 @@ describe('StatistiquesFournisseur', () => {
         // Verify Cards (Totals) based on simplified matching
         // We strip all likely whitespace from the actual content before asserting
         const cards = screen.getAllByRole('heading', { level: 3 });
-        const cardTexts = cards.map(c => c.textContent?.replace(/[\s\u00A0\u202F]/g, ''));
+        const cardTexts = cards.map(c => c.textContent?.replace(/[\s\u00A0\u202F.]/g, ''));
         
         // 150 000 F -> "150000F"
         expect(cardTexts.some(t => t?.includes('150000'))).toBe(true);

@@ -77,7 +77,7 @@
     },
     "search": {
         "label": "Search a product (F2)",
-        "placeholder": "Ex: PARACETAMOL (F2)",
+        "placeholder": "Ex: PARACETAMOL (F2) or datamatrix scan",
         "min_chars": "Type at least 2 characters",
         "no_results": "No product found",
         "out_of_stock": "Out of stock",
@@ -399,13 +399,6 @@
         "button": "Recall",
         "loading": "Loading..."
     },
-    "datamatrix": {
-        "placeholder": "Scan the box datamatrix…",
-        "enter_to_validate": "Enter to validate",
-        "not_found": "Product or batch not found — check the barcode"
-    },
-    "disable_datamatrix": "Disable Data Matrix Scan",
-    "enable_datamatrix": "Enable Data Matrix Scan",
     "avoirs": {
         "unload_stock_title": "Physically remove these quantities from stock and record movements",
         "unload_stock": "Unload Stock",
