@@ -2,6 +2,16 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-10-21 — 500 nginx sur routes SPA : dist/ tronqué, rebuild complet
+
+- Symptôme : `GET /app/caisse-centralisee` → 500 `rewrite or internal
+  redirection cycle ... /index.html` + chunks JS en 404.
+- Cause : `frontend/frontend/dist/` (bind-monté sur `/usr/share/nginx/html`,
+  compose.yml) ne contenait plus que `assets/` — `index.html`, `sw.js`,
+  `locales/`… absents (build interrompu ?). Le fallback SPA nginx bouclait.
+- Fix : `npm run build` complet — dist restauré, routes SPA en 200 sans
+  redémarrage (bind mount).
+
 ## 2026-10-21 — Correctifs revue de code (listing réserve, génériques, scan, N+1 pharma)
 
 - `listing_excel.py` : filtre « Stocks nuls en réserve » corrigé — le combo
