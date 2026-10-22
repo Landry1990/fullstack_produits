@@ -1,4 +1,5 @@
 from datetime import timedelta
+from decimal import Decimal, ROUND_HALF_UP
 from math import ceil
 
 from django.db.models import Sum
@@ -48,11 +49,24 @@ def calculate_stock_thresholds(produit, coverage_days=30):
     marge_retard = getattr(fournisseur, 'marge_retard_jours', None) or 2
     vmd_ajustee = metrics['vmd_ajustee']
     stock_minimum = ceil(vmd_ajustee * (delai_livraison + marge_retard))
-    stock_maximum = ceil(stock_minimum + (vmd_ajustee * coverage_days))
+    # Arrondi au plus proche pour le max : ceil() gonflait les produits
+    # dormants (rotation 0,3/mois → max 2, soit ~7 mois de stock).
+    stock_maximum = int(
+        Decimal(str(stock_minimum + vmd_ajustee * coverage_days)).quantize(
+            Decimal('1'), rounding=ROUND_HALF_UP
+        )
+    )
 
     if vmd_ajustee > 0:
         stock_minimum = max(1, stock_minimum)
-        stock_maximum = max(stock_minimum + 1, stock_maximum)
+        # Rotation < 1/mois : le max peut égaler le min (on garde l'unité de
+        # sécurité, pas de couverture additionnelle pour un dormant).
+        floor_max = (
+            stock_minimum
+            if metrics['consommation_mensuelle'] < 1
+            else stock_minimum + 1
+        )
+        stock_maximum = max(floor_max, stock_maximum)
 
     return {
         **metrics,

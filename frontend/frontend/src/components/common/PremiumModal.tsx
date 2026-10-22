@@ -34,6 +34,7 @@ interface PremiumModalProps {
   disableClose?: boolean;
   /** Additional CSS classes for the modal container */
   className?: string;
+  onOpenAutoFocus?: (event: Event) => void;
 }
 
 /**
@@ -72,6 +73,7 @@ const PremiumModal: React.FC<PremiumModalProps> = ({
   footer,
   disableClose = false,
   className = '',
+  onOpenAutoFocus,
 }) => {
   const { t } = useTranslation('common');
 
@@ -84,6 +86,7 @@ const PremiumModal: React.FC<PremiumModalProps> = ({
     >
       <DialogContent
         hideCloseButton
+        onOpenAutoFocus={onOpenAutoFocus}
         // aria-describedby optionnel : on fournit DialogDescription quand subtitle existe
         aria-describedby={undefined}
         onEscapeKeyDown={(e) => {
