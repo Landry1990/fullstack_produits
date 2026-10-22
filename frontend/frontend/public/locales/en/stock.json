@@ -1218,6 +1218,7 @@
             "exclude_all": "Exclude all",
             "include_all": "Include all",
             "invert_selection": "Invert",
+            "only_in_stock": "In stock only",
             "start_typing": "Type a range or term to see the preview.",
             "confirm_title": "Confirm organizing",
             "confirm_description": "{{count}} products will be organized into {{name}}.",

@@ -136,9 +136,10 @@ def calculate_and_apply_stock_levels(produit_id=None):
             if stock_minimum_int < 1 and ventes_mensuelles > 0:
                 stock_minimum_int = 1
             
-            # Garantir la cohérence : max doit toujours être > min
-            if stock_maximum_int <= stock_minimum_int:
-                stock_maximum_int = stock_minimum_int + max(1, stock_minimum_int)
+            # Garantir la cohérence : max >= min. Un produit dormant
+            # (rotation < 1/mois) peut avoir max == min — pas de +1 forcé.
+            if stock_maximum_int < stock_minimum_int:
+                stock_maximum_int = stock_minimum_int
             
             # 5. Toujours mettre à jour les deux ensemble pour garantir la cohérence
             produit.stock_minimum = stock_minimum_int

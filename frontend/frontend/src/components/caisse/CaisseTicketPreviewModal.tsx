@@ -108,13 +108,13 @@ export function CaisseTicketPreviewModal({
 
   // Focus automatique sur le bouton d'impression à l'ouverture
   useEffect(() => {
-    if (isOpen && ticket) {
+    if (isOpen && ticket && !loading) {
       const timer = setTimeout(() => {
         printButtonRef.current?.focus()
       }, 50)
       return () => clearTimeout(timer)
     }
-  }, [isOpen, ticket])
+  }, [isOpen, ticket, loading])
 
   // Récupération des styles du document au moment de l'ouverture du modal
   const styleTags = useMemo(() => {
@@ -173,14 +173,28 @@ export function CaisseTicketPreviewModal({
     }
   }, [settings, styleTags, t, ticket, printing])
 
+  const handleTicketKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'Enter' || event.repeat || event.defaultPrevented || showClientNameModal) return
+    const target = event.target as HTMLElement
+    const action = target.closest('button, a, input, textarea, select, [contenteditable="true"]')
+    if (action && action !== printButtonRef.current) return
+    event.preventDefault()
+    event.stopPropagation()
+    if (!loading && !printing) printButtonRef.current?.click()
+  }
+
   return (
-    <>
+    <div onKeyDownCapture={handleTicketKeyDown}>
     <PremiumModal
       isOpen={isOpen && !!ticket}
       onClose={onClose}
       title={t('ticket.title')}
       icon={<Receipt className="h-6 w-6 text-emerald-600" aria-hidden="true" />}
       maxWidth="max-w-md"
+      onOpenAutoFocus={(event) => {
+        event.preventDefault()
+        printButtonRef.current?.focus()
+      }}
       footer={
         <div className="flex justify-end gap-2 w-full" onKeyDown={handleFooterKeyDown}>
           <button
@@ -229,7 +243,7 @@ export function CaisseTicketPreviewModal({
           <button
             ref={printButtonRef}
             type="button"
-            className="inline-flex items-center justify-center h-8 px-6 rounded-lg text-xs font-semibold bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center justify-center h-8 px-6 rounded-lg text-xs font-semibold bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus:ring-white focus:ring-2 focus:ring-offset-2 focus:ring-offset-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={handlePrint}
             disabled={printing || loading}
           >
@@ -256,6 +270,6 @@ export function CaisseTicketPreviewModal({
       onConfirm={handleConfirmPrintClientName}
       facture={pendingFacture}
     />
-    </>
+    </div>
   )
 }

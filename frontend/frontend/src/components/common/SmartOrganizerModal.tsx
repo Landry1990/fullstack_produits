@@ -35,6 +35,7 @@ interface MiniProduct {
     id: number;
     name: string;
     cip1?: string;
+    stock?: number;
     rayon?: number | null;
     rayon__name?: string | null;
     forme?: number | null;
@@ -48,6 +49,8 @@ interface IndexedProduct {
     rawName: string;
     lowerName: string;
 }
+
+const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 interface ProductListData {
     products: MiniProduct[];
@@ -214,6 +217,15 @@ const ProductRow = ({ index, style, data }: ListChildComponentProps<ProductListD
                     </span>
                 </div>
                 <div className="flex items-center gap-2 shrink-0 ml-2">
+                    <span
+                        className={`text-micro font-bold px-1.5 py-0.5 rounded ${
+                            (p.stock ?? 0) > 0
+                                ? 'bg-emerald-50 text-emerald-600'
+                                : 'bg-slate-100 text-slate-400'
+                        }`}
+                    >
+                        {(p.stock ?? 0) > 0 ? `×${p.stock}` : '×0'}
+                    </span>
                     <span className="text-slate-400">{p.cip1}</span>
                     <button
                         onClick={() =>
@@ -376,7 +388,23 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
         const candidates = source.slice(start, end);
 
         if (cTerm) {
-            const containsTerm = (item: IndexedProduct) => (caseSensitive ? item.rawName : item.lowerName).includes(cTerm);
+            // Codes forme courts (cp, sp, gel…) : le terme doit démarrer un
+            // mot — sinon « sp » attrape ASPEGIC et « cp » DACPRIL, et le
+            // filtre ne sert plus à repérer comprimés/sirops. Un chiffre
+            // compte comme frontière (« 500CP » reste trouvé) sauf si le
+            // terme commence lui-même par un chiffre (« 500 » ne doit pas
+            // matcher « 1500 »). Termes plus longs : recherche %terme%.
+            let containsTerm: (item: IndexedProduct) => boolean;
+            if (cTerm.length <= 3) {
+                const boundary = /^\p{L}/u.test(cTerm) ? '[^\\p{L}]' : '[^\\p{L}\\p{N}]';
+                const termRe = new RegExp(
+                    `(^|${boundary})${escapeRegExp(cTerm)}`,
+                    caseSensitive ? 'u' : 'iu'
+                );
+                containsTerm = (item) => termRe.test(item.product.name ?? '');
+            } else {
+                containsTerm = (item) => (caseSensitive ? item.rawName : item.lowerName).includes(cTerm);
+            }
             return candidates.filter(containsTerm).map(item => item.product);
         }
 
@@ -416,6 +444,16 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
             const next = new Set(prev);
             for (const p of filteredProducts) {
                 next.delete(p.id);
+            }
+            return next;
+        });
+    };
+
+    const handleOnlyInStock = () => {
+        setExcludedIds(prev => {
+            const next = new Set(prev);
+            for (const p of filteredProducts) {
+                if ((p.stock ?? 0) <= 0) next.add(p.id);
             }
             return next;
         });
@@ -594,6 +632,14 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
                                                     aria-label={t('stock:organisation.smart_organizer.include_all')}
                                                 >
                                                     {t('stock:organisation.smart_organizer.include_all')}
+                                                </button>
+                                                <button
+                                                    onClick={handleOnlyInStock}
+                                                    disabled={filteredProducts.length === 0}
+                                                    className="text-caption text-sky-600 hover:text-sky-800 font-medium underline underline-offset-2 transition-colors disabled:opacity-40"
+                                                    aria-label={t('stock:organisation.smart_organizer.only_in_stock')}
+                                                >
+                                                    {t('stock:organisation.smart_organizer.only_in_stock')}
                                                 </button>
                                                 <button
                                                     onClick={handleInvert}

@@ -418,6 +418,7 @@
             "exclude_all": "Tout exclure",
             "include_all": "Tout réinclure",
             "invert_selection": "Inverser",
+            "only_in_stock": "Uniquement en stock",
             "start_typing": "Saisissez une plage ou un terme pour voir l'aperçu.",
             "confirm_title": "Confirmer le rangement",
             "confirm_description": "{{count}} produits seront rangés dans {{name}}.",

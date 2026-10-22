@@ -2,6 +2,62 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-10-22 — Seuils stock : dormants n'ont plus max forcé à min+1
+
+- `replenishment_service.py` : `stock_maximum` arrondi au plus proche
+  (ROUND_HALF_UP) au lieu de `ceil` — un produit à rotation 0,3/mois avait
+  max=2 (~7 mois de stock). Si `consommation_mensuelle < 1`, le plancher
+  devient `stock_min` au lieu de `stock_min + 1` → max = 1.
+- `signals_stock_levels.py` : garde `max >= min` au lieu de
+  `max = min + max(1, min)` (qui doublait le min pour les dormants).
+- Vérifié : rotation 0,3/mois → min 1 / max 1 ; rotation 30/mois → min 4 /
+  max 34 (inchangé). Seuils stockés recalculés au prochain cycle
+  (vente/clôture ou `monthly_stock_levels_update`).
+
+## 2026-10-22 — Audit prix TTC : 2 fiches corrigées (HT enregistré à la place)
+
+- Analyse des 1.101 produits à TVA 19,25 % : croisement fiche / lots /
+  commandes clôturées → 2 fiches contenant le prix HT au lieu du TTC :
+  - A CERUMEN UNIDOSE 2ML (15412) : 3.069 → **3.660 F** (+ ligne commande
+    PREP 5275 alignée, commande 102)
+  - BIOFAR MAGNES+VIT B6 CP B/20 (16182) : 4.200,42 → **5.009 F**
+- Marges recalculées via `Produit.save()` (taux_marge 1,91), cache produits
+  invalidé. Reste 1.038 fiches à prix 0 (prix jamais saisis, pas corrompus).
+- Cause probable : une commande en préparation portant le HT a réécrit la
+  fiche via la sync `commande_produits.py` — à surveiller.
+
+## 2026-10-22 — Ticket caisse : raccourci Entrée dans l'aperçu
+
+- `CaisseTicketPreviewModal.tsx` : Entrée dans l'aperçu déclenche le bouton
+  Imprimer, sans dépendre exclusivement de son focus. Les autres actions et
+  champs conservent leur comportement ; répétition clavier et chargement ignorés.
+- Le contour du bouton apparaît aussi lors d'un focus programmatique.
+- Vérification : TypeScript sans erreur.
+
+## 2026-10-21 — Ticket caisse : focus sur Imprimer à l'ouverture
+
+- `PremiumModal.tsx` : transmet le callback optionnel `onOpenAutoFocus` à Radix.
+- `CaisseTicketPreviewModal.tsx` : cible Imprimer lors de l'ouverture réelle
+  du dialogue et après chargement du ticket ; Entrée active le bouton natif.
+- Vérification : TypeScript sans erreur.
+
+## 2026-10-21 — Rangement intelligent : « Contient » en début de mot pour codes courts
+
+- `SmartOrganizerModal.tsx` : terme « Contient » ≤ 3 car. → match en début
+  de mot (`cp` → « DOLIPRANE CP », « 500CP » ; plus DA**CP**RIL ni
+  A**SP**EGIC) — pensé pour repérer les formes CP/SP/GEL. Termes longs :
+  `%terme%` inchangé. Chiffres = frontière de mot, sauf si le terme débute
+  par un chiffre (`500` ne matche pas `1500`).
+
+## 2026-10-21 — Rangement intelligent : sélection « uniquement en stock »
+
+- `SmartOrganizerModal.tsx` : bouton « Uniquement en stock » dans la barre
+  d'actions de l'aperçu — exclut d'un clic tous les produits à `stock <= 0`
+  (le champ `stock` était déjà renvoyé par `produits/for_import/`).
+- Chaque ligne de l'aperçu affiche désormais un badge quantité (`×N` vert si
+  stock > 0, `×0` gris sinon) pour voir d'un coup ce qui sera exclu.
+- i18n `only_in_stock` ajouté en fr + en.
+
 ## 2026-10-21 — 500 nginx sur routes SPA : dist/ tronqué, rebuild complet
 
 - Symptôme : `GET /app/caisse-centralisee` → 500 `rewrite or internal
