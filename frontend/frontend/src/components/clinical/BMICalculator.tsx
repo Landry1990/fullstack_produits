@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { staggerContainer, fadeInUp } from '../../lib/motion';
 import { useTranslation } from 'react-i18next';
 import { Calculator, Info, Scale, Ruler, Activity, Baby, User } from 'lucide-react';
 
@@ -115,9 +117,14 @@ const BMICalculator: React.FC = () => {
   ];
 
   return (
-    <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6">
+    <motion.div
+      variants={staggerContainer}
+      initial="hidden"
+      animate="show"
+      className="p-4 md:p-8 max-w-4xl mx-auto space-y-6"
+    >
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+      <motion.div variants={fadeInUp} className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
         <div className="flex items-center gap-4">
           <div className="size-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-emerald-500/20 flex items-center justify-center text-emerald-500 shadow-lg shadow-emerald-500/10">
             <Calculator className="size-5 md:w-6 md:h-6" />
@@ -145,9 +152,9 @@ const BMICalculator: React.FC = () => {
             {t('bmi.tab_child')}
           </button>
         </div>
-      </div>
+      </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+      <motion.div variants={fadeInUp} className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
         {/* Input Section */}
         <div className="pharma-card p-6 md:p-8 space-y-6">
           {activeTab === 'adult' ? (
@@ -295,8 +302,8 @@ const BMICalculator: React.FC = () => {
             </div>
           )}
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 

@@ -1,4 +1,6 @@
 import { useTranslation } from 'react-i18next';
+import { motion } from 'framer-motion';
+import { staggerContainer, fadeInUp } from '../../lib/motion';
 import { Eye, Trash2, GitMerge, Sparkles, Plus, Search, X, Package, Loader2 } from 'lucide-react';
 import type { Commande, Fournisseur } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
@@ -175,9 +177,14 @@ export default function CommandeList({
 
 
   return (
-    <div className="flex flex-col h-full p-4 space-y-3">
+    <motion.div
+      variants={staggerContainer}
+      initial="hidden"
+      animate="show"
+      className="flex flex-col h-full p-4 space-y-3"
+    >
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4 shrink-0">
+      <motion.div variants={fadeInUp} className="flex flex-col md:flex-row justify-between items-center gap-4 shrink-0">
         <div className="flex items-center gap-2">
           <h1 className="text-lg font-semibold text-slate-800">{t('orders:list.title')}</h1>
           <Badge variant="secondary" className="text-xs">{totalCount}</Badge>
@@ -206,12 +213,12 @@ export default function CommandeList({
             {t('orders:list.create_btn')}
           </Button>
         </div>
-      </div>
+      </motion.div>
 
 
 
       {/* Unified Filter/Sort Bar */}
-      <div className="flex flex-wrap items-center gap-3 p-3 bg-white rounded-lg border border-slate-200 shadow-sm shrink-0">
+      <motion.div variants={fadeInUp} className="flex flex-wrap items-center gap-3 p-3 bg-white rounded-lg border border-slate-200 shadow-sm shrink-0">
         <div className="flex items-center gap-2 mr-2">
           <span className="text-caption font-semibold uppercase tracking-wider text-slate-400">{t('orders:list.sort_by')}:</span>
           <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
@@ -338,10 +345,10 @@ export default function CommandeList({
               {t('orders:list.filters.closed')} ({statusCounts.CLOT || 0})
             </Button>
           </div>
-        </div>
+        </motion.div>
 
       {/* Table Section */}
-      <div className="flex-1 min-h-0 overflow-auto bg-white rounded-xl shadow-sm border border-slate-200">
+      <motion.div variants={fadeInUp} className="flex-1 min-h-0 overflow-auto bg-white rounded-xl shadow-sm border border-slate-200">
         <Table className="table-fixed min-w-[900px] text-sm">
           <TableHeader>
             <TableRow className="bg-slate-50 text-slate-500 border-b border-slate-200 hover:bg-slate-50">
@@ -610,12 +617,12 @@ export default function CommandeList({
 
         </Table>
 
-      </div>
+      </motion.div>
 
 
 
       {/* Pagination Footer */}
-      <div className="flex flex-col px-4 py-2 bg-white rounded-lg border border-slate-200 shadow-sm shrink-0 gap-1.5">
+      <motion.div variants={fadeInUp} className="flex flex-col px-4 py-2 bg-white rounded-lg border border-slate-200 shadow-sm shrink-0 gap-1.5">
         {/* Ligne 1 : Info + Pagination */}
         <div className="flex items-center justify-between">
           <div className="text-xs font-medium text-slate-400">
@@ -649,9 +656,9 @@ export default function CommandeList({
             </div>
           );
         })()}
-      </div>
+      </motion.div>
 
-    </div>
+    </motion.div>
 
   );
 

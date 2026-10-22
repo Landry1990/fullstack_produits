@@ -33,6 +33,8 @@ import PaginationControls from '../ui/PaginationControls';
 import { logger } from '../../utils/logger'
 import { usePharmacySettings } from '../../hooks/usePharmacySettings';
 import { exportToExcel } from '../../utils/excelExport';
+import { motion } from 'framer-motion';
+import { staggerContainer, fadeInUp } from '../../lib/motion';
 
 interface VenteDivers {
   id: number;
@@ -289,8 +291,13 @@ const GestionDivers: React.FC<{ defaultTab?: DiversTab }> = ({ defaultTab = 'ca'
   const ActiveIcon = activeMeta.icon;
 
   return (
-    <div className="p-2 lg:p-3 h-full flex flex-col gap-3 bg-slate-50/50 dark:bg-slate-950/30">
-      <div className="flex items-center gap-3">
+    <motion.div
+      variants={staggerContainer}
+      initial="hidden"
+      animate="show"
+      className="p-2 lg:p-3 h-full flex flex-col gap-3 bg-slate-50/50 dark:bg-slate-950/30"
+    >
+      <motion.div variants={fadeInUp} className="flex items-center gap-3">
         <div className={`p-2.5 rounded-xl ${activeMeta.iconClass}`}>
           <ActiveIcon className="h-6 w-6" aria-hidden="true" />
         </div>
@@ -298,8 +305,9 @@ const GestionDivers: React.FC<{ defaultTab?: DiversTab }> = ({ defaultTab = 'ca'
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{activeMeta.title}</h1>
           <p className="text-sm text-muted-foreground">{activeMeta.description}</p>
         </div>
-      </div>
+      </motion.div>
 
+      <motion.div variants={fadeInUp} className="flex-1 flex flex-col min-h-0">
       <Tabs value={activeTab} onValueChange={(value) => handleTabChange(value as DiversTab)} className="flex-1 flex flex-col min-h-0">
         <TabsList className="grid h-auto w-full grid-cols-1 sm:grid-cols-3 gap-2 bg-transparent p-0">
           <TabsTrigger value="ca" className="h-auto min-h-10 justify-start gap-3 border-2 border-transparent bg-white px-3 py-2 shadow-sm data-[state=active]:border-emerald-500 data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-800 dark:bg-slate-950 dark:data-[state=active]:bg-emerald-950/40 dark:data-[state=active]:text-emerald-300">
@@ -724,7 +732,8 @@ const GestionDivers: React.FC<{ defaultTab?: DiversTab }> = ({ defaultTab = 'ca'
           )}
         </TabsContent>
       </Tabs>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 

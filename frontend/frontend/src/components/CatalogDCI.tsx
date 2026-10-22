@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { staggerContainer, fadeInUp } from '../lib/motion';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { useSubstances, useSubstanceProduits, type Substance } from '../hooks/useSubstances';
@@ -62,9 +64,14 @@ export default function CatalogDCI() {
   });
 
   return (
-    <div className="flex flex-col lg:flex-row h-full gap-6 overflow-hidden">
+    <motion.div
+      variants={staggerContainer}
+      initial="hidden"
+      animate="show"
+      className="flex flex-col lg:flex-row h-full gap-6 overflow-hidden"
+    >
       {/* Sidebar - Liste des DCI */}
-      <div className="w-full lg:w-96 min-h-0 max-h-72 lg:max-h-none flex flex-col bg-base-100 rounded-3xl shadow-xl border border-base-200 overflow-hidden">
+      <motion.div variants={fadeInUp} className="w-full lg:w-96 min-h-0 max-h-72 lg:max-h-none flex flex-col bg-base-100 rounded-3xl shadow-xl border border-base-200 overflow-hidden">
         <div className="p-6 bg-primary/5 border-b border-base-200">
           <h2 className="text-xl font-bold flex items-center gap-3 text-primary mb-4">
             <Icons.Pill />
@@ -136,10 +143,10 @@ export default function CatalogDCI() {
             <span className="text-xs font-medium text-base-content/50">{t('products:dci.page', { page })}</span>
           </div>
         )}
-      </div>
+      </motion.div>
 
       {/* Main Content - Produits associés */}
-      <div className="flex-1 flex flex-col gap-6 overflow-hidden">
+      <motion.div variants={fadeInUp} className="flex-1 flex flex-col gap-6 overflow-hidden">
         {selectedSubstance ? (
           <>
             {/* Header Substance */}
@@ -263,7 +270,7 @@ export default function CatalogDCI() {
             <p className="mt-12 text-xl font-medium text-base-content/40">{t('products:dci.select_dci')}</p>
           </div>
         )}
-      </div>
+      </motion.div>
 
       <CatalogDCIAddModal
         isOpen={isAddModalOpen}
@@ -276,7 +283,7 @@ export default function CatalogDCI() {
           }
         }}
       />
-    </div>
+    </motion.div>
   );
 }
 

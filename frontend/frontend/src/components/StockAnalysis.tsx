@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { staggerContainer, fadeInUp, tabContent } from '../lib/motion';
 import { useTranslation } from 'react-i18next';
 import {
     PackageSearch, ShoppingBag, X,
@@ -114,9 +116,14 @@ const StockAnalysis = () => {
     return (
         <div className="h-full min-h-0 overflow-hidden bg-slate-50 p-2 sm:p-3 lg:p-4">
 
-            <div className="h-full max-w-[1600px] mx-auto space-y-3 overflow-hidden flex flex-col">
+            <motion.div
+                variants={staggerContainer}
+                initial="hidden"
+                animate="show"
+                className="h-full max-w-[1600px] mx-auto space-y-3 overflow-hidden flex flex-col"
+            >
                 {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
                         <div className="size-10 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-600/20">
                             <PackageSearch className="size-5" />
@@ -149,9 +156,10 @@ const StockAnalysis = () => {
                             </Button>
                         </div>
                     )}
-                </div>
+                </motion.div>
 
                 {/* Navigation Tabs — shadcn */}
+                <motion.div variants={fadeInUp}>
                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
                     <TabsList className="bg-white border border-slate-200 p-1 h-9 w-full sm:w-auto">
                         {tabs.map((tab) => {
@@ -170,7 +178,17 @@ const StockAnalysis = () => {
                         })}
                     </TabsList>
                 </Tabs>
+                </motion.div>
 
+                <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                    key={activeTab}
+                    variants={tabContent}
+                    initial="hidden"
+                    animate="show"
+                    exit="exit"
+                    className="flex-1 min-h-0 flex flex-col overflow-hidden"
+                >
                 {activeTab === 'pilotage' ? (
                     <div className="flex-1 min-h-0 overflow-y-auto pr-1">
                         <StockHealthDashboard />
@@ -339,6 +357,8 @@ const StockAnalysis = () => {
                         </Card>
                     </div>
                 )}
+                </motion.div>
+                </AnimatePresence>
 
                 {/* Floating Action Bar */}
                 {(activeTab === 'shortage' || activeTab === 'overstock') && selectedItems.size > 0 && (
@@ -377,7 +397,7 @@ const StockAnalysis = () => {
                         </Card>
                     </div>
                 )}
-            </div>
+            </motion.div>
         </div>
     );
 };

@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { staggerContainer, fadeInUp } from '../lib/motion';
 import { useTranslation } from 'react-i18next';
 import { Trophy, Users, TrendingUp, Calendar, ChevronDown, ChevronRight } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './shadcn/card';
 import { Badge } from './shadcn/badge';
-import { Button } from './shadcn/button';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from './shadcn/table';
@@ -123,11 +124,11 @@ export default function TeamReportsPage() {
   const equipes = report?.equipes || [];
 
   return (
-    <div className="h-full flex flex-col bg-slate-50 p-4 sm:p-6 font-sans overflow-hidden">
+    <motion.div variants={staggerContainer} initial="hidden" animate="show" className="h-full flex flex-col bg-slate-50 p-4 sm:p-6 font-sans overflow-hidden">
       <div className="max-w-[1400px] mx-auto w-full flex-1 overflow-y-auto space-y-6">
 
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <motion.div variants={fadeInUp} className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <div className="flex items-center gap-3 mb-1">
               <h1 className="text-xl lg:text-2xl font-bold text-slate-900 tracking-tight">
@@ -138,9 +139,10 @@ export default function TeamReportsPage() {
               {t('dashboard:manager_dashboard.teams_report_subtitle', 'Performance des équipes commerciales')}
             </p>
           </div>
-        </div>
+        </motion.div>
 
         {/* Period filter */}
+        <motion.div variants={fadeInUp}>
         <Card>
           <CardContent className="p-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
@@ -175,12 +177,14 @@ export default function TeamReportsPage() {
             </div>
           </CardContent>
         </Card>
+        </motion.div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-16">
+          <motion.div variants={fadeInUp} className="flex items-center justify-center py-16">
             <div className="size-12 border-3 border-slate-200 border-t-emerald-500 rounded-full animate-spin" />
-          </div>
+          </motion.div>
         ) : equipes.length === 0 ? (
+          <motion.div variants={fadeInUp}>
           <Card>
             <CardContent className="py-12">
               <div className="flex flex-col items-center justify-center text-slate-400">
@@ -196,10 +200,11 @@ export default function TeamReportsPage() {
               </div>
             </CardContent>
           </Card>
+          </motion.div>
         ) : (
           <>
             {/* Ranking cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <motion.div variants={fadeInUp} className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {classement.slice(0, 3).map((item, idx) => {
                 const cfg = [
                   { icon: Trophy, color: 'text-amber-600', bg: 'bg-amber-50', border: 'ring-amber-200' },
@@ -241,9 +246,10 @@ export default function TeamReportsPage() {
                   </Card>
                 );
               })}
-            </div>
+            </motion.div>
 
             {/* Detailed table */}
+            <motion.div variants={fadeInUp}>
             <Card>
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-2">
@@ -289,9 +295,10 @@ export default function TeamReportsPage() {
                 </Table>
               </CardContent>
             </Card>
+            </motion.div>
           </>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }

@@ -1,4 +1,6 @@
 import { useState, useCallback } from 'react';
+import { motion } from 'framer-motion';
+import { staggerContainer, fadeInUp } from '../lib/motion';
 import api from '../services/api';
 import { gooeyToast } from 'goey-toast';
 import { formatCurrency } from '../utils/formatters';
@@ -182,9 +184,9 @@ export default function RapportMensuel() {
   };
 
   return (
-    <div className="p-3 sm:p-4 space-y-3 animate-fade-in max-w-7xl mx-auto">
+    <motion.div variants={staggerContainer} initial="hidden" animate="show" className="p-3 sm:p-4 space-y-3 animate-fade-in max-w-7xl mx-auto">
       {/* Header */}
-      <div className="bg-white px-4 py-2.5 rounded-2xl shadow-sm border border-slate-200 space-y-2">
+      <motion.div variants={fadeInUp} className="bg-white px-4 py-2.5 rounded-2xl shadow-sm border border-slate-200 space-y-2">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
           <div>
             <h1 className="text-xl font-bold text-slate-800">📊 {t('title')}</h1>
@@ -368,12 +370,12 @@ export default function RapportMensuel() {
             </div>
           )}
         </div>
-      </div>
+      </motion.div>
 
       {rapport && (
         <>
           {/* 1. KPIs Principaux */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2">
+          <motion.div variants={fadeInUp} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2">
             <div className="bg-emerald-50 border border-emerald-200 rounded-xl shadow-sm px-3 py-2">
               <div className="text-emerald-700 font-semibold text-xs uppercase tracking-widest mb-1">{t('kpis.ca_ttc')}</div>
               <div className="text-xl font-black text-slate-800">{formatCurrency(Math.round(rapport.ca.ca_ttc))}</div>
@@ -400,9 +402,9 @@ export default function RapportMensuel() {
               <div className="text-purple-700 font-semibold text-xs uppercase tracking-widest mb-1">{t('kpis.purchase_cost')}</div>
               <div className="text-xl font-black text-slate-800">{formatCurrency(Math.round(rapport.marge.cout_achat))}</div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <motion.div variants={fadeInUp} className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {/* 2. Achats par Fournisseur */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-3">
               <h2 className="text-base font-bold text-slate-800 flex items-center gap-2 mb-3">
@@ -657,11 +659,11 @@ export default function RapportMensuel() {
                 )}
               </div>
             </div>
-          </div>
+          </motion.div>
 
 
           {/* 6. Mouvements de Caisse Extra-Comptables */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-3">
+          <motion.div variants={fadeInUp} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-3">
             <h2 className="text-base font-bold text-slate-800 flex items-center gap-2 mb-3">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -728,10 +730,10 @@ export default function RapportMensuel() {
                 </div>
               )}
             </div>
-          </div>
+          </motion.div>
 
           {/* 7. CA par TVA + Créances */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <motion.div variants={fadeInUp} className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-3">
               <h2 className="text-base font-bold text-slate-800 mb-4">{t('tva.title')}</h2>
               <div className="overflow-x-auto">
@@ -773,19 +775,19 @@ export default function RapportMensuel() {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
         </>
       )}
 
       {!rapport && !loading && (
-        <div className="flex flex-col items-center justify-center h-96 text-slate-400">
+        <motion.div variants={fadeInUp} className="flex flex-col items-center justify-center h-96 text-slate-400">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-24 w-24 mb-4 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
           <p className="text-xl font-medium">{t('empty.title')}</p>
           <p className="text-sm mt-2">{t('empty.subtitle')}</p>
-        </div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 }

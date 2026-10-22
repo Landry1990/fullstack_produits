@@ -1,4 +1,6 @@
 import { useMemo } from 'react';
+import { motion } from 'framer-motion';
+import { staggerContainer, fadeInUp } from '../../lib/motion';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronRight } from 'lucide-react';
@@ -37,20 +39,25 @@ export default function FeatureHub({ category }: FeatureHubProps) {
   );
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-8 p-4 sm:p-6">
-      <header className="space-y-1">
+    <motion.div
+      variants={staggerContainer}
+      initial="hidden"
+      animate="show"
+      className="mx-auto w-full max-w-6xl space-y-8 p-4 sm:p-6"
+    >
+      <motion.header variants={fadeInUp} className="space-y-1">
         <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100 sm:text-2xl">
           {t(`hub.${category}_title`)}
         </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
           {t(`hub.${category}_subtitle`)}
         </p>
-      </header>
+      </motion.header>
 
       {sections.map(item => {
         const groups = item.submenus ? groupNavSubMenus(item.submenus) : null;
         return (
-          <section key={item.key} aria-labelledby={`hub-section-${item.key}`} className="space-y-3">
+          <motion.section key={item.key} variants={fadeInUp} aria-labelledby={`hub-section-${item.key}`} className="space-y-3">
             <h2
               id={`hub-section-${item.key}`}
               className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400"
@@ -79,9 +86,9 @@ export default function FeatureHub({ category }: FeatureHubProps) {
                 </div>
               )
             )}
-          </section>
+          </motion.section>
         );
       })}
-    </div>
+    </motion.div>
   );
 }

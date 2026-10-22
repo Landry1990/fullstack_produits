@@ -40,6 +40,8 @@ import {
   DialogDescription,
   DialogFooter,
 } from '../ui/Dialog';
+import { motion } from 'framer-motion';
+import { staggerContainer, fadeInUp } from '../../lib/motion';
 
 interface ReapproAdjustment {
   id: number;
@@ -111,9 +113,14 @@ export default function ReapproHistory() {
   }, [history, searchQuery]);
 
   return (
-    <div className="h-full flex flex-col bg-slate-50 p-4 sm:p-6 gap-4 sm:gap-6 font-sans">
+    <motion.div
+      variants={staggerContainer}
+      initial="hidden"
+      animate="show"
+      className="h-full flex flex-col bg-slate-50 p-4 sm:p-6 gap-4 sm:gap-6 font-sans"
+    >
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+      <motion.div variants={fadeInUp} className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
           <Link to="/app/reappro-rayon">
             <Button variant="outline" size="sm" className="rounded-full w-10 h-10 p-0" aria-label={t('common:back', { defaultValue: 'Retour' })}>
@@ -145,9 +152,10 @@ export default function ReapproHistory() {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-      </div>
+      </motion.div>
 
       {/* Main Content */}
+      <motion.div variants={fadeInUp}>
       <Card variant="default" padding="none" className="rounded-2xl overflow-hidden">
         <div className="overflow-x-auto">
           <Table className="table-fixed">
@@ -253,6 +261,7 @@ export default function ReapproHistory() {
           </Table>
         </div>
       </Card>
+      </motion.div>
 
       {/* Detail Dialog */}
       <Dialog open={!!selectedSession} onOpenChange={(open) => !open && setSelectedSession(null)}>
@@ -350,6 +359,6 @@ export default function ReapproHistory() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </motion.div>
   );
 }

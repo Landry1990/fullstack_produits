@@ -210,8 +210,8 @@ export function useUnreadMessageCount(enabled: boolean) {
       return response.data.count ?? 0;
     },
     enabled,
-    refetchInterval: 5000,
-    staleTime: 5000,
+    refetchInterval: 30000,
+    staleTime: 15000,
   });
 }
 

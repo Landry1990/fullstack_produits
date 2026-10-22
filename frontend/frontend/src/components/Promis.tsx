@@ -13,6 +13,8 @@ import { SmsModal } from './promis/modals/SmsModal';
 import { PromisDetailModal } from './promis/modals/PromisDetailModal';
 import PasswordConfirmModal from './PasswordConfirmModal';
 import type { Promis } from '../types';
+import { motion } from 'framer-motion';
+import { staggerContainer, fadeInUp } from '../lib/motion';
 
 const Promis: React.FC = () => {
     const { t } = useTranslation(['stock', 'common']);
@@ -52,9 +54,14 @@ const Promis: React.FC = () => {
 
     return (
         <div className="h-full min-h-0 overflow-hidden bg-slate-50 p-2 sm:p-3 lg:p-4">
-            <div className="h-full max-w-[1600px] mx-auto space-y-3 overflow-hidden flex flex-col">
+            <motion.div
+                variants={staggerContainer}
+                initial="hidden"
+                animate="show"
+                className="h-full max-w-[1600px] mx-auto space-y-3 overflow-hidden flex flex-col"
+            >
                 {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-4 py-2.5">
+                <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-4 py-2.5">
                     <div className="flex items-center gap-3">
                         <div className="size-10 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-600/20">
                             <PackageOpen className="size-5" />
@@ -80,10 +87,10 @@ const Promis: React.FC = () => {
                         {headerCollapsed ? <ChevronDown className="size-3.5" /> : <ChevronUp className="size-3.5" />}
                         {headerCollapsed ? t('common:show_header', 'Afficher') : t('common:hide_header', 'Masquer')}
                     </Button>
-                </div>
+                </motion.div>
 
                 {!headerCollapsed && (
-                    <div className="space-y-3 shrink-0">
+                    <motion.div variants={fadeInUp} className="space-y-3 shrink-0">
                         {/* Filters Card */}
                         <Card className="py-3">
                             <CardHeader className="pb-2">
@@ -105,10 +112,11 @@ const Promis: React.FC = () => {
 
                         {/* Quick Stats Dashboard */}
                         <PromisQuickStats stats={stats} />
-                    </div>
+                    </motion.div>
                 )}
 
                 {/* Table Card */}
+                <motion.div variants={fadeInUp} className="flex-1 min-h-0 flex flex-col">
                 <Card className="overflow-hidden flex flex-col flex-1 min-h-0">
                     <div className="flex-1 overflow-hidden min-h-0 flex flex-col">
                         <PromisTable
@@ -130,6 +138,7 @@ const Promis: React.FC = () => {
                         />
                     </div>
                 </Card>
+                </motion.div>
 
                 {/* Modals */}
                 <SmsModal
@@ -159,7 +168,7 @@ const Promis: React.FC = () => {
                     title={t('stock:promis.modals.sudo_confirm_title', 'Confirmation Requise (Zone Sensible)')}
                     message={t('stock:promis.modals.sudo_confirm_message', 'Cette action va modifier le stock (réintégration). Veuillez confirmer votre mot de passe pour continuer.')}
                 />
-            </div>
+            </motion.div>
         </div>
     );
 };

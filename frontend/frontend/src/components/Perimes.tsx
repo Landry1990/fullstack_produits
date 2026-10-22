@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { fadeInUp, tabContent } from '../lib/motion'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import api from '../services/api'
 import { gooeyToast } from 'goey-toast'
@@ -584,7 +586,7 @@ export default function Perimes() {
   return (
     <div className="h-full flex flex-col bg-slate-50 overflow-hidden max-w-[1600px] mx-auto w-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 lg:px-6 py-2 lg:py-4 border-b border-slate-200/60 bg-white/80 backdrop-blur-md sticky top-0 z-30 shrink-0">
+      <motion.div variants={fadeInUp} initial="hidden" animate="show" className="flex items-center justify-between px-3 lg:px-6 py-2 lg:py-4 border-b border-slate-200/60 bg-white/80 backdrop-blur-md sticky top-0 z-30 shrink-0">
         <div className="flex items-center gap-2 lg:gap-4">
           <div className="p-1.5 lg:p-2.5 bg-red-50 text-red-500 rounded-lg lg:rounded-xl">
             <AlertTriangle className="size-5 lg:size-6" />
@@ -629,7 +631,7 @@ export default function Perimes() {
             <span className="hidden sm:inline">{t('common:refresh')}</span>
           </Button>
         </div>
-      </div>
+      </motion.div>
 
       {error && (
         <div className="px-3 lg:px-6 pt-2 lg:pt-4 shrink-0">
@@ -642,6 +644,8 @@ export default function Perimes() {
 
       {/* Content */}
       <div className="flex-1 overflow-auto px-3 lg:px-6 py-2 lg:py-4">
+        <AnimatePresence mode="wait" initial={false}>
+        <motion.div key={activeTab} variants={tabContent} initial="hidden" animate="show" exit="exit">
         {activeTab === 'dashboard' ? (
           /* ========== DASHBOARD VIEW ========== */
           <div className="space-y-4 lg:space-y-6">
@@ -1284,6 +1288,8 @@ export default function Perimes() {
              )}
           </div>
         )}
+        </motion.div>
+        </AnimatePresence>
       </div>
 
       <QuantityInputDialog

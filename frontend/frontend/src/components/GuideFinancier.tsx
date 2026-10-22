@@ -1,4 +1,6 @@
 import React from 'react';
+import { motion } from 'framer-motion';
+import { staggerContainer, fadeInUp } from '../lib/motion';
 import { useTranslation } from 'react-i18next';
 import { 
   BookOpen, 
@@ -16,9 +18,14 @@ const GuideFinancier: React.FC = () => {
   const { t } = useTranslation(['finance', 'common']);
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <motion.div
+      variants={staggerContainer}
+      initial="hidden"
+      animate="show"
+      className="p-6 max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700"
+    >
       {/* Hero Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-8 text-white shadow-xl relative overflow-hidden">
+      <motion.div variants={fadeInUp} className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-8 text-white shadow-xl relative overflow-hidden">
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-4">
             <div className="bg-white/20 p-2 rounded-xl backdrop-blur-md">
@@ -34,9 +41,9 @@ const GuideFinancier: React.FC = () => {
         <div className="absolute right-[-10%] top-[-20%] opacity-10">
           <TrendingUp className="size-64" />
         </div>
-      </div>
+      </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <motion.div variants={fadeInUp} className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Navigation Rapide */}
         <div className="md:col-span-1 space-y-4">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm sticky top-24 p-4">
@@ -224,8 +231,8 @@ const GuideFinancier: React.FC = () => {
             </div>
           </section>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 

@@ -1,4 +1,6 @@
 ﻿import React, { useEffect, useMemo, useState } from 'react';
+import { motion } from 'framer-motion';
+import { fadeInUp } from '../lib/motion';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { gooeyToast } from 'goey-toast';
@@ -128,7 +130,7 @@ const JournalAudit: React.FC = () => {
   useEffect(() => { const timer = window.setTimeout(() => { setDebouncedSearch(search.trim()); setPage(1); }, 400); return () => window.clearTimeout(timer); }, [search]);
 
   const filters = { action_in: quickFilter, user: userFilter, model_name: modelFilter, date_from: dateFrom, date_to: dateTo, q: debouncedSearch };
-  const { data: logsData, isLoading: loading, isError: error } = useAuditLogs({ page, ...filters });
+  const { data: logsData, isLoading: loading, isError: error, refetch } = useAuditLogs({ page, ...filters });
   const { data: statistics } = useAuditStats(filters); const { data: users = [] } = useUsers();
   const logs = useMemo(() => logsData?.results || [], [logsData]);
   const groups = useMemo(() => {
@@ -198,7 +200,7 @@ const JournalAudit: React.FC = () => {
   };
 
   return <PageContainer variant="dense" className="lg:px-10">
-    <div className="flex flex-wrap items-start justify-between gap-2 mb-3 px-4 py-2.5">
+    <motion.div variants={fadeInUp} initial="hidden" animate="show" className="flex flex-wrap items-start justify-between gap-2 mb-3 px-4 py-2.5">
       <div className="flex items-center gap-2"><div className="p-2 bg-slate-800 text-white rounded-xl"><ClipboardList className="size-5" /></div><div><h2 className="text-xl font-black text-slate-800">{t('title')}</h2><p className="hidden xl:block text-xs text-slate-500">{t('subtitle')}</p></div></div>
       <div className="flex gap-2">
         {user?.is_superuser && (
@@ -209,28 +211,28 @@ const JournalAudit: React.FC = () => {
         <Button variant="outline" size="sm" onClick={exportCSV} className="border-emerald-200 text-emerald-700 hover:border-emerald-500 hover:text-emerald-700"><Download className="size-3.5" />{t('filters.export')}</Button>
         <Button variant="outline" size="sm" onClick={() => setShowFilters(v => !v)}><Filter className="size-3.5" />{t('filters.button')}{hasActiveFilters && <span className="size-1.5 rounded-full bg-orange-400" />}</Button>
       </div>
-    </div>
-    {error && <ErrorState error={t('messages.load_error')} onRetry={fetchAll} className="mb-4" />}
-    {statistics && <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">{[
+    </motion.div>
+    {error && <motion.div variants={fadeInUp} initial="hidden" animate="show"><ErrorState error={t('messages.load_error')} onRetry={() => refetch()} className="mb-4" /></motion.div>}
+    {statistics && <motion.div variants={fadeInUp} initial="hidden" animate="show" className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">{[
       ['stats.total', formatNumber(statistics.total_logs), 'stats.all_time'], ['stats.last_24h', statistics.recent_activity.last_24h, 'stats.today'],
       ['stats.last_7d', statistics.recent_activity.last_7d, 'stats.this_week'], ['stats.last_30d', statistics.recent_activity.last_30d, 'stats.this_month'],
-    ].map(([label, value, sub]) => <Card key={label} className="px-3 py-2"><div className="text-caption lg:text-xs font-black uppercase text-slate-500">{t(String(label))}</div><div className="text-xl font-black text-slate-800">{value}</div><div className="text-caption lg:text-xs text-slate-500">{t(String(sub))}</div></Card>)}</div>}
-    <div className="flex flex-wrap gap-1.5 mb-4">
+    ].map(([label, value, sub]) => <Card key={label} className="px-3 py-2"><div className="text-caption lg:text-xs font-black uppercase text-slate-500">{t(String(label))}</div><div className="text-xl font-black text-slate-800">{value}</div><div className="text-caption lg:text-xs text-slate-500">{t(String(sub))}</div></Card>)}</motion.div>}
+    <motion.div variants={fadeInUp} initial="hidden" animate="show" className="flex flex-wrap gap-1.5 mb-4">
       {QUICK_FILTERS.map(item => <Button key={item.key} size="sm" variant={quickFilter === item.value ? 'secondary' : 'outline'} onClick={() => { setQuickFilter(item.value); setPage(1); }} className={`rounded-full ${quickFilter === item.value ? 'bg-indigo-600 hover:bg-indigo-700 shadow-none' : ''}`}>{t(item.key)}</Button>)}
       <div className="relative sm:ml-auto flex-1 sm:flex-none min-w-48"><Search className="absolute left-2.5 top-2.5 size-3.5 text-slate-400 pointer-events-none" /><Input disableUppercase value={search} onChange={e => setSearch(e.target.value)} placeholder={t('filters.search_placeholder')} aria-label={t('filters.search_label')} className="w-full sm:w-56 h-8 pl-8 rounded-full text-xs" /></div>
-    </div>
-    {showFilters && <Card className="p-3 mb-3 grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
+    </motion.div>
+    {showFilters && <motion.div variants={fadeInUp} initial="hidden" animate="show"><Card className="p-3 mb-3 grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
       <FilterSelect label={t('filters.user_label')} value={userFilter} onChange={setUserFilter}><option value="">{t('filters.all_users')}</option>{users.filter(u => u.id).map(u => <option key={u.id} value={String(u.id)}>{u.first_name || u.last_name ? `${u.first_name} ${u.last_name}`.trim() : u.username}</option>)}</FilterSelect>
       <FilterSelect label={t('filters.model_label')} value={modelFilter} onChange={setModelFilter}><option value="">{t('filters.all_models')}</option>{MODELS.map(model => <option key={model} value={model}>{t(`models.${model}`)}</option>)}</FilterSelect>
       <FilterInput label={t('filters.date_from')} value={dateFrom} onChange={setDateFrom} /><FilterInput label={t('filters.date_to')} value={dateTo} onChange={setDateTo} />
       <Button variant="outline" size="sm" onClick={reset} className="self-end"><RotateCcw className="size-3.5" />{t('filters.reset')}</Button>
-    </Card>}
-    <div className="flex gap-2 items-center mb-2 text-xs font-black text-slate-500 uppercase"><Activity className="size-3.5" />{t('view.flux')}<span className="text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">{logsData?.count || 0} {t('view.items')}</span></div>
-    {loading ? <div className="py-20 flex justify-center"><Loader2 className="size-7 animate-spin text-indigo-500" /><span className="sr-only">{t('view.loading')}</span></div> : !logs.length ? <div className="py-16 text-center border-2 border-dashed rounded-2xl text-slate-500"><p className="font-bold">{t('view.empty_title')}</p><p className="text-sm">{t('view.empty_subtitle')}</p></div> : <div className="space-y-4">{groups.map(group => <section key={group.dateKey}><div className="flex items-center gap-2 mb-1 text-caption lg:text-xs font-bold uppercase text-slate-500"><span>{group.label}</span><span>· {t('view.action_count', { count: group.dayLogs.length })}</span><div className="h-px bg-slate-200 flex-1" /></div><div className="border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-100">{group.dayLogs.map(log => <AuditRow key={log.id} log={log} expanded={expandedLog === log.id} onToggle={() => setExpandedLog(expandedLog === log.id ? null : log.id)} t={t} />)}</div></section>)}</div>}
-    {!loading && totalPages > 1 && <div className="flex justify-center items-center gap-3 mt-6">
+    </Card></motion.div>}
+    <motion.div variants={fadeInUp} initial="hidden" animate="show" className="flex gap-2 items-center mb-2 text-xs font-black text-slate-500 uppercase"><Activity className="size-3.5" />{t('view.flux')}<span className="text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">{logsData?.count || 0} {t('view.items')}</span></motion.div>
+    {loading ? <motion.div variants={fadeInUp} initial="hidden" animate="show" className="py-20 flex justify-center"><Loader2 className="size-7 animate-spin text-indigo-500" /><span className="sr-only">{t('view.loading')}</span></motion.div> : !logs.length ? <motion.div variants={fadeInUp} initial="hidden" animate="show" className="py-16 text-center border-2 border-dashed rounded-2xl text-slate-500"><p className="font-bold">{t('view.empty_title')}</p><p className="text-sm">{t('view.empty_subtitle')}</p></motion.div> : <motion.div variants={fadeInUp} initial="hidden" animate="show" className="space-y-4">{groups.map(group => <section key={group.dateKey}><div className="flex items-center gap-2 mb-1 text-caption lg:text-xs font-bold uppercase text-slate-500"><span>{group.label}</span><span>· {t('view.action_count', { count: group.dayLogs.length })}</span><div className="h-px bg-slate-200 flex-1" /></div><div className="border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-100">{group.dayLogs.map(log => <AuditRow key={log.id} log={log} expanded={expandedLog === log.id} onToggle={() => setExpandedLog(expandedLog === log.id ? null : log.id)} t={t} />)}</div></section>)}</motion.div>}
+    {!loading && totalPages > 1 && <motion.div variants={fadeInUp} initial="hidden" animate="show" className="flex justify-center items-center gap-3 mt-6">
       <span className="text-xs text-slate-500">{t('view.page', { page, total: totalPages })}</span>
       <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} />
-    </div>}
+    </motion.div>}
 
     <Dialog open={showPurgeModal} onOpenChange={v => { if (!v) resetPurgeModal(); setShowPurgeModal(v); }}>
       <DialogContent size="sm">

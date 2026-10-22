@@ -1,4 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
+import { motion } from 'framer-motion';
+import { staggerContainer, fadeInUp } from '../../lib/motion';
 import { useDocumentLock } from '../../hooks/useDocumentLock';
 import { LockBanner } from '../common/LockBanner';
 import { useTranslation } from 'react-i18next';
@@ -230,13 +232,18 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
 
   return (
 
-    <div className="flex-1 min-h-0 flex flex-col p-4 space-y-4">
+    <motion.div
+      variants={staggerContainer}
+      initial="hidden"
+      animate="show"
+      className="flex-1 min-h-0 flex flex-col p-4 space-y-4"
+    >
       {/* Verrou pessimiste */}
       {selectedCommande.status !== 'CLOT' && (
         <LockBanner lock={lock} documentLabel={t('orders:details.lock_document_label', { id: selectedCommande.numero_facture || selectedCommande.id })} />
       )}
       {/* Header */}
-      <div className="flex flex-wrap items-start gap-2 shrink-0 px-4 py-2.5">
+      <motion.div variants={fadeInUp} className="flex flex-wrap items-start gap-2 shrink-0 px-4 py-2.5">
         <Button variant="ghost" size="icon" onClick={onBack} aria-label={t('orders:form.back_to_list')} className="size-9 text-slate-400 hover:text-slate-600">
           <ArrowLeft className="size-5" />
         </Button>
@@ -353,12 +360,12 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
             {selectedRows.size > 0 ? `${t('orders:details.return')} (${selectedRows.size})` : t('orders:details.return')}
           </Button>
         </div>
-      </div>
+      </motion.div>
 
 
 
       {/* Grid Info */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-white px-3 py-2 rounded-lg border border-slate-200 shadow-sm shrink-0">
+      <motion.div variants={fadeInUp} className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-white px-3 py-2 rounded-lg border border-slate-200 shadow-sm shrink-0">
         <div>
           <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('orders:details.id')}</div>
           <div className="text-sm font-semibold text-slate-800">{selectedCommande.id}</div>
@@ -389,12 +396,12 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
             <div className="text-sm font-semibold text-slate-800">{selectedCommande.closed_by_name}</div>
           </div>
         )}
-      </div>
+      </motion.div>
 
 
 
       {/* Barre de synthèse horizontale */}
-      <div className="mt-2 flex flex-wrap justify-between items-end gap-4 shrink-0 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+      <motion.div variants={fadeInUp} className="mt-2 flex flex-wrap justify-between items-end gap-4 shrink-0 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
         <div className="flex flex-wrap gap-3 items-center">
           {/* PRIX A HT */}
           <div className="flex flex-col items-end">
@@ -437,7 +444,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
             </div>
           )}
         </div>
-      </div>
+      </motion.div>
 
 
 
@@ -446,7 +453,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
         const totalUG = (selectedCommande.produits || []).reduce((sum, p) => sum + normalizeNumberInput(p.unites_gratuites || 0), 0);
         if (totalUG > 0) {
           return (
-            <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg shrink-0">
+            <motion.div variants={fadeInUp} className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg shrink-0">
               <div className="flex items-center gap-3">
                 <div className="size-10 rounded-full bg-emerald-100 flex items-center justify-center">
                   <span className="text-emerald-700 font-bold text-sm">{t('orders:product_table.headers.ug')}</span>
@@ -458,14 +465,14 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
                   </p>
                 </div>
               </div>
-            </div>
+            </motion.div>
           );
         }
         return null;
       })()}
 
       {/* Liste des produits (Read Only) */}
-      <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden flex flex-col flex-1 min-h-0">
+      <motion.div variants={fadeInUp} className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden flex flex-col flex-1 min-h-0">
         <div className="p-3 border-b border-slate-200 flex justify-between items-center gap-4 bg-slate-50 shrink-0">
           <div className="flex items-center gap-2">
             <Package className="size-4 text-slate-500" />
@@ -633,9 +640,9 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
 
         </div>
 
-      </div>
+      </motion.div>
 
-    </div>
+    </motion.div>
 
   );
 

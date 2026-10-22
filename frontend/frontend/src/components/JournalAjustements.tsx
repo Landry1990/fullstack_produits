@@ -1,4 +1,6 @@
-﻿import { GoeyToaster } from 'goey-toast';
+﻿import { motion } from 'framer-motion';
+import { staggerContainer, fadeInUp } from '../lib/motion';
+import { GoeyToaster } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
 import { useAjustementsData } from '../hooks/useAjustementsData';
 import { AjustementsFilters } from './adjustments/AjustementsFilters';
@@ -19,12 +21,17 @@ export default function JournalAjustements() {
     } = useAjustementsData();
 
     return (
-        <div className="h-full min-h-0 bg-slate-100 p-2 sm:p-3 lg:p-4 flex flex-col overflow-hidden">
+        <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            animate="show"
+            className="h-full min-h-0 bg-slate-100 p-2 sm:p-3 lg:p-4 flex flex-col overflow-hidden"
+        >
             <GoeyToaster position="top-right" />
 
-            <div className="max-w-[1600px] mx-auto w-full flex flex-col h-full gap-2 lg:gap-4">
+            <motion.div variants={staggerContainer} className="max-w-[1600px] mx-auto w-full flex flex-col h-full gap-2 lg:gap-4">
                 {/* Header Section */}
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-2 lg:gap-6 shrink-0">
+                <motion.div variants={fadeInUp} className="flex flex-col md:flex-row md:items-end justify-between gap-2 lg:gap-6 shrink-0">
                     <div>
                         <div className="flex items-center gap-2 lg:gap-3 mb-1 lg:mb-2">
                             <div className="size-8 lg:size-10 rounded-xl lg:rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-200">
@@ -40,10 +47,10 @@ export default function JournalAjustements() {
                             </div>
                         </div>
                     </div>
-                </div>
+                </motion.div>
 
                 {/* Search & Filter Bar */}
-                <div className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-slate-200 overflow-hidden shrink-0">
+                <motion.div variants={fadeInUp} className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-slate-200 overflow-hidden shrink-0">
                     <AjustementsFilters
                         searchQuery={filters.searchQuery}
                         onSearchChange={setFilters.setSearchQuery}
@@ -63,10 +70,10 @@ export default function JournalAjustements() {
                         onExport={actions.handleExportExcel}
                         loading={loading}
                     />
-                </div>
+                </motion.div>
 
                 {/* Table Section */}
-                <div className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col flex-1 min-h-0">
+                <motion.div variants={fadeInUp} className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col flex-1 min-h-0">
                     <AjustementsTable
                         adjustments={adjustments}
                         loading={loading}
@@ -75,8 +82,8 @@ export default function JournalAjustements() {
                         totalCount={totalCount}
                         onPageChange={pagination.setCurrentPage}
                     />
-                </div>
-            </div>
-        </div>
+                </motion.div>
+            </motion.div>
+        </motion.div>
     );
 }

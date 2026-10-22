@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { staggerContainer, fadeInUp } from '../lib/motion';
 import { useTranslation } from 'react-i18next';
 import { LoadingScreen } from './common/LoadingScreen';
 import { ErrorState } from './ui/ErrorState';
@@ -58,7 +60,7 @@ export default function CentreRapports() {
     }, []);
 
     return (
-        <div className="h-full min-h-0 flex bg-slate-100 overflow-hidden">
+        <motion.div variants={staggerContainer} initial="hidden" animate="show" className="h-full min-h-0 flex bg-slate-100 overflow-hidden">
             
             {/* Mobile drawer backdrop */}
             {mobileMenuOpen && (
@@ -71,7 +73,8 @@ export default function CentreRapports() {
             )}
 
             {/* Sidebar - desktop: visible; mobile: drawer */}
-            <div
+            <motion.div
+                variants={fadeInUp}
                 className={[
                     'print:hidden',
                     'md:block',
@@ -83,10 +86,10 @@ export default function CentreRapports() {
                     onSelect={handleSelectQuery}
                     onClose={() => setMobileMenuOpen(false)}
                 />
-            </div>
+            </motion.div>
             
             {/* Main Content */}
-            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+            <motion.div variants={fadeInUp} className="flex-1 flex flex-col min-w-0 overflow-hidden">
                 {/* Mobile top bar (menu) */}
                 <div className="md:hidden border-b border-slate-200 bg-white/90 backdrop-blur-sm px-3 py-2 flex items-center justify-between print:hidden z-10">
                     <div className="min-w-0">
@@ -270,7 +273,7 @@ export default function CentreRapports() {
                         )}
                     </div>
                 </div>
-            </div>
+            </motion.div>
 
             {/* Print Styles */}
             <style>{`
@@ -308,7 +311,7 @@ export default function CentreRapports() {
                     [class*="border-emerald"], [class*="border-blue"], [class*="border-indigo"] { border-color: #ccc !important; }
                 }
             `}</style>
-        </div>
+        </motion.div>
     );
 }
 

@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { staggerContainer, fadeInUp, tabContent } from '../lib/motion';
 import api from '../services/api';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -438,9 +440,14 @@ export default function Clients() {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row h-full bg-slate-50 max-w-[1600px] mx-auto w-full">
+    <motion.div
+      variants={staggerContainer}
+      initial="hidden"
+      animate="show"
+      className="flex flex-col lg:flex-row h-full bg-slate-50 max-w-[1600px] mx-auto w-full"
+    >
       {/* LEFT PANEL */}
-      <div className={cn("w-full lg:w-1/3 border-b lg:border-b-0 lg:border-r border-slate-200 flex flex-col bg-white h-full lg:h-full", selectedClient ? 'hidden lg:flex' : 'flex')}>
+      <motion.div variants={fadeInUp} className={cn("w-full lg:w-1/3 border-b lg:border-b-0 lg:border-r border-slate-200 flex flex-col bg-white h-full lg:h-full", selectedClient ? 'hidden lg:flex' : 'flex')}>
         <div className="p-4 border-b border-slate-200 space-y-4">
            {selectedIds.length > 0 ? (
              <SelectionHeader
@@ -593,10 +600,19 @@ export default function Clients() {
             onPageChange={setCurrentPage}
           />
         </div>
-      </div>
+      </motion.div>
 
       {/* RIGHT PANEL */}
-      <div className={cn("flex-1 bg-slate-50 flex flex-col overflow-hidden max-w-full h-full", !selectedClient ? 'hidden lg:flex' : 'flex')}>
+      <motion.div variants={fadeInUp} className={cn("flex-1 bg-slate-50 flex flex-col overflow-hidden max-w-full h-full", !selectedClient ? 'hidden lg:flex' : 'flex')}>
+        <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={selectedClient?.id ?? 'empty'}
+          variants={tabContent}
+          initial="hidden"
+          animate="show"
+          exit="exit"
+          className="flex-1 min-h-0 flex flex-col overflow-hidden"
+        >
         {selectedClient ? (
           <>
             <div className="p-3 lg:p-4 border-b border-slate-200 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center shrink-0 gap-3">
@@ -850,7 +866,9 @@ export default function Clients() {
             description={t('clients:modals.select_client_empty_desc')}
           />
         )}
-      </div>
+        </motion.div>
+        </AnimatePresence>
+      </motion.div>
 
       {/* MODALS */}
       <ClientFormModal 
@@ -908,6 +926,6 @@ export default function Clients() {
         onMerge={handleMerge}
         candidates={mergeCandidates}
       />
-    </div>
+    </motion.div>
   );
 }

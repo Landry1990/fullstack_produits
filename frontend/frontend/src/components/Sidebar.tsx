@@ -207,7 +207,7 @@ export default function Sidebar() {
                   <Fragment key={grp.group ?? gi}>
                     {grp.group && (
                       <li aria-hidden="true" className="px-3 pt-2 pb-0.5">
-                        <span className="text-micro font-bold uppercase tracking-wider text-slate-500">
+                        <span className="text-caption font-bold uppercase tracking-wider text-slate-500">
                           {t(`menu_groups.${grp.group}`)}
                         </span>
                       </li>
@@ -268,7 +268,7 @@ export default function Sidebar() {
                     <Fragment key={grp.group ?? gi}>
                       {grp.group && (
                         <li aria-hidden="true" className="px-2 pt-2 pb-0.5">
-                          <span className="text-micro font-bold uppercase tracking-wider text-slate-500">
+                          <span className="text-caption font-bold uppercase tracking-wider text-slate-500">
                             {t(`menu_groups.${grp.group}`)}
                           </span>
                         </li>
@@ -373,7 +373,7 @@ export default function Sidebar() {
               <h1 className="text-sm font-black text-white tracking-widest uppercase leading-none truncate">
                 {licence?.pharmacie_nom || 'Zenith'}
               </h1>
-              <p className="text-micro font-bold text-primary uppercase tracking-[0.2em] mt-0.5 truncate">
+              <p className="text-caption font-bold text-primary uppercase tracking-[0.15em] mt-0.5 truncate">
                 {licence?.pharmacien_nom || t('app_subtitle')}
               </p>
             </div>
@@ -423,7 +423,7 @@ export default function Sidebar() {
           <div className="flex items-center gap-2">
             <div className="size-2 rounded-full bg-primary shadow-[0_0_6px] shadow-primary/50"></div>
             <span className="text-caption font-semibold text-white/40 uppercase tracking-wider truncate">Zenith OS</span>
-            <span className="text-micro text-white/30 font-mono ml-auto" title={formatVersion()}>{formatVersion().split('.').slice(0,2).join('.')}</span>
+            <span className="text-caption text-white/30 font-mono ml-auto" title={formatVersion()}>{formatVersion().split('.').slice(0,2).join('.')}</span>
           </div>
         </div>
       </aside>

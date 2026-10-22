@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
+import { motion } from 'framer-motion';
+import { staggerContainer, fadeInUp } from '../lib/motion';
 import { useTranslation } from 'react-i18next';
 import api from '../services/api';
 import { gooeyToast } from 'goey-toast';
@@ -441,15 +443,20 @@ export default function SystemAdmin() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 overflow-y-auto">
+    <motion.div
+      variants={staggerContainer}
+      initial="hidden"
+      animate="show"
+      className="min-h-screen bg-gray-50 p-6 overflow-y-auto"
+    >
 
       {/* ── OVERLAY RESTAURATION ── */}
       <RestoreOverlay restoring={restoring} restoreProgress={restoreProgress} t={t} />
 
-      <div className="max-w-5xl mx-auto">
+      <motion.div variants={staggerContainer} className="max-w-5xl mx-auto">
 
         {/* Header */}
-        <div className="mb-6">
+        <motion.div variants={fadeInUp} className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <Server className="w-6 h-6 text-indigo-600" />
             {t('title')}
@@ -457,10 +464,10 @@ export default function SystemAdmin() {
           <p className="text-sm text-gray-500 mt-1">
             {t('subtitle')}
           </p>
-        </div>
+        </motion.div>
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-6 bg-white border border-gray-100 rounded-xl p-1 shadow-sm w-fit max-w-full overflow-x-auto">
+        <motion.div variants={fadeInUp} className="flex gap-1 mb-6 bg-white border border-gray-100 rounded-xl p-1 shadow-sm w-fit max-w-full overflow-x-auto">
           {tabs.map(tab => (
             <button
               key={tab.id}
@@ -475,7 +482,7 @@ export default function SystemAdmin() {
               {tab.label}
             </button>
           ))}
-        </div>
+        </motion.div>
 
         {/* ── ONGLET SANTÉ ── */}
         {activeTab === 'sante' && (
@@ -572,7 +579,7 @@ export default function SystemAdmin() {
             t={t}
           />
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
