@@ -19,24 +19,26 @@ export const AnimatedNumber: React.FC<AnimatedNumberProps> = ({
             return;
         }
         let startTime: number | null = null;
+        let rafId = 0;
         const startValue = displayValue;
 
         const animate = (timestamp: number) => {
             if (!startTime) startTime = timestamp;
             const progress = Math.min((timestamp - startTime) / duration, 1);
-            
+
             // Easing function: easeOutExpo
             const easeProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
-            
+
             const current = startValue + (value - startValue) * easeProgress;
             setDisplayValue(current);
 
             if (progress < 1) {
-                requestAnimationFrame(animate);
+                rafId = requestAnimationFrame(animate);
             }
         };
 
-        requestAnimationFrame(animate);
+        rafId = requestAnimationFrame(animate);
+        return () => cancelAnimationFrame(rafId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [value, duration]);
 

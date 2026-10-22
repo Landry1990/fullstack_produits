@@ -18,6 +18,8 @@ import {
 import { normalizeNumberInput, formatNumber } from '../utils/formatters';
 import { formatDate, formatDateTime } from '../utils/dateUtils';
 import { logger } from '../utils/logger'
+import { motion, AnimatePresence } from 'framer-motion';
+import { staggerContainer, fadeInUp, tabContent } from '../lib/motion';
 
 // Interfaces
 interface RelationTransformation {
@@ -472,9 +474,14 @@ const Transformations: React.FC = () => {
   };
 
   return (
-    <div className="h-full flex flex-col bg-slate-100 overflow-hidden font-sans">
+    <motion.div
+      variants={staggerContainer}
+      initial="hidden"
+      animate="show"
+      className="h-full flex flex-col bg-slate-100 overflow-hidden font-sans"
+    >
       {/* Header Section */}
-      <div className="bg-white border-b border-slate-200 sticky top-0 z-30 flex flex-col shrink-0">
+      <motion.div variants={fadeInUp} className="bg-white border-b border-slate-200 sticky top-0 z-30 flex flex-col shrink-0">
         <div className="px-6 py-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-emerald-50 rounded-xl text-emerald-600 shadow-inner">
@@ -527,10 +534,10 @@ const Transformations: React.FC = () => {
             />
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Main Content Section */}
-      <div className="flex-1 overflow-auto p-6">
+      <motion.div variants={fadeInUp} className="flex-1 overflow-auto p-6">
         {loading ? (
           <div className="space-y-3">
             <Skeleton className="h-20 w-full rounded-2xl" />
@@ -539,7 +546,15 @@ const Transformations: React.FC = () => {
             <Skeleton className="h-20 w-full rounded-2xl" />
           </div>
         ) : (
-          <div className="h-full">
+          <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={activeTab}
+            variants={tabContent}
+            initial="hidden"
+            animate="show"
+            exit="exit"
+            className="h-full"
+          >
             {activeTab === 'relations' && (
               <div className="space-y-3">
                 {filteredRelations.map(relation => (
@@ -683,9 +698,10 @@ const Transformations: React.FC = () => {
                 </div>
               </div>
             )}
-          </div>
+          </motion.div>
+          </AnimatePresence>
         )}
-      </div>
+      </motion.div>
 
       {/* ===== Modal Création Relation ===== */}
       <PremiumModal
@@ -1004,7 +1020,7 @@ const Transformations: React.FC = () => {
         )}
       </PremiumModal>
 
-    </div>
+    </motion.div>
   );
 };
 

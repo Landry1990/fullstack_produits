@@ -1,4 +1,6 @@
 import React, { useMemo, useState } from 'react';
+import { motion } from 'framer-motion';
+import { staggerContainer, fadeInUp } from '../../lib/motion';
 import { useTranslation } from 'react-i18next';
 import { useDebounce } from 'use-debounce';
 import {
@@ -161,9 +163,14 @@ const ChallengesPage: React.FC = () => {
     };
 
     return (
-        <div className="p-6 w-full h-full flex flex-col gap-4">
+        <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            animate="show"
+            className="p-6 w-full h-full flex flex-col gap-4"
+        >
             {/* ── Header ── */}
-            <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-5 w-full">
+            <motion.div variants={fadeInUp} className="bg-white border border-slate-200 rounded-xl shadow-sm p-5 w-full">
                 <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
                     <div className="flex items-start gap-3">
                         <div className="p-2.5 bg-amber-100 rounded-lg text-amber-600">
@@ -186,10 +193,10 @@ const ChallengesPage: React.FC = () => {
                         </Button>
                     </div>
                 </div>
-            </div>
+            </motion.div>
 
             {/* ── Filters ── */}
-            <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 w-full">
+            <motion.div variants={fadeInUp} className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 w-full">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                     <div className="flex flex-col gap-1 flex-1 min-w-0">
                         <label htmlFor="challenges-search" className="text-caption font-bold uppercase tracking-wider text-slate-500">
@@ -237,10 +244,10 @@ const ChallengesPage: React.FC = () => {
                         </Select>
                     </div>
                 </div>
-            </div>
+            </motion.div>
 
             {/* ── Table ── */}
-            <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col w-full flex-1 min-h-0">
+            <motion.div variants={fadeInUp} className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col w-full flex-1 min-h-0">
                 <div className="overflow-x-auto w-full">
                     <Table className="w-full min-w-[1100px]">
                         <TableHeader>
@@ -433,7 +440,7 @@ const ChallengesPage: React.FC = () => {
                         </div>
                     </div>
                 )}
-            </div>
+            </motion.div>
 
             {/* ── Form Modal (Create / Edit) ── */}
             <ChallengeFormModal
@@ -527,7 +534,7 @@ const ChallengesPage: React.FC = () => {
                 title={t('challenges:form.sudo_title_delete')}
                 message={t('challenges:form.sudo_message_delete')}
             />
-        </div>
+        </motion.div>
     );
 };
 

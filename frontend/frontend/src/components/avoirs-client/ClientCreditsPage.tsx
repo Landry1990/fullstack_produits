@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ClientCreditsList } from './ClientCreditsList';
 import { ClientCreditForm } from './ClientCreditForm';
@@ -17,6 +17,8 @@ import {
 } from '../../hooks/useClientCredits';
 import { useConfirm } from '../../hooks/useConfirm';
 import type { ClientCredit, ClientCreditFilters } from '../../types';
+import { motion, AnimatePresence } from 'framer-motion';
+import { fadeInUp, tabContent } from '../../lib/motion';
 
 const PAGE_SIZE = 25;
 
@@ -79,12 +81,17 @@ export const ClientCreditsPage: React.FC = () => {
         setFilters((prev) => ({ ...prev, page }));
     };
 
-    const totalAmount = useMemo(() => {
-        return selectedCredit?.lignes?.reduce((sum, line) => sum + (Number(line.prix_unitaire) * line.quantity), 0) || 0;
-    }, [selectedCredit]);
-
     return (
-        <div className="p-6 w-full h-full">
+        <motion.div variants={fadeInUp} initial="hidden" animate="show" className="p-6 w-full h-full">
+            <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+                key={showForm ? 'form' : 'list'}
+                variants={tabContent}
+                initial="hidden"
+                animate="show"
+                exit="exit"
+                className="h-full"
+            >
             {showForm ? (
                 <ClientCreditForm
                     onSubmit={handleCreate}
@@ -112,6 +119,8 @@ export const ClientCreditsPage: React.FC = () => {
                     onValidate={handleValidate}
                 />
             )}
+            </motion.div>
+            </AnimatePresence>
 
             <Dialog open={!!selectedCredit} onOpenChange={(open) => !open && setSelectedCredit(null)}>
                 {selectedCredit && (
@@ -184,7 +193,7 @@ export const ClientCreditsPage: React.FC = () => {
                     </DialogContent>
                 )}
             </Dialog>
-        </div>
+        </motion.div>
     );
 };
 

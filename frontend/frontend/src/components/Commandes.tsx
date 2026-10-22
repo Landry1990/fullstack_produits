@@ -1,4 +1,6 @@
 import { useEffect, useState, lazy, Suspense } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { fadeInUp, tabContent } from '../lib/motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCommandesState } from '../hooks/useCommandesState';
@@ -110,7 +112,7 @@ export default function Commandes({ forcedType, embedded }: CommandesProps) {
       {!embedded && (
         <>
           {/* Header moderne */}
-          <div className="px-4 py-2.5 border-b border-slate-200 bg-white shrink-0 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <motion.div variants={fadeInUp} initial="hidden" animate="show" className="px-4 py-2.5 border-b border-slate-200 bg-white shrink-0 flex flex-col sm:flex-row items-center justify-between gap-2">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-emerald-100 rounded-lg">
                   <ShoppingCart className="size-5 text-emerald-600" />
@@ -151,7 +153,7 @@ export default function Commandes({ forcedType, embedded }: CommandesProps) {
                     </Button>
                 </div>
               )}
-          </div>
+          </motion.div>
         </>
       )}
 
@@ -162,23 +164,25 @@ export default function Commandes({ forcedType, embedded }: CommandesProps) {
         className={cn("shrink-0", embedded ? "mx-0 mt-0" : "mx-4 mt-4")}
       />
 
+      <AnimatePresence mode="wait" initial={false}>
       {state.viewMode === 'LIST' && (
-        <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+        <motion.div key={`list-${state.activeTab}`} variants={tabContent} initial="hidden" animate="show" exit="exit" className="flex-1 min-h-0 overflow-hidden flex flex-col">
           <CommandeList {...listProps} />
-        </div>
+        </motion.div>
       )}
 
       {state.viewMode === 'DETAILS' && state.selectedCommande && (
-        <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+        <motion.div key={`details-${state.selectedCommande.id}`} variants={tabContent} initial="hidden" animate="show" exit="exit" className="flex-1 min-h-0 overflow-hidden flex flex-col">
           <CommandeDetails {...(detailsProps as CommandeDetailsProps)} />
-        </div>
+        </motion.div>
       )}
 
       {(state.viewMode === 'CREATE' || state.viewMode === 'EDIT') && (
-        <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+        <motion.div key={state.viewMode} variants={tabContent} initial="hidden" animate="show" exit="exit" className="flex-1 min-h-0 overflow-hidden flex flex-col">
           <CommandeForm {...(formProps as CommandeFormProps)} onViewProductDetails={handleViewProductDetails} onEditProduct={(id: number) => setEditProductId(id)} />
-        </div>
+        </motion.div>
       )}
+      </AnimatePresence>
 
       {state.isSuggestionModalOpen && (
         <Suspense fallback={<LoadingScreen size="sm" overlay={false} />}>

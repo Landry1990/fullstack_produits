@@ -7,15 +7,18 @@ import {
   TrendingDown, PackageX, CreditCard, Archive, Clock, CheckCircle2, ChevronRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useManagerDashboard, type EditingObjectif } from '../hooks/useManagerDashboard';
 import type { ObjectifCommercial } from '../hooks/useDashboard';
 import { ObjectivesSettings } from './dashboard/ObjectivesSettings';
 import { ChallengesSummary } from './dashboard/ChallengesSummary';
+import { AnimatedNumber } from './common/AnimatedNumber';
+import { AnimatedProgress } from './common/AnimatedProgress';
+import { staggerContainer, staggerGrid, fadeInUp } from '../lib/motion';
 
 import { Button } from './shadcn/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './shadcn/card';
 import { Badge } from './shadcn/badge';
-import { Progress } from './shadcn/progress';
 import { Tabs, TabsList, TabsTrigger } from './shadcn/tabs';
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter,
@@ -88,24 +91,34 @@ function KPIsShadcn({ kpis }: { kpis: { jour: KPIData; semaine: KPIData; mois: K
   ], [t]);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">
+    <motion.div
+      variants={staggerGrid}
+      initial="hidden"
+      animate="show"
+      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5"
+    >
       {items.map((item) => {
         const data = kpis[item.key];
         const isSuccess = data.rate >= 100 && data.target > 0;
         const Icon = item.icon;
 
         return (
-          <Card
+          <motion.div
             key={item.key}
+            variants={fadeInUp}
+            whileHover={{ y: -3, transition: { duration: 0.18 } }}
+            className="h-full"
+          >
+          <Card
             className={`
-              relative overflow-hidden transition-all duration-300
+              relative overflow-hidden transition-all duration-300 h-full
               ${isSuccess ? 'ring-1 ring-emerald-200 shadow-lg shadow-emerald-500/10' : 'hover:shadow-md'}
             `}
           >
             <div className={`absolute inset-0 bg-gradient-to-br ${item.gradient} pointer-events-none`} />
 
             {isSuccess && (
-              <div className="absolute top-4 right-4">
+              <div className="absolute top-4 right-4 animate-scale-in">
                 <Badge variant="default" className="bg-emerald-500 text-white gap-1">
                   <Trophy className="size-3" />
                   {t('manager_dashboard.achieved_badge', 'Atteint')}
@@ -125,10 +138,10 @@ function KPIsShadcn({ kpis }: { kpis: { jour: KPIData; semaine: KPIData; mois: K
                   </p>
                   <div className="mt-1 flex flex-wrap items-baseline gap-1.5 lg:gap-2">
                     <span className={`text-2xl lg:text-3xl font-bold tracking-tight ${isSuccess ? 'text-emerald-600' : 'text-slate-900'}`}>
-                      {fmt(data.actual)}
+                      <AnimatedNumber value={data.actual} formatValue={fmt} />
                     </span>
                     <Badge variant={isSuccess ? 'default' : item.badgeVariant} className="text-caption lg:text-xs">
-                      {Math.round(data.rate)}%
+                      <AnimatedNumber value={data.rate} formatValue={(v) => `${Math.round(v)}%`} />
                     </Badge>
                   </div>
 
@@ -146,7 +159,7 @@ function KPIsShadcn({ kpis }: { kpis: { jour: KPIData; semaine: KPIData; mois: K
                   <span>{t('manager_dashboard.progression', 'Progression')}</span>
                   <span className="text-slate-600">{t('manager_dashboard.target', 'Cible')} : {fmt(data.target)}</span>
                 </div>
-                <Progress value={Math.min(data.rate, 100)} className={`h-2.5 rounded-full ${isSuccess ? '[&>div]:bg-emerald-500' : `[&>div]:${item.barColor}`}`} />
+                <AnimatedProgress value={Math.min(data.rate, 100)} className={`h-2.5 rounded-full ${isSuccess ? '[&>div]:bg-emerald-500' : `[&>div]:${item.barColor}`}`} />
               </div>
 
               {isSuccess && (
@@ -155,14 +168,15 @@ function KPIsShadcn({ kpis }: { kpis: { jour: KPIData; semaine: KPIData; mois: K
                     <span className="flex items-center gap-1"><Zap className="size-3.5" /> {t('manager_dashboard.next_tier', 'Prochain palier')}</span>
                     <span>{fmt(data.target * 1.2)}</span>
                   </div>
-                  <Progress value={Math.min((data.actual / (data.target * 1.2)) * 100, 100)} className="h-1.5 rounded-full [&>div]:bg-amber-400" />
+                  <AnimatedProgress value={Math.min((data.actual / (data.target * 1.2)) * 100, 100)} className="h-1.5 rounded-full [&>div]:bg-amber-400" />
                 </div>
               )}
             </CardContent>
           </Card>
+          </motion.div>
         );
       })}
-    </div>
+    </motion.div>
   );
 }
 
@@ -226,7 +240,7 @@ export function AlertsShadcn({ alerts }: { alerts?: DashboardAlert[] }) {
               <CardTitle className="text-base font-bold flex items-center gap-2">
                 {t('manager_dashboard.alerts_title', 'Alertes Intelligentes')}
                 {criticalCount > 0 && (
-                  <span className="inline-flex items-center justify-center size-5 rounded-full bg-red-500 text-white text-caption font-bold">
+                  <span className="inline-flex items-center justify-center size-5 rounded-full bg-red-500 text-white text-caption font-bold animate-scale-in">
                     {criticalCount}
                   </span>
                 )}
@@ -241,13 +255,15 @@ export function AlertsShadcn({ alerts }: { alerts?: DashboardAlert[] }) {
           )}
         </div>
       </CardHeader>
-      <CardContent className="flex-1 space-y-2.5">
+      <CardContent className="flex-1">
         {sorted.length > 0 ? (
-          sorted.map((alert, _idx) => {
+          <motion.div variants={staggerGrid} initial="hidden" animate="show" className="space-y-2.5">
+          {sorted.map((alert, _idx) => {
             const style = alertStyles[alert.type] || alertStyles.info;
             const icon = iconMap[alert.icon ?? ''] || <AlertCircle className="size-4" />;
             return (
-              <div
+              <motion.div
+                variants={fadeInUp}
                 key={alert.id ?? alert.title_key}
                 className={`flex items-start gap-3 p-3.5 rounded-xl bg-white border border-slate-100 ${style.border} shadow-sm transition-all hover:shadow-md`}
               >
@@ -268,9 +284,10 @@ export function AlertsShadcn({ alerts }: { alerts?: DashboardAlert[] }) {
                     </button>
                   )}
                 </div>
-              </div>
+              </motion.div>
             );
-          })
+          })}
+          </motion.div>
         ) : (
           <EmptyState
             icon={<CheckCircle2 className="size-8 text-emerald-400" />}
@@ -313,11 +330,13 @@ function ObjectivesShadcn({ currentObj, onEdit, onRefresh }: { currentObj: { jou
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="flex-1 space-y-3">
+      <CardContent className="flex-1">
+        <motion.div variants={staggerGrid} initial="hidden" animate="show" className="space-y-3">
         {types.map((p) => {
           const obj = currentObj ? (currentObj as Record<string, ObjectifCommercial | null>)[p.code.toLowerCase()] : null;
           return (
-            <div
+            <motion.div
+              variants={fadeInUp}
               key={p.code}
               className="group flex items-center justify-between p-4 rounded-xl bg-slate-50/50 border border-slate-100 hover:bg-white hover:shadow-sm transition-all cursor-pointer"
               onClick={() => onEdit(p.code, obj ?? undefined)}
@@ -349,9 +368,10 @@ function ObjectivesShadcn({ currentObj, onEdit, onRefresh }: { currentObj: { jou
               >
                 {t('manager_dashboard.modify', 'Modifier')}
               </Button>
-            </div>
+            </motion.div>
           );
         })}
+        </motion.div>
       </CardContent>
     </Card>
   );
@@ -501,27 +521,44 @@ export default function DashboardManagerShadcn() {
   return (
     <div className="h-full flex flex-col bg-slate-50 p-4 sm:p-6 font-sans overflow-hidden">
 
-      <div className="max-w-[1400px] mx-auto w-full flex-1 overflow-y-auto space-y-6">
-        <HeaderShadcn
-          onOpenSettings={() => setIsSettingsModalOpen(true)}
-          onOpenObjective={() => actions.openObjectiveModal()}
-        />
-
-        <KPIsShadcn kpis={kpis} />
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <AlertsShadcn alerts={stats?.alerts} />
-          <ObjectivesShadcn
-            currentObj={currentObj}
-            onEdit={actions.openObjectiveModal}
-            onRefresh={actions.refetchStats}
+      <motion.div
+        variants={staggerContainer}
+        initial="hidden"
+        animate="show"
+        className="max-w-[1400px] mx-auto w-full flex-1 overflow-y-auto space-y-6"
+      >
+        <motion.div variants={fadeInUp}>
+          <HeaderShadcn
+            onOpenSettings={() => setIsSettingsModalOpen(true)}
+            onOpenObjective={() => actions.openObjectiveModal()}
           />
-        </div>
+        </motion.div>
 
-        <ChallengesSummary />
+        <motion.div variants={fadeInUp}>
+          <KPIsShadcn kpis={kpis} />
+        </motion.div>
 
-        <ReportsShadcn onExport={actions.handleExport} exporting={exporting} />
-      </div>
+        <motion.div variants={staggerGrid} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <motion.div variants={fadeInUp} className="h-full">
+            <AlertsShadcn alerts={stats?.alerts} />
+          </motion.div>
+          <motion.div variants={fadeInUp} className="h-full">
+            <ObjectivesShadcn
+              currentObj={currentObj}
+              onEdit={actions.openObjectiveModal}
+              onRefresh={actions.refetchStats}
+            />
+          </motion.div>
+        </motion.div>
+
+        <motion.div variants={fadeInUp}>
+          <ChallengesSummary />
+        </motion.div>
+
+        <motion.div variants={fadeInUp}>
+          <ReportsShadcn onExport={actions.handleExport} exporting={exporting} />
+        </motion.div>
+      </motion.div>
 
       {/* Settings Modal */}
       <ObjectivesSettings

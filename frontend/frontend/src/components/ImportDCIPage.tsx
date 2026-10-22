@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { motion } from 'framer-motion';
+import { staggerContainer, fadeInUp } from '../lib/motion';
 import { Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { gooeyToast } from 'goey-toast';
@@ -191,9 +193,14 @@ export default function ImportDCIPage() {
   }, []);
 
   return (
-    <div className="p-6 space-y-8 max-w-7xl mx-auto">
+    <motion.div
+      variants={staggerContainer}
+      initial="hidden"
+      animate="show"
+      className="p-6 space-y-8 max-w-7xl mx-auto"
+    >
       {/* Header — épuré comme CatalogueDCI */}
-      <div className="flex items-center justify-between">
+      <motion.div variants={fadeInUp} className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-black tracking-tight">{t('products:actions.dci_admin.title', 'Gestion DCI & Matching')}</h1>
           <p className="text-sm text-base-content/50 mt-1 font-medium">{t('products:actions.dci_admin.subtitle', 'Import de substances et liaison automatique avec la base ANSM')}</p>
@@ -201,10 +208,10 @@ export default function ImportDCIPage() {
         <Button onClick={fetchStats} variant="ghost" size="sm" className="opacity-60 hover:opacity-100">
           {t('common:refresh', 'Actualiser')}
         </Button>
-      </div>
+      </motion.div>
 
       {/* Tabs */}
-      <div role="tablist" className="inline-flex border-b border-base-200 gap-0">
+      <motion.div variants={fadeInUp} role="tablist" className="inline-flex border-b border-base-200 gap-0">
         <a role="tab" aria-selected={activeTab === 'dci'} tabIndex={0} className={`px-4 py-2 text-sm font-medium cursor-pointer border-b-2 transition-colors ${activeTab === 'dci' ? 'border-primary text-primary' : 'border-transparent text-base-content/60 hover:text-base-content'}`} onClick={() => setActiveTab('dci')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveTab('dci'); } }}>
           {t('products:dci.tab_substances')}
         </a>
@@ -217,7 +224,7 @@ export default function ImportDCIPage() {
         <a role="tab" aria-selected={activeTab === 'substances'} tabIndex={0} className={`px-4 py-2 text-sm font-medium cursor-pointer border-b-2 transition-colors ${activeTab === 'substances' ? 'border-primary text-primary' : 'border-transparent text-base-content/60 hover:text-base-content'}`} onClick={() => setActiveTab('substances')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveTab('substances'); } }}>
           {t('products:dci.tab_substances_ref')}
         </a>
-      </div>
+      </motion.div>
 
       {activeTab === 'interactions' && <InteractionsManager />}
       {activeTab === 'generics' && <GenericsManager />}
@@ -227,7 +234,7 @@ export default function ImportDCIPage() {
         <>
 
       {/* Stats — blocs légers sans ombre, bordure subtile */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <motion.div variants={fadeInUp} className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <StatCard
           label={t('products:actions.dci_admin.substances', 'Substances')}
           value={stats?.substances ?? '-'}
@@ -254,10 +261,10 @@ export default function ImportDCIPage() {
           icon={<UnlinkIcon />}
           accent="error"
         />
-      </div>
+      </motion.div>
 
       {/* Actions — simples blocs rounded-3xl, pas de card DaisyUI */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <motion.div variants={fadeInUp} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Upload COMPO.txt */}
         <div className="bg-base-100 rounded-3xl border border-base-200 p-6">
           <h2 className="font-bold text-lg flex items-center gap-2 mb-1">
@@ -358,10 +365,10 @@ export default function ImportDCIPage() {
             ) : null
           )}
         </div>
-      </div>
+      </motion.div>
 
       {/* Unlinked Products — table épurée, pas de zebra, pas de card */}
-      <div className="bg-base-100 rounded-3xl border border-base-200 overflow-hidden">
+      <motion.div variants={fadeInUp} className="bg-base-100 rounded-3xl border border-base-200 overflow-hidden">
         <div className="p-6 border-b border-base-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <h2 className="font-bold text-lg flex items-center gap-2">
             <BoxIcon />
@@ -462,10 +469,10 @@ export default function ImportDCIPage() {
             />
           </div>
         )}
-      </div>
+      </motion.div>
       </>
       )}
-    </div>
+    </motion.div>
   );
 }
 

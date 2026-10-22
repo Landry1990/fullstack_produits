@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
+import { motion } from 'framer-motion';
+import { staggerContainer, fadeInUp } from '../lib/motion';
 import api from '../services/api';
 import { gooeyToast } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
@@ -245,9 +247,14 @@ export default function Corbeille() {
 
 
   return (
-    <div className="h-full bg-base-200 flex flex-col max-w-[1600px] mx-auto w-full">
+    <motion.div
+      variants={staggerContainer}
+      initial="hidden"
+      animate="show"
+      className="h-full bg-base-200 flex flex-col max-w-[1600px] mx-auto w-full"
+    >
       {/* Header */}
-      <div className="bg-base-100 border-b border-base-200 px-6 py-4 shrink-0">
+      <motion.div variants={fadeInUp} className="bg-base-100 border-b border-base-200 px-6 py-4 shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-error/10 flex items-center justify-center">
@@ -270,10 +277,10 @@ export default function Corbeille() {
             )}
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Toolbar */}
-      <div className="bg-base-100 border-b border-base-200 px-6 py-3 flex flex-wrap items-center gap-3 shrink-0">
+      <motion.div variants={fadeInUp} className="bg-base-100 border-b border-base-200 px-6 py-3 flex flex-wrap items-center gap-3 shrink-0">
         {/* Search */}
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground z-10" aria-hidden="true" />
@@ -316,10 +323,10 @@ export default function Corbeille() {
             </span>
           </div>
         )}
-      </div>
+      </motion.div>
 
       {/* Content */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4">
+      <motion.div variants={fadeInUp} className="flex-1 min-h-0 overflow-y-auto px-6 py-4">
         {loading && (
           <div className="flex items-center justify-center py-20" role="status" aria-busy="true" aria-label={t('common:loading', 'Chargement')}>
             <span className="inline-block size-8 border-2 border-base-300 border-t-primary rounded-full animate-spin" aria-hidden="true" />
@@ -447,11 +454,11 @@ export default function Corbeille() {
             </div>
           </div>
         ))}
-      </div>
+      </motion.div>
 
       {/* Bulk actions bar */}
       {selectedIds.size > 0 && (
-        <div className="shrink-0 bg-slate-50 border-t border-slate-200 px-6 py-3 flex items-center justify-between">
+        <motion.div variants={fadeInUp} initial="hidden" animate="show" className="shrink-0 bg-slate-50 border-t border-slate-200 px-6 py-3 flex items-center justify-between">
           <span className="text-sm font-medium text-slate-700">
             {t('actions.selected', { count: selectedIds.size })}
           </span>
@@ -475,8 +482,8 @@ export default function Corbeille() {
               {t('actions.delete_permanently')}
             </Button>
           </div>
-        </div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 }

@@ -15,6 +15,23 @@
   unicode-range: U+0030-0039;
 }
 
+/* Graisses Inter 800/900 — fontsource ne charge que 300-700 (main.tsx).
+   Ces fichiers existent déjà dans public/fonts/ (utilisés par le print). */
+@font-face {
+  font-family: "Inter";
+  src: url('/fonts/inter-800.woff2') format('woff2');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter";
+  src: url('/fonts/inter-900.woff2') format('woff2');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
   --font-sans: "Zenith Numeric", "Inter", "Roboto", "Segoe UI", sans-serif;
   --font-heading: "Zenith Numeric", "Inter", "Roboto", sans-serif;

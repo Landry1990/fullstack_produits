@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { staggerContainer, fadeInUp } from '../lib/motion';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
@@ -101,8 +103,14 @@ function GestionVitrine({
   const isAllSelected = products.length > 0 && selectedIds.size === products.length;
 
   return (
-    <div className="space-y-6 relative">
+    <motion.div
+      variants={staggerContainer}
+      initial="hidden"
+      animate="show"
+      className="space-y-6 relative"
+    >
       {/* Filters */}
+      <motion.div variants={fadeInUp}>
       <Card variant="elevated" padding="md" className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-base-content/40" />
@@ -123,9 +131,11 @@ function GestionVitrine({
           />
         </div>
       </Card>
+      </motion.div>
 
       {/* Bulk Actions Bar */}
       {selectedIds.size > 0 && (
+        <motion.div variants={fadeInUp} initial="hidden" animate="show">
         <Card
           variant="bordered"
           padding="sm"
@@ -169,9 +179,11 @@ function GestionVitrine({
             </Button>
           </div>
         </Card>
+        </motion.div>
       )}
 
       {/* Table */}
+      <motion.div variants={fadeInUp}>
       <Card variant="default" padding="none" className="overflow-hidden">
         <div className="overflow-x-auto">
           <Table className="table-fixed">
@@ -297,7 +309,8 @@ function GestionVitrine({
           </Table>
         </div>
       </Card>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -397,9 +410,14 @@ function SimulateurClient() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-auto lg:h-full">
+    <motion.div
+      variants={staggerContainer}
+      initial="hidden"
+      animate="show"
+      className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-auto lg:h-full"
+    >
       {/* Colonne Recherche */}
-      <div className="lg:col-span-2 space-y-4 order-1 lg:order-none">
+      <motion.div variants={fadeInUp} className="lg:col-span-2 space-y-4 order-1 lg:order-none">
         <Card variant="elevated" padding="lg">
           <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
             <Search className="size-6 text-primary" />
@@ -482,10 +500,10 @@ function SimulateurClient() {
             )}
           </div>
         </Card>
-      </div>
+      </motion.div>
 
       {/* Colonne "Panier" */}
-      <div className="lg:col-span-1 order-2 lg:order-none">
+      <motion.div variants={fadeInUp} className="lg:col-span-1 order-2 lg:order-none">
         <Card variant="elevated" className="h-full sticky top-4 overflow-hidden flex flex-col" padding="none">
           <div className="bg-primary/5 p-5 border-b border-primary/10">
             <div className="flex justify-between items-center">
@@ -608,8 +626,8 @@ function SimulateurClient() {
             )}
           </div>
         </Card>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -711,8 +729,13 @@ export default function Vitrine() {
   });
 
   return (
-    <div className="p-4 lg:p-6 space-y-6">
-      <div className="flex flex-col lg:flex-row gap-4 lg:items-center justify-between">
+    <motion.div
+      variants={staggerContainer}
+      initial="hidden"
+      animate="show"
+      className="p-4 lg:p-6 space-y-6"
+    >
+      <motion.div variants={fadeInUp} className="flex flex-col lg:flex-row gap-4 lg:items-center justify-between">
         <div>
           <h1 className="text-2xl lg:text-3xl font-bold flex items-center gap-2">
             <Globe className="size-6 lg:size-8 text-emerald-500" />
@@ -744,7 +767,7 @@ export default function Vitrine() {
             </TabsList>
           </Tabs>
         </div>
-      </div>
+      </motion.div>
 
       {activeTab === 'gestion' ? (
         <GestionVitrine
@@ -761,6 +784,6 @@ export default function Vitrine() {
       ) : (
         <SimulateurClient />
       )}
-    </div>
+    </motion.div>
   );
 }

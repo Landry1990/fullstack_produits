@@ -1,11 +1,13 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { Trophy, ChevronRight, Users, User, Package, Target, CalendarClock, Sparkles } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../shadcn/card';
 import { Badge } from '../shadcn/badge';
-import { Progress } from '../shadcn/progress';
+import { AnimatedProgress } from '../common/AnimatedProgress';
+import { fadeInUp, staggerGrid } from '../../lib/motion';
 import { Button } from '../shadcn/button';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -44,7 +46,9 @@ function ChallengeCard({ item, currencySymbol }: { item: ChallengeSummaryItem; c
   const hasObjective = item.objectif_valeur !== null && item.objectif_valeur > 0;
 
   return (
-    <div
+    <motion.div
+      variants={fadeInUp}
+      whileHover={{ y: -2, transition: { duration: 0.18 } }}
       className="group rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:shadow-md hover:border-slate-300 cursor-pointer"
       onClick={() => navigate('/app/challenges')}
       role="button"
@@ -101,7 +105,7 @@ function ChallengeCard({ item, currencySymbol }: { item: ChallengeSummaryItem; c
           </span>
         </div>
         {hasObjective && (
-          <Progress
+          <AnimatedProgress
             value={item.progression_globale}
             className={`h-2 rounded-full ${item.progression_globale >= 100 ? '[&>div]:bg-emerald-500' : `[&>div]:${cfg.color.replace('text-', 'bg-')}`}`}
           />
@@ -159,7 +163,7 @@ function ChallengeCard({ item, currencySymbol }: { item: ChallengeSummaryItem; c
           />
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -207,11 +211,11 @@ export function ChallengesSummary() {
             <Skeleton className="h-44 w-full rounded-xl" />
           </div>
         ) : challenges && challenges.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <motion.div variants={staggerGrid} initial="hidden" animate="show" className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {challenges.map((item: ChallengeSummaryItem) => (
               <ChallengeCard key={item.id} item={item} currencySymbol={currencySymbol} />
             ))}
-          </div>
+          </motion.div>
         ) : (
           <EmptyState
             icon={<Trophy className="size-8" />}

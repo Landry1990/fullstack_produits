@@ -1,4 +1,6 @@
 import { useState, useRef } from 'react'
+import { motion } from 'framer-motion'
+import { staggerContainer, fadeInUp } from '../lib/motion'
 import { useTranslation } from 'react-i18next'
 import { gooeyToast } from 'goey-toast'
 import { FileText, Plus, X, Search, Printer, Loader2, AlertTriangle } from 'lucide-react'
@@ -156,10 +158,10 @@ export default function RecapClient() {
   }
 
   return (
-    <div className="h-full min-h-0 bg-slate-100 p-3 lg:p-4 font-sans overflow-auto">
+    <motion.div variants={staggerContainer} initial="hidden" animate="show" className="h-full min-h-0 bg-slate-100 p-3 lg:p-4 font-sans overflow-auto">
       <div className="max-w-5xl mx-auto space-y-3">
         {/* Header */}
-        <div className="flex items-center gap-2 px-4 py-2.5">
+        <motion.div variants={fadeInUp} className="flex items-center gap-2 px-4 py-2.5">
           <div className="p-3 bg-emerald-50 rounded-xl">
             <FileText className="size-6 text-emerald-600" />
           </div>
@@ -167,10 +169,10 @@ export default function RecapClient() {
             <h1 className="text-xl font-bold text-slate-800">{t('recap:title')}</h1>
             <p className="text-sm text-slate-500">{t('recap:subtitle')}</p>
           </div>
-        </div>
+        </motion.div>
 
         {/* Formulaire de saisie */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 space-y-3">
+        <motion.div variants={fadeInUp} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 space-y-3">
           {/* Nom client (optionnel) */}
           <div>
             <label htmlFor="recap-client-name" className="block text-xs font-semibold text-slate-600 mb-1.5">
@@ -268,14 +270,14 @@ export default function RecapClient() {
               </Button>
             )}
           </div>
-        </div>
+        </motion.div>
 
         {/* Résultats */}
         {result && (
-          <div className="space-y-4">
+          <motion.div variants={fadeInUp} className="space-y-4">
             {/* Avertissement numéros non trouvés */}
             {result.not_found.length > 0 && (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
+              <motion.div variants={fadeInUp} className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
                 <AlertTriangle className="size-5 text-amber-500 shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm font-semibold text-amber-700">{t('recap:results.not_found_title')}</p>
@@ -283,11 +285,11 @@ export default function RecapClient() {
                     {result.not_found.join(', ')}
                   </p>
                 </div>
-              </div>
+              </motion.div>
             )}
 
             {/* Résumé */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+            <motion.div variants={fadeInUp} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
               <h3 className="font-bold text-slate-800 mb-3">{t('recap:results.summary')}</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                 <div className="bg-slate-50 rounded-xl px-3 py-2 text-center">
@@ -307,10 +309,10 @@ export default function RecapClient() {
                   <div className="text-xs text-emerald-600 uppercase font-bold">{t('recap:results.total_ttc')}</div>
                 </div>
               </div>
-            </div>
+            </motion.div>
 
             {/* Détails par facture */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <motion.div variants={fadeInUp} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
               <div className="p-4 border-b border-slate-100">
                 <h3 className="font-bold text-slate-800">{t('recap:results.details')}</h3>
               </div>
@@ -353,10 +355,10 @@ export default function RecapClient() {
                   )
                 })}
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         )}
       </div>
-    </div>
+    </motion.div>
   )
 }

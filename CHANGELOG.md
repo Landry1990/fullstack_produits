@@ -2,6 +2,140 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-10-22 — Review working changes : correctifs post-motion
+
+- `JournalAudit.tsx` : `onRetry={fetchAll}` référençait une fonction inexistante
+  (ReferenceError → crash dès que la query échouait). Destructure `refetch`
+  de `useAuditLogs` et passe `onRetry={() => refetch()}`.
+- `common/AnimatedNumber.tsx` : la boucle `requestAnimationFrame` n'était
+  jamais annulée (fuite au démontage + double animation quand `value` change
+  pendant l'animation). Ajout de `cancelAnimationFrame` dans le cleanup.
+- ⚠️ Vérification TypeScript : le `tsconfig.json` racine n'a que `"files": []`
+  (références) → `tsc -p tsconfig.json` ne vérifie rien. La vraie config est
+  `tsconfig.app.json` ; `tsc --noEmit -p tsconfig.app.json` remonte ~276
+  erreurs préexistantes dans 81 fichiers (casts `as unknown` dans les tests,
+  signatures `doubleSize()` dans `escpos/`, etc.) — aucune introduite par la
+  passe motion. Les deux fichiers corrigés sont propres (tsc + ESLint).
+
+## 2026-10-22 — Motion design : uniformisation de toutes les pages
+
+- Passe globale (3 lots parallèles) : ~40 pages reçoivent le pattern
+  `staggerContainer`/`fadeInUp` (+ `staggerGrid` sur grilles de stats,
+  crossfade `AnimatePresence`/`tabContent` quand un switch d'onglets propre
+  existe). Jamais sur `<tr>`.
+- Rapports/finance : StatistiquesFournisseur, RapportMensuel,
+  TelegramHistory, CentreRapports, AnalyseABC, AnalyseMargesProduit,
+  AnalyseTemporelle, StockUGReport, ClassementVendeurs, TeamReportsPage,
+  RecapClient, Ordonnancier, compta/Comptabilite.
+- Stock/divers : ReapproRayon, ReapproHistory, Cadencier, Transformations
+  (+ crossfade d'onglets), Promis, Avoirs, ClientCreditsPage (+ crossfade
+  liste/formulaire), PromotionList, GestionDivers, PlanningOperateurs,
+  LoyaltyPage.
+- Admin/paramètres : UtilisateursPage, JournalAudit, JournalAjustements,
+  CatalogDCI, BMICalculator, GuideFinancier, HelpTraining,
+  PharmacySettingsForm, Maintenance, Corbeille, ImportDCIPage, SystemAdmin,
+  FeatureHub (`motion.header`/`motion.section` sémantiques), Vitrine,
+  Organisation.
+- `Commandes.tsx` (orchestrateur) : crossfade entre vues liste/détail/
+  formulaire re-keyé par `viewMode`/`activeTab`.
+- Exclus volontairement : Facturation, Caisse*, Ventes, Inventaire*,
+  PrintPage (postes de saisie — doivent rester instantanés).
+- Nettoyage lint préexistant : imports inutilisés retirés (Button dans
+  HelpTraining/TeamReportsPage, Input/CardHeader/CardTitle/CardDescription
+  dans Cadencier, useMemo/totalAmount dans ClientCreditsPage).
+- Bug préexistant corrigé (voir entrée du jour ci-dessus) : `JournalAudit.tsx`
+  référençait `fetchAll` dans `onRetry`.
+- Vérification : ESLint sur les ~40 fichiers + `tsc --noEmit` sans erreur
+  (⚠️ voir entrée ci-dessus : `tsconfig.json` racine vide — la vraie config
+  est `tsconfig.app.json`).
+
+## 2026-10-22 — Motion design : finance, challenges, périmés, analyse stock
+
+- Suite du même pattern (`staggerContainer`/`fadeInUp` + crossfade
+  `AnimatePresence`/`tabContent` sur les onglets, pas d'animation sur `<tr>`).
+- `ModuleFinancier.tsx` : header + 7 sections (variance, charts, répartition,
+  catégories, marges, fournisseurs, résumé) en cascade ; 4 cartes KPI en
+  `staggerGrid`.
+- `challenges/ChallengesPage.tsx` : header, filtres et carte table en cascade.
+- `Perimes.tsx` : header en `fadeInUp` + crossfade entre les 4 vues
+  (dashboard, liste, étagère, historique) re-keyées par `activeTab`.
+- `StockAnalysis.tsx` : header + barre d'onglets en cascade + crossfade
+  entre pilotage/unsold/overstock/shortage.
+- Vérification : TypeScript + ESLint sans erreur.
+
+## 2026-10-22 — Motion design : historiques, listes tiers et commandes
+
+- Même pattern que le dashboard : cascade de sections
+  (`staggerContainer`/`fadeInUp` de `lib/motion`) + crossfade d'onglets
+  (`AnimatePresence` mode="wait" + `tabContent`). Aucune animation sur les
+  `<tr>` (transforms non fiables sur `display: table-row`).
+- `HistoriqueVentes.tsx` : header, filtres, carte table et footer en cascade.
+- `HistoriqueAchats.tsx` : cascade + crossfade entre onglets
+  résumé/détail (table re-keyée par `activeTab`), cartes résumé en
+  `staggerGrid`.
+- `HistoriqueClotures.tsx` : crossfade entre onglets sessions/clôtures ;
+  `caisse/clotures/CloturesStats.tsx` : barre repliée, section perf et
+  cartes totaux en cascade (`staggerGrid`).
+- `Clients.tsx` : panneaux liste/détail en cascade + crossfade du panneau
+  détail re-keyé par client sélectionné.
+- `Fournisseurs.tsx` : crossfade entre onglets dashboard/management.
+- `Creances.tsx` : header, quick stats et carte table en cascade.
+- `Commandes/CommandeList.tsx` : header, barre filtres, table et footer
+  pagination en cascade.
+- `Commandes/CommandeDetails.tsx` : header, grille infos, barre synthèse,
+  bannière UG et carte produits en cascade.
+- Vérification : TypeScript + ESLint sans erreur.
+
+## 2026-10-22 — Motion design : dashboard manager animé
+
+- `DashboardManagerShadcn.tsx` : entrée en cascade des sections
+  (`staggerContainer`/`fadeInUp` de `lib/motion`), cartes KPI en
+  `staggerGrid` + `whileHover` (-3px), compteurs `AnimatedNumber`
+  (montant + % du badge), alertes et lignes d'objectifs en cascade,
+  badges "Atteint"/critiques en `animate-scale-in`.
+- `common/AnimatedProgress.tsx` (nouveau) : barre Radix animée 0 → valeur
+  au montage via `transition-transform` existante ; `useReducedMotion`
+  → valeur affichée immédiatement. Utilisée pour les barres de
+  progression KPI, "prochain palier" et challenges.
+- `ChallengesSummary.tsx` : cartes challenges en cascade + `whileHover`
+  + `AnimatedProgress`.
+- Vérification : TypeScript + ESLint sans erreur.
+
+## 2026-10-22 — Diagnostic (non corrigé) : remise déduite 2× dans les marges
+
+- `margin_service.py` (`calculate_period_margin_with_discounts` +
+  `calculate_daily_margin_with_discounts`) : `ca_ttc_net = ca_ttc_total ×
+  total_ttc/(total_ttc+remise)` — or `Facture.total_ttc` est déjà net de
+  remise (`billing.py` recalc : `total_ttc = brut − remise`) → la remise
+  est soustraite une 2e fois, marge et marge_pct sous-estimés de ≈ remise.
+- Correctif envisagé (à valider — impacte dashboard marges jour/sem/mois,
+  `margin_today`, rapports `excel_general`/`base`) : `ca_ttc_net = ca_ttc_total`
+  + widget `PerformanceOverview.tsx` : dénominateur = `Σ data` au lieu de
+  `Σ(coûts+marges)`. Réf. `rapports/finance.py:1060` pour le ratio correct
+  (net/brut appliqué au brut).
+- Reporté à une prochaine occasion à la demande de l'utilisateur.
+
+## 2026-10-22 — Sidebar : vraie graisse Inter 800/900 + plancher 10px
+
+- `index.css` : `@font-face` Inter 800/900 déclarés depuis `public/fonts/`
+  (fichiers déjà présents, utilisés par le print) — `font-black` du titre
+  rend une vraie graisse au lieu de retomber sur 700 (fontsource ne charge
+  que 300-700).
+- `Sidebar.tsx` : `text-micro` (9px) → `text-caption` (10px) sur les labels
+  de groupes de sous-menus, le sous-titre "PHARMA" (tracking 0.2em → 0.15em)
+  et la version du footer — lisibilité plancher remontée.
+
+## 2026-10-22 — Messagerie : polling unread_count unifié (12 req/min → 2)
+
+- `UserHeader.tsx` : polling manuel `setInterval(5 s)` remplacé par
+  `useUnreadMessageCount` (React Query) — partage la même queryKey que
+  `MessagingCenter` → une seule requête commune, en pause quand l'onglet
+  n'est pas focus. Corrige aussi un fetch à chaque re-render (`fetchUnread`
+  recréée dans les deps du useEffect) et le toast/son joué au chargement
+  de la page quand des non-lus existaient déjà (premier fetch ignoré).
+- `useMessaging.ts` : `refetchInterval` 5 s → 30 s, `staleTime` 15 s.
+- Vérification : TypeScript + ESLint sans erreur.
+
 ## 2026-10-22 — Seuils stock : dormants n'ont plus max forcé à min+1
 
 - `replenishment_service.py` : `stock_maximum` arrondi au plus proche

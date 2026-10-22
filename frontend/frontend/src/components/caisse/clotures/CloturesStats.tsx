@@ -3,7 +3,9 @@
  * barre compacte (sections repliées), classement meilleur caissier,
  * cartes de totaux globaux de la période.
  */
+import { motion } from 'framer-motion'
 import { Banknote, CheckCircle, ChevronDown, XCircle } from 'lucide-react'
+import { fadeInUp, staggerGrid } from '../../../lib/motion'
 import { Button } from '../../shadcn/button'
 import { cn } from '../../../lib/utils'
 import { normalizeNumberInput } from '../../../utils/formatters'
@@ -27,7 +29,7 @@ export default function CloturesStats({ state }: Props) {
     <>
       {/* Barre compacte commune pour les sections repliées */}
       {(!showPerfSection || (globalTotals && !showTotalsSection)) && (
-        <div className="px-3 sm:px-6 pt-4 shrink-0">
+        <motion.div variants={fadeInUp} className="px-3 sm:px-6 pt-4 shrink-0">
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-wrap items-stretch divide-x divide-slate-200">
             {!showPerfSection && (
               <button
@@ -61,12 +63,12 @@ export default function CloturesStats({ state }: Props) {
               </button>
             )}
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Best Cashier Ranking Section — visible uniquement dépliée */}
       {showPerfSection && (
-      <div className="px-3 sm:px-6 pt-4 sm:pt-6">
+      <motion.div variants={fadeInUp} className="px-3 sm:px-6 pt-4 sm:pt-6">
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
           <div className={cn("p-4 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center bg-white", showPerfSection && "border-b border-slate-200")}>
             <button
@@ -139,12 +141,12 @@ export default function CloturesStats({ state }: Props) {
             </div>
           )}
         </div>
-      </div>
+      </motion.div>
       )}
 
       {/* Global Stats Cards — visible uniquement dépliée */}
       {globalTotals && showTotalsSection && (
-        <div className="px-3 sm:px-6 pt-4 shrink-0">
+        <motion.div variants={fadeInUp} className="px-3 sm:px-6 pt-4 shrink-0">
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             <button
               type="button"
@@ -157,8 +159,8 @@ export default function CloturesStats({ state }: Props) {
                 <ChevronDown className="size-4 rotate-180 transition-transform" />
               </h2>
             </button>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border-t border-slate-100">
-          <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex flex-col justify-center">
+            <motion.div variants={staggerGrid} initial="hidden" animate="show" className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border-t border-slate-100">
+          <motion.div variants={fadeInUp} className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex flex-col justify-center">
              <div className="flex justify-between items-start">
                <div>
                   <h3 className="text-slate-500 text-xs font-bold uppercase tracking-wider">{t('stats.theoretical_total')}</h3>
@@ -168,9 +170,9 @@ export default function CloturesStats({ state }: Props) {
                  <Banknote className="size-6" />
                </div>
              </div>
-          </div>
+          </motion.div>
 
-          <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex flex-col justify-center">
+          <motion.div variants={fadeInUp} className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex flex-col justify-center">
              <div className="flex justify-between items-start">
                <div>
                   <h3 className="text-slate-500 text-xs font-bold uppercase tracking-wider">{t('stats.real_total')}</h3>
@@ -180,9 +182,9 @@ export default function CloturesStats({ state }: Props) {
                  <CheckCircle className="size-6" />
                </div>
              </div>
-          </div>
+          </motion.div>
 
-          <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex flex-col justify-center">
+          <motion.div variants={fadeInUp} className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex flex-col justify-center">
              <div className="flex justify-between items-start">
                <div>
                   <h3 className="text-slate-500 text-xs font-bold uppercase tracking-wider">{t('stats.global_gap')}</h3>
@@ -194,10 +196,10 @@ export default function CloturesStats({ state }: Props) {
                  <XCircle className="size-6" />
                </div>
              </div>
+          </motion.div>
+            </motion.div>
           </div>
-            </div>
-          </div>
-        </div>
+        </motion.div>
       )}
     </>
   )

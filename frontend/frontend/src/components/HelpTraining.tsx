@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { staggerContainer, fadeInUp } from '../lib/motion';
 import { useTranslation } from 'react-i18next';
 import {
   BookOpen, Search, LayoutGrid, PlayCircle, FileText,
@@ -6,7 +8,6 @@ import {
 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './shadcn/tabs';
 import { Input } from './shadcn/input';
-import { Button } from './shadcn/button';
 import HelpOverview from './help/HelpOverview';
 import HelpVideos from './help/HelpVideos';
 import HelpGuides from './help/HelpGuides';
@@ -41,10 +42,15 @@ const HelpTraining = () => {
   };
 
   return (
-    <div className="h-full min-h-0 overflow-hidden bg-slate-50 p-2 sm:p-3 lg:p-4">
-      <div className="h-full max-w-[1600px] mx-auto flex flex-col gap-3 overflow-hidden">
+    <motion.div
+      variants={staggerContainer}
+      initial="hidden"
+      animate="show"
+      className="h-full min-h-0 overflow-hidden bg-slate-50 p-2 sm:p-3 lg:p-4"
+    >
+      <motion.div variants={staggerContainer} className="h-full max-w-[1600px] mx-auto flex flex-col gap-3 overflow-hidden">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
+        <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
           <div className="flex items-center gap-3">
             <div className="size-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
               <BookOpen className="size-5" />
@@ -79,7 +85,7 @@ const HelpTraining = () => {
               </div>
             )}
           </div>
-        </div>
+        </motion.div>
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1 min-h-0 flex flex-col">
@@ -99,7 +105,7 @@ const HelpTraining = () => {
             })}
           </TabsList>
 
-          <div className="flex-1 min-h-0 overflow-y-auto pr-1 -mr-1 mt-3">
+          <motion.div variants={fadeInUp} className="flex-1 min-h-0 overflow-y-auto pr-1 -mr-1 mt-3">
             <TabsContent value="overview" className="mt-0 h-full">
               <HelpOverview
                 totalGuides={GUIDE_IDS.length}
@@ -132,10 +138,10 @@ const HelpTraining = () => {
             <TabsContent value="faq" className="mt-0 h-full">
               <HelpFaq search={search} />
             </TabsContent>
-          </div>
+          </motion.div>
         </Tabs>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 

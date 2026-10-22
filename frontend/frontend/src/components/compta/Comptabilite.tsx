@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
+import { motion } from 'framer-motion';
+import { staggerContainer, fadeInUp } from '../../lib/motion';
 import { useAccounting, type Compte, type Ecriture, type LigneEcriture, type Journal } from '../../hooks/useAccounting';
 import api from '../../services/api';
 import type { TFunction } from 'i18next';
@@ -95,9 +97,10 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
     }, [exercices, setCurrentExercice, setDateRange]);
 
     return (
+        <motion.div variants={staggerContainer} initial="hidden" animate="show">
         <PageContainer variant="dense" className="bg-slate-50 p-4 md:p-8 animate-fade-in">
             {/* Header */}
-            <div className="flex flex-col xl:flex-row xl:items-center justify-between mb-8 gap-6">
+            <motion.div variants={fadeInUp} className="flex flex-col xl:flex-row xl:items-center justify-between mb-8 gap-6">
                 <div>
                     <span className="text-xs font-semibold uppercase tracking-wider text-blue-600 mb-2 block">{t('ohada')}</span>
                     <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-800 flex items-center gap-3">
@@ -144,10 +147,10 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
                         />
                     </div>
                 </div>
-            </div>
+            </motion.div>
 
             {/* Navigation Tabs */}
-            <div className="flex overflow-x-auto hide-scrollbar gap-1 mb-8 p-1.5 rounded-2xl bg-white border border-slate-200 shadow-sm w-full lg:w-fit">
+            <motion.div variants={fadeInUp} className="flex overflow-x-auto hide-scrollbar gap-1 mb-8 p-1.5 rounded-2xl bg-white border border-slate-200 shadow-sm w-full lg:w-fit">
                 {tabs.map((tab) => (
                     <button
                         key={tab.id}
@@ -164,16 +167,16 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
                         <span className="whitespace-nowrap">{tab.label}</span>
                     </button>
                 ))}
-            </div>
+            </motion.div>
 
             {/* Content Area */}
             {isLoading ? (
-                <div className="flex flex-col items-center justify-center py-20">
+                <motion.div variants={fadeInUp} className="flex flex-col items-center justify-center py-20">
                     <span className="size-10 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin mb-3"></span>
                     <p className="font-medium text-slate-400">{t('loading_msg')}</p>
-                </div>
+                </motion.div>
             ) : (
-                <div className="space-y-6">
+                <motion.div variants={fadeInUp} className="space-y-6">
                     <Suspense fallback={
                         <div className="flex flex-col items-center justify-center py-20 text-slate-300">
                             <span className="size-8 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin mb-2"></span>
@@ -209,10 +212,11 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
                         {activeTab === 'plan' && <PlanTab comptes={comptes} actions={actions} t={t} />}
                         {activeTab === 'charges' && <ChargesTab actions={actions} comptes={comptes} journaux={journaux} t={t} />}
                     </Suspense>
-                </div>
+                </motion.div>
 
             )}
         </PageContainer>
+        </motion.div>
     );
 }
 

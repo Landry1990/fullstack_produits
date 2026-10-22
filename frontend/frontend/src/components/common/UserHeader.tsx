@@ -3,12 +3,11 @@ import { gooeyToast } from 'goey-toast';
 import { useAuth } from '../../context/AuthContext';
 import { useSidebar } from '../../hooks/useSidebar';
 import { useTranslation } from 'react-i18next';
-import communicationService from '../../services/communicationService';
 import MessagingModal from './MessagingModal';
 import FeedbackModal from './FeedbackModal';
+import { useUnreadMessageCount } from './messaging/useMessaging';
 import { ChevronDown, LogOut, Moon, Sun, MessageSquare, User as UserIcon, MessageCircle, Key } from 'lucide-react';
 import { playNotificationSound } from '../../utils/audio';
-import { logger } from '../../utils/logger'
 import { AnimatePresence, motion } from 'framer-motion';
 import { popover } from '../../lib/motion';
 
@@ -16,49 +15,31 @@ export default function UserHeader() {
   const { t, i18n } = useTranslation(['messaging', 'sidebar', 'common']);
   const { user, logout } = useAuth();
   const { isMidnightTheme, toggleMidnightTheme } = useSidebar();
-  const [unreadCount, setUnreadCount] = useState(0);
   const [isMessagingOpen, setIsMessagingOpen] = useState(false);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const prevUnreadCount = useRef<number>(0);
+  const prevUnreadCount = useRef<number | null>(null);
+  const { data: unreadCount = 0, refetch: refetchUnread } = useUnreadMessageCount(!!user);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const fetchUnread = async () => {
-    if (!user) return;
-    try {
-      const res = await communicationService.getUnreadCount();
-      const newCount = res.data.count || 0;
-      
-      // Notify if new messages arrive
-      if (newCount > prevUnreadCount.current) {
-        // Play an alert sound for the recipient
-        playNotificationSound();
-
-        if (!isMessagingOpen) {
-          gooeyToast.success(t('new.new_notification'), {
-            description: t('subtitle'),
-            action: {
-              label: t('new.view'),
-              onClick: () => setIsMessagingOpen(true),
-            },
-            duration: 6000,
-          });
-        }
-      }
-      
-      setUnreadCount(newCount);
-      prevUnreadCount.current = newCount;
-    } catch (error) {
-      logger.error("Error fetching unread count", error);
-    }
-  };
-
-  // Polling for unread messages
+  // Notify when new messages arrive (skip the very first fetch)
   useEffect(() => {
-    fetchUnread();
-    const interval = setInterval(fetchUnread, 5000); // Check every 5 seconds
-    return () => clearInterval(interval);
-  }, [user, fetchUnread]);
+    if (prevUnreadCount.current !== null && unreadCount > prevUnreadCount.current) {
+      // Play an alert sound for the recipient
+      playNotificationSound();
+
+      if (!isMessagingOpen) {
+        gooeyToast.success(t('new.new_notification'), {
+          description: t('subtitle'),
+          action: {
+            label: t('new.view'),
+            onClick: () => setIsMessagingOpen(true),
+          },
+          duration: 6000,
+        });
+      }
+    }
+    prevUnreadCount.current = unreadCount;
+  }, [unreadCount, isMessagingOpen, t]);
 
   // Handle outside click to close menu
   useEffect(() => {
@@ -210,14 +191,10 @@ export default function UserHeader() {
         onClose={() => {
           setIsMessagingOpen(false);
           // Refresh unread count when closing
-          const fetchUnread = async () => {
-            const res = await communicationService.getUnreadCount();
-            setUnreadCount(res.data.count || 0);
-          };
-          fetchUnread();
+          refetchUnread();
         }}
         onMessageRead={() => {
-          fetchUnread();
+          refetchUnread();
         }}
         currentUser={user}
       />

@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { motion } from 'framer-motion';
+import { staggerContainer, fadeInUp } from '../lib/motion';
 
 import { useCreancesData } from '../hooks/useCreancesData';
 import { useCreanceActions } from '../hooks/useCreanceActions';
@@ -35,10 +37,15 @@ export default function Creances() {
     }, [data.selectedIds, data.creances]);
 
     return (
-        <div className="h-full min-h-0 flex flex-col bg-slate-100 p-2 lg:p-3 gap-3 font-sans overflow-hidden max-w-[1600px] mx-auto w-full">
+        <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            animate="show"
+            className="h-full min-h-0 flex flex-col bg-slate-100 p-2 lg:p-3 gap-3 font-sans overflow-hidden max-w-[1600px] mx-auto w-full"
+        >
 
             {/* Header Area */}
-            <div className="flex flex-col gap-3 shrink-0">
+            <motion.div variants={fadeInUp} className="flex flex-col gap-3 shrink-0">
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col">
                     <div className="px-4 py-3 border-b border-slate-100 flex flex-wrap justify-between items-center gap-3 bg-white/50">
                         <div>
@@ -106,7 +113,7 @@ export default function Creances() {
                         loading={data.loading}
                     />
                 </div>
-            </div>
+            </motion.div>
 
             {/* Stats Dashboard */}
             <CreancesQuickStats
@@ -117,7 +124,7 @@ export default function Creances() {
             />
 
             {/* Main Content Table Card */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex-1 relative min-h-0">
+            <motion.div variants={fadeInUp} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex-1 relative min-h-0">
                 <CreancesTable
                     mode={data.filters.selectedClient ? 'invoices' : 'clients'}
                     groupedClients={data.groupedClients}
@@ -147,7 +154,7 @@ export default function Creances() {
                     }}
                     onSort={data.setFilters.handleSort}
                 />
-            </div>
+            </motion.div>
             {/* Error handling */}
             {data.error && (
                 <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
@@ -189,6 +196,6 @@ export default function Creances() {
                 message={actions.modals.sudoState.message}
             />
 
-        </div>
+        </motion.div>
     );
 }

@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
+import { motion } from 'framer-motion'
+import { staggerContainer, fadeInUp } from '../../lib/motion'
 import { useTranslation } from 'react-i18next'
 import { usePharmacySettings, type PharmacySettings } from '../../hooks/usePharmacySettings'
 import { useTVA } from '../../hooks/useTVA'
@@ -209,15 +211,20 @@ export default function PharmacySettingsForm() {
   ] as const
 
   return (
-    <div className="h-full flex flex-col overflow-hidden relative">
+    <motion.div
+      variants={staggerContainer}
+      initial="hidden"
+      animate="show"
+      className="h-full flex flex-col overflow-hidden relative"
+    >
       {/* Header */}
-      <div className="px-6 py-4 border-b shrink-0">
+      <motion.div variants={fadeInUp} className="px-6 py-4 border-b shrink-0">
         <h1 className="text-2xl font-bold tracking-tight flex items-center gap-3">
           <Settings className="h-6 w-6 text-indigo-600" />
           {t('pharmacy_settings:title')}
         </h1>
         <p className="text-sm text-muted-foreground mt-1">{t('subtitle')}</p>
-      </div>
+      </motion.div>
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabId)} className="flex-1 flex flex-col min-h-0">
         <TabsList className="mx-6 mt-4 self-start">
@@ -332,7 +339,7 @@ export default function PharmacySettingsForm() {
       </Tabs>
 
       {/* STICKY BOTTOM ACTION BAR */}
-      <div className="absolute bottom-0 left-0 right-0 p-6 bg-white/90 backdrop-blur-xl border-t z-50 flex justify-center items-center">
+      <motion.div variants={fadeInUp} className="absolute bottom-0 left-0 right-0 p-6 bg-white/90 backdrop-blur-xl border-t z-50 flex justify-center items-center">
         <Button
           onClick={() => handleSubmit()}
           disabled={saving}
@@ -348,7 +355,7 @@ export default function PharmacySettingsForm() {
             </>
           )}
         </Button>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   )
 }
