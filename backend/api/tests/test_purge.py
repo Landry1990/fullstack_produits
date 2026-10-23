@@ -395,3 +395,33 @@ class MaintenanceBackupRestoreTest(PurgeBase):
             resp = self.client_api.post(reverse('maintenance-backup'))
         self.assertEqual(resp.status_code, 500)
         self.assertIn('Erreur', resp.data['detail'])
+
+
+# ── Recalcul manuel des seuils de stock ────────────────────────────────────────
+
+class StockLevelsRecalcTest(PurgeBase):
+    def test_status_idle(self):
+        resp = self.client_api.get(reverse('maintenance-stock-levels-status'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data['status'], 'idle')
+
+    def test_status_en_cours_depuis_cache(self):
+        cache.set('stock_levels_recalc_job', {
+            'status': 'running', 'step': '10/100 produits',
+            'progress': 10, 'current': 10, 'total': 100,
+        }, timeout=60)
+        resp = self.client_api.get(reverse('maintenance-stock-levels-status'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data['status'], 'running')
+        self.assertEqual(resp.data['current'], 10)
+
+    @patch('api.views.purge.threading.Thread')
+    def test_recalc_lance_thread(self, mock_thread):
+        resp = self.client_api.post(reverse('maintenance-stock-levels-recalc'))
+        self.assertEqual(resp.status_code, 202)
+        mock_thread.assert_called_once()
+
+    def test_recalc_deja_en_cours_409(self):
+        cache.set('stock_levels_recalc_job', {'status': 'running'}, timeout=60)
+        resp = self.client_api.post(reverse('maintenance-stock-levels-recalc'))
+        self.assertEqual(resp.status_code, 409)

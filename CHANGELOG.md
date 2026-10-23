@@ -2,6 +2,121 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-10-23 — ✨ Tableaux : en-têtes sticky au scroll
+
+- `shadcn/table.tsx` : `TableHeader` reçoit `sticky top-0 z-10` — l'en-tête
+  reste visible au scroll dans tous les tableaux utilisant le composant
+  partagé (~49 fichiers : commandes, produits, historiques, rapports…).
+- Sticky appliqué sur le `<thead>` (et non chaque `<th>`) pour supporter les
+  en-têtes multi-lignes (Perimes, StatistiquesFournisseur, GestionDivers…)
+  — le bloc entier colle sans chevauchement.
+- Non couvert : les rares `<table>` natifs hors composant partagé (prints,
+  cas particuliers) — migration au fur et à mesure si besoin.
+
+## 2026-10-23 — ⚡ Perf réseau : assets précompressés gzip au build
+
+- `scripts/precompress.mjs` (postbuild) : génère les `.gz` niveau max pour
+  js/css/html/svg/json (240 fichiers, ~8,6 Mo de transfert gagné).
+- `nginx.conf` : `gzip_static on` — nginx sert le `.gz` précompressé au lieu
+  de gzipper à la volée niveau 1 à chaque requête (module `http_gzip_static`
+  présent dans nginx:alpine). Fallback on-the-fly inchangé.
+- Vérifié live : `index-*.js` servi `content-encoding: gzip`, 10 Ko → 3,2 Ko.
+- Brotli non retenu : pas de module dans nginx:alpine, et sur LAN le
+  transfert n'est pas le goulot — gain réel trop faible pour une image custom.
+- LazyMotion non retenu : 1257 appels `motion.*` à convertir pour ~25 Ko
+  gzip — mauvais rapport risque/gain (un oubli = crash strict).
+
+## 2026-10-23 — ⚡ Perf boot (2e passe) : Dashboard lazy + precache allégé
+
+- **Dashboard lazy** : `DashboardShadcn` n'est plus eager dans `routes.tsx`
+  → chunk dédié `isDynamicEntry`, chargé comme les autres pages. L'entrée
+  perd aussi `vendor-dates` (plus rien d'eager ne l'utilisait) — imports de
+  boot réduits aux vendors core (react, i18n, router, query, http, radix, ui).
+- **Precache allégé** : les grosses libs lazy sortent du precache SW
+  (vendor-pdf 417 Ko, vendor-xlsx 500 Ko, bwip-js 963 Ko, html2canvas,
+  canvg `index.es`, dompurify, react-datepicker, JsBarcode, coerce, qz-tray,
+  worker tesseract) → récupérées à la demande puis gardées par un nouveau
+  runtime cache `CacheFirst` `/assets/*` (hashés → immutables, 30 j).
+  Precache SW : ~8,06 Mo → ~5,5 Mo.
+- **jsPDF lazy au point d'appel** : les 5 utilitaires PDF étaient importés
+  statiquement par leurs pages (Créances, RapportMensuel, ReapproRayon,
+  ReapproHistory, StockValuationReport) → chaque ouverture de page tirait
+  vendor-pdf. Convertis en `await import()` dans les handlers (pattern déjà
+  utilisé dans `useSaleCompletion`).
+
+## 2026-10-23 — ⚡ Perf boot : jsPDF hors du chemin critique + fonts latin only
+
+- **`__vitePreload` dans `vendor-pdf`** : le helper injecté par Vite dans
+  chaque `import()` dynamique avait été placé par Rollup dans `vendor-pdf`
+  → toutes les pages lazy l'importaient statiquement → **417 Ko de jsPDF
+  (136 Ko gzip) téléchargés à chaque boot**. Fix : `\0vite/*` helpers
+  épinglés dans `vendor-core` (toujours chargé en premier). Vérifié via
+  manifest : `vendor-pdf` ne figure plus dans les imports de l'entrée.
+- **Fonts** : `@fontsource/inter/*.css` → `latin-*.css` — les subsets
+  vietnamese/cyrillic/greek/ext n'étaient jamais utilisés (UI fr/en).
+  71 → 11 fichiers de polices, precache SW 257 → 197 entrées.
+
+## 2026-10-23 — 🚑 Fix : page blanche intermittente au boot (chunks circulaires, bis)
+
+- **Symptôme** : dashboard parfois entièrement blanc, surtout au premier
+  démarrage ; un refresh le fait revenir.
+- **Cause** : rechute du bug du 12/10. Les groupes `feature-*` du
+  `manualChunks` créaient 11 imports circulaires entre chunks — vérifié dans
+  `dist/` : `feature-dashboard` ↔ `feature-caisse` (11 symboles dans un
+  sens, 22 dans l'autre). `DashboardShadcn` étant eager, un binding en TDZ
+  crashait avant le montage React → blanc total, intermittent selon l'ordre
+  d'évaluation réseau/cache.
+- **Fix** : suppression de tous les groupes `feature-*` de `CHUNK_GROUPS` —
+  seuls les vendors `node_modules` restent en chunks manuels (acycliques par
+  construction). Rollup découpe les routes lazy et mutualise le code partagé
+  automatiquement → impossible de créer un cycle.
+- **Filet de sécurité** (`main.tsx`) : handler global `error` +
+  `unhandledrejection` qui recharge la page (max 3×, compteur reset après
+  30 s de boot sain) sur erreur de chunk/TDZ — plus jamais de blanc muet.
+- Build vérifié : **0 warning « Circular chunk »**, 167 chunks propres.
+
+## 2026-10-22 — Créances : allègement typographique (font-black → bold)
+
+- La page Créances utilisait `font-black` (900) partout — ~63 occurrences
+  (table, filtres, modals, KPI) alors que les autres pages plafonnent à
+  `font-bold`/`semibold`. Depuis le chargement des vraies graisses Inter
+  800/900 (entrée du 22/10), le rendu était devenu très lourd.
+- `font-black` → `font-bold` dans `Creances.tsx` + tout `components/creances/`
+  (table, filtres, quick stats, modals paiement/détails/bulk).
+
+## 2026-10-22 — Périmés : la sortie de stock retire le lot de l'étagère
+
+- `stock_lots.py` : `sortir_perimes` et `bulk_sortir_perimes` effacent
+  `deplace_peremption_le` quand le lot est vidé — un lot sorti du stock
+  quitte l'étagère « proches péremption ». Avant, le flag survivait et un
+  lot restauré (`restaurer_sortie_perimee`) réapparaissait sur l'étagère.
+  Sortie partielle → flag conservé (unités restantes encore sur l'étagère).
+- `Perimes.tsx` : bouton **« Sortir »** ajouté à la barre de sélection de
+  l'onglet Étagère (même endpoint `bulk_sortir_perimes` + sudo, extrait en
+  helper `bulkSortirLots` partagé avec l'onglet Liste) — on peut sortir les
+  lots directement depuis l'étagère. `fetchShelf()` appelé après chaque
+  sortie pour garder le badge/compteur à jour.
+- Tests : 3 cas dans `test_expired_lot_handling` (sortie totale → flag
+  effacé, partielle → conservé, groupée → effacé).
+
+## 2026-10-22 — Maintenance : déclencheur manuel du recalcul des seuils min/max
+
+- `signals_stock_levels.py` : `progress_callback` optionnel sur
+  `calculate_and_apply_stock_levels()` / `monthly_stock_levels_update()`
+  (appelé `(traités, total)` à chaque produit) — comportement inchangé sinon.
+- `views/purge.py` (`PurgeViewSet`, admin only) : 2 nouveaux endpoints —
+  `POST maintenance/stock_levels_recalc/` lance en thread la même séquence
+  que le job mensuel du scheduler (seuils + `recalculate_analytics` +
+  `last_stock_analytics_run`), progression stockée dans le cache
+  (`stock_levels_recalc_job`, 409 si déjà en cours) ; `GET
+  maintenance/stock_levels_status/` retourne l'état pour le polling.
+- Frontend : `useStockLevelsRecalc.ts` (lancement + polling 2 s, reprise si
+  un job tourne déjà) et `StockLevelsCard.tsx` (bouton, barre `Progress`,
+  étape `n/N produits`, résultat) ajoutés à l'onglet Nettoyage de la page
+  Maintenance. Clés i18n `stock_levels.*` fr + en.
+- Tests : `test_purge.py::StockLevelsRecalcTest` (idle, état cache, lancement
+  202, conflit 409) + `test_progress_callback_invoked_per_product`.
+
 ## 2026-10-22 — Review working changes : correctifs post-motion
 
 - `JournalAudit.tsx` : `onRetry={fetchAll}` référençait une fonction inexistante

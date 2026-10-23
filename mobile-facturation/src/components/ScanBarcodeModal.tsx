@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Modal, View, Text, TouchableOpacity, ActivityIndicator,
-  StyleSheet, Vibration, Switch, Platform,
+  StyleSheet, Vibration, Switch, useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -27,6 +27,10 @@ interface Props {
 export function ScanBarcodeModal({ visible, onResolve, onAdd, onClose }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
+  // Fenêtre caméra compacte (~36 % de l'écran, plafonnée) — le modal ne
+  // couvre plus tout l'écran, l'écran de vente reste visible derrière.
+  const cameraHeight = Math.min(ms(300), windowHeight * 0.36);
   const [permission, requestPermission] = useCameraPermissions();
   const { autoAddScan, setAutoAddScan } = useSettingsStore();
   const totalArticles = useCartStore((s) => s.totalArticles());
@@ -259,38 +263,54 @@ export function ScanBarcodeModal({ visible, onResolve, onAdd, onClose }: Props) 
   };
 
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <View style={[styles.container, {
-        paddingBottom: Math.min(insets.bottom, 24),
-        paddingLeft: insets.left,
-        paddingRight: insets.right,
-      }]}>
-        <View style={[styles.header, { paddingTop: 14 + (Platform.OS === 'web' ? 0 : insets.top) }]}>
-          <Text style={styles.title}>{t('scan.title')}</Text>
-          <View style={styles.headerRight}>
-            <Text style={styles.switchLabel}>{t('scan.auto_add')}</Text>
-            <Switch
-              value={autoAddScan}
-              onValueChange={setAutoAddScan}
-              trackColor={{ false: theme.borderStrong, true: theme.primary }}
-              thumbColor="#fff"
-            />
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-              <X size={ms(22)} color={theme.text} />
-            </TouchableOpacity>
+    <Modal visible={visible} animationType="slide" transparent statusBarTranslucent onRequestClose={onClose}>
+      <View style={styles.overlay}>
+        {/* Zone haute : l'écran de vente reste visible (assombri) —
+            tap dessus pour fermer le scanner */}
+        <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
+        <View style={[styles.sheet, {
+          paddingBottom: Math.min(insets.bottom, 24),
+          paddingLeft: insets.left,
+          paddingRight: insets.right,
+        }]}>
+          <View style={styles.header}>
+            <Text style={styles.title}>{t('scan.title')}</Text>
+            <View style={styles.headerRight}>
+              <Text style={styles.switchLabel}>{t('scan.auto_add')}</Text>
+              <Switch
+                value={autoAddScan}
+                onValueChange={setAutoAddScan}
+                trackColor={{ false: theme.borderStrong, true: theme.primary }}
+                thumbColor="#fff"
+              />
+              <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+                <X size={ms(22)} color={theme.text} />
+              </TouchableOpacity>
+            </View>
           </View>
+
+          <View style={[styles.body, { height: cameraHeight }]}>{renderBody()}</View>
+
+          <View style={styles.footer}>{renderFooter()}</View>
         </View>
-
-        <View style={styles.body}>{renderBody()}</View>
-
-        <View style={styles.footer}>{renderFooter()}</View>
       </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.bg },
+  overlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(15,23,42,0.45)',
+  },
+  backdrop: { flex: 1 },
+  sheet: {
+    backgroundColor: theme.bg,
+    borderTopLeftRadius: ms(18),
+    borderTopRightRadius: ms(18),
+    overflow: 'hidden',
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -305,7 +325,7 @@ const styles = StyleSheet.create({
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: ms(10) },
   switchLabel: { fontSize: ms(12), color: theme.textMuted },
   closeBtn: { padding: ms(6) },
-  body: { flex: 1, justifyContent: 'center' },
+  body: { justifyContent: 'center' },
   cameraWrap: { flex: 1, backgroundColor: '#000' },
   camera: { flex: 1 },
   frame: {

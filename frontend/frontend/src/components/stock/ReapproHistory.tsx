@@ -15,7 +15,6 @@ import {
 } from 'lucide-react';
 import produitService from '../../services/produitService';
 import { formatDate } from '../../utils/dateUtils';
-import { generateReapproSessionPdfDraft } from '../../utils/print/reapproSessionPdfDraft';
 import { usePharmacySettings } from '../../hooks/usePharmacySettings';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -90,6 +89,7 @@ export default function ReapproHistory() {
   const handleDownloadPdf = async (session: ReapproSession) => {
     setDownloadingId(session.id);
     try {
+      const { generateReapproSessionPdfDraft } = await import('../../utils/print/reapproSessionPdfDraft');
       generateReapproSessionPdfDraft(session, settings).save(
         `reappro_session_${session.id}_${new Date(session.created_at).toISOString().slice(0, 10).replace(/-/g, '')}.pdf`
       );

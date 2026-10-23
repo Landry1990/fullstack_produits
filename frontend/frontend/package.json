@@ -12,7 +12,8 @@
     "test": "vitest",
     "test:run": "vitest run",
     "doctor": "npx react-doctor@latest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "postbuild": "node scripts/precompress.mjs"
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.8",

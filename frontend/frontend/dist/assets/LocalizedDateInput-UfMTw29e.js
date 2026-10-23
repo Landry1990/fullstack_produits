@@ -1,0 +1,1 @@
+import{r as t}from"./vendor-core-DruQiq2h.js";import{u as n}from"./vendor-i18n-FHetUBVu.js";const u=a=>{const{i18n:e}=n();return t.createElement("input",{...a,key:`${a.name??"date"}-${e.language}-${a.value??""}`,type:"date",lang:e.language})};export{u as L};

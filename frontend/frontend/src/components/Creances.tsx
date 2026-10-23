@@ -54,7 +54,7 @@ export default function Creances() {
                                     <Wallet className="size-6" />
                                 </div>
                                 <div>
-                                    <h1 className="text-2xl font-black text-slate-800 tracking-tight">
+                                    <h1 className="text-2xl font-bold text-slate-800 tracking-tight">
                                         {t('creances:title')}
                                     </h1>
                                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-0.5">
@@ -68,17 +68,17 @@ export default function Creances() {
                         {data.filters.selectedClient && data.selectedIds.length > 0 && !data.filters.showHistory && (
                             <div className="flex items-center gap-3 animate-in fade-in zoom-in duration-300">
                                 <div className="flex flex-col items-end">
-                                    <span className="text-caption font-black uppercase tracking-widest text-slate-400">{t('creances:selection')}</span>
-                                    <span className="text-sm font-black text-emerald-600">{t('creances:invoices_count', { count: data.selectedIds.length })}</span>
+                                    <span className="text-caption font-bold uppercase tracking-widest text-slate-400">{t('creances:selection')}</span>
+                                    <span className="text-sm font-bold text-emerald-600">{t('creances:invoices_count', { count: data.selectedIds.length })}</span>
                                 </div>
                                 <div className="h-8 w-px bg-slate-200"></div>
                                 <div className="flex flex-col items-end mr-2">
-                                    <span className="text-caption font-black uppercase tracking-widest text-slate-400">{t('creances:total_due')}</span>
-                                    <span className="text-sm font-black text-slate-800">{formatCurrency(Math.round(bulkTotalAmount))}</span>
+                                    <span className="text-caption font-bold uppercase tracking-widest text-slate-400">{t('creances:total_due')}</span>
+                                    <span className="text-sm font-bold text-slate-800">{formatCurrency(Math.round(bulkTotalAmount))}</span>
                                 </div>
                                 <button
                                     onClick={actions.actions.handleBulkPayment}
-                                    className="inline-flex items-center justify-center h-8 px-6 rounded-lg text-xs font-black uppercase tracking-widest bg-emerald-600 text-white shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-colors"
+                                    className="inline-flex items-center justify-center h-8 px-6 rounded-lg text-xs font-bold uppercase tracking-widest bg-emerald-600 text-white shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-colors"
                                 >
                                     <DollarSign className="size-4 mr-2" />
                                     {t('creances:pay_selection')}

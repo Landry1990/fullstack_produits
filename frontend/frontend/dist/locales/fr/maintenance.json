@@ -187,6 +187,19 @@
     "section_import": "IMPORT",
     "section_export": "EXPORT",
     "section_purge": "PURGE",
+    "stock_levels": {
+        "title": "Seuils de stock (min/max)",
+        "description": "Recalcule les seuils mini/maxi et les rotations à partir de l'historique des ventes — normalement automatique le 1er du mois. Les seuils saisis manuellement seront écrasés pour les produits vendus.",
+        "run_now": "Recalculer maintenant",
+        "running": "Recalcul en cours...",
+        "done": "{{count}} produit(s) mis à jour",
+        "toasts": {
+            "started": "Recalcul des seuils lancé",
+            "done": "Recalcul terminé : {{count}} produit(s) mis à jour",
+            "error": "Erreur lors du recalcul des seuils",
+            "timeout": "Le recalcul prend trop de temps."
+        }
+    },
     "retention": {
         "title": "Rétention automatique",
         "description": "Supprime automatiquement les données anciennes selon les durées de conservation ci-dessous.",

@@ -1151,3 +1151,95 @@ class PurgeViewSet(ViewSet):
             'message': 'Mise à jour manuelle démarrée.',
             'poll_url': 'maintenance/update_status/',
         })
+
+    # ── Recalcul manuel des seuils de stock (min/max) ──────────────────────
+
+    def _run_stock_levels_thread(self):
+        """Même séquence que le job mensuel du scheduler : seuils + analytics."""
+        from api.models.settings import PharmacySettings
+        from api.signals_stock_levels import monthly_stock_levels_update
+
+        cache_key = 'stock_levels_recalc_job'
+        cache.set(cache_key, {
+            'status': 'running',
+            'step': 'Démarrage',
+            'progress': 0,
+            'current': 0,
+            'total': 0,
+            'updated': 0,
+            'started_at': timezone.now().isoformat(),
+            'finished_at': None,
+        }, timeout=7200)
+
+        try:
+            def on_progress(done, total):
+                state = cache.get(cache_key) or {}
+                state['current'] = done
+                state['total'] = total
+                # 90% pour les seuils, 10% pour le recalcul des rotations
+                state['progress'] = int(done / total * 90) if total else 0
+                state['step'] = f'{done}/{total} produits'
+                cache.set(cache_key, state, timeout=7200)
+
+            updated = monthly_stock_levels_update(progress_callback=on_progress)
+
+            state = cache.get(cache_key) or {}
+            state['step'] = 'Rotations et marges'
+            state['progress'] = 92
+            cache.set(cache_key, state, timeout=7200)
+
+            call_command('recalculate_analytics')
+
+            pharmacy_settings, _ = PharmacySettings.objects.get_or_create(pk=1)
+            pharmacy_settings.last_stock_analytics_run = timezone.now()
+            pharmacy_settings.save(update_fields=['last_stock_analytics_run'])
+
+            state = cache.get(cache_key) or {}
+            state['status'] = 'done'
+            state['step'] = 'Terminé'
+            state['progress'] = 100
+            state['updated'] = updated
+            state['finished_at'] = timezone.now().isoformat()
+            cache.set(cache_key, state, timeout=7200)
+        except Exception as e:
+            logger.error(f"[StockLevels] Erreur recalcul manuel: {e}", exc_info=True)
+            state = cache.get(cache_key) or {}
+            state['status'] = 'error'
+            state['step'] = f'Erreur: {e!s}'
+            state['finished_at'] = timezone.now().isoformat()
+            cache.set(cache_key, state, timeout=7200)
+
+    @action(detail=False, methods=['get'])
+    def stock_levels_status(self, request):
+        """Retourne l'état courant du recalcul des seuils de stock."""
+        state = cache.get('stock_levels_recalc_job')
+        if not state:
+            return Response({'status': 'idle', 'step': 'Aucun recalcul en cours', 'progress': 0})
+        return Response(state)
+
+    @action(detail=False, methods=['post'])
+    def stock_levels_recalc(self, request):
+        """Lance en arrière-plan le recalcul des seuils min/max + rotations."""
+        existing = cache.get('stock_levels_recalc_job')
+        if existing and existing.get('status') == 'running':
+            return Response({'detail': 'Un recalcul des seuils est déjà en cours.'}, status=status.HTTP_409_CONFLICT)
+
+        t = threading.Thread(target=self._run_stock_levels_thread, daemon=True)
+        t.start()
+
+        from api.audit_helpers import log_audit
+        from api.models.audit import AuditLog
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.OTHER,
+            model_name='Maintenance',
+            object_id=0,
+            description="Recalcul manuel des seuils de stock (min/max) lancé",
+            request=request,
+        )
+
+        return Response({
+            'status': 'running',
+            'message': 'Recalcul des seuils démarré.',
+            'poll_url': 'maintenance/stock_levels_status/',
+        }, status=status.HTTP_202_ACCEPTED)

@@ -63,7 +63,7 @@ export const CreancesQuickStats: React.FC<CreancesQuickStatsProps> = ({
                         <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                             {stat.label}
                         </div>
-                        <div className="text-xl font-black text-slate-800 mt-0.5">
+                        <div className="text-xl font-bold text-slate-800 mt-0.5">
                             {stat.value}
                         </div>
                     </div>

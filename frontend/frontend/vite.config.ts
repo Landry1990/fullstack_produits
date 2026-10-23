@@ -3,10 +3,13 @@ import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
-// Regroupement des chunks. Les modules Radix UI et leurs dépendances proches
-// doivent vivre dans un seul chunk vendor : éparpillés dans les feature chunks
-// (selon le premier importateur), ils créent des imports circulaires entre
-// chunks qui laissent des bindings non initialisés (crash `displayName` au boot).
+// Regroupement des chunks VENDOR uniquement (node_modules).
+// Les pages/features ne doivent PAS avoir de chunk manuel : des groupes
+// feature-* imposés créent des imports circulaires entre chunks (modules
+// partagés placés selon le premier importateur) qui laissent des bindings
+// non initialisés à l'évaluation → page blanche au boot, intermittente
+// selon l'ordre réseau. Rollup découpe les routes lazy et mutualise le
+// code partagé automatiquement, sans cycle.
 const RADIX_CHUNK_DEPS = [
   '@radix-ui',
   'aria-hidden',
@@ -31,29 +34,6 @@ const CHUNK_GROUPS: Record<string, string[]> = {
   // Heavy libs - isolated so they don't bloat the main chunk
   'vendor-pdf': ['jspdf', 'jspdf-autotable'],
   'vendor-xlsx': ['xlsx'],
-  // Feature inventory découpé en sous-chunks
-  'feature-inventory': ['/src/components/Inventaire'],
-  'feature-inventory-editor': ['/src/components/inventaire/editor/InventaireEditor'],
-  'feature-inventory-states': ['/src/components/EtatsInventaire', '/src/components/Organisation'],
-  // Reports
-  'feature-reports': ['/src/components/RapportMensuel', '/src/components/CentreRapports', '/src/components/AnalyseABC'],
-  // History
-  'feature-history': ['/src/components/HistoriqueVentes', '/src/components/HistoriqueAchats', '/src/components/HistoriqueClotures'],
-  // Caisse & cash register
-  'feature-caisse': ['/src/components/CaisseCentralisee', '/src/components/JournalCaisse'],
-  // Settings & admin
-  'feature-settings': ['/src/components/settings/PharmacySettingsForm', '/src/components/users/GestionUtilisateurs', '/src/components/SystemAdmin'],
-  // Dashboard
-  'feature-dashboard': ['/src/components/DashboardManagerShadcn', '/src/components/DashboardShadcn'],
-  // Produits & facturation (pages principales mais lazy-loaded)
-  'feature-produits': ['/src/components/ProduitShadcn'],
-  'feature-ventes': ['/src/components/Ventes', '/src/components/Facturation'],
-  // Commandes
-  'feature-commandes': ['/src/components/Commandes'],
-  // Compta
-  'feature-compta': ['/src/components/compta/Comptabilite'],
-  // Printing
-  'feature-printing': ['/src/components/printing/PrintPage'],
 };
 
 // https://vite.dev/config/
@@ -70,7 +50,16 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,ttf}'],
         // maintenance.html est servi par nginx en `internal` (404 externe) —
         // le precacher ferait échouer l'install du service worker.
-        globIgnores: ['**/*tesseract*.wasm*', '**/tesseract*.js', 'maintenance.html'],
+        // Les grosses libs lazy (pdf/xlsx/barcode/ocr…) sont exclues du
+        // precache : elles sont récupérées à la demande puis gardées par le
+        // runtime cache CacheFirst ci-dessous (noms hashés → immutables).
+        globIgnores: [
+          '**/*tesseract*', '**/worker.min-*.js', 'maintenance.html',
+          '**/vendor-pdf-*.js', '**/vendor-xlsx-*.js', '**/bwip-js-*.js',
+          '**/html2canvas*.js', '**/purify.es-*.js', '**/index.es-*.js',
+          '**/react-datepicker-*', '**/qz-tray-*.js', '**/JsBarcode-*.js',
+          '**/coerce-*.js',
+        ],
         // Ne pas intercepter les requêtes API — elles doivent toujours atteindre le backend
         navigateFallbackDenylist: [/^\/api\/.*/],
         runtimeCaching: [
@@ -108,6 +97,16 @@ export default defineConfig({
               networkTimeoutSeconds: 5,
               expiration: { maxEntries: 1, maxAgeSeconds: 60 }
             }
+          },
+          // Assets hashés non précachés (libs lazy) — immutables → CacheFirst.
+          // Après la 1re utilisation elles restent en cache 30 j.
+          {
+            urlPattern: /\/assets\/.*\.(?:js|css|woff2?)$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'lazy-assets',
+              expiration: { maxEntries: 400, maxAgeSeconds: 60 * 60 * 24 * 30 }
+            }
           }
         ]
       },
@@ -142,6 +141,14 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id: string) {
+          // Helpers internes Vite (`\0vite/preload-helper` = __vitePreload,
+          // utilisé par CHAQUE import() dynamique) — doivent vivre dans le
+          // chunk core. Sinon Rollup les place dans un chunk arbitraire
+          // (observé : vendor-pdf) qui devient dépendance statique de
+          // toutes les pages → 400 Ko de jsPDF téléchargés à chaque boot.
+          if (id.includes('preload-helper') || id.startsWith('\0vite')) {
+            return 'vendor-core';
+          }
           // Radix UI + dépendances partagées dans un chunk dédié
           if (RADIX_CHUNK_DEPS.some(p => id.includes(`node_modules/${p}`))) {
             return 'vendor-radix';

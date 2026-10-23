@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Alert } from 'react-native';
 import i18n from '../i18n';
 import { useCartStore } from '../stores/useCartStore';
@@ -17,17 +17,36 @@ export function useProductSearch(opts?: { onAdded?: () => void }) {
   const [results, setResults] = useState<Product[]>([]);
   const [searching, setSearching] = useState(false);
 
+  // N° de requête : une réponse lente d'une frappe plus ancienne ne doit
+  // jamais écraser les résultats de la requête courante.
+  const reqSeq = useRef(0);
+  // Mini-cache des dernières recherches : « dol » → « doli » → effacer ne
+  // refait pas un aller-retour serveur pour un résultat déjà connu.
+  const cacheRef = useRef<Map<string, Product[]>>(new Map());
+
   useEffect(() => {
     const timer = setTimeout(async () => {
-      if (searchQuery.length >= 2) {
-        setSearching(true);
-        try {
-          const data = await searchProducts(searchQuery);
-          setResults(data);
-        } catch {}
-        setSearching(false);
-      } else {
+      const q = searchQuery.trim();
+      if (q.length < 2) {
         setResults([]);
+        return;
+      }
+      const cached = cacheRef.current.get(q);
+      if (cached) {
+        setResults(cached);
+        return;
+      }
+      const seq = ++reqSeq.current;
+      setSearching(true);
+      try {
+        const data = await searchProducts(q);
+        if (seq !== reqSeq.current) return; // réponse obsolète
+        setResults(data);
+        const cache = cacheRef.current;
+        cache.set(q, data);
+        if (cache.size > 50) cache.delete(cache.keys().next().value!);
+      } catch {} finally {
+        if (seq === reqSeq.current) setSearching(false);
       }
     }, 300);
     return () => clearTimeout(timer);

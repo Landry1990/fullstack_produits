@@ -7,7 +7,6 @@ import { formatCurrency } from '../utils/formatters';
 import { formatDate } from '../utils/dateUtils';
 import { useTranslation } from 'react-i18next';
 import { usePharmacySettings } from '../context/PharmacySettingsContext';
-import { generateMonthlyReportPdfDraft } from '../utils/print/reportPdfDraft';
 import { logger } from '../utils/logger'
 import { LocalizedDateInput } from './LocalizedDateInput';
 import { ReportTableHead } from './common/ReportTableHead';
@@ -229,6 +228,7 @@ export default function RapportMensuel() {
                 if (!rapport) return;
                 setPdfLoading(true);
                 try {
+                  const { generateMonthlyReportPdfDraft } = await import('../utils/print/reportPdfDraft');
                   await generateMonthlyReportPdfDraft(rapport, settings, periodeLabel);
                   gooeyToast.success(t('messages.pdf_success', { defaultValue: 'PDF généré avec succès' }));
                 } catch (error) {

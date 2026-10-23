@@ -354,6 +354,7 @@ export default function Perimes() {
         })
         gooeyToast.success(t('perimes.messages.success_exit'))
         fetchLots()
+        fetchShelf()
         fetchStats() 
       } catch (err) {
         logger.error('Erreur sortie stock:', err);
@@ -400,13 +401,13 @@ export default function Perimes() {
     })
   }
 
-  const handleBulkSortir = async () => {
-      if (selectedLotIds.size === 0) return
-      const selectedLots = lots.filter(lot => selectedLotIds.has(lot.id))
-      const totalQuantity = selectedLots.reduce((sum, lot) => sum + lot.quantity_remaining, 0)
+  // Sortie groupée commune aux onglets Liste et Étagère : les lots vidés
+  // quittent automatiquement l'étagère côté backend (flag effacé).
+  const bulkSortirLots = async (lotIds: number[], totalQuantity: number) => {
+      if (lotIds.length === 0) return
       const confirmed = await confirm({
         title: t('perimes.confirm.bulk_exit_title'),
-        message: t('perimes.confirm.bulk_exit_summary', { count: selectedLots.length, quantity: totalQuantity }),
+        message: t('perimes.confirm.bulk_exit_summary', { count: lotIds.length, quantity: totalQuantity }),
         variant: 'danger',
         confirmText: t('perimes.table.exit_btn')
       })
@@ -416,13 +417,16 @@ export default function Perimes() {
           try {
               setProcessing(true)
               await api.post('stock-lots/bulk_sortir_perimes/', {
-                  lot_ids: Array.from(selectedLotIds),
+                  lot_ids: lotIds,
                   reason: t('stock:perimes.confirm.bulk_exit_title'),
                   validated_by_id: validatorId,
                   sudo_password: password
               })
-              gooeyToast.success(t('perimes.messages.success_bulk_exit', { count: selectedLotIds.size }))
+              gooeyToast.success(t('perimes.messages.success_bulk_exit', { count: lotIds.length }))
+              setSelectedLotIds(new Set())
+              setSelectedShelfIds(new Set())
               fetchLots()
+              fetchShelf()
               fetchStats()
           } catch (err) {
               logger.error('Erreur sortie groupée:', err)
@@ -433,9 +437,23 @@ export default function Perimes() {
           }
       }, {
           title: t('perimes.confirm.bulk_exit_title'),
-          message: t('perimes.confirm.bulk_exit_message', { count: selectedLotIds.size }),
+          message: t('perimes.confirm.bulk_exit_message', { count: lotIds.length }),
           permission: 'can_manage_perimes'
       })
+  }
+
+  const handleBulkSortir = async () => {
+      if (selectedLotIds.size === 0) return
+      const selectedLots = lots.filter(lot => selectedLotIds.has(lot.id))
+      const totalQuantity = selectedLots.reduce((sum, lot) => sum + lot.quantity_remaining, 0)
+      bulkSortirLots(Array.from(selectedLotIds), totalQuantity)
+  }
+
+  const handleBulkSortirShelf = async () => {
+      if (selectedShelfIds.size === 0) return
+      const selectedLots = shelfLots.filter(lot => selectedShelfIds.has(lot.id))
+      const totalQuantity = selectedLots.reduce((sum, lot) => sum + lot.quantity_remaining, 0)
+      bulkSortirLots(Array.from(selectedShelfIds), totalQuantity)
   }
 
   // Export Excel de la liste telle qu'affichée : en mode groupé, l'ordre
@@ -1040,6 +1058,16 @@ export default function Perimes() {
                       <PinOff className="size-4" />
                       {t('perimes.shelf.unmark')}
                       <Badge variant="secondary">{selectedShelfIds.size}</Badge>
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="gap-2"
+                      onClick={handleBulkSortirShelf}
+                      disabled={processing}
+                    >
+                      <Trash2 className="size-4" />
+                      {t('perimes.table.exit_btn')}
                     </Button>
                     <Button
                       variant="ghost"

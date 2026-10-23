@@ -187,6 +187,19 @@
     "section_import": "IMPORT",
     "section_export": "EXPORT",
     "section_purge": "PURGE",
+    "stock_levels": {
+        "title": "Stock thresholds (min/max)",
+        "description": "Recalculates min/max thresholds and rotations from sales history — normally runs automatically on the 1st of each month. Manually entered thresholds will be overwritten for products with sales.",
+        "run_now": "Recalculate now",
+        "running": "Recalculating...",
+        "done": "{{count}} product(s) updated",
+        "toasts": {
+            "started": "Threshold recalculation started",
+            "done": "Recalculation finished: {{count}} product(s) updated",
+            "error": "Error while recalculating thresholds",
+            "timeout": "The recalculation is taking too long."
+        }
+    },
     "retention": {
         "title": "Automatic retention",
         "description": "Automatically deletes old data according to the retention periods below.",

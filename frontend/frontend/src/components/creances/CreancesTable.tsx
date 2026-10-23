@@ -74,12 +74,12 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                 <table className="w-full min-w-[900px] text-sm">
                     <thead>
                         <tr className="bg-slate-50">
-                            <th className="text-caption font-black uppercase tracking-widest text-slate-400 py-2 px-3">{t('creances:client_list.client')}</th>
-                            <th className="text-caption font-black uppercase tracking-widest text-slate-400 text-right py-2 px-3">{t('creances:client_list.nb_invoices')}</th>
-                            <th className="text-caption font-black uppercase tracking-widest text-slate-400 text-right py-2 px-3">{t('creances:client_list.total_amount')}</th>
-                            <th className="text-caption font-black uppercase tracking-widest text-slate-400 text-right py-2 px-3">{t('creances:client_list.already_paid')}</th>
-                            <th className="text-caption font-black uppercase tracking-widest text-slate-400 text-right py-2 px-3">{t('creances:client_list.remaining_due')}</th>
-                            <th className="text-caption font-black uppercase tracking-widest text-slate-400 text-center py-2 px-3">{t('creances:client_list.actions')}</th>
+                            <th className="text-caption font-bold uppercase tracking-widest text-slate-400 py-2 px-3">{t('creances:client_list.client')}</th>
+                            <th className="text-caption font-bold uppercase tracking-widest text-slate-400 text-right py-2 px-3">{t('creances:client_list.nb_invoices')}</th>
+                            <th className="text-caption font-bold uppercase tracking-widest text-slate-400 text-right py-2 px-3">{t('creances:client_list.total_amount')}</th>
+                            <th className="text-caption font-bold uppercase tracking-widest text-slate-400 text-right py-2 px-3">{t('creances:client_list.already_paid')}</th>
+                            <th className="text-caption font-bold uppercase tracking-widest text-slate-400 text-right py-2 px-3">{t('creances:client_list.remaining_due')}</th>
+                            <th className="text-caption font-bold uppercase tracking-widest text-slate-400 text-center py-2 px-3">{t('creances:client_list.actions')}</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -98,26 +98,26 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                             >
                                 <td className="py-2 px-3">
                                     <div className="flex items-center gap-2">
-                                        <div className="size-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 font-black text-xs uppercase shadow-sm border border-emerald-200 group-hover:scale-110 transition-transform">
+                                        <div className="size-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 font-bold text-xs uppercase shadow-sm border border-emerald-200 group-hover:scale-110 transition-transform">
                                             {groupe.client.name.substring(0, 2)}
                                         </div>
                                         <div className="flex flex-col">
-                                            <span className="font-black text-sm text-slate-800 group-hover:text-emerald-600 transition-colors">{groupe.client.name}</span>
+                                            <span className="font-bold text-sm text-slate-800 group-hover:text-emerald-600 transition-colors">{groupe.client.name}</span>
                                             <span className="text-caption font-bold text-slate-400 uppercase tracking-widest">{t('creances:client_type_label')}</span>
                                         </div>
                                     </div>
                                 </td>
                                 <td className="text-right py-2 px-3">
-                                    <span className="px-2 py-1 bg-slate-100 rounded-lg font-mono text-xs font-black text-slate-500">{groupe.count}</span>
+                                    <span className="px-2 py-1 bg-slate-100 rounded-lg font-mono text-xs font-bold text-slate-500">{groupe.count}</span>
                                 </td>
                                 <td className="text-right py-2 px-3">
-                                    <span className="font-black text-sm text-slate-800">{formatCurrency(groupe.total)}</span>
+                                    <span className="font-bold text-sm text-slate-800">{formatCurrency(groupe.total)}</span>
                                 </td>
                                 <td className="text-right py-2 px-3 font-bold text-emerald-600 text-sm">
                                     {formatCurrency(groupe.paye)}
                                 </td>
                                 <td className="text-right py-2 px-3">
-                                    <span className="bg-amber-50 text-amber-600 px-2.5 py-1 rounded-lg font-black text-sm shadow-sm border border-amber-200">
+                                    <span className="bg-amber-50 text-amber-600 px-2.5 py-1 rounded-lg font-bold text-sm shadow-sm border border-amber-200">
                                         {formatCurrency(groupe.reste)}
                                     </span>
                                 </td>
@@ -178,7 +178,7 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                         ] as const).map((col) => (
                             <th
                                 key={col.key}
-                                className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 text-caption font-black uppercase tracking-widest text-slate-400 cursor-pointer hover:text-emerald-600 transition-colors h-9 px-3 whitespace-nowrap"
+                                className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 text-caption font-bold uppercase tracking-widest text-slate-400 cursor-pointer hover:text-emerald-600 transition-colors h-9 px-3 whitespace-nowrap"
                                 onClick={() => onSort(col.key)}
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter' || e.key === ' ') {
@@ -194,8 +194,8 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                                 </div>
                             </th>
                         ))}
-                        <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 text-caption font-black uppercase tracking-widest text-slate-400 text-center h-9 px-3">{t('creances:invoice_list.status')}</th>
-                        <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 text-caption font-black uppercase tracking-widest text-slate-400 text-center h-9 px-3">{t('creances:invoice_list.actions')}</th>
+                        <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 text-caption font-bold uppercase tracking-widest text-slate-400 text-center h-9 px-3">{t('creances:invoice_list.status')}</th>
+                        <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 text-caption font-bold uppercase tracking-widest text-slate-400 text-center h-9 px-3">{t('creances:invoice_list.actions')}</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -221,7 +221,7 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                                 )}
                                 <td className="py-2 px-3">
                                     <div className="flex flex-col">
-                                        <span className="font-mono text-xs font-black text-slate-500">
+                                        <span className="font-mono text-xs font-bold text-slate-500">
                                             {formatDate(creance.date)}
                                         </span>
                                         <span className="text-caption font-bold text-slate-400 uppercase tracking-widest">
@@ -230,13 +230,13 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                                     </div>
                                 </td>
                                 <td className="py-2 px-3">
-                                    <span className="font-black text-sm text-emerald-600 tracking-tight">{creance.numero_facture || '-'}</span>
+                                    <span className="font-bold text-sm text-emerald-600 tracking-tight">{creance.numero_facture || '-'}</span>
                                 </td>
                                 <td className="py-2 px-3 font-bold text-sm text-slate-500">{creance.ayant_droit_details?.nom || '-'}</td>
-                                <td className="py-2 px-3 text-right font-black text-sm text-slate-800 tabular-nums whitespace-nowrap">{formatCurrency(normalizeNumberInput(creance.total_ttc))}</td>
-                                <td className="py-2 px-3 text-right text-emerald-600 font-black text-sm tabular-nums whitespace-nowrap">{formatCurrency(normalizeNumberInput(creance.montant_paye))}</td>
+                                <td className="py-2 px-3 text-right font-bold text-sm text-slate-800 tabular-nums whitespace-nowrap">{formatCurrency(normalizeNumberInput(creance.total_ttc))}</td>
+                                <td className="py-2 px-3 text-right text-emerald-600 font-bold text-sm tabular-nums whitespace-nowrap">{formatCurrency(normalizeNumberInput(creance.montant_paye))}</td>
                                 <td className="py-2 px-3 text-right">
-                                    <span className={`${isPaid ? 'text-slate-300' : 'text-amber-600'} font-black text-sm tabular-nums whitespace-nowrap`}>
+                                    <span className={`${isPaid ? 'text-slate-300' : 'text-amber-600'} font-bold text-sm tabular-nums whitespace-nowrap`}>
                                         {formatCurrency(remaining)}
                                     </span>
                                 </td>
