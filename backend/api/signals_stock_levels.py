@@ -79,31 +79,37 @@ def calculate_ventes_mensuelles(produit):
     return 0.0
 
 
-def calculate_and_apply_stock_levels(produit_id=None):
+def calculate_and_apply_stock_levels(produit_id=None, progress_callback=None):
     """
     Calcule et applique les seuils min/max pour un produit ou tous les produits.
-    
+
     Formule:
     - MINIMUM = (ventes_mensuelles / 30) × délai_livraison
     - MAXIMUM = ventes_mensuelles × 1.2
-    
+
     Args:
         produit_id: Si None, calcule pour tous les produits
-    
+        progress_callback: optionnel, appelé (traités, total) à chaque produit
+
     Returns:
         Nombre de produits mis à jour
     """
     # Délai par défaut pour fournisseurs locaux (même jour ou 2 jours max)
-    
+
     updated_count = 0
-    
+
     # Sélectionner les produits
     if produit_id:
         produits = Produit.objects.filter(id=produit_id)
     else:
         produits = Produit.objects.all()
-    
+
+    total = produits.count()
+    processed = 0
     for produit in produits:
+        processed += 1
+        if progress_callback:
+            progress_callback(processed, total)
         try:
             # 1. Calculer les ventes mensuelles (30 derniers jours)
             thresholds = calculate_stock_thresholds(produit)
@@ -183,13 +189,13 @@ def update_stock_levels_on_invoice_save(sender, instance, update_fields=None, **
     _schedule_stock_levels_update(produit_ids)
 
 
-def monthly_stock_levels_update():
+def monthly_stock_levels_update(progress_callback=None):
     """
     Recalcule les seuils pour TOUS les produits.
     À exécuter le 1er de chaque mois via le scheduler.
     """
     print(f"[StockLevels] Début recalcul mensuel - {timezone.now()}")
-    updated = calculate_and_apply_stock_levels()
+    updated = calculate_and_apply_stock_levels(progress_callback=progress_callback)
     
     # Invalider le cache produit pour forcer le rechargement des nouvelles valeurs min/max
     if updated > 0:

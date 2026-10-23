@@ -47,10 +47,8 @@ import Login from './components/LoginShadcn';
 import Layout from './components/Layout';
 import LicenceScreen from './components/LicenceScreen';
 
-// Dashboard eager pour premier écran rapide
-import Dashboard from './components/DashboardShadcn';
-
 // ── Lazy-loaded pages (routes secondaires) ──
+const Dashboard = lazyWithRetry(() => import('./components/DashboardShadcn'));
 const PrintPage = lazyWithRetry(() => import('./components/printing/PrintPage'));
 const DashboardManager = lazyWithRetry(() => import('./components/DashboardManagerShadcn'));
 const Produit = lazyWithRetry(() => import('./components/ProduitShadcn'));

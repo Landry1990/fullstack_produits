@@ -4,17 +4,20 @@ import { Button } from '../shadcn/button';
 import { LocalizedDateInput } from '../LocalizedDateInput';
 import { ProductsCard } from './ProductsCard';
 import { RetentionCard } from './RetentionCard';
+import { StockLevelsCard } from './StockLevelsCard';
 import type { UsePurgeTablesReturn } from './usePurgeTables';
 import type { UseProductsMaintenanceReturn } from './useProductsMaintenance';
 import type { UseRetentionReturn } from './useRetention';
+import type { UseStockLevelsRecalcReturn } from './useStockLevelsRecalc';
 
 interface CleanupTabProps {
   purge: UsePurgeTablesReturn;
   products: UseProductsMaintenanceReturn;
   retention: UseRetentionReturn;
+  recalc: UseStockLevelsRecalcReturn;
 }
 
-export function CleanupTab({ purge, products, retention }: CleanupTabProps) {
+export function CleanupTab({ purge, products, retention, recalc }: CleanupTabProps) {
   const { t } = useTranslation(['maintenance', 'common']);
 
   return (
@@ -94,6 +97,9 @@ export function CleanupTab({ purge, products, retention }: CleanupTabProps) {
 
       {/* Gestion des Produits */}
       <ProductsCard products={products} />
+
+      {/* Seuils de stock min/max */}
+      <StockLevelsCard recalc={recalc} />
 
       {/* Rétention automatique */}
       <RetentionCard retention={retention} />

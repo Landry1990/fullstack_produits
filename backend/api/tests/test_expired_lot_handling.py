@@ -387,6 +387,76 @@ class ExpiredLotHandlingTestCase(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    # ------------------------------------------------------------------
+    # 5. Étagère péremption : sortie → retrait automatique de l'étagère
+    # ------------------------------------------------------------------
+    def test_sortir_perimes_emptied_lot_leaves_expiry_shelf(self):
+        """Sortie totale : le lot quitte l'étagère (deplace_peremption_le effacé)."""
+        produit = self.factory.create_produit(stock=0, use_lot_management=True)
+        lot = self.factory.create_stock_lot(
+            produit=produit, quantity=10, lot_name='LOT-SHELF-OUT',
+            date_expiration=timezone.now().date() - timedelta(days=10),
+        )
+        lot.deplace_peremption_le = timezone.now()
+        lot.save(update_fields=['deplace_peremption_le'])
+
+        response = self.client.post(
+            reverse('stocklot-sortir-perimes', kwargs={'pk': lot.pk}),
+            {'quantity': 10}, format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        lot.refresh_from_db()
+        self.assertEqual(lot.quantity_remaining, 0)
+        self.assertIsNone(lot.deplace_peremption_le)
+
+    def test_sortir_perimes_partial_keeps_shelf_flag(self):
+        """Sortie partielle : le lot reste sur l'étagère (il reste des unités)."""
+        produit = self.factory.create_produit(stock=0, use_lot_management=True)
+        lot = self.factory.create_stock_lot(
+            produit=produit, quantity=10, lot_name='LOT-SHELF-PART',
+            date_expiration=timezone.now().date() - timedelta(days=10),
+        )
+        lot.deplace_peremption_le = timezone.now()
+        lot.save(update_fields=['deplace_peremption_le'])
+
+        response = self.client.post(
+            reverse('stocklot-sortir-perimes', kwargs={'pk': lot.pk}),
+            {'quantity': 4}, format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        lot.refresh_from_db()
+        self.assertEqual(lot.quantity_remaining, 6)
+        self.assertIsNotNone(lot.deplace_peremption_le)
+
+    def test_bulk_sortir_clears_shelf_flags(self):
+        """Sortie groupée : tous les lots vidés quittent l'étagère."""
+        produit = self.factory.create_produit(stock=0, use_lot_management=True)
+        lot1 = self.factory.create_stock_lot(
+            produit=produit, quantity=10, lot_name='LOT-BULK-SHELF-1',
+            date_expiration=timezone.now().date() - timedelta(days=10),
+        )
+        lot2 = self.factory.create_stock_lot(
+            produit=produit, quantity=5, lot_name='LOT-BULK-SHELF-2',
+            date_expiration=timezone.now().date() - timedelta(days=10),
+        )
+        now = timezone.now()
+        StockLot.objects.filter(pk__in=[lot1.pk, lot2.pk]).update(
+            deplace_peremption_le=now,
+        )
+
+        response = self.client.post(reverse('stocklot-bulk-sortir-perimes'), {
+            'lot_ids': [lot1.id, lot2.id],
+            'reason': 'Sortie groupée étagère',
+        }, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        lot1.refresh_from_db()
+        lot2.refresh_from_db()
+        self.assertIsNone(lot1.deplace_peremption_le)
+        self.assertIsNone(lot2.deplace_peremption_le)
+
     def test_expiration_alert_exposes_product_and_supplier_ids(self):
         fournisseur = self.factory.create_fournisseur(name='Fournisseur Alert')
         produit = self.factory.create_produit(fournisseur=fournisseur)

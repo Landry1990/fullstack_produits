@@ -47,7 +47,7 @@ export const BulkPaiementModal: React.FC<BulkPaiementModalProps> = ({
                         <div className="text-sm font-bold text-emerald-600 uppercase tracking-widest mb-1">
                             {t('creances:bulk_modal.selected_invoices', { count })}
                         </div>
-                        <div className="text-3xl font-black text-slate-800 italic tracking-tight">
+                        <div className="text-3xl font-bold text-slate-800 italic tracking-tight">
                             {formatCurrency(Math.round(totalAmount))}
                         </div>
                         <div className="text-xs text-slate-500">
@@ -73,7 +73,7 @@ export const BulkPaiementModal: React.FC<BulkPaiementModalProps> = ({
                 <div className="space-y-4">
                     {/* Montant personnalisé - Paiement partiel */}
                     <div className="space-y-1.5">
-                        <label htmlFor="bulk-montant" className="text-caption font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
+                        <label htmlFor="bulk-montant" className="text-caption font-bold uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
                             <Wallet className="size-3" /> {t('creances:bulk_payment.amount_label')}
                         </label>
                         <input
@@ -100,7 +100,7 @@ export const BulkPaiementModal: React.FC<BulkPaiementModalProps> = ({
                     </div>
 
                     <div className="space-y-1.5">
-                        <label htmlFor="bulk-mode" className="text-caption font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
+                        <label htmlFor="bulk-mode" className="text-caption font-bold uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
                             <CreditCard className="size-3" /> {t('creances:bulk_modal.payment_mode')}
                         </label>
                         <select
@@ -119,7 +119,7 @@ export const BulkPaiementModal: React.FC<BulkPaiementModalProps> = ({
                     </div>
 
                     <div className="space-y-1.5">
-                        <label htmlFor="bulk-reference" className="text-caption font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
+                        <label htmlFor="bulk-reference" className="text-caption font-bold uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
                             <Hash className="size-3" /> {t('creances:bulk_modal.bulk_reference')}
                         </label>
                         <input
@@ -149,7 +149,7 @@ export const BulkPaiementModal: React.FC<BulkPaiementModalProps> = ({
                     </button>
                     <button
                         onClick={onConfirm}
-                        className="inline-flex items-center justify-center h-9 flex-1 rounded-lg text-xs font-black uppercase tracking-widest bg-emerald-600 text-white shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-colors gap-2"
+                        className="inline-flex items-center justify-center h-9 flex-1 rounded-lg text-xs font-bold uppercase tracking-widest bg-emerald-600 text-white shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-colors gap-2"
                     >
                         <CheckCircle2 className="size-4" />
                         {t('creances:bulk_modal.confirm_payment')}

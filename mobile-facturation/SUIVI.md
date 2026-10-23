@@ -10,6 +10,18 @@
 
 ## ✅ Déjà en place
 
+- [x] **Recherche produit : anti-race + cache** (2026-10-24) : une réponse
+  lente d'une frappe ancienne n'écrase plus les résultats courants
+  (n° de requête) ; mini-cache des 50 dernières recherches — retaper une
+  requête déjà faite est instantané, moins de charge serveur.
+
+- [x] **Scan caméra en bottom sheet** (2026-10-24) : `ScanBarcodeModal`
+  n'occupe plus tout l'écran — modal `transparent` + panneau bas
+  (bords arrondis) : l'écran de vente reste visible derrière un voile
+  assombri, tap dessus = fermer. Fenêtre caméra compacte
+  (`min(300, 36 % hauteur)`), header/footer/carte de confirmation
+  inchangés.
+
 - [x] **Étagère « proches péremption »** (2026-10-16) : marquage manuel
   **au niveau du lot** (`StockLot.deplace_peremption_le`, timestamp NULL
   = en rayon normal) — pas un rayon produit : seule une partie du stock

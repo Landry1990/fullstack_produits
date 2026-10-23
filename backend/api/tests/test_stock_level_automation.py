@@ -40,5 +40,14 @@ class StockLevelAutomationTests(TestCase):
         updated = monthly_stock_levels_update()
 
         self.assertEqual(updated, 7)
-        calculate.assert_called_once_with()
+        calculate.assert_called_once_with(progress_callback=None)
         invalidate.assert_called_once_with()
+
+    def test_progress_callback_invoked_per_product(self):
+        from ..signals_stock_levels import calculate_and_apply_stock_levels
+        calls = []
+        calculate_and_apply_stock_levels(
+            progress_callback=lambda done, total: calls.append((done, total))
+        )
+        # Un seul produit créé en setUp
+        self.assertEqual(calls, [(1, 1)])

@@ -17,6 +17,7 @@ import { RetentionPurgeDialog } from './maintenance/RetentionPurgeDialog';
 import { usePurgeTables } from './maintenance/usePurgeTables';
 import { usePharmacySettings } from './maintenance/usePharmacySettings';
 import { useRetention } from './maintenance/useRetention';
+import { useStockLevelsRecalc } from './maintenance/useStockLevelsRecalc';
 import { useProductsMaintenance } from './maintenance/useProductsMaintenance';
 import { useBackupRestore } from './maintenance/useBackupRestore';
 import { useManualUpdate } from './maintenance/useManualUpdate';
@@ -27,6 +28,7 @@ export default function Maintenance() {
   const purge = usePurgeTables();
   const settings = usePharmacySettings();
   const retention = useRetention(settings);
+  const stockLevels = useStockLevelsRecalc();
   const products = useProductsMaintenance();
   const update = useManualUpdate();
   const backup = useBackupRestore(settings);
@@ -100,7 +102,7 @@ export default function Maintenance() {
           </div>
 
           {activeRightTab === 'nettoyage' && (
-            <CleanupTab purge={purge} products={products} retention={retention} />
+            <CleanupTab purge={purge} products={products} retention={retention} recalc={stockLevels} />
           )}
 
           {activeRightTab === 'sauvegardes' && (

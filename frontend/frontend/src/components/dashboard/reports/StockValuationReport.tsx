@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { formatCurrency } from '../../../utils/formatters';
 import { FileDown, Printer } from 'lucide-react';
 import { usePharmacySettings } from '../../../context/PharmacySettingsContext';
-import { generateStockValuationPdf } from '../../../utils/print/stockValuationPdf';
 
 interface StockValuationData {
     is_pmp: boolean;
@@ -48,9 +47,10 @@ const StockValuationReport: React.FC<Props> = ({ data }) => {
 
     const typeLabel = d.is_pmp ? t('stock_valuation.valuation_pmp') : t('stock_valuation.valuation_vente');
 
-    const handleDownloadPDF = () => {
+    const handleDownloadPDF = async () => {
         setDownloading(true);
         try {
+            const { generateStockValuationPdf } = await import('../../../utils/print/stockValuationPdf');
             generateStockValuationPdf(d, settings);
         } finally {
             setDownloading(false);

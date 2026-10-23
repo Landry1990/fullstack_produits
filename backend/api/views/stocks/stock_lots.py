@@ -178,8 +178,11 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
             produit = Produit.objects.select_for_update().get(pk=produit.pk)
             StockObligationService.reapply_pending_obligations([produit.id])
 
-        # Update lot
+        # Update lot — un lot vidé quitte aussi l'étagère « proches
+        # péremption » (sinon le flag survivrait à une restauration ultérieure).
         lot.quantity_remaining -= quantity_to_remove
+        if lot.quantity_remaining == 0:
+            lot.deplace_peremption_le = None
         lot.save()
 
         # Update product stock
@@ -300,8 +303,9 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
             quantity_to_remove = lot.quantity_remaining
             quantity_before = lot.quantity_remaining
 
-            # Update lot
+            # Update lot — sorti du stock → sorti de l'étagère péremption
             lot.quantity_remaining = 0
+            lot.deplace_peremption_le = None
             lot.save()
 
             # Update product stock

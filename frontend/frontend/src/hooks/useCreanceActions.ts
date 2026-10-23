@@ -5,7 +5,6 @@ import type { Creance } from '../types';
 import { useSudo } from './useSudo';
 import creanceService, { type BulkPaiementPayload } from '../services/creanceService';
 import { usePharmacySettings } from './usePharmacySettings';
-import { generateRelevePdfDraft } from '../utils/print/relevePdfDraft';
 import { buildRelevePaiementPrintHtml } from '../utils/print/relevePaiementPrintHtml';
 import { printHtmlInIframe } from '../utils/print/printHelpers';
 import { logger } from '../utils/logger'
@@ -249,6 +248,7 @@ export const useCreanceActions = ({
                 include_products: includeProducts,
             }) as ReleveData;
 
+            const { generateRelevePdfDraft } = await import('../utils/print/relevePdfDraft');
             const doc = generateRelevePdfDraft({
                 client: releveData.client,
                 creances: releveData.creances,

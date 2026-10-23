@@ -7,7 +7,6 @@ import SudoValidationModal from '../common/SudoValidationModal';
 import { useAuth } from '../../context/AuthContext';
 import { getApiErrorDetail } from '../../utils/errorHandling';
 import produitService from '../../services/produitService';
-import { generateReapproSessionPdfDraft } from '../../utils/print/reapproSessionPdfDraft';
 import { usePharmacySettings, type PharmacySettings } from '../../hooks/usePharmacySettings';
 import { 
   Package, 
@@ -611,6 +610,7 @@ export default function ReapproRayon() {
                   if (lastSessionIdRef.current) {
                     try {
                       const session = await produitService.getReapproSessionDetails(lastSessionIdRef.current);
+                      const { generateReapproSessionPdfDraft } = await import('../../utils/print/reapproSessionPdfDraft');
                       generateReapproSessionPdfDraft(session, lastSessionSettingsRef.current || settings).save(
                         `reappro_session_${session.id}_${new Date(session.created_at).toISOString().slice(0, 10).replace(/-/g, '')}.pdf`
                       );

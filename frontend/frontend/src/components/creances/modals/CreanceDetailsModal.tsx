@@ -47,31 +47,31 @@ export const CreanceDetailsModal: React.FC<CreanceDetailsModalProps> = ({
                 {/* Facture Identity */}
                 <div className="flex flex-col md:flex-row gap-4 p-4 bg-slate-50 rounded-xl border border-slate-200 shadow-inner">
                     <div className="flex-1 space-y-1">
-                        <div className="text-caption font-black uppercase text-slate-400 tracking-widest">{t('creances:details_modal.invoice')}</div>
-                        <div className="text-xl font-black text-emerald-600 tracking-tighter">{creance.numero_facture}</div>
+                        <div className="text-caption font-bold uppercase text-slate-400 tracking-widest">{t('creances:details_modal.invoice')}</div>
+                        <div className="text-xl font-bold text-emerald-600 tracking-tighter">{creance.numero_facture}</div>
                         <div className="text-sm font-bold text-slate-500">{t('creances:details_modal.issued_on')} {formatDate(creance.date)}</div>
                     </div>
                     <div className="flex-1 space-y-1 md:border-l md:pl-4 border-slate-200">
-                        <div className="text-caption font-black uppercase text-slate-400 tracking-widest">{t('creances:details_modal.client_beneficiary')}</div>
+                        <div className="text-caption font-bold uppercase text-slate-400 tracking-widest">{t('creances:details_modal.client_beneficiary')}</div>
                         <div className="text-base font-bold text-slate-800">{creance.client_name}</div>
                         <div className="text-xs font-semibold text-slate-500">{creance.ayant_droit_details?.nom || t('creances:details_modal.no_beneficiary')}</div>
                     </div>
                     <div className="flex-1 space-y-1 md:border-l md:pl-4 border-slate-200">
-                        <div className="text-caption font-black uppercase text-slate-400 tracking-widest">{t('creances:details_modal.financial_summary')}</div>
+                        <div className="text-caption font-bold uppercase text-slate-400 tracking-widest">{t('creances:details_modal.financial_summary')}</div>
                         <div className="flex items-center gap-2">
                             <span className="text-xs font-bold text-slate-700">{t('creances:details_modal.total')}</span>
-                            <span className="font-black text-slate-800">{formatCurrency(Math.round(parseFloat(creance.total_ttc)))}</span>
+                            <span className="font-bold text-slate-800">{formatCurrency(Math.round(parseFloat(creance.total_ttc)))}</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <span className="text-xs font-bold text-amber-600">{t('creances:details_modal.remaining')}</span>
-                            <span className="font-black text-amber-600">{formatCurrency(Math.round(parseFloat(creance.reste_a_payer)))}</span>
+                            <span className="font-bold text-amber-600">{formatCurrency(Math.round(parseFloat(creance.reste_a_payer)))}</span>
                         </div>
                     </div>
                 </div>
 
                 {/* Paiements Table */}
                 <div className="space-y-3">
-                    <h4 className="text-xs font-black uppercase tracking-widest text-emerald-600 flex items-center gap-2 px-1">
+                    <h4 className="text-xs font-bold uppercase tracking-widest text-emerald-600 flex items-center gap-2 px-1">
                         <History className="size-3.5" /> {t('creances:details_modal.payment_list')}
                     </h4>
 
@@ -84,11 +84,11 @@ export const CreanceDetailsModal: React.FC<CreanceDetailsModalProps> = ({
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="bg-slate-50 border-b border-slate-200">
-                                        <th className="text-micro font-black uppercase text-slate-400 tracking-widest px-4 py-3">{t('creances:details_modal.headers.date')}</th>
-                                        <th className="text-micro font-black uppercase text-slate-400 tracking-widest px-4 py-3">{t('creances:details_modal.headers.mode')}</th>
-                                        <th className="text-micro font-black uppercase text-slate-400 tracking-widest px-4 py-3">{t('creances:details_modal.headers.reference')}</th>
-                                        <th className="text-micro font-black uppercase text-slate-400 tracking-widest text-right px-4 py-3">{t('creances:details_modal.headers.amount')}</th>
-                                        <th className="text-micro font-black uppercase text-slate-400 tracking-widest text-center px-4 py-3">{t('creances:details_modal.headers.actions')}</th>
+                                        <th className="text-micro font-bold uppercase text-slate-400 tracking-widest px-4 py-3">{t('creances:details_modal.headers.date')}</th>
+                                        <th className="text-micro font-bold uppercase text-slate-400 tracking-widest px-4 py-3">{t('creances:details_modal.headers.mode')}</th>
+                                        <th className="text-micro font-bold uppercase text-slate-400 tracking-widest px-4 py-3">{t('creances:details_modal.headers.reference')}</th>
+                                        <th className="text-micro font-bold uppercase text-slate-400 tracking-widest text-right px-4 py-3">{t('creances:details_modal.headers.amount')}</th>
+                                        <th className="text-micro font-bold uppercase text-slate-400 tracking-widest text-center px-4 py-3">{t('creances:details_modal.headers.actions')}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="text-sm">
@@ -102,7 +102,7 @@ export const CreanceDetailsModal: React.FC<CreanceDetailsModalProps> = ({
                                                 </div>
                                             </td>
                                             <td className="px-4 py-3 font-mono text-xs text-slate-500">{p.reference || '-'}</td>
-                                            <td className="px-4 py-3 text-right font-black italic text-slate-800">{formatCurrency(Math.round(parseFloat(p.montant)))}</td>
+                                            <td className="px-4 py-3 text-right font-bold italic text-slate-800">{formatCurrency(Math.round(parseFloat(p.montant)))}</td>
                                             <td className="px-4 py-3 text-center">
                                                 <button
                                                     onClick={() => onPrintReceipt(creance.id, p.id)}
@@ -122,7 +122,7 @@ export const CreanceDetailsModal: React.FC<CreanceDetailsModalProps> = ({
 
                 <div className="flex justify-between items-center bg-emerald-50 p-4 rounded-xl border border-emerald-200">
                     <div className="text-xs font-bold text-emerald-600/60 uppercase tracking-widest">{t('creances:details_modal.total_collected')}</div>
-                    <div className="text-2xl font-black text-emerald-600 italic tracking-tighter">
+                    <div className="text-2xl font-bold text-emerald-600 italic tracking-tighter">
                         {formatCurrency(Math.round(parseFloat(creance.montant_paye)))}
                     </div>
                 </div>
@@ -133,7 +133,7 @@ export const CreanceDetailsModal: React.FC<CreanceDetailsModalProps> = ({
                     </button>
                     <button
                         onClick={() => onPrintReceipt(creance.id)}
-                        className="inline-flex items-center justify-center h-9 px-8 rounded-lg text-xs font-black uppercase tracking-widest bg-emerald-600 text-white gap-2 shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-colors"
+                        className="inline-flex items-center justify-center h-9 px-8 rounded-lg text-xs font-bold uppercase tracking-widest bg-emerald-600 text-white gap-2 shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-colors"
                     >
                         <Printer className="size-4" />
                         {t('creances:details_modal.print_global_receipt')}
