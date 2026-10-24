@@ -1154,12 +1154,22 @@ class PurgeViewSet(ViewSet):
 
     # ── Recalcul manuel des seuils de stock (min/max) ──────────────────────
 
+    STOCK_LEVELS_JOB_KEY = 'stock_levels_recalc_job'
+    # Verrou anti double-lancement, posé atomiquement (cache.add) par la vue
+    # et rafraîchi par le thread : si le process meurt en plein job, il expire
+    # seul au lieu de bloquer les relances pendant 2 h.
+    STOCK_LEVELS_LOCK_KEY = 'stock_levels_recalc_lock'
+    STOCK_LEVELS_LOCK_TTL = 1800
+    STOCK_LEVELS_PROGRESS_EVERY = 50
+
     def _run_stock_levels_thread(self):
         """Même séquence que le job mensuel du scheduler : seuils + analytics."""
+        from django.db import connection
         from api.models.settings import PharmacySettings
         from api.signals_stock_levels import monthly_stock_levels_update
 
-        cache_key = 'stock_levels_recalc_job'
+        cache_key = self.STOCK_LEVELS_JOB_KEY
+        lock_key = self.STOCK_LEVELS_LOCK_KEY
         cache.set(cache_key, {
             'status': 'running',
             'step': 'Démarrage',
@@ -1173,6 +1183,10 @@ class PurgeViewSet(ViewSet):
 
         try:
             def on_progress(done, total):
+                # Throttle : 2 allers-retours Redis par produit sinon
+                if done % self.STOCK_LEVELS_PROGRESS_EVERY and done != total:
+                    return
+                cache.touch(lock_key, self.STOCK_LEVELS_LOCK_TTL)
                 state = cache.get(cache_key) or {}
                 state['current'] = done
                 state['total'] = total
@@ -1187,6 +1201,7 @@ class PurgeViewSet(ViewSet):
             state['step'] = 'Rotations et marges'
             state['progress'] = 92
             cache.set(cache_key, state, timeout=7200)
+            cache.touch(lock_key, self.STOCK_LEVELS_LOCK_TTL)
 
             call_command('recalculate_analytics')
 
@@ -1208,20 +1223,27 @@ class PurgeViewSet(ViewSet):
             state['step'] = f'Erreur: {e!s}'
             state['finished_at'] = timezone.now().isoformat()
             cache.set(cache_key, state, timeout=7200)
+        finally:
+            cache.delete(lock_key)
+            connection.close()
 
     @action(detail=False, methods=['get'])
     def stock_levels_status(self, request):
         """Retourne l'état courant du recalcul des seuils de stock."""
-        state = cache.get('stock_levels_recalc_job')
+        state = cache.get(self.STOCK_LEVELS_JOB_KEY)
         if not state:
             return Response({'status': 'idle', 'step': 'Aucun recalcul en cours', 'progress': 0})
+        # Job marqué en cours mais verrou expiré → process mort en plein recalcul
+        if state.get('status') == 'running' and cache.get(self.STOCK_LEVELS_LOCK_KEY) is None:
+            state['status'] = 'error'
+            state['step'] = 'Recalcul interrompu (redémarrage du serveur ?)'
+            cache.set(self.STOCK_LEVELS_JOB_KEY, state, timeout=7200)
         return Response(state)
 
     @action(detail=False, methods=['post'])
     def stock_levels_recalc(self, request):
         """Lance en arrière-plan le recalcul des seuils min/max + rotations."""
-        existing = cache.get('stock_levels_recalc_job')
-        if existing and existing.get('status') == 'running':
+        if not cache.add(self.STOCK_LEVELS_LOCK_KEY, timezone.now().isoformat(), timeout=self.STOCK_LEVELS_LOCK_TTL):
             return Response({'detail': 'Un recalcul des seuils est déjà en cours.'}, status=status.HTTP_409_CONFLICT)
 
         t = threading.Thread(target=self._run_stock_levels_thread, daemon=True)

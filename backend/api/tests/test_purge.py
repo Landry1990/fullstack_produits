@@ -410,10 +410,17 @@ class StockLevelsRecalcTest(PurgeBase):
             'status': 'running', 'step': '10/100 produits',
             'progress': 10, 'current': 10, 'total': 100,
         }, timeout=60)
+        cache.set('stock_levels_recalc_lock', 'x', timeout=60)
         resp = self.client_api.get(reverse('maintenance-stock-levels-status'))
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.data['status'], 'running')
         self.assertEqual(resp.data['current'], 10)
+
+    def test_status_running_sans_verrou_signale_interruption(self):
+        """Process mort en plein job : verrou expiré → état « error », relance possible."""
+        cache.set('stock_levels_recalc_job', {'status': 'running', 'progress': 40}, timeout=60)
+        resp = self.client_api.get(reverse('maintenance-stock-levels-status'))
+        self.assertEqual(resp.data['status'], 'error')
 
     @patch('api.views.purge.threading.Thread')
     def test_recalc_lance_thread(self, mock_thread):
@@ -421,7 +428,41 @@ class StockLevelsRecalcTest(PurgeBase):
         self.assertEqual(resp.status_code, 202)
         mock_thread.assert_called_once()
 
+    @patch('api.views.purge.threading.Thread')
+    def test_recalc_double_lancement_409(self, mock_thread):
+        """Le verrou est posé par la vue elle-même : un 2e POST immédiat est refusé."""
+        first = self.client_api.post(reverse('maintenance-stock-levels-recalc'))
+        second = self.client_api.post(reverse('maintenance-stock-levels-recalc'))
+        self.assertEqual(first.status_code, 202)
+        self.assertEqual(second.status_code, 409)
+        mock_thread.assert_called_once()
+
     def test_recalc_deja_en_cours_409(self):
-        cache.set('stock_levels_recalc_job', {'status': 'running'}, timeout=60)
+        cache.set('stock_levels_recalc_lock', 'x', timeout=60)
         resp = self.client_api.post(reverse('maintenance-stock-levels-recalc'))
         self.assertEqual(resp.status_code, 409)
+
+    @patch('django.db.connection.close')
+    @patch('api.views.purge.call_command')
+    @patch('api.signals_stock_levels.monthly_stock_levels_update')
+    def test_thread_progression_throttlee_et_verrou_libere(self, mock_update, _cmd, mock_close):
+        from ..views.purge import PurgeViewSet
+        set_calls = []
+
+        def fake_update(progress_callback=None):
+            for i in range(1, 121):
+                progress_callback(i, 120)
+            return 120
+        mock_update.side_effect = fake_update
+        cache.set('stock_levels_recalc_lock', 'x', timeout=60)
+
+        real_set = cache.set
+        with patch.object(cache, 'set', side_effect=lambda *a, **kw: (set_calls.append(a[0]), real_set(*a, **kw))):
+            PurgeViewSet()._run_stock_levels_thread()
+
+        # 50, 100, 120 → 3 écritures de progression (au lieu de 120)
+        progress_writes = set_calls.count('stock_levels_recalc_job') - 3  # init, rotations, done
+        self.assertEqual(progress_writes, 3)
+        self.assertEqual(cache.get('stock_levels_recalc_job')['status'], 'done')
+        self.assertIsNone(cache.get('stock_levels_recalc_lock'))
+        mock_close.assert_called_once()
