@@ -2,6 +2,26 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-10-24 — 🐛 Correctifs revue : reload boot + recalcul seuils
+
+- `main.tsx` : le filet « reload au boot » (chunk raté / binding non
+  initialisé) retire ses écouteurs `error`/`unhandledrejection` après la
+  fenêtre de 30 s. Avant, ils restaient actifs toute la session : un
+  `import()` raté plus tard (jsPDF/xlsx à l'impression, relevé PDF) rechargeait
+  la page → panier caisse perdu, et boucle de reloads si l'erreur persistait.
+- `views/purge.py` (recalcul manuel des seuils) :
+  - Verrou atomique `stock_levels_recalc_lock` via `cache.add` dans la vue
+    (avant : lecture cache puis thread → double-clic = 2 jobs). TTL 30 min
+    rafraîchi par le thread, supprimé en `finally`.
+  - `stock_levels_status` : job `running` sans verrou → passé en `error`
+    (« Recalcul interrompu ») — un redémarrage Daphne ne bloque plus les
+    relances pendant 2 h.
+  - `connection.close()` en fin de thread (connexion DB fuitée sinon).
+  - Progression écrite tous les 50 produits (+ le dernier) au lieu de
+    2 allers-retours Redis par produit.
+- Tests `test_purge.StockLevelsRecalcTest` : double POST → 409, interruption
+  détectée, progression throttlée + verrou libéré (48 tests OK).
+
 ## 2026-10-23 — ✨ Tableaux : en-têtes sticky au scroll
 
 - `shadcn/table.tsx` : `TableHeader` reçoit `sticky top-0 z-10` — l'en-tête

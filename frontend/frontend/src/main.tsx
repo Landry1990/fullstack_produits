@@ -26,7 +26,9 @@ consumePrintAuthSync();
 // non initialisé (import circulaire) laisse sinon une page blanche — React
 // n'ayant jamais monté, aucune ErrorBoundary ne peut s'afficher. On recharge
 // une fois ; le compteur (réinitialisé 30 s après un boot réussi) évite la
-// boucle de reloads si l'erreur est déterministe.
+// boucle de reloads si l'erreur est déterministe. Les écouteurs sont retirés
+// après la fenêtre de boot : un import() raté plus tard (impression, export…)
+// ne doit jamais recharger la page (panier caisse en cours perdu).
 const BOOT_RELOAD_KEY = 'boot_reload_count';
 const isBootFatal = (reason: unknown): boolean => {
   const msg = String(reason instanceof Error ? reason.message : reason ?? '');
@@ -43,9 +45,15 @@ const bootReload = (): void => {
     window.location.reload();
   }
 };
-window.addEventListener('error', (e) => { if (isBootFatal(e.message)) bootReload(); });
-window.addEventListener('unhandledrejection', (e) => { if (isBootFatal(e.reason)) bootReload(); });
-setTimeout(() => sessionStorage.removeItem(BOOT_RELOAD_KEY), 30_000);
+const onBootError = (e: ErrorEvent): void => { if (isBootFatal(e.message)) bootReload(); };
+const onBootRejection = (e: PromiseRejectionEvent): void => { if (isBootFatal(e.reason)) bootReload(); };
+window.addEventListener('error', onBootError);
+window.addEventListener('unhandledrejection', onBootRejection);
+setTimeout(() => {
+  window.removeEventListener('error', onBootError);
+  window.removeEventListener('unhandledrejection', onBootRejection);
+  sessionStorage.removeItem(BOOT_RELOAD_KEY);
+}, 30_000);
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
