@@ -127,7 +127,8 @@ export function PeremptionScreen({ onBack }: { onBack: () => void }) {
     const groups = new Map<string, ExpiringLot[]>();
     for (const lot of items) {
       const label = lot[key] || t('peremption.no_group');
-      (groups.get(label) ?? groups.set(label, []).get(label)!).push(lot);
+      const group = groups.get(label);
+      if (group) group.push(lot); else groups.set(label, [lot]);
     }
     const sortedLabels = [...groups.keys()].sort((a, b) => {
       const noGroup = t('peremption.no_group');
@@ -137,7 +138,7 @@ export function PeremptionScreen({ onBack }: { onBack: () => void }) {
     });
     const out: RowItem[] = [];
     for (const label of sortedLabels) {
-      const lots = groups.get(label)!.sort((a, b) =>
+      const lots = (groups.get(label) ?? []).sort((a, b) =>
         a.produit_nom.localeCompare(b.produit_nom, 'fr') ||
         (a.date_expiration ?? '9999').localeCompare(b.date_expiration ?? '9999')
       );

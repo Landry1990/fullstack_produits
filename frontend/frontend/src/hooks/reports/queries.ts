@@ -438,6 +438,28 @@ export const QUERIES: QueryDefinition[] = [
         resultType: 'table'
     },
     {
+        id: 'ventes_fournisseur_lots',
+        name: 'Ventes par Fournisseur (Lots)',
+        description: 'Produits et lots vendus par fournisseur sur une période : quantités, UG, CA, coût d\'achat et marge',
+        endpoint: '/api/rapports/ventes_fournisseur_lots/',
+        params: [
+            { key: 'date_debut', label: 'Début', type: 'date', required: true },
+            { key: 'date_fin', label: 'Fin', type: 'date', required: true },
+            { key: 'fournisseur_id', label: 'Fournisseur', type: 'fournisseur_id' },
+            {
+                key: 'vue',
+                label: 'Affichage',
+                type: 'select',
+                default: 'groupe',
+                options: [
+                    { value: 'groupe', label: 'Regroupé par lot' },
+                    { value: 'detail', label: 'Détail par vente' }
+                ]
+            }
+        ],
+        resultType: 'table'
+    },
+    {
         id: 'rapport_fiscal_mensuel',
         name: 'Rapport Fiscal Mensuel',
         description: 'Accompte sur CA + Précompte sur achats (Réel/Simplifié, Marge administrée)',

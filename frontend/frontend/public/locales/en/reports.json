@@ -149,6 +149,10 @@
             "name": "Sales by Operator (Lots)",
             "description": "Products sold by operator with lot, expiry date, quantity, invoice, discount"
         },
+        "ventes_fournisseur_lots": {
+            "name": "Sales by Supplier (Lots)",
+            "description": "Products and lots sold per supplier over a period: quantities, free units, revenue, purchase cost and margin"
+        },
         "rapport_fiscal_mensuel": {
             "name": "Monthly Tax Report",
             "description": "Installment on revenue + withholding on purchases (Standard/Simplified, administered margin)"
@@ -248,7 +252,8 @@
         "sort_order": "Sort order",
         "poste_caisse_id": "Checkout point",
         "fournisseur_id": "Supplier",
-        "valorisation": "Valuation method"
+        "valorisation": "Valuation method",
+        "vue": "Display"
     },
     "results": {
         "title": "Results",
@@ -403,7 +408,15 @@
         "MT_ACHAT": "Purchase Amount",
         "validated_by": "Validated by",
         "remise_validated_by": "Discount authorized by",
-        "prix_validated_by": "Price modified by"
+        "prix_validated_by": "Price modified by",
+        "date_peremption": "Expiry",
+        "date_creation": "Date/Time",
+        "prix_vente": "Selling Price (F)",
+        "quantite": "Qty",
+        "quantite_ug": "incl. Free",
+        "montant_vente": "Revenue incl. VAT (F)",
+        "montant_vente_ht": "Revenue excl. VAT (F)",
+        "montant_achat": "Purchase Cost (F)"
     },
     "preset_saved": "Configuration saved!",
     "preset_loaded": "Loading: {{name}}",
@@ -423,7 +436,19 @@
     "close_menu": "Close menu",
     "open_menu": "Open menu",
     "export_excel": "Export to Excel",
+    "supplier_lots": {
+        "total": "Total {{name}} ({{count}} lots)",
+        "grand_total": "GRAND TOTAL ({{count}} lots)",
+        "average": "Average margin per lot",
+        "summary": "{{suppliers}} supplier(s) · {{lots}} lot(s)"
+    },
     "query_options": {
+        "ventes_fournisseur_lots": {
+            "vue": {
+                "groupe": "Grouped by lot",
+                "detail": "Detail per sale"
+            }
+        },
         "recap_valeur_stock_pdf": {
             "valorisation": {
                 "ACHAT": "Purchase Price (PMP)",

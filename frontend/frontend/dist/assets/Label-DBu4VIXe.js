@@ -1,1 +1,0 @@
-import{r as t,j as r}from"./vendor-core-DruQiq2h.js";import{y as o}from"./index-Dn-Li0h-.js";const l=t.forwardRef(({className:e,...a},s)=>r.jsx("label",{ref:s,className:o("text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",e),...a}));l.displayName="Label";export{l as L};

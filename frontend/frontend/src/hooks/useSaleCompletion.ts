@@ -358,8 +358,10 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
             const promisLines = params.lignesFacture.filter(l => l.isPromis && l.promisQuantity && l.promisQuantity > 0);
             if (promisLines.length > 0) {
                 try {
-                    const { generatePromisTicketDraft } = await import('../utils/print/promisPdfDraft');
-                    generatePromisTicketDraft({
+                    const { printPromisTicketSmart } = await import('../utils/print/promisPdfDraft');
+                    // Pas d'await : la connexion QZ ne doit pas retarder le ticket de caisse
+                    // (la file QZ sérialise de toute façon les deux impressions).
+                    void printPromisTicketSmart({
                         client_name: finalFacture.client_name || params.manualClientName || t('common:passerby_client'),
                         client_phone: params.lignesFacture.find(l => l.promisPhone)?.promisPhone,
                         items: promisLines.map(l => ({
@@ -373,7 +375,7 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
                         pharmacy: pharmacySettings,
                         facture_id: finalFacture.numero_facture || finalFacture.id,
                         is_paid: !params.centralizedCashRegister
-                    });
+                    }).catch((err: unknown) => logger.error("Erreur génération PDF promis:", err));
                 } catch (err: unknown) {
                     logger.error("Erreur génération PDF promis:", err);
                 }
@@ -562,8 +564,8 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
                             }))
                         });
                         
-                        const { generatePromisTicketDraft: genPromis } = await import('../utils/print/promisPdfDraft');
-                        genPromis({
+                        const { printPromisTicketSmart } = await import('../utils/print/promisPdfDraft');
+                        await printPromisTicketSmart({
                             client_name: updatedFacture.client_name || params.manualClientName || t('common:passerby_client'),
                             client_phone: params.promisPhone || params.lignesFacture.find(l => l.promisPhone)?.promisPhone,
                             items: promisLines.map(l => ({

@@ -538,15 +538,15 @@ const Transformations: React.FC = () => {
 
       {/* Main Content Section */}
       <motion.div variants={fadeInUp} className="flex-1 overflow-auto p-6">
+        <AnimatePresence mode="wait" initial={false}>
         {loading ? (
-          <div className="space-y-3">
+          <div key="loading" className="space-y-3">
             <Skeleton className="h-20 w-full rounded-2xl" />
             <Skeleton className="h-20 w-full rounded-2xl" />
             <Skeleton className="h-20 w-full rounded-2xl" />
             <Skeleton className="h-20 w-full rounded-2xl" />
           </div>
         ) : (
-          <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={activeTab}
             variants={tabContent}
@@ -699,8 +699,8 @@ const Transformations: React.FC = () => {
               </div>
             )}
           </motion.div>
-          </AnimatePresence>
         )}
+        </AnimatePresence>
       </motion.div>
 
       {/* ===== Modal Création Relation ===== */}

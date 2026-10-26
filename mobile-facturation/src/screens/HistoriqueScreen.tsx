@@ -132,8 +132,8 @@ export function HistoriqueScreen({ onBack }: { onBack: () => void }) {
                 <View style={styles.detail}>
                   {item.lignes && item.lignes.length > 0 ? (
                     <>
-                      {item.lignes.map((l, i) => (
-                        <View key={i} style={styles.detailLine}>
+                      {item.lignes.map((l) => (
+                        <View key={`${l.name}-${l.quantite}-${l.total_ttc}`} style={styles.detailLine}>
                           <Text style={styles.detailName} numberOfLines={1}>
                             {l.quantite}× {l.name}
                             {l.remise > 0 ? ` (−${l.remise}%)` : ''}

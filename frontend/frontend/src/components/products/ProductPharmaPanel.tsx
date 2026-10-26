@@ -126,8 +126,8 @@ export default function ProductPharmaPanel({ data, loading }: ProductPharmaPanel
                 {data.indication_items.length > 0 && (
                   <InfoSection title={t('products:pharma.indications')} icon={<Stethoscope className="size-3.5" />}>
                     <ul className="flex flex-wrap gap-1.5">
-                      {data.indication_items.map((txt, i) => (
-                        <li key={i}>
+                      {data.indication_items.map((txt) => (
+                        <li key={txt}>
                           <Badge variant="secondary" className="text-xs font-normal px-2 py-0.5">
                             {txt}
                           </Badge>
@@ -136,14 +136,14 @@ export default function ProductPharmaPanel({ data, loading }: ProductPharmaPanel
                     </ul>
                   </InfoSection>
                 )}
-                {data.posology_blocks.map((block, i) => (
-                  <PosologyBlockView key={i} block={block} />
+                {data.posology_blocks.map((block) => (
+                  <PosologyBlockView key={block.raw} block={block} />
                 ))}
                 {data.conservation_texts.length > 0 && (
                   <InfoSection title={t('products:pharma.conservation')} icon={<Thermometer className="size-3.5" />}>
                     <div className="space-y-1">
-                      {data.conservation_texts.map((txt, i) => (
-                        <p key={i} className="text-sm text-slate-700 whitespace-pre-line">
+                      {data.conservation_texts.map((txt) => (
+                        <p key={txt} className="text-sm text-slate-700 whitespace-pre-line">
                           {txt}
                         </p>
                       ))}
@@ -181,8 +181,8 @@ export default function ProductPharmaPanel({ data, loading }: ProductPharmaPanel
               <EmptyState text={t('products:pharma.no_classes')} />
             ) : (
               <div className="space-y-2">
-                {data.therapeutic_classes.map((cls, i) => (
-                  <div key={i} className="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg border border-slate-100">
+                {data.therapeutic_classes.map((cls) => (
+                  <div key={cls.code} className="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg border border-slate-100">
                     <span className="text-sm text-slate-700">{cls.label}</span>
                     <Badge variant="secondary" className="text-xs font-mono">{cls.code}</Badge>
                   </div>
@@ -323,8 +323,8 @@ function InteractionsList({ interactions }: { interactions: PharmaInteraction[] 
               {t(`products:pharma.gravity_${gravity}`)} ({list.length})
             </h4>
             <div className="space-y-2">
-              {list.map((inter, i) => (
-                <InteractionRow key={i} interaction={inter} cfg={cfg} t={t} />
+              {list.map((inter) => (
+                <InteractionRow key={JSON.stringify([inter.substance_a, inter.substance_b, inter.gravity, inter.description])} interaction={inter} cfg={cfg} t={t} />
               ))}
             </div>
           </div>

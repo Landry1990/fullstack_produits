@@ -46,13 +46,15 @@ export default function useOmnisearch() {
   // Ref pour suivre le dernier debouncedSearch traité et éviter les race conditions
   const lastProcessedRef = useRef<string>('');
 
+  const allowedMenus = useMemo(() => new Set(user?.allowed_menus), [user?.allowed_menus]);
+
   const canAccessPage = useCallback((page: AppPage) => {
     if (page.adminOnly) return Boolean(user?.is_superuser);
     return Boolean(
       user?.is_superuser ||
-      page.permissions.some((permission) => user?.allowed_menus?.includes(permission))
+      page.permissions.some((permission) => allowedMenus.has(permission))
     );
-  }, [user]);
+  }, [user, allowedMenus]);
 
   const searchablePages = useMemo(() => {
     const term = normalizeSearchText(search.trim());

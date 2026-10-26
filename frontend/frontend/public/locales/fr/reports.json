@@ -149,6 +149,10 @@
             "name": "Ventes par Opérateur (Lots)",
             "description": "Produits vendus par opérateur avec lot, date de péremption, quantité, facture, remise"
         },
+        "ventes_fournisseur_lots": {
+            "name": "Ventes par Fournisseur (Lots)",
+            "description": "Produits et lots vendus par fournisseur sur une période : quantités, UG, CA, coût d'achat et marge"
+        },
         "rapport_fiscal_mensuel": {
             "name": "Rapport Fiscal Mensuel",
             "description": "Accompte sur CA + Précompte sur achats (Réel/Simplifié, Marge administrée)"
@@ -248,7 +252,8 @@
         "group_by": "Grouper par",
         "sort_by": "Trier par",
         "sort_order": "Ordre de tri",
-        "poste_caisse_id": "Poste de caisse"
+        "poste_caisse_id": "Poste de caisse",
+        "vue": "Affichage"
     },
     "results": {
         "title": "Résultats",
@@ -403,7 +408,15 @@
         "MT_ACHAT": "Montant Achat",
         "validated_by": "Validé par",
         "remise_validated_by": "Remise autorisée par",
-        "prix_validated_by": "Prix modifié par"
+        "prix_validated_by": "Prix modifié par",
+        "date_peremption": "Péremption",
+        "date_creation": "Date/Heure",
+        "prix_vente": "Prix Vente (F)",
+        "quantite": "Qté",
+        "quantite_ug": "dont UG",
+        "montant_vente": "CA TTC (F)",
+        "montant_vente_ht": "CA HT (F)",
+        "montant_achat": "Coût Achat (F)"
     },
     "preset_saved": "Configuration enregistrée !",
     "preset_loaded": "Chargement de : {{name}}",
@@ -423,7 +436,19 @@
     "close_menu": "Fermer le menu",
     "open_menu": "Ouvrir le menu",
     "export_excel": "Exporter Excel",
+    "supplier_lots": {
+        "total": "Total {{name}} ({{count}} lots)",
+        "grand_total": "TOTAL GÉNÉRAL ({{count}} lots)",
+        "average": "Marge moyenne par lot",
+        "summary": "{{suppliers}} fournisseur(s) · {{lots}} lot(s)"
+    },
     "query_options": {
+        "ventes_fournisseur_lots": {
+            "vue": {
+                "groupe": "Regroupé par lot",
+                "detail": "Détail par vente"
+            }
+        },
         "recap_valeur_stock_pdf": {
             "valorisation": {
                 "ACHAT": "Prix d'Achat (PMP)",

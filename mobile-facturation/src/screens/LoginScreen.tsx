@@ -11,10 +11,97 @@ import { login, getMe, ensurePosteVente, PosteChoiceRequired } from '../services
 import { theme } from '../config/theme';
 import { moderateScale as ms } from '../utils/scale';
 
-export function LoginScreen({ onLoginSuccess }: { onLoginSuccess: () => void }) {
-  const { serverUrl, setServerUrl, setAuth, setMaxDiscountRate, setPosteVente, setUserId } = useAuthStore();
+// Formulaire de connexion (URL serveur + mot de passe + bascule FR/EN).
+// ScrollView : carte centrée quand elle tient, scrollable clavier ouvert /
+// petit écran (scrollbar persistante).
+function LoginForm({ url, password, loading, onUrlChange, onPasswordChange, onSubmit }: {
+  url: string;
+  password: string;
+  loading: boolean;
+  onUrlChange: (v: string) => void;
+  onPasswordChange: (v: string) => void;
+  onSubmit: () => void;
+}) {
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
+
+  return (
+    <KeyboardAvoidingView
+      style={[styles.container, {
+        paddingTop: insets.top,
+        paddingBottom: insets.bottom,
+        paddingLeft: insets.left,
+        paddingRight: insets.right,
+      }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+        persistentScrollbar
+      >
+      <View style={styles.card}>
+        <Text style={styles.title}>{t('login.title')}</Text>
+        <Text style={styles.subtitle}>{t('login.subtitle')}</Text>
+        <Text style={styles.hint}>{t('login.hint')}</Text>
+
+        <TextInput
+          style={styles.input}
+          placeholder={t('login.url_placeholder')}
+          placeholderTextColor={theme.textMuted}
+          value={url}
+          onChangeText={onUrlChange}
+          autoCapitalize="none"
+          keyboardType="default"
+        />
+
+        <TextInput
+          style={styles.input}
+          placeholder={t('login.password')}
+          placeholderTextColor={theme.textMuted}
+          value={password}
+          onChangeText={onPasswordChange}
+          secureTextEntry
+          onSubmitEditing={onSubmit}
+          returnKeyType="go"
+        />
+
+        <TouchableOpacity
+          style={[styles.button, loading && styles.buttonDisabled]}
+          onPress={onSubmit}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>{t('login.submit')}</Text>
+          )}
+        </TouchableOpacity>
+
+        {/* Bascule FR/EN — choix persisté par appareil (kv-store). */}
+        <View style={styles.langRow}>
+          {(['fr', 'en'] as const).map((lng) => (
+            <TouchableOpacity
+              key={lng}
+              style={[styles.langBtn, i18n.language === lng && styles.langBtnActive]}
+              onPress={() => useSettingsStore.getState().setLanguage(lng)}
+            >
+              <Text style={[styles.langBtnText, i18n.language === lng && styles.langBtnTextActive]}>
+                {lng.toUpperCase()}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+}
+
+export function LoginScreen({ onLoginSuccess }: { onLoginSuccess: () => void }) {
+  const { serverUrl, setServerUrl, setAuth, setMaxDiscountRate, setPosteVente, setUserId } = useAuthStore();
+  const { t } = useTranslation();
   const [url, setUrl] = useState(serverUrl);
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -80,78 +167,14 @@ export function LoginScreen({ onLoginSuccess }: { onLoginSuccess: () => void }) 
   };
 
   return (
-    <KeyboardAvoidingView
-      style={[styles.container, {
-        paddingTop: insets.top,
-        paddingBottom: insets.bottom,
-        paddingLeft: insets.left,
-        paddingRight: insets.right,
-      }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      {/* ScrollView : carte centrée quand elle tient, scrollable
-          clavier ouvert / petit écran (scrollbar persistante). */}
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={styles.scroll}
-        keyboardShouldPersistTaps="handled"
-        persistentScrollbar
-      >
-      <View style={styles.card}>
-        <Text style={styles.title}>{t('login.title')}</Text>
-        <Text style={styles.subtitle}>{t('login.subtitle')}</Text>
-        <Text style={styles.hint}>{t('login.hint')}</Text>
-
-        <TextInput
-          style={styles.input}
-          placeholder={t('login.url_placeholder')}
-          placeholderTextColor={theme.textMuted}
-          value={url}
-          onChangeText={setUrl}
-          autoCapitalize="none"
-          keyboardType="default"
-        />
-
-        <TextInput
-          style={styles.input}
-          placeholder={t('login.password')}
-          placeholderTextColor={theme.textMuted}
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          onSubmitEditing={handleLogin}
-          returnKeyType="go"
-        />
-
-        <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
-          onPress={handleLogin}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>{t('login.submit')}</Text>
-          )}
-        </TouchableOpacity>
-
-        {/* Bascule FR/EN — choix persisté par appareil (kv-store). */}
-        <View style={styles.langRow}>
-          {(['fr', 'en'] as const).map((lng) => (
-            <TouchableOpacity
-              key={lng}
-              style={[styles.langBtn, i18n.language === lng && styles.langBtnActive]}
-              onPress={() => useSettingsStore.getState().setLanguage(lng)}
-            >
-              <Text style={[styles.langBtnText, i18n.language === lng && styles.langBtnTextActive]}>
-                {lng.toUpperCase()}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+    <LoginForm
+      url={url}
+      password={password}
+      loading={loading}
+      onUrlChange={setUrl}
+      onPasswordChange={setPassword}
+      onSubmit={handleLogin}
+    />
   );
 }
 

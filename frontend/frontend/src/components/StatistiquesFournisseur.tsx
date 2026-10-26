@@ -37,10 +37,14 @@ interface StatsFournisseur {
   id: number;
   nom: string;
   ca_ttc: number;
+  /** CA HT : base du taux de marge (marge_brute = CA HT − coût d'achat HT). */
+  ca_ht?: number;
   cout_achat: number;
   marge_brute: number;
   quantite_vendue: number;
 }
+
+const caHt = (s: Pick<StatsFournisseur, 'ca_ht' | 'ca_ttc'>) => Number(s.ca_ht ?? s.ca_ttc);
 
 const COLORS = [
   '#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d',
@@ -257,10 +261,11 @@ export default function StatistiquesFournisseur() {
   const totaux = useMemo(() => {
     return stats.reduce((acc, curr) => ({
       ca_ttc: acc.ca_ttc + Number(curr.ca_ttc),
+      ca_ht: acc.ca_ht + caHt(curr),
       cout_achat: acc.cout_achat + Number(curr.cout_achat),
       marge_brute: acc.marge_brute + Number(curr.marge_brute),
       quantite_vendue: acc.quantite_vendue + curr.quantite_vendue
-    }), { ca_ttc: 0, cout_achat: 0, marge_brute: 0, quantite_vendue: 0 });
+    }), { ca_ttc: 0, ca_ht: 0, cout_achat: 0, marge_brute: 0, quantite_vendue: 0 });
   }, [stats]);
 
   const Recharts = useRecharts();
@@ -384,7 +389,7 @@ export default function StatistiquesFournisseur() {
                     <p className="text-sm font-medium text-base-content/70">{t('sales_tab.cards.gross_margin')}</p>
                     <h3 className="text-2xl font-bold text-warning">{formatCurrency(Math.round(totaux.marge_brute), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</h3>
                     <p className="text-xs text-base-content/60">
-                    {totaux.ca_ttc > 0 ? ((totaux.marge_brute / totaux.ca_ttc) * 100).toFixed(1) : 0} {t('sales_tab.cards.margin_percentage')}
+                    {totaux.ca_ht > 0 ? ((totaux.marge_brute / totaux.ca_ht) * 100).toFixed(1) : 0} {t('sales_tab.cards.margin_percentage')}
                     </p>
                 </CardContent>
                 </Card>
@@ -475,8 +480,8 @@ export default function StatistiquesFournisseur() {
                                     <TableCell className="px-3 py-2 text-right font-bold">{formatCurrency(Math.round(Number(stat.ca_ttc)), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</TableCell>
                                     <TableCell className="px-3 py-2 text-right text-success">{formatCurrency(Math.round(Number(stat.marge_brute)), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</TableCell>
                                     <TableCell className="px-3 py-2 text-right text-sm">
-                                        {Number(stat.ca_ttc) > 0
-                                            ? ((Number(stat.marge_brute) / Number(stat.ca_ttc)) * 100).toFixed(1)
+                                        {caHt(stat) > 0
+                                            ? ((Number(stat.marge_brute) / caHt(stat)) * 100).toFixed(1)
                                             : 0}%
                                     </TableCell>
                                 </TableRow>

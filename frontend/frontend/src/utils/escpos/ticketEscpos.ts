@@ -6,6 +6,13 @@ import * as esc from './encoder';
 
 const CHAR_WIDTH_80 = 46;
 const CHAR_WIDTH_58 = 32;
+// Interligne compact (points) : police A = 24 pts de haut, défaut imprimante ≈ 30.
+export const COMPACT_LINE_SPACING = 26;
+
+/** Nombre de colonnes (police A) selon la largeur papier configurée. */
+export function getTicketCols(settings: PharmacySettings): number {
+  return (settings.ticket_paper_width || 80) <= 60 ? CHAR_WIDTH_58 : CHAR_WIDTH_80;
+}
 
 function formatDate(dateStr: string, locale: string): string {
   try {
@@ -66,8 +73,7 @@ export function buildTicketEscpos(
   const facture = typeof ticket.facture === 'object' ? ticket.facture : null;
   const isTiersPayant = facture?.client_type === 'PROFESSIONNEL';
   const produits = facture?.produits || [];
-  const ticketWidth = settings.ticket_paper_width || 80;
-  const cols = ticketWidth <= 60 ? CHAR_WIDTH_58 : CHAR_WIDTH_80;
+  const cols = getTicketCols(settings);
 
   const totalTTC = Math.round(Number(ticket.montant || facture?.total_ttc || 0));
   const totalTVA = facture ? Math.round(Number(facture.total_tva || 0)) : 0;
@@ -96,24 +102,40 @@ export function buildTicketEscpos(
 
   const parts: string[] = [];
 
-  // Initialisation + page code
-  parts.push(esc.init());
+  // Deux paires label/valeur sur une ligne (gauche/droite) si elles tiennent, sinon deux lignes classiques.
+  const pairedColumns = (l1: string, v1: string, l2: string, v2: string, sep = ' '): string[] => {
+    const leftPart = `${l1}${sep}${v1}`;
+    const rightPart = `${l2}${sep}${v2}`;
+    return leftPart.length + 1 + rightPart.length <= cols
+      ? [esc.columns(leftPart, rightPart, cols)]
+      : [esc.columns(l1, v1, cols), esc.columns(l2, v2, cols)];
+  };
+
+  // Initialisation + page code + interligne compact
+  parts.push(esc.init(), esc.lineSpacing(COMPACT_LINE_SPACING));
 
   // HEADER
   parts.push(esc.center());
   if (settings.pharmacy_name) {
-    parts.push(esc.doubleSize(), esc.boldOn());
+    parts.push(esc.defaultLineSpacing(), esc.doubleSize(true), esc.boldOn());
     parts.push(esc.line(settings.pharmacy_name));
-    parts.push(esc.normalSize(), esc.boldOff());
+    parts.push(esc.normalSize(), esc.boldOff(), esc.lineSpacing(COMPACT_LINE_SPACING));
   }
   if (settings.address) parts.push(esc.line(settings.address));
-  if (settings.phone || settings.phone2) {
-    const phones = [settings.phone, settings.phone2].filter(Boolean).join(' / ');
-    parts.push(esc.line(`${t('invoice.tel')}: ${phones}`));
-  }
-  if (settings.email) parts.push(esc.line(`${t('invoice.email')}: ${settings.email}`));
-  if (settings.niu) parts.push(esc.line(`${t('invoice.niu')}: ${settings.niu}`));
-  if (settings.registre_commerce) parts.push(esc.line(`${t('invoice.rc')}: ${settings.registre_commerce}`));
+  const phones = [settings.phone, settings.phone2].filter(Boolean).join(' / ');
+  parts.push(
+    esc.joinedLines(
+      [phones ? `${t('invoice.tel')}: ${phones}` : null, settings.email ? `${t('invoice.email')}: ${settings.email}` : null],
+      cols
+    ),
+    esc.joinedLines(
+      [
+        settings.niu ? `${t('invoice.niu')}: ${settings.niu}` : null,
+        settings.registre_commerce ? `${t('invoice.rc')}: ${settings.registre_commerce}` : null,
+      ],
+      cols
+    )
+  );
   if (settings.show_pharmacist_on_documents && settings.pharmacist_name) {
     parts.push(esc.line(`${t('invoice.pharmacist')}: ${settings.pharmacist_name}`));
   }
@@ -129,8 +151,14 @@ export function buildTicketEscpos(
   }
 
   // INFOS TICKET
-  parts.push(esc.columns(t('ticket.ticket_no'), barcodeValue || `#${ticket.id}`, cols));
-  parts.push(esc.columns(t('invoice.date'), formatDate(ticket.date_paiement, docLocale), cols));
+  const ticketNo = barcodeValue || `#${ticket.id}`;
+  const dateStr = formatDate(ticket.date_paiement, docLocale);
+  if (`${t('ticket.ticket_no')} ${ticketNo}`.length + 1 + dateStr.length <= cols) {
+    parts.push(esc.columns(`${t('ticket.ticket_no')} ${ticketNo}`, dateStr, cols));
+  } else {
+    parts.push(esc.columns(t('ticket.ticket_no'), ticketNo, cols));
+    parts.push(esc.columns(t('invoice.date'), dateStr, cols));
+  }
   parts.push(esc.columns(t('invoice.customer'), clientName, cols));
   if (ticket.client_solde_depot && Number(ticket.client_solde_depot) > 0) {
     parts.push(esc.columns(t('invoice.remaining_deposit'), formatM(ticket.client_solde_depot), cols));
@@ -138,8 +166,15 @@ export function buildTicketEscpos(
   if (ticket.client_points_fidelite !== undefined && ticket.client_points_fidelite !== null) {
     parts.push(esc.columns(t('ticket.points_fidelity'), `${ticket.client_points_fidelite} ${t('ticket.pts')}`, cols));
   }
-  parts.push(esc.columns(t('ticket.seller'), facture?.created_by_name || t('invoice.na'), cols));
-  parts.push(esc.columns(t('ticket.cashier'), ticket.user_details?.username || t('ticket.na'), cols));
+  parts.push(
+    ...pairedColumns(
+      t('ticket.seller'),
+      facture?.created_by_name || t('invoice.na'),
+      t('ticket.cashier'),
+      ticket.user_details?.username || t('ticket.na'),
+      ': '
+    )
+  );
   parts.push(esc.hr(cols));
 
   // PRODUITS
@@ -170,10 +205,9 @@ export function buildTicketEscpos(
     parts.push(esc.columns(t('ticket.global_discount_minus'), `-${formatM(remiseGlobale)}`, cols));
   }
 
-  parts.push(esc.center(), esc.boldOn(), esc.doubleSize());
-  parts.push(esc.line(t('ticket.net_a_payer_cfa')));
-  parts.push(esc.line(formatM(totalTTC)));
-  parts.push(esc.normalSize(), esc.boldOff(), esc.left());
+  parts.push(esc.left(), esc.defaultLineSpacing());
+  parts.push(esc.totalLine(t('ticket.net_a_payer_cfa'), formatM(totalTTC), cols));
+  parts.push(esc.lineSpacing(COMPACT_LINE_SPACING));
 
   const totalLettres = ticket.total_lettres || facture?.total_lettres;
   if (totalLettres) {
@@ -217,16 +251,14 @@ export function buildTicketEscpos(
     parts.push(esc.barcodeCODE128(barcodeValue));
     // Le HRI est désactivé (GS H 0) — on imprime le numéro en clair sous le
     // code-barres comme dans l'aperçu HTML, avec de l'air autour.
-    parts.push(esc.lf(), esc.lf());
-    parts.push(esc.line(barcodeValue));
     parts.push(esc.lf());
+    parts.push(esc.line(barcodeValue));
   }
   parts.push(esc.line('ZENITH POS SYSTEM'));
-  parts.push(esc.lf(), esc.lf());
-  parts.push(esc.left());
+  parts.push(esc.left(), esc.defaultLineSpacing());
 
   // Coupe + tiroir optionnel
-  parts.push(esc.feed(3));
+  parts.push(esc.feed(2));
   if (opts?.openDrawer) {
     parts.push(esc.drawerPulse());
   }

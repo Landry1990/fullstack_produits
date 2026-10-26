@@ -153,15 +153,16 @@ export default function SuggestionCommandeModal({
       // Rattache les signalements terrain : badge si le produit est déjà
       // suggéré, ligne ajoutée en fin de liste sinon (demande terrain à
       // ne pas perdre même si l'analyse ne la recommande pas).
-      const suggestedIds = new Set(items.map(i => i.produit_id))
+      const suggestedItems = new Map(items.map(i => [i.produit_id, i]))
+      const productsById = new Map(produitsList.map(p => [p.id, p]))
       for (const s of signalements) {
-        if (suggestedIds.has(s.produit)) {
-          const item = items.find(i => i.produit_id === s.produit)!
+        const item = suggestedItems.get(s.produit)
+        if (item) {
           item.signalement_id = s.id
           item.signalement_note = s.note
           item.signalement_user = s.utilisateur_nom
         } else {
-          const realProduct = produitsList.find(p => p.id === s.produit)
+          const realProduct = productsById.get(s.produit)
           items.push({
             produit_id: s.produit,
             produit_nom: s.produit_nom ?? realProduct?.name ?? `#${s.produit}`,

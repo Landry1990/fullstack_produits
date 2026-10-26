@@ -2,6 +2,136 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-10-26 — ♻️ Ventes « sans lot » : étape 1/3 (rapports + stats fournisseur)
+
+- Nouveau `api/services/ventes_lots.py` : collecte unique des ventes (allocations
+  + lignes sans allocation au PMP, remises ligne et globale, CA HT, marge HT) —
+  `collect_sales_records()`, `factures_retenues()`.
+- Branché sur : `rapports/ventes_fournisseur_lots`, `rapports/top_selling_products`
+  (« Produits les plus vendus » : ventes sans lot désormais incluses, filtre
+  fournisseur avec repli sur le fournisseur du produit) et
+  `statistiques/ca_par_fournisseur` (coût des ventes sans lot au PMP au lieu de
+  0, marge = CA HT − coût HT, nouveau champ `ca_ht`).
+- `MarginService.calculate_facture_margin` : coût des lignes sans lot au PMP.
+- Frontend `StatistiquesFournisseur.tsx` : % de marge calculé sur `ca_ht`
+  (repli `ca_ttc`), libellé « % du CA HT » (fr/en).
+- Octobre (dev) : les 3 écrans = CA 673 871 / 175 u. / marge 180 238 (27,6 % HT).
+  Avant (stats fournisseur) : coût 462 214, marge 211 657 (31,4 % du TTC).
+- Tests : `test_rapport_ventes_fournisseur.py` (stats, top produits,
+  `calculate_facture_margin`) ; 81 tests backend OK.
+- Restent : étape 2 (Module financier), étape 3 (Rapport général Excel).
+
+## 2026-10-25 — 🐛 Ventes par fournisseur ≠ stats fournisseur (écart 14 711 F)
+
+- Cause : `ventes_fournisseur_lots` partait des seules allocations → les lignes
+  vendues sans aucune allocation (6 lignes / 15 050 F en oct. dev) étaient
+  absentes, et la remise globale facture (339 F) n'était pas appliquée.
+- `views/rapports/sales.py` : rapport réécrit en 2 sources fusionnées en Python
+  (allocations + lignes sans allocation → « Sans lot », fournisseur par défaut
+  du produit, coût au PMP) ; remise globale répartie au prorata du brut des
+  lignes (comme `ca_par_fournisseur`). Vue détail paginée sur la liste.
+- `views/dashboard/statistiques.py` (`ca_par_fournisseur`) : n'excluait pas les
+  factures supprimées (`is_active=False`, corbeille) → filtre ajouté.
+- Vérifié sur dev, octobre : 673 871 F / 175 unités des deux côtés.
+- Test : `test_lignes_sans_allocation_et_remise_globale` (égalité des totaux
+  avec `ca_par_fournisseur`).
+
+## 2026-10-25 — 🐛 Marges des rapports : CA HT vs coût HT
+
+- Bug : marge = CA **TTC** − coût d'achat **HT** → TVA comptée comme marge
+  (produits taxés, ex. parapharmacie 19,25 %). Le modèle
+  (`FactureProduitAllocation.margin`) calcule pourtant bien en HT.
+- `ventes_fournisseur_lots` : nouvelle colonne `montant_vente_ht` (CA TTC ÷
+  (1 + TVA ligne)) ; `marge` et `taux_marge` calculés sur le HT. Libellés
+  « CA TTC (F) » / « CA HT (F) » (fr/en). Frontend : taux total des sous-totaux
+  fournisseur pondéré par le CA HT (`supplierGroups.ts`).
+- `top_selling_products` (« Produits les plus vendus ») : même correction de
+  marge + le CA ignorait la remise ligne (prix brut de l'allocation) → CA TTC
+  désormais net de la remise ligne.
+- Tests : `test_rapport_ventes_fournisseur.py` (+2 : marge HT, top_selling).
+
+## 2026-10-25 — 📊 Rapport « Ventes par Fournisseur (Lots) »
+
+- Manquait : aucun rapport ne donnait les lots vendus par fournisseur sur une
+  période (`top_selling_products` agrège par produit sans lot ; le rapport à la
+  carte « ventes » ignorait `fournisseur_id`).
+- `views/rapports/sales.py` : nouvelle action `ventes_fournisseur_lots` basée sur
+  `FactureProduitAllocation` (mêmes règles d'inclusion que `top_selling_products`).
+  Fournisseur = celui du lot, sinon fournisseur par défaut du produit. `vue=groupe`
+  (1 ligne fournisseur+produit+lot, non paginé) ou `vue=detail` (1 ligne par vente
+  et par lot, paginé). Ventes sans lot → « Sans lot » / « Sans lot (en attente) ».
+  Montants nets de la remise ligne (hors remise globale).
+- `utils_doclang.py` : clés `fournisseur_inconnu`, `sans_lot`, `sans_lot_attente` (fr/en).
+- Frontend : définition dans `hooks/reports/queries.ts` ; i18n `reports.json`
+  fr/en (nom, param `vue`, options, libellés de colonnes).
+- Tests : `api/tests/test_rapport_ventes_fournisseur.py` (4 tests).
+- **Vue groupée : sous-totaux par fournisseur** — nouveau composant
+  `dashboard/reports/SupplierLotsReport.tsx` (en-tête fournisseur, lots, ligne
+  « Total » + « Moyenne par lot » après chaque fournisseur, total général). Le
+  tableau générique limitait à 100 lignes et calculait mal marge/taux (moyenne
+  de marge, taux basé sur `mt_vente` absent). Logique dans
+  `hooks/reports/supplierGroups.ts` (taux total pondéré par le CA, moyenne =
+  moyenne simple par lot), réutilisée par l'export Excel (`useCentreRapports.ts`).
+  i18n `reports:supplier_lots.*` fr/en. Test vitest `supplierGroups.test.ts`.
+  Ligne de moyenne limitée à la marge et au taux de marge (« Marge moyenne par
+  lot ») — les moyennes de CA/quantités n'apportaient rien.
+- `utils/excelExport.ts` : largeur auto des colonnes = contenu + 2 (au lieu de
+  +4, trop d'espace) et plafonnée à 50 caractères. Concerne tous les exports
+  Excel du Centre de Rapports.
+
+## 2026-10-25 — 🧾 Ticket QZ (ESC/POS) : « Net à payer » sur une seule ligne
+
+- `utils/escpos/encoder.ts` : nouveau `totalLine()` — libellé gras double hauteur
+  à gauche, montant double taille à droite (repli en double hauteur seule si ça
+  ne tient pas en 58 mm).
+- `utils/escpos/ticketEscpos.ts` : « NET À PAYER » + montant passent de 2 lignes
+  centrées à 1 ligne (comme l'aperçu HTML).
+- Bug corrigé : `esc.doubleSize()` était appelé sans argument → taille normale
+  (nom pharmacie ticket + `clotureEscpos.ts`) ; désormais `doubleSize(true)`.
+- Ticket plus court (~25 %) : interligne compact 26 pts (`ESC 3`, défaut
+  rétabli autour des lignes double hauteur) ; Tél|Email et NIU|RC regroupés
+  s'ils tiennent ; « Ticket N° … / date » et « Vendeur: … / Caissier: … » sur une
+  ligne (repli 2 lignes en 58 mm) ; sauts réduits autour du code-barres et avant
+  la coupe (`GS V B` avance déjà jusqu'au couteau).
+- `encoder.ts` : ajout `lineSpacing()` / `defaultLineSpacing()` / `joinedLines()`.
+- **Coupon de monnaie via QZ Tray** : nouveau `utils/escpos/couponEscpos.ts`
+  (même contenu que le HTML, style compact du ticket, pas d'ouverture tiroir) +
+  `printCouponSmart()` dans `printTicketSmart.ts`. `CouponDetailsModal.tsx` tente
+  QZ puis retombe sur le HTML, désormais imprimé en iframe (`printHtmlInIframe`)
+  au lieu d'une popup (bloquée après un `await`). Toast i18n
+  `caisse:coupons.details_modal.print_error` (fr/en). `PharmacySettings` :
+  ajout `city?` / `country?` (déjà renvoyés par le backend).
+- **Ticket promis via QZ Tray** : nouveau `utils/escpos/promisEscpos.ts`
+  (exemplaire pharmacie + client, coupe partielle entre les deux au lieu du
+  « découper ici ») + `printPromisTicketSmart()` dans `promisPdfDraft.ts`
+  (fallback : PDF jsPDF comme avant). Branché sur les 2 flux de fin de vente
+  (`useSaleCompletion.ts`, sans `await` pour ne pas retarder le ticket de caisse)
+  et sur le bouton Imprimer de la page Promis (`usePromisData.ts`, fallback PDF
+  backend ; si popup bloquée → téléchargement). `PromisTicketData` : ajout
+  `status_label?` / `date?`.
+
+## 2026-10-25 — 🎬 PoC vidéo formation motion design (Remotion)
+
+- `video-formation/` (nouveau, hors app) : projet Remotion 4.0.355 — exemple
+  16 s / 1080p « Réaliser une vente — Caisse » (intro cinétique, maquette
+  stylisée du panier caisse avec scan animé + total compteur, outro check).
+- `remotion.config.ts` : `setBrowserExecutable` vers Chrome local —
+  storage.googleapis.com bloqué → téléchargement du Chrome Headless Shell
+  impossible.
+- Rendu : `npx remotion render FormationVente out/formation-vente.mp4` (1,9 Mo).
+
+## 2026-10-25 — 🧹 Audit react-doctor : 16 des 17 findings corrigés (score 82/100)
+
+- **Frontend** : `Set`/`Map` hors boucle (`useOmnisearch`, `SuggestionCommandeModal`) ;
+  `.get()!` → accès sûr (`Perimes`, `printHelpers`) ; `AnimatePresence` restructuré
+  pour survivre au child (`Transformations`) ; `key={index}` → clés stables
+  (`ProductPharmaPanel` ×5) ; button imbriqué supprimé (`GenericsManager` — sélection
+  portée par le `<li role="option">`).
+- **Mobile-facturation** : détails dans `mobile-facturation/SUIVI.md`.
+- **`use-lazy-motion` ×65 ignorés** : arbitrage déjà acté (cf. entrée du 2026-10-23)
+  — conversion `motion`→`m`+`LazyMotion` refusée (risque crash strict, ~25 Ko gagnés).
+- `react-doctor-report.json` (rapport JSON du scan) versionné pour baseline.
+
 ## 2026-10-24 — 🐛 Correctifs revue : reload boot + recalcul seuils
 
 - `main.tsx` : le filet « reload au boot » (chunk raté / binding non

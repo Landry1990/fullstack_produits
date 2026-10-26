@@ -114,7 +114,7 @@ export function buildClotureEscpos(
 
   // HEADER
   parts.push(esc.center());
-  parts.push(esc.doubleSize(), esc.boldOn());
+  parts.push(esc.doubleSize(true), esc.boldOn());
   parts.push(esc.line(pharmacyName));
   parts.push(esc.normalSize(), esc.boldOff());
   parts.push(esc.line(t('cloture.report_title')));

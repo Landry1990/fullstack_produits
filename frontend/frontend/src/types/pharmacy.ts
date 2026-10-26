@@ -2,6 +2,8 @@ export interface PharmacySettings {
     id?: number
     pharmacy_name: string
     address: string
+    city?: string
+    country?: string
     phone: string
     phone2?: string
     email: string

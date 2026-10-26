@@ -11,6 +11,8 @@ import {
 import type { QueryDefinition, PaginationData } from '../../../hooks/useCentreRapports';
 import { MonthlyReportView } from './MonthlyReportView';
 import { StockValuationReport } from './StockValuationReport';
+import { SupplierLotsReport } from './SupplierLotsReport';
+import { isSupplierLotsGrouped } from '../../../hooks/reports/supplierGroups';
 import { Inbox, Eye, Download, AlertTriangle } from 'lucide-react';
 import { Button } from '../../shadcn/button';
 import PaginationControls from '../../ui/PaginationControls';
@@ -131,6 +133,11 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                     })}
                 </div>
             );
+        }
+
+        // Ventes par fournisseur (vue groupée) : sous-totaux et moyennes par fournisseur
+        if (isSupplierLotsGrouped(selectedQuery.id, results)) {
+            return <SupplierLotsReport rows={results} />;
         }
 
         // Table Display

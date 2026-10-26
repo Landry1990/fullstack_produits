@@ -4,6 +4,9 @@ import type { PharmacySettings } from '../context/PharmacySettingsContext';
 import { formatDate, formatTime } from './dateUtils';
 import { getDocumentLanguage } from './documentLang';
 
+/** Largeur maximale d'une colonne (en caractères). */
+const MAX_COL_WIDTH = 50;
+
 interface ExcelExportOptions {
     sheetName?: string;
     filename: string;
@@ -79,7 +82,8 @@ export function exportToExcel(
                 const val = String(row[key] ?? '');
                 return Math.max(max, val.length);
             }, 0);
-            return { wch: Math.max(headerLen, maxContentLen) + 4 };
+            // +2 de marge (au lieu de +4, trop aéré) et plafond pour les textes très longs.
+            return { wch: Math.min(Math.max(headerLen, maxContentLen) + 2, MAX_COL_WIDTH) };
         });
         ws['!cols'] = colWidths;
     }

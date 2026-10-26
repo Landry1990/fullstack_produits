@@ -2,7 +2,7 @@ import csv
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-from django.db.models import Count, DecimalField, Exists, F, OuterRef, Sum, Value
+from django.db.models import Count, DecimalField, Sum, Value
 from django.db.models.functions import Coalesce, TruncMonth
 from django.http import HttpResponse
 from django.utils import timezone
@@ -11,7 +11,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from api.audit_helpers import log_audit
-from api.models import AuditLog, Caisse, Facture, FactureProduit, FactureProduitAllocation, Fournisseur
+from api.models import AuditLog, Facture, FactureProduit, Fournisseur
+from api.services.ventes_lots import collect_sales_records, money, taux
 from api.utils.validation import parse_id, parse_int
 
 from .tz_utils import parse_api_datetime
@@ -314,8 +315,8 @@ class RapportSalesMixin:
     @action(detail=False, methods=['get'])
     def top_selling_products(self, request):
         """
-        Rapport des produits les plus vendus.
-        Optimisé pour calculer CA, Qté et Marge via les allocations de lots.
+        Rapport des produits les plus vendus (CA TTC, Qté, marge HT).
+        Ventes collectées via services.ventes_lots (lots + ventes sans lot au PMP).
         """
         db_str = request.query_params.get('date_debut')
         df_str = request.query_params.get('date_fin')
@@ -326,52 +327,108 @@ class RapportSalesMixin:
         if date_debut is None or date_fin is None:
             return Response({'error': 'Dates invalides'}, status=400)
 
-        # Base QuerySet: Filtrage sur les factures validées/payées actives.
-        # On utilise FactureProduitAllocation pour la précision des marges (prix d'achat réel du lot).
-        # Une facture simplement VALIDEE doit avoir au moins un paiement complété :
-        # Exists évite le Count multi-valué qui dupliquait les lignes (qty/ca/marge gonflés).
-        paiement_complete = Caisse.objects.filter(
-            facture=OuterRef('facture_produit__facture'),
-            statut='completee',
-        )
-        qs = FactureProduitAllocation.objects.annotate(
-            has_paiement=Exists(paiement_complete)
-        ).filter(
-            facture_produit__facture__is_active=True,
-            facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
-            facture_produit__facture__date__range=(date_debut, date_fin)
-        ).exclude(facture_produit__facture__status=Facture.Status.VALIDEE, has_paiement=False)
+        produits = {}
+        for r in collect_sales_records(date_debut, date_fin, fid):
+            p = produits.setdefault(r['produit_id'], {
+                'name': r['p_nom'], 'cip1': r['cip'], 'qty': 0,
+                'ttc': Decimal(0), 'ht': Decimal(0), 'achat': Decimal(0),
+            })
+            p['qty'] += r['qte']
+            p['ttc'] += r['vente']
+            p['ht'] += r['vente_ht']
+            p['achat'] += r['achat']
 
-        if fid:
-            qs = qs.filter(stock_lot__fournisseur_id=fid)
-
-        # Agrégation optimisée
-        stats = qs.values(
-            'facture_produit__produit__id',
-            'facture_produit__produit__name',
-            'facture_produit__produit__cip1'
-        ).annotate(
-            qty=Sum('quantity'),
-            catttc=Sum(F('quantity') * F('selling_price'), output_field=DecimalField(max_digits=12, decimal_places=2)),
-            marge=Sum(F('quantity') * (F('selling_price') - F('cost_price')), output_field=DecimalField(max_digits=12, decimal_places=2))
-        ).order_by('-qty')
-
-        # Pagination
-        self._check_pagination_params(request)
-        page = self.paginator.paginate_queryset(stats, request, view=self)
-        
-        results = []
-        for item in (page if page is not None else stats):
-            results.append({
-                'id': item['facture_produit__produit__id'],
-                'name': item['facture_produit__produit__name'],
-                'cip1': item['facture_produit__produit__cip1'],
-                'qty': item['qty'],
-                'catttc': float(item['catttc']),
-                'marge': float(item['marge']),
-                'taux_marge': round((float(item['marge']) / float(item['catttc']) * 100), 2) if item['catttc'] > 0 else 0
+        stats = []
+        for pid, p in sorted(produits.items(), key=lambda kv: (-kv[1]['qty'], -kv[1]['ttc'])):
+            marge = p['ht'] - p['achat']
+            stats.append({
+                'id': pid,
+                'name': p['name'],
+                'cip1': p['cip1'],
+                'qty': p['qty'],
+                'catttc': money(p['ttc']),
+                'marge': money(marge),
+                'taux_marge': taux(marge, p['ht']),
             })
 
+        self._check_pagination_params(request)
+        page = self.paginator.paginate_queryset(stats, request, view=self)
+        return self.paginator.get_paginated_response(page) if page is not None else Response(stats)
+
+    @action(detail=False, methods=['get'])
+    def ventes_fournisseur_lots(self, request):
+        """
+        Produits (lots) vendus par fournisseur sur une période.
+
+        - vue=groupe (défaut) : 1 ligne par fournisseur + produit + lot (non paginé).
+        - vue=detail : 1 ligne par vente et par lot (paginé).
+
+        Ventes collectées via services.ventes_lots (règles documentées là-bas) :
+        lots + ventes sans lot au PMP, remises ligne et globale, marge sur le HT.
+        """
+        from collections import defaultdict
+
+        date_debut, date_fin, err = self._parse_period_or_400(
+            request.query_params.get('date_debut'), request.query_params.get('date_fin')
+        )
+        if err:
+            return err
+        fid = parse_id(request.query_params.get('fournisseur_id'), field='fournisseur_id', required=False)
+        vue = request.query_params.get('vue', 'groupe')
+        if vue not in ('groupe', 'detail'):
+            return Response({'error': "Paramètre 'vue' invalide (groupe ou detail)"}, status=400)
+
+        records = collect_sales_records(date_debut, date_fin, fid)
+
+        if vue == 'groupe':
+            groups = defaultdict(lambda: {'qte': 0, 'ug': 0, 'vente': Decimal(0), 'vente_ht': Decimal(0), 'achat': Decimal(0)})
+            for r in records:
+                g = groups[(r['f_nom'], r['p_nom'], r['cip'], r['lot'], r['exp'])]
+                g['qte'] += r['qte']
+                g['ug'] += r['ug']
+                g['vente'] += r['vente']
+                g['vente_ht'] += r['vente_ht']
+                g['achat'] += r['achat']
+            results = []
+            for (f_nom, p_nom, cip, lot, exp), g in sorted(groups.items(), key=lambda kv: kv[0][:4]):
+                marge = g['vente_ht'] - g['achat']
+                results.append({
+                    'fournisseur': f_nom,
+                    'nom_produit': p_nom,
+                    'cip': cip,
+                    'lot': lot,
+                    'date_peremption': exp.isoformat() if exp else None,
+                    'quantite': g['qte'],
+                    'quantite_ug': g['ug'],
+                    'montant_vente': money(g['vente']),
+                    'montant_vente_ht': money(g['vente_ht']),
+                    'montant_achat': money(g['achat']),
+                    'marge': money(marge),
+                    'taux_marge': taux(marge, g['vente_ht']),
+                })
+            return Response(results)
+
+        records.sort(key=lambda r: (r['sort'][0] or datetime.min, *r['sort'][1:]), reverse=True)
+        self._check_pagination_params(request)
+        page = self.paginator.paginate_queryset(records, request, view=self)
+        results = []
+        for r in (page if page is not None else records):
+            results.append({
+                'date_creation': r['date'].isoformat() if r['date'] else None,
+                'numero_facture': r['numero'] or f"#{r['facture_id']}",
+                'fournisseur': r['f_nom'],
+                'nom_produit': r['p_nom'],
+                'cip': r['cip'],
+                'lot': r['lot'],
+                'date_peremption': r['exp'].isoformat() if r['exp'] else None,
+                'quantite': r['qte'],
+                'quantite_ug': r['ug'],
+                'prix_vente': money(r['pu']),
+                'montant_vente': money(r['vente']),
+                'montant_vente_ht': money(r['vente_ht']),
+                'montant_achat': money(r['achat']),
+                'marge': money(r['vente_ht'] - r['achat']),
+            })
         return self.paginator.get_paginated_response(results) if page is not None else Response(results)
 
     @action(detail=False, methods=['get'])
