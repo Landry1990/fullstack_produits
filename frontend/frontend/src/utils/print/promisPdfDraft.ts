@@ -4,6 +4,7 @@ import { formatDateTime, getLocalDateString } from '../dateUtils';
 import { getDocumentLanguage, getDocumentLocale } from '../documentLang';
 import type { PharmacySettings } from '../../hooks/usePharmacySettings';
 import type { ProduitModel } from '../../types';
+import { logger } from '../logger';
 
 export interface PromisItem {
     id: number;
@@ -21,6 +22,35 @@ export interface PromisTicketData {
     pharmacy: PharmacySettings;
     facture_id?: number | string;
     is_paid: boolean;
+    /** Libellé de statut imposé (sinon « payé / à régler » selon is_paid). ESC/POS uniquement. */
+    status_label?: string;
+    /** Date affichée (ISO) — défaut : maintenant. ESC/POS uniquement. */
+    date?: string;
+}
+
+/**
+ * Ticket promis : ESC/POS natif via QZ Tray, sinon `fallback`
+ * (par défaut : PDF jsPDF téléchargé comme avant).
+ */
+export async function printPromisTicketSmart(
+    data: PromisTicketData,
+    fallback: () => void | Promise<void> = () => generatePromisTicketDraft(data)
+): Promise<'escpos' | 'fallback'> {
+    try {
+        const [{ buildPromisEscpos }, { printEscpos }] = await Promise.all([
+            import('../escpos/promisEscpos'),
+            import('../../services/qzPrinter'),
+        ]);
+        if (await printEscpos(buildPromisEscpos(data))) {
+            logger.info('Ticket promis envoyé en ESC/POS natif via QZ Tray');
+            return 'escpos';
+        }
+        throw new Error('QZ Tray a refusé ou aucune imprimante disponible');
+    } catch (err) {
+        logger.warn('Impression promis ESC/POS échouée, fallback', err);
+        await fallback();
+        return 'fallback';
+    }
 }
 
 export const generatePromisTicketDraft = (data: PromisTicketData) => {

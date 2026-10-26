@@ -527,7 +527,7 @@ export default function Perimes() {
     })
     const rows: DisplayRow[] = []
     for (const label of labels) {
-      const groupLots = groups.get(label)!.sort((a, b) =>
+      const groupLots = (groups.get(label) ?? []).sort((a, b) =>
         a.produit_nom.localeCompare(b.produit_nom, 'fr') ||
         (a.date_expiration ?? '9999').localeCompare(b.date_expiration ?? '9999')
       )

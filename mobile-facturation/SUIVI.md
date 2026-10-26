@@ -10,6 +10,12 @@
 
 ## ✅ Déjà en place
 
+- [x] **Correctifs audit react-doctor** (2026-10-25) : `key={index}` → clés
+  stables (`PendingSalesModal`, `HistoriqueScreen`) ; `.get()!` → accès sûr
+  (`PeremptionScreen`) ; JSX dupliqué factorisé en composants locaux
+  (`ModalHeader`/`RowActions` dans `PendingEntreeModal`, `LoginForm` dans
+  `LoginScreen`). Typecheck `tsc --noEmit` propre.
+
 - [x] **Recherche produit : anti-race + cache** (2026-10-24) : une réponse
   lente d'une frappe ancienne n'écrase plus les résultats courants
   (n° de requête) ; mini-cache des 50 dernières recherches — retaper une

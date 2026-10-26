@@ -86,8 +86,8 @@ export function PendingSalesModal({ visible, cartEmpty, onRestore, onMerge, onDe
                   <Text style={styles.total}>{saleTotal(item).toLocaleString('fr-FR')} F</Text>
                 </View>
                 <View style={styles.preview}>
-                  {item.lines.slice(0, 3).map((l, i) => (
-                    <Text key={i} style={styles.previewLine} numberOfLines={1}>
+                  {item.lines.slice(0, 3).map((l) => (
+                    <Text key={`${l.product.id}-${l.lotId ?? 'none'}`} style={styles.previewLine} numberOfLines={1}>
                       {l.quantite}× {l.product.name}
                     </Text>
                   ))}

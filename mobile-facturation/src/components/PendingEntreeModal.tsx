@@ -37,6 +37,54 @@ const entreeTotal = (e: PendingEntree) =>
 const entreeArticles = (e: PendingEntree) =>
   e.lines.reduce((a, l) => a + (parseInt(l.quantity, 10) || 0) + (parseInt(l.unites_gratuites, 10) || 0), 0);
 
+// En-tête de la modale : icône + titre + compteur + fermeture.
+function ModalHeader({ title, count, onClose }: { title: string; count: number; onClose: () => void }) {
+  return (
+    <View style={styles.header}>
+      <View style={styles.headerLeft}>
+        <Clock size={ms(18)} color={theme.warning} />
+        <Text style={styles.title}>{title}</Text>
+        {count > 0 && (
+          <View style={styles.countBadge}>
+            <Text style={styles.countText}>{count}</Text>
+          </View>
+        )}
+      </View>
+      <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+        <Text style={styles.closeBtnText}>✕</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+// Actions d'une ligne : fusionner (si réception courante non vide),
+// reprendre, supprimer.
+function RowActions({ showMerge, onMerge, onRestore, onDelete }: {
+  showMerge: boolean;
+  onMerge: () => void;
+  onRestore: () => void;
+  onDelete: () => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <View style={styles.actions}>
+      {showMerge && (
+        <TouchableOpacity style={styles.mergeBtn} onPress={onMerge}>
+          <GitMerge size={ms(14)} color={theme.textSecondary} />
+          <Text style={styles.mergeText}>{t('pending.merge')}</Text>
+        </TouchableOpacity>
+      )}
+      <TouchableOpacity style={styles.restoreBtn} onPress={onRestore}>
+        <RefreshCcw size={ms(14)} color="#fff" />
+        <Text style={styles.restoreText}>{t('pending.restore')}</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.deleteBtn} onPress={onDelete}>
+        <Trash2 size={ms(14)} color={theme.danger} />
+      </TouchableOpacity>
+    </View>
+  );
+}
+
 export function PendingEntreeModal({ visible, entreeEmpty, onRestore, onMerge, onDelete, onClose }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -49,20 +97,7 @@ export function PendingEntreeModal({ visible, entreeEmpty, onRestore, onMerge, o
         paddingBottom: Math.max(insets.bottom, 24),
       }]}>
         <View style={styles.sheet}>
-          <View style={styles.header}>
-            <View style={styles.headerLeft}>
-              <Clock size={ms(18)} color={theme.warning} />
-              <Text style={styles.title}>{t('pendingEntree.title')}</Text>
-              {entries.length > 0 && (
-                <View style={styles.countBadge}>
-                  <Text style={styles.countText}>{entries.length}</Text>
-                </View>
-              )}
-            </View>
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-              <Text style={styles.closeBtnText}>✕</Text>
-            </TouchableOpacity>
-          </View>
+          <ModalHeader title={t('pendingEntree.title')} count={entries.length} onClose={onClose} />
 
           <FlatList
             data={entries}
@@ -100,21 +135,12 @@ export function PendingEntreeModal({ visible, entreeEmpty, onRestore, onMerge, o
                     </Text>
                   )}
                 </View>
-                <View style={styles.actions}>
-                  {!entreeEmpty && (
-                    <TouchableOpacity style={styles.mergeBtn} onPress={() => onMerge(item)}>
-                      <GitMerge size={ms(14)} color={theme.textSecondary} />
-                      <Text style={styles.mergeText}>{t('pending.merge')}</Text>
-                    </TouchableOpacity>
-                  )}
-                  <TouchableOpacity style={styles.restoreBtn} onPress={() => onRestore(item)}>
-                    <RefreshCcw size={ms(14)} color="#fff" />
-                    <Text style={styles.restoreText}>{t('pending.restore')}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.deleteBtn} onPress={() => onDelete(item.id)}>
-                    <Trash2 size={ms(14)} color={theme.danger} />
-                  </TouchableOpacity>
-                </View>
+                <RowActions
+                  showMerge={!entreeEmpty}
+                  onMerge={() => onMerge(item)}
+                  onRestore={() => onRestore(item)}
+                  onDelete={() => onDelete(item.id)}
+                />
               </View>
             )}
           />

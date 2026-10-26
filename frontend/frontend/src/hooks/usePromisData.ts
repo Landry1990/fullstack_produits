@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { gooeyToast } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
 import { useConfirm } from './useConfirm';
+import { usePharmacySettings } from './usePharmacySettings';
 import promisService from '../services/promisService';
 import clientService from '../services/clientService';
 import produitService from '../services/produitService';
@@ -56,6 +57,7 @@ export interface UsePromisDataReturn {
 export function usePromisData(): UsePromisDataReturn {
     const { t } = useTranslation(['stock', 'common']);
     const confirm = useConfirm();
+    const { settings: pharmacySettings } = usePharmacySettings();
 
     const [promisList, setPromisList] = useState<Promis[]>([]);
     const [loading, setLoading] = useState(true);
@@ -186,23 +188,48 @@ export function usePromisData(): UsePromisDataReturn {
         }
     };
 
-    const handlePrintTicket = async (id: number) => {
-        // Ouvrir la fenêtre AVANT l'appel async pour éviter le blocage popup
-        const printWindow = window.open('about:blank', '_blank');
-        if (!printWindow) {
-            gooeyToast.error(t('stock:promis.messages.print_ticket_error', 'Erreur lors de l\'impression'));
-            return;
-        }
+    // Fallback : PDF backend. Après la tentative QZ (async) la popup peut être
+    // bloquée → on bascule alors sur un téléchargement du PDF.
+    const printTicketPdf = async (id: number) => {
         try {
             const blob = await promisService.imprimerTicket(id);
             const url = window.URL.createObjectURL(blob);
-            printWindow.location.href = url;
+            if (!window.open(url, '_blank')) {
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `ticket_promis_${id}.pdf`;
+                link.click();
+            }
             setTimeout(() => window.URL.revokeObjectURL(url), 10000);
         } catch (err) {
             logger.error('Erreur impression ticket:', err);
             gooeyToast.error(t('stock:promis.messages.print_ticket_error', 'Erreur lors de l\'impression'));
-            printWindow.close();
         }
+    };
+
+    const handlePrintTicket = async (id: number) => {
+        const promis = promisList.find(p => p.id === id);
+        if (!promis || !pharmacySettings) {
+            await printTicketPdf(id);
+            return;
+        }
+        const { printPromisTicketSmart } = await import('../utils/print/promisPdfDraft');
+        await printPromisTicketSmart({
+            client_name: promis.client_display || promis.client_name || t('common:passerby_client'),
+            client_phone: promis.client_phone_display || promis.client_phone,
+            items: [{
+                id: promis.id,
+                produit_nom: promis.produit_name || `#${promis.produit}`,
+                promisQuantity: promis.quantite,
+                produit: promis.produit_cip ? ({ cip1: promis.produit_cip } as ProduitModel) : undefined,
+                date_promis: promis.date_promis,
+                status: promis.status,
+            }],
+            pharmacy: pharmacySettings,
+            is_paid: true,
+            status_label: promis.status_display,
+            date: promis.date_promis,
+        }, () => printTicketPdf(id));
     };
 
     const handleWhatsAppReminder = async (id: number) => {

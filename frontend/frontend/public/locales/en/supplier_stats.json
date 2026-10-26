@@ -32,7 +32,7 @@
             "total_ca": "Total Turnover (TTC)",
             "purchase_cost": "Purchase Cost (Sold)",
             "gross_margin": "Gross Margin",
-            "margin_percentage": "% of Turnover",
+            "margin_percentage": "% of Turnover excl. VAT",
             "units_sold": "Units Sold"
         },
         "chart": {

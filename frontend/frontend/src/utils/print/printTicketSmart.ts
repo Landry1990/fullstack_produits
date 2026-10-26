@@ -1,5 +1,6 @@
-import type { TicketCaisse, PharmacySettings } from '../../types';
+import type { TicketCaisse, PharmacySettings, CouponMonnaie } from '../../types';
 import { buildTicketEscpos } from '../escpos/ticketEscpos';
+import { buildCouponEscpos } from '../escpos/couponEscpos';
 import { printEscpos, shouldOpenDrawer } from '../../services/qzPrinter';
 import { logger } from '../logger';
 
@@ -25,6 +26,25 @@ export async function printTicketSmart(
     throw new Error('QZ Tray a refusé ou aucune imprimante disponible');
   } catch (err) {
     logger.warn('Impression ESC/POS échouée, fallback sur le flux HTML', err);
+    htmlFallback();
+    return 'html';
+  }
+}
+
+/** Coupon de monnaie : ESC/POS natif via QZ Tray, sinon fallback HTML (sans ouverture du tiroir). */
+export async function printCouponSmart(
+  coupon: CouponMonnaie,
+  settings: PharmacySettings,
+  htmlFallback: () => void
+): Promise<'escpos' | 'html'> {
+  try {
+    if (await printEscpos(buildCouponEscpos(coupon, settings))) {
+      logger.info('Coupon envoyé en ESC/POS natif via QZ Tray');
+      return 'escpos';
+    }
+    throw new Error('QZ Tray a refusé ou aucune imprimante disponible');
+  } catch (err) {
+    logger.warn('Impression coupon ESC/POS échouée, fallback sur le flux HTML', err);
     htmlFallback();
     return 'html';
   }

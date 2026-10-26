@@ -24,6 +24,8 @@ export const COMMANDS = {
   doubleSizeOn: `${GS}!\x11`, // double hauteur + double largeur
   normalSize: `${GS}!\x00`,
   feed: (n = 1) => `${ESC}d${String.fromCharCode(n)}`,
+  lineSpacing: (dots: number) => `${ESC}3${String.fromCharCode(dots)}`,
+  defaultLineSpacing: `${ESC}2`,
   cutFull: `${GS}V\x00`,
   cutPartial: `${GS}V\x42\x00`,
   drawerPulse: `${ESC}p\x00\x19\xFA`,
@@ -204,6 +206,13 @@ export function feed(n = 1): string {
   return COMMANDS.feed(n);
 }
 
+/** Interligne en points (ESC 3 n). Le défaut imprimante (ESC 2) est ~30 points. */
+export function lineSpacing(dots: number): string {
+  return COMMANDS.lineSpacing(Math.max(0, Math.min(255, Math.round(dots))));
+}
+
+export const defaultLineSpacing = (): string => COMMANDS.defaultLineSpacing;
+
 /** Coupe du papier (partielle par défaut). */
 export function cut(partial = true): string {
   return partial ? COMMANDS.cutPartial : COMMANDS.cutFull;
@@ -232,6 +241,42 @@ export function columns(label: string, value: string, width = 48): string {
   const trimmedLabel = safeLabel.length > labelMax ? safeLabel.slice(0, labelMax) : safeLabel;
   const pad = Math.max(0, width - trimmedLabel.length - valueLen);
   return text(trimmedLabel) + ' '.repeat(pad) + text(safeValue) + LF;
+}
+
+/**
+ * Regroupe plusieurs segments sur une ligne (séparés par « | ») s'ils tiennent
+ * dans la largeur, sinon une ligne par segment. Les segments vides sont ignorés.
+ */
+export function joinedLines(segments: (string | null | undefined)[], width = 48): string {
+  const items = segments.filter((s): s is string => !!s);
+  const joined = items.join(' | ');
+  return joined.length <= width ? (joined ? line(joined) : '') : items.map((s) => line(s)).join('');
+}
+
+/**
+ * Ligne de total mise en avant : label gras en double hauteur à gauche,
+ * valeur en double taille (2 colonnes par caractère) alignée à droite.
+ */
+export function totalLine(label: string, value: string, width = 48): string {
+  const safeLabel = String(label ?? '');
+  const safeValue = String(value ?? '');
+  // Papier étroit (58 mm) : si la double largeur ne tient pas, la valeur reste en double hauteur seule.
+  const wide = safeLabel.length + 1 + safeValue.length * 2 <= width;
+  const valueCols = Math.min(safeValue.length * (wide ? 2 : 1), width);
+  const labelMax = Math.max(0, width - valueCols - 1);
+  const trimmedLabel = safeLabel.length > labelMax ? safeLabel.slice(0, labelMax) : safeLabel;
+  const pad = Math.max(1, width - trimmedLabel.length - valueCols);
+  return (
+    COMMANDS.boldOn +
+    `${GS}!\x01` +
+    text(trimmedLabel) +
+    ' '.repeat(pad) +
+    (wide ? COMMANDS.doubleSizeOn : '') +
+    text(safeValue) +
+    LF +
+    COMMANDS.normalSize +
+    COMMANDS.boldOff
+  );
 }
 
 /** Code-barres CODE128 en mode natif (format B), taille réduite. */

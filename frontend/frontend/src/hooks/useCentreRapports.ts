@@ -13,6 +13,7 @@ export * from './reports/utils';
 export { QUERIES } from './reports/queries';
 
 import { QUERIES } from './reports/queries';
+import { groupBySupplier, isSupplierLotsGrouped } from './reports/supplierGroups';
 import { 
     formatColumnHeader, 
     isSummableColumn,
@@ -378,7 +379,25 @@ export function useCentreRapports() {
 
         let data: Record<string, string | number | boolean>[] = [];
 
-        if (Array.isArray(results) && results.length > 0) {
+        if (isSupplierLotsGrouped(selectedQuery.id, results)) {
+            // Même structure que l'écran : lots du fournisseur, puis Total et Moyenne par lot.
+            const columns = Object.keys(results[0]).filter(k => !k.startsWith('_'));
+            const toRow = (src: Record<string, unknown>) => Object.fromEntries(
+                columns.map(col => [formatColumnHeader(col, t), (src[col] ?? '') as string | number])
+            );
+            const aggRow = (label: string, values: Record<string, number>) => toRow({
+                fournisseur: label,
+                ...Object.fromEntries(Object.entries(values).map(([k, v]) => [k, Math.round(v * 100) / 100])),
+            });
+            const { groups, grand } = groupBySupplier(results);
+            for (const g of groups) {
+                g.rows.forEach(r => data.push(toRow(r)));
+                data.push(aggRow(t('reports:supplier_lots.total', { name: g.fournisseur, count: g.count }), g.totals));
+                data.push(aggRow(t('reports:supplier_lots.average'), g.averages));
+            }
+            data.push(aggRow(t('reports:supplier_lots.grand_total', { count: grand.count }), grand.totals));
+            data.push(aggRow(t('reports:supplier_lots.average'), grand.averages));
+        } else if (Array.isArray(results) && results.length > 0) {
             const columns = Object.keys(results[0]).filter(k => !k.startsWith('_') && k !== 'id').slice(0, 20);
             data = (results as Record<string, unknown>[]).map(row => {
                 const obj: Record<string, string | number | boolean> = {};

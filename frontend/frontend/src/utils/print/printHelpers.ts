@@ -515,7 +515,7 @@ export function buildReceptionPrintHtml(commande: Commande, companyInfo: { name?
     const groupLabel = docT(groupBy === 'rayon' ? 'reception.group_rayon' : 'reception.group_forme');
     const noGroupLabel = docT(groupBy === 'rayon' ? 'reception.no_rayon' : 'reception.no_forme');
     rowsHtml = sortedKeys.map((key) => {
-      const items = groups.get(key)!.slice().sort((a, b) => nomOf(a).localeCompare(nomOf(b), docLocale));
+      const items = (groups.get(key) ?? []).slice().sort((a, b) => nomOf(a).localeCompare(nomOf(b), docLocale));
       const header = `<tr class="group-row"><td colspan="8">${escHtml(groupLabel)} : ${key ? escHtml(key) : escHtml(noGroupLabel)}</td></tr>`;
       return header + items.map(rowFor).join('');
     }).join('');

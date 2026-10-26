@@ -1,9 +1,11 @@
 import { useTranslation } from 'react-i18next'
 import { formatCurrency } from '../../utils/formatters'
-import { escHtml, writePrintDocument } from '../../utils/print/printHelpers'
+import { gooeyToast } from 'goey-toast'
+import { escHtml, printHtmlInIframe } from '../../utils/print/printHelpers'
+import { printCouponSmart } from '../../utils/print/printTicketSmart'
 import { useDocumentLocale } from '../../hooks/usePharmacySettings'
 import PremiumModal from '../common/PremiumModal'
-import type { CouponMonnaie, Facture } from '../../types'
+import type { CouponMonnaie, Facture, PharmacySettings } from '../../types'
 
 interface CouponDetailsModalProps {
   isOpen: boolean
@@ -27,16 +29,15 @@ export function CouponDetailsModal({
   const { lang: docLang, locale: docLocale } = useDocumentLocale()
   const { t: docT } = useTranslation('printing', { lng: docLang })
 
-  const handlePrintCoupon = () => {
-    if (!coupon) return
-    const win = window.open('about:blank', '', 'height=600,width=400')
-    if (win) {
+  const pharmacy = (settings ?? {}) as PharmacySettings
+
+  const printCouponHtml = (coupon: CouponMonnaie) => {
       const dateStr = new Date(coupon.date_creation).toLocaleString(docLocale, {
         day: '2-digit', month: '2-digit', year: 'numeric',
         hour: '2-digit', minute: '2-digit'
       })
 
-      writePrintDocument(win, `<!DOCTYPE html>
+      printHtmlInIframe(`<!DOCTYPE html>
 <html>
 <head>
   <title>${escHtml(docT('coupon.title'))}</title>
@@ -148,12 +149,12 @@ export function CouponDetailsModal({
 </head>
 <body>
   <div class="header">
-    <div class="pharmacy-name">${escHtml(settings.pharmacy_name || docT('coupon.pharmacy_fallback'))}</div>
+    <div class="pharmacy-name">${escHtml(pharmacy.pharmacy_name || docT('coupon.pharmacy_fallback'))}</div>
     <div class="pharmacy-info">
-      ${settings.city ? `${escHtml(settings.city)}` : ''}${settings.country ? `, ${escHtml(settings.country)}` : ''}<br>
-      ${settings.phone ? `${docT('invoice.tel')}: ${escHtml(settings.phone)}` : ''}<br>
-      ${settings.niu ? `NIU: ${escHtml(settings.niu)}` : ''}<br>
-      ${settings.registre_commerce ? `RC: ${escHtml(settings.registre_commerce)}` : ''}
+      ${pharmacy.city ? `${escHtml(pharmacy.city)}` : ''}${pharmacy.country ? `, ${escHtml(pharmacy.country)}` : ''}<br>
+      ${pharmacy.phone ? `${docT('invoice.tel')}: ${escHtml(pharmacy.phone)}` : ''}<br>
+      ${pharmacy.niu ? `NIU: ${escHtml(pharmacy.niu)}` : ''}<br>
+      ${pharmacy.registre_commerce ? `RC: ${escHtml(pharmacy.registre_commerce)}` : ''}
     </div>
   </div>
   
@@ -196,16 +197,16 @@ export function CouponDetailsModal({
   </div>
 
   <div class="footer">
-    ${escHtml(settings.ticket_footer_message || docT('ticket.visit_thanks'))}
+    ${escHtml(pharmacy.ticket_footer_message || docT('ticket.visit_thanks'))}
   </div>
+  <script>window.onload = function () { setTimeout(function () { window.print() }, 250) }</script>
 </body>
-</html>`)
-      win.onload = () => {
-        setTimeout(() => {
-          win.print()
-        }, 250)
-      }
-    }
+</html>`, () => gooeyToast.error(t('coupons.details_modal.print_error')))
+  }
+
+  const handlePrintCoupon = () => {
+    if (!coupon) return
+    void printCouponSmart(coupon, pharmacy, () => printCouponHtml(coupon))
   }
 
   return (

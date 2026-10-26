@@ -132,7 +132,19 @@ class MarginService:
             )
         )
         
-        cout_achat = allocations['cout_achat']
+        # Lignes vendues sans allocation de lot : coût au PMP du produit
+        # (sinon coût 0 → marge gonflée).
+        sans_lot = FactureProduit.objects.filter(facture=facture).annotate(
+            has_alloc=Exists(FactureProduitAllocation.objects.filter(facture_produit=OuterRef('pk')))
+        ).filter(has_alloc=False).aggregate(
+            cout=Coalesce(
+                Sum(F('quantity') * Coalesce(F('produit__pmp'), Value(0, output_field=DecimalField())),
+                    output_field=DecimalField()),
+                Value(0, output_field=DecimalField())
+            )
+        )
+
+        cout_achat = allocations['cout_achat'] + sans_lot['cout']
         ca_ht = facture.total_ht or Decimal('0.00')
         marge_brute = ca_ht - cout_achat
         marge_pct = (marge_brute / ca_ht * 100) if ca_ht > 0 else Decimal('0.00')

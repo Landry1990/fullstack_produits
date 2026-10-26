@@ -335,15 +335,16 @@ function ProductSearchCombobox({ placeholder, onSelect, excludeId, disabled }: P
             <li className="px-3 py-2 text-xs text-base-content/40">{t('common:no_results')}</li>
           ) : (
             results.map((p, idx) => (
-              <li key={p.id} role="option" aria-selected={idx === highlightIndex}>
-                <button
-                  type="button"
-                  className={`w-full text-left px-3 py-2 text-sm hover:bg-base-200 rounded-lg ${idx === highlightIndex ? 'bg-base-200' : ''}`}
-                  onMouseEnter={() => setHighlightIndex(idx)}
-                  onClick={() => handleSelect(p)}
-                >
-                  {p.name}
-                </button>
+              <li
+                key={p.id}
+                role="option"
+                aria-selected={idx === highlightIndex}
+                className={`w-full text-left px-3 py-2 text-sm hover:bg-base-200 rounded-lg ${idx === highlightIndex ? 'bg-base-200' : ''}`}
+                onMouseEnter={() => setHighlightIndex(idx)}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => handleSelect(p)}
+              >
+                {p.name}
               </li>
             ))
           )}

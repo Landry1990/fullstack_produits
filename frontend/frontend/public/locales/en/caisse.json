@@ -77,7 +77,8 @@
         "details_modal": {
             "title": "Coupon Details",
             "close": "Close",
-            "print": "Print"
+            "print": "Print",
+            "print_error": "Unable to print the coupon"
         },
         "generate_modal": {
             "title": "Generate Coupon",
