@@ -2,6 +2,19 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-10-29 — Perf : rapport général Excel sans N+1
+
+- `views/rapports/excel_general.py` : stock par rayon et créances clients
+  passés de boucles par ligne à des agrégats `GROUP BY` (2 requêtes chacun).
+  `_collect_data` : 114 → 31 requêtes ; classeur complet : 155 → 59 requêtes
+  (~0,6 s sur la base dev, profilé via `backend/profile_excel.py`).
+- Résiduel connu : ~8 lookups PK `PharmacySettings` (locale/propriétés de
+  modèles) et 2 requêtes Avoir — négligeables.
+- Outils de mesure conservés : `backend/measure_queries.py` (requêtes/temps
+  par endpoint) et `backend/profile_excel.py` (patterns SQL du rapport).
+- Vérification : 75 tests backend OK (1 skip préexistant), classeur regénéré
+  sans erreur. Non committé ; backend redéployé en dev.
+
 ## 2026-10-26 — Ventes « sans lot » : étape 4/4 (MarginService : dashboard + rapports mensuels)
 
 - `services/margin_service.py` : `calculate_period_margin`,
