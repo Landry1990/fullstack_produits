@@ -99,9 +99,9 @@ describe('ModuleFinancier Component', () => {
     
     await waitFor(() => {
         // Check for CA Mois
-        expect(screen.getAllByText(/1\s?200\s?000/).length).toBeGreaterThan(0);
+        expect(screen.getAllByText(/1[.\s]?200[.\s]?000/).length).toBeGreaterThan(0);
         // Check for Panier Moyen
-        expect(screen.getAllByText(/15\s?000/).length).toBeGreaterThan(0);
+        expect(screen.getAllByText(/15[.\s]?000/).length).toBeGreaterThan(0);
     });
   });
 

@@ -8,20 +8,17 @@ from decimal import ROUND_HALF_UP, Decimal
 
 from django.db.models import (
     Avg,
-    Count,
     DecimalField,
     Exists,
     F,
     OuterRef,
-    Q,
     Sum,
     Value,
 )
-from django.db.models.functions import Coalesce, TruncDay
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 
 from api.models import (
-    Caisse,
     Facture,
     FactureProduit,
     FactureProduitAllocation,
@@ -172,40 +169,26 @@ class MarginService:
         Returns:
             Dict avec statistiques de marge sur la période
         """
+        from api.services.ventes_lots import collect_sales_records, factures_retenues
+
         if factures_qs is None:
-            factures_qs = Facture.objects.filter(
-                status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+            factures_qs = factures_retenues().filter(
                 date__gte=_to_aware_datetime(date_debut),
                 date__lt=_to_aware_datetime(date_fin)
             )
-        
-        # Requête optimisée avec annotations
-        factures_with_margin = factures_qs.annotate(
-            cout_achat_facture=Coalesce(
-                Sum(
-                    F('produits__factureproduitallocation__cost_price') * 
-                    F('produits__factureproduitallocation__quantity'),
-                    output_field=DecimalField()
-                ),
-                Value(0, output_field=DecimalField())
-            )
-        ).aggregate(
-            ca_ht_total=Coalesce(Sum('total_ht'), Value(0, output_field=DecimalField())),
-            cout_achat_total=Coalesce(Sum('cout_achat_facture'), Value(0, output_field=DecimalField())),
-            nb_factures=Count('id')
-        )
-        
-        ca_ht = factures_with_margin['ca_ht_total']
-        cout_achat = factures_with_margin['cout_achat_total']
+
+        records = collect_sales_records(invoices=factures_qs)
+        ca_ht = sum((r['vente_ht'] for r in records), Decimal(0))
+        cout_achat = sum((r['achat'] for r in records), Decimal(0))
         marge_brute = ca_ht - cout_achat
         marge_pct = (marge_brute / ca_ht * 100) if ca_ht > 0 else Decimal('0.00')
-        
+
         return {
             'ca_ht_total': ca_ht.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
             'cout_achat_total': cout_achat.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
             'marge_brute': marge_brute.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
             'marge_pct': marge_pct.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
-            'nb_factures': factures_with_margin['nb_factures']
+            'nb_factures': len({r['facture_id'] for r in records})
         }
     
     @staticmethod
@@ -216,9 +199,10 @@ class MarginService:
         exclude_is_divers=True
     ) -> dict[str, Decimal]:
         """
-        Calcule la marge sur une période avec prise en compte des remises globales
-        Formule unifiée : (CA TTC * ratio_remise) - coût_achat
-        où ratio_remise = total_ttc / (total_ttc + remise_globale)
+        Calcule la marge sur une période via collect_sales_records() :
+        ventes tracées par lot au coût du lot, lignes sans allocation au PMP,
+        remises ligne/globale et TVA par ligne. Marge calculée sur le CA HT.
+        ratio_remise est conservé pour compatibilité (CA TTC net / brut).
         
         Args:
             date_debut: Date de début
@@ -229,82 +213,44 @@ class MarginService:
         Returns:
             Dict avec statistiques de marge sur la période
         """
+        from api.services.ventes_lots import collect_sales_records, factures_retenues
+
         if factures_qs is None:
-            factures_qs = Facture.objects.filter(
-                status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+            factures_qs = factures_retenues().filter(
                 date__gte=_to_aware_datetime(date_debut),
                 date__lt=_to_aware_datetime(date_fin)
             )
-        
-        # Exclure les factures avec uniquement des produits is_divers si demandé
+
+        records = collect_sales_records(invoices=factures_qs)
         if exclude_is_divers:
-            factures_qs = factures_qs.exclude(
-                produits__allocations__stock_lot__is_divers=True
-            ).distinct()
-        
-        # Coût des produits alloués (exclure is_divers)
-        allocations_qs = FactureProduitAllocation.objects.filter(
-            facture_produit__facture__in=factures_qs
-        )
-        if exclude_is_divers:
-            allocations_qs = allocations_qs.exclude(stock_lot__is_divers=True)
-        
-        cost_allocated = allocations_qs.aggregate(
-            total=Coalesce(
-                Sum(F('cost_price') * F('quantity'), output_field=DecimalField()),
-                Value(0, output_field=DecimalField())
-            )
-        )['total']
-        
-        # Coût des produits non alloués (fallback PMP)
-        unallocated_qs = FactureProduit.objects.filter(
-            facture__in=factures_qs
-        ).annotate(
-            has_alloc=Exists(
-                FactureProduitAllocation.objects.filter(facture_produit=OuterRef('pk'))
-            )
-        ).filter(has_alloc=False)
-        
-        if exclude_is_divers:
-            unallocated_qs = unallocated_qs.exclude(produit__stock_lots__is_divers=True)
-        
-        cost_unallocated = unallocated_qs.aggregate(
-            total=Coalesce(
-                Sum(F('produit__pmp') * F('quantity'), output_field=DecimalField()),
-                Value(0, output_field=DecimalField())
-            )
-        )['total']
-        
-        total_cost = cost_allocated + cost_unallocated
-        
-        # CA TTC total
-        ca_ttc_total = factures_qs.aggregate(
-            total=Coalesce(Sum('total_ttc'), Value(0, output_field=DecimalField()))
-        )['total']
-        
-        # Calcul de la marge avec ratio de remise globale
-        # ratio_remise = total_ttc / (total_ttc + remise_globale)
-        total_remise = factures_qs.aggregate(
+            records = [r for r in records if not r['is_divers']]
+
+        # vente = TTC net de remises (ligne + globale) ; marge sur le HT
+        ca_ttc_net = sum((r['vente'] for r in records), Decimal(0))
+        ca_ht = sum((r['vente_ht'] for r in records), Decimal(0))
+        total_cost = sum((r['achat'] for r in records), Decimal(0))
+        total_remise = Decimal(factures_qs.filter(
+            pk__in={r['facture_id'] for r in records}
+        ).aggregate(
             total=Coalesce(Sum('remise'), Value(0, output_field=DecimalField()))
-        )['total']
-        
+        )['total'] or 0)
+
         ratio_remise = Decimal(1)
-        if ca_ttc_total + total_remise > 0:
-            ratio_remise = ca_ttc_total / (ca_ttc_total + total_remise)
-        
-        ca_ttc_net = ca_ttc_total * ratio_remise
-        marge_brute = ca_ttc_net - total_cost
-        marge_pct = (marge_brute / ca_ttc_net * 100) if ca_ttc_net > 0 else Decimal('0.00')
-        
+        if ca_ttc_net + total_remise > 0:
+            ratio_remise = ca_ttc_net / (ca_ttc_net + total_remise)
+
+        marge_brute = ca_ht - total_cost
+        marge_pct = (marge_brute / ca_ht * 100) if ca_ht > 0 else Decimal('0.00')
+
         return {
-            'ca_ttc_total': ca_ttc_total.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
+            'ca_ttc_total': ca_ttc_net.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
             'ca_ttc_net': ca_ttc_net.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
             'cout_achat_total': total_cost.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
             'remise_globale': total_remise.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
             'ratio_remise': ratio_remise.quantize(Decimal('0.0001'), rounding=ROUND_HALF_UP),
             'marge_brute': marge_brute.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
             'marge_pct': marge_pct.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
-            'nb_factures': Decimal(str(factures_qs.count()))
+            'nb_factures': Decimal(str(len({r['facture_id'] for r in records})))
         }
     
     @staticmethod
@@ -314,11 +260,9 @@ class MarginService:
         exclude_is_divers=True
     ) -> dict[date_type, dict[str, Decimal]]:
         """
-        Calcule les marges journalières sur une période en une seule passe SQL groupée par jour.
-        
-        Remplace les appels répétés de calculate_period_margin_with_discounts pour chaque jour
-        par une agrégation groupée avec TruncDay, ce qui réduit drastiquement le nombre de
-        requêtes sur la base de données.
+        Calcule les marges journalières sur une période via collect_sales_records(),
+        regroupées par jour local. Même logique que calculate_period_margin_with_discounts :
+        marge sur le CA HT, CA TTC net de remises, coût lot ou PMP.
         
         Args:
             date_debut: Date de début (date ou datetime)
@@ -329,94 +273,60 @@ class MarginService:
             Dict {date: {ca_ttc_total, ca_ttc_net, cout_achat_total, remise_globale,
                          ratio_remise, marge_brute, marge_pct, nb_factures}}
         """
+        from api.services.ventes_lots import collect_sales_records, factures_retenues
+
         if isinstance(date_debut, datetime):
             date_debut = date_debut.date()
         if isinstance(date_fin, datetime):
             date_fin = date_fin.date()
 
-        # Requête de base : même filtrage que revenue_chart (status + paiement)
-        factures_qs = Facture.objects.filter(
+        factures_qs = factures_retenues().filter(
             date__gte=day_start(date_debut),
             date__lt=day_start(date_fin + timedelta(days=1)),
-            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(~Q(id__in=Caisse.objects.values('facture_id')), status='VAL')
-
-        # 1. Totaux TTC / remise / nb factures groupés par jour
-        daily_totals = factures_qs.annotate(
-            day=TruncDay('date')
-        ).values('day').annotate(
-            total_ttc=Coalesce(Sum('total_ttc'), Decimal(0)),
-            total_remise=Coalesce(Sum('remise'), Decimal(0)),
-            nb_factures=Count('id')
-        ).order_by('day')
-
-        # 2. Coût des produits alloués groupés par jour
-        allocations_qs = FactureProduitAllocation.objects.filter(
-            facture_produit__facture__in=factures_qs
         )
+        records = collect_sales_records(invoices=factures_qs)
         if exclude_is_divers:
-            allocations_qs = allocations_qs.exclude(stock_lot__is_divers=True)
+            records = [r for r in records if not r['is_divers']]
 
-        allocated_costs = {
-            item['day'].date(): item['total']
-            for item in allocations_qs.annotate(
-                day=TruncDay('facture_produit__facture__date')
-            ).values('day').annotate(
-                total=Coalesce(
-                    Sum(F('cost_price') * F('quantity'), output_field=DecimalField()),
-                    Decimal(0)
-                )
-            )
-        }
-
-        # 3. Coût des produits non alloués (fallback PMP) groupés par jour
-        unallocated_qs = FactureProduit.objects.filter(
-            facture__in=factures_qs
-        ).annotate(
-            has_alloc=Exists(
-                FactureProduitAllocation.objects.filter(facture_produit=OuterRef('pk'))
-            )
-        ).filter(has_alloc=False)
-
-        if exclude_is_divers:
-            unallocated_qs = unallocated_qs.exclude(produit__stock_lots__is_divers=True)
-
-        unallocated_costs = {
-            item['day'].date(): item['total']
-            for item in unallocated_qs.annotate(
-                day=TruncDay('facture__date')
-            ).values('day').annotate(
-                total=Coalesce(
-                    Sum(F('produit__pmp') * F('quantity'), output_field=DecimalField()),
-                    Decimal(0)
-                )
-            )
-        }
+        remises = dict(
+            Facture.objects.filter(pk__in={r['facture_id'] for r in records})
+            .values_list('id', 'remise')
+        )
 
         results: dict[date_type, dict[str, Decimal]] = {}
-        for item in daily_totals:
-            day = item['day'].date()
-            ca_ttc_total = item['total_ttc'] or Decimal(0)
-            total_remise = item['total_remise'] or Decimal(0)
-            total_cost = allocated_costs.get(day, Decimal(0)) + unallocated_costs.get(day, Decimal(0))
+        days: dict[date_type, dict] = {}
+        for r in records:
+            day = timezone.localtime(r['date']).date()
+            entry = days.setdefault(day, {
+                'ca_ttc': Decimal(0), 'ca_ht': Decimal(0), 'cost': Decimal(0),
+                'factures': set(),
+            })
+            entry['ca_ttc'] += r['vente']
+            entry['ca_ht'] += r['vente_ht']
+            entry['cost'] += r['achat']
+            entry['factures'].add(r['facture_id'])
 
+        for day, entry in days.items():
+            total_remise = sum(
+                (remises.get(f_id) or Decimal(0) for f_id in entry['factures']), Decimal(0)
+            )
+            ca_ttc_net = entry['ca_ttc']
             ratio_remise = Decimal(1)
-            if ca_ttc_total + total_remise > 0:
-                ratio_remise = ca_ttc_total / (ca_ttc_total + total_remise)
-
-            ca_ttc_net = ca_ttc_total * ratio_remise
-            marge_brute = ca_ttc_net - total_cost
-            marge_pct = (marge_brute / ca_ttc_net * 100) if ca_ttc_net > 0 else Decimal('0.00')
+            if ca_ttc_net + total_remise > 0:
+                ratio_remise = ca_ttc_net / (ca_ttc_net + total_remise)
+            ca_ht = entry['ca_ht']
+            marge_brute = ca_ht - entry['cost']
+            marge_pct = (marge_brute / ca_ht * 100) if ca_ht > 0 else Decimal('0.00')
 
             results[day] = {
-                'ca_ttc_total': ca_ttc_total.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
+                'ca_ttc_total': ca_ttc_net.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
                 'ca_ttc_net': ca_ttc_net.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
-                'cout_achat_total': total_cost.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
+                'cout_achat_total': entry['cost'].quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
                 'remise_globale': total_remise.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
                 'ratio_remise': ratio_remise.quantize(Decimal('0.0001'), rounding=ROUND_HALF_UP),
                 'marge_brute': marge_brute.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
                 'marge_pct': marge_pct.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
-                'nb_factures': item['nb_factures']
+                'nb_factures': len(entry['factures'])
             }
 
         return results

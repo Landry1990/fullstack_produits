@@ -152,9 +152,43 @@ class MarginServiceTestCase(TestCase):
         # Le coût d'achat doit être 2 * 50.00 = 100.00
         self.assertEqual(margins['cout_achat'], Decimal('100.00'))
     
-    @unittest.skip("MarginService.calculate_period_margin utilise un lookup ORM obsolète (produits__factureproduitallocation)")
     def test_calculate_period_margin(self):
-        """Test calcul marge sur période"""
+        """Marge de période basée sur collect_sales_records (lots + PMP, HT)."""
+        today = timezone.localtime(timezone.now()).date()
+        facture = Facture.objects.create(
+            client=self.test_client,
+            status=Facture.Status.PAYEE,
+            date=timezone.now(),
+        )
+        fp = FactureProduit.objects.create(
+            facture=facture, produit=self.produit1, quantity=2,
+            selling_price=Decimal('100.00'), tva=Decimal('0.00'),
+        )
+        FactureProduitAllocation.objects.create(
+            facture_produit=fp, stock_lot=self.lot1, quantity=2,
+            selling_price=Decimal('100.00'), cost_price=Decimal('50.00'),
+        )
+        # Ligne sans allocation : coût au PMP (30)
+        self.produit2.pmp = Decimal('30.00')
+        self.produit2.save(update_fields=['pmp'])
+        FactureProduit.objects.create(
+            facture=facture, produit=self.produit2, quantity=1,
+            selling_price=Decimal('120.00'), tva=Decimal('0.00'),
+        )
+        # Facture VAL sans paiement complété : exclue
+        excluded = Facture.objects.create(
+            client=self.test_client, status=Facture.Status.VALIDEE, date=timezone.now(),
+        )
+        FactureProduit.objects.create(
+            facture=excluded, produit=self.produit1, quantity=10,
+            selling_price=Decimal('100.00'), tva=Decimal('0.00'),
+        )
+
+        stats = MarginService.calculate_period_margin(today, today + timedelta(days=1))
+        self.assertEqual(stats['ca_ht_total'], Decimal('320.00'))
+        self.assertEqual(stats['cout_achat_total'], Decimal('130.00'))
+        self.assertEqual(stats['marge_brute'], Decimal('190.00'))
+        self.assertEqual(stats['nb_factures'], 1)
     
     def test_update_product_margins_all(self):
         """Test mise à jour marges de tous les produits"""
@@ -190,7 +224,6 @@ class MarginServiceTestCase(TestCase):
         self.assertEqual(self.produit1.pourcentage_marge, Decimal('50.00'))
         self.assertEqual(count, 1)
     
-    @unittest.skip("MarginService.get_margin_variance_analysis utilise un lookup ORM obsolète (produits__factureproduitallocation)")
     def test_get_margin_variance_analysis(self):
         """Test analyse variance des marges"""
     

@@ -2,6 +2,95 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-10-26 — Ventes « sans lot » : étape 4/4 (MarginService : dashboard + rapports mensuels)
+
+- `services/margin_service.py` : `calculate_period_margin`,
+  `calculate_period_margin_with_discounts` et
+  `calculate_daily_margin_with_discounts` rebasées sur
+  `collect_sales_records()` / `factures_retenues()` — signatures et clés de
+  retour inchangées. Alignés automatiquement : dashboard (`stats`,
+  `stats_heavy`, `manager_stats`, `revenue_chart`), `rapports/base.py`
+  (`_calculate_margin`) et `margin_views` (`period_margin`, variance).
+- Changements de périmètre assumés : factures `is_active` uniquement, paiement
+  **complété** requis pour VAL (avant : tout paiement comptait), exclusion
+  `is_divers` désormais par ligne de vente (avant : la facture entière pouvait
+  être écartée), marge calculée sur le **CA HT net** de remises (avant : CA TTC
+  × ratio global de remise). `ca_ttc_total`/`ca_ttc_net` = TTC net de remises ;
+  `ratio_remise` conservé pour compatibilité.
+- `tests/test_margin_service.py` : test réel de `calculate_period_margin`
+  (alloué + sans lot au PMP, VAL sans paiement exclu) et dé-skip de
+  `test_get_margin_variance_analysis` (lookup ORM obsolète supprimé).
+- Hotfix post-déploiement : `total_remise` converti en `Decimal` (le Coalesce
+  renvoyait un `int` sur queryset vide → 500 sur `stats_heavy`).
+- Vérification : 75 tests backend exécutés (OK, 1 skip préexistant sur
+  `get_products_with_anomalous_margins`, hors périmètre).
+- Aucune migration ni modification des données métier ; non committé, non
+  déployé. Les libellés dashboard (« Marge du jour ») affichent désormais la
+  marge HT comme le module financier et le rapport Excel.
+
+## 2026-10-26 — Ventes « sans lot » : étape 3/3 (Rapport général Excel)
+
+- `views/rapports/excel_general.py` : synthèse, CA/marges journaliers et Top
+  Produits basés sur `collect_sales_records()` : ventes sans allocation au PMP,
+  allocations au coût du lot, remises ligne/globale et TVA par ligne. Factures
+  actives VAL/PAY uniquement ; paiement complété requis pour VAL.
+- CA conservé en TTC, marges et taux sur le HT (y compris le taux pondéré de la
+  ligne total journalière et le taux pharmacie). Remises lignes désormais
+  incluses dans les remises journalières. Top 50 : métadonnées produit chargées
+  en une requête, plus de requête CIP par ligne.
+- `services/ventes_lots.py` : indicateur `is_divers` (priorité au lot ; sans lot,
+  repli sur le fournisseur du produit) pour ventiler pharmacie/divers sans
+  perdre les ventes sans allocation.
+- `views/rapports/excel_general_extra.py` : comparaison mois courant/précédent
+  alignée sur les mêmes ventes, marges HT et filtres de factures.
+- Base fiscale « marge administrée » alignée sur la marge HT calculée depuis
+  les lots/PMP ; mode « droit commun » sur le CA HT net. Taux fiscaux et règles
+  d'arrondi existants inchangés. Aucun changement des calculs achats, stock,
+  dettes et clôtures de caisse.
+- `utils_doclang.py` : libellés de synthèse et taux explicitement sur CA HT,
+  en français et en anglais.
+- `tests/test_finance.py` : ventes mixtes allouées/sans lot, coût lot distinct
+  du prix produit, TVA, remises, factures exclues, paiements multiples,
+  ventilation divers, cellules des classeurs fr/en, comparaison mensuelle,
+  bornes de mois exclusives, période vide et bases fiscales marge/CA.
+- Vérification : 90 tests backend exécutés (OK, 3 skips préexistants). Octobre
+  dev : CA TTC 673 871 F, CA HT 652 935,44 F, marge HT 180 237,99 F, identique
+  dans la synthèse, le détail journalier et la comparaison mensuelle. Classeur
+  de 19 feuilles généré et relu sans erreur (~1,06 s pour collecte + génération
+  + relecture sur la base dev).
+- Les 3 étapes sont terminées. Aucune migration ni modification des données
+  métier ; non committé, non déployé.
+
+## 2026-10-26 — Ventes « sans lot » : étape 2/3 (Module financier)
+
+- `services/finance_marges.py` : collecte et regroupements financiers basés sur
+  `collect_sales_records()` (allocations au coût du lot, lignes sans allocation
+  au PMP, remises ligne et globale, TVA par ligne). Bornes de journées complètes
+  et regroupement mensuel dans le fuseau local.
+- `services/ventes_lots.py` : filtre optionnel par queryset de factures et remise
+  ligne exposée aux calculs de promotions ; appels existants inchangés.
+- `services/finance_base_queries.py` : filtres communs des rapports (factures
+  actives VAL/PAY, paiement complété obligatoire pour VAL), sans multiplication
+  des lignes lorsqu'une facture possède plusieurs paiements.
+- `views/finance_stats.py` : harmonisation des marges mensuelles/KPI, top produits,
+  répartitions et évolutions par catégorie/fournisseur, analyses avancées,
+  variation de marge, marge par produit et promotions. Taux sur CA HT, taux moyen
+  annuel pondéré par le CA HT ; répartitions/évolutions de CA conservées en TTC.
+  Cache KPI versionné pour ne pas réutiliser les anciens calculs.
+- i18n `public/locales/{fr,en}/finance.json` : précision HT/TTC et coût moyen
+  lots/PMP. `ModuleFinancier.test.tsx` : assertions de montants compatibles avec
+  le séparateur de milliers affiché (point ou espace).
+- Tests `test_finance_marges.py` : remises globales, sans lot, TVA simple/mixte,
+  factures inactives, paiements non complétés/multiples, catégories rayon/groupe/
+  forme, promotions, variations, fin de journée, période vide et requêtes bornées.
+  Fixtures existantes : paiements explicitement complétés.
+- Vérification : 80 tests backend exécutés (OK, 3 skips préexistants), 3 tests
+  frontend OK. Octobre dev : CA TTC 673 871 F, CA HT 652 935,44 F, marge HT
+  180 237,99 F ; collecte/regroupement 12 mois : 741 enregistrements, 6 requêtes,
+  ~0,05 s (mesure dev, non représentative d'une grosse base de production).
+- Aucun changement des données métier ni migration. Reste : étape 3 (Rapport
+  général Excel).
+
 ## 2026-10-26 — ♻️ Ventes « sans lot » : étape 1/3 (rapports + stats fournisseur)
 
 - Nouveau `api/services/ventes_lots.py` : collecte unique des ventes (allocations

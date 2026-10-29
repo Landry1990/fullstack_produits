@@ -37,7 +37,7 @@ def factures_retenues(date_debut=None, date_fin=None):
     return qs
 
 
-def collect_sales_records(date_debut=None, date_fin=None, fournisseur_id=None, lang=None):
+def collect_sales_records(date_debut=None, date_fin=None, fournisseur_id=None, lang=None, invoices=None):
     """
     Retourne une liste de ventes unitaires (une par allocation ou par ligne sans
     allocation) avec les clés : facture_id, date, numero, f_id, f_nom, produit_id,
@@ -45,6 +45,8 @@ def collect_sales_records(date_debut=None, date_fin=None, fournisseur_id=None, l
     """
     lang = lang or get_document_language()
     factures = factures_retenues(date_debut, date_fin)
+    if invoices is not None:
+        factures = factures.filter(pk__in=invoices)
     text = CharField()
     inconnu = Value(T(lang, 'fournisseur_inconnu'))
     sans_lot = T(lang, 'sans_lot')
@@ -57,6 +59,7 @@ def collect_sales_records(date_debut=None, date_fin=None, fournisseur_id=None, l
             | Q(stock_lot__fournisseur__isnull=True, facture_produit__produit__fournisseur_id=fournisseur_id)
         )
     allocs = allocs.annotate(
+        is_divers=Coalesce('stock_lot__is_divers', 'facture_produit__produit__fournisseur__is_divers', Value(False)),
         f_id=Coalesce('stock_lot__fournisseur_id', 'facture_produit__produit__fournisseur_id'),
         f_nom=Coalesce(
             'stock_lot__fournisseur__name', 'facture_produit__produit__fournisseur__name',
@@ -76,7 +79,7 @@ def collect_sales_records(date_debut=None, date_fin=None, fournisseur_id=None, l
         'id', 'facture_produit__facture_id', 'facture_produit__facture__date',
         'facture_produit__facture__numero_facture', 'f_id', 'f_nom', 'facture_produit__produit_id',
         'p_nom', 'facture_produit__produit__cip1', 'lot_label', 'stock_lot__date_expiration',
-        'quantity', 'quantity_free', 'cost_price',
+        'quantity', 'quantity_free', 'cost_price', 'is_divers',
         'facture_produit__selling_price', 'facture_produit__discount', 'facture_produit__tva',
     )
 
@@ -92,7 +95,7 @@ def collect_sales_records(date_debut=None, date_fin=None, fournisseur_id=None, l
     ).values(
         'id', 'facture_id', 'facture__date', 'facture__numero_facture', 'produit__fournisseur_id',
         'f_nom', 'produit_id', 'p_nom', 'produit__cip1', 'date_expiration', 'quantity',
-        'produit__pmp', 'selling_price', 'discount', 'tva',
+        'produit__pmp', 'selling_price', 'discount', 'tva', 'produit__fournisseur__is_divers',
     )
 
     records = []
@@ -109,6 +112,8 @@ def collect_sales_records(date_debut=None, date_fin=None, fournisseur_id=None, l
             'qte': a['quantity'], 'ug': a['quantity_free'], 'cost': a['cost_price'] or Decimal(0),
             'pu': (a['facture_produit__selling_price'] or Decimal(0)) - (a['facture_produit__discount'] or Decimal(0)),
             'tva': a['facture_produit__tva'] or Decimal(0),
+            'discount': a['facture_produit__discount'] or Decimal(0),
+            'is_divers': a['is_divers'],
         })
     for line in lignes:
         records.append({
@@ -123,6 +128,8 @@ def collect_sales_records(date_debut=None, date_fin=None, fournisseur_id=None, l
             'qte': line['quantity'], 'ug': 0, 'cost': line['produit__pmp'] or Decimal(0),
             'pu': (line['selling_price'] or Decimal(0)) - (line['discount'] or Decimal(0)),
             'tva': line['tva'] or Decimal(0),
+            'discount': line['discount'] or Decimal(0),
+            'is_divers': bool(line['produit__fournisseur__is_divers']),
         })
 
     # Remise globale : facteur (1 − remise / brut des lignes) par facture.

@@ -547,6 +547,116 @@ class ExportsPdfTest(RapportsFinanceBase):
         self.assertEqual(resp.status_code, 200)
         self.assertIn('spreadsheetml', resp['Content-Type'])
 
+    def test_excel_general_coherent_avec_ventes_partagees(self):
+        from ..services.ventes_lots import collect_sales_records
+        from ..utils.dates import day_start
+        from ..utils_doclang import T
+        from ..views.rapports.excel_general import _collect_data, build_rapport_general_excel, _fmt, _pct
+        from ..views.rapports.excel_general_extra import collect_extra_data
+
+        fournisseur = F.create_fournisseur(is_divers=True)
+        divers = F.create_produit(name='Divers sans lot', cost_price=90, pmp=40, selling_price=100, fournisseur=fournisseur)
+        F.create_facture_produit(self.facture, divers, quantity=2, selling_price=Decimal('100'), discount=Decimal('10'), tva=0)
+        lot = F.create_stock_lot(self.produit, price_cost=Decimal('150'))
+        FactureProduitAllocation.objects.create(
+            facture_produit=self.ligne, stock_lot=lot, quantity=2,
+            selling_price=Decimal('777'), cost_price=Decimal('150'),
+        )
+        F.create_caisse(self.facture, 1, user=self.admin)
+        for status, active, payment_status in [('PAY', False, 'completee'), ('VAL', True, 'en_attente')]:
+            excluded = F.create_facture(status=status, is_active=active)
+            F.create_facture_produit(excluded, self.produit, quantity=50)
+            payment = F.create_caisse(excluded, 1, user=self.admin)
+            Caisse.objects.filter(pk=payment.pk).update(statut=payment_status)
+        start = day_start(self.today.replace(day=1))
+        end = day_start((self.today.replace(day=28) + timedelta(days=4)).replace(day=1))
+        factor = Decimal('1080') / Decimal('1180')
+        expected_ht = Decimal('1000') * factor / Decimal('1.1925') + Decimal('180') * factor
+        expected_margin = expected_ht - Decimal('380')
+        records = collect_sales_records(invoices=type(self.facture).objects.filter(pk=self.facture.pk))
+        self.assertAlmostEqual(float(sum(r['vente_ht'] for r in records)), float(expected_ht))
+        settings, _ = PharmacySettings.objects.get_or_create(pk=1)
+        settings.mode_imposition = 'MARGE_ADMINISTREE'
+        settings.taux_marge_brute = Decimal('10')
+        settings.taux_cac = Decimal('10')
+        settings.save()
+        for lang in ('fr', 'en'):
+            data = _collect_data(start, end, lang=lang)
+            self.assertEqual(data['ca']['nb_ventes'], 1)
+            self.assertAlmostEqual(float(data['ca']['ca_ttc']), 1080)
+            self.assertAlmostEqual(float(data['ca']['ca_ht']), float(expected_ht))
+            self.assertAlmostEqual(float(data['marge']['marge_brute']), float(expected_margin))
+            self.assertAlmostEqual(sum(r['marge_totale'] for r in data['daily_rows']), float(expected_margin))
+            self.assertAlmostEqual(float(sum(r['marge'] for r in data['top_rows'])), float(expected_margin))
+            self.assertEqual(sum(r['quantite'] for r in data['top_rows']), 4)
+            self.assertAlmostEqual(float(data['divers_ca']['ca_ttc']), float(Decimal('180') * factor))
+            self.assertAlmostEqual(float(data['marge']['marge_divers']), float(Decimal('180') * factor - 80))
+            self.assertEqual(data['accompte_fiscal']['base_imposition'], round(expected_margin))
+            extra = collect_extra_data(start, end, lang=lang)
+            self.assertAlmostEqual(float(extra['evolution']['marge_cur']), float(expected_margin))
+            response = build_rapport_general_excel(start, end, 'Test', lang=lang)
+            wb = load_workbook(io.BytesIO(response.content), read_only=True)
+            summary = {row[0]: row[1] for row in wb[T(lang, 'xs_sheet_synthese')].iter_rows(values_only=True) if len(row) > 1}
+            self.assertEqual(summary[T(lang, 'xs_r_marge_totale')], _fmt(expected_margin))
+            self.assertEqual(summary[T(lang, 'xs_r_taux_total')], _pct(expected_margin / expected_ht * 100))
+            daily = list(wb[T(lang, 'xs_sheet_ca_marges')].iter_rows(values_only=True))
+            self.assertEqual(daily[8][7], _fmt(expected_margin))
+            self.assertEqual(daily[-1][8], _pct(expected_margin / expected_ht * 100))
+            top = list(wb[T(lang, 'xs_sheet_top')].iter_rows(values_only=True))
+            for cells, product in zip(top[8:], data['top_rows']):
+                self.assertEqual(cells[8], _fmt(product['marge']))
+                self.assertEqual(cells[9], _pct(product['taux_marge']))
+            fiscal = {row[0]: row[1] for row in wb[T(lang, 'xs_sheet_fiscal')].iter_rows(values_only=True) if len(row) > 1}
+            self.assertEqual(fiscal[T(lang, 'fis_base_marge')], _fmt(data['accompte_fiscal']['base_imposition']))
+            wb.close()
+
+    def test_excel_general_bornes_mensuelles_et_periode_vide(self):
+        from ..utils.dates import day_start
+        from ..views.rapports.excel_general import _collect_data
+        from ..views.rapports.excel_general_extra import collect_extra_data
+
+        start = day_start(self.today.replace(day=1))
+        end = day_start((self.today.replace(day=28) + timedelta(days=4)).replace(day=1))
+        type(self.facture).objects.filter(pk=self.facture.pk).update(date=start - timedelta(microseconds=1))
+        future = F.create_facture(status='PAY')
+        F.create_facture_produit(future, self.produit, quantity=100)
+        type(future).objects.filter(pk=future.pk).update(date=end)
+        data = _collect_data(start, end, lang='fr')
+        self.assertEqual(data['ca']['ca_ttc'], 0)
+        self.assertEqual(data['ca']['nb_ventes'], 0)
+        self.assertEqual(data['marge']['marge_brute'], 0)
+        self.assertEqual(data['daily_rows'], [])
+        self.assertEqual(data['top_rows'], [])
+        extra = collect_extra_data(start, end, lang='fr')
+        self.assertEqual(extra['evolution']['ca_cur'], 0)
+        self.assertEqual(extra['evolution']['marge_cur'], 0)
+        self.assertEqual(extra['evolution']['ca_prev'], 900)
+        self.assertAlmostEqual(float(extra['evolution']['marge_prev']), float(Decimal('900') / Decimal('1.1925') - 400))
+
+    def test_excel_general_base_fiscale_ca_et_marge(self):
+        from ..utils.dates import day_start
+        from ..views.rapports.excel_general import _collect_data
+
+        start = day_start(self.today.replace(day=1))
+        end = day_start((self.today.replace(day=28) + timedelta(days=4)).replace(day=1))
+        settings, _ = PharmacySettings.objects.get_or_create(pk=1)
+        settings.mode_imposition = 'MARGE_ADMINISTREE'
+        settings.taux_marge_brute = Decimal('10')
+        settings.taux_cac = Decimal('10')
+        settings.save()
+        data = _collect_data(start, end, lang='fr')
+        self.assertEqual(data['accompte_fiscal']['base_imposition'], 355)
+        self.assertEqual(data['accompte_fiscal']['accompte_base'], 35)
+        self.assertEqual(data['accompte_fiscal']['accompte_total'], 39)
+        settings.mode_imposition = 'DROIT_COMMUN'
+        settings.regime_fiscal = 'REEL'
+        settings.taux_accompte_reel = Decimal('2')
+        settings.save()
+        data = _collect_data(start, end, lang='fr')
+        self.assertEqual(data['accompte_fiscal']['base_imposition'], 755)
+        self.assertEqual(data['accompte_fiscal']['accompte_base'], 15)
+        self.assertEqual(data['accompte_fiscal']['accompte_total'], 17)
+
     def test_rapport_general_excel_mois_invalide_400(self):
         resp = self.client_api.get(
             reverse('rapports-rapport-general-excel'), {'mois': 'bad'},

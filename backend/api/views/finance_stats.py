@@ -10,9 +10,6 @@ from dateutil.relativedelta import relativedelta
 from django.core.cache import cache
 from django.db.models import (
     Avg,
-    BooleanField,
-    Case,
-    CharField,
     Count,
     DecimalField,
     Exists,
@@ -20,8 +17,6 @@ from django.db.models import (
     OuterRef,
     Q,
     Sum,
-    Value,
-    When,
 )
 from django.db.models.functions import Coalesce, TruncMonth
 from django.utils import timezone
@@ -31,7 +26,6 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from ..models import (
-    Facture,
     FactureProduit,
     FactureProduitAllocation,
     Produit,
@@ -45,6 +39,8 @@ from ..services.finance_formatters import (
 from ..services.finance_marges import (
     build_monthly_margin_map,
     calculate_margin_for_invoices,
+    finance_sales_records,
+    group_finance_records,
 )
 from ..services.finance_predictions import (
     combined_prediction,
@@ -128,7 +124,8 @@ class FinanceStatsViewSet(viewsets.ViewSet):
             marge_brute.append(marge_val)
             taux_marge.append(round(marge_val / ca_val * 100, 1) if ca_val else 0)
 
-        avg_taux = round(sum(taux_marge) / len(taux_marge), 1) if taux_marge else 0
+        total_ca = sum(ca_values)
+        avg_taux = round(sum(marge_brute) / total_ca * 100, 1) if total_ca else 0
         return Response({
             'labels': labels, 'marge_brute': marge_brute, 'taux_marge': taux_marge,
             'ca': ca_values, 'taux_moyen': avg_taux, 'total_marge': sum(marge_brute)
@@ -166,7 +163,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
     # ── 4. KPIs ──────────────────────────────────────────
     @action(detail=False, methods=['get'])
     def kpis(self, request):
-        cache_key = f'finance_kpis_{timezone.now().strftime("%Y-%m-%d-%H")}'
+        cache_key = f'finance_kpis_v2_{timezone.now().strftime("%Y-%m-%d-%H")}'
         cached = cache.get(cache_key)
         if cached is not None:
             return Response(cached)
@@ -248,37 +245,13 @@ class FinanceStatsViewSet(viewsets.ViewSet):
             date__gte=day_start(start_date), date__lt=day_start(today + timedelta(days=1))
         )
 
-        stats = FactureProduitAllocation.objects.filter(
-            facture_produit__facture__in=base_qs
-        ).values(
-            'facture_produit__produit__id',
-            'facture_produit__produit__name',
-            'facture_produit__produit__cip1'
-        ).annotate(
-            ca_ht=Sum(
-                (F('quantity') * (F('selling_price') - F('facture_produit__discount'))) / (1 + Coalesce(F('facture_produit__tva'), Value(0)) / 100),
-                output_field=DecimalField()
-            ),
-            marge=Sum(
-                ((F('selling_price') - F('facture_produit__discount')) / (1 + Coalesce(F('facture_produit__tva'), Value(0)) / 100) - F('cost_price')) * F('quantity'),
-                output_field=DecimalField()
-            ),
-            quantite=Sum('quantity')
-        ).order_by('-' + ('marge' if critere == 'marge' else 'ca_ht'))[:50]
-
-        data = []
-        for item in stats:
-            ca = float(item['ca_ht'] or 0)
-            marge = float(item['marge'] or 0)
-            data.append({
-                'id': item['facture_produit__produit__id'],
-                'nom': item['facture_produit__produit__name'],
-                'cip': item['facture_produit__produit__cip1'],
-                'ca': ca,
-                'marge': marge,
-                'taux_marge': round((marge / ca) * 100, 1) if ca > 0 else 0,
-                'quantite': item['quantite']
-            })
+        stats = group_finance_records(finance_sales_records(invoices=base_qs))
+        ranked = sorted(stats.values(), key=lambda p: p['marge' if critere == 'marge' else 'ca'], reverse=True)[:50]
+        data = [
+            {key: float(p[key]) if key in ('ca', 'marge') else p[key]
+             for key in ('id', 'nom', 'cip', 'ca', 'marge', 'taux_marge', 'quantite')}
+            for p in ranked
+        ]
 
         return Response({'periode': periode, 'critere': critere, 'data': data})
 
@@ -299,61 +272,13 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         base_qs = get_validated_invoices_queryset().filter(
             date__gte=day_start(start_date), date__lt=day_start(today + timedelta(days=1))
         )
-        alloc_qs = FactureProduitAllocation.objects.filter(facture_produit__facture__in=base_qs)
-
-        if by == 'fournisseur':
-            from django.db.models.functions import Coalesce as CoalesceFunc
-            data = alloc_qs.annotate(
-                is_inventory_lot=Case(
-                    When(stock_lot__lot__istartswith='LOT-INV', then=Value(True)),
-                    default=Value(False),
-                    output_field=BooleanField()
-                ),
-                fournisseur_id_resolved=CoalesceFunc(
-                    'stock_lot__fournisseur__id',
-                    'facture_produit__produit__fournisseur__id'
-                ),
-                fournisseur_name_resolved=Case(
-                    When(
-                        stock_lot__lot__istartswith='LOT-INV',
-                        stock_lot__fournisseur__isnull=True,
-                        facture_produit__produit__fournisseur__isnull=True,
-                        then=Value('Stock Inventaire')
-                    ),
-                    default=CoalesceFunc(
-                        'stock_lot__fournisseur__name',
-                        'facture_produit__produit__fournisseur__name'
-                    ),
-                    output_field=CharField()
-                )
-            ).values('fournisseur_id_resolved', 'fournisseur_name_resolved').annotate(
-                ca=Coalesce(Sum(F('quantity') * F('selling_price'), output_field=DecimalField()), Decimal(0))
-            ).order_by('-ca')[:10]
-
-            result = [
-                {
-                    'id': item['fournisseur_id_resolved'] or 0,
-                    'nom': item['fournisseur_name_resolved'] or 'Inconnu',
-                    'ca': float(item['ca'])
-                }
-                for item in data
-            ]
-        else:
-            data = alloc_qs.values(
-                'facture_produit__produit__rayon__id',
-                'facture_produit__produit__rayon__name'
-            ).annotate(
-                ca=Coalesce(Sum(F('quantity') * F('selling_price'), output_field=DecimalField()), Decimal(0))
-            ).order_by('-ca')[:10]
-
-            result = [
-                {
-                    'id': item['facture_produit__produit__rayon__id'] or 0,
-                    'nom': item['facture_produit__produit__rayon__name'] or 'Non catégorisé',
-                    'ca': float(item['ca'])
-                }
-                for item in data
-            ]
+        records = finance_sales_records(invoices=base_qs)
+        grouped = group_finance_records(records, 'fournisseur' if by == 'fournisseur' else 'rayon')
+        totals = {key: sum(p['months'].values(), Decimal(0)) for key, p in grouped.items()}
+        result = [
+            {'id': key, 'nom': grouped[key]['nom'], 'ca': float(ca)}
+            for key, ca in sorted(totals.items(), key=lambda item: item[1], reverse=True)[:10]
+        ]
 
         total = sum(item['ca'] for item in result)
         for item in result:
@@ -378,46 +303,20 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         base_qs = get_validated_invoices_queryset().filter(
             date__gte=day_start(start_date), date__lt=day_start(today + timedelta(days=1))
         )
-        alloc_qs = FactureProduitAllocation.objects.filter(facture_produit__facture__in=base_qs)
-
-        if cat_type == 'groupe':
-            id_field = 'facture_produit__produit__groupe__id'
-            name_field = 'facture_produit__produit__groupe__nom'
-        elif cat_type == 'forme':
-            id_field = 'facture_produit__produit__forme__id'
-            name_field = 'facture_produit__produit__forme__nom'
-        else:
-            id_field = 'facture_produit__produit__rayon__id'
-            name_field = 'facture_produit__produit__rayon__name'
-
-        stats = alloc_qs.values(id_field, name_field).annotate(
-            ca_ht=Sum(
-                (F('quantity') * (F('selling_price') - F('facture_produit__discount'))) / (1 + Coalesce(F('facture_produit__tva'), Value(0)) / 100),
-                output_field=DecimalField()
-            ),
-            marge=Sum(
-                ((F('selling_price') - F('facture_produit__discount')) / (1 + Coalesce(F('facture_produit__tva'), Value(0)) / 100) - F('cost_price')) * F('quantity'),
-                output_field=DecimalField()
-            ),
-            nb_ventes=Count('id')
-        ).order_by('-ca_ht')
-
-        total_ca = sum(float(item['ca_ht'] or 0) for item in stats) or 1
-        total_marge = sum(float(item['marge'] or 0) for item in stats)
-
-        result = []
-        for item in stats:
-            ca = float(item['ca_ht'] or 0)
-            marge = float(item['marge'] or 0)
-            result.append({
-                'id': item[id_field] or 0,
-                'nom': item[name_field] or 'Inconnu',
-                'ca': ca,
-                'marge': marge,
-                'taux_marge': round((marge / ca) * 100, 1) if ca > 0 else 0,
-                'pourcentage_ca': round((ca / total_ca) * 100, 1),
-                'nb_ventes': item['nb_ventes']
-            })
+        dimension = cat_type if cat_type in ('groupe', 'forme') else 'rayon'
+        grouped = group_finance_records(finance_sales_records(invoices=base_qs), dimension)
+        stats = sorted(grouped.values(), key=lambda p: p['ca'], reverse=True)
+        total_ca = float(sum((p['ca'] for p in stats), Decimal(0)))
+        total_marge = float(sum((p['marge'] for p in stats), Decimal(0)))
+        result = [
+            {
+                'id': p['id'], 'nom': p['nom'], 'ca': float(p['ca']),
+                'marge': float(p['marge']), 'taux_marge': p['taux_marge'],
+                'pourcentage_ca': round(float(p['ca']) / total_ca * 100, 1) if total_ca else 0,
+                'nb_ventes': p['nb_ventes'],
+            }
+            for p in stats
+        ]
 
         return Response({
             'type': cat_type, 'periode': periode,
@@ -434,55 +333,16 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         today = timezone.localtime(timezone.now()).date()
         start_date = (today - relativedelta(months=11)).replace(day=1)
 
-        if cat_type == 'groupe':
-            id_field = 'facture_produit__produit__groupe__id'
-            name_field = 'facture_produit__produit__groupe__nom'
-        elif cat_type == 'forme':
-            id_field = 'facture_produit__produit__forme__id'
-            name_field = 'facture_produit__produit__forme__nom'
-        else:
-            id_field = 'facture_produit__produit__rayon__id'
-            name_field = 'facture_produit__produit__rayon__name'
-
-        top_categories = FactureProduitAllocation.objects.filter(
-            facture_produit__facture__in=get_validated_invoices_queryset().filter(
-                date__gte=day_start(start_date), date__lt=day_start(today + timedelta(days=1))
-            )
-        ).values(id_field, name_field).annotate(
-            total_ca=Coalesce(Sum(F('quantity') * F('selling_price'), output_field=DecimalField()), Decimal(0))
-        ).order_by('-total_ca')[:top_n]
-
-        top_ids = [item[id_field] for item in top_categories if item[id_field]]
-        category_names = {item[id_field]: item[name_field] for item in top_categories}
-
-        monthly_data = FactureProduitAllocation.objects.filter(
-            facture_produit__facture__in=get_validated_invoices_queryset().filter(
-                date__gte=day_start(start_date), date__lt=day_start(today + timedelta(days=1))
-            ),
-            **{f'{id_field}__in': top_ids}
-        ).annotate(
-            month=TruncMonth('facture_produit__facture__date')
-        ).values('month', id_field).annotate(
-            ca=Coalesce(Sum(F('quantity') * F('selling_price'), output_field=DecimalField()), Decimal(0))
-        ).order_by('month')
-
+        dimension = cat_type if cat_type in ('groupe', 'forme') else 'rayon'
+        grouped = group_finance_records(finance_sales_records(start_date, today), dimension)
+        top_categories = sorted(grouped.values(), key=lambda p: sum(p['months'].values()), reverse=True)[:top_n]
         labels = build_monthly_labels(start_date, today)
-        series = {}
-        for cat_id in top_ids:
-            series[cat_id] = {'id': cat_id, 'nom': category_names.get(cat_id, 'Inconnu'), 'data': [0] * len(labels)}
-
-        for item in monthly_data:
-            cat_id = item[id_field]
-            if cat_id in series:
-                month_key = item['month'].strftime('%Y-%m')
-                current = start_date
-                for i, _ in enumerate(labels):
-                    if current.strftime('%Y-%m') == month_key:
-                        series[cat_id]['data'][i] = float(item['ca'])
-                        break
-                    current = current + relativedelta(months=1)
-
-        return Response({'type': cat_type, 'labels': labels, 'series': list(series.values())})
+        keys = [(start_date + relativedelta(months=i)).strftime('%Y-%m') for i in range(len(labels))]
+        series = [
+            {'id': p['id'], 'nom': p['nom'], 'data': [float(p['months'].get(key, 0)) for key in keys]}
+            for p in top_categories
+        ]
+        return Response({'type': cat_type, 'labels': labels, 'series': series})
 
     # ── 9. Analyse Marges ─────────────────────────────────
     @action(detail=False, methods=['get'])
@@ -490,33 +350,18 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         today = timezone.localtime(timezone.now()).date()
         start_date = today - relativedelta(months=3)
 
-        base_qs = FactureProduit.objects.filter(
-            produit__isnull=False,
-            facture__date__gte=day_start(start_date),
-            facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).annotate(
-            num_p=Count('facture__paiements')
-        ).exclude(facture__status='VAL', num_p=0)
-
-        stats_globales = base_qs.aggregate(
-            total_qty=Coalesce(Sum('quantity'), 0),
-            nb_produits=Count('produit', distinct=True)
-        )
-        total_ventes_qty = stats_globales['total_qty']
-        nb_produits_distincts = stats_globales['nb_produits'] or 1
+        grouped = group_finance_records(finance_sales_records(start_date, today))
+        total_ventes_qty = sum(p['quantite'] for p in grouped.values())
+        nb_produits_distincts = len(grouped) or 1
         seuil_volume_eleve = (total_ventes_qty / nb_produits_distincts) * 1.5
-
-        produits_stats = base_qs.values('produit__id', 'produit__name', 'produit__cost_price').annotate(
-            volume_total=Sum('quantity'),
-            ca_ht=Sum(
-                (F('quantity') * (F('selling_price') - F('discount'))) / (1 + Coalesce(F('tva'), Value(0)) / 100),
-                output_field=DecimalField()
-            ),
-            marge_totale=Sum(
-                ((F('selling_price') - F('discount')) / (1 + Coalesce(F('tva'), Value(0)) / 100) - F('produit__cost_price')) * F('quantity'),
-                output_field=DecimalField()
-            )
-        )
+        produits_stats = [
+            {
+                'produit__id': p['id'], 'produit__name': p['nom'],
+                'produit__cost_price': p['achat'] / p['quantite'] if p['quantite'] else 0,
+                'volume_total': p['quantite'], 'ca_ht': p['ca'], 'marge_totale': p['marge'],
+            }
+            for p in grouped.values()
+        ]
 
         opportunites_nego, stock_dormant, suggestions_prix = [], [], []
         for p in produits_stats:
@@ -757,56 +602,38 @@ class FinanceStatsViewSet(viewsets.ViewSet):
             factures = get_validated_invoices_queryset().filter(
                 date__gte=day_start(start), date__lt=day_start(end + timedelta(days=1))
             )
-            global_remise = factures.aggregate(s=Coalesce(Sum('remise'), Decimal(0)))['s']
             total_ca = factures.aggregate(s=Coalesce(Sum('total_ttc'), Decimal(0)))['s']
 
-            m_alloc = FactureProduitAllocation.objects.filter(
-                facture_produit__facture__in=factures
-            ).aggregate(
-                m=Coalesce(Sum((F('facture_produit__selling_price') - F('facture_produit__discount') - F('cost_price')) * F('quantity')), Decimal(0))
-            )['m']
-
-            m_unalloc = FactureProduit.objects.filter(
-                facture__in=factures
-            ).annotate(
-                has_alloc=Exists(FactureProduitAllocation.objects.filter(facture_produit=OuterRef('pk')))
-            ).filter(has_alloc=False).aggregate(
-                m=Coalesce(Sum((F('selling_price') - F('discount') - F('produit__pmp')) * F('quantity')), Decimal(0))
-            )['m']
-
-            total_margin = m_alloc + m_unalloc - global_remise
-            margin_pct = (total_margin / total_ca * 100) if total_ca > 0 else 0
-
-            products = FactureProduit.objects.filter(facture__in=factures).values(
-                'produit__id', 'produit__name'
-            ).annotate(
-                ca=Sum(F('quantity') * (F('selling_price') - F('discount'))),
-                qty=Sum('quantity')
-            ).order_by('-ca')[:50]
-
+            records = finance_sales_records(invoices=factures)
+            total_ca_ht = sum((r['vente_ht'] for r in records), Decimal(0))
+            total_margin = sum((r['vente_ht'] - r['achat'] for r in records), Decimal(0))
+            margin_pct = total_margin / total_ca_ht * 100 if total_ca_ht > 0 else 0
+            grouped = group_finance_records(records)
+            products = sorted(grouped.values(), key=lambda p: p['ca'], reverse=True)[:50]
             return {
                 'ca': float(total_ca), 'margin': float(total_margin),
                 'margin_pct': float(margin_pct),
-                'products': {p['produit__id']: p for p in products}
+                'products': {
+                    p['id']: {'produit__id': p['id'], 'produit__name': p['nom'],
+                              'ca': float(sum(p['months'].values())), 'qty': p['quantite']}
+                    for p in products
+                }
             }
 
         stats1 = get_period_stats(p1_start, p1_end)
         stats2 = get_period_stats(p2_start, p2_end)
         variance_pct = stats1['margin_pct'] - stats2['margin_pct']
 
-        suspicious_products = FactureProduit.objects.filter(
-            facture__date__gte=day_start(p1_start),
-            facture__date__lt=day_start(p1_end + timedelta(days=1)),
-            facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).annotate(
-            unit_margin=F('selling_price') - F('discount') - Coalesce(F('produit__pmp'), Value(0, output_field=DecimalField())),
-            unit_margin_pct=Case(
-                When(selling_price__gt=0, then=(F('selling_price') - F('discount') - F('produit__pmp')) / F('selling_price') * 100),
-                default=Value(0, output_field=DecimalField())
-            )
-        ).filter(Q(unit_margin_pct__gt=80) | Q(unit_margin_pct__lt=5)).values(
-            'produit__id', 'produit__name', 'unit_margin_pct', 'selling_price', 'produit__pmp'
-        ).distinct()[:10]
+        suspicious_products = []
+        for p in group_finance_records(finance_sales_records(p1_start, p1_end)).values():
+            if p['taux_marge'] > 80 or p['taux_marge'] < 5:
+                suspicious_products.append({
+                    'produit__id': p['id'], 'produit__name': p['nom'],
+                    'unit_margin_pct': p['taux_marge'],
+                    'selling_price': float(p['ca'] / p['quantite']) if p['quantite'] else 0,
+                    'produit__pmp': float(p['achat'] / p['quantite']) if p['quantite'] else 0,
+                })
+        suspicious_products = suspicious_products[:10]
 
         insights = []
         if variance_pct > 5:
@@ -819,7 +646,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
                 'fr': f"Baisse importante de la marge ({variance_pct:.1f}%). Possible augmentation des coûts ou changement de mix produit.",
                 'en': f"Significant margin drop ({variance_pct:.1f}%). Possible cost increase or change in product mix."
             })
-        if suspicious_products.exists():
+        if suspicious_products:
             insights.append({
                 'fr': f"Détection de {len(suspicious_products)} produits avec des marges atypiques (>80% ou <5%). Cela peut fausser les résultats.",
                 'en': f"Detected {len(suspicious_products)} products with abnormal margins (>80% or <5%). This may skew the results."
@@ -864,74 +691,14 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         )
 
         # Produits avec allocation de stock (marge précise basée sur cost_price)
-        alloc_stats = FactureProduitAllocation.objects.filter(
-            facture_produit__facture__in=base_qs
-        ).values(
-            'facture_produit__produit__id',
-            'facture_produit__produit__name',
-            'facture_produit__produit__cip1',
-        ).annotate(
-            ca_ht=Sum(
-                (F('quantity') * (F('selling_price') - F('facture_produit__discount')))
-                / (1 + Coalesce(F('facture_produit__tva'), Value(0, output_field=DecimalField())) / Value(100, output_field=DecimalField())),
-                output_field=DecimalField()
-            ),
-            marge=Sum(
-                ((F('selling_price') - F('facture_produit__discount'))
-                 / (1 + Coalesce(F('facture_produit__tva'), Value(0, output_field=DecimalField())) / Value(100, output_field=DecimalField()))
-                 - F('cost_price')) * F('quantity'),
-                output_field=DecimalField()
-            ),
-            quantite=Sum('quantity')
-        )
-
         # Produits sans allocation (marge basée sur pmp)
-        unalloc_stats = FactureProduit.objects.filter(
-            facture__in=base_qs
-        ).annotate(
-            has_alloc=Exists(
-                FactureProduitAllocation.objects.filter(facture_produit=OuterRef('pk'))
-            )
-        ).filter(has_alloc=False).values(
-            'produit__id', 'produit__name', 'produit__cip1'
-        ).annotate(
-            ca_ht=Sum(
-                (F('quantity') * (F('selling_price') - F('discount')))
-                / (1 + Coalesce(F('tva'), Value(0, output_field=DecimalField())) / Value(100, output_field=DecimalField())),
-                output_field=DecimalField()
-            ),
-            marge=Sum(
-                ((F('selling_price') - F('discount'))
-                 / (1 + Coalesce(F('tva'), Value(0, output_field=DecimalField())) / Value(100, output_field=DecimalField()))
-                 - Coalesce(F('produit__pmp'), Value(0, output_field=DecimalField())))
-                * F('quantity'),
-                output_field=DecimalField()
-            ),
-            quantite=Sum('quantity')
-        )
-
         # Fusionner les deux sources
-        merged = {}
-        for item in list(alloc_stats) + list(unalloc_stats):
-            pid = item.get('facture_produit__produit__id') or item.get('produit__id')
-            if pid is None:
-                continue
-            ca = float(item.get('ca_ht') or 0)
-            marge = float(item.get('marge') or 0)
-            qte = float(item.get('quantite') or 0)
-            if pid in merged:
-                merged[pid]['ca'] += ca
-                merged[pid]['marge'] += marge
-                merged[pid]['quantite'] += qte
-            else:
-                merged[pid] = {
-                    'id': pid,
-                    'nom': item.get('facture_produit__produit__name') or item.get('produit__name') or '',
-                    'cip': item.get('facture_produit__produit__cip1') or item.get('produit__cip1') or '',
-                    'ca': ca,
-                    'marge': marge,
-                    'quantite': qte,
-                }
+        grouped = group_finance_records(finance_sales_records(invoices=base_qs))
+        merged = {
+            pid: {key: float(p[key]) if key in ('ca', 'marge') else p[key]
+                  for key in ('id', 'nom', 'cip', 'ca', 'marge', 'quantite')}
+            for pid, p in grouped.items()
+        }
 
         all_products = list(merged.values())
         for p in all_products:
@@ -976,48 +743,18 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         )
 
         # Ventes avec remise (au niveau facture produit)
-        alloc_qs = FactureProduitAllocation.objects.filter(
-            facture_produit__facture__in=base_qs
-        )
+        records = finance_sales_records(invoices=base_qs)
+        promo_invoices = set(base_qs.filter(remise__gt=0).values_list('pk', flat=True))
 
         # Avec promotion = discount > 0 ou facture avec remise globale
-        with_promo = alloc_qs.filter(
-            Q(facture_produit__discount__gt=0) |
-            Q(facture_produit__facture__remise__gt=0)
-        ).aggregate(
-            ca=Coalesce(Sum(
-                (F('quantity') * (F('selling_price') - F('facture_produit__discount')))
-                / (1 + Coalesce(F('facture_produit__tva'), Value(0, output_field=DecimalField())) / Value(100, output_field=DecimalField())),
-                output_field=DecimalField()
-            ), Decimal(0)),
-            marge=Coalesce(Sum(
-                ((F('selling_price') - F('facture_produit__discount'))
-                 / (1 + Coalesce(F('facture_produit__tva'), Value(0, output_field=DecimalField())) / Value(100, output_field=DecimalField()))
-                 - F('cost_price')) * F('quantity'),
-                output_field=DecimalField()
-            ), Decimal(0)),
-            quantite=Coalesce(Sum('quantity'), Value(0)),
-            count=Count('id')
-        )
-
-        without_promo = alloc_qs.filter(
-            ~Q(facture_produit__discount__gt=0) &
-            (Q(facture_produit__facture__remise=0) | Q(facture_produit__facture__remise__isnull=True))
-        ).aggregate(
-            ca=Coalesce(Sum(
-                (F('quantity') * F('selling_price'))
-                / (1 + Coalesce(F('facture_produit__tva'), Value(0, output_field=DecimalField())) / Value(100, output_field=DecimalField())),
-                output_field=DecimalField()
-            ), Decimal(0)),
-            marge=Coalesce(Sum(
-                (F('selling_price')
-                 / (1 + Coalesce(F('facture_produit__tva'), Value(0, output_field=DecimalField())) / Value(100, output_field=DecimalField()))
-                 - F('cost_price')) * F('quantity'),
-                output_field=DecimalField()
-            ), Decimal(0)),
-            quantite=Coalesce(Sum('quantity'), Value(0)),
-            count=Count('id')
-        )
+        with_promo = {'ca': Decimal(0), 'marge': Decimal(0), 'quantite': 0, 'count': 0}
+        without_promo = dict(with_promo)
+        for r in records:
+            target = with_promo if r['discount'] > 0 or r['facture_id'] in promo_invoices else without_promo
+            target['ca'] += r['vente_ht']
+            target['marge'] += r['vente_ht'] - r['achat']
+            target['quantite'] += r['qte']
+            target['count'] += 1
 
         ca_promo = float(with_promo['ca'] or 0)
         ca_normal = float(without_promo['ca'] or 0)
@@ -1030,14 +767,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
 
         # CA "perdu" = ce qu'on aurait gagné sans la remise
         ca_perdu = 0
-        remise_totale = float(
-            alloc_qs.filter(facture_produit__discount__gt=0).aggregate(
-                total=Coalesce(Sum(
-                    F('facture_produit__discount') * F('quantity'),
-                    output_field=DecimalField()
-                ), Decimal(0))
-            )['total'] or 0
-        )
+        remise_totale = float(sum((r['discount'] * r['qte'] for r in records), Decimal(0)))
         # Remise globale des factures avec remise
         remise_globale = float(
             base_qs.filter(remise__gt=0).aggregate(

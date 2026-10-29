@@ -65,13 +65,13 @@ def collect_extra_data(date_debut, date_fin, lang: str | None = None):
         Client,
         ClotureCaisse,
         Facture,
-        FactureProduitAllocation,
         MouvementCaisse,
         ObjectifCommercial,
         Promotion,
         StockAdjustment,
     )
     from api.models.billing import Caisse
+    from api.services.ventes_lots import collect_sales_records, factures_retenues
     from api.views.rapports.tz_utils import local_trunc_date
     prev_fin   = date_debut
     prev_debut = (date_debut - timedelta(days=1)).replace(day=1)
@@ -79,14 +79,10 @@ def collect_extra_data(date_debut, date_fin, lang: str | None = None):
     if timezone.is_naive(prev_debut):
         prev_debut = timezone.make_aware(datetime(prev_debut.year, prev_debut.month, 1))
 
-    factures_cur  = Facture.objects.filter(
-        status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
-        date__gte=date_debut, date__lt=date_fin,
-    )
-    factures_prev = Facture.objects.filter(
-        status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
-        date__gte=prev_debut, date__lt=prev_fin,
-    )
+    factures_cur = factures_retenues().filter(date__gte=date_debut, date__lt=date_fin)
+    factures_prev = factures_retenues().filter(date__gte=prev_debut, date__lt=prev_fin)
+    records_cur = collect_sales_records(invoices=factures_cur, lang=lang)
+    records_prev = collect_sales_records(invoices=factures_prev, lang=lang)
 
     agg_cur  = factures_cur.aggregate(
         ca=Coalesce(Sum("total_ttc"), Decimal(0)),
@@ -98,19 +94,12 @@ def collect_extra_data(date_debut, date_fin, lang: str | None = None):
         nb=Count("id"),
     )
 
-    # Marge courante simplifiée (via allocations)
-    def _marge_alloc(qs):
-        return FactureProduitAllocation.objects.filter(
-            facture_produit__facture__in=qs
-        ).aggregate(
-            rev=Coalesce(Sum(F("selling_price") * F("quantity"), output_field=DecimalField()), Decimal(0)),
-            cost=Coalesce(Sum(F("cost_price")   * F("quantity"), output_field=DecimalField()), Decimal(0)),
-        )
+    agg_cur['ca'] = sum((r['vente'] for r in records_cur), Decimal(0))
+    agg_prev['ca'] = sum((r['vente'] for r in records_prev), Decimal(0))
 
-    m_cur  = _marge_alloc(factures_cur)
-    m_prev = _marge_alloc(factures_prev)
-    marge_cur  = m_cur["rev"]  - m_cur["cost"]
-    marge_prev = m_prev["rev"] - m_prev["cost"]
+    # Marge courante simplifiée (via allocations)
+    marge_cur = sum((r['vente_ht'] - r['achat'] for r in records_cur), Decimal(0))
+    marge_prev = sum((r['vente_ht'] - r['achat'] for r in records_prev), Decimal(0))
 
     # Objectif mensuel
     try:
