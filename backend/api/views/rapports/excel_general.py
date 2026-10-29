@@ -225,7 +225,7 @@ def _sheet_synthese(wb, data: dict, pharmacy: dict, mois_label: str, logo_path, 
     ]
 
     # Calcul taux marge pharmacie
-    ca_pharma = float(ca["ca_ttc"]) - float(divers["ca_ttc"])
+    ca_pharma = float(ca["ca_ht"]) - float(divers["ca_ht"])
     marge_pharma = float(marge.get("marge_pharma", 0))
     taux_pharma = (marge_pharma / ca_pharma * 100) if ca_pharma else 0.0
     taux_total = float(marge.get("marge_pct", 0))
@@ -270,7 +270,7 @@ def _sheet_ca_marges(wb, daily_rows: list, pharmacy: dict, mois_label: str, logo
     headers = [
         T(lang, 'col_date'), T(lang, 'kpi_nb_ventes'),
         T(lang, 'xsc_ca_pharma'), T(lang, 'xsc_ca_divers'), T(lang, 'xsc_ca_total'),
-        T(lang, 'xsc_marge_pharma'), T(lang, 'xsc_marge_divers'), T(lang, 'xsc_marge_totale'), T(lang, 'col_taux_marge'),
+        T(lang, 'xsc_marge_pharma'), T(lang, 'xsc_marge_divers'), T(lang, 'xsc_marge_totale'), T(lang, 'xsc_taux_marge_ht'),
         T(lang, 'kpi_remises')
     ]
     _write_col_headers(ws, start, headers)
@@ -293,13 +293,13 @@ def _sheet_ca_marges(wb, daily_rows: list, pharmacy: dict, mois_label: str, logo
         for c, v in enumerate(vals, 1):
             ws.cell(row=r, column=c, value=v).alignment = _align(h="right" if c > 1 else "left")
         _row_style(ws, r, len(headers), is_alt=(i % 2 == 0))
-        for key in ["ca_pharma", "ca_divers", "ca_total", "marge_pharma", "marge_divers", "marge_totale", "remises"]:
+        for key in ["ca_pharma", "ca_divers", "ca_total", "ca_ht", "marge_pharma", "marge_divers", "marge_totale", "remises"]:
             totals[key] += Decimal(str(row.get(key, 0) or 0))
         totals["nb_ventes"] += int(row.get("nb_ventes", 0))
         r += 1
 
     # Ligne total
-    ca_total_f = float(totals["ca_total"])
+    ca_total_f = float(totals["ca_ht"])
     marge_tot_f = float(totals["marge_totale"])
     total_vals = [
         T(lang, 'row_total'), int(totals["nb_ventes"]),
@@ -394,7 +394,7 @@ def _sheet_top_produits(wb, top_rows: list, pharmacy: dict, mois_label: str, log
     ws = wb.create_sheet(T(lang, 'xs_sheet_top'))
     start = _write_sheet_header(ws, pharmacy, T(lang, 'xs_t_top', mois=mois_label), logo_path, lang=lang)
 
-    headers = [T(lang, 'col_rang'), T(lang, 'col_produit'), "CIP", T(lang, 'col_rayon'), T(lang, 'col_type'), T(lang, 'col_qte_vendue'), T(lang, 'col_ca_ttc_f'), T(lang, 'col_cout_achat'), T(lang, 'col_marge_f'), T(lang, 'col_taux_marge')]
+    headers = [T(lang, 'col_rang'), T(lang, 'col_produit'), "CIP", T(lang, 'col_rayon'), T(lang, 'col_type'), T(lang, 'col_qte_vendue'), T(lang, 'col_ca_ttc_f'), T(lang, 'col_cout_achat'), T(lang, 'col_marge_f'), T(lang, 'xsc_taux_marge_ht')]
     _write_col_headers(ws, start, headers)
     r = start + 1
     for i, row in enumerate(top_rows):
@@ -898,9 +898,10 @@ def _sheet_depenses(wb, depenses_rows: list, pharmacy: dict, mois_label: str, lo
 # Collecte des données
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _compute_accompte_fiscal_inline(ca_ht, factures_qs, lang: str | None = None):
+def _compute_accompte_fiscal_inline(ca_ht, factures_qs, lang: str | None = None, sales_records=None):
     """Calcule l'accompte fiscal selon le régime et mode configurés dans PharmacySettings."""
-    from api.models import FactureProduit, PharmacySettings
+    from api.models import PharmacySettings
+    from api.services.ventes_lots import collect_sales_records
     from api.utils_doclang import T, get_document_language
 
     if not lang:
@@ -915,10 +916,8 @@ def _compute_accompte_fiscal_inline(ca_ht, factures_qs, lang: str | None = None)
     taux_cac = ps.taux_cac
 
     if mode == 'MARGE_ADMINISTREE':
-        cout_ventes = Decimal(0)
-        for fp in FactureProduit.objects.filter(facture__in=factures_qs).select_related('produit'):
-            cout_ventes += Decimal(str(fp.produit.cost_price or 0)) * Decimal(str(fp.quantity))
-        marge_brute = ca_ht - cout_ventes
+        records = sales_records if sales_records is not None else collect_sales_records(invoices=factures_qs, lang=lang)
+        marge_brute = sum((r['vente_ht'] - r['achat'] for r in records), Decimal(0))
         taux_imposition = ps.taux_marge_brute
         base_imposition = marge_brute
         base_label = T(lang, 'fis_base_marge')
@@ -974,7 +973,6 @@ def _collect_data(date_debut, date_fin, lang: str | None = None):
         CommandeProduit,
         Facture,
         FactureProduit,
-        FactureProduitAllocation,
         Fournisseur,
         MouvementCaisse,
         PaiementFournisseur,
@@ -982,35 +980,29 @@ def _collect_data(date_debut, date_fin, lang: str | None = None):
         Rayon,
         StockLot,
     )
-    from api.services.margin_service import MarginService
+    from api.services.ventes_lots import collect_sales_records, factures_retenues
     from api.views.rapports.tz_utils import local_trunc_date
 
     # ── Factures de la période ──────────────────────────────────────────────
-    factures = Facture.objects.filter(
-        status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
-        date__gte=date_debut, date__lt=date_fin,
-    )
+    factures = factures_retenues().filter(date__gte=date_debut, date__lt=date_fin)
+    records = collect_sales_records(invoices=factures, lang=lang)
 
     # ── CA global ──────────────────────────────────────────────────────────
     # Sous-requête pour montant divers par facture
-    divers_sub = FactureProduitAllocation.objects.filter(
-        facture_produit__facture=OuterRef("pk"),
-        stock_lot__is_divers=True,
-    ).values("facture_produit__facture").annotate(
-        total=Coalesce(Sum(F("selling_price") * F("quantity"), output_field=DecimalField()), Decimal(0))
-    ).values("total")
-
-    factures_ann = factures.annotate(
-        divers_amount=Coalesce(Subquery(divers_sub, output_field=DecimalField()), Decimal(0)),
-    )
-    agg = factures_ann.aggregate(
-        ca_total_ttc=Coalesce(Sum("total_ttc"), Decimal(0)),
-        ca_total_ht=Coalesce(Sum("total_ht"), Decimal(0)),
-        ca_divers_ttc=Coalesce(Sum("divers_amount"), Decimal(0)),
+    divers_par_facture = defaultdict(Decimal)
+    for record in records:
+        if record['is_divers']:
+            divers_par_facture[record['facture_id']] += record['vente']
+    factures_ann = factures
+    agg = factures.aggregate(
         remises=Coalesce(Sum("remise"), Decimal(0)),
         remises_fid=Coalesce(Sum("montant_fidelite"), Decimal(0)),
         nb_ventes=Count("id"),
     )
+    agg['ca_total_ttc'] = sum((r['vente'] for r in records), Decimal(0))
+    agg['ca_total_ht'] = sum((r['vente_ht'] for r in records), Decimal(0))
+    agg['ca_divers_ttc'] = sum(divers_par_facture.values(), Decimal(0))
+    ca_divers_ht = sum((r['vente_ht'] for r in records if r['is_divers']), Decimal(0))
     remises_lignes = FactureProduit.objects.filter(
         facture__in=factures
     ).aggregate(
@@ -1023,48 +1015,34 @@ def _collect_data(date_debut, date_fin, lang: str | None = None):
     total_remises = agg["remises"] + agg["remises_fid"] + remises_lignes
 
     # ── Marges ──────────────────────────────────────────────────────────────
-    margin_stats = MarginService.calculate_period_margin_with_discounts(
-        date_debut=date_debut, date_fin=date_fin,
-        factures_qs=factures, exclude_is_divers=False
-    )
-    margin_pharma_stats = MarginService.calculate_period_margin_with_discounts(
-        date_debut=date_debut, date_fin=date_fin,
-        factures_qs=factures, exclude_is_divers=True
-    )
-    marge_totale  = margin_stats["marge_brute"]
-    marge_pharma  = margin_pharma_stats["marge_brute"]
-    marge_divers  = marge_totale - marge_pharma
+    marge_totale = sum((r['vente_ht'] - r['achat'] for r in records), Decimal(0))
+    marge_pharma = sum((r['vente_ht'] - r['achat'] for r in records if not r['is_divers']), Decimal(0))
+    marge_divers = marge_totale - marge_pharma
 
     # ── CA & Marges jour par jour ────────────────────────────────────────────
     # Utiliser TruncDate (cohérent avec le calcul des allocations ci-dessous)
     daily_data: dict = {}
     for f in factures_ann.annotate(day=local_trunc_date("date")).values(
-        "day", "total_ttc", "divers_amount", "remise", "montant_fidelite"
+        "id", "day", "remise", "montant_fidelite"
     ):
         day = f["day"]
         if day not in daily_data:
             daily_data[day] = {"ca_total": Decimal(0), "ca_divers": Decimal(0),
                                "remises": Decimal(0), "nb_ventes": 0}
-        daily_data[day]["ca_total"]  += f["total_ttc"] or Decimal(0)
-        daily_data[day]["ca_divers"] += f["divers_amount"] or Decimal(0)
         daily_data[day]["remises"]   += (f["remise"] or Decimal(0)) + (f["montant_fidelite"] or Decimal(0))
         daily_data[day]["nb_ventes"] += 1
 
     # Marges par jour via allocations
-    alloc_day = FactureProduitAllocation.objects.filter(
-        facture_produit__facture__in=factures
-    ).annotate(
-        day=local_trunc_date("facture_produit__facture__date")
-    ).values("day", "stock_lot__is_divers").annotate(
-        rev=Coalesce(Sum(F("selling_price") * F("quantity"), output_field=DecimalField()), Decimal(0)),
-        cost=Coalesce(Sum(F("cost_price") * F("quantity"), output_field=DecimalField()), Decimal(0)),
-    )
-    for row in alloc_day:
-        day = row["day"]
+    for row in records:
+        day = timezone.localtime(row['date']).date()
         if day not in daily_data:
             continue  # allocation orpheline (décalage timezone) — ignorer
-        marge_ligne = (row["rev"] or Decimal(0)) - (row["cost"] or Decimal(0))
-        if row["stock_lot__is_divers"]:
+        daily_data[day]['ca_total'] += row['vente']
+        daily_data[day]['ca_ht'] = daily_data[day].get('ca_ht', Decimal(0)) + row['vente_ht']
+        daily_data[day]['remises'] += row['discount'] * row['qte']
+        marge_ligne = row['vente_ht'] - row['achat']
+        if row['is_divers']:
+            daily_data[day]['ca_divers'] += row['vente']
             daily_data[day]["marge_divers"] = daily_data[day].get("marge_divers", Decimal(0)) + marge_ligne
         else:
             daily_data[day]["marge_pharma"] = daily_data[day].get("marge_pharma", Decimal(0)) + marge_ligne
@@ -1085,7 +1063,8 @@ def _collect_data(date_debut, date_fin, lang: str | None = None):
             "marge_pharma": mp,
             "marge_divers": md,
             "marge_totale": mt,
-            "taux_marge":   (mt / ca_t * 100) if ca_t else 0,
+            "ca_ht":        float(d.get('ca_ht', 0)),
+            "taux_marge":   mt / float(d['ca_ht']) * 100 if d.get('ca_ht') else 0,
             "remises":      float(d["remises"]),
         })
 
@@ -1122,37 +1101,29 @@ def _collect_data(date_debut, date_fin, lang: str | None = None):
         })
 
     # ── Top Produits ─────────────────────────────────────────────────────────
-    alloc_prod = FactureProduitAllocation.objects.filter(
-        facture_produit__facture__in=factures
-    ).values(
-        "facture_produit__produit__id",
-        "facture_produit__produit__name",
-        "facture_produit__produit__rayon__name",
-        "stock_lot__is_divers",
-    ).annotate(
-        ca_ttc=Coalesce(Sum(F("selling_price") * F("quantity"), output_field=DecimalField()), Decimal(0)),
-        cout_achat=Coalesce(Sum(F("cost_price") * F("quantity"), output_field=DecimalField()), Decimal(0)),
-        quantite=Coalesce(Sum("quantity"), 0),
-    ).order_by("-ca_ttc")[:50]
-
-    top_rows = []
-    for row in alloc_prod:
-        ca   = float(row["ca_ttc"] or 0)
-        cout = float(row["cout_achat"] or 0)
-        marge_p = ca - cout
-        prod = Produit.objects.filter(pk=row["facture_produit__produit__id"]).values("cip1", "cip2", "cip3").first() or {}
-        cip = prod.get("cip1") or prod.get("cip2") or prod.get("cip3") or "—"
-        top_rows.append({
-            "produit_nom": row["facture_produit__produit__name"] or "—",
-            "cip":         cip,
-            "rayon":       row["facture_produit__produit__rayon__name"] or "—",
-            "is_divers":   row["stock_lot__is_divers"],
-            "quantite":    row["quantite"],
-            "ca_ttc":      ca,
-            "cout_achat":  cout,
-            "marge":       marge_p,
-            "taux_marge":  (marge_p / ca * 100) if ca else 0,
+    products = {
+        p['id']: p for p in Produit.objects.filter(pk__in={r['produit_id'] for r in records}).values(
+            'id', 'cip1', 'cip2', 'cip3', 'rayon__name',
+        )
+    }
+    grouped_products = {}
+    for record in records:
+        key = (record['produit_id'], record['p_nom'], record['is_divers'])
+        prod = products.get(record['produit_id'], {})
+        row = grouped_products.setdefault(key, {
+            'produit_nom': record['p_nom'],
+            'cip': prod.get('cip1') or prod.get('cip2') or prod.get('cip3') or '—',
+            'rayon': prod.get('rayon__name') or '—', 'is_divers': record['is_divers'],
+            'quantite': 0, 'ca_ttc': Decimal(0), 'ca_ht': Decimal(0), 'cout_achat': Decimal(0),
         })
+        row['quantite'] += record['qte']
+        row['ca_ttc'] += record['vente']
+        row['ca_ht'] += record['vente_ht']
+        row['cout_achat'] += record['achat']
+    top_rows = sorted(grouped_products.values(), key=lambda r: r['ca_ttc'], reverse=True)[:50]
+    for row in top_rows:
+        row['marge'] = row['ca_ht'] - row['cout_achat']
+        row['taux_marge'] = row['marge'] / row['ca_ht'] * 100 if row['ca_ht'] else 0
 
     # ── Dettes Fournisseurs ──────────────────────────────────────────────────
     comm_sub = CommandeProduit.objects.filter(
@@ -1363,12 +1334,12 @@ def _collect_data(date_debut, date_fin, lang: str | None = None):
             },
             "nb_ventes":    agg["nb_ventes"],
         },
-        "divers_ca": {"ca_ttc": ca_divers},
+        "divers_ca": {"ca_ttc": ca_divers, "ca_ht": ca_divers_ht},
         "marge": {
             "marge_brute":  marge_totale,
             "marge_pharma": marge_pharma,
             "marge_divers": marge_divers,
-            "marge_pct":    float(marge_totale / ca_total * 100) if ca_total else 0,
+            "marge_pct":    float(marge_totale / agg['ca_total_ht'] * 100) if agg['ca_total_ht'] else 0,
         },
         "creances": {
             "total":       sum(Decimal(str(r["reste_a_payer"])) for r in creances_rows),
@@ -1389,7 +1360,7 @@ def _collect_data(date_debut, date_fin, lang: str | None = None):
             "total_achats_ht": int(sum((Decimal(str(r.get("montant_total", 0) or 0)) for r in achats_rows), Decimal('0')).quantize(Decimal(1), rounding=ROUND_HALF_UP)),
             "total_precompte": int(total_precompte_excel.quantize(Decimal(1), rounding=ROUND_HALF_UP)) if total_precompte_excel else 0,
         },
-        "accompte_fiscal": _compute_accompte_fiscal_inline(agg["ca_total_ht"], factures_ann, lang=lang),
+        "accompte_fiscal": _compute_accompte_fiscal_inline(agg["ca_total_ht"], factures_ann, lang=lang, sales_records=records),
     }
 
 

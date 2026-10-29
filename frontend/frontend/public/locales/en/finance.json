@@ -1,6 +1,6 @@
 {
     "title": "Financial Analysis",
-    "subtitle": "Analysis and predictions of turnover",
+    "subtitle": "Revenue incl. VAT, net of discounts · margins and rates based on revenue excl. VAT",
     "margin_rate": "Rate",
     "marge_produit": {
         "title": "Margin Analysis by Product",
@@ -9,12 +9,12 @@
         "bottom_20": "Bottom 20 (Margin)",
         "negative": "Negative Margin",
         "promotions": "Promotion Impact",
-        "total_ca": "Total Revenue",
+        "total_ca": "Total Revenue excl. VAT",
         "total_marge": "Total Margin",
         "taux_marge_global": "Global Margin Rate",
         "produits_perte": "Loss-Making Products",
         "product": "Product",
-        "ca": "Revenue",
+        "ca": "Revenue excl. VAT",
         "marge": "Margin",
         "taux_marge": "Margin rate",
         "pct_ca": "% of Revenue",
@@ -76,7 +76,7 @@
         "rayon": "Shelf",
         "groupe": "Group",
         "forme": "Form",
-        "total_ca": "Total CA",
+        "total_ca": "Total Revenue excl. VAT",
         "total_margin": "Total Margin",
         "global_rate": "Global Margin Rate",
         "no_data": "No data for this category"
@@ -111,7 +111,7 @@
         "atypical_margins": "Atypical Margins Detected",
         "product": "Product",
         "margin": "Margin",
-        "cost_pmp": "Cost (PMP)",
+        "cost_pmp": "Average cost excl. VAT (lots / WAC)",
         "high_margin_note": "* High margins (>80%) often indicate missing cost prices (PMP = 0).",
         "no_abnormal": "No abnormal margins detected today."
     },

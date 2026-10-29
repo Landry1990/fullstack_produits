@@ -5,11 +5,12 @@ Centralise les filtres communs (status VAL/PAY, exclusion VAL sans paiement).
 from datetime import timedelta
 from decimal import Decimal
 
-from django.db.models import Count, Sum
+from django.db.models import Sum
 from django.db.models.functions import Coalesce, TruncMonth
 
-from ..models import Facture, FactureProduit, FactureProduitAllocation
+from ..models import FactureProduit, FactureProduitAllocation
 from ..utils.dates import day_start
+from .ventes_lots import factures_retenues
 
 
 def get_validated_invoices_queryset():
@@ -17,22 +18,14 @@ def get_validated_invoices_queryset():
     QuerySet de base pour les factures validées/payées,
     excluant les factures VAL sans paiement.
     """
-    return Facture.objects.annotate(
-        num_p=Count('paiements')
-    ).filter(
-        status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-    ).exclude(status='VAL', num_p=0)
+    return factures_retenues()
 
 
 def get_allocations_base_queryset(start_date=None, end_date=None, invoices=None):
     """
     QuerySet de base pour FactureProduitAllocation avec filtres standards.
     """
-    qs = FactureProduitAllocation.objects.annotate(
-        num_p=Count('facture_produit__facture__paiements')
-    ).filter(
-        facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-    ).exclude(facture_produit__facture__status='VAL', num_p=0)
+    qs = FactureProduitAllocation.objects.filter(facture_produit__facture__in=factures_retenues())
 
     if start_date:
         qs = qs.filter(facture_produit__facture__date__gte=day_start(start_date))
@@ -48,11 +41,7 @@ def get_unallocated_products_base_queryset(start_date=None, end_date=None, invoi
     """
     QuerySet de base pour FactureProduit non-alloués avec filtres standards.
     """
-    qs = FactureProduit.objects.filter(
-        facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-    ).annotate(
-        num_p=Count('facture__paiements')
-    ).exclude(facture__status='VAL', num_p=0)
+    qs = FactureProduit.objects.filter(facture__in=factures_retenues())
 
     if start_date:
         qs = qs.filter(facture__date__gte=day_start(start_date))
