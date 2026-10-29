@@ -1173,22 +1173,30 @@ def _collect_data(date_debut, date_fin, lang: str | None = None):
             facture__date__lt=date_fin,
         )),
     )
-    creances_rows = []
-    for c in clients_data:
-        ca_c = Facture.objects.filter(
-            client=c,
+    ca_par_client = {
+        row["client_id"]: row["t"]
+        for row in Facture.objects.filter(
+            client_id__isnull=False,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
             date__gte=date_debut,
             date__lt=date_fin,
-        ).aggregate(t=Coalesce(Sum("total_ttc"), Decimal(0)))["t"]
-        paye_c = Caisse.objects.filter(
-            facture__client=c,
+        ).values("client_id").annotate(t=Coalesce(Sum("total_ttc"), Decimal(0)))
+    }
+    paye_par_client = {
+        row["facture__client_id"]: row["t"]
+        for row in Caisse.objects.filter(
+            facture__client_id__isnull=False,
             facture__date__gte=date_debut,
             facture__date__lt=date_fin,
             statut="completee",
-        ).exclude(mode_paiement="en_compte").aggregate(
+        ).exclude(mode_paiement="en_compte").values("facture__client_id").annotate(
             t=Coalesce(Sum("montant"), Decimal(0))
-        )["t"]
+        )
+    }
+    creances_rows = []
+    for c in clients_data:
+        ca_c = ca_par_client.get(c.id, Decimal(0))
+        paye_c = paye_par_client.get(c.id, Decimal(0))
         reste = ca_c - paye_c
         if reste > Decimal("0.5"):
             creances_rows.append({
@@ -1208,31 +1216,42 @@ def _collect_data(date_debut, date_fin, lang: str | None = None):
     today = tz.now().date()
 
     # Rayons nommés + rayon None (produits sans rayon)
-    rayons_list = list(Rayon.objects.all().order_by("name")) + [None]
-    for rayon in rayons_list:
-        prods = Produit.objects.filter(rayon=rayon, is_active=True)
-        nb_refs      = prods.count()
-        if nb_refs == 0:
-            continue
-        qte_totale   = prods.aggregate(t=Coalesce(Sum("stock"), 0))["t"]
-        valeur_pmp   = prods.aggregate(
-            t=Coalesce(Sum(F("stock") * F("pmp"), output_field=DecimalField()), Decimal(0))
-        )["t"]
-        alertes_rupt = prods.filter(stock__lte=F("stock_minimum"), type_produit='PRODUIT').count()
-        alertes_per  = StockLot.objects.filter(
-            produit__rayon=rayon,
+    stats_rayons = {
+        row["rayon_id"]: row
+        for row in Produit.objects.filter(is_active=True).values("rayon_id").annotate(
+            nb_refs=Count("id"),
+            qte_totale=Coalesce(Sum("stock"), 0),
+            valeur_pmp=Coalesce(
+                Sum(F("stock") * F("pmp"), output_field=DecimalField()), Decimal(0)
+            ),
+            stock_min=Coalesce(Sum("stock_minimum"), 0),
+            alertes_rupt=Count(
+                "id", filter=Q(stock__lte=F("stock_minimum"), type_produit='PRODUIT')
+            ),
+        )
+    }
+    peremptions = {
+        row["produit__rayon_id"]: row["n"]
+        for row in StockLot.objects.filter(
             quantity_remaining__gt=0,
             date_expiration__lte=today + timedelta(days=30),
             date_expiration__gt=today,
-        ).count()
+        ).values("produit__rayon_id").annotate(n=Count("id"))
+    }
+    rayons_list = list(Rayon.objects.all().order_by("name")) + [None]
+    for rayon in rayons_list:
+        rid = rayon.id if rayon else None
+        s = stats_rayons.get(rid)
+        if not s:
+            continue
         stock_rows.append({
             "rayon":              rayon.name if rayon else T(lang, 'grp_sans_rayon_paren'),
-            "nb_refs":            nb_refs,
-            "qte_totale":         qte_totale,
-            "valeur_pmp":         float(valeur_pmp),
-            "stock_minimum":      prods.aggregate(t=Coalesce(Sum("stock_minimum"), 0))["t"],
-            "alertes_rupture":    alertes_rupt,
-            "alertes_peremption": alertes_per,
+            "nb_refs":            s["nb_refs"],
+            "qte_totale":         s["qte_totale"],
+            "valeur_pmp":         float(s["valeur_pmp"]),
+            "stock_minimum":      s["stock_min"],
+            "alertes_rupture":    s["alertes_rupt"],
+            "alertes_peremption": peremptions.get(rid, 0),
         })
 
     # ── Achats fournisseurs ──────────────────────────────────────────────────
