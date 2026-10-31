@@ -1,1 +1,0 @@
-import{j as o}from"./vendor-core-DruQiq2h.js";import{y as r}from"./index-D_-V7OWI.js";function n({children:s,variant:m="dense",className:e}){return o.jsx("div",{className:r("mx-auto w-full p-3 sm:p-6",m==="dense"&&"max-w-[1600px]",m==="form"&&"max-w-4xl",e),children:s})}export{n as P};

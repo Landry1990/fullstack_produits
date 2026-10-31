@@ -2,6 +2,27 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-10-31 — Coordonnées pharmacie : boîte postale, ville imprimée et RC à 25 caractères
+
+- `models/settings.py`, migration `0278_pharmacy_post_box_and_register_length` :
+  ajout de `post_box` facultatif (100 caractères) et registre de commerce porté
+  de 20 à 25 caractères ; le champ `city` existant est conservé.
+- `settings/GeneralTab.tsx`, contexte/types et traductions fr/en : saisie de la
+  boîte postale dans les coordonnées et limite RC alignée sur le backend.
+- `printing/PharmacyContactBlock.tsx`, `InvoiceTemplate.tsx`, `TicketTemplate.tsx`,
+  `utils/escpos/ticketEscpos.ts`, `hooks/usePrint.ts`, `services/invoice_pdf.py` :
+  boîte postale et ville sur tickets navigateur/ESC-POS et factures HTML/PDF ;
+  valeurs absentes masquées, contenu PDF échappé et libellés BP/PO Box.
+- Tests : `test_settings.py`, `test_document_language.py`,
+  `PharmacyContactBlock.test.tsx` ; 22 tests backend et 5 tests frontend OK.
+  Migration cohérente (`makemigrations --check --dry-run`), build Vite OK,
+  assets `dist/` régénérés. ESLint ciblé : aucune erreur, un avertissement
+  sur une directive existante dans `usePrint.ts`.
+- Déployé sur Docker local uniquement : sauvegarde
+  `backups/backup-20261031-074957.sql` (29,64 Mo), migration 0278 appliquée,
+  frontend reconstruit et nginx rechargé, backend redémarré ; smoke test
+  `/api/health/` OK. Aucun déploiement distant ; non committé.
+
 ## 2026-10-31 — Paramètres > Impression : imprimantes QZ Tray en menu déroulant
 
 - `settings/PrintingTab.tsx` : le champ imprimante (input + datalist)

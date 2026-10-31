@@ -107,6 +107,11 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
         <div className="mb-2 border-b border-black/40" style={{ width: '66.666%', marginLeft: 'auto', marginRight: 'auto' }}></div>
         <div className="text-micro leading-tight">
             {settings.address && <p className="mb-1 font-medium">{settings.address}</p>}
+            {(settings.post_box || settings.city) && (
+              <p className="mb-1 font-medium break-words">
+                {[settings.post_box ? `${t('invoice.post_box')}: ${settings.post_box}` : '', settings.city].filter(Boolean).join(' — ')}
+              </p>
+            )}
             <div className="font-mono text-[8px]">
                {(settings.phone || settings.phone2) && <div>{t('invoice.tel')}: {settings.phone}{settings.phone2 ? ` / ${settings.phone2}` : ''}</div>}
                {settings.email && <div>{t('invoice.email', { defaultValue: 'Email' })}: {settings.email}</div>}

@@ -102,10 +102,10 @@ export function GeneralTab({ formData, handleChange, t, logo, logoInputRef, hand
                 <Input
                   type="text"
                   value={formData.registre_commerce || ''}
-                  onChange={(e) => handleChange('registre_commerce', e.target.value.toUpperCase().slice(0, 20))}
+                  onChange={(e) => handleChange('registre_commerce', e.target.value.toUpperCase().slice(0, 25))}
                   className="w-full rounded-xl border border-slate-300 bg-white h-12 px-4 text-sm font-mono font-bold focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 transition-all"
                   placeholder={t('placeholders.rccm')}
-                  maxLength={20}
+                  maxLength={25}
                 />
                 <label>
                   <span className="text-xs text-slate-400 flex items-center gap-1">
@@ -143,7 +143,21 @@ export function GeneralTab({ formData, handleChange, t, logo, logoInputRef, hand
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="flex flex-col gap-1">
+                <label htmlFor="pharmacy-post-box" className="text-sm font-bold text-slate-500">
+                  {t('labels.post_box')}
+                </label>
+                <Input
+                  id="pharmacy-post-box"
+                  type="text"
+                  value={formData.post_box || ''}
+                  onChange={(e) => handleChange('post_box', e.target.value)}
+                  maxLength={100}
+                  className="w-full rounded-xl border border-slate-300 bg-white h-12 px-4 text-sm font-bold focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 transition-all"
+                  placeholder={t('placeholders.post_box')}
+                />
+              </div>
               <div className="flex flex-col gap-1">
                 <label>
                   <span className="text-sm font-bold text-slate-500">{t('labels.city')}</span>

@@ -1,5 +1,6 @@
 {
   "invoice": {
+    "post_box": "PO Box",
     "tel": "Tel",
     "niu": "NIU",
     "rc": "RC",

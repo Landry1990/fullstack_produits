@@ -122,6 +122,10 @@ export function buildTicketEscpos(
     parts.push(esc.normalSize(), esc.boldOff(), esc.lineSpacing(COMPACT_LINE_SPACING));
   }
   if (settings.address) parts.push(esc.line(settings.address));
+  parts.push(esc.joinedLines([
+    settings.post_box ? `${t('invoice.post_box')}: ${settings.post_box}` : null,
+    settings.city || null,
+  ], cols));
   const phones = [settings.phone, settings.phone2].filter(Boolean).join(' / ');
   parts.push(
     esc.joinedLines(

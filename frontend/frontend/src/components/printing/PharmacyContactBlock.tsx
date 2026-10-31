@@ -2,6 +2,8 @@ import type { TFunction } from 'i18next';
 
 interface PharmacyContactInfo {
   address?: string;
+  post_box?: string;
+  city?: string;
   phone?: string;
   phone2?: string;
   email?: string;
@@ -15,6 +17,11 @@ export function PharmacyContactBlock({ settings, t }: { settings: PharmacyContac
       <div className="whitespace-pre-line leading-tight italic">
         {settings.address}
       </div>
+      {(settings.post_box || settings.city) && (
+        <div className="break-words">
+          {[settings.post_box ? `${t('invoice.post_box')}: ${settings.post_box}` : '', settings.city].filter(Boolean).join(' — ')}
+        </div>
+      )}
       <div className="flex flex-col gap-0.5 mt-2 font-bold text-base-content/90">
         {(settings.phone || settings.phone2) && (
           <div className="flex items-center gap-1">

@@ -48,6 +48,7 @@ class PharmacySettings(models.Model):
     """Configuration de la pharmacie (Singleton) - Nom, Adresse, Téléphone, etc."""
     pharmacy_name = models.CharField(max_length=200, default="ZENITH")
     address = models.CharField(max_length=300, blank=True, default="")
+    post_box = models.CharField(max_length=100, blank=True, default="")
     city = models.CharField(max_length=100, blank=True, default="Douala")
     country = models.CharField(max_length=100, blank=True, default="Cameroun")
     phone = models.CharField(max_length=50, blank=True, default="")
@@ -58,7 +59,7 @@ class PharmacySettings(models.Model):
         help_text="Numéro d'Identification Unique (14-15 caractères)"
     )
     registre_commerce = models.CharField(
-        max_length=20, blank=True, default="", 
+        max_length=25, blank=True, default="",
         help_text="Registre de Commerce"
     )
     ticket_footer_message = models.TextField(blank=True, default="Merci de votre visite!")
