@@ -54,6 +54,10 @@
     "cash": "Espèces (sortie de caisse)",
     "credit": "Crédit client"
   },
+  "validate_dialog": {
+    "title": "Valider l'avoir {{numero}}",
+    "subtitle": "Choisissez le mode de remboursement : la sortie sera enregistrée sur ce canal dans le journal de caisse."
+  },
   "motifs": {
     "erreur": "Erreur",
     "retour": "Retour",

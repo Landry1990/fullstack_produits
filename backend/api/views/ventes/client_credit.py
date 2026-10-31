@@ -14,10 +14,12 @@ from ...audit_helpers import log_audit
 from ...models import (
     AuditLog,
     AvoirClient,
+    Caisse,
     DepotClient,
     Facture,
     MouvementCaisse,
     MouvementStock,
+    PharmacySettings,
     Produit,
     StockLot,
 )
@@ -31,11 +33,29 @@ from ...utils.validation import parse_date_param, parse_id
 
 logger = logging.getLogger(__name__)
 
+# Modes d'encaissement non monétaires : pas remboursables en caisse.
+_MODES_NON_REMBOURSABLES = {'coupon', 'en_compte', 'depot', 'recouvrement'}
+
+
+def _refund_modes():
+    """Modes de remboursement monétaires : modes d'encaissement intégrés
+    (hors coupon/en compte/dépôt/recouvrement) + modes personnalisés actifs."""
+    builtin = {m for m, _ in Caisse.MODES_PAIEMENT} - _MODES_NON_REMBOURSABLES
+    try:
+        settings = PharmacySettings.objects.filter(pk=1).only('custom_payment_modes').first()
+        custom = {
+            m['value'] for m in (settings.custom_payment_modes or [])
+            if isinstance(m, dict) and m.get('value')
+        } if settings else set()
+    except Exception:
+        custom = set()
+    return builtin | custom
+
 
 class AvoirClientViewSet(viewsets.ModelViewSet):
     queryset = AvoirClient.objects.select_related(
         'facture_origine', 'client', 'created_by'
-    ).prefetch_related('lignes__produit', 'lignes__stock_lot')
+    ).prefetch_related('lignes__produit', 'lignes__stock_lot', 'facture_origine__paiements')
     serializer_class = AvoirClientSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = StandardResultsSetPagination
@@ -134,9 +154,12 @@ class AvoirClientViewSet(viewsets.ModelViewSet):
             return error_response
 
         refund_method = request.data.get('refund_method')
-        if refund_method not in ('cash', 'credit'):
+        if refund_method == 'cash':
+            # Alias historique envoyé par les anciens clients.
+            refund_method = 'especes'
+        if refund_method != 'credit' and refund_method not in _refund_modes():
             return Response(
-                {'detail': "Le mode de remboursement doit être 'cash' ou 'credit'."},
+                {'detail': 'Mode de remboursement invalide.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -213,16 +236,7 @@ class AvoirClientViewSet(viewsets.ModelViewSet):
             LotAllocationService.sync_stock_from_lots(product_ids_with_lots)
         notify_stock_changed(ligne.produit_id for ligne in lignes)
 
-        if refund_method == 'cash':
-            MouvementCaisse.objects.create(
-                type='SORTIE',
-                montant=avoir.montant_total,
-                motif=f'Remboursement avoir client {avoir.numero}',
-                description=avoir.notes,
-                user=validation_user,
-                poste_caisse=avoir.facture_origine.poste_caisse if avoir.facture_origine else None,
-            )
-        else:
+        if refund_method == 'credit':
             DepotClient.objects.create(
                 client=avoir.client,
                 type=DepotClient.Type.DEPOT,
@@ -230,6 +244,16 @@ class AvoirClientViewSet(viewsets.ModelViewSet):
                 facture=avoir.facture_origine,
                 created_by=validation_user,
                 notes=f'Crédit issu de l’avoir client {avoir.numero}',
+            )
+        else:
+            MouvementCaisse.objects.create(
+                type='SORTIE',
+                montant=avoir.montant_total,
+                mode_paiement=refund_method,
+                motif=f'Remboursement avoir client {avoir.numero}',
+                description=avoir.notes,
+                user=validation_user,
+                poste_caisse=avoir.facture_origine.poste_caisse if avoir.facture_origine else None,
             )
 
         avoir.statut = AvoirClient.Statut.VALIDEE

@@ -4,7 +4,7 @@ export type ClientCreditStatus = 'BROUILLON' | 'VALIDEE' | 'ANNULEE';
 
 export type ClientCreditTypeMotif = 'ERREUR' | 'RETOUR' | 'REMISE' | 'AUTRE';
 
-export type RefundMethod = 'cash' | 'credit';
+export type RefundMethod = 'especes' | 'om' | 'momo' | 'cheque' | 'carte' | 'virement' | 'credit';
 
 export interface ClientCreditLine {
     id: number;
@@ -34,6 +34,7 @@ export interface ClientCredit {
     created_by_name?: string;
     notes: string;
     lignes: ClientCreditLine[];
+    suggested_refund_method?: string;
 }
 
 export interface ClientCreditFilters {
@@ -68,7 +69,7 @@ export interface ClientCreditCreatePayload {
 }
 
 export interface ClientCreditValidatePayload {
-    refund_method: RefundMethod;
+    refund_method: RefundMethod | string;
     validated_by_id?: number | null;
     sudo_password?: string;
 }

@@ -9,13 +9,16 @@ import {
     DialogTitle,
     DialogDescription,
 } from '../shadcn/dialog';
+import { Button } from '../shadcn/button';
+import { Select } from '../shadcn/select';
 import {
     useClientCredits,
     useCreateClientCredit,
     useValidateClientCredit,
     useExportClientCredits,
 } from '../../hooks/useClientCredits';
-import { useConfirm } from '../../hooks/useConfirm';
+import { usePharmacySettings } from '../../hooks/usePharmacySettings';
+import { getCaissePaymentModes, getPaymentModeLabel } from '../../config/paymentModes';
 import type { ClientCredit, ClientCreditFilters } from '../../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { fadeInUp, tabContent } from '../../lib/motion';
@@ -24,12 +27,14 @@ const PAGE_SIZE = 25;
 
 export const ClientCreditsPage: React.FC = () => {
     const { t } = useTranslation(['avoirs_client', 'common']);
-    const confirm = useConfirm();
     const locale = t('common:locale', { defaultValue: 'fr-FR' });
     const [showForm, setShowForm] = useState(false);
     const [selectedCredit, setSelectedCredit] = useState<ClientCredit | null>(null);
+    const [refundCredit, setRefundCredit] = useState<ClientCredit | null>(null);
+    const [refundMethod, setRefundMethod] = useState<string>('especes');
     const [validatingId, setValidatingId] = useState<number | null>(null);
     const [filters, setFilters] = useState<ClientCreditFilters>({ page_size: PAGE_SIZE, page: 1 });
+    const { settings } = usePharmacySettings();
 
     const { data, isLoading } = useClientCredits(filters);
     const createMutation = useCreateClientCredit();
@@ -49,19 +54,26 @@ export const ClientCreditsPage: React.FC = () => {
         }
     };
 
-    const handleValidate = async (credit: ClientCredit) => {
-        const refundMethod = 'cash';
-        if (refundMethod === 'credit' && !(await confirm({
-            title: t('common:confirmation'),
-            message: t('messages.confirm_credit_refund'),
-            confirmText: t('common:confirm'),
-            variant: 'warning'
-        }))) {
-            return;
-        }
-        setValidatingId(credit.id);
+    // Modes de remboursement = modes d'encaissement monétaires (hors dépôt)
+    // + « crédit client » (dépôt, pas de sortie de caisse).
+    const refundModes = [
+        ...getCaissePaymentModes(settings?.disabled_payment_modes, settings?.custom_payment_modes)
+            .filter(m => m.value !== 'depot')
+            .map(m => ({ value: m.value, label: getPaymentModeLabel(m.value, t, settings?.custom_payment_modes) })),
+        { value: 'credit', label: t('refund_methods.credit') },
+    ];
+
+    const handleValidate = (credit: ClientCredit) => {
+        setRefundMethod(credit.suggested_refund_method || 'especes');
+        setRefundCredit(credit);
+    };
+
+    const confirmValidate = async () => {
+        if (!refundCredit) return;
+        setValidatingId(refundCredit.id);
         try {
-            await validateMutation.mutateAsync({ id: credit.id, payload: { refund_method: refundMethod } });
+            await validateMutation.mutateAsync({ id: refundCredit.id, payload: { refund_method: refundMethod } });
+            setRefundCredit(null);
         } catch {
             // toast géré par le hook
         } finally {
@@ -188,6 +200,48 @@ export const ClientCreditsPage: React.FC = () => {
                                         ))}
                                     </tbody>
                                 </table>
+                            </div>
+                        </div>
+                    </DialogContent>
+                )}
+            </Dialog>
+
+            <Dialog open={!!refundCredit} onOpenChange={(open) => !open && setRefundCredit(null)}>
+                {refundCredit && (
+                    <DialogContent className="max-w-md">
+                        <DialogHeader>
+                            <DialogTitle>{t('validate_dialog.title', { numero: refundCredit.numero })}</DialogTitle>
+                            <DialogDescription>{t('validate_dialog.subtitle')}</DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <label htmlFor="refund-method-select" className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                    {t('form.refund_method')}
+                                </label>
+                                <Select
+                                    id="refund-method-select"
+                                    value={refundMethod}
+                                    onChange={(e) => setRefundMethod(e.target.value)}
+                                    disabled={validatingId !== null}
+                                >
+                                    {refundModes.map(m => (
+                                        <option key={m.value} value={m.value}>{m.label}</option>
+                                    ))}
+                                </Select>
+                            </div>
+                            {refundMethod === 'credit' && !refundCredit.client && (
+                                <p className="text-xs text-red-600 font-medium">{t('messages.credit_requires_client')}</p>
+                            )}
+                            <div className="flex justify-end gap-2">
+                                <Button variant="outline" onClick={() => setRefundCredit(null)} disabled={validatingId !== null}>
+                                    {t('common:cancel')}
+                                </Button>
+                                <Button
+                                    onClick={confirmValidate}
+                                    disabled={validatingId !== null || (refundMethod === 'credit' && !refundCredit.client)}
+                                >
+                                    {t('list.validate')}
+                                </Button>
                             </div>
                         </div>
                     </DialogContent>

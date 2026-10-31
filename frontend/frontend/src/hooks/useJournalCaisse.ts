@@ -273,7 +273,7 @@ export function useJournalCaisse() {
         mouv.motif.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (mouv.description && mouv.description.toLowerCase().includes(searchQuery.toLowerCase()));
 
-       const matchesMode = filterMode === 'all' || filterMode === 'especes';
+       const matchesMode = filterMode === 'all' || (mouv.mode_paiement ?? 'especes') === filterMode;
 
        const matchesType = filterType === 'all' ||
         (filterType === 'entrees' && mouv.type === 'ENTREE') ||
