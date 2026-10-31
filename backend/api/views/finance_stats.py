@@ -335,7 +335,10 @@ class FinanceStatsViewSet(viewsets.ViewSet):
 
         dimension = cat_type if cat_type in ('groupe', 'forme') else 'rayon'
         grouped = group_finance_records(finance_sales_records(start_date, today), dimension)
-        top_categories = sorted(grouped.values(), key=lambda p: sum(p['months'].values()), reverse=True)[:top_n]
+        top_categories = sorted(
+            (p for p in grouped.values() if p['id']),
+            key=lambda p: sum(p['months'].values()), reverse=True,
+        )[:top_n]
         labels = build_monthly_labels(start_date, today)
         keys = [(start_date + relativedelta(months=i)).strftime('%Y-%m') for i in range(len(labels))]
         series = [

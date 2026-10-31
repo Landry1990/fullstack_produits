@@ -61,9 +61,19 @@ def collect_sales_records(date_debut=None, date_fin=None, fournisseur_id=None, l
     allocs = allocs.annotate(
         is_divers=Coalesce('stock_lot__is_divers', 'facture_produit__produit__fournisseur__is_divers', Value(False)),
         f_id=Coalesce('stock_lot__fournisseur_id', 'facture_produit__produit__fournisseur_id'),
-        f_nom=Coalesce(
-            'stock_lot__fournisseur__name', 'facture_produit__produit__fournisseur__name',
-            'stock_lot__fournisseur_nom', inconnu, output_field=text,
+        f_nom=Case(
+            When(
+                Q(stock_lot__lot__istartswith='LOT-INV')
+                & Q(stock_lot__fournisseur__isnull=True)
+                & Q(facture_produit__produit__fournisseur__isnull=True)
+                & (Q(stock_lot__fournisseur_nom__isnull=True) | Q(stock_lot__fournisseur_nom='')),
+                then=Value('Stock Inventaire'),
+            ),
+            default=Coalesce(
+                'stock_lot__fournisseur__name', 'facture_produit__produit__fournisseur__name',
+                'stock_lot__fournisseur_nom', inconnu, output_field=text,
+            ),
+            output_field=text,
         ),
         p_nom=Coalesce(
             'facture_produit__produit__name', 'facture_produit__produit_nom',
