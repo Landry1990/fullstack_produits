@@ -217,6 +217,7 @@ export interface MouvementCaisse {
     id: number;
     type: 'ENTREE' | 'SORTIE';
     montant: string;
+    mode_paiement?: string;
     motif: string;
     description?: string;
     date: string;

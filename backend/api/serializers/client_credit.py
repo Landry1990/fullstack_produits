@@ -3,6 +3,8 @@ from rest_framework import serializers
 
 from ..models import AvoirClient, LigneAvoirClient
 
+_MODES_NON_REMBOURSABLES = {'coupon', 'en_compte', 'depot', 'recouvrement'}
+
 
 class LigneAvoirClientSerializer(serializers.ModelSerializer):
     produit_nom = serializers.CharField(source='produit.name', read_only=True)
@@ -18,6 +20,7 @@ class AvoirClientSerializer(serializers.ModelSerializer):
     created_by_name = serializers.SerializerMethodField()
     client_name = serializers.CharField(source='client.name', read_only=True)
     facture_numero = serializers.CharField(source='facture_origine.numero_facture', read_only=True)
+    suggested_refund_method = serializers.SerializerMethodField()
 
     class Meta:
         model = AvoirClient
@@ -28,6 +31,19 @@ class AvoirClientSerializer(serializers.ModelSerializer):
         if not obj.created_by:
             return ''
         return obj.created_by.get_full_name() or obj.created_by.username
+
+    def get_suggested_refund_method(self, obj):
+        """Mode de remboursement pré-rempli : mode le plus utilisé pour
+        encaisser la facture d'origine (espèces en repli). Agrégé en Python
+        pour profiter du prefetch `facture_origine__paiements`."""
+        if not obj.facture_origine_id:
+            return 'especes'
+        totals = {}
+        for p in obj.facture_origine.paiements.all():
+            if p.statut != 'completee' or p.mode_paiement in _MODES_NON_REMBOURSABLES:
+                continue
+            totals[p.mode_paiement] = totals.get(p.mode_paiement, 0) + p.montant
+        return max(totals, key=totals.get) if totals else 'especes'
 
     def validate_lignes(self, lignes):
         if not lignes:

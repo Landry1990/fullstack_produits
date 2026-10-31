@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDebounce } from 'use-debounce';
 import { X, Loader2, Search, Plus } from 'lucide-react';
-import type { ClientCreditCreatePayload, ClientCreditTypeMotif, RefundMethod } from '../../types';
+import type { ClientCreditCreatePayload, ClientCreditTypeMotif } from '../../types';
 import type { ProduitModel, Facture } from '../../types';
 import { Button } from '../shadcn/button';
 import { Input } from '../shadcn/input';
@@ -59,7 +59,6 @@ export const ClientCreditForm: React.FC<ClientCreditFormProps> = ({
     const [selectedInvoice, setSelectedInvoice] = useState<SelectedInvoice | null>(null);
 
     const [lines, setLines] = useState<FormLine[]>([]);
-    const [refundMethod, setRefundMethod] = useState<RefundMethod>('cash');
     const [typeMotif, setTypeMotif] = useState<ClientCreditTypeMotif>('AUTRE');
     const [notes, setNotes] = useState('');
 
@@ -198,10 +197,6 @@ export const ClientCreditForm: React.FC<ClientCreditFormProps> = ({
             gooeyToast.error(t('messages.no_lines'));
             return;
         }
-        if (refundMethod === 'credit' && !selectedInvoice?.client) {
-            gooeyToast.error(t('messages.credit_requires_client'));
-            return;
-        }
         const missingLot = lines.find((l) => l.use_lot_management && !l.stock_lot);
         if (missingLot) {
             gooeyToast.error(t('form.lot_required'));
@@ -298,21 +293,7 @@ export const ClientCreditForm: React.FC<ClientCreditFormProps> = ({
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Refund method */}
-                <div className="space-y-2">
-                    <label htmlFor="refund-method" className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('form.refund_method')}</label>
-                    <Select
-                        id="refund-method"
-                        value={refundMethod}
-                        onChange={(e) => setRefundMethod(e.target.value as RefundMethod)}
-                        disabled={isSubmitting}
-                    >
-                        <option value="cash">{t('refund_methods.cash')}</option>
-                        <option value="credit">{t('refund_methods.credit')}</option>
-                    </Select>
-                </div>
-
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Motif */}
                 <div className="space-y-2">
                     <label htmlFor="type-motif" className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('form.type_motif')}</label>

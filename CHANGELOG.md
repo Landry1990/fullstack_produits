@@ -2,6 +2,65 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-10-31 — Paramètres > Impression : imprimantes QZ Tray en menu déroulant
+
+- `settings/PrintingTab.tsx` : le champ imprimante (input + datalist)
+  devient un `<Select>` peuplé par `listPrinters()` après « Détecter ».
+  Option vide = imprimante par défaut (fallback QZ `getDefault`) ; le nom
+  sauvegardé reste sélectionnable même non détecté (imprimante éteinte).
+- i18n : `labels.qz_printer_auto` fr/en ; `placeholders.qz_printer` retiré.
+- Non committé ; eslint OK.
+
+## 2026-10-31 — Avoirs clients : remboursement par canal (OM/MoMo…) + choix à la validation
+
+- `models/audit.py` : nouveau champ `MouvementCaisse.mode_paiement`
+  (défaut `especes`, migration 0277) — la sortie de caisse d'un avoir
+  enregistre désormais le canal réel du remboursement.
+- `views/ventes/client_credit.py` : `valider` accepte tout mode monétaire
+  (`especes`, `om`, `momo`, `cheque`, `carte`, `virement` + modes
+  personnalisés) ou `credit` (dépôt client, aucun mouvement) ; alias
+  historique `cash` → `especes`. Avant : `'cash'` hardcodé côté UI —
+  tout remboursement passait en espèces, donc décalage quand la vente
+  avait été encaissée en OM (l'encaissement OM restait, la sortie
+  tapait les espèces).
+- `serializers/client_credit.py` : `suggested_refund_method` = mode le
+  plus encaissé sur la facture d'origine (agrégé en Python via prefetch
+  `facture_origine__paiements`, pas de N+1).
+- Frontend : modale de validation avec select du mode pré-rempli
+  (`ClientCreditsPage`) ; sélecteur « mort » retiré du formulaire de
+  création (jamais envoyé au backend) ; journal de caisse filtre et
+  affiche le vrai mode des mouvements (`MOUV-n` : `SORTIE · OM`).
+- `tests/test_client_credit.py` : +4 tests (canal OM, dépôt crédit sans
+  mouvement, mode invalide 400, mode suggéré dominant).
+- Limites : la ventilation `details` du journal/clôture reste en brut
+  encaissé (choix utilisateur) ; les mouvements manuels restent en
+  espèces ; `refund_method` ne se splitte pas sur les paiements mixtes.
+- Vérification : 11 tests backend OK (client_credit + caisse_integrity),
+  eslint OK. `JournalCaisse.test.tsx` « displays totals » en échec
+  pré-existant (identique avec les fichiers stashés). Non committé.
+
+## 2026-10-29 — Alignement résiduel « sans lot » : dashboard + rapport mensuel
+
+- `views/dashboard/core.py` : `stats` (CA/ventes/créances/top produits),
+  `manager_stats` (CA mois) et `revenue_chart` basculés sur
+  `factures_retenues()` — `is_active` + paiement complété pour VAL,
+  cohérent avec les marges de l'étape 4.
+- `views/rapports/base.py` : `_calculate_ca_stats`, `_calculate_ca_par_tva`,
+  `_calculate_creances` et `_calculate_clients_pro` ventilent le divers via
+  `collect_sales_records()` (lot `is_divers` OU fournisseur produit en repli)
+  au lieu des seules allocations `stock_lot__is_divers`. CA TVA désormais
+  net des remises ligne+globale, comme le module financier et l'Excel.
+- `services/ventes_lots.py` : libellé fournisseur « Stock Inventaire »
+  restauré pour les lots `LOT-INV*` sans aucun fournisseur (régression du
+  camembert `repartition_ca`).
+- `views/finance_stats.py` : `evolution_categories` exclut à nouveau la
+  catégorie nulle (« Inconnu », id 0) comme avant.
+- `rapport_mensuel` : 32 → 48 requêtes (~200 ms) — plusieurs collectes
+  partagées mais périmètres différents ; inchangé côté contenu visible.
+- Vérification : 75 tests backend OK (1 skip), tous les endpoints
+  dashboard/finance/rapports en 200 via `measure_queries.py`. Backend
+  redéployé ; non committé.
+
 ## 2026-10-29 — Perf : rapport général Excel sans N+1
 
 - `views/rapports/excel_general.py` : stock par rayon et créances clients

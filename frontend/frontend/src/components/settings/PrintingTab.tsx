@@ -226,14 +226,22 @@ export function PrintingTab({ formData, handleChange, t, invSettings, updateInvS
               <span className="text-sm font-bold text-slate-500">{t('labels.qz_printer')}</span>
             </label>
             <div className="flex gap-2">
-              <input
-                list="qz-printer-list"
-                type="text"
+              <Select
+                size="lg"
                 value={printerName}
                 onChange={(e) => handlePrinterChange(e.target.value)}
-                placeholder={t('placeholders.qz_printer')}
-                className="flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
+                className="flex-1 rounded-xl"
+              >
+                {/* Vide = imprimante par défaut du système (fallback QZ Tray) */}
+                <option value="">{t('labels.qz_printer_auto')}</option>
+                {/* Nom sauvegardé conservé même s'il n'est pas détecté (imprimante éteinte) */}
+                {printerName && !printers.includes(printerName) && (
+                  <option value={printerName}>{printerName}</option>
+                )}
+                {printers.map((p) => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </Select>
               <button
                 type="button"
                 onClick={handleDetectPrinters}
@@ -244,11 +252,6 @@ export function PrintingTab({ formData, handleChange, t, invSettings, updateInvS
                 {t('buttons.detect')}
               </button>
             </div>
-            <datalist id="qz-printer-list">
-              {printers.map((p) => (
-                <option key={p} value={p} />
-              ))}
-            </datalist>
           </div>
 
           <div className="mt-5 flex items-center justify-between">

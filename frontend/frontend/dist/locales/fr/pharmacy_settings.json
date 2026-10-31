@@ -67,6 +67,7 @@
         "add_custom_mode": "Ajouter un mode personnalisé",
         "centralized_cash_register": "Caisse Centralisée",
         "qz_printer": "Imprimante QZ Tray",
+        "qz_printer_auto": "Imprimante par défaut (auto)",
         "open_drawer": "Ouvrir le tiroir-caisse",
         "telegram_bot_token": "Token Bot Telegram",
         "telegram_chat_id": "Chat ID",
@@ -110,8 +111,7 @@
         "custom_mode": "Ex: PayPal, Stripe, Wave...",
         "telegram_bot_token": "123456789:ABCDefGh...",
         "telegram_chat_id": "Identifiant numérique du chat",
-        "report_recipients": "email1@exemple.com, email2@exemple.com",
-        "qz_printer": "Saisissez ou sélectionnez une imprimante..."
+        "report_recipients": "email1@exemple.com, email2@exemple.com"
     },
     "hints": {
         "pharmacy_name": "Le nom officiel tel qu'il apparaîtra sur les factures et tickets.",

@@ -32,7 +32,7 @@
             "total_ca": "CA Total TTC",
             "purchase_cost": "Coût d'Achat (Vendu)",
             "gross_margin": "Marge Brute",
-            "margin_percentage": "% du CA",
+            "margin_percentage": "% du CA HT",
             "units_sold": "Unités Vendues"
         },
         "chart": {

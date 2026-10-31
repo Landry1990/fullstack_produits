@@ -54,6 +54,10 @@
     "cash": "Cash (cash out)",
     "credit": "Customer credit"
   },
+  "validate_dialog": {
+    "title": "Validate credit {{numero}}",
+    "subtitle": "Choose the refund method: the outflow will be recorded on this channel in the cash journal."
+  },
   "motifs": {
     "erreur": "Error",
     "retour": "Return",

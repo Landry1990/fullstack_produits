@@ -67,6 +67,7 @@
         "add_custom_mode": "Add a custom payment mode",
         "centralized_cash_register": "Centralized Cash Register",
         "qz_printer": "QZ Tray Printer",
+        "qz_printer_auto": "Default printer (auto)",
         "open_drawer": "Open cash drawer",
         "telegram_bot_token": "Telegram Bot Token",
         "telegram_chat_id": "Chat ID",
@@ -110,8 +111,7 @@
         "custom_mode": "e.g. PayPal, Stripe, Wave...",
         "telegram_bot_token": "123456789:ABCDefGh...",
         "telegram_chat_id": "Numeric chat identifier",
-        "report_recipients": "email1@example.com, email2@example.com",
-        "qz_printer": "Type or select a printer..."
+        "report_recipients": "email1@example.com, email2@example.com"
     },
     "hints": {
         "pharmacy_name": "The official name as it will appear on invoices and receipts.",

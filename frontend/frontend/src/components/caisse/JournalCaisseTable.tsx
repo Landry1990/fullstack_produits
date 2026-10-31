@@ -24,6 +24,8 @@ import { ErrorState } from '../ui/ErrorState';
 import SkeletonTable from '../ui/SkeletonTable';
 import { cn } from '../../lib/utils';
 import { Table, TableBody, TableHeader } from '../shadcn/table';
+import { usePharmacySettings } from '../../hooks/usePharmacySettings';
+import { getPaymentModeLabel } from '../../config/paymentModes';
 
 interface Props {
   state: ReturnType<typeof useJournalCaisse>;
@@ -51,6 +53,7 @@ export default function JournalCaisseTable({ state }: Props) {
     expandedReleves, toggleReleve, formatCurrencyLocal,
     page, totalPages, totalCount, setPage, fetchData
   } = state;
+  const { settings } = usePharmacySettings();
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -91,7 +94,7 @@ export default function JournalCaisseTable({ state }: Props) {
                   subtitle: item.user_nom,
                   amount: normalizeNumberInput(item.montant),
                   type: item.type === 'ENTREE' ? 'success' : 'error',
-                  badge: item.type === 'ENTREE' ? t('filter_caps.entry') : t('filter_caps.exit'),
+                  badge: `${item.type === 'ENTREE' ? t('filter_caps.entry') : t('filter_caps.exit')} · ${getPaymentModeLabel(item.mode_paiement || 'especes', t, settings?.custom_payment_modes)}`,
                   date: formatDate(item.date)
                 } : {
                   title: transaction.client_name,
@@ -172,9 +175,15 @@ export default function JournalCaisseTable({ state }: Props) {
                           {mouv.type === 'ENTREE' ? '+' : '-'}{formatCurrencyLocal(normalizeNumberInput(mouv.montant))}
                         </td>
                         <td className="px-3 py-2">
-                          <span className={cn("inline-flex items-center rounded-md font-bold text-caption gap-1 py-1 px-2", mouv.type === 'ENTREE' ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white')}>
-                            {mouv.type === 'ENTREE' ? t('filter_caps.entry') : t('filter_caps.exit')}
-                          </span>
+                          <div className="flex flex-col gap-1">
+                            <span className={cn("inline-flex items-center rounded-md font-bold text-caption gap-1 py-1 px-2 w-fit", mouv.type === 'ENTREE' ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white')}>
+                              {mouv.type === 'ENTREE' ? t('filter_caps.entry') : t('filter_caps.exit')}
+                            </span>
+                            <span className="inline-flex items-center gap-1 text-caption text-slate-500 font-medium">
+                              {getModeIcon(mouv.mode_paiement || 'especes')}
+                              {getPaymentModeLabel(mouv.mode_paiement || 'especes', t, settings?.custom_payment_modes)}
+                            </span>
+                          </div>
                         </td>
                         <td className="px-3 py-2 text-right">
                           <span className="inline-flex items-center gap-1 text-emerald-600 font-bold text-caption bg-emerald-50 px-2 py-1 rounded-md uppercase">
