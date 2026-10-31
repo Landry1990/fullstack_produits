@@ -25,6 +25,7 @@ from ...models import (
 from ...pagination import StandardResultsSetPagination
 from ...search_mixins import MultiTermSearchMixin
 from ...serializers import PromisSerializer
+from ...sudo_utils import validate_sudo_mode
 from ...services.realtime import notify_stock_changed
 from ...services.stock_obligation_service import StockObligationService
 from ...utils.validation import parse_id
@@ -342,6 +343,9 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         Annuler un promis et réintégrer le stock.
         Crée un mouvement de stock de type RETOUR (affiché en vert dans les stats).
         """
+        validation_user, error_res = validate_sudo_mode(request, permission_attr='can_cancel_promis')
+        if error_res:
+            return error_res
         # parse_id lève ValidationError (400) : pk='abc' lèverait ValueError
         # dans le filtre ORM → 500. DoesNotExist → 404 explicite.
         try:
@@ -450,6 +454,9 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         Annuler plusieurs promis et réintégrer le stock.
         Payload: { "ids": [1, 2, 3] }
         """
+        validation_user, error_res = validate_sudo_mode(request, permission_attr='can_cancel_promis')
+        if error_res:
+            return error_res
         ids = request.data.get('ids', [])
         if not ids:
             return Response({'detail': 'Aucun ID fourni.'}, status=status.HTTP_400_BAD_REQUEST)

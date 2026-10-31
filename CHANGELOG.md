@@ -2,6 +2,46 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-10-31 — Permissions sudo : regroupement UI + 2 trous de sécurité corrigés
+
+- **Regroupement** (`usersMeta.ts`, `UserPermissionsTab.tsx`) : les 7 permissions
+  protégées par un sudo (`can_cash_out`, `can_do_returns`,
+  `can_sell_negative_stock`, `can_modify_price`, `can_do_remise`,
+  `can_modify_invoice`, `can_validate_sales`) déplacées de la carte
+  « Permissions spéciales » vers « Sécurité / Sudo » — toutes les actions sudo
+  sont désormais visibles au même endroit. Rendu spécial `can_cash_out`
+  (description + blocage rôle VENDEUR) factorisé via `renderPermission` commun.
+- **`can_delete_product` appliqué côté serveur** : `perform_destroy`
+  (`views/produits.py`, `PermissionDenied` si droit absent) et `bulk_delete`
+  (`produit_actions/bulk_ops.py`) passent désormais par
+  `validate_sudo_mode(..., permission_attr='can_delete_product')` — auparavant
+  seul un gate client + modale mot de passe existait.
+- **`can_cancel_promis` appliqué côté serveur** : `annuler_et_reintegrer` et
+  `bulk_annuler` (`views/commandes/promis.py`) exigent la permission via
+  `validate_sudo_mode` (auparavant aucun contrôle).
+- **Promis.tsx** : `PasswordConfirmModal` (mot de passe propre seul) remplacé
+  par `SudoValidationModal` avec `permission="can_cancel_promis"` — un
+  superviseur peut autoriser l'annulation pour un autre utilisateur.
+  `promisService` transmet `validated_by_id` + `sudo_password` ;
+  `usePromisData.handleSudoConfirm(validatorId, password)` propage les erreurs
+  au modal (détail serveur affiché) + état `sudoSaving`.
+- Vérifié : py_compile conteneur, eslint/tsc OK, 45 tests
+  (`test_sensitive_permissions` + `test_user_management`) OK. Non committé.
+- `users/UserFormDialog.tsx` : hauteur fixe `h-[60vh]` sur la zone d'onglets
+  (taille identique Informations/Menus/Permissions) et titre « Modifier
+  l'Utilisateur — username » en édition. Frontend redéployé.
+
+## 2026-10-31 — Client « CLIENTS DIVERS » créé à l'installation
+
+- Migration `0279_seed_client_divers` : crée le client `CLIENTS DIVERS`
+  (PARTICULIER, `is_loyalty_member=False`) une seule fois par base — il est le
+  client sélectionné par défaut en facturation (`useFacturationClients`
+  cherche « CLIENTS DIVERS » / « CLIENT DIVERS »).
+- Contrôle `name__iexact` incluant les fiches soft-deletées (comme
+  `0260_seed_defauts`) : une suppression par l'utilisateur reste définitive.
+- Déjà présent sur la base dev (id 1) → migration appliquée en no-op ;
+  `makemigrations --check` propre. Non committé.
+
 ## 2026-10-31 — ForcePasswordChange : bouton « Ignorer » en dev/local
 
 - `auth/ForcePasswordChangeGuard.tsx` : bouton ghost « Ignorer (dev) » visible

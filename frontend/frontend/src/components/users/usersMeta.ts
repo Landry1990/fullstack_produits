@@ -7,17 +7,20 @@
  */
 
 export const PERMISSIONS_META = [
-  { key: 'can_cash_out', labelKey: 'permissions.cash_out', descKey: 'permissions.cash_out_desc', group: 'operations', color: 'emerald' as const, roleDefaults: { PHARMACIEN: true, CAISSIER: true, VENDEUR: false, COMPTABLE: false } },
-  { key: 'can_do_returns', labelKey: 'permissions.returns', group: 'operations', roleDefaults: { PHARMACIEN: true, CAISSIER: false, VENDEUR: false, COMPTABLE: false } },
-  { key: 'can_sell_negative_stock', labelKey: 'permissions.negative_stock', group: 'operations', color: 'warning' as const, roleDefaults: { PHARMACIEN: true, CAISSIER: false, VENDEUR: false, COMPTABLE: false } },
-  { key: 'can_modify_price', labelKey: 'permissions.modify_price', group: 'operations', roleDefaults: { PHARMACIEN: true, CAISSIER: false, VENDEUR: false, COMPTABLE: false } },
-  { key: 'can_do_remise', labelKey: 'permissions.modify_remise', group: 'operations', roleDefaults: { PHARMACIEN: true, CAISSIER: false, VENDEUR: false, COMPTABLE: false } },
+  // ── Permissions opérationnelles (affichage / usage courant) ──
   { key: 'can_generate_coupon', labelKey: 'permissions.generate_coupon', group: 'operations', roleDefaults: { PHARMACIEN: true, CAISSIER: false, VENDEUR: false, COMPTABLE: false } },
-  { key: 'can_modify_invoice', labelKey: 'permissions.modify_invoice', group: 'operations', roleDefaults: { PHARMACIEN: true, CAISSIER: true, VENDEUR: false, COMPTABLE: false } },
   { key: 'can_view_cash_sessions', labelKey: 'permissions.view_cash_sessions', group: 'operations', roleDefaults: { PHARMACIEN: true, CAISSIER: false, VENDEUR: false, COMPTABLE: false } },
   { key: 'can_view_cash_totals', labelKey: 'permissions.view_cash_totals', group: 'operations', roleDefaults: { PHARMACIEN: true, CAISSIER: false, VENDEUR: false, COMPTABLE: true } },
-  { key: 'can_validate_sales', labelKey: 'permissions.can_validate_sales', group: 'operations', roleDefaults: { PHARMACIEN: true, CAISSIER: false, VENDEUR: false, COMPTABLE: false } },
   { key: 'is_terminal_account', labelKey: 'permissions.is_terminal_account', group: 'operations', roleDefaults: { PHARMACIEN: false, CAISSIER: false, VENDEUR: false, COMPTABLE: false } },
+  // ── Permissions sudo : chacune correspond à un validate_sudo_mode
+  //    (permission_attr) ou à un contrôle `permission=` du SudoValidationModal ──
+  { key: 'can_cash_out', labelKey: 'permissions.cash_out', descKey: 'permissions.cash_out_desc', group: 'sudo', color: 'emerald' as const, roleDefaults: { PHARMACIEN: true, CAISSIER: true, VENDEUR: false, COMPTABLE: false } },
+  { key: 'can_do_returns', labelKey: 'permissions.returns', group: 'sudo', color: 'warning' as const, roleDefaults: { PHARMACIEN: true, CAISSIER: false, VENDEUR: false, COMPTABLE: false } },
+  { key: 'can_sell_negative_stock', labelKey: 'permissions.negative_stock', group: 'sudo', color: 'warning' as const, roleDefaults: { PHARMACIEN: true, CAISSIER: false, VENDEUR: false, COMPTABLE: false } },
+  { key: 'can_modify_price', labelKey: 'permissions.modify_price', group: 'sudo', color: 'warning' as const, roleDefaults: { PHARMACIEN: true, CAISSIER: false, VENDEUR: false, COMPTABLE: false } },
+  { key: 'can_do_remise', labelKey: 'permissions.modify_remise', group: 'sudo', color: 'warning' as const, roleDefaults: { PHARMACIEN: true, CAISSIER: false, VENDEUR: false, COMPTABLE: false } },
+  { key: 'can_modify_invoice', labelKey: 'permissions.modify_invoice', group: 'sudo', color: 'error' as const, roleDefaults: { PHARMACIEN: true, CAISSIER: true, VENDEUR: false, COMPTABLE: false } },
+  { key: 'can_validate_sales', labelKey: 'permissions.can_validate_sales', group: 'sudo', color: 'warning' as const, roleDefaults: { PHARMACIEN: true, CAISSIER: false, VENDEUR: false, COMPTABLE: false } },
   { key: 'can_validate_zero_amount', labelKey: 'permissions.validate_zero_amount', group: 'sudo', color: 'error' as const, roleDefaults: { PHARMACIEN: true, CAISSIER: false, VENDEUR: false, COMPTABLE: false } },
   { key: 'can_cancel_invoice', labelKey: 'permissions.cancel_invoice', group: 'sudo', color: 'error' as const, roleDefaults: { PHARMACIEN: true, CAISSIER: false, VENDEUR: false, COMPTABLE: false } },
   { key: 'can_cancel_promis', labelKey: 'permissions.cancel_promis', group: 'sudo', color: 'error' as const, roleDefaults: { PHARMACIEN: true, CAISSIER: false, VENDEUR: false, COMPTABLE: false } },

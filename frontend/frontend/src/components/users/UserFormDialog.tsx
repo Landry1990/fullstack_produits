@@ -43,12 +43,14 @@ export default function UserFormDialog({ open, onOpenChange, editingUser, users,
             <div className="size-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
               <User className="h-5 w-5" />
             </div>
-            {editingUser ? t('modal.edit_title') : t('modal.new_title')}
+            {editingUser ? `${t('modal.edit_title')} — ${editingUser.username}` : t('modal.new_title')}
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="flex flex-col min-h-0 overflow-hidden">
-          <div className="flex-1 overflow-y-auto p-6 min-h-0">
+          {/* Hauteur fixe : la modale garde la même taille quel que soit
+              l'onglet actif, le contenu défile en interne. */}
+          <div className="h-[60vh] overflow-y-auto p-6">
             <Tabs defaultValue="informations" className="w-full">
               <TabsList className="mb-4">
                 <TabsTrigger value="informations">{t('modal.tabs.information')}</TabsTrigger>

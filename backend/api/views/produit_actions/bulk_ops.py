@@ -8,6 +8,7 @@ from ...audit_helpers import log_audit
 from ...cache_utils import SearchCache
 from ...models import AuditLog, Produit, StockLot
 from ...serializers_optimized import ProduitListSerializer
+from ...sudo_utils import validate_sudo_mode
 from django.db.models import Prefetch, Q
 
 
@@ -199,6 +200,9 @@ class ProduitBulkMixin:
 
     @action(detail=False, methods=['post'])
     def bulk_delete(self, request):
+        validation_user, error_res = validate_sudo_mode(request, permission_attr='can_delete_product')
+        if error_res:
+            return error_res
         ids = request.data.get('ids', [])
         if not ids:
             return Response({'detail': 'Aucun ID fourni.'}, status=400)

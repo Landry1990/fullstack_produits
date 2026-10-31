@@ -51,7 +51,8 @@ export interface UsePromisDataReturn {
     // Sudo Modal State (Managed here or passed up)
     sudoModal: { isOpen: boolean, action: 'cancel' | 'bulk_cancel' | null, targetId: number | null };
     setSudoModal: React.Dispatch<React.SetStateAction<{ isOpen: boolean, action: 'cancel' | 'bulk_cancel' | null, targetId: number | null }>>;
-    handleSudoConfirm: () => void;
+    sudoSaving: boolean;
+    handleSudoConfirm: (validatorId: number, password: string) => Promise<void>;
 }
 
 export function usePromisData(): UsePromisDataReturn {
@@ -176,15 +177,15 @@ export function usePromisData(): UsePromisDataReturn {
         setSudoModal({ isOpen: true, action: 'cancel', targetId: id });
     };
 
-    const verifySudoAndCancel = async (id: number) => {
+    const verifySudoAndCancel = async (id: number, creds: { validated_by_id: number; sudo_password: string }) => {
         setPromisStatus([id], 'ANN');
         try {
-            const data = await promisService.annulerEtReintegrer(id);
+            const data = await promisService.annulerEtReintegrer(id, creds);
             gooeyToast.success(data.message);
         } catch (err) {
-            gooeyToast.error(t('stock:promis.messages.cancel_error', 'Erreur lors de l\'annulation'));
             logger.error(err);
             fetchPromis();
+            throw err; // rejeté vers SudoValidationModal (affiche le détail serveur)
         }
     };
 
@@ -302,29 +303,36 @@ export function usePromisData(): UsePromisDataReturn {
         setSudoModal({ isOpen: true, action: 'bulk_cancel', targetId: null });
     };
 
-    const verifySudoAndBulkCancel = async () => {
+    const verifySudoAndBulkCancel = async (creds: { validated_by_id: number; sudo_password: string }) => {
         setBulkLoading(true);
         setPromisStatus(selectedIds, 'ANN');
         setSelectedIds(new Set());
         try {
-            const data = await promisService.bulkAnnuler(Array.from(selectedIds));
+            const data = await promisService.bulkAnnuler(Array.from(selectedIds), creds);
             gooeyToast.success(t('stock:promis.messages.bulk_cancel_success', { count: data.cancelled, defaultValue: `${data.cancelled} promis annulés` }));
         } catch (err) {
-            gooeyToast.error(t('stock:promis.messages.bulk_cancel_error', 'Erreur lors de l\'annulation multiple'));
             logger.error(err);
             fetchPromis();
+            throw err; // rejeté vers SudoValidationModal (affiche le détail serveur)
         } finally {
             setBulkLoading(false);
         }
     };
 
-    const handleSudoConfirm = () => {
-        if (sudoModal.action === 'cancel' && sudoModal.targetId) {
-            verifySudoAndCancel(sudoModal.targetId);
-        } else if (sudoModal.action === 'bulk_cancel') {
-            verifySudoAndBulkCancel();
+    const [sudoSaving, setSudoSaving] = useState(false);
+    const handleSudoConfirm = async (validatorId: number, password: string) => {
+        const creds = { validated_by_id: validatorId, sudo_password: password };
+        setSudoSaving(true);
+        try {
+            if (sudoModal.action === 'cancel' && sudoModal.targetId) {
+                await verifySudoAndCancel(sudoModal.targetId, creds);
+            } else if (sudoModal.action === 'bulk_cancel') {
+                await verifySudoAndBulkCancel(creds);
+            }
+            setSudoModal({ isOpen: false, action: null, targetId: null });
+        } finally {
+            setSudoSaving(false);
         }
-        setSudoModal({ isOpen: false, action: null, targetId: null });
     };
 
     return {
@@ -353,6 +361,7 @@ export function usePromisData(): UsePromisDataReturn {
         clearSelection: () => setSelectedIds(new Set()),
         sudoModal,
         setSudoModal,
+        sudoSaving,
         handleSudoConfirm
     };
 }

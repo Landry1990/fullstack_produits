@@ -19,8 +19,8 @@ const promisService = {
         await api.post(`promis/${id}/delivrer/`);
     },
 
-    annulerEtReintegrer: async (id: number): Promise<{ message: string }> => {
-        const response = await api.post<{ message: string }>(`promis/${id}/annuler_et_reintegrer/`);
+    annulerEtReintegrer: async (id: number, sudoCreds?: { validated_by_id: number; sudo_password: string }): Promise<{ message: string }> => {
+        const response = await api.post<{ message: string }>(`promis/${id}/annuler_et_reintegrer/`, sudoCreds || {});
         return response.data;
     },
 
@@ -41,8 +41,8 @@ const promisService = {
         return response.data;
     },
 
-    bulkAnnuler: async (ids: number[]): Promise<{ cancelled: number }> => {
-        const response = await api.post<{ cancelled: number }>('promis/bulk_annuler/', { ids });
+    bulkAnnuler: async (ids: number[], sudoCreds?: { validated_by_id: number; sudo_password: string }): Promise<{ cancelled: number }> => {
+        const response = await api.post<{ cancelled: number }>('promis/bulk_annuler/', { ids, ...(sudoCreds || {}) });
         return response.data;
     }
 };

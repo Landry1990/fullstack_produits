@@ -11,7 +11,7 @@ import { PromisFilters } from './promis/PromisFilters';
 import { PromisTable } from './promis/PromisTable';
 import { SmsModal } from './promis/modals/SmsModal';
 import { PromisDetailModal } from './promis/modals/PromisDetailModal';
-import PasswordConfirmModal from './PasswordConfirmModal';
+import SudoValidationModal from './common/SudoValidationModal';
 import type { Promis } from '../types';
 import { motion } from 'framer-motion';
 import { staggerContainer, fadeInUp } from '../lib/motion';
@@ -47,6 +47,7 @@ const Promis: React.FC = () => {
         clearSelection,
         sudoModal,
         setSudoModal,
+        sudoSaving,
         handleSudoConfirm
     } = usePromisData();
 
@@ -161,13 +162,15 @@ const Promis: React.FC = () => {
                     onWhatsApp={handleWhatsAppReminder}
                 />
 
-                <PasswordConfirmModal
+                {sudoModal.isOpen && <SudoValidationModal
                     isOpen={sudoModal.isOpen}
                     onClose={() => setSudoModal({ isOpen: false, action: null, targetId: null })}
-                    onConfirm={handleSudoConfirm}
+                    onValidate={handleSudoConfirm}
+                    saving={sudoSaving}
+                    permission="can_cancel_promis"
                     title={t('stock:promis.modals.sudo_confirm_title', 'Confirmation Requise (Zone Sensible)')}
                     message={t('stock:promis.modals.sudo_confirm_message', 'Cette action va modifier le stock (réintégration). Veuillez confirmer votre mot de passe pour continuer.')}
-                />
+                />}
             </motion.div>
         </div>
     );

@@ -18,7 +18,7 @@ from django.db.models import (
 from django.db.models.functions import Coalesce
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 
 from ..cache_mixins import CachedSearchMixin
@@ -35,6 +35,7 @@ from ..search_mixins import MultiTermSearchMixin
 from ..serializer_mixins import OptimizedSerializerMixin
 from ..serializers import ProduitSerializer, ProduitUpdateSerializer
 from ..serializers_optimized import ProduitDetailSerializer, ProduitListSerializer
+from ..sudo_utils import validate_sudo_mode
 from ..utils.validation import parse_decimal, parse_id
 
 # Imports des mixins modulaires
@@ -318,6 +319,12 @@ class ProduitViewSet(
 
     @transaction.atomic
     def perform_destroy(self, instance):
+        # La permission can_delete_product n'était vérifiée que côté client :
+        # un appel API direct contournait le bloc. Sans credentials sudo, le
+        # contrôle porte sur request.user (la modale mot de passe reste côté UX).
+        _, error_res = validate_sudo_mode(self.request, permission_attr='can_delete_product')
+        if error_res:
+            raise PermissionDenied(error_res.data.get('detail', 'Permission refusée.'))
         from django.utils import timezone
         log_audit(
             user=self.request.user,

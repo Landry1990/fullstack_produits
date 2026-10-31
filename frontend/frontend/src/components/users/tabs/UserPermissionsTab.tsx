@@ -29,6 +29,38 @@ export default function UserPermissionsTab({ form, onApplyToRole }: Props) {
     }
   };
 
+  const renderPermission = (p: (typeof PERMISSIONS_META)[number]) => {
+    if (p.key === 'can_cash_out') {
+      return (
+        <div key={p.key} className="flex cursor-pointer justify-start gap-4 p-2 bg-base-100 rounded-lg border border-base-300 hover:border-success/50 transition-all shadow-sm group">
+          <Checkbox
+            checked={formData[p.key]}
+            onChange={checked => setFormData({ ...formData, [p.key]: checked })}
+            disabled={formData.is_superuser || formData.role === 'VENDEUR'}
+            color="success"
+            size="sm"
+          />
+          <div className="flex flex-col">
+            <span className="font-bold text-xs group-hover:text-success transition-colors">{t(p.labelKey)}</span>
+            {p.descKey && <span className="text-caption opacity-60 leading-none mt-0.5">{t(p.descKey)}</span>}
+          </div>
+        </div>
+      );
+    }
+    return (
+      <Checkbox
+        key={p.key}
+        size="xs"
+        color={checkboxColor(p.color)}
+        checked={formData[p.key]}
+        onChange={checked => setFormData({ ...formData, [p.key]: checked })}
+        label={t(p.labelKey)}
+        className={permissionClass(p.color)}
+        disabled={formData.is_superuser}
+      />
+    );
+  };
+
   return (
     <div className="space-y-4">
       {formData.is_superuser && (
@@ -43,37 +75,7 @@ export default function UserPermissionsTab({ form, onApplyToRole }: Props) {
             <h4 className="font-bold text-xs uppercase tracking-widest text-success">{t('modal.special_permissions')}</h4>
           </div>
           <div className="grid grid-cols-1 gap-3">
-            {PERMISSIONS_META.filter(p => p.group === 'operations').map(p => {
-              if (p.key === 'can_cash_out') {
-                return (
-                  <div key={p.key} className="flex cursor-pointer justify-start gap-4 p-2 bg-base-100 rounded-lg border border-base-300 hover:border-success/50 transition-all shadow-sm group">
-                    <Checkbox
-                      checked={formData[p.key]}
-                      onChange={checked => setFormData({ ...formData, [p.key]: checked })}
-                      disabled={formData.is_superuser || formData.role === 'VENDEUR'}
-                      color="success"
-                      size="sm"
-                    />
-                    <div className="flex flex-col">
-                      <span className="font-bold text-xs group-hover:text-success transition-colors">{t(p.labelKey)}</span>
-                      {p.descKey && <span className="text-caption opacity-60 leading-none mt-0.5">{t(p.descKey)}</span>}
-                    </div>
-                  </div>
-                );
-              }
-              return (
-                <Checkbox
-                  key={p.key}
-                  size="xs"
-                  color={checkboxColor(p.color)}
-                  checked={formData[p.key]}
-                  onChange={checked => setFormData({ ...formData, [p.key]: checked })}
-                  label={t(p.labelKey)}
-                  className={permissionClass(p.color)}
-                  disabled={formData.is_superuser}
-                />
-              );
-            })}
+            {PERMISSIONS_META.filter(p => p.group === 'operations').map(renderPermission)}
 
             <div className="flex flex-col gap-1 px-2 mt-1">
               <Label htmlFor="max-discount-rate">{t('form.max_discount')}</Label>
@@ -94,18 +96,7 @@ export default function UserPermissionsTab({ form, onApplyToRole }: Props) {
             <h4 className="font-bold text-xs uppercase tracking-widest text-error">{t('modal.security_sudo')}</h4>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {PERMISSIONS_META.filter(p => p.group === 'sudo').map(p => (
-              <Checkbox
-                key={p.key}
-                size="xs"
-                color={checkboxColor(p.color)}
-                checked={formData[p.key]}
-                onChange={checked => setFormData({ ...formData, [p.key]: checked })}
-                label={t(p.labelKey)}
-                className={permissionClass(p.color)}
-                disabled={formData.is_superuser}
-              />
-            ))}
+            {PERMISSIONS_META.filter(p => p.group === 'sudo').map(renderPermission)}
           </div>
         </Card>
       </div>
