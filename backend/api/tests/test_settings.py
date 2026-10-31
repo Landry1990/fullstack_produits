@@ -134,6 +134,31 @@ class PharmacySettingsViewTest(SettingsBase):
             model_name='PharmacySettings', action='UPDATE',
             user=self.admin).exists())
 
+    @patch(LICENCE, return_value=NO_LICENCE)
+    def test_put_registre_25_caracteres_et_coordonnees(self, _m):
+        data = {'registre_commerce': 'R' * 25, 'post_box': '1234', 'city': 'Yaoundé'}
+        resp = self.api.put(reverse(self.URL), data, format='json')
+        self.assertEqual(resp.status_code, 200, resp.data)
+        settings = PharmacySettings.objects.get(pk=1)
+        for field, value in data.items():
+            self.assertEqual(getattr(settings, field), value)
+        resp = self.api.get(reverse(self.URL))
+        for field, value in data.items():
+            self.assertEqual(resp.data[field], value)
+
+    def test_put_registre_26_caracteres_refuse(self):
+        resp = self.api.put(reverse(self.URL), {'registre_commerce': 'R' * 26}, format='json')
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn('registre_commerce', resp.data)
+
+    @patch(LICENCE, return_value=NO_LICENCE)
+    def test_put_boite_postale_ville_vides(self, _m):
+        resp = self.api.put(reverse(self.URL), {'post_box': '', 'city': ''}, format='json')
+        self.assertEqual(resp.status_code, 200, resp.data)
+        settings = PharmacySettings.objects.get(pk=1)
+        self.assertEqual(settings.post_box, '')
+        self.assertEqual(settings.city, '')
+
     def test_put_email_invalide_400(self):
         resp = self.api.put(
             reverse(self.URL), {'email': 'pas-un-email'}, format='json')

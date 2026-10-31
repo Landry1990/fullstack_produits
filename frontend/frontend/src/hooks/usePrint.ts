@@ -169,6 +169,8 @@ function usePrint(): UsePrintReturn {
       <div class="print-header">
         <h2>${escHtml(settings.pharmacy_name || 'PHARMACIE')}</h2>
         ${settings.address ? `<p>${escHtml(settings.address)}</p>` : ''}
+        ${settings.post_box ? `<p>${escHtml(docT('printing:invoice.post_box'))}: ${escHtml(settings.post_box)}</p>` : ''}
+        ${settings.city ? `<p>${escHtml(settings.city)}</p>` : ''}
         ${settings.phone ? `<p>${escHtml(docT('common:phone_short'))}${escHtml(settings.phone)}</p>` : ''}
         ${settings.email ? `<p>${escHtml(settings.email)}</p>` : ''}
         ${settings.niu ? `<p>NIU: ${escHtml(settings.niu)}</p>` : ''}

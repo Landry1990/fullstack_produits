@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 import openpyxl
 from django.test import TestCase
+from reportlab.platypus import Paragraph
 
 from api.models import InvoiceSettings, PharmacySettings
 from api.services.invoice_pdf import generate_invoice_pdf
@@ -74,6 +75,26 @@ class DocumentGenerationSmokeTests(TestCase):
         }
         self.assertIn('Indicator', visible_values)
         self.assertTrue(any('MONTHLY SUMMARY' in value for value in visible_values))
+
+    @patch('api.services.invoice_pdf.valider_licence_systeme', return_value=(False, None, None))
+    def test_invoice_pdf_includes_post_box_and_city(self, _mock_licence):
+        pharmacy = PharmacySettings.objects.get(pk=1)
+        pharmacy.post_box = '1234 & 56'
+        pharmacy.city = 'Yaoundé'
+        pharmacy.save()
+        facture = TestDataFactory.create_facture(total_ttc=1000)
+        settings = InvoiceSettings.objects.create(company_name='Test Pharmacy', company_address='Test Address')
+        for lang, label in [('fr', 'BP'), ('en', 'PO Box')]:
+            for layout in ['split', 'left', 'center', 'right']:
+                with self.subTest(lang=lang, layout=layout):
+                    settings.header_layout = layout
+                    with patch('api.services.invoice_pdf.Paragraph', wraps=Paragraph) as paragraph:
+                        pdf = generate_invoice_pdf(facture, settings, lang=lang).getvalue()
+                    self.assertTrue(pdf.startswith(b'%PDF'))
+                    self.assertTrue(any(
+                        f'{label}: 1234 &amp; 56 — Yaoundé' in call.args[0]
+                        for call in paragraph.call_args_list
+                    ))
 
     @patch('api.services.invoice_pdf.valider_licence_systeme', return_value=(False, None, None))
     def test_invoice_pdf_generates_in_english(self, _mock_licence):

@@ -1,4 +1,5 @@
 import io
+from xml.sax.saxutils import escape
 
 from reportlab.lib import colors
 from reportlab.lib.colors import HexColor
@@ -7,6 +8,7 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm, inch
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
+from api.models import PharmacySettings
 from api.utils_doclang import T, get_document_language
 from api.utils_licence import valider_licence_systeme
 
@@ -70,6 +72,14 @@ def generate_invoice_pdf(facture, settings, is_proforma=False, lang=None):
     valid, _, payload = valider_licence_systeme()
     company_name = payload.get('pharmacie_nom') if valid and payload and payload.get('pharmacie_nom') else settings.company_name
     company_address = settings.company_address.replace('\n', '<br/>')
+    pharmacy = PharmacySettings.objects.filter(pk=1).first()
+    if pharmacy:
+        postal_address = ' — '.join(filter(None, [
+            f"{'PO Box' if lang == 'en' else 'BP'}: {pharmacy.post_box}" if pharmacy.post_box else '',
+            pharmacy.city,
+        ]))
+        if postal_address:
+            company_address += f'<br/>{escape(postal_address)}'
     company_block = [Paragraph(f"<b>{company_name}</b>", style_company), Paragraph(company_address, style_normal)]
     _inv_dt = facture.date_document or facture.date
     invoice_date = f"{format_doc_date(_inv_dt, lang)} {T(lang, 'doc_at')} {_inv_dt.strftime('%H:%M')}"

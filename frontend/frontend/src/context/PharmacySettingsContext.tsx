@@ -12,6 +12,7 @@ export interface PharmacySettings {
   id: number;
   pharmacy_name: string;
   address: string;
+  post_box?: string;
   city: string;
   country: string;
   phone: string;
@@ -93,6 +94,7 @@ const DEFAULT_SETTINGS: PharmacySettings = {
   id: 1,
   pharmacy_name: 'ZENITH',
   address: '',
+  post_box: '',
   city: 'Douala',
   country: 'Cameroun',
   phone: '',

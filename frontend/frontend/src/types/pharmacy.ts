@@ -2,6 +2,7 @@ export interface PharmacySettings {
     id?: number
     pharmacy_name: string
     address: string
+    post_box?: string
     city?: string
     country?: string
     phone: string

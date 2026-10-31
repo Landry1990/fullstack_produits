@@ -68,6 +68,8 @@ export interface InvoiceData {
 export interface PharmacySettings {
   pharmacy_name: string;
   address: string;
+  post_box?: string;
+  city?: string;
   phone?: string;
   phone2?: string;
   email?: string;
