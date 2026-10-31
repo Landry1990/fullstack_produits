@@ -87,11 +87,11 @@ class DashboardCoreMixin(viewsets.ViewSet):
         today_lo, today_hi = day_bounds(today)
         yesterday_lo = day_start(yesterday)
 
-        facture_qs = Facture.objects.filter(
+        from ...services.ventes_lots import factures_retenues
+        facture_qs = factures_retenues().filter(
             date__gte=yesterday_lo,
             date__lt=today_hi,
-            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).annotate(num_p=Count('paiements')).exclude(status=Facture.Status.VALIDEE, num_p=0)
+        )
 
 
         # Aggregate everything related to Facture in one pass for [today, yesterday]
@@ -156,9 +156,7 @@ class DashboardCoreMixin(viewsets.ViewSet):
                 s=Sum('montant')
             ).values('s')[:1]
     
-            receivables_agg = Facture.objects.filter(
-                status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-            ).exclude(~Q(id__in=Caisse.objects.values('facture_id')), status='VAL').annotate(
+            receivables_agg = factures_retenues().annotate(
                 total_paid=Coalesce(Subquery(paid_sub, output_field=DecimalField()), Decimal('0.00')),
             ).annotate(
                 debt=F('total_ttc') - F('total_paid')
@@ -186,10 +184,8 @@ class DashboardCoreMixin(viewsets.ViewSet):
             # 5. Top Products Today
             from ...models import FactureProduit
             top_products = FactureProduit.objects.filter(
-                facture__date__gte=today_lo,
-                facture__date__lt=today_hi,
-                facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-            ).exclude(facture__status=Facture.Status.VALIDEE, facture__paiements__isnull=True).distinct().values('produit_id', 'produit__name').annotate(
+                facture__in=factures_retenues().filter(date__gte=today_lo, date__lt=today_hi)
+            ).values('produit_id', 'produit__name').annotate(
                 qty=Sum('quantity'),
                 revenue=Sum(F('quantity') * (F('selling_price') - F('discount')))
             ).order_by('-qty')[:5]
@@ -344,9 +340,9 @@ class DashboardCoreMixin(viewsets.ViewSet):
         from django.db.models import Case, DecimalField, Value, When
     
         # --- Chiffre d'Affaires (Grouped) ---
-        ca_stats = Facture.objects.filter(
+        from ...services.ventes_lots import factures_retenues
+        ca_stats = factures_retenues().filter(
             date__gte=month_lo,
-            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         ).aggregate(
             ca_jour=Coalesce(Sum(Case(When(date__gte=today_lo, date__lt=today_hi, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
             ca_sem=Coalesce(Sum(Case(When(date__gte=week_lo, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
@@ -761,11 +757,11 @@ class DashboardCoreMixin(viewsets.ViewSet):
         end_date = timezone.localtime(timezone.now())
         start_date = end_date - timedelta(days=6)  # 7 days including today
 
-        daily_revenue = Facture.objects.filter(
+        from ...services.ventes_lots import factures_retenues
+        daily_revenue = factures_retenues().filter(
             date__gte=day_start(start_date.date()),
             date__lt=day_start(end_date.date() + timedelta(days=1)),
-            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(~Q(id__in=Caisse.objects.values('facture_id')), status='VAL').annotate(
+        ).annotate(
             day=TruncDay('date')
         ).values('day').annotate(
             total=Coalesce(Sum('total_ttc'), Decimal(0)),
