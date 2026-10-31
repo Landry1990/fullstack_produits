@@ -676,3 +676,60 @@ class ProduitStockMixin:
             }, request=request
         )
         return Response({'detail': f"{len([r for r in results if r['success']])} produits réapprovisionnés.", 'results': results, 'session_id': session.id if getattr(session, 'id', None) else None})
+
+    @action(detail=False, methods=['post'])
+    @transaction.atomic
+    def reset_all_stock(self, request):
+        """
+        Remise à zéro globale du stock (usage post-formation / remise à plat).
+        Réservé aux superadministrateurs : le mot de passe sudo est vérifié
+        par validate_sudo_mode, puis is_superuser est exigé sur le validateur.
+        """
+        validation_user, error_res = validate_sudo_mode(request)
+        if error_res:
+            return error_res
+        if not validation_user.is_superuser:
+            return Response(
+                {'detail': "Seul un superadministrateur peut remettre tout le stock à zéro."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        produits_qs = Produit.objects.exclude(stock=0, stock_reserve=0)
+        totals = produits_qs.aggregate(rayon=Sum('stock'), reserve=Sum('stock_reserve'))
+        product_ids = list(produits_qs.values_list('id', flat=True))
+        produits_qs.update(stock=0, stock_reserve=0, version=F('version') + 1)
+
+        lots_affected = StockLot.objects.exclude(
+            quantity_remaining=0, quantity_reserved=0, quantity_free_remaining=0
+        ).update(quantity_remaining=0, quantity_reserved=0, quantity_free_remaining=0)
+
+        # Comme pour un ajustement absolu : les promis en attente restent des
+        # dettes à honorer, mais ne seront pas retranchés du nouveau compteur.
+        StockObligation.objects.filter(
+            status=StockObligation.Status.EN_ATTENTE,
+            stock_applied=True,
+        ).update(stock_applied=False)
+
+        log_audit(
+            user=request.user, action=AuditLog.Action.STOCK_ADJUST,
+            model_name='Produit', object_id='ALL',
+            description=(
+                f"Remise à zéro globale du stock : {len(product_ids)} produit(s), "
+                f"{lots_affected} lot(s) — validé par {validation_user.username}"
+            ),
+            details={
+                'products_affected': len(product_ids),
+                'lots_affected': lots_affected,
+                'units_rayon_removed': totals['rayon'] or 0,
+                'units_reserve_removed': totals['reserve'] or 0,
+                'validator': validation_user.username,
+                'is_sudo': validation_user != request.user,
+            }, request=request
+        )
+
+        notify_stock_changed(product_ids)
+        return Response({
+            'detail': f"Stock remis à zéro : {len(product_ids)} produit(s) et {lots_affected} lot(s) réinitialisés.",
+            'products_affected': len(product_ids),
+            'lots_affected': lots_affected,
+        })

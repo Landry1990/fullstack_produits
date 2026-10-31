@@ -390,6 +390,16 @@
         "lot_update_success": "Lot mis à jour",
         "lot_update_error": "Erreur lors de la mise à jour"
     },
+    "reset_stock": {
+        "button": "Remise à zéro",
+        "confirm_title": "Remise à zéro du stock",
+        "confirm_body": "Vous allez remettre à ZÉRO le stock de TOUS les produits (rayon et réserve).\n\nCette action est irréversible et réservée à une remise à plat (par exemple après une session de formation).\n\nVoulez-vous continuer ?",
+        "confirm_button": "Tout remettre à zéro",
+        "sudo_title": "Validation superadministrateur",
+        "sudo_body": "La remise à zéro du stock nécessite le mot de passe d'un compte superadministrateur.",
+        "success": "Stock remis à zéro",
+        "error": "Erreur lors de la remise à zéro du stock"
+    },
     "labels": {
         "filename_prefix": "etiquettes"
     },

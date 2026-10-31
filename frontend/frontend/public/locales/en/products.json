@@ -390,6 +390,16 @@
         "lot_update_success": "Batch updated",
         "lot_update_error": "Update error"
     },
+    "reset_stock": {
+        "button": "Reset to zero",
+        "confirm_title": "Reset all stock",
+        "confirm_body": "You are about to reset the stock of ALL products to ZERO (shelf and reserve).\n\nThis action is irreversible and intended for a fresh start (e.g. after a training session).\n\nDo you want to continue?",
+        "confirm_button": "Reset everything to zero",
+        "sudo_title": "Superadministrator validation",
+        "sudo_body": "Resetting the stock requires the password of a superadministrator account.",
+        "success": "Stock reset to zero",
+        "error": "Error while resetting the stock"
+    },
     "labels": {
         "filename_prefix": "labels"
     },

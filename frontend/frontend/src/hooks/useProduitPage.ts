@@ -5,8 +5,10 @@ import { useQueryClient } from '@tanstack/react-query'
 import { gooeyToast } from 'goey-toast'
 
 import api from '../services/api'
+import produitService from '../services/produitService'
 import { getApiErrorDetail } from '../utils/errorHandling'
 import { useConfirm } from './useConfirm'
+import { useSudo } from './useSudo'
 import { useAuth } from '../context/AuthContext'
 import type { ProduitModel, Facture } from '../types'
 import {
@@ -34,6 +36,7 @@ export interface AdjustForm {
  */
 export function useProduitPage() {
   const confirm = useConfirm()
+  const { sudoState, requireSudo, closeSudo } = useSudo()
   const navigate = useNavigate()
   const location = useLocation()
   const { t } = useTranslation(['products', 'common'])
@@ -242,6 +245,29 @@ export function useProduitPage() {
 
   const handleGenerateLabels = (produit: ProduitModel) => setLabelProduct(produit)
 
+  // Remise à zéro globale du stock (usage post-formation). Double garde-fou :
+  // confirmation explicite puis mot de passe d'un superadministrateur (le
+  // backend re-vérifie is_superuser sur le validateur).
+  const handleResetAllStock = async () => {
+    const ok = await confirm({
+      title: t('products:reset_stock.confirm_title'),
+      message: t('products:reset_stock.confirm_body'),
+      variant: 'danger',
+      confirmText: t('products:reset_stock.confirm_button')
+    })
+    if (!ok) return
+    requireSudo(async (validatorId, password) => {
+      const data = await produitService.resetAllStock({ validated_by_id: validatorId, sudo_password: password })
+      gooeyToast.success(data.detail || t('products:reset_stock.success'))
+      setSelectedProduit(null)
+      queryClient.invalidateQueries({ queryKey: ['produits'] })
+      refetch()
+    }, {
+      title: t('products:reset_stock.sudo_title'),
+      message: t('products:reset_stock.sudo_body')
+    })
+  }
+
   const handleTransferToRayon = (produit: ProduitModel) => {
     if (produit.has_reserve_storage && (produit.stock_reserve ?? 0) > 0) setTransferProduct(produit)
   }
@@ -410,7 +436,8 @@ export function useProduitPage() {
     labelProduct, setLabelProduct, transferProduct, setTransferProduct,
     /* handlers */
     handleDelete, handleStockAdjustmentSubmit, handleOpenAdjust, handleOpenCreate,
-    handleToggleActive, handleGenerateLabels,
+    handleToggleActive, handleGenerateLabels, handleResetAllStock,
+    sudoState, closeSudo,
     handleTransferToRayon, confirmTransferToRayon,
     handleMovementClick, handleOpenEdit,
     queryClient,

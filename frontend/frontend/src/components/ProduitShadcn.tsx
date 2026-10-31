@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
 import { gooeyToast } from 'goey-toast'
-import { Package, Upload, RefreshCw } from 'lucide-react'
+import { Package, Upload, RefreshCw, Eraser } from 'lucide-react'
 
 import type { ProduitModel } from '../types'
 import type { Groupe } from '../types/catalog'
@@ -20,6 +20,7 @@ import { ProduitPageModals } from './products/ProduitPageModals'
 import { ProductTabsContent } from './products/ProductTabsContent'
 import { QuantityInputDialog } from './products/modals/QuantityInputDialog'
 import { LoadingScreen } from './common/LoadingScreen'
+import SudoValidationModal from './common/SudoValidationModal'
 
 const SimplePrintLabelsModal = lazy(() => import('./SimplePrintLabelsModal'))
 
@@ -58,6 +59,7 @@ export default function ProduitShadcn() {
     handleToggleActive, handleGenerateLabels,
     handleTransferToRayon, confirmTransferToRayon,
     handleMovementClick, handleOpenEdit,
+    handleResetAllStock, sudoState, closeSudo,
     queryClient,
   } = state
 
@@ -92,6 +94,9 @@ export default function ProduitShadcn() {
             setIsPasswordOpen(true)
           }}>
             {t('products:import.title', { defaultValue: 'Importer' })}
+          </Button>
+          <Button variant="danger" size="sm" leftIcon={<Eraser className="size-4" />} onClick={handleResetAllStock}>
+            {t('products:reset_stock.button', { defaultValue: 'Remise à zéro' })}
           </Button>
         </div>
       </motion.header>
@@ -245,6 +250,14 @@ export default function ProduitShadcn() {
         formes={formes}
         groupes={groupes as unknown as Groupe[]}
       />
+      {sudoState.isOpen && <SudoValidationModal
+        isOpen={sudoState.isOpen}
+        onClose={closeSudo}
+        onValidate={sudoState.onValidate}
+        saving={sudoState.isValidating}
+        title={sudoState.title}
+        message={sudoState.message}
+      />}
     </motion.div>
   )
 }

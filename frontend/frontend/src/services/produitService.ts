@@ -205,6 +205,11 @@ const produitService = {
         return response.data;
     },
 
+    resetAllStock: async (sudoCreds: { validated_by_id: number; sudo_password: string }): Promise<{ detail?: string; products_affected?: number; lots_affected?: number }> => {
+        const response = await api.post<{ detail?: string; products_affected?: number; lots_affected?: number }>('produits/reset_all_stock/', sudoCreds);
+        return response.data;
+    },
+
     getReapproHistory: async (): Promise<unknown[]> => {
         const response = await api.get('reappro-sessions/');
         return response.data;

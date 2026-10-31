@@ -197,6 +197,24 @@ export default function ForcePasswordChangeGuard() {
               t('force_change.submit')
             )}
           </Button>
+
+          {/* Dev/local uniquement : court-circuite la modale quand le flag est
+              périmé côté sessionStorage (ex. flag levé en base après le login).
+              Sans effet si le flag backend est encore posé — le middleware
+              continue de bloquer l'API. */}
+          {(import.meta.env.DEV || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && (
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full text-slate-400"
+              onClick={() => {
+                safeStorage.setItem('must_change_password', 'false');
+                window.location.reload();
+              }}
+            >
+              {t('force_change.skip_dev', { defaultValue: 'Ignorer (dev)' })}
+            </Button>
+          )}
         </form>
       </DialogContent>
     </Dialog>

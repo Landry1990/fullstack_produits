@@ -2,6 +2,37 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-10-31 — ForcePasswordChange : bouton « Ignorer » en dev/local
+
+- `auth/ForcePasswordChangeGuard.tsx` : bouton ghost « Ignorer (dev) » visible
+  uniquement en `import.meta.env.DEV` ou sur localhost/127.0.0.1 (le frontend
+  Docker est un build production). Efface le flag `must_change_password` du
+  sessionStorage et recharge — couvre le cas du flag périmé après re-login ;
+  sans effet si le flag backend est encore posé (le middleware continue de
+  bloquer l'API). i18n `auth:force_change.skip_dev` fr/en.
+- Frontend redéployé ; non committé.
+
+## 2026-10-31 — Remise à zéro globale du stock (post-formation)
+
+- `views/produit_actions/stock.py` : nouvelle action `POST /api/produits/reset_all_stock/`
+  (détail=False, atomique). `validate_sudo_mode` + `is_superuser` exigé sur le
+  validateur ; remise à zéro en masse des compteurs `Produit.stock` /
+  `stock_reserve` (+ `version`) et des lots (`quantity_remaining` /
+  `quantity_reserved` / `quantity_free_remaining`), obligations promis repassées
+  en `stock_applied=False` (même logique qu'un ajustement absolu), une entrée
+  `AuditLog` globale (produits/lots/unités, validateur) et broadcast
+  `notify_stock_changed`.
+- `ProduitShadcn.tsx` : bouton danger « Remise à zéro » dans le header →
+  `useConfirm` (variant danger) puis `SudoValidationModal` via `useSudo`
+  (sans `permission` → `verify_password` n'accepte que les superusers).
+- `useProduitPage.ts` : `handleResetAllStock` (confirm → sudo → appel →
+  invalidation `produits` + toast) ; `produitService.resetAllStock` envoie
+  `validated_by_id` + `sudo_password`.
+- i18n `products:reset_stock.*` fr/en.
+- Vérifié : py_compile dans le conteneur, route résolue, requêtes d'agrégat
+  OK sur la base dev (382 produits / 433 lots concernés), eslint + tsc OK.
+  Non committé.
+
 ## 2026-10-31 — Coordonnées pharmacie : boîte postale, ville imprimée et RC à 25 caractères
 
 - `models/settings.py`, migration `0278_pharmacy_post_box_and_register_length` :
