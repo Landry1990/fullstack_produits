@@ -12,7 +12,7 @@ from rest_framework.response import Response
 
 from ...audit_helpers import log_audit
 from ...centralized_configs import BaseViewSetConfig
-from ...models import AuditLog, MouvementStock, Produit, StockAdjustment, StockLot
+from ...models import AuditLog, CommandeProduit, MouvementStock, Produit, StockAdjustment, StockLot
 from ...serializer_mixins import OptimizedSerializerMixin
 from ...serializers import StockLotSerializer, StockLotUpdateSerializer
 from ...serializers_optimized import StockLotDetailSerializer, StockLotListSerializer
@@ -100,6 +100,25 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
     def perform_update(self, serializer):
         fields = sorted(serializer.validated_data.keys())
         lot = serializer.save()
+        # Resynchronisation inverse : Produit.expire_date reflète la date du
+        # lot rayon le plus ancien (même règle que transfer_to_shelf) — sinon
+        # la fiche produit garde une date périmée après correction du lot.
+        if 'date_expiration' in serializer.validated_data and lot.produit_id:
+            produit = lot.produit
+            oldest_shelf_lot = produit.stock_lots.filter(
+                quantity_remaining__gt=0
+            ).order_by('date_reception').first()
+            new_expire = oldest_shelf_lot.date_expiration if oldest_shelf_lot else None
+            if produit.expire_date != new_expire:
+                produit.expire_date = new_expire
+                produit.save(update_fields=['expire_date'])
+        # La ligne de commande d'origine porte sa propre date_expiration
+        # (affichée dans le détail de commande) : même saisie erronée → même
+        # correction.
+        if 'date_expiration' in serializer.validated_data and lot.commande_produit_id:
+            CommandeProduit.objects.filter(pk=lot.commande_produit_id).update(
+                date_expiration=lot.date_expiration
+            )
         log_audit(
             user=self.request.user,
             action=AuditLog.Action.UPDATE,

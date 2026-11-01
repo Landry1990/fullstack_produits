@@ -272,7 +272,9 @@
             "sell_ttc": "prix v ttc",
             "margin": "marge",
             "coeff": "coeff",
-            "precompte": "précompte"
+            "precompte": "précompte",
+            "hide": "Masquer la synthèse",
+            "show": "Afficher la synthèse"
         },
         "correct_lot_expiry": "Corriger lot / date péremption"
     },

@@ -272,7 +272,9 @@
             "sell_ttc": "sell price ttc",
             "margin": "margin",
             "coeff": "coeff",
-            "precompte": "withholding"
+            "precompte": "withholding",
+            "hide": "Hide summary",
+            "show": "Show summary"
         },
         "correct_lot_expiry": "Correct lot / expiry date"
     },

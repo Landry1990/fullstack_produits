@@ -4,7 +4,7 @@ import { staggerContainer, fadeInUp } from '../../lib/motion';
 import { useDocumentLock } from '../../hooks/useDocumentLock';
 import { LockBanner } from '../common/LockBanner';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Pencil, Pause, Play, Check, Printer, Trash2, Tag, RotateCcw, Package, Search, X, Loader2, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Pencil, Pause, Play, Check, Printer, Trash2, Tag, RotateCcw, Package, Search, X, Loader2, ChevronDown, Eye, EyeOff } from 'lucide-react';
 import type { Commande, Fournisseur, ProduitModel } from '../../types';
 import type { ReceptionGroupBy } from '../../utils/print/printHelpers';
 import { formatCurrency, normalizeNumberInput } from '../../utils/formatters';
@@ -142,6 +142,15 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
   const { t } = useTranslation(['orders', 'products', 'common']);
 
   const [searchDetailQuery, setSearchDetailQuery] = useState('');
+  // Barre de synthèse (prix/marge) : préférence persistée entre les sessions.
+  const [showRecapState, setShowRecapState] = useState(() => {
+    try { return localStorage.getItem('commande_recap_hidden') !== '1'; } catch { return true; }
+  });
+  const setShowRecap = (v: boolean) => {
+    setShowRecapState(v);
+    try { localStorage.setItem('commande_recap_hidden', v ? '0' : '1'); } catch { /* stockage bloqué */ }
+  };
+  const showRecap = showRecapState;
 
   const [detailSortKey, setDetailSortKey] = useState<'name' | 'quantity' | 'price' | null>(null);
 
@@ -402,7 +411,17 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
 
       {/* Barre de synthèse horizontale */}
       <motion.div variants={fadeInUp} className="mt-2 flex flex-wrap justify-between items-end gap-4 shrink-0 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
-        <div className="flex flex-wrap gap-3 items-center">
+        {!showRecap ? (
+          <button
+            type="button"
+            onClick={() => setShowRecap(true)}
+            className="flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-slate-600 transition-colors"
+          >
+            <Eye className="size-4" />
+            {t('orders:details.recap.show', { defaultValue: 'Afficher la synthèse' })}
+          </button>
+        ) : (
+        <div className="flex flex-wrap gap-3 items-center flex-1">
           {/* PRIX A HT */}
           <div className="flex flex-col items-end">
             <span className="text-xs uppercase font-bold text-slate-400 -mb-1">{t('orders:details.recap.buy_ht')}</span>
@@ -444,6 +463,17 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
             </div>
           )}
         </div>
+        )}
+        {showRecap && (
+          <button
+            type="button"
+            onClick={() => setShowRecap(false)}
+            title={t('orders:details.recap.hide', { defaultValue: 'Masquer la synthèse' })}
+            className="shrink-0 p-1 rounded-lg text-slate-300 hover:text-slate-500 hover:bg-slate-100 transition-colors"
+          >
+            <EyeOff className="size-4" />
+          </button>
+        )}
       </motion.div>
 
 

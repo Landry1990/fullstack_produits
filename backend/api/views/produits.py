@@ -288,6 +288,7 @@ class ProduitViewSet(
     def perform_update(self, serializer):
         old_selling = serializer.instance.selling_price
         old_cost = serializer.instance.cost_price
+        old_expire = serializer.instance.expire_date
         produit = serializer.save()
         SearchCache.invalidate_all_products()
 
@@ -297,6 +298,19 @@ class ProduitViewSet(
             or ('cost_price' in serializer.validated_data and produit.cost_price != old_cost)
         )
         details = {'fields': fields}
+        # Propagation de la date de péremption : le statut « périmé » est
+        # calculé sur StockLot.date_expiration, pas sur Produit.expire_date.
+        # Corriger la fiche produit met donc à jour les lots qui affichaient
+        # la même (ancienne) date — saisie erronée à la réception.
+        if 'expire_date' in serializer.validated_data and old_expire and produit.expire_date != old_expire:
+            lots_to_fix = StockLot.objects.filter(produit=produit, date_expiration=old_expire)
+            lot_ids = list(lots_to_fix.values_list('id', flat=True))
+            details['lots_expire_date_updated'] = lots_to_fix.update(date_expiration=produit.expire_date)
+            # La ligne de commande d'origine porte sa propre date_expiration
+            # (détail de commande) : corriger la même saisie erronée.
+            details['commandes_expire_date_updated'] = CommandeProduit.objects.filter(
+                stock_lot__id__in=lot_ids
+            ).update(date_expiration=produit.expire_date)
         if price_changed:
             details.update({
                 'old_selling_price': str(old_selling),

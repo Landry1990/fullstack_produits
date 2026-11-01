@@ -2,6 +2,26 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-11-01 — 🐛 Date de péremption : propagation produit ↔ lots
+
+- Bug : le statut « périmé » est calculé sur `StockLot.date_expiration` alors
+  que la fiche produit édite `Produit.expire_date` — corriger la fiche laissait
+  le lot périmé (stats, page Périmés, blocage transformations).
+- `views/produits.py perform_update` : modifier `expire_date` du produit met à
+  jour les lots qui avaient la même ancienne date (saisie erronée en réception) —
+  les autres lots ne sont pas touchés ; compteur logué en audit.
+- `views/stocks/stock_lots.py perform_update` : modifier `date_expiration` d'un
+  lot resynchronise `Produit.expire_date` depuis le lot rayon le plus ancien
+  (même règle que `transfer_to_shelf`).
+- 3 lots à dates aberrantes repérés sur la base dev (2002, 2016, 2023) : à
+  corriger via l'onglet Lots de la fiche produit — la resync est désormais
+  automatique. Backend redéployé ; non committé.
+- Extension : `CommandeProduit.date_expiration` (détail de commande) porte sa
+  propre copie de la date — propagée dans les deux chemins de correction
+  (`stock_lot__id__in` depuis la fiche produit, `commande_produit_id` depuis
+  le lot). `LigneAvoir.date_expiration` volontairement non réécrite
+  (historique d'un retour effectué). Backend redéployé.
+
 ## 2026-10-31 — Permissions sudo : regroupement UI + 2 trous de sécurité corrigés
 
 - **Regroupement** (`usersMeta.ts`, `UserPermissionsTab.tsx`) : les 7 permissions
