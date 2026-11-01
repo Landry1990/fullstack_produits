@@ -1,17 +1,17 @@
 #!/bin/bash
 #
-# Script de mise à jour production — sans rebuild Docker, sans npm
-# Tout vient de git (backend + frontend déjà buildé).
+# Script de mise à jour production — hot-deploy backend, rebuild frontend
 #
 # Usage sur le serveur : ./update.sh
 #
 # Ce script :
-#   1. git pull (récupère le code backend + le frontend buildé)
+#   1. git pull (récupère le code backend + les sources frontend)
 #   2. Copie le backend dans le conteneur + migrations + restart
-#   3. Copie le frontend (dist/) dans le conteneur nginx + reload
+#   3. Rebuild l'image frontend via docker compose UNIQUEMENT si
+#      frontend/ a changé (npm tourne dans le builder Docker, pas besoin
+#      de npm sur le serveur — mais d'un accès au registry npm)
 #
-# Le serveur n'a besoin QUE de git et docker. Pas de npm, pas d'internet
-# vers Docker Hub.
+# Le serveur n'a besoin QUE de git et docker.
 #
 # Si requirements.txt a changé, il FAUT faire un rebuild Docker complet :
 #   docker compose -f docker-compose.prod.yml build --no-pull backend
@@ -36,14 +36,11 @@ git config --local core.fileMode false
 # Hash AVANT le pull — pour détecter les fichiers protégés modifiés.
 BEFORE_HASH=$(git rev-parse HEAD)
 
-# dist/ est un artefact de build tracké : il peut être localement "modifié"
-# (rebuild sur place, fins de ligne) et bloque le merge — autostash ne
-# s'applique qu'aux rebases, pas aux merges. On le réinitialise, le pull
-# ramène la version commitée.
+# dist/ n'est plus versionné (artefact de build). Sur les anciens checkouts
+# il peut rester tracké/modifié localement et bloquer le merge — on le
+# réinitialise + on nettoie les non-trackés. No-op une fois le nouveau
+# commit récupéré.
 git checkout -- frontend/frontend/dist/ 2>/dev/null || true
-# Idem pour les fichiers NON trackés dans dist/ (assets hashés générés
-# localement) : s'ils entrent en collision avec le merge ("untracked
-# working tree files would be overwritten"), le pull avorterait aussi.
 git clean -fdq frontend/frontend/dist/ 2>/dev/null || true
 
 git pull --autostash
@@ -54,8 +51,12 @@ git pull --autostash
 # - entrypoint.sh / requirements.txt / Dockerfile (hors du docker cp api/)
 CHANGED_FILES=$(git diff --name-only "$BEFORE_HASH" HEAD 2>/dev/null || echo "")
 NEEDS_REBUILD=""
-echo "$CHANGED_FILES" | grep -Eq 'middleware_licence|utils_licence|entrypoint\.sh|requirements\.txt|Dockerfile' \
+echo "$CHANGED_FILES" | grep -Eq 'middleware_licence|utils_licence|entrypoint\.sh|requirements\.txt|backend/Dockerfile' \
     && NEEDS_REBUILD="yes"
+# Le frontend n'est plus hot-deployé (dist/ non versionné) : si des sources
+# frontend ont changé, on rebuild l'image à l'étape 6.
+FRONTEND_CHANGED=""
+echo "$CHANGED_FILES" | grep -Eq '^frontend/' && FRONTEND_CHANGED="yes"
 
 # 2. Backend : copier le code api/ dans le conteneur
 echo ""
@@ -78,11 +79,19 @@ echo ""
 echo ">> Redémarrage backend..."
 docker restart zenith-pharma-backend
 
-# 6. Frontend : copier dist/ dans le conteneur nginx
-echo ""
-echo ">> Copie du frontend..."
-docker cp frontend/frontend/dist/. zenith-pharma-frontend:/usr/share/nginx/html/
-docker exec zenith-pharma-frontend nginx -s reload
+# 6. Frontend : rebuild de l'image si des sources ont changé.
+# dist/ n'est plus versionné — le build se fait dans le stage builder
+# Node du Dockerfile.prod (npm install/build à l'intérieur de Docker).
+if [ "$FRONTEND_CHANGED" = "yes" ]; then
+    echo ""
+    echo ">> Sources frontend modifiées — rebuild de l'image..."
+    export GIT_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+    docker compose -f docker-compose.prod.yml build frontend
+    docker compose -f docker-compose.prod.yml up -d frontend
+else
+    echo ""
+    echo ">> Frontend inchangé — skip rebuild"
+fi
 
 echo ""
 if [ "$NEEDS_REBUILD" = "yes" ]; then

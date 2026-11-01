@@ -53,6 +53,12 @@ Le build Docker prod :
 - Compile les fichiers critiques en `.so` via Cython (cf. section Compilation Cython)
 - Le client ne reçoit que les binaires — impossible de modifier le code source
 
+**`frontend/frontend/dist/` n'est plus versionné** (artefact de build).
+`update.sh` hot-deploie le backend (`docker cp`) et rebuild l'image frontend
+via `docker compose build frontend` **uniquement si `frontend/` a changé**
+— npm tourne dans le stage builder du `Dockerfile.prod`, le serveur n'a pas
+besoin de npm, juste d'un accès au registry npm le temps du build.
+
 ⚠️ Après un déploiement, le client doit faire un **Ctrl+F5** (hard reload) pour
 invalider le cache PWA du navigateur.
 

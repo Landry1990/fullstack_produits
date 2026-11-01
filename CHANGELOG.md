@@ -2,6 +2,30 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-11-02 — ♻️ Désindexation des artefacts non essentiels + purge historique
+
+- **Cause racine des blocages de pull en pré-prod** : `frontend/frontend/dist/`
+  (546 fichiers, build Vite) était versionné pour le hot-deploy `update.sh`
+  → modifié localement sur les serveurs, il cassait chaque `git pull`.
+- **Désindexés** (`git rm --cached`, fichiers locaux conservés) :
+  `frontend/frontend/dist/`, `video-formation/out/` (mp4 214 Mo — sources
+  Remotion conservées), `.gemini/` (doublon de `.devin/skills/`).
+- **Conservés** : `backend/donnees mysql/` (154 Mo MyISAM — requis par
+  `import_supplier_data.py` / seed base MQ via `SUPPLIER_DATA`), listings
+  fournisseurs xlsx.
+- `.gitignore` : exception `!dist/` retirée de `frontend/frontend/.gitignore`,
+  ajout `video-formation/out/` et `.gemini/` à la racine.
+- **`update.sh`** : le frontend n'est plus hot-deployé par `docker cp dist/` —
+  rebuild de l'image via `docker compose -f docker-compose.prod.yml build
+  frontend && up -d frontend` **uniquement si `frontend/` a changé** dans le
+  pull (npm dans le builder Docker, serveur sans npm ; besoin d'accès registry
+  npm le temps du build). `docs/agent/deploiement.md` mis à jour.
+- **Purge de l'historique** (git filter-repo, `--invert-paths`) : les 3 chemins
+  supprimés de tous les commits → force-push requis, et `git fetch && git
+  reset --hard origin/main` sur CHAQUE checkout (serveurs, postes dev).
+
+## 2026-11-02 — 🐛 Mises à jour pré-prod bloquées par dist/ (fix définitif)
+
 ## 2026-11-02 — 🐛 Mises à jour pré-prod bloquées par dist/ (fix définitif)
 
 - Cause : `frontend/frontend/dist/` est un artefact de build **tracké** (copié

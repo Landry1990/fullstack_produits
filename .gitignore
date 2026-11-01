@@ -119,3 +119,9 @@ coverage.xml
 backend/rapports/
 *.rest
 eslint_errors.json
+
+# Vidéos de formation rendues (lourdes, regénérées par Remotion — les sources restent versionnées)
+video-formation/out/
+
+# Doublon de .devin/skills/ (config d'outil externe)
+.gemini/
