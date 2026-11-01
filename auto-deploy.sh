@@ -73,6 +73,10 @@ elif [[ "$LOCAL" == "$REMOTE" ]]; then
     # exit 0
 else
     warn "   Nouveaux commits détectés"
+    # dist/ est un artefact de build tracké : souvent modifié localement
+    # (rebuild, fins de ligne, assets hashés non trackés) → bloque le pull.
+    git checkout -- frontend/frontend/dist/ 2>/dev/null || true
+    git clean -fdq frontend/frontend/dist/ 2>/dev/null || true
     git pull origin "$BRANCH" --ff-only
     log "   ✅ Pull terminé"
 fi

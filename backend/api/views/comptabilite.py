@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.core.cache import cache
 from django.db import transaction
 from django.db.models import F, Q, Sum
+from django.db.models.functions import TruncMonth
 from django.utils import timezone
 from rest_framework import permissions, viewsets
 from rest_framework.decorators import action
@@ -433,6 +434,61 @@ class EcritureComptableViewSet(viewsets.ModelViewSet):
         }
         cache.set(cache_key, response_data, 300)  # 5 min
         return Response(response_data)
+
+    @action(detail=False, methods=['get'])
+    def rapport_tva(self, request):
+        """
+        Récapitulatif TVA pour déclaration (DGI — Cameroun 19,25 %).
+        Agrège les lignes d'écriture sur les comptes TVA (443* collectée,
+        445* déductible) par mois sur la période demandée.
+        """
+        date_debut = parse_date_param(request.query_params.get('date_debut'), field='date_debut')
+        date_fin = parse_date_param(request.query_params.get('date_fin'), field='date_fin')
+
+        filters = Q(compte__numero__startswith='443') | Q(compte__numero__startswith='445')
+        if date_debut:
+            filters &= Q(ecriture__date__gte=date_debut)
+        if date_fin:
+            filters &= Q(ecriture__date__lte=date_fin)
+
+        rows = (
+            LigneEcriture.objects.filter(filters)
+            .annotate(mois=TruncMonth('ecriture__date'))
+            .values('mois', 'compte__numero')
+            .annotate(total_debit=Sum('debit'), total_credit=Sum('credit'))
+            .order_by('mois')
+        )
+
+        # Regroupement par mois : TVA collectée (crédit 443*) − TVA déductible (débit 445*)
+        par_mois = {}
+        for r in rows:
+            key = r['mois'].strftime('%Y-%m') if r['mois'] else 'indetermine'
+            m = par_mois.setdefault(key, {'tva_collectee': Decimal('0'), 'tva_deductible': Decimal('0')})
+            if str(r['compte__numero']).startswith('443'):
+                m['tva_collectee'] += (r['total_credit'] or 0) - (r['total_debit'] or 0)
+            else:
+                m['tva_deductible'] += (r['total_debit'] or 0) - (r['total_credit'] or 0)
+
+        details = [
+            {
+                'mois': mois,
+                'tva_collectee': float(m['tva_collectee']),
+                'tva_deductible': float(m['tva_deductible']),
+                'tva_nette': float(m['tva_collectee'] - m['tva_deductible']),
+            }
+            for mois, m in par_mois.items()
+        ]
+        total_collectee = sum(m['tva_collectee'] for m in par_mois.values())
+        total_deductible = sum(m['tva_deductible'] for m in par_mois.values())
+
+        return Response({
+            'periode': {'debut': str(date_debut) if date_debut else None, 'fin': str(date_fin) if date_fin else None},
+            'details': details,
+            'total_tva_collectee': float(total_collectee),
+            'total_tva_deductible': float(total_deductible),
+            'tva_nette_a_payer': float(total_collectee - total_deductible),
+            'note': 'Valeur positive = TVA à reverser au Trésor ; négative = crédit de TVA reportable.',
+        })
 
     @action(detail=False, methods=['post'])
     @transaction.atomic

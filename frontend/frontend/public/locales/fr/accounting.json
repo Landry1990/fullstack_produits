@@ -10,7 +10,8 @@
         "bilan": "Bilan",
         "resultat": "Compte de Résultat",
         "charges": "Charges",
-        "plan": "Plan Comptable"
+        "plan": "Plan Comptable",
+        "tva": "TVA"
     },
     "exercice": {
         "label": "Exercice",
@@ -80,9 +81,9 @@
         "saving": "Enregistrement..."
     },
     "achats": {
-      "title": "Journal des Achats (AC)",
-      "subtitle": "Suivi des écritures d'achat générées lors de la réception des commandes",
-      "no_data": "Aucun achat enregistré pour cette période."
+        "title": "Journal des Achats (AC)",
+        "subtitle": "Suivi des écritures d'achat générées lors de la réception des commandes",
+        "no_data": "Aucun achat enregistré pour cette période."
     },
     "loading_msg": "Analyse des comptes en cours...",
     "loading_data": "Chargement des données...",
@@ -173,5 +174,13 @@
         "account_update_error": "Erreur lors de la modification",
         "account_deleted": "Compte supprimé",
         "account_delete_error": "Impossible de supprimer ce compte (des écritures y sont liées)"
+    },
+    "tva": {
+        "collectee": "TVA collectée",
+        "deductible": "TVA déductible",
+        "net": "TVA nette",
+        "month": "Mois",
+        "empty": "Aucune écriture TVA sur la période.",
+        "note": "Valeur positive = TVA à reverser au Trésor ; négative = crédit de TVA reportable."
     }
 }

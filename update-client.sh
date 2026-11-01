@@ -42,6 +42,11 @@ info "════════════════════════�
 # 1. Git pull
 if [[ "$DO_PULL" == "true" ]]; then
     warn "📥 Git pull..."
+    git config --local core.fileMode false 2>/dev/null || true
+    # dist/ est un artefact de build tracké : souvent modifié localement
+    # (rebuild, fins de ligne, assets hashés non trackés) → bloque le merge.
+    git checkout -- frontend/frontend/dist/ 2>/dev/null || true
+    git clean -fdq frontend/frontend/dist/ 2>/dev/null || true
     git pull
     log "  ✅ Code à jour"
 else

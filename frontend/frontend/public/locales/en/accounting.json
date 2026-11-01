@@ -10,27 +10,28 @@
         "bilan": "Balance Sheet",
         "resultat": "Income Statement",
         "charges": "Expenses",
-        "plan": "Chart of Accounts"
+        "plan": "Chart of Accounts",
+        "tva": "VAT"
     },
     "exercice": {
-      "label": "Fiscal year",
-      "closed": "CLOSED"
+        "label": "Fiscal year",
+        "closed": "CLOSED"
     },
     "dashboard": {
-      "title": "Dashboard",
-      "products": "Products (Sales)",
-      "revenue": "Revenue",
-      "expenses": "Expenses (Charges)",
-      "net_result": "Net Result",
-      "profit": "PROFIT",
-      "loss": "LOSS",
-      "last_month": "last month",
-      "method_note": "Calculated using the Products - Charges method",
-      "ready_title": "Ready for your closing?",
-      "ready_subtitle": "Generate missing entries for past invoices in one click.",
-      "init_button": "Initialize History",
-      "init_loading": "Initializing...",
-      "action_required": "ACTION REQUIRED"
+        "title": "Dashboard",
+        "products": "Products (Sales)",
+        "revenue": "Revenue",
+        "expenses": "Expenses (Charges)",
+        "net_result": "Net Result",
+        "profit": "PROFIT",
+        "loss": "LOSS",
+        "last_month": "last month",
+        "method_note": "Calculated using the Products - Charges method",
+        "ready_title": "Ready for your closing?",
+        "ready_subtitle": "Generate missing entries for past invoices in one click.",
+        "init_button": "Initialize History",
+        "init_loading": "Initializing...",
+        "action_required": "ACTION REQUIRED"
     },
     "ledger": {
         "title": "General Journal",
@@ -80,9 +81,9 @@
         "saving": "Saving..."
     },
     "achats": {
-      "title": "Purchases Journal (AC)",
-      "subtitle": "Track purchase entries generated during order reception",
-      "no_data": "No purchases recorded for this period."
+        "title": "Purchases Journal (AC)",
+        "subtitle": "Track purchase entries generated during order reception",
+        "no_data": "No purchases recorded for this period."
     },
     "loading_msg": "Analyzing accounts in progress...",
     "loading_data": "Loading data...",
@@ -173,5 +174,13 @@
         "account_update_error": "Error while updating",
         "account_deleted": "Account deleted",
         "account_delete_error": "Cannot delete this account (linked entries exist)"
+    },
+    "tva": {
+        "collectee": "VAT collected",
+        "deductible": "Deductible VAT",
+        "net": "Net VAT",
+        "month": "Month",
+        "empty": "No VAT entries for the period.",
+        "note": "Positive = VAT payable to the Treasury; negative = carry-forward VAT credit."
     }
 }

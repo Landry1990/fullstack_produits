@@ -90,6 +90,15 @@ fi
 # --autostash : préserve/remet d'éventuelles retouches locales sur le serveur.
 git config --local core.fileMode false 2>/dev/null || true
 
+# dist/ est un artefact de build tracké : il peut être localement "modifié"
+# (rebuild sur place, fins de ligne) et bloque le merge — autostash ne
+# s'applique qu'aux rebases, pas aux merges. On le réinitialise, le pull
+# ramène la version commitée. Idem pour les fichiers NON trackés dans
+# dist/ (assets hashés générés localement) qui bloqueraient le merge
+# ("untracked working tree files would be overwritten").
+git checkout -- frontend/frontend/dist/ 2>/dev/null || true
+git clean -fdq frontend/frontend/dist/ 2>/dev/null || true
+
 if ! git pull --autostash origin main >> "$LOG_FILE" 2>&1; then
     write_status "failed" "Échec du git pull" "Vérifiez la connexion ou les conflits"
     log "✗ Échec du git pull"

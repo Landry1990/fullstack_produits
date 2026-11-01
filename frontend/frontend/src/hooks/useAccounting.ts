@@ -147,6 +147,16 @@ export const useAccounting = () => {
         gcTime: 1000 * 60 * 5,
     });
 
+    const { data: rapportTva } = useQuery({
+        queryKey: ['accounting', 'rapport_tva', dateRange],
+        queryFn: async () => (await api.get('compta/ecritures/rapport_tva/', {
+            params: { date_debut: dateRange.start, date_fin: dateRange.end }
+        })).data,
+        placeholderData: (previousData) => previousData,
+        staleTime: 1000 * 60 * 2,
+        gcTime: 1000 * 60 * 5,
+    });
+
     const { data: ecrituresData, isLoading: loadingEcritures, isFetching: fetchingEcritures } = useQuery<PaginatedResponse<Ecriture>>({
         queryKey: ['accounting', 'ecritures', dateRange, ecrituresPage, ecrituresSearch, ecrituresJournal, ecrituresPageSize],
         queryFn: async () => (await api.get('compta/ecritures/', { 
@@ -249,6 +259,7 @@ export const useAccounting = () => {
         balance,
         resultat,
         bilan,
+        rapportTva,
         ecritures: ecrituresData?.results || [],
         ecrituresCount: ecrituresData?.count || 0,
         ecrituresPage,

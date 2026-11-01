@@ -19,7 +19,8 @@ import {
     Calendar,
     Settings,
     FileText,
-    Download as _Download
+    Download as _Download,
+    Percent
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
@@ -46,6 +47,7 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
         balance, 
         resultat, 
         bilan,
+        rapportTva,
         ecritures, 
         ecrituresCount,
         ecrituresPage,
@@ -84,6 +86,7 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
         { id: 'balance', label: t('tabs.balance'), icon: <Scale className="size-4" /> },
         { id: 'bilan', label: t('tabs.bilan'), icon: <TrendingUp className="size-4" /> },
         { id: 'resultat', label: t('tabs.resultat'), icon: <ArrowUpRight className="size-4" /> },
+        { id: 'tva', label: t('tabs.tva'), icon: <Percent className="size-4" /> },
         { id: 'charges', label: t('tabs.charges'), icon: <PlusCircle className="size-4" /> },
         { id: 'plan', label: t('tabs.plan'), icon: <Settings className="size-4" /> },
     ];
@@ -209,6 +212,7 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
                         {activeTab === 'balance' && <BalanceTab balance={balance?.comptes || []} t={t} />}
                         {activeTab === 'bilan' && <BilanTab bilan={bilan} t={t} />}
                         {activeTab === 'resultat' && <ResultatTab resultat={resultat} t={t} />}
+                        {activeTab === 'tva' && <TvaTab rapport={rapportTva} t={t} />}
                         {activeTab === 'plan' && <PlanTab comptes={comptes} actions={actions} t={t} />}
                         {activeTab === 'charges' && <ChargesTab actions={actions} comptes={comptes} journaux={journaux} t={t} />}
                     </Suspense>
@@ -1164,6 +1168,70 @@ function ChargesTab({ actions, comptes, journaux, t }: ChargesTabProps) {
                     </form>
                 </div>
             </div>
+        </div>
+    );
+}
+
+interface TvaLigne {
+    mois: string;
+    tva_collectee: number;
+    tva_deductible: number;
+    tva_nette: number;
+}
+
+interface RapportTva {
+    details: TvaLigne[];
+    total_tva_collectee: number;
+    total_tva_deductible: number;
+    tva_nette_a_payer: number;
+    note: string;
+}
+
+function TvaTab({ rapport, t }: { rapport?: RapportTva; t: TFunction }) {
+    const fmt = (n: number) => new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(Math.round(n || 0));
+    if (!rapport || rapport.details.length === 0) {
+        return <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center text-slate-400 text-sm">{t('tva.empty')}</div>;
+    }
+    const net = rapport.tva_nette_a_payer;
+    return (
+        <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-white rounded-2xl border border-slate-200 p-4">
+                    <div className="text-xs font-bold uppercase text-slate-400">{t('tva.collectee')}</div>
+                    <div className="text-xl font-black text-slate-800">{fmt(rapport.total_tva_collectee)} F</div>
+                </div>
+                <div className="bg-white rounded-2xl border border-slate-200 p-4">
+                    <div className="text-xs font-bold uppercase text-slate-400">{t('tva.deductible')}</div>
+                    <div className="text-xl font-black text-slate-800">{fmt(rapport.total_tva_deductible)} F</div>
+                </div>
+                <div className={`rounded-2xl border p-4 ${net >= 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'}`}>
+                    <div className={`text-xs font-bold uppercase ${net >= 0 ? 'text-emerald-600' : 'text-amber-600'}`}>{t('tva.net')}</div>
+                    <div className={`text-xl font-black ${net >= 0 ? 'text-emerald-700' : 'text-amber-700'}`}>{fmt(Math.abs(net))} F</div>
+                </div>
+            </div>
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                <table className="w-full text-sm">
+                    <thead>
+                        <tr className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500 font-bold">
+                            <th className="text-left px-4 py-2.5">{t('tva.month')}</th>
+                            <th className="text-right px-4 py-2.5">{t('tva.collectee')}</th>
+                            <th className="text-right px-4 py-2.5">{t('tva.deductible')}</th>
+                            <th className="text-right px-4 py-2.5">{t('tva.net')}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {rapport.details.map((l) => (
+                            <tr key={l.mois} className="border-t border-slate-100">
+                                <td className="px-4 py-2.5 font-semibold text-slate-700">{l.mois}</td>
+                                <td className="px-4 py-2.5 text-right text-slate-700">{fmt(l.tva_collectee)}</td>
+                                <td className="px-4 py-2.5 text-right text-slate-700">{fmt(l.tva_deductible)}</td>
+                                <td className={`px-4 py-2.5 text-right font-bold ${l.tva_nette >= 0 ? 'text-emerald-600' : 'text-amber-600'}`}>{fmt(l.tva_nette)}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+            <p className="text-xs text-slate-400 italic">{t('tva.note')}</p>
         </div>
     );
 }

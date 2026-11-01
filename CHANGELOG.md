@@ -2,6 +2,46 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-11-02 — 🐛 Mises à jour pré-prod bloquées par dist/ (fix définitif)
+
+- Cause : `frontend/frontend/dist/` est un artefact de build **tracké** (copié
+  en hot-deploy par `update.sh` → ne pas le désindexer). Sur le serveur il est
+  souvent modifié localement (rebuild, fins de ligne, assets hashés non
+  trackés) → tout `git pull` en merge avorte (« modifications locales
+  seraient écrasées »). `update.sh` avait déjà le garde-fou, pas les autres.
+- `update-app.sh`, `zenith-update.sh`, `update-client.sh`, `auto-deploy.sh` :
+  ajout de `git checkout -- frontend/frontend/dist/` +
+  `git clean -fdq frontend/frontend/dist/` avant le pull (même pattern que
+  `update.sh`). `update-client.sh` gagne aussi `core.fileMode false`.
+- `zenith-update.sh` : le `git pull … || true` qui masquait l'échec (mise à
+  jour partielle silencieuse) affiche désormais l'erreur, conseille
+  `git status` + `git checkout -- <fichier>` et sort en 1.
+- Sur la pré-prod (une fois) : `git checkout -- frontend/frontend/dist/ &&
+  git clean -fdq frontend/frontend/dist/ && git pull` pour débloquer et
+  récupérer les scripts corrigés. `bash -n` OK sur les 5 scripts.
+
+## 2026-11-01 — Liste utilisateurs compacte
+
+- `UserListItem.tsx` : réduction des marges verticales et de l'avatar ; nom et email regroupés sur une ligne. Actions et droits inchangés.
+
+## 2026-11-01 — Récap TVA DGI + onglet TVA
+
+- `GET /api/compta/ecritures/rapport_tva/` : TVA collectée (443*) vs déductible
+  (445*) par mois + net à reverser/crédit reportable. Vérifié sur dev.
+- UI : onglet « TVA » dans Comptabilité (3 cartes totaux + tableau mensuel),
+  query `rapportTva` dans useAccounting, i18n accounting.json fr/en.
+  Backend + frontend déployés.
+
+- `GET /api/compta/ecritures/rapport_tva/` : TVA collectée (443*) vs déductible
+  (445*) par mois + net à reverser/crédit reportable. Vérifié sur dev.
+
+## 2026-11-01 — Plan comptable SYSCOHADA complet
+
+- Migration `0280_seed_plan_comptable_syscohada` : seed de 80 comptes
+  SYSCOHADA révisés (classes 1-7, périmètre officine) — 91 comptes au total
+  avec les 11 existants. Idempotent (`get_or_create`), reverse no-op.
+  Déployé en dev ; appliqué automatiquement en prod via `migrate`.
+
 ## 2026-11-01 — Tableau commande responsive iPad : colonnes CIP/Stock/Rotation/PrixDev/TVA masquées sous lg (~400px gagnés). Frontend déployé.
 
 ## 2026-11-01 — 🐛 Date de péremption : propagation produit ↔ lots

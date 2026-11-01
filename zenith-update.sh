@@ -39,7 +39,23 @@ echo "📥 Récupération des mises à jour..."
 # core.fileMode=false : les chmod +x (install.sh, ce script) ne doivent pas
 # bloquer le merge. --autostash : préserve d'éventuelles retouches locales.
 git config --local core.fileMode false 2>/dev/null || true
-git pull --autostash origin main 2>/dev/null || true
+
+# dist/ est un artefact de build tracké : souvent modifié localement sur le
+# serveur (rebuild, fins de ligne, assets hashés non trackés) → bloque le
+# merge. On le réinitialise et on nettoie les non-trackés avant le pull.
+git checkout -- frontend/frontend/dist/ 2>/dev/null || true
+git clean -fdq frontend/frontend/dist/ 2>/dev/null || true
+
+# Si le pull échoue quand même (autre fichier en conflit), on le signale au
+# lieu de continuer silencieusement sur du code périmé.
+if ! git pull --autostash origin main; then
+    echo ""
+    echo "❌ Échec du git pull — des modifications locales bloquent la mise à jour."
+    echo "   Lance : git status   pour voir les fichiers concernés,"
+    echo "   puis  git checkout -- <fichier>  pour les réinitialiser et relance."
+    read -p "Appuyez sur Entrée pour quitter..."
+    exit 1
+fi
 
 # Corriger les permissions du script principal
 chmod +x nightly-update.sh 2>/dev/null || sudo chmod +x nightly-update.sh 2>/dev/null || true
