@@ -129,17 +129,17 @@ export default function CommandeProductTable({
                                     />
                                 </TableHead>
                                 <TableHead className="bg-slate-100 pl-2 font-bold min-w-[260px] w-full whitespace-nowrap">{t('orders:product_table.headers.product')}</TableHead>
-                                <TableHead className="bg-slate-100 pl-2 font-bold min-w-[96px] whitespace-nowrap">{t('orders:product_table.headers.cip')}</TableHead>
-                                <TableHead className="bg-slate-100 text-center min-w-[56px] text-amber-600 font-bold border-x border-slate-300/30 whitespace-nowrap">{t('orders:product_table.headers.stock_short')}</TableHead>
-                                <TableHead className="bg-slate-100 text-center min-w-[56px] text-blue-600 font-bold border-x border-slate-300/30 whitespace-nowrap">{t('orders:product_table.headers.rotation')}</TableHead>
+                                <TableHead className="bg-slate-100 pl-2 font-bold min-w-[96px] whitespace-nowrap hidden lg:table-cell">{t('orders:product_table.headers.cip')}</TableHead>
+                                <TableHead className="bg-slate-100 text-center min-w-[56px] text-amber-600 font-bold border-x border-slate-300/30 whitespace-nowrap hidden lg:table-cell">{t('orders:product_table.headers.stock_short')}</TableHead>
+                                <TableHead className="bg-slate-100 text-center min-w-[56px] text-blue-600 font-bold border-x border-slate-300/30 whitespace-nowrap hidden lg:table-cell">{t('orders:product_table.headers.rotation')}</TableHead>
                                 <TableHead className="bg-slate-100 text-right min-w-[64px] font-bold whitespace-nowrap">{t('orders:product_table.headers.qty')}</TableHead>
                                 <TableHead className="bg-slate-100 text-center min-w-[56px] font-bold text-emerald-600 border-l border-slate-300/30 whitespace-nowrap">{t('orders:product_table.headers.ug')}</TableHead>
                                 {commandeType === 'DIR' && (
-                                    <TableHead className="bg-slate-100 text-right min-w-[96px] font-bold text-blue-600 border-l border-slate-300/30 whitespace-nowrap">{t('orders:product_table.headers.dev_price')}</TableHead>
+                                    <TableHead className="bg-slate-100 text-right min-w-[96px] font-bold text-blue-600 border-l border-slate-300/30 whitespace-nowrap hidden lg:table-cell">{t('orders:product_table.headers.dev_price')}</TableHead>
                                 )}
                                 <TableHead className="bg-slate-100 text-right min-w-[96px] font-bold border-l border-slate-300/30 whitespace-nowrap">{t('orders:product_table.headers.buy_price_ht')}</TableHead>
                                 <TableHead className="bg-slate-100 text-right min-w-[112px] font-bold text-indigo-600 border-l border-slate-300/30 whitespace-nowrap">{t('orders:product_table.headers.amount')}</TableHead>
-                                <TableHead className="bg-slate-100 text-right min-w-[72px] font-bold whitespace-nowrap">{t('orders:product_table.headers.tva')}</TableHead>
+                                <TableHead className="bg-slate-100 text-right min-w-[72px] font-bold whitespace-nowrap hidden lg:table-cell">{t('orders:product_table.headers.tva')}</TableHead>
                                 <TableHead className="bg-slate-100 text-right min-w-[64px] font-bold whitespace-nowrap">{t('orders:product_table.headers.margin')}</TableHead>
                                 <TableHead className="bg-slate-100 text-right min-w-[96px] font-bold border-l border-slate-300/30 pr-3 whitespace-nowrap">{t('orders:product_table.headers.sell_price')}</TableHead>
                                 <TableHead className="bg-slate-100 text-left min-w-[96px] font-bold border-l border-slate-300/30 whitespace-nowrap">{t('orders:product_table.headers.lot')}</TableHead>

@@ -161,19 +161,19 @@ export function CommandeProductRow({
                 </TableCell>
 
                 {/* CIP Column */}
-                <TableCell className="pl-2 py-0.5">
+                <TableCell className="pl-2 py-0.5 hidden lg:table-cell">
                     <span className="text-sm font-mono font-bold text-slate-600">{cip}</span>
                 </TableCell>
 
                 {/* Stock Actuel */}
-                <TableCell className="text-center py-0.5 bg-amber-50/20">
+                <TableCell className="text-center py-0.5 bg-amber-50/20 hidden lg:table-cell">
                     <span className={`text-xs font-bold px-1 rounded ${currentStock <= 0 ? 'text-red-600 bg-red-50' : 'text-amber-600'}`}>
                         {currentStock}
                     </span>
                 </TableCell>
 
                 {/* Rotation moyenne / mois */}
-                <TableCell className="text-center py-0.5 bg-blue-50/20">
+                <TableCell className="text-center py-0.5 bg-blue-50/20 hidden lg:table-cell">
                     <span className={`text-xs font-bold px-1 rounded ${rotation > 0 ? 'text-blue-600' : 'text-slate-400'}`}>
                         {rotation > 0 ? rotation.toFixed(1) : '-'}
                     </span>
@@ -224,7 +224,7 @@ export function CommandeProductRow({
 
                 {/* Prix Euro (Direct Only) */}
                 {commandeType === 'DIR' && (
-                    <TableCell className="text-right py-0.5 bg-blue-50/10 border-l border-blue-100">
+                    <TableCell className="text-right py-0.5 bg-blue-50/10 border-l border-blue-100 hidden lg:table-cell">
                         <Input
                             type="text"
                             data-row={index}
@@ -268,7 +268,7 @@ export function CommandeProductRow({
                 </TableCell>
 
                 {/* TVA (3) */}
-                <TableCell className="text-right py-0.5">
+                <TableCell className="text-right py-0.5 hidden lg:table-cell">
                     <Input
                         type="text"
                         data-row={index}

@@ -2,6 +2,8 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-11-01 — Tableau commande responsive iPad : colonnes CIP/Stock/Rotation/PrixDev/TVA masquées sous lg (~400px gagnés). Frontend déployé.
+
 ## 2026-11-01 — 🐛 Date de péremption : propagation produit ↔ lots
 
 - Bug : le statut « périmé » est calculé sur `StockLot.date_expiration` alors
