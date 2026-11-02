@@ -98,3 +98,29 @@ class EcritureComptableSerializer(serializers.ModelSerializer):
         for ligne_data in lignes_data:
             LigneEcriture.objects.create(ecriture=ecriture, **ligne_data)
         return ecriture
+
+
+class DotationAmortissementSerializer(serializers.ModelSerializer):
+    class Meta:
+        from api.models import DotationAmortissement
+        model = DotationAmortissement
+        fields = ['id', 'annee', 'montant', 'ecriture', 'created_at']
+
+
+class ImmobilisationSerializer(serializers.ModelSerializer):
+    dotations = DotationAmortissementSerializer(many=True, read_only=True)
+    compte_immo_numero = serializers.CharField(source='compte_immo.numero', read_only=True)
+    compte_immo_libelle = serializers.CharField(source='compte_immo.libelle', read_only=True)
+    compte_amortissement_numero = serializers.CharField(source='compte_amortissement.numero', read_only=True)
+    cumul_amortissements = serializers.ReadOnlyField()
+    valeur_nette_comptable = serializers.ReadOnlyField()
+    dotation_annuelle = serializers.ReadOnlyField()
+
+    class Meta:
+        from api.models import Immobilisation
+        model = Immobilisation
+        fields = ['id', 'nom', 'compte_immo', 'compte_immo_numero', 'compte_immo_libelle',
+                  'compte_amortissement', 'compte_amortissement_numero', 'date_acquisition',
+                  'valeur_acquisition', 'duree_annees', 'valeur_residuelle', 'mode_paiement',
+                  'is_active', 'dotation_annuelle', 'cumul_amortissements',
+                  'valeur_nette_comptable', 'dotations', 'created_at']

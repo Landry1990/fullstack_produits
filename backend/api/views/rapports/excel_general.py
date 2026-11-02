@@ -1392,6 +1392,7 @@ def build_rapport_general_excel(date_debut, date_fin, mois_label: str, lang: str
     Construit le rapport Excel général et retourne un HttpResponse prêt à télécharger.
     """
     from api.models.settings import PharmacySettings
+    from api.utils.currency import get_pharmacy_name
     from api.utils_doclang import get_document_language
 
     if not lang:
@@ -1401,7 +1402,7 @@ def build_rapport_general_excel(date_debut, date_fin, mois_label: str, lang: str
     try:
         ps = PharmacySettings.objects.get(pk=1)
         pharmacy = {
-            "name":    ps.pharmacy_name,
+            "name":    get_pharmacy_name(),
             "address": ps.address,
             "city":    ps.city,
             "phone":   ps.phone,

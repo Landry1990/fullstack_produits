@@ -109,9 +109,10 @@ class Command(BaseCommand):
 
     def generate_report_data(self, ps, start_date, end_date, month, year):
         """Génère les données du rapport selon les options cochées"""
+        from api.utils.currency import get_pharmacy_name
         data = {
             'period': f"{month:02d}/{year}",
-            'pharmacy_name': ps.pharmacy_name or 'Pharmacie',
+            'pharmacy_name': get_pharmacy_name() or 'Pharmacie',
             'generated_at': timezone.now(),
         }
 

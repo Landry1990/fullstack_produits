@@ -158,7 +158,8 @@ class Command(BaseCommand):
 
         # Format message
         lang = ps.locale or 'fr-FR'
-        pharmacy_name = (ps.pharmacy_name or 'Pharmacie').upper()
+        from api.utils.currency import get_pharmacy_name
+        pharmacy_name = get_pharmacy_name().upper()
         date_str = now.strftime("%d/%m/%Y à %H:%M")
         periode_label = f"{month:02d}/{year}"
 

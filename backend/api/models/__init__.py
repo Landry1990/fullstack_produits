@@ -50,8 +50,10 @@ from .communication import (
 # Comptabilité
 from .comptabilite import (
     CompteComptable,
+    DotationAmortissement,
     EcritureComptable,
     ExerciceComptable,
+    Immobilisation,
     JournalComptable,
     Lettrage,
     LigneEcriture,

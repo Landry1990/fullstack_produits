@@ -566,7 +566,8 @@ class TelegramTestViewTest(SettingsBase):
         self.assertIn('Chat ID', resp.data['message'])
 
     @patch(TELEGRAM_SEND, return_value=(True, 'Message envoyé'))
-    def test_envoi_succes_via_settings(self, mock_send):
+    @patch(LICENCE, return_value=NO_LICENCE)
+    def test_envoi_succes_via_settings(self, _l, mock_send):
         PharmacySettings.objects.create(
             telegram_bot_token='tok', telegram_chat_id='777',
             pharmacy_name='Ma Pharma')

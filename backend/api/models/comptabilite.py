@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Sum
 from django.utils import timezone
@@ -83,6 +84,8 @@ class EcritureComptable(models.Model):
     commande = models.ForeignKey('Commande', on_delete=models.SET_NULL, null=True, blank=True, related_name='ecritures_compta')
     paiement = models.ForeignKey('Caisse', on_delete=models.SET_NULL, null=True, blank=True, related_name='ecritures_compta')
     paiement_fournisseur = models.ForeignKey('PaiementFournisseur', on_delete=models.SET_NULL, null=True, blank=True, related_name='ecritures_compta')
+    avoir_client = models.ForeignKey('AvoirClient', on_delete=models.SET_NULL, null=True, blank=True, related_name='ecritures_compta')
+    mouvement_caisse = models.ForeignKey('MouvementCaisse', on_delete=models.SET_NULL, null=True, blank=True, related_name='ecritures_compta')
 
     class Meta:
         verbose_name = "Écriture Comptable"
@@ -158,6 +161,92 @@ class EcritureComptable(models.Model):
 
     def is_balanced(self):
         return self.total_debit == self.total_credit
+
+
+class Immobilisation(models.Model):
+    """Immobilisation amortissable (linéaire, prorata temporis l'année 1).
+
+    Écritures : acquisition générée par signal (D compte_immo / C trésorerie
+    ou 404100), dotations annuelles via action `generer_dotation`
+    (D 681100 / C compte_amortissement)."""
+
+    class ModePaiement(models.TextChoices):
+        ESPECES = 'especes', 'Espèces'
+        BANQUE = 'banque', 'Banque'
+        CREDIT = 'credit', 'Crédit fournisseur'
+
+    nom = models.CharField(max_length=200)
+    compte_immo = models.ForeignKey(
+        CompteComptable, on_delete=models.PROTECT, related_name='immobilisations',
+        help_text='Compte d\'immobilisation (classe 2 : 241, 244, 245…)')
+    compte_amortissement = models.ForeignKey(
+        CompteComptable, on_delete=models.PROTECT,
+        related_name='amortissements_immobilisations',
+        help_text='Compte d\'amortissements (28x)')
+    date_acquisition = models.DateField()
+    valeur_acquisition = models.DecimalField(
+        max_digits=14, decimal_places=2,
+        validators=[MinValueValidator(Decimal('0.01'))])
+    duree_annees = models.PositiveIntegerField(
+        default=5, help_text='Durée d\'amortissement linéaire en années')
+    valeur_residuelle = models.DecimalField(
+        max_digits=14, decimal_places=2, default=Decimal('0.00'),
+        validators=[MinValueValidator(Decimal('0'))])
+    mode_paiement = models.CharField(
+        max_length=10, choices=ModePaiement.choices, default=ModePaiement.BANQUE)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Immobilisation"
+        ordering = ['-date_acquisition']
+
+    def __str__(self):
+        return f"{self.nom} ({self.valeur_acquisition} F sur {self.duree_annees} ans)"
+
+    @property
+    def base_amortissable(self):
+        return self.valeur_acquisition - self.valeur_residuelle
+
+    @property
+    def dotation_annuelle(self):
+        return self.base_amortissable / self.duree_annees
+
+    def montant_dotation(self, annee):
+        """Dotation de l'année : prorata temporis l'année d'acquisition."""
+        annuel = self.dotation_annuelle
+        if annee == self.date_acquisition.year:
+            mois = 13 - self.date_acquisition.month
+            return (annuel * mois / 12).quantize(Decimal('0.01'))
+        return annuel.quantize(Decimal('0.01'))
+
+    @property
+    def cumul_amortissements(self):
+        return self.dotations.aggregate(
+            models.Sum('montant'))['montant__sum'] or Decimal('0.00')
+
+    @property
+    def valeur_nette_comptable(self):
+        return self.valeur_acquisition - self.cumul_amortissements
+
+
+class DotationAmortissement(models.Model):
+    """Dotation aux amortissements générée pour une immobilisation/année."""
+    immobilisation = models.ForeignKey(
+        Immobilisation, on_delete=models.CASCADE, related_name='dotations')
+    annee = models.PositiveIntegerField()
+    montant = models.DecimalField(max_digits=14, decimal_places=2)
+    ecriture = models.ForeignKey(
+        EcritureComptable, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='dotations_amortissement')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = [['immobilisation', 'annee']]
+        ordering = ['immobilisation', 'annee']
+
+    def __str__(self):
+        return f"{self.immobilisation.nom} — dotation {self.annee} ({self.montant})"
 
 
 class LigneEcriture(models.Model):

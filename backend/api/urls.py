@@ -153,6 +153,7 @@ from .views.comptabilite import (
     CompteComptableViewSet,
     EcritureComptableViewSet,
     ExerciceComptableViewSet,
+    ImmobilisationViewSet,
     JournalComptableViewSet,
 )
 from .views.configuration_objectifs import ConfigurationObjectifsViewSet
@@ -271,6 +272,7 @@ router.register(r'compta/comptes', CompteComptableViewSet, basename='compta-comp
 router.register(r'compta/journaux', JournalComptableViewSet, basename='compta-journal')
 router.register(r'compta/exercices', ExerciceComptableViewSet, basename='compta-exercice')
 router.register(r'compta/ecritures', EcritureComptableViewSet, basename='compta-ecriture')
+router.register(r'compta/immobilisations', ImmobilisationViewSet, basename='compta-immobilisation')
 
 # Planning
 router.register(r'shift-config', ShiftConfigViewSet, basename='shift-config')

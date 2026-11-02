@@ -238,7 +238,8 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         from ...models import PharmacySettings
         try:
             pharmacy = PharmacySettings.objects.get(pk=1)
-            pharma_name = pharmacy.pharmacy_name or 'PHARMACIE'
+            from ...utils.currency import get_pharmacy_name
+            pharma_name = get_pharmacy_name()
             pharma_address = f"{pharmacy.address or ''} {pharmacy.city or ''}".strip()
             pharma_phone = pharmacy.phone or ''
         except Exception:

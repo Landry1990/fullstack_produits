@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import { gooeyToast } from 'goey-toast';
+import { downloadBlob } from '../utils/excelExport';
 
 export interface Compte {
     id: number;
@@ -253,9 +254,36 @@ export const useAccounting = () => {
         }
     });
 
+    const exportDocument = async (docType: string, format: 'excel' | 'pdf' | 'txt') => {
+        try {
+            const res = await api.get('compta/ecritures/export/', {
+                params: {
+                    type: docType,
+                    fmt: format,
+                    date_debut: dateRange.start,
+                    date_fin: dateRange.end,
+                    journal_code: ecrituresJournal || undefined,
+                },
+                responseType: 'blob',
+            });
+            const ext = format === 'pdf' ? 'pdf' : format === 'txt' ? 'txt' : 'xlsx';
+            const filename = docType === 'fec'
+                ? `FEC_${dateRange.end}.txt`
+                : `compta_${docType}_${dateRange.start}_${dateRange.end}.${ext}`;
+            downloadBlob(
+                res.data,
+                filename,
+                format === 'pdf' ? 'application/pdf' : format === 'txt' ? 'text/plain' : undefined
+            );
+        } catch {
+            gooeyToast.error(t('export.error'));
+        }
+    };
+
     return {
         comptes,
         journaux,
+        exportDocument,
         balance,
         resultat,
         bilan,

@@ -10,6 +10,7 @@
         "bilan": "Balance Sheet",
         "resultat": "Income Statement",
         "charges": "Expenses",
+        "immos": "Fixed assets",
         "plan": "Chart of Accounts",
         "tva": "VAT"
     },
@@ -163,6 +164,31 @@
         "internet": "Internet & Phone",
         "fournitures": "Office supplies",
         "autre": "Other charge..."
+    },
+    "immos": {
+        "title": "Fixed assets",
+        "nom": "Name",
+        "compte": "Account",
+        "acquisition": "Acquisition",
+        "valeur": "Value",
+        "dotation": "Depr./yr",
+        "cumul": "Depreciated",
+        "vnc": "NBV",
+        "empty": "No fixed assets",
+        "doter": "Depreciate",
+        "dote": "Depreciated",
+        "doter_tout": "Depreciate all",
+        "dotation_ok": "Depreciation generated",
+        "dotation_error": "Depreciation failed",
+        "dotation_all_ok": "Depreciations generated: {{n}}",
+        "load_error": "Loading failed"
+    },
+    "export": {
+        "excel": "Export the current tab document to Excel",
+        "pdf": "Export the current tab document to PDF",
+        "fec": "Export the standardised accounting entries file (FEC)",
+        "liasse": "Export the OHADA statutory statements (balance sheet + income statement — to be validated by an accountant)",
+        "error": "Document export failed"
     },
     "messages": {
         "entry_saved": "Entry saved successfully",

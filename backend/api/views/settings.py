@@ -370,7 +370,8 @@ class TelegramTestView(APIView):
         if not chat_id:
             return Response({'status': 'error', 'message': 'Chat ID manquant — démarrez une conversation avec votre bot et récupérez votre chat_id'}, status=status.HTTP_400_BAD_REQUEST)
 
-        pharmacy_name = (ps.pharmacy_name if ps else '') or 'Zenith Pharma'
+        from api.utils.currency import get_pharmacy_name
+        pharmacy_name = get_pharmacy_name()
         lang = ps.locale if ps else 'fr-FR'
         success, message = TelegramService.send_message(
             text=f"✅ <b>{TelegramService.t('test_title', lang)} — {pharmacy_name}</b>\n\n{TelegramService.t('test_success', lang)}",
@@ -480,7 +481,8 @@ class TelegramRapportFlashView(APIView):
 
             arrow = "📈" if float(change) >= 0 else "📉"
             sign = "+" if float(change) >= 0 else ""
-            pharmacy_name = (ps.pharmacy_name or 'Pharmacie').upper()
+            from api.utils.currency import get_pharmacy_name
+            pharmacy_name = get_pharmacy_name().upper()
             lang = ps.locale if ps else 'fr-FR'
             now = timezone.now()
             date_str = now.strftime("%d/%m/%Y à %H:%M")
@@ -586,7 +588,8 @@ class TelegramRapportFlashDateView(APIView):
             ).aggregate(total=Sum('montant'))
             creances = float(en_compte_agg['total'] or 0)
 
-            pharmacy_name = (ps.pharmacy_name or 'Pharmacie').upper()
+            from api.utils.currency import get_pharmacy_name
+            pharmacy_name = get_pharmacy_name().upper()
             lang = ps.locale if ps else 'fr-FR'
             date_affichee = jour.strftime('%d/%m/%Y')
             panier_moyen = ca / nb_ventes if nb_ventes > 0 else 0
@@ -632,7 +635,8 @@ class TelegramRapportInventaireView(APIView):
             if not ps or not ps.telegram_enabled:
                 return Response({'status': 'error', 'message': 'Telegram non activé dans les paramètres'}, status=status.HTTP_400_BAD_REQUEST)
 
-            pharmacy_name = (ps.pharmacy_name or 'Pharmacie').upper()
+            from api.utils.currency import get_pharmacy_name
+            pharmacy_name = get_pharmacy_name().upper()
             lang = ps.locale if ps else 'fr-FR'
             now = timezone.now()
             date_str = now.strftime("%d/%m/%Y à %H:%M")
@@ -734,7 +738,8 @@ class TelegramRapportMensuelView(APIView):
             if not ps or not ps.telegram_enabled:
                 return Response({'status': 'error', 'message': 'Telegram non activé dans les paramètres'}, status=status.HTTP_400_BAD_REQUEST)
 
-            pharmacy_name = (ps.pharmacy_name or 'Pharmacie').upper()
+            from api.utils.currency import get_pharmacy_name
+            pharmacy_name = get_pharmacy_name().upper()
             lang = ps.locale if ps else 'fr-FR'
             now = timezone.now()
             date_str = now.strftime("%d/%m/%Y à %H:%M")

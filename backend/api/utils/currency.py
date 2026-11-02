@@ -21,11 +21,24 @@ def format_currency(amount, symbol=None):
     return f"{formatted_val} {symbol}"
 
 def get_pharmacy_name():
-    """Récupère le nom configuré de la pharmacie, ou un fallback par défaut."""
+    """Récupère le nom de la pharmacie : licence active > paramètres > défaut.
+
+    Le nom affiché sur les documents doit être celui de la licence
+    (``pharmacie_nom``), comme dans ``PharmacySettingsSerializer``. Le champ
+    ``PharmacySettings.pharmacy_name`` a 'ZENITH' (nom du logiciel) comme
+    valeur par défaut : il n'est utilisé que s'il a été personnalisé.
+    """
+    try:
+        from api.utils_licence import valider_licence_systeme
+        valide, _msg, payload = valider_licence_systeme()
+        if valide and payload and payload.get('pharmacie_nom'):
+            return payload['pharmacie_nom']
+    except Exception:
+        pass
     from api.models.settings import PharmacySettings
     try:
         ps = PharmacySettings.objects.first()
-        if ps and ps.pharmacy_name:
+        if ps and ps.pharmacy_name and ps.pharmacy_name != 'ZENITH':
             return ps.pharmacy_name
     except Exception:
         pass

@@ -2,6 +2,128 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-11-02 — 🐛 Nom du logiciel (« ZENITH ») dans l'en-tête des exports
+
+- Cause : beaucoup d'exports lisaient `PharmacySettings.pharmacy_name` en base
+  (défaut `'ZENITH'`) alors que la source de vérité est la licence
+  (`pharmacie_nom`, cf. `PharmacySettingsSerializer.get_pharmacy_name`).
+- `utils/currency.py::get_pharmacy_name` devient licence-aware :
+  `valider_licence_systeme().pharmacie_nom` > champ BDD (si ≠ 'ZENITH') >
+  `DEFAULT_PHARMACY_NAME` / 'Ma Pharmacie'.
+- Routés sur le helper : exports Excel compta (`services/compta_exports.py`),
+  listing inventaire/stock (`stocks/inventaire/listing_excel.py`), créances
+  (`ventes/creances.py`), rapport général mensuel (`rapports/excel_general.py`),
+  en-têtes Telegram (`views/settings.py` ×5), rappels chroniques WhatsApp
+  (`chronic_reminder_service.py`), rapports mensuels email/Telegram
+  (`send_monthly_report.py`, `send_monthly_telegram_report.py`). Déjà OK
+  via le helper : `rapports/finance.py`, `stocks/adjustments.py`,
+  `telegram_service.py`, `email_service.py`.
+- Test `test_settings.TelegramTestViewTest` : patch licence `NO_LICENCE`
+  (le cache Redis partagé injecte la licence de dev dans les tests).
+
+## 2026-11-02 — ✨ Compta étape 3c : immobilisations + amortissements
+
+- `models/comptabilite.py` : `Immobilisation` (compte immo 2x + compte
+  amortissement 28x, valeur/durée/résiduelle/mode de paiement, `montant_dotation`
+  avec prorata temporis l'année 1) et `DotationAmortissement` (unique
+  immo+année, lien écriture). Migration `0282_immobilisations`.
+- Signal `generer_ecriture_acquisition_immo` (journal `IM`) : D compte_immo /
+  C 571100 espèces, 521100 banque ou 404100 crédit fournisseur.
+- `compta/immobilisations/` ViewSet : CRUD + `generer_dotation` (D 681100 /
+  C compte_amortissement, anti-doublon unique_together, log_audit) +
+  `generer_dotations_annee` en masse.
+- Frontend : onglet « Immobilisations » dans Comptabilité — tableau
+  valeur/dotation/cumul/VNC, bouton « Doter » par ligne + « Doter tout ».
+  i18n `immos.*` fr/en.
+- Vérifié : acquisition 12 M banque → D 245100 / C 521100 ; dotation prorata
+  10/12 = 2 M → D 681100 / C 284510 ; migration appliquée, eslint/JSON ok.
+- Reste : formulaire de création d'immobilisation UI (CRUD API seul pour
+  l'instant), TAFIRE, validation expert-comptable de la liasse.
+
+## 2026-11-02 — ✨ Compta étape 3a/3b : écritures avoirs, caisse, stock
+
+- Migration `0281_ecriture_avoir_mouvement_links` : `EcritureComptable` gagne
+  `avoir_client` + `mouvement_caisse` (SET_NULL, traçabilité).
+- `signals_comptabilite.py` (tout tolérant aux erreurs, jamais bloquant) :
+  - **AvoirClient validé** → journal `AV` : D 701100 (HT) + D 443100 (TVA) /
+    C 411100 (TTC) — HT/TVA recalculés par ligne au taux de chaque ligne.
+  - **MouvementCaisse** (création) → journal `CA`/`BQ` selon `mode_paiement` :
+    remboursement d'avoir (motif « Remboursement avoir client ») → D 411100 /
+    C trésorerie ; entrée diverse → D trésorerie / C 758100 ; sortie diverse →
+    D 658100 / C trésorerie (571100 espèces, 521100 autres canaux).
+  - **MouvementStock** (création) : `AJUSTEMENT` ± → 311000 ↔ 603100 au coût
+    (pmp/cost_price) ; `RETOUR` lié à un avoir client → rentrée stock D 311000 /
+    C 603100 ; `AVOIR` (retour fournisseur) → journal `AC` D 401100 / C 601100.
+    ENTREE/SORTIE ventes-achats non doublonnées (déjà couvertes), 
+    transformations non comptabilisées (v1). Helpers `_compte`/`_ecriture`
+    factorisés.
+- Vérifié en conteneur : avoir 119,25 → D 701100 100,00 + D 443100 19,25 /
+  C 411100 119,25 ; remboursement espèces → D 411100 / C 571100 ; sortie OM →
+  D 658100 / C 521100 ; ajustements ± et retour fournisseur OK. Migration
+  appliquée, `makemigrations --check` propre, objets de test purgés.
+- Reste étape 3c : immobilisations + dotations aux amortissements (nouveau
+  modèle + UI).
+
+## 2026-11-02 — ✨ Exports comptables étape 2b : Liasse OHADA
+
+- `services/compta_liasse.py` : mapping comptes → lignes SYSCOHADA
+  (bilan actif AD…BQ, passif CA…DR, compte de résultat TA…XE), soldes
+  agrégés par préfixes, injection du stock physique (311000) et du résultat
+  au passif (13) — cohérent avec l'action `bilan`.
+- `type=liasse` sur `/api/compta/ecritures/export/` : Excel = 3 feuilles
+  (ACTIF / PASSIF / COMPTE DE RÉSULTAT), PDF = 3 tableaux (A4 paysage).
+  Bouton « Liasse » violet sur les onglets Bilan/Résultat. i18n fr/en.
+- ⚠️ **Mapping v1 approximatif — à faire valider par un expert-comptable
+  avant usage fiscal** ; écart actif≠passif possible tant que le périmètre
+  des écritures n'est pas complet (étape 3 : avoirs, stock, amortissements).
+- Vérifié : compute_liasse sur base dev (9/14/19 lignes, totaux calculés),
+  endpoint 200 xlsx+pdf, eslint/JSON ok. TAFIRE : non implémenté (flux,
+  chantier dédié).
+
+## 2026-11-02 — 🐛 Export compta 404 : `format` est réservé par DRF
+
+- `GET .../export/?format=excel` retournait 404 : `format` est le paramètre
+  de négociation de contenu de DRF (`FORMAT_QUERY_PARAM`) → DRF cherchait un
+  renderer « excel » et levait `Http404` avant d'atteindre l'action.
+- Param renommé **`fmt`** côté endpoint et frontend (`useAccounting`).
+- Vérifié via pipeline complet `as_view` : ecritures/grand_livre/fec/balance
+  → 200 + `Content-Disposition`. Redéployé dev (backend + frontend rebuild).
+
+## 2026-11-02 — ✨ Exports comptables étape 2 : FEC + grand livre général
+
+- **`grand_livre`** (Excel/PDF) : toutes les lignes triées compte → date → pièce,
+  solde progressif recalculé par compte, totaux débit/crédit. Onglet
+  « Grand livre » l'exporte désormais à la place du journal à plat.
+- **`fec`** : fichier des écritures comptables au format normalisé (texte plat,
+  séparateur `|`, 18 colonnes, dates AAAAMMJJ, montants à virgule, CRLF —
+  convention DGFIP adaptée OHADA ; comptes auxiliaires/devise vides car non
+  gérés par le modèle). Nommé `FEC_<date_fin>.txt`, bouton « FEC » sur les
+  onglets Grand livre / Achats / Charges.
+- View : `_lignes_filters` mutualisé (dates + `journal_code`) ; collecteurs
+  `_grand_livre_export_data` et `_fec_export_data` (lettrage préchargé).
+  `type=fec` ignore le param format. Type/format invalides → 400.
+- Vérifié : specs + fichiers générés en conteneur (FEC conforme à l'ordre des
+  colonnes), endpoint 200 sur les 2 types, 400 sur type invalide, eslint ok.
+- Reste : liasse OHADA/DSF + TAFIRE (nécessite le mapping comptes → lignes
+  officielles), périmètre écritures étape 3 (avoirs, stock, amortissements).
+
+## 2026-11-02 — ✨ Exports Excel/PDF des états comptables (étape 1)
+
+- `services/compta_exports.py` : spec tabulaire commune (title/headers/rows/
+  total) + rendu openpyxl et reportlab (paysage A4, en-tête pharmacie).
+- `GET /api/compta/ecritures/export/?type=&format=&date_debut=&date_fin=&
+  journal_code=` : 5 documents — `balance`, `resultat`, `bilan`, `tva`,
+  `ecritures` (journal à plat, non paginé, filtrable par `journal_code`).
+  Les données sont réutilisées depuis les actions existantes (`Response.data`).
+- Frontend : `exportDocument` dans `useAccounting` (blob → `downloadBlob`),
+  boutons Excel/PDF dans le header Comptabilité, onglet actif → type de doc
+  (dashboard → compte de résultat, grand-livre/achats/charges → journal
+  filtré). Masqué sur l'onglet Plan comptable. i18n `accounting:export.*`.
+- Vérifié : génération des 5 docs × 2 formats en conteneur + appel méthode
+  200, route résolue, eslint propre. tsc : erreurs pré-existantes inchangées.
+- Reste (étapes suivantes) : FEC/export normalisé, liasse OHADA, TAFIRE,
+  périmètre écritures (avoirs, stock, amortissements).
+
 ## 2026-11-02 — ♻️ Désindexation des artefacts non essentiels + purge historique
 
 - **Cause racine des blocages de pull en pré-prod** : `frontend/frontend/dist/`

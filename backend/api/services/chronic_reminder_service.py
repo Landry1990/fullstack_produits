@@ -4,7 +4,7 @@ from datetime import timedelta
 from django.db.models import Q
 from django.utils import timezone
 
-from ..models import FactureProduit, PharmacySettings, WhatsAppLog
+from ..models import FactureProduit, WhatsAppLog
 from ..utils.dates import day_start
 from ..whatsapp_service import WhatsAppService
 
@@ -67,8 +67,8 @@ class ChronicReminderService:
         due_lines = ChronicReminderService.get_pending_reminders(days_before)
         sent_count = 0
         
-        pharmacy_settings, _ = PharmacySettings.objects.get_or_create(pk=1)
-        pharmacy_name = pharmacy_settings.pharmacy_name or "la Pharmacie"
+        from api.utils.currency import get_pharmacy_name
+        pharmacy_name = get_pharmacy_name() or "la Pharmacie"
         
         for line in due_lines:
             client = line.facture.client

@@ -10,6 +10,7 @@
         "bilan": "Bilan",
         "resultat": "Compte de Résultat",
         "charges": "Charges",
+        "immos": "Immobilisations",
         "plan": "Plan Comptable",
         "tva": "TVA"
     },
@@ -163,6 +164,31 @@
         "internet": "Internet & Téléphone",
         "fournitures": "Fournitures de bureau",
         "autre": "Autre charge..."
+    },
+    "immos": {
+        "title": "Immobilisations",
+        "nom": "Nom",
+        "compte": "Compte",
+        "acquisition": "Acquisition",
+        "valeur": "Valeur",
+        "dotation": "Dot./an",
+        "cumul": "Amorti",
+        "vnc": "VNC",
+        "empty": "Aucune immobilisation",
+        "doter": "Doter",
+        "dote": "Dotée",
+        "doter_tout": "Doter tout",
+        "dotation_ok": "Dotation générée",
+        "dotation_error": "Dotation impossible",
+        "dotation_all_ok": "Dotations générées : {{n}}",
+        "load_error": "Chargement impossible"
+    },
+    "export": {
+        "excel": "Exporter le document de l'onglet en Excel",
+        "pdf": "Exporter le document de l'onglet en PDF",
+        "fec": "Exporter le fichier des écritures comptables (FEC) au format normalisé",
+        "liasse": "Exporter la liasse OHADA (bilan + compte de résultat, à valider par un expert-comptable)",
+        "error": "Échec de l'export du document"
     },
     "messages": {
         "entry_saved": "Écriture enregistrée avec succès",

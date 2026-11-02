@@ -19,7 +19,7 @@ import {
     Calendar,
     Settings,
     FileText,
-    Download as _Download,
+    FileSpreadsheet,
     Percent
 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -65,8 +65,21 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
         isFetching,
         dateRange, 
         setDateRange,
+        exportDocument,
         actions 
     } = useAccounting();
+
+    // Onglet actif → type de document exporté
+    const exportDocType = ({
+        'dashboard': 'resultat',
+        'grand-livre': 'grand_livre',
+        'achats': 'ecritures',
+        'charges': 'ecritures',
+        'balance': 'balance',
+        'bilan': 'bilan',
+        'resultat': 'resultat',
+        'tva': 'tva',
+    } as Record<string, string>)[activeTab];
 
     useEffect(() => {
         if (activeTab === 'achats') {
@@ -88,6 +101,7 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
         { id: 'resultat', label: t('tabs.resultat'), icon: <ArrowUpRight className="size-4" /> },
         { id: 'tva', label: t('tabs.tva'), icon: <Percent className="size-4" /> },
         { id: 'charges', label: t('tabs.charges'), icon: <PlusCircle className="size-4" /> },
+        { id: 'immos', label: t('tabs.immos', 'Immobilisations'), icon: <FileText className="size-4" /> },
         { id: 'plan', label: t('tabs.plan'), icon: <Settings className="size-4" /> },
     ];
 
@@ -149,6 +163,48 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
                             aria-label={t('common:to', 'Au')}
                         />
                     </div>
+
+                    {/* Exports Excel / PDF du document de l'onglet actif */}
+                    {exportDocType && (
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => exportDocument(exportDocType, 'excel')}
+                                className="flex items-center gap-2 px-3 py-2 bg-emerald-50 text-emerald-700 rounded-xl border border-emerald-200 text-sm font-medium hover:bg-emerald-100 transition-colors"
+                                title={t('export.excel')}
+                            >
+                                <FileSpreadsheet className="size-4" />
+                                Excel
+                            </button>
+                            <button
+                                onClick={() => exportDocument(exportDocType, 'pdf')}
+                                className="flex items-center gap-2 px-3 py-2 bg-rose-50 text-rose-700 rounded-xl border border-rose-200 text-sm font-medium hover:bg-rose-100 transition-colors"
+                                title={t('export.pdf')}
+                            >
+                                <FileText className="size-4" />
+                                PDF
+                            </button>
+                            {['bilan', 'resultat'].includes(exportDocType) && (
+                                <button
+                                    onClick={() => exportDocument('liasse', 'excel')}
+                                    className="flex items-center gap-2 px-3 py-2 bg-violet-50 text-violet-700 rounded-xl border border-violet-200 text-sm font-medium hover:bg-violet-100 transition-colors"
+                                    title={t('export.liasse')}
+                                >
+                                    <FileSpreadsheet className="size-4" />
+                                    Liasse
+                                </button>
+                            )}
+                            {['ecritures', 'grand_livre'].includes(exportDocType) && (
+                                <button
+                                    onClick={() => exportDocument('fec', 'txt')}
+                                    className="flex items-center gap-2 px-3 py-2 bg-blue-50 text-blue-700 rounded-xl border border-blue-200 text-sm font-medium hover:bg-blue-100 transition-colors"
+                                    title={t('export.fec')}
+                                >
+                                    <FileText className="size-4" />
+                                    FEC
+                                </button>
+                            )}
+                        </div>
+                    )}
                 </div>
             </motion.div>
 
@@ -213,6 +269,7 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
                         {activeTab === 'bilan' && <BilanTab bilan={bilan} t={t} />}
                         {activeTab === 'resultat' && <ResultatTab resultat={resultat} t={t} />}
                         {activeTab === 'tva' && <TvaTab rapport={rapportTva} t={t} />}
+                        {activeTab === 'immos' && <ImmosTab t={t} />}
                         {activeTab === 'plan' && <PlanTab comptes={comptes} actions={actions} t={t} />}
                         {activeTab === 'charges' && <ChargesTab actions={actions} comptes={comptes} journaux={journaux} t={t} />}
                     </Suspense>
@@ -1232,6 +1289,114 @@ function TvaTab({ rapport, t }: { rapport?: RapportTva; t: TFunction }) {
                 </table>
             </div>
             <p className="text-xs text-slate-400 italic">{t('tva.note')}</p>
+        </div>
+    );
+}
+
+// ── Onglet Immobilisations (amortissements) ──────────────────
+
+interface Immo {
+    id: number;
+    nom: string;
+    compte_immo_numero: string;
+    date_acquisition: string;
+    valeur_acquisition: number;
+    duree_annees: number;
+    dotation_annuelle: number;
+    cumul_amortissements: number;
+    valeur_nette_comptable: number;
+    dotations: { id: number; annee: number; montant: number }[];
+    mode_paiement: string;
+}
+
+function ImmosTab({ t }: { t: TFunction }) {
+    const [immos, setImmos] = useState<Immo[]>([]);
+    const [annee] = useState(new Date().getFullYear());
+    const [loading, setLoading] = useState(true);
+
+    const load = useCallback(async () => {
+        setLoading(true);
+        try {
+            const res = await api.get('compta/immobilisations/');
+            setImmos(res.data.results || res.data);
+        } catch {
+            gooeyToast.error(t('immos.load_error', 'Chargement impossible'));
+        } finally {
+            setLoading(false);
+        }
+    }, [t]);
+
+    useEffect(() => { load(); }, [load]);
+
+    const doter = async (immo: Immo) => {
+        try {
+            await api.post(`compta/immobilisations/${immo.id}/generer_dotation/`, { annee });
+            gooeyToast.success(t('immos.dotation_ok', 'Dotation générée'));
+            load();
+        } catch (e: unknown) {
+            const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error;
+            gooeyToast.error(msg || t('immos.dotation_error', 'Dotation impossible'));
+        }
+    };
+
+    const doterTout = async () => {
+        try {
+            const res = await api.post('compta/immobilisations/generer_dotations_annee/', { annee });
+            gooeyToast.success(t('immos.dotation_all_ok', 'Dotations générées : {{n}}', { n: res.data.generees?.length || 0 }));
+            load();
+        } catch {
+            gooeyToast.error(t('immos.dotation_error', 'Dotation impossible'));
+        }
+    };
+
+    if (loading) return <div className="py-16 text-center text-slate-400">{t('loading_msg')}</div>;
+
+    return (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+                <h3 className="font-semibold text-slate-800">{t('immos.title', 'Immobilisations')} — {annee}</h3>
+                <button onClick={doterTout}
+                    className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
+                    {t('immos.doter_tout', 'Doter tout')}
+                </button>
+            </div>
+            <table className="w-full text-sm">
+                <thead className="bg-slate-50 text-slate-500 text-xs uppercase">
+                    <tr>
+                        <th className="px-4 py-2.5 text-left">{t('immos.nom', 'Nom')}</th>
+                        <th className="px-4 py-2.5 text-left">{t('immos.compte', 'Compte')}</th>
+                        <th className="px-4 py-2.5 text-left">{t('immos.acquisition', 'Acquisition')}</th>
+                        <th className="px-4 py-2.5 text-right">{t('immos.valeur', 'Valeur')}</th>
+                        <th className="px-4 py-2.5 text-right">{t('immos.dotation', 'Dot./an')}</th>
+                        <th className="px-4 py-2.5 text-right">{t('immos.cumul', 'Amorti')}</th>
+                        <th className="px-4 py-2.5 text-right">{t('immos.vnc', 'VNC')}</th>
+                        <th className="px-4 py-2.5"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {immos.length === 0 && (
+                        <tr><td colSpan={8} className="px-4 py-8 text-center text-slate-400">{t('immos.empty', 'Aucune immobilisation')}</td></tr>
+                    )}
+                    {immos.map(im => (
+                        <tr key={im.id} className="border-t border-slate-100">
+                            <td className="px-4 py-2.5 font-medium text-slate-700">{im.nom}</td>
+                            <td className="px-4 py-2.5 text-slate-500">{im.compte_immo_numero}</td>
+                            <td className="px-4 py-2.5 text-slate-500">{im.date_acquisition}</td>
+                            <td className="px-4 py-2.5 text-right">{formatFCFA(im.valeur_acquisition)}</td>
+                            <td className="px-4 py-2.5 text-right text-slate-600">{formatFCFA(im.dotation_annuelle)}</td>
+                            <td className="px-4 py-2.5 text-right text-slate-600">{formatFCFA(im.cumul_amortissements)}</td>
+                            <td className="px-4 py-2.5 text-right font-semibold text-slate-800">{formatFCFA(im.valeur_nette_comptable)}</td>
+                            <td className="px-4 py-2.5 text-right">
+                                <button onClick={() => doter(im)}
+                                    disabled={im.dotations.some(d => d.annee === annee)}
+                                    className="px-2.5 py-1 text-xs font-medium rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 disabled:opacity-40 disabled:cursor-not-allowed">
+                                    {im.dotations.some(d => d.annee === annee) ? t('immos.dote', 'Dotée') : t('immos.doter', 'Doter')}
+                                </button>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
         </div>
     );
 }

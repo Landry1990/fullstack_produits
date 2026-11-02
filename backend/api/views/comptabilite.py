@@ -490,6 +490,146 @@ class EcritureComptableViewSet(viewsets.ModelViewSet):
             'note': 'Valeur positive = TVA à reverser au Trésor ; négative = crédit de TVA reportable.',
         })
 
+    @action(detail=False, methods=['get'], url_path='export')
+    def export_document(self, request):
+        """
+        Exporte un état comptable en Excel ou PDF.
+        Params : type (balance|resultat|bilan|tva|ecritures|grand_livre|fec),
+                 fmt (excel|pdf|txt — ignoré pour fec : format normé),
+                 date_debut, date_fin, journal_code (types ecritures/fec).
+                 ⚠️ le param s'appelle fmt : « format » est réservé par DRF
+                 (négociation de contenu → 404 si le renderer n'existe pas).
+        """
+        from ..services.compta_exports import DOC_TYPES, FORMATS, build_compta_export
+
+        doc_type = request.query_params.get('type')
+        fmt = request.query_params.get('fmt', 'excel')
+        if doc_type not in DOC_TYPES:
+            return Response({'error': f"Type invalide — attendu : {', '.join(DOC_TYPES)}"}, status=400)
+        if fmt not in FORMATS:
+            return Response({'error': f"Format invalide — attendu : {', '.join(FORMATS)}"}, status=400)
+
+        date_debut = parse_date_param(request.query_params.get('date_debut'), field='date_debut')
+        date_fin = parse_date_param(request.query_params.get('date_fin'), field='date_fin')
+
+        # Réutilise les calculs des actions existantes (Response.data = dict brut)
+        if doc_type == 'balance':
+            data = self.balance(request).data
+        elif doc_type == 'resultat':
+            data = self.compte_resultat(request).data
+        elif doc_type == 'bilan':
+            data = self.bilan(request).data
+        elif doc_type == 'tva':
+            data = self.rapport_tva(request).data
+        elif doc_type == 'ecritures':
+            data = self._ecritures_export_data(request, date_debut, date_fin)
+        elif doc_type == 'grand_livre':
+            data = self._grand_livre_export_data(request, date_debut, date_fin)
+        elif doc_type == 'fec':
+            data = self._fec_export_data(request, date_debut, date_fin)
+        else:  # liasse
+            from ..services.compta_liasse import compute_liasse
+            data = compute_liasse(date_debut, date_fin)
+
+        return build_compta_export(doc_type, fmt, data, date_debut, date_fin)
+
+    @staticmethod
+    def _lignes_filters(request, date_debut, date_fin):
+        """Filtre commun des lignes/écritures pour les exports tabulaires."""
+        filters = Q()
+        if date_debut:
+            filters &= Q(ecriture__date__gte=date_debut)
+        if date_fin:
+            filters &= Q(ecriture__date__lte=date_fin)
+        journal_code = request.query_params.get('journal_code')
+        if journal_code:
+            filters &= Q(ecriture__journal__code=journal_code)
+        return filters
+
+    @classmethod
+    def _ecritures_export_data(cls, request, date_debut, date_fin):
+        """Lignes d'écritures à plat pour l'export journal (toutes, non paginées)."""
+        lignes_qs = LigneEcriture.objects.filter(
+            cls._lignes_filters(request, date_debut, date_fin)
+        ).select_related('ecriture__journal', 'compte').order_by(
+            'ecriture__date', 'ecriture__numero_piece')
+
+        lignes = []
+        total_debit = total_credit = Decimal('0.00')
+        for l in lignes_qs:
+            lignes.append({
+                'date': l.ecriture.date,
+                'numero_piece': l.ecriture.numero_piece,
+                'journal': l.ecriture.journal.code if l.ecriture.journal else '',
+                'compte': l.compte.numero if l.compte else '',
+                'libelle': l.libelle_ligne or l.ecriture.libelle,
+                'debit': l.debit,
+                'credit': l.credit,
+            })
+            total_debit += l.debit
+            total_credit += l.credit
+
+        return {'lignes': lignes, 'total_debit': total_debit, 'total_credit': total_credit}
+
+    @classmethod
+    def _grand_livre_export_data(cls, request, date_debut, date_fin):
+        """Grand livre général : toutes les lignes triées par compte puis date,
+        avec solde progressif recalculé par compte."""
+        lignes_qs = LigneEcriture.objects.filter(
+            cls._lignes_filters(request, date_debut, date_fin)
+        ).select_related('ecriture__journal', 'compte').order_by(
+            'compte__numero', 'ecriture__date', 'ecriture__numero_piece')
+
+        lignes = []
+        soldes = {}
+        total_debit = total_credit = Decimal('0.00')
+        for l in lignes_qs:
+            num = l.compte.numero if l.compte else ''
+            soldes[num] = soldes.get(num, Decimal('0.00')) + (l.debit - l.credit)
+            lignes.append({
+                'compte': num,
+                'date': l.ecriture.date,
+                'numero_piece': l.ecriture.numero_piece,
+                'journal': l.ecriture.journal.code if l.ecriture.journal else '',
+                'libelle': l.libelle_ligne or l.ecriture.libelle,
+                'debit': l.debit,
+                'credit': l.credit,
+                'solde_progressif': soldes[num],
+            })
+            total_debit += l.debit
+            total_credit += l.credit
+
+        return {'lignes': lignes, 'total_debit': total_debit, 'total_credit': total_credit}
+
+    @classmethod
+    def _fec_export_data(cls, request, date_debut, date_fin):
+        """Lignes triées journal/pièce pour le FEC (format normalisé)."""
+        lignes_qs = LigneEcriture.objects.filter(
+            cls._lignes_filters(request, date_debut, date_fin)
+        ).select_related('ecriture__journal', 'compte').prefetch_related(
+            'lettrages').order_by(
+            'ecriture__journal__code', 'ecriture__numero_piece', 'id')
+
+        lignes = []
+        for l in lignes_qs:
+            e = l.ecriture
+            lett = l.lettrages.first()
+            lignes.append({
+                'journal_code': e.journal.code if e.journal else '',
+                'journal_lib': e.journal.nom if e.journal else '',
+                'numero_piece': e.numero_piece,
+                'date': e.date,
+                'compte': l.compte.numero if l.compte else '',
+                'compte_libelle': l.compte.libelle if l.compte else '',
+                'reference': e.reference,
+                'libelle': l.libelle_ligne or e.libelle,
+                'debit': l.debit,
+                'credit': l.credit,
+                'lettrage': lett.code if lett else '',
+                'date_lettrage': lett.date_lettrage if lett else None,
+            })
+        return {'lignes': lignes}
+
     @action(detail=False, methods=['post'])
     @transaction.atomic
     def initialiser_historique(self, request):
@@ -740,3 +880,65 @@ class EcritureComptableViewSet(viewsets.ModelViewSet):
             request=self.request,
         )
         instance.delete()
+
+
+class ImmobilisationViewSet(viewsets.ModelViewSet):
+    """CRUD immobilisations + génération des dotations annuelles."""
+    from api.models import Immobilisation
+    from api.serializers.accounting import ImmobilisationSerializer
+    queryset = Immobilisation.objects.select_related(
+        'compte_immo', 'compte_amortissement').prefetch_related('dotations')
+    serializer_class = ImmobilisationSerializer
+    permission_classes = [IsComptaWriteAllowed]
+
+    @action(detail=True, methods=['post'], url_path='generer_dotation')
+    @transaction.atomic
+    def generer_dotation(self, request, pk=None):
+        """Génère l'écriture de dotation (D 681100 / C compte_amortissement)
+        pour l'année fournie (body: {"annee": 2026})."""
+        from api.models import DotationAmortissement
+        annee = int(request.data.get('annee', timezone.now().year))
+        immo = self.get_object()
+
+        if annee < immo.date_acquisition.year or annee > immo.date_acquisition.year + immo.duree_annees:
+            return Response({'error': 'Année hors période d\'amortissement'}, status=400)
+        if DotationAmortissement.objects.filter(immobilisation=immo, annee=annee).exists():
+            return Response({'error': f'Dotation {annee} déjà générée'}, status=400)
+
+        montant = immo.montant_dotation(annee)
+        journal, _ = JournalComptable.objects.get_or_create(
+            code='IM', defaults={'nom': 'Immobilisations'})
+        from ..signals_comptabilite import get_exercice_courant
+        compte_dotation = CompteComptable.objects.get_or_create(
+            numero='681100', defaults={'libelle': 'Dotations aux amortissements',
+                                       'type': 'CHARGE'})[0]
+        ecriture = EcritureComptable.objects.create(
+            date=timezone.now().date(), journal=journal,
+            exercice=get_exercice_courant(), reference=f"DOT-{immo.id}-{annee}",
+            libelle=f"Dotation amortissement {immo.nom} {annee}")
+        LigneEcriture.objects.create(
+            ecriture=ecriture, compte=compte_dotation, debit=montant)
+        LigneEcriture.objects.create(
+            ecriture=ecriture, compte=immo.compte_amortissement, credit=montant)
+        DotationAmortissement.objects.create(
+            immobilisation=immo, annee=annee, montant=montant, ecriture=ecriture)
+        log_audit(
+            user=request.user, action=AuditLog.Action.OTHER,
+            model_name='Immobilisation', object_id=immo.pk,
+            description=f"Dotation {annee} {immo.nom} : {montant}",
+            request=request)
+        return Response({'annee': annee, 'montant': str(montant),
+                         'ecriture': ecriture.numero_piece})
+
+    @action(detail=False, methods=['post'], url_path='generer_dotations_annee')
+    def generer_dotations_annee(self, request):
+        """Génère les dotations de l'année pour toutes les immobilisations
+        actives (skip celles déjà dotées ou hors période)."""
+        from api.models import Immobilisation
+        annee = int(request.data.get('annee', timezone.now().year))
+        done, skipped = [], []
+        for immo in Immobilisation.objects.filter(is_active=True):
+            res = self.generer_dotation(request, pk=immo.pk)
+            (done if res.status_code == 200 else skipped).append(
+                {'id': immo.id, 'status': res.status_code})
+        return Response({'annee': annee, 'generees': done, 'ignorees': skipped})
