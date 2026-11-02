@@ -56,21 +56,30 @@ class EcritureComptableSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'date', 'exercice', 'journal', 'journal_code',
             'reference', 'libelle', 'created_at', 'lignes',
-            'total_debit', 'total_credit'
+            'total_debit', 'total_credit', 'est_liee'
         ]
 
     def validate(self, data):
-        lignes = data.get('lignes', [])
-        if not lignes:
-            raise serializers.ValidationError("Une écriture doit avoir au moins une ligne.")
-
-        total_debit = sum(Decimal(str(l.get('debit', 0))) for l in lignes)
-        total_credit = sum(Decimal(str(l.get('credit', 0))) for l in lignes)
-
-        if total_debit != total_credit:
+        # Une écriture liée à un document métier (commande, facture, caisse,
+        # stock, immobilisation…) ne se modifie pas ici : corriger la source.
+        if self.instance is not None and self.instance.est_liee:
             raise serializers.ValidationError(
-                f"L'écriture n'est pas équilibrée (Débit: {total_debit}, Crédit: {total_credit})"
+                "Cette écriture est liée à un document (commande, facture, caisse, "
+                "stock ou immobilisation). Modifiez le document d'origine."
             )
+        # En PATCH partiel sans lignes, on ne touche pas aux lignes existantes.
+        if self.instance is None or 'lignes' in data:
+            lignes = data.get('lignes', [])
+            if not lignes:
+                raise serializers.ValidationError("Une écriture doit avoir au moins une ligne.")
+
+            total_debit = sum(Decimal(str(l.get('debit', 0))) for l in lignes)
+            total_credit = sum(Decimal(str(l.get('credit', 0))) for l in lignes)
+
+            if total_debit != total_credit:
+                raise serializers.ValidationError(
+                    f"L'écriture n'est pas équilibrée (Débit: {total_debit}, Crédit: {total_credit})"
+                )
 
         # Assigner l'exercice automatiquement si manquant
         if not data.get('exercice'):
@@ -98,6 +107,17 @@ class EcritureComptableSerializer(serializers.ModelSerializer):
         for ligne_data in lignes_data:
             LigneEcriture.objects.create(ecriture=ecriture, **ligne_data)
         return ecriture
+
+    def update(self, instance, validated_data):
+        lignes_data = validated_data.pop('lignes', None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        if lignes_data is not None:
+            instance.lignes.all().delete()
+            for ligne_data in lignes_data:
+                LigneEcriture.objects.create(ecriture=instance, **ligne_data)
+        return instance
 
 
 class DotationAmortissementSerializer(serializers.ModelSerializer):

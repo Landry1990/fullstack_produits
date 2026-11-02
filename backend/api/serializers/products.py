@@ -97,12 +97,17 @@ class StockLotSerializer(serializers.ModelSerializer):
 
 
 class StockLotUpdateSerializer(StockLotSerializer):
-    """Mise à jour d'un lot : seuls le numéro de lot et la date d'expiration sont modifiables."""
+    """Mise à jour d'un lot : numéro, péremption et prix (achat/vente) modifiables.
+
+    Les quantités restent figées — un écart de stock se corrige par ajustement,
+    pas en éditant le lot. Les prix sont éditables pour corriger une erreur
+    de saisie à la réception (impacte la marge des unités restantes).
+    """
 
     class Meta(StockLotSerializer.Meta):
         read_only_fields = [
             'produit', 'quantity_initial', 'quantity_paid', 'quantity_free',
-            'quantity_remaining', 'quantity_reserved', 'price_cost', 'selling_price',
+            'quantity_remaining', 'quantity_reserved',
             'fournisseur', 'commande_produit', 'date_reception', 'is_divers'
         ]
 

@@ -87,6 +87,10 @@ class EcritureComptable(models.Model):
     avoir_client = models.ForeignKey('AvoirClient', on_delete=models.SET_NULL, null=True, blank=True, related_name='ecritures_compta')
     mouvement_caisse = models.ForeignKey('MouvementCaisse', on_delete=models.SET_NULL, null=True, blank=True, related_name='ecritures_compta')
 
+    # Écritures générées par signal sans FK dédiée — identifiées par la
+    # référence système (préfixe). Toute autre écriture auto est liée par FK.
+    REFERENCES_AUTO = ('MST-', 'IMMO-')
+
     class Meta:
         verbose_name = "Écriture Comptable"
         verbose_name_plural = "Écritures Comptables"
@@ -96,6 +100,24 @@ class EcritureComptable(models.Model):
             # Perf (migration 0262) — index créé en CONCURRENTLY
             models.Index(fields=['date'], name='ecriture_date_idx'),
         ]
+
+    @property
+    def est_liee(self):
+        """True si l'écriture est générée depuis/liée à un document métier.
+
+        Modifier ou supprimer une telle écriture créerait une discordance
+        avec sa source (commande, facture, caisse, stock, immobilisation) :
+        la correction doit se faire sur le document d'origine.
+        """
+        if any((
+            self.facture_id, self.commande_id, self.paiement_id,
+            self.paiement_fournisseur_id, self.avoir_client_id,
+            self.mouvement_caisse_id,
+        )):
+            return True
+        if self.dotations_amortissement.exists():
+            return True
+        return (self.reference or '').startswith(self.REFERENCES_AUTO)
 
     def save(self, *args, **kwargs):
         # Validation OHADA: Exercice obligatoire et non cloturé

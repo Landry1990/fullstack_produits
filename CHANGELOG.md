@@ -2,6 +2,88 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-11-02 — ✏️ Prix des lots éditables (correction d'erreur de saisie)
+
+- `serializers/products.py` : `StockLotUpdateSerializer` débloque
+  `price_cost` + `selling_price` en PATCH (quantités toujours figées —
+  un écart se corrige par ajustement). Les champs modifiés sont déjà tracés
+  par log_audit.
+- Onglet Lots de ProduitShadcn : nouvelle colonne « Prix Vente », et en mode
+  édition les prix achat/vente deviennent des inputs (à côté du n° de lot et
+  de la péremption déjà éditables). i18n `lots.selling_price` fr/en.
+- Permet de corriger un prix saisi par erreur à la réception avant la vente.
+
+## 2026-11-02 — 🐛 Prix de vente du lot ignoré à la clôture de commande
+
+- `views/commandes/cloture_mixin.py` : le `StockLot` créé prenait toujours
+  `produit.selling_price` — le `selling_price` saisi sur la ligne de commande
+  était ignoré (seuls `price_cost` effectif et `date_expiration` étaient
+  propagés). Le lot utilise désormais `item.selling_price` (fallback produit
+  si vide/0). Ne s'applique qu'aux nouvelles réceptions — les lots existants
+  conservent leur prix.
+- Rappel : `price_cost` du lot = coût effectif (payé dilué par les UG), pas
+  le prix brut saisi — voulu pour le calcul de marge/PMP.
+
+## 2026-11-02 — 🏷️ Numéros de lot plus courts : `CMD{id}-{position}`
+
+- Clôture de commande : le lot auto passait de `CMD{commande.id}-{item.id}`
+  (ex. `CMD1542-8934`, jusqu'à ~17 car.) à `CMD{commande.id}-{position:02d}`
+  (ex. `CMD1542-03`) — position de la ligne dans la commande. Court pour
+  tickets/étiquettes, toujours unique (id commande + rang), trace commande
+  conservée. Uniquement les nouvelles réceptions — les lots existants
+  gardent leur numéro. `views/commandes/cloture_mixin.py`.
+
+## 2026-11-02 — 🔒 Écritures liées : modification/suppression bloquées
+
+- Risque : modifier une écriture générée (achat commandes, vente, caisse,
+  mouvement stock, dotation immo…) créait une discordance avec le document
+  source. `EcritureComptable.est_liee` : FK métier (`facture`, `commande`,
+  `paiement`, `paiement_fournisseur`, `avoir_client`, `mouvement_caisse`),
+  `dotations_amortissement`, ou référence auto `MST-`/`IMMO-` (générées par
+  signal sans FK dédiée).
+- Backend : `validate()` du serializer refuse PATCH/PUT sur écriture liée
+  (400) ; `perform_destroy` idem pour DELETE ; `est_liee` exposé en lecture
+  + prefetch `dotations_amortissement`.
+- Frontend : tableau « Dernières charges » — cadenas + tooltip au lieu du
+  crayon pour les écritures liées. i18n `locked_title` fr/en.
+- Vérifié en shell : écriture `MST-` → PATCH 400 / DELETE 400 ; manuelle
+  `PIECE_` → PATCH 200. Déployé `all`.
+
+## 2026-11-02 — ✏️ Charges : édition des écritures + fix alignement
+
+- Backend `serializers/accounting.py` : `EcritureComptableSerializer.update()`
+  ajouté — en PATCH, les lignes sont remplacées (delete + recreate, même
+  pattern que les avoirs) ; `validate()` tolère un PATCH sans `lignes`.
+- `useAccounting` : mutation `updateEcriture` (PATCH `compta/ecritures/:id`).
+- `ChargesTab` : crayon d'édition sur chaque ligne de « Dernières charges » →
+  recharge l'écriture dans le formulaire (catégorie ou « autre », paiement,
+  date, libellé, montant), bandeau ambre « Modification en cours » + bouton
+  annuler, bouton submit passe en « Mettre à jour » (ambre).
+- Fix décalage : libellés paiement raccourcis (« Espèces »/« Banque ») +
+  `whitespace-nowrap` — le bouton ne passe plus sur 2 lignes.
+- i18n fr+en : `charges_simple.{editing_banner,cancel_edit,edit_title,update}`.
+- Vérifié : PATCH écriture OK en shell (lignes remplacées, totaux recalculés),
+  eslint/JSON ok. Déployé `all`.
+
+## 2026-11-02 — 💄 Refonte UI/UX onglet « Charges » (Comptabilité)
+
+- `components/compta/Comptabilite.tsx` (`ChargesTab`) :
+  - Emojis remplacés par des icônes Lucide (Building2, Zap, Users, Receipt,
+    Wifi, Paperclip, Ellipsis ; Banknote/Landmark pour le paiement).
+  - Moyen de paiement : boutons segmentés avec `role="radiogroup"`/`radio`
+    au lieu d'un `<select>` avec emojis.
+  - Récap comptable avant validation : « Débit 613000 Loyer • Crédit
+    571100 Caisse » — l'utilisateur voit l'écriture qui sera créée.
+  - Nouveau tableau « Dernières charges enregistrées » (6 dernières
+    écritures débitant un compte 6x : date, libellé, compte, journal,
+    montant) — feedback visuel immédiat des saisies.
+  - État sélectionné des catégories enrichi (tuile icône + check),
+    `cursor-pointer`, `aria-pressed`, `min="0"` sur le montant.
+- i18n `accounting.json` fr+en : `charges_simple.{recap_debit,recap_credit,
+  recent,recent_empty,col_account,col_journal}` ; emojis retirés de
+  `payment_cash`/`payment_bank`.
+- Fix accessoire : guard `tresoCompte`/`targetJournal` (2 erreurs tsc).
+
 ## 2026-11-02 — 🐛 Nom du logiciel (« ZENITH ») dans l'en-tête des exports
 
 - Cause : beaucoup d'exports lisaient `PharmacySettings.pharmacy_name` en base

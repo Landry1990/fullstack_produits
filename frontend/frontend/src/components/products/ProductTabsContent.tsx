@@ -204,7 +204,7 @@ const PurchasesTabContent = ({ achats, t }: { achats: AchatProduit[]; t: TFuncti
 const LotsTabContent = ({ lots, produitId, t }: { lots: StockLot[]; produitId: number; t: TFunction }) => {
     const queryClient = useQueryClient();
     const [editingId, setEditingId] = useState<number | null>(null);
-    const [editValues, setEditValues] = useState<{ lot: string; date_expiration: string }>({ lot: '', date_expiration: '' });
+    const [editValues, setEditValues] = useState<{ lot: string; date_expiration: string; price_cost: string; selling_price: string }>({ lot: '', date_expiration: '', price_cost: '', selling_price: '' });
     const [saving, setSaving] = useState(false);
     const [showFinishedLots, setShowFinishedLots] = useState(false);
     const [localLots, setLocalLots] = useState<StockLot[]>(lots);
@@ -221,6 +221,8 @@ const LotsTabContent = ({ lots, produitId, t }: { lots: StockLot[]; produitId: n
         setEditValues({
             lot: lot.lot || '',
             date_expiration: lot.date_expiration ? lot.date_expiration.slice(0, 10) : '',
+            price_cost: String(lot.price_cost ?? ''),
+            selling_price: String(lot.selling_price ?? ''),
         });
     }, []);
 
@@ -237,6 +239,8 @@ const LotsTabContent = ({ lots, produitId, t }: { lots: StockLot[]; produitId: n
             } else {
                 payload.date_expiration = null;
             }
+            if (editValues.price_cost !== '') payload.price_cost = editValues.price_cost;
+            if (editValues.selling_price !== '') payload.selling_price = editValues.selling_price;
             await api.patch(`stock-lots/${lotId}/`, payload);
             setLocalLots(prev => prev.map(l => l.id === lotId ? { ...l, ...payload } : l));
             setEditingId(null);
@@ -270,6 +274,7 @@ const LotsTabContent = ({ lots, produitId, t }: { lots: StockLot[]; produitId: n
                     <TableHead scope="col" className="w-32 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.lots.expiration')}</TableHead>
                     <TableHead scope="col" className="w-40 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.lots.provider')}</TableHead>
                     <TableHead scope="col" className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-28">{t('products:detail.purchases.price', { defaultValue: 'Prix' })}</TableHead>
+                    <TableHead scope="col" className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-28">{t('products:detail.lots.selling_price', { defaultValue: 'Prix Vente' })}</TableHead>
                     <TableHead scope="col" className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-20">{t('products:detail.lots.initial_qty')}</TableHead>
                     <TableHead scope="col" className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-20">{t('products:detail.lots.remaining_qty')}</TableHead>
                     <TableHead scope="col" className="w-16 px-3 py-2 whitespace-nowrap text-center text-xs font-semibold uppercase tracking-wide text-slate-500"></TableHead>
@@ -310,7 +315,28 @@ const LotsTabContent = ({ lots, produitId, t }: { lots: StockLot[]; produitId: n
                             </TableCell>
                             <TableCell className="text-sm font-bold truncate py-2 px-3" title={lot.fournisseur_nom}>{lot.fournisseur_nom}</TableCell>
                             <TableCell className="text-right text-sm font-black text-blue-600 py-2 px-3">
-                                {formatCurrency(Math.round(Number(lot.price_cost || 0)))}
+                                {isEditing ? (
+                                    <Input
+                                        type="number" min="0"
+                                        className="w-24 font-mono text-xs h-8 text-right ml-auto"
+                                        value={editValues.price_cost}
+                                        onChange={e => setEditValues(v => ({ ...v, price_cost: e.target.value }))}
+                                    />
+                                ) : (
+                                    formatCurrency(Math.round(Number(lot.price_cost || 0)))
+                                )}
+                            </TableCell>
+                            <TableCell className="text-right text-sm font-black text-emerald-600 py-2 px-3">
+                                {isEditing ? (
+                                    <Input
+                                        type="number" min="0"
+                                        className="w-24 font-mono text-xs h-8 text-right ml-auto"
+                                        value={editValues.selling_price}
+                                        onChange={e => setEditValues(v => ({ ...v, selling_price: e.target.value }))}
+                                    />
+                                ) : (
+                                    lot.selling_price ? formatCurrency(Math.round(Number(lot.selling_price))) : '-'
+                                )}
                             </TableCell>
                             <TableCell className="text-right text-sm font-bold py-2 px-3">{lot.quantity_initial}</TableCell>
                             <TableCell className="text-right font-black text-sm py-2 px-3">

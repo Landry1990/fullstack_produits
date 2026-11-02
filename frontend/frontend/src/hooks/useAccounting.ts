@@ -30,6 +30,8 @@ export interface Ecriture {
     libelle: string;
     total_debit: number;
     total_credit: number;
+    /** Écriture générée depuis un document métier — non modifiable/supprimable. */
+    est_liee?: boolean;
     lignes: LigneEcriture[];
 }
 
@@ -196,6 +198,26 @@ export const useAccounting = () => {
         }
     });
 
+    const updateEcriture = useMutation({
+        mutationFn: ({ id, ...data }: Partial<Ecriture> & { id: number }) =>
+            api.patch(`compta/ecritures/${id}/`, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['accounting'] });
+            gooeyToast.success(t('messages.entry_saved'));
+        },
+        onError: (error: unknown) => {
+            const e = error as { response?: { data?: { detail?: string; message?: string; [key: string]: unknown } } };
+            const data = e.response?.data;
+            if (data && typeof data === 'object') {
+                const firstError = Object.values(data)[0];
+                const msg = Array.isArray(firstError) ? firstError[0] : (data.detail || data.message || t('messages.entry_save_error'));
+                gooeyToast.error(msg);
+            } else {
+                gooeyToast.error(t('messages.entry_save_error'));
+            }
+        }
+    });
+
     const initializeHistory = useMutation({
         mutationFn: () => api.post('compta/ecritures/initialiser_historique/'),
         onSuccess: (res) => {
@@ -307,10 +329,11 @@ export const useAccounting = () => {
         setDateRange: useCallback((range: { start: string; end: string }) => setDateRange(range), []),
         actions: useMemo(() => ({
             createEcriture,
+            updateEcriture,
             initializeHistory,
             createCompte,
             updateCompte,
             deleteCompte
-        }), [createEcriture, initializeHistory, createCompte, updateCompte, deleteCompte])
+        }), [createEcriture, updateEcriture, initializeHistory, createCompte, updateCompte, deleteCompte])
     };
 };

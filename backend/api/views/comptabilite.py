@@ -176,7 +176,7 @@ from ..filters import EcritureComptableFilter
 
 
 class EcritureComptableViewSet(viewsets.ModelViewSet):
-    queryset = EcritureComptable.objects.all().select_related('journal', 'exercice').prefetch_related('lignes', 'lignes__compte')
+    queryset = EcritureComptable.objects.all().select_related('journal', 'exercice').prefetch_related('lignes', 'lignes__compte', 'dotations_amortissement')
     serializer_class = EcritureComptableSerializer
     permission_classes = [IsComptaWriteAllowed]
     filterset_class = EcritureComptableFilter
@@ -866,6 +866,14 @@ class EcritureComptableViewSet(viewsets.ModelViewSet):
 
     @transaction.atomic
     def perform_destroy(self, instance):
+        # Une écriture liée à un document métier ne se supprime pas ici :
+        # supprimer casserait la cohérence avec sa source (commande, caisse…).
+        if instance.est_liee:
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError(
+                "Cette écriture est liée à un document (commande, facture, caisse, "
+                "stock ou immobilisation). Modifiez le document d'origine."
+            )
         log_audit(
             user=self.request.user,
             action=AuditLog.Action.DELETE,

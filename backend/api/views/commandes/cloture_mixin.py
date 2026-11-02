@@ -155,7 +155,7 @@ class CommandeClotureMixin:
                     produits_dict = {}
                     
                     # Phase 1: Calculs en mémoire
-                    for item in items:
+                    for position, item in enumerate(items, 1):
                         quantity_paid = item.quantity
                         quantity_free = item.unites_gratuites
                         total_qty = quantity_paid + quantity_free
@@ -173,7 +173,7 @@ class CommandeClotureMixin:
                         if produit.use_lot_management:
                             lot_number = item.lot
                             if not lot_number:
-                                lot_number = f"CMD{commande.id}-{item.id}"
+                                lot_number = f"CMD{commande.id}-{position:02d}"
                                 item.lot = lot_number
                             
                             lot = StockLot(
@@ -187,7 +187,11 @@ class CommandeClotureMixin:
                                 quantity_remaining=0 if produit.has_reserve_storage else total_qty,
                                 quantity_reserved=total_qty if produit.has_reserve_storage else 0,
                                 price_cost=effective_cost,
-                                selling_price=produit.selling_price,
+                                selling_price=(
+                                    item.selling_price
+                                    if item.selling_price and item.selling_price > 0
+                                    else produit.selling_price
+                                ),
                                 lot=lot_number,
                                 date_expiration=item.date_expiration,
                                 date_reception=commande.date_cloture,

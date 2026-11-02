@@ -265,7 +265,8 @@
             "initial_qty": "Qté Initiale",
             "remaining_qty": "Qté Restante",
             "show_finished": "Afficher les lots épuisés",
-            "hide_finished": "Masquer les lots épuisés"
+            "hide_finished": "Masquer les lots épuisés",
+            "selling_price": "Prix Vente"
         },
         "stats": {
             "month": "Mois",

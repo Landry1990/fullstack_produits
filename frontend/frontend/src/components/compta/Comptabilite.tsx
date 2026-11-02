@@ -20,7 +20,22 @@ import {
     Settings,
     FileText,
     FileSpreadsheet,
-    Percent
+    Percent,
+    Building2,
+    Zap,
+    Users,
+    Landmark,
+    Wifi,
+    Paperclip,
+    Ellipsis,
+    Banknote,
+    Receipt,
+    Check,
+    History,
+    Pencil,
+    Lock,
+    X,
+    type LucideIcon
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
@@ -271,7 +286,7 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
                         {activeTab === 'tva' && <TvaTab rapport={rapportTva} t={t} />}
                         {activeTab === 'immos' && <ImmosTab t={t} />}
                         {activeTab === 'plan' && <PlanTab comptes={comptes} actions={actions} t={t} />}
-                        {activeTab === 'charges' && <ChargesTab actions={actions} comptes={comptes} journaux={journaux} t={t} />}
+                        {activeTab === 'charges' && <ChargesTab actions={actions} comptes={comptes} journaux={journaux} ecritures={ecritures} locale={currentLocale} t={t} />}
                     </Suspense>
                 </motion.div>
 
@@ -1005,32 +1020,48 @@ function ResultatTab({ resultat, t }: ResultatTabProps) {
     );
 }
 
-const categoriesOHADA = [
-    { id: 'loyer', compte: '613000', label: 'Loyer (Bail)', icon: '🏢' },
-    { id: 'energie', compte: '605000', label: 'Eau & Électricité (ENEO/CAMWATER)', icon: '⚡' },
-    { id: 'salaires', compte: '660000', label: 'Salaires du personnel', icon: '👥' },
-    { id: 'impots', compte: '640000', label: 'Impôts et Taxes', icon: '🏛️' },
-    { id: 'internet', compte: '622000', label: 'Internet & Téléphone', icon: '🌐' },
-    { id: 'fournitures', compte: '604000', label: 'Fournitures de bureau', icon: '📎' },
-    { id: 'autre', compte: 'autre', label: 'Autre charge...', icon: '⚙️' },
+interface OhadaCategory {
+    id: string;
+    compte: string;
+    label: string;
+    icon: LucideIcon;
+}
+
+const categoriesOHADA: OhadaCategory[] = [
+    { id: 'loyer', compte: '613000', label: 'Loyer (Bail)', icon: Building2 },
+    { id: 'energie', compte: '605000', label: 'Eau & Électricité (ENEO/CAMWATER)', icon: Zap },
+    { id: 'salaires', compte: '660000', label: 'Salaires du personnel', icon: Users },
+    { id: 'impots', compte: '640000', label: 'Impôts et Taxes', icon: Receipt },
+    { id: 'internet', compte: '622000', label: 'Internet & Téléphone', icon: Wifi },
+    { id: 'fournitures', compte: '604000', label: 'Fournitures de bureau', icon: Paperclip },
+    { id: 'autre', compte: 'autre', label: 'Autre charge...', icon: Ellipsis },
 ];
+
+const MODES_PAIEMENT = [
+    { compte: '571100', journal: 'CA', icon: Banknote, labelKey: 'charges_simple.payment_cash' },
+    { compte: '521100', journal: 'BQ', icon: Landmark, labelKey: 'charges_simple.payment_bank' },
+] as const;
 
 interface ChargesTabProps {
     actions: ReturnType<typeof useAccounting>['actions'];
     comptes: Compte[] | undefined;
     journaux: Journal[] | undefined;
+    ecritures: Ecriture[] | undefined;
+    locale: Locale;
     t: TFunction<'accounting'>;
 }
 
-function ChargesTab({ actions, comptes, journaux, t }: ChargesTabProps) {
-    const [formData, setFormData] = useState({
+function ChargesTab({ actions, comptes, journaux, ecritures, locale, t }: ChargesTabProps) {
+    const emptyForm = {
         typeCharge: '',
         comptePersonnalise: '',
         modePaiement: '571100', // Default Caisse
         libelle: '',
         montant: '',
         date: new Date().toISOString().split('T')[0]
-    });
+    };
+    const [formData, setFormData] = useState(emptyForm);
+    const [editingId, setEditingId] = useState<number | null>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -1086,64 +1117,150 @@ function ChargesTab({ actions, comptes, journaux, t }: ChargesTabProps) {
             }
         }
 
-        actions.createEcriture.mutate({
-            date: formData.date,
-            journal: targetJournal.id,
-            reference: `PIECE_${Date.now().toString().slice(-6)}`,
-            libelle: formData.libelle,
-            lignes: [
-                { compte: chargeCompte.id, debit: parseFloat(formData.montant), credit: 0, libelle_ligne: formData.libelle },
-                { compte: tresoCompte.id,  debit: 0, credit: parseFloat(formData.montant), libelle_ligne: formData.libelle }
-            ]
-        });
+        if (!tresoCompte || !targetJournal) {
+            gooeyToast.error(t('charges_simple.account_not_found'));
+            return;
+        }
 
-        setFormData({ ...formData, libelle: '', montant: '' });
+        const lignes = [
+            { compte: chargeCompte.id, debit: parseFloat(formData.montant), credit: 0, libelle_ligne: formData.libelle },
+            { compte: tresoCompte.id,  debit: 0, credit: parseFloat(formData.montant), libelle_ligne: formData.libelle }
+        ];
+        if (editingId !== null) {
+            actions.updateEcriture.mutate({
+                id: editingId,
+                date: formData.date,
+                journal: targetJournal.id,
+                libelle: formData.libelle,
+                lignes,
+            });
+            setEditingId(null);
+            setFormData({ ...formData, libelle: '', montant: '' });
+        } else {
+            actions.createEcriture.mutate({
+                date: formData.date,
+                journal: targetJournal.id,
+                reference: `PIECE_${Date.now().toString().slice(-6)}`,
+                libelle: formData.libelle,
+                lignes,
+            });
+            setFormData({ ...formData, libelle: '', montant: '' });
+        }
+    };
+
+    // Charge une écriture existante dans le formulaire pour modification
+    const startEdit = (ecriture: Ecriture) => {
+        const chargeLigne = ecriture.lignes.find(l => (l.compte_numero || '').startsWith('6') && l.debit > 0);
+        const tresoLigne = ecriture.lignes.find(l => l.credit > 0);
+        if (!chargeLigne) return;
+        const compteNum = chargeLigne.compte_numero || '';
+        const isCategory = categoriesOHADA.some(c => c.compte === compteNum);
+        setEditingId(ecriture.id);
+        setFormData({
+            typeCharge: isCategory ? compteNum : 'autre',
+            comptePersonnalise: isCategory ? '' : compteNum,
+            modePaiement: tresoLigne?.compte_numero === '521100' ? '521100' : '571100',
+            libelle: ecriture.libelle,
+            montant: String(chargeLigne.debit),
+            date: ecriture.date,
+        });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const cancelEdit = () => {
+        setEditingId(null);
+        setFormData(emptyForm);
     };
 
     const chargeAccounts = comptes?.filter((c) => c.numero.startsWith('6'));
+    const selectedCategory = categoriesOHADA.find(c => c.compte === formData.typeCharge);
+
+    // Récap comptable de l'écriture qui sera créée
+    const compteDebit = formData.typeCharge === 'autre'
+        ? formData.comptePersonnalise
+        : formData.typeCharge;
+    const compteDebitLibelle = formData.typeCharge === 'autre'
+        ? chargeAccounts?.find(c => c.numero === formData.comptePersonnalise)?.libelle
+        : selectedCategory ? t(`ohada_categories.${selectedCategory.id}`, { defaultValue: selectedCategory.label }) : '';
+    const modeInfo = MODES_PAIEMENT.find(m => m.compte === formData.modePaiement)!;
+
+    // Dernières écritures de charge (débit sur un compte 6x), 6 max.
+    const recentCharges = (ecritures || [])
+        .map(e => ({
+            ecriture: e,
+            ligne: e.lignes.find(l => (l.compte_numero || '').startsWith('6') && l.debit > 0),
+        }))
+        .filter((x): x is { ecriture: Ecriture; ligne: LigneEcriture } => Boolean(x.ligne))
+        .slice(0, 6);
 
     return (
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
             <div className="text-center mb-8">
                 <h3 className="text-2xl font-bold text-blue-600 mb-2">{t('charges_simple.title')}</h3>
                 <p className="text-slate-400 text-sm">{t('charges_simple.subtitle')}</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Sélecteur visuel de catégories */}
-                <div className="md:col-span-1 space-y-2">
+                <div className="lg:col-span-1">
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3">{t('charges_simple.category')}</p>
-                    {categoriesOHADA.map(cat => (
-                        <button
-                            key={cat.id}
-                            type="button"
-                            onClick={() => setFormData({...formData, typeCharge: cat.compte})}
-                            aria-pressed={formData.typeCharge === cat.compte}
-                            className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all text-left group
-                                ${formData.typeCharge === cat.compte 
-                                    ? 'border-blue-500 bg-blue-50 shadow-sm' 
-                                    : 'border-slate-200 bg-white hover:border-blue-200 hover:bg-slate-50'}`}
-                        >
-                            <span className="text-xl grayscale group-hover:grayscale-0 transition-all">{cat.icon}</span>
-                            <span className={`font-medium text-sm ${
-                                formData.typeCharge === cat.compte ? 'text-blue-700' : 'text-slate-700'
-                            }`}>
-                                {t(`ohada_categories.${cat.id}`, { defaultValue: cat.label })}
-                            </span>
-                        </button>
-                    ))}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2">
+                    {categoriesOHADA.map(cat => {
+                        const isSelected = formData.typeCharge === cat.compte;
+                        const CatIcon = cat.icon;
+                        return (
+                            <button
+                                key={cat.id}
+                                type="button"
+                                onClick={() => setFormData({...formData, typeCharge: cat.compte})}
+                                aria-pressed={isSelected}
+                                className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-colors duration-200 text-left cursor-pointer
+                                    ${isSelected
+                                        ? 'border-blue-500 bg-blue-50 shadow-sm ring-1 ring-blue-500/30'
+                                        : 'border-slate-200 bg-white hover:border-blue-200 hover:bg-slate-50'}`}
+                            >
+                                <span className={`size-9 rounded-lg flex items-center justify-center shrink-0 transition-colors
+                                    ${isSelected ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                                    <CatIcon className="size-4" />
+                                </span>
+                                <span className={`flex-1 min-w-0 font-medium text-sm leading-tight ${
+                                    isSelected ? 'text-blue-700' : 'text-slate-700'
+                                }`}>
+                                    {t(`ohada_categories.${cat.id}`, { defaultValue: cat.label })}
+                                </span>
+                                {isSelected && <Check className="size-4 text-blue-600 shrink-0" />}
+                            </button>
+                        );
+                    })}
+                    </div>
                 </div>
 
                 {/* Formulaire de détails */}
-                <div className="md:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm h-fit">
+                <div className={`lg:col-span-2 bg-white p-6 rounded-2xl border shadow-sm h-fit transition-colors ${editingId !== null ? 'border-amber-300 ring-1 ring-amber-300/40' : 'border-slate-200'}`}>
+                    {editingId !== null && (
+                        <div className="flex items-center justify-between gap-3 mb-5 px-4 py-2.5 rounded-xl bg-amber-50 border border-amber-200 animate-fade-in">
+                            <p className="text-sm font-medium text-amber-700 flex items-center gap-2">
+                                <Pencil className="size-4" />
+                                {t('charges_simple.editing_banner')}
+                            </p>
+                            <button
+                                type="button"
+                                onClick={cancelEdit}
+                                className="text-amber-600 hover:text-amber-800 hover:bg-amber-100 rounded-lg p-1 transition-colors cursor-pointer"
+                                title={t('charges_simple.cancel_edit')}
+                            >
+                                <X className="size-4" />
+                            </button>
+                        </div>
+                    )}
                     <form onSubmit={handleSubmit} className="space-y-5">
-                        
+
                         {formData.typeCharge === 'autre' && (
-                            <div className="bg-amber-50 p-4 rounded-xl border border-amber-200 mb-4 animate-fade-in">
+                            <div className="bg-amber-50 p-4 rounded-xl border border-amber-200 animate-fade-in">
                                 <label htmlFor="charge-account-select" className="block text-xs font-bold text-amber-600 uppercase tracking-wide mb-2">{t('charges_simple.select_account')}</label>
                                 <select
                                     id="charge-account-select"
-                                    className="h-10 w-full px-3 rounded-xl border border-amber-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 transition-all appearance-none"
+                                    className="h-10 w-full px-3 rounded-xl border border-amber-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 transition-all appearance-none cursor-pointer"
                                     value={formData.comptePersonnalise}
                                     onChange={(e) => setFormData({...formData, comptePersonnalise: e.target.value})}
                                     required
@@ -1157,19 +1274,31 @@ function ChargesTab({ actions, comptes, journaux, t }: ChargesTabProps) {
                         )}
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="col-span-2 md:col-span-1">
-                                <label htmlFor="charge-payment-method" className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">{t('charges_simple.payment_method')}</label>
-                                <select
-                                    id="charge-payment-method"
-                                    className="h-10 w-full px-3 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
-                                    value={formData.modePaiement}
-                                    onChange={(e) => setFormData({...formData, modePaiement: e.target.value})}
-                                    required
-                                >
-                                    <option value="571100">{t('charges_simple.payment_cash')}</option>
-                                    <option value="521100">{t('charges_simple.payment_bank')}</option>
-                                </select>
-                            </div>
+                            <fieldset className="col-span-2 md:col-span-1">
+                                <legend className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">{t('charges_simple.payment_method')}</legend>
+                                <div className="grid grid-cols-2 gap-2" role="radiogroup">
+                                    {MODES_PAIEMENT.map(mode => {
+                                        const isSelected = formData.modePaiement === mode.compte;
+                                        const ModeIcon = mode.icon;
+                                        return (
+                                            <button
+                                                key={mode.compte}
+                                                type="button"
+                                                role="radio"
+                                                aria-checked={isSelected}
+                                                onClick={() => setFormData({...formData, modePaiement: mode.compte})}
+                                                className={`flex items-center justify-center gap-2 h-10 px-3 rounded-xl border text-sm font-medium whitespace-nowrap transition-colors duration-200 cursor-pointer
+                                                    ${isSelected
+                                                        ? 'border-blue-500 bg-blue-50 text-blue-700 ring-1 ring-blue-500/30'
+                                                        : 'border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:bg-slate-50'}`}
+                                            >
+                                                <ModeIcon className="size-4" />
+                                                {t(mode.labelKey)}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </fieldset>
                             <div className="col-span-2 md:col-span-1">
                                 <label htmlFor="charge-date" className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">{t('charges.date')}</label>
                                 <LocalizedDateInput
@@ -1201,6 +1330,7 @@ function ChargesTab({ actions, comptes, journaux, t }: ChargesTabProps) {
                                 <input
                                     id="charge-amount"
                                     type="number"
+                                    min="0"
                                     placeholder={t('charges_simple.amount_placeholder')}
                                     className="w-full px-4 py-4 pr-16 rounded-xl border border-slate-200 bg-white text-2xl font-bold text-blue-600 text-right focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                                     value={formData.montant}
@@ -1211,19 +1341,100 @@ function ChargesTab({ actions, comptes, journaux, t }: ChargesTabProps) {
                             </div>
                         </div>
 
-                        <button 
+                        {/* Récap de l'écriture qui sera créée */}
+                        {compteDebit && (
+                            <div className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-500 animate-fade-in">
+                                <span className="truncate">
+                                    <span className="font-bold text-slate-600">{t('charges_simple.recap_debit')}</span>{' '}
+                                    <span className="font-mono">{compteDebit}</span>{' '}
+                                    <span className="truncate">{compteDebitLibelle}</span>
+                                </span>
+                                <span className="text-slate-300">•</span>
+                                <span className="truncate">
+                                    <span className="font-bold text-slate-600">{t('charges_simple.recap_credit')}</span>{' '}
+                                    <span className="font-mono">{modeInfo.compte}</span>{' '}
+                                    {t(`charges_simple.${formData.modePaiement === '571100' ? 'cash_account' : 'bank_account'}`)}
+                                </span>
+                            </div>
+                        )}
+
+                        <button
                             type="submit"
-                            className="inline-flex items-center justify-center w-full h-11 px-4 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-sm"
-                            disabled={actions.createEcriture.isPending || !formData.typeCharge}
+                            className={`inline-flex items-center justify-center w-full h-11 px-4 text-white rounded-xl text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm cursor-pointer ${editingId !== null ? 'bg-amber-500 hover:bg-amber-600' : 'bg-blue-600 hover:bg-blue-700'}`}
+                            disabled={actions.createEcriture.isPending || actions.updateEcriture.isPending || !formData.typeCharge}
                         >
-                            {actions.createEcriture.isPending ? t('charges.saving') : t('charges_simple.submit')}
+                            {(actions.createEcriture.isPending || actions.updateEcriture.isPending)
+                                ? t('charges.saving')
+                                : editingId !== null ? t('charges_simple.update') : t('charges_simple.submit')}
                         </button>
-                        
+
                         {!formData.typeCharge && (
                             <p className="text-center text-red-500 text-xs font-medium mt-2">{t('charges_simple.select_category_warning')}</p>
                         )}
                     </form>
                 </div>
+            </div>
+
+            {/* Dernières charges enregistrées */}
+            <div className="mt-6 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-100">
+                    <History className="size-4 text-slate-400" />
+                    <h4 className="text-sm font-bold text-slate-700">{t('charges_simple.recent')}</h4>
+                </div>
+                {recentCharges.length === 0 ? (
+                    <p className="px-5 py-8 text-center text-sm text-slate-400 italic">{t('charges_simple.recent_empty')}</p>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                            <thead>
+                                <tr className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500 font-bold">
+                                    <th className="text-left px-5 py-2.5">{t('charges.date')}</th>
+                                    <th className="text-left px-5 py-2.5">{t('charges_simple.label')}</th>
+                                    <th className="text-left px-5 py-2.5">{t('charges_simple.col_account')}</th>
+                                    <th className="text-left px-5 py-2.5">{t('charges_simple.col_journal')}</th>
+                                    <th className="text-right px-5 py-2.5">{t('charges.amount')}</th>
+                                    <th className="text-right px-5 py-2.5"><span className="sr-only">{t('charges_simple.edit_title')}</span></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {recentCharges.map(({ ecriture, ligne }) => (
+                                    <tr key={ecriture.id} className="border-t border-slate-100 hover:bg-slate-50 transition-colors">
+                                        <td className="px-5 py-2.5 whitespace-nowrap text-slate-500">
+                                            {format(new Date(ecriture.date), 'dd MMM yyyy', { locale })}
+                                        </td>
+                                        <td className="px-5 py-2.5 text-slate-700 font-medium max-w-56 truncate">{ecriture.libelle}</td>
+                                        <td className="px-5 py-2.5 whitespace-nowrap">
+                                            <span className="font-mono text-xs text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">{ligne.compte_numero}</span>
+                                        </td>
+                                        <td className="px-5 py-2.5 whitespace-nowrap">
+                                            <span className="text-xs font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">{ecriture.journal_code}</span>
+                                        </td>
+                                        <td className="px-5 py-2.5 text-right font-bold text-red-500 whitespace-nowrap">{formatFCFA(ligne.debit)}</td>
+                                        <td className="px-5 py-2.5 text-right">
+                                            {ecriture.est_liee ? (
+                                                <span
+                                                    className="inline-flex items-center justify-center size-7 rounded-lg text-slate-300"
+                                                    title={t('charges_simple.locked_title')}
+                                                >
+                                                    <Lock className="size-3.5" />
+                                                </span>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => startEdit(ecriture)}
+                                                    className="inline-flex items-center justify-center size-7 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
+                                                    title={t('charges_simple.edit_title')}
+                                                >
+                                                    <Pencil className="size-3.5" />
+                                                </button>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </div>
         </div>
     );

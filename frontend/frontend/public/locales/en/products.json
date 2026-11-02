@@ -265,7 +265,8 @@
             "initial_qty": "Initial Qty",
             "remaining_qty": "Remaining Qty",
             "show_finished": "Show finished lots",
-            "hide_finished": "Hide finished lots"
+            "hide_finished": "Hide finished lots",
+            "selling_price": "Sale Price"
         },
         "stats": {
             "month": "Month",
