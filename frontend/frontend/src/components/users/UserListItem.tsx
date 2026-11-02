@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pencil, Trash2, Coins, Zap, CheckCircle } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
@@ -15,7 +15,7 @@ interface Props {
   onDeactivate: (user: ManagedUser) => void;
 }
 
-export default function UserListItem({ user, isSelf, allMenuKeysCount, menuLabel, onEdit, onDeactivate }: Props) {
+export default function UserListItem({ user, isSelf, onEdit, onDeactivate }: Props) {
   const { t } = useTranslation(['users', 'sidebar', 'common']);
 
   const roleBadge = (
@@ -30,45 +30,6 @@ export default function UserListItem({ user, isSelf, allMenuKeysCount, menuLabel
     </Badge>
   );
 
-  const menuBadges = () => {
-    if (user.is_superuser) {
-      return <Badge variant="primary" size="sm">{t('badges.full_access')}</Badge>;
-    }
-    const allowedMenus = user.profile?.allowed_menus || [];
-    // If they have all keys (or all but a few), show full access
-    const isFullAccess = allowedMenus.length >= allMenuKeysCount - 2;
-
-    if (isFullAccess && allowedMenus.length > 0) {
-      return <Badge variant="primary" size="sm">{t('badges.full_access', 'Accès complet')}</Badge>;
-    }
-
-    const limit = 4;
-    const visibleMenus = allowedMenus.slice(0, limit);
-    const hiddenCount = allowedMenus.length - limit;
-
-    return (
-      <>
-        {visibleMenus.map(menu => (
-          <Badge key={menu} variant="outline" size="sm">
-            {menuLabel(menu)}
-          </Badge>
-        ))}
-        {hiddenCount > 0 && (
-          <Badge
-            variant="ghost"
-            size="sm"
-            title={allowedMenus.slice(limit).map(menuLabel).join(', ')}
-          >
-            +{hiddenCount} {t('common:others', 'autres')}
-          </Badge>
-        )}
-        {allowedMenus.length === 0 && (
-          <Badge variant="error" size="sm">{t('badges.no_access')}</Badge>
-        )}
-      </>
-    );
-  };
-
   return (
     <Card variant="default" padding="none" className="px-3 py-2">
       <div className="flex flex-col md:flex-row md:items-center gap-2">
@@ -79,36 +40,12 @@ export default function UserListItem({ user, isSelf, allMenuKeysCount, menuLabel
           <div className="min-w-0">
             <div className="font-bold flex items-center gap-2 text-slate-800 truncate">
               {user.username}
+              {roleBadge}
             </div>
             <div className="text-xs text-slate-500 truncate">
               {[`${user.first_name || ''} ${user.last_name || ''}`.trim(), user.email].filter(Boolean).join(' · ')}
             </div>
           </div>
-        </div>
-
-        <div className="flex flex-col gap-1 md:w-72">
-          {roleBadge}
-          <div className="flex flex-wrap gap-1">
-            {menuBadges()}
-          </div>
-        </div>
-
-        <div className="flex gap-2">
-          {user.profile?.can_cash_out && (
-            <Badge variant="success" size="sm" title={t('permissions.cash_out')} aria-label={t('permissions.cash_out')}>
-              <Coins className="h-3 w-3" />
-            </Badge>
-          )}
-          {user.profile?.can_sell_negative_stock && (
-            <Badge variant="warning" size="sm" title={t('permissions.negative_stock')} aria-label={t('permissions.negative_stock')}>
-              <Zap className="h-3 w-3" />
-            </Badge>
-          )}
-          {user.profile?.can_validate_sales && (
-            <Badge variant="primary" size="sm" title={t('permissions.can_validate_sales')} aria-label={t('permissions.can_validate_sales')}>
-              <CheckCircle className="h-3 w-3" />
-            </Badge>
-          )}
         </div>
 
         <div className="flex items-center justify-end gap-2 md:ml-auto">
