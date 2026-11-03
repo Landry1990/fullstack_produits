@@ -336,7 +336,7 @@ class ProduitViewSet(
         # La permission can_delete_product n'était vérifiée que côté client :
         # un appel API direct contournait le bloc. Sans credentials sudo, le
         # contrôle porte sur request.user (la modale mot de passe reste côté UX).
-        _, error_res = validate_sudo_mode(self.request, permission_attr='can_delete_product')
+        validation_user, error_res = validate_sudo_mode(self.request, permission_attr='can_delete_product')
         if error_res:
             raise PermissionDenied(error_res.data.get('detail', 'Permission refusée.'))
         from django.utils import timezone
@@ -350,7 +350,7 @@ class ProduitViewSet(
             request=self.request,
         )
         instance.is_active = False
-        instance.deleted_by = self.request.user
+        instance.deleted_by = validation_user or self.request.user
         instance.deleted_at = timezone.now()
         suffix = " (Produit Supprimé)"
         if suffix not in instance.name:

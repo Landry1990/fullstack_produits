@@ -494,7 +494,9 @@ export function useCommandeProductLines(
     setCommandeSortBy(sortBy);
     setCommandeProduits((prev) => {
       const sorted = prev.slice().sort((a, b) => {
-        if (sortBy === 'chrono') return (a.id || 0) - (b.id || 0);
+        // Lignes sans id (pas encore sauvegardées) en dernier — elles sont
+        // les plus récentes, pas en tête de liste.
+        if (sortBy === 'chrono') return (a.id ?? Number.MAX_SAFE_INTEGER) - (b.id ?? Number.MAX_SAFE_INTEGER);
 
         const prodA = typeof a.produit === 'object' ? a.produit : produitsList.find((p) => p.id === a.produit);
         const prodB = typeof b.produit === 'object' ? b.produit : produitsList.find((p) => p.id === b.produit);

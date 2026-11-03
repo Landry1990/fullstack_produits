@@ -92,8 +92,10 @@ class CommandeClotureMixin:
                     if error_res:
                         return error_res
 
-                    # Enregistrer l'utilisateur qui clôture
-                    commande.closed_by = request.user
+                    # Enregistrer le validateur réel : s'il y a eu une validation
+                    # sudo par un tiers (ex. pharmacien), c'est lui qui a autorisé
+                    # la clôture — sinon l'utilisateur connecté (repli sudo_utils).
+                    commande.closed_by = _validation_user or request.user
                     commande.date_cloture = timezone.now()
 
                     # Prefetch tous les produits

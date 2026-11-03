@@ -2,6 +2,43 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-11-02 — 🐛 Lignes de commande ET d'inventaire : ordre chronologique
+
+- `LigneInventaire` idem : ajout de `ordering = ['id']` dans Meta.
+
+## 2026-11-02 — 🐛 Lignes de commande : ordre chronologique garanti
+
+- `CommandeProduit` n'avait pas de `Meta.ordering` → à la réouverture d'un
+  brouillon, les lignes revenaient dans l'ordre interne de la DB, pas
+  chronologique — perte de position dans les longues saisies. Ajout de
+  `ordering = ['id']` (l'id auto-incrémenté = ordre de saisie).
+- Tri « chrono » du frontend : les lignes sans id (non sauvegardées)
+  passaient en tête `(a.id || 0)` ; elles vont désormais en fin de liste
+  (`?? MAX_SAFE_INTEGER`) — ce sont les plus récentes.
+
+## 2026-11-02 — 🐛 Audit sudo : 2 autres `*_by` enregistraient l'opérateur
+
+- Revue des ~30 sites `validate_sudo_mode` : suppression produit
+  (`produits.py` `perform_destroy`) et suppression groupée
+  (`produit_actions/bulk_ops.py` `bulk_delete`) enregistraient
+  `deleted_by = request.user` au lieu du `validation_user` retourné —
+  corrigés (validateur sudo, repli user connecté sans sudo).
+- Déjà corrects : `fournisseurs.deleted_by`, `avoirs.stock_decharge_by`/
+  `cancelled_by`, `inventaire.validated_by`, annulation facture
+  (`sales_actions`, `bulk_actions`) qui loguent le validateur.
+- Volontairement inchangés : `MouvementStock.user`, `MouvementCaisse.user`,
+  logs d'audit = l'opérateur qui saisit (le validateur est déjà tracé par
+  l'audit sudo de `sudo_utils`).
+
+## 2026-11-02 — 🐛 Clôture commande : `closed_by` = validateur sudo
+
+- `cloture_mixin.py` : `closed_by` enregistrait toujours `request.user`
+  (opérateur connecté) même quand un tiers validait la clôture via sudo
+  (ex. pharmacien). Désormais `closed_by = _validation_user` retourné par
+  `validate_sudo_mode` (repli sur request.user sans sudo). Le validateur
+  réel est l'autorisant — la trace doit le refléter. Les logs sudo/audit
+  des deux rôles existaient déjà via sudo_utils.
+
 ## 2026-11-02 — ✏️ Prix des lots éditables (correction d'erreur de saisie)
 
 - `serializers/products.py` : `StockLotUpdateSerializer` débloque

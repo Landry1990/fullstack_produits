@@ -102,6 +102,9 @@ class LigneInventaire(models.Model):
                 name='unique_inventaire_lot'
             )
         ]
+        # Ordre chronologique de saisie (id auto-incrémenté) — retrouver
+        # sa position à la réouverture d'un inventaire en cours.
+        ordering = ['id']
         indexes = [
             # Performance: recherche par inventaire (très fréquent)
             models.Index(fields=['inventaire', 'id'], name='idx_ligneinv_inventaire_id'),

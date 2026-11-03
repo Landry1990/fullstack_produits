@@ -309,6 +309,10 @@ class CommandeProduit(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        # Ordre chronologique : l'id auto-incrémenté reflète l'ordre de saisie.
+        # Sans ordering, la réouverture d'un brouillon retournait les lignes
+        # dans un ordre indéfini — on perdait sa position dans les longues saisies.
+        ordering = ['id']
         indexes = [
             # Perf (migration 0262) — index créé en CONCURRENTLY
             models.Index(fields=['created_at'], name='commandeproduit_created_idx'),

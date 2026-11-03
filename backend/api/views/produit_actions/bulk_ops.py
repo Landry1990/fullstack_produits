@@ -212,7 +212,7 @@ class ProduitBulkMixin:
             count = produits.count()
             
             with transaction.atomic():
-                produits.update(is_active=False, deleted_at=timezone.now(), deleted_by=request.user)
+                produits.update(is_active=False, deleted_at=timezone.now(), deleted_by=validation_user or request.user)
 
                 # Optional: suffix name for Corbeille
                 for p in produits:
