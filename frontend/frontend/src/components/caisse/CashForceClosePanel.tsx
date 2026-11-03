@@ -1,11 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
 import { AlertTriangle, Loader2, Power, RefreshCw, Store } from 'lucide-react';
 import { gooeyToast } from 'goey-toast';
 import { cashSessionService, type PosteVente } from '../../services/cashSessionService';
 import { formatDateTime } from '../../utils/dateUtils';
 import { Button } from '../shadcn/button';
-import { Badge } from '../shadcn/badge';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '../shadcn/table';

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, Package, ArrowRight } from 'lucide-react';
+import { Search, Package, ArrowRight, Zap } from 'lucide-react';
+import { useCommandesStore } from '../../stores/useCommandesStore';
 import { Button } from '../shadcn/button';
 import { Input } from '../shadcn/input';
 import { Select } from '../shadcn/select';
@@ -34,6 +35,8 @@ export function CommandeProductToolbar({
     onSearchChange,
 }: CommandeProductToolbarProps) {
     const { t } = useTranslation(['orders', 'common']);
+    const quickReceptionMode = useCommandesStore((s) => s.quickReceptionMode);
+    const setQuickReceptionMode = useCommandesStore((s) => s.setQuickReceptionMode);
 
     return (
         <div className="py-1.5 px-3 border-b border-slate-200 flex justify-between items-center shrink-0 flex-wrap gap-x-4 gap-y-2">
@@ -67,6 +70,20 @@ export function CommandeProductToolbar({
                         <option value="name">{t('orders:product_table.sort_options.name')}</option>
                         <option value="qty">{t('orders:product_table.sort_options.qty')}</option>
                     </Select>
+                )}
+                {(viewMode === 'CREATE' || (viewMode === 'EDIT' && selectedCommandeStatus === 'PREP')) && (
+                    <Button
+                        type="button"
+                        variant={quickReceptionMode ? 'default' : 'outline'}
+                        size="sm"
+                        className="h-7 px-2 text-caption gap-1"
+                        aria-pressed={quickReceptionMode}
+                        title={t('orders:product_table.quick_reception_tooltip')}
+                        onClick={() => setQuickReceptionMode(!quickReceptionMode)}
+                    >
+                        <Zap className="size-3" />
+                        {t('orders:product_table.quick_reception')}
+                    </Button>
                 )}
                 {saving && <span className="text-caption text-amber-600 animate-pulse font-bold">{t('orders:form.saving')}</span>}
             </div>

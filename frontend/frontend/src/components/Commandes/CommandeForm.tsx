@@ -1,13 +1,13 @@
-import React, { type RefObject, useState, useCallback, lazy, Suspense } from 'react';
+import React, { type RefObject, useState, useEffect, useMemo, useRef, useCallback, lazy, Suspense } from 'react';
 import type { Commande, Fournisseur, ProduitModel, CommandeProduit } from '../../types';
 import { useTranslation } from 'react-i18next';
 import { gooeyToast } from 'goey-toast';
-import { ArrowLeft, FileDown, FolderOpen, Plus, RotateCcw, Pause, Play, Check, Save, ScanLine, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, FileDown, FolderOpen, Plus, RotateCcw, Pause, Play, Check, Save, ScanLine, AlertTriangle, Send, Loader2, ChevronDown } from 'lucide-react';
 import CommandeProductTable from './CommandeProductTable';
 import { formatCurrency } from '../../utils/formatters';
+import api from '../../services/api';
 import { Button } from '../shadcn/button';
 import { Input } from '../shadcn/input';
-import { Select } from '../shadcn/select';
 import { Checkbox } from '../shadcn/checkbox';
 import { ProductSearch, type SearchResult } from '../common/ProductSearch';
 import { cn } from '../../lib/utils';
@@ -17,6 +17,116 @@ import { LoadingScreen } from '../common/LoadingScreen';
 
 const ExportCommandeModal = lazy(() => import('./ExportCommandeModal'));
 const DuplicateLotModal = lazy(() => import('./DuplicateLotModal'));
+
+// Combobox fournisseur avec recherche (même pattern que le fournisseurSearch d'AvoirsForm).
+// L'input reçoit la ref utilisée par le raccourci F4 (.focus()).
+interface FournisseurComboboxProps {
+    id?: string;
+    inputRef: RefObject<HTMLInputElement | null>;
+    value: string; // id du fournisseur sélectionné ('' = aucun)
+    onChange: (id: string) => void;
+    fournisseurs: Fournisseur[];
+    disabled?: boolean;
+    placeholder: string;
+    noResultLabel: string;
+}
+
+function FournisseurCombobox({
+    id,
+    inputRef,
+    value,
+    onChange,
+    fournisseurs,
+    disabled,
+    placeholder,
+    noResultLabel,
+}: FournisseurComboboxProps) {
+    const [open, setOpen] = useState(false);
+    const [query, setQuery] = useState('');
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    const selectedFournisseur = fournisseurs.find(f => String(f.id) === value);
+    const filteredFournisseurs = useMemo(() => {
+        const q = query.trim().toLowerCase();
+        if (!q) return fournisseurs;
+        return fournisseurs.filter(f => f.name.toLowerCase().includes(q));
+    }, [fournisseurs, query]);
+
+    // Fermer la liste sur clic extérieur
+    useEffect(() => {
+        if (!open) return;
+        const handleOutside = (e: MouseEvent) => {
+            if (!containerRef.current?.contains(e.target as Node)) setOpen(false);
+        };
+        document.addEventListener('mousedown', handleOutside);
+        return () => document.removeEventListener('mousedown', handleOutside);
+    }, [open]);
+
+    const selectFournisseur = (f: Fournisseur) => {
+        onChange(String(f.id));
+        setQuery('');
+        setOpen(false);
+    };
+
+    return (
+        <div ref={containerRef} className="relative">
+            <Input
+                ref={inputRef}
+                id={id}
+                type="text"
+                role="combobox"
+                aria-expanded={open}
+                autoComplete="off"
+                disableUppercase
+                className="h-9 text-sm bg-slate-100 border-slate-200 py-1 px-2 pr-6"
+                placeholder={placeholder}
+                // Ouvert : on affiche la recherche ; fermé : le fournisseur choisi
+                value={open ? query : (selectedFournisseur?.name ?? '')}
+                onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
+                onFocus={() => { setQuery(''); setOpen(true); }}
+                onKeyDown={(e) => {
+                    if (e.key === 'Escape') {
+                        setOpen(false);
+                    } else if (e.key === 'Enter' && open && filteredFournisseurs.length > 0) {
+                        e.preventDefault();
+                        selectFournisseur(filteredFournisseurs[0]);
+                    }
+                }}
+                disabled={disabled}
+            />
+            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 size-4 text-slate-400 pointer-events-none" />
+            {open && filteredFournisseurs.length > 0 && (
+                <div className="absolute top-full left-0 z-[100] mt-1 w-full min-w-[220px] bg-white rounded-xl shadow-lg border border-slate-200 max-h-60 overflow-y-auto">
+                    {filteredFournisseurs.map(f => (
+                        <div
+                            key={f.id}
+                            role="button"
+                            tabIndex={0}
+                            className={cn(
+                                "px-3 py-2 text-sm cursor-pointer border-b border-slate-100 last:border-0 hover:bg-indigo-50 transition-colors",
+                                String(f.id) === value && "bg-indigo-50 font-semibold text-indigo-700"
+                            )}
+                            onMouseDown={(e) => { e.preventDefault(); selectFournisseur(f); }}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    selectFournisseur(f);
+                                }
+                            }}
+                        >
+                            {f.name}
+                        </div>
+                    ))}
+                </div>
+            )}
+            {open && filteredFournisseurs.length === 0 && (
+                <div className="absolute top-full left-0 z-[100] mt-1 w-full min-w-[220px] bg-white rounded-xl shadow-lg border border-slate-200">
+                    <div className="px-3 py-2 text-xs text-slate-400">{noResultLabel}</div>
+                </div>
+            )}
+        </div>
+    );
+}
 
 interface FieldConfig {
     name: string;
@@ -60,7 +170,8 @@ export interface CommandeFormProps {
     
     // Search
     searchInputRef: RefObject<HTMLInputElement>;
-    fournisseurSelectRef: RefObject<HTMLSelectElement>;
+    // HTMLElement : pointe désormais sur l'input du combobox fournisseur (F4 appelle .focus())
+    fournisseurSelectRef: RefObject<HTMLElement | null>;
     searchProduitQuery: string;
     setSearchProduitQuery: (q: string) => void;
     handleSearchKeyDown: (e: React.KeyboardEvent) => void;
@@ -89,6 +200,7 @@ export interface CommandeFormProps {
     handleTableFieldKeyDown: (e: React.KeyboardEvent, rowIndex: number, fieldIndex: number) => void;
     handleSellingPriceBlur?: (index: number) => void;
     onRemoveProduct: (index: number) => void;
+    onDuplicateProduct?: (index: number) => void;
     onCreateAvoir?: () => void; // Optional handler for creating credit note
     commandeSortBy?: 'chrono' | 'stock' | 'name' | 'qty';
     onSortProduits?: (sortBy: 'chrono' | 'stock' | 'name' | 'qty') => void;
@@ -141,7 +253,7 @@ export default function CommandeForm({
     fileInputRef,
     setIsCreateProduitModalOpen,
     searchInputRef,
-    fournisseurSelectRef: _fournisseurSelectRef,
+    fournisseurSelectRef,
     searchProduitQuery,
     setSearchProduitQuery,
     handleSearchKeyDown,
@@ -165,6 +277,7 @@ export default function CommandeForm({
     handleSellingPriceBlur,
     handleTableFieldKeyDown,
     onRemoveProduct,
+    onDuplicateProduct,
     onCreateAvoir,
     commandeSortBy,
     onSortProduits,
@@ -182,9 +295,37 @@ export default function CommandeForm({
     const { t } = useTranslation(['orders', 'common']);
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const [datamatrixEnabled, setDatamatrixEnabled] = useState(true);
+    const [sendingOrder, setSendingOrder] = useState(false);
 
     // Sécurité : une commande clôturée ne doit jamais être éditable depuis le formulaire.
     const isClosedOrder = selectedCommande?.status === 'CLOT';
+
+    // « Marquer envoyée » : exporte le CSV de la commande puis la passe en ATT
+    // (en attente de livraison) via le même handler que « Mettre en attente ».
+    const handleSendToProvider = async () => {
+        if (!selectedCommande || !onMettreEnAttente) return;
+        try {
+            setSendingOrder(true);
+            const response = await api.get(
+                `commandes/${selectedCommande.id}/export/?cip_field=cip1&export_format=csv`,
+                { responseType: 'blob' }
+            );
+            const url = window.URL.createObjectURL(response.data);
+            const link = document.createElement('a');
+            const filenameMatch = response.headers['content-disposition']?.match(/filename="(.+)"/);
+            link.href = url;
+            link.setAttribute('download', filenameMatch ? filenameMatch[1] : `commande_${selectedCommande.id}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode?.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            onMettreEnAttente();
+        } catch {
+            gooeyToast.error(t('orders:messages.send_export_error'));
+        } finally {
+            setSendingOrder(false);
+        }
+    };
 
     const handleNotFound = useCallback(() => {
         searchInputRef.current?.focus();
@@ -263,18 +404,16 @@ export default function CommandeForm({
                     <label htmlFor="fournisseur-select" className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1">
                       {t('orders:form.provider_label')}
                     </label>
-                    <Select
+                    <FournisseurCombobox
+                      inputRef={fournisseurSelectRef as RefObject<HTMLInputElement | null>}
                       id="fournisseur-select"
                       value={newCommandeFournisseurId}
-                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNewCommandeFournisseurId(e.target.value)}
+                      onChange={setNewCommandeFournisseurId}
+                      fournisseurs={fournisseurs}
                       disabled={isClosedOrder}
-                      className="h-9 text-sm bg-slate-100 border-slate-200 py-1 px-2 pr-6"
-                    >
-                      <option value="" disabled>{t('orders:form.provider_placeholder')}</option>
-                      {fournisseurs.map(f => (
-                        <option key={f.id} value={String(f.id)}>{f.name}</option>
-                      ))}
-                    </Select>
+                      placeholder={t('orders:form.provider_search_placeholder')}
+                      noResultLabel={t('orders:form.provider_no_result')}
+                    />
                   </div>
 
                   {/* Facture */}
@@ -386,8 +525,8 @@ export default function CommandeForm({
                         }
                         setIsExportModalOpen(true);
                       }}
-                      disabled={isClosedOrder}
-                      title={t('orders:form.export_btn')}
+                      disabled={isClosedOrder || !selectedCommande}
+                      title={!selectedCommande ? t('orders:form.export_requires_save') : t('orders:form.export_btn')}
                       aria-label={t('orders:form.export_btn')}
                     >
                       <FileDown className="size-4" />
@@ -438,6 +577,7 @@ export default function CommandeForm({
                 handleSellingPriceBlur={handleSellingPriceBlur}
                 handleTableFieldKeyDown={handleTableFieldKeyDown}
                 onRemoveProduct={onRemoveProduct}
+                onDuplicateProduct={onDuplicateProduct}
                 onEditProduct={onEditProduct}
                 onViewProductDetails={onViewProductDetails}
                 commandeSortBy={commandeSortBy}
@@ -489,6 +629,21 @@ export default function CommandeForm({
                 </div>
 
                 <div className="flex gap-2">
+                {/* Marquer envoyée - export CSV + passage en ATT (commande PREP uniquement) */}
+                {viewMode === 'EDIT' && onMettreEnAttente && selectedCommande?.status === 'PREP' && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-1 border-indigo-300 text-indigo-700 hover:bg-indigo-50"
+                    onClick={handleSendToProvider}
+                    disabled={saving || executingAction || sendingOrder}
+                    title={t('orders:details.mark_sent_help')}
+                  >
+                    {sendingOrder ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+                    {t('orders:details.mark_sent')}
+                  </Button>
+                )}
                 {/* Mettre en attente - visible uniquement en mode EDIT */}
                 {viewMode === 'EDIT' && onMettreEnAttente && selectedCommande?.status !== 'CLOT' && (
                   <Button

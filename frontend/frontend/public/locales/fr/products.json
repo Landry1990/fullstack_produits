@@ -64,7 +64,8 @@
             "identification": "Identification",
             "stock_location": "Stock & Localisation",
             "classification": "Classification",
-            "pricing": "Tarification"
+            "pricing": "Tarification",
+            "options": "Options"
         },
         "validation": {
             "required_fields": "Veuillez remplir tous les champs obligatoires (*)",
@@ -167,6 +168,14 @@
         "new_shelf_stock": "Nouveau Stock Rayon",
         "new_reserve_stock": "Nouveau Stock Réserve",
         "difference": "Différence :",
+        "mode_absolute": "Nouvelle valeur",
+        "mode_delta": "Écart ±",
+        "delta_quantity": "Écart (ex. +5, -3)",
+        "delta_shelf": "Écart rayon (ex. +5, -3)",
+        "delta_reserve": "Écart réserve (ex. +5, -3)",
+        "delta_placeholder": "Ex: +5 ou -3",
+        "result": "Résultat : {{value}}",
+        "delta_invalid": "La quantité résultante ne peut pas être négative",
         "reason_type": "Type de motif *",
         "lot_concerned": "Lot concerné",
         "lot_number": "Numéro de lot",

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { gooeyToast } from 'goey-toast';
 import { AlertTriangle, RefreshCw, Trash2 } from 'lucide-react';
 import type { TFunction } from 'i18next';
@@ -30,6 +30,7 @@ interface UseCommandeProductLinesReturn {
   handleDuplicateAddNewLine: () => void;
   handleDuplicateIncrementExisting: (relativeIndex: number) => void;
   removeProductFromCommande: (index: number) => void;
+  duplicateCommandeProduit: (index: number) => void;
   toggleRowSelection: (index: number) => void;
   toggleAllRows: () => void;
   deleteSelectedRows: () => void;
@@ -42,7 +43,7 @@ interface UseCommandeProductLinesReturn {
   handleSellingPriceBlur: (index: number) => void;
   handleTableFieldKeyDown: (e: React.KeyboardEvent, rowIndex: number, fieldIndex: number) => void;
   handleSortProduits: (sortBy: 'chrono' | 'stock' | 'name' | 'qty') => void;
-  handleTransferSuccess: () => void;
+  handleTransferSuccess: (transferredCount: number, supplierName: string, newCommandeId: number) => void;
 }
 
 export function useCommandeProductLines(
@@ -65,8 +66,37 @@ export function useCommandeProductLines(
 
   const commandeProduits = useCommandesStore((s) => s.commandeProduits);
   const setCommandeProduits = useCommandesStore((s) => s.setCommandeProduits);
+  const quickReceptionMode = useCommandesStore((s) => s.quickReceptionMode);
   const _commandeSortBy = useCommandesStore((s) => s.commandeSortBy);
   const setCommandeSortBy = useCommandesStore((s) => s.setCommandeSortBy);
+
+  // Reprise de saisie : à la réouverture d'un brouillon, scroll + flash
+  // sur la dernière ligne éditée (mémorisée dans localStorage).
+  const resumeDoneForRef = useRef<number | null>(null);
+  useEffect(() => {
+    const cid = selectedCommande?.id;
+    if (!cid || resumeDoneForRef.current === cid) return;
+    resumeDoneForRef.current = cid;
+    let key: string | null = null;
+    try { key = localStorage.getItem(`zenith_cmd_last_line_${cid}`); } catch { /* ignore */ }
+    if (!key) return;
+    const t = setTimeout(() => {
+      const list = useCommandesStore.getState().commandeProduits || [];
+      const isLine = !key.startsWith('p');
+      const id = Number(isLine ? key : key.slice(1));
+      const idx = list.findIndex((p) =>
+        isLine ? p.id === id : (typeof p.produit === 'object' ? p.produit?.id : p.produit) === id);
+      if (idx < 0) return;
+      const input = document.querySelector(`[data-row="${idx}"][data-field="quantity"]`);
+      const row = input?.closest('tr');
+      row?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (row) {
+        row.classList.add('ring-2', 'ring-inset', 'ring-amber-400', 'bg-amber-50');
+        setTimeout(() => row.classList.remove('ring-2', 'ring-inset', 'ring-amber-400', 'bg-amber-50'), 2600);
+      }
+    }, 400);
+    return () => clearTimeout(t);
+  }, [selectedCommande?.id]);
   const selectedRows = useCommandesStore((s) => s.selectedRows);
   const setSelectedRows = useCommandesStore((s) => s.setSelectedRows);
   const setFocusedField = useCommandesStore((s) => s.setFocusedField);
@@ -87,8 +117,12 @@ export function useCommandeProductLines(
   ];
 
   function handleTableFieldKeyDown(e: React.KeyboardEvent, rowIndex: number, fieldIndex: number) {
+    // Keep real column indexes (including DIR's euro price) and editability intact.
+    const isNavigationField = (index: number) => fieldsConfig[index].editable && (
+      !quickReceptionMode || ['quantity', 'lot', 'date_expiration'].includes(fieldsConfig[index].name)
+    );
     const moveToNextField = () => {
-      if (commandeType === 'DIR' && fieldIndex === 1) {
+      if (!quickReceptionMode && commandeType === 'DIR' && fieldIndex === 1) {
         setTimeout(() => {
           const euroInput = document.querySelector(`input[data-row="${rowIndex}"][data-field="prix_euro"]`) as HTMLInputElement;
           euroInput?.focus();
@@ -98,7 +132,7 @@ export function useCommandeProductLines(
       }
 
       let nextFieldIndex = fieldIndex + 1;
-      while (nextFieldIndex < fieldsConfig.length && !fieldsConfig[nextFieldIndex].editable) nextFieldIndex++;
+      while (nextFieldIndex < fieldsConfig.length && !isNavigationField(nextFieldIndex)) nextFieldIndex++;
 
       if (nextFieldIndex < fieldsConfig.length) {
         setFocusedField({ row: rowIndex, field: nextFieldIndex });
@@ -117,7 +151,7 @@ export function useCommandeProductLines(
 
     const moveToPreviousField = () => {
       let prevFieldIndex = fieldIndex - 1;
-      while (prevFieldIndex >= 0 && !fieldsConfig[prevFieldIndex].editable) prevFieldIndex--;
+      while (prevFieldIndex >= 0 && !isNavigationField(prevFieldIndex)) prevFieldIndex--;
 
       if (prevFieldIndex >= 0) {
         setFocusedField({ row: rowIndex, field: prevFieldIndex });
@@ -325,6 +359,26 @@ export function useCommandeProductLines(
     setSearchProduitQuery('');
   }
 
+  function duplicateCommandeProduit(index: number) {
+    // Multi-lots : même produit reçu en plusieurs lots → dupliquer la ligne.
+    // On retire l'id (nouvelle ligne à créer) et le lot/péremption (l'objet
+    // de la duplication est justement de saisir l'autre lot).
+    setCommandeProduits((prev) => {
+      const src = prev[index];
+      if (!src) return prev;
+      const clone = { ...src, id: undefined, lot: '', date_expiration: '' };
+      const next = [...prev];
+      next.splice(index + 1, 0, clone);
+      return next;
+    });
+    const newRowIndex = index + 1;
+    setTimeout(() => {
+      const lotInput = document.querySelector(`input[data-row="${newRowIndex}"][data-field="lot"]`) as HTMLInputElement;
+      lotInput?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      lotInput?.focus();
+    }, 100);
+  }
+
   function removeProductFromCommande(index: number) {
     setCommandeProduits((prev) => prev.filter((_, i) => i !== index));
     setSelectedRows((prev) => {
@@ -366,10 +420,11 @@ export function useCommandeProductLines(
     setIsTransferModalOpen(true);
   }
 
-  function handleTransferSuccess() {
+  function handleTransferSuccess(transferredCount: number, supplierName: string) {
     setCommandeProduits((prev) => prev.filter((_, idx) => !selectedRows.has(idx)));
     setSelectedRows(new Set());
     setIsTransferModalOpen(false);
+    gooeyToast.success(t('orders:messages.transfer_success', { count: transferredCount, supplier: supplierName }));
   }
 
   function updateCommandeProduitField(
@@ -381,6 +436,17 @@ export function useCommandeProductLines(
       const updatedList = prev.map((item, i) => {
         if (i === index) {
           const newItem = { ...item, [field]: value };
+
+          // Reprise de saisie : mémoriser la dernière ligne éditée de ce
+          // brouillon pour scroller dessus à la réouverture.
+          try {
+            const cid = selectedCommande?.id;
+            if (cid) {
+              const prodId = item.produit && typeof item.produit === 'object' ? item.produit.id : item.produit;
+              const key = item.id ?? (prodId != null ? `p${prodId}` : null);
+              if (key != null) localStorage.setItem(`zenith_cmd_last_line_${cid}`, String(key));
+            }
+          } catch { /* stockage indisponible */ }
 
           if (commandeType === 'DIR' && field === 'prix_euro') {
             const pEuro = normalizeNumberInput(String(newItem.prix_euro || 0));
@@ -399,6 +465,12 @@ export function useCommandeProductLines(
                 newItem.selling_price = Math.round(sellingTTC).toString();
               }
             }
+          }
+
+          if (field === 'price') {
+            // Le coût réel suit le prix d'achat saisi — sinon le lot et le
+            // PMP à la clôture héritent l'ancien cost_price du produit.
+            newItem.price_cost = newItem.price;
           }
 
           if (field === 'price' || field === 'marge' || field === 'tva') {
@@ -530,6 +602,7 @@ export function useCommandeProductLines(
     handleDuplicateAddNewLine,
     handleDuplicateIncrementExisting,
     removeProductFromCommande,
+    duplicateCommandeProduit,
     toggleRowSelection,
     toggleAllRows,
     deleteSelectedRows,

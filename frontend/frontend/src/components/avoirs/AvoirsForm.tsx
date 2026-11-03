@@ -12,6 +12,7 @@ import { Button } from '../shadcn/button';
 import { Badge } from '../shadcn/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../shadcn/card';
 import { Input } from '../ui/Input';
+import { Select } from '../shadcn/select';
 import { Textarea } from '../ui/Textarea';
 import { Label } from '../ui/Label';
 import {
@@ -31,6 +32,8 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
         editingAvoirId,
         observations,
         setObservations,
+        typeAvoir,
+        setTypeAvoir,
         lignes,
         fournisseurSearch,
         setFournisseurSearch,
@@ -209,6 +212,17 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                                 {showFournisseurList && (
                                     <div className="fixed inset-0 z-[45]" onClick={() => setShowFournisseurList(false)} aria-hidden="true" />
                                 )}
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <Label htmlFor="avoir-type">{t('stock:avoirs.form.type_label')}</Label>
+                                <Select id="avoir-type" value={typeAvoir} onChange={(e) => setTypeAvoir(e.target.value)}>
+                                    <option value="PERIME">{t('stock:avoirs.types.perime')}</option>
+                                    <option value="AVARIE">{t('stock:avoirs.types.avarie')}</option>
+                                    <option value="NON_FACTURE">{t('stock:avoirs.types.non_facture')}</option>
+                                    <option value="ERREUR">{t('stock:avoirs.types.erreur_livraison')}</option>
+                                    <option value="AUTRE">{t('stock:avoirs.types.autre')}</option>
+                                </Select>
                             </div>
 
                             <div className="space-y-1.5">

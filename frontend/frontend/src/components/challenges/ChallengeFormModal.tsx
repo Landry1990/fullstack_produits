@@ -70,9 +70,7 @@ interface FormState {
 }
 
 const STATUTS: Challenge['statut'][] = ['BROU', 'ENC', 'CLO', 'ANN'];
-const TYPES_OBJECTIF: ChallengeTypeObjectif[] = ['CA', 'BOITES', 'POINTS'];
 const MODES: ChallengeMode[] = ['INDIVIDUEL', 'EQUIPES'];
-const SOURCES: ChallengeSourceProduits[] = ['MANUEL', 'AUTO_PEREMPTION'];
 
 const EMPTY_FORM: FormState = {
     nom: '',

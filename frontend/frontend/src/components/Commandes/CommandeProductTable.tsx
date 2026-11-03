@@ -1,6 +1,7 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Package } from 'lucide-react';
+import api from '../../services/api';
 import type { CommandeProduit, ProduitModel, Commande } from '../../types';
 import { usePharmacySettings } from '../../context/PharmacySettingsContext';
 import { Checkbox } from '../shadcn/checkbox';
@@ -31,6 +32,7 @@ interface CommandeProductTableProps {
     handleTableFieldKeyDown: (e: React.KeyboardEvent, rowIndex: number, fieldIndex: number) => void;
     handleSellingPriceBlur?: (index: number) => void;
     onRemoveProduct: (index: number) => void;
+    onDuplicateProduct?: (index: number) => void;
     onEditProduct?: (produitId: number) => void;
     onCreateAvoir?: () => void;
     commandeSortBy?: SortBy;
@@ -57,12 +59,54 @@ export default function CommandeProductTable({
     handleSellingPriceBlur,
     handleTableFieldKeyDown,
     onRemoveProduct,
+    onDuplicateProduct,
     onEditProduct,
     commandeSortBy,
     onSortProduits,
     highlightedIndex = null,
 }: CommandeProductTableProps) {
     const { t } = useTranslation(['orders', 'common']);
+
+    // Fournisseur le moins cher par produit (min price_cost sur commandes
+    // clôturées) — signale en ligne quand un autre fournisseur l'a moins cher.
+    const [cheaperMap, setCheaperMap] = useState<Map<number, { fournisseur_id: number; fournisseur_name: string; price: number }>>(new Map());
+    const idsKey = commandeProduits
+        .map(p => (typeof p.produit === 'object' ? p.produit?.id : p.produit) ?? 0)
+        .filter(Boolean)
+        .join(',');
+    useEffect(() => {
+        if (!idsKey) { setCheaperMap(new Map()); return; }
+        let cancelled = false;
+        api.get('commande-produits/cheaper-suppliers/', { params: { ids: idsKey } })
+            .then(r => {
+                if (cancelled) return;
+                setCheaperMap(new Map(
+                    Object.entries(r.data || {}).map(([k, v]) => [Number(k), v as { fournisseur_id: number; fournisseur_name: string; price: number }])
+                ));
+            })
+            .catch(() => { /* badge facultatif */ });
+        return () => { cancelled = true; };
+    }, [idsKey]);
+
+    // Rang chronologique de chaque ligne (ordre de saisie) — stable quel
+    // que soit le tri d'affichage : la ligne entrée 3ᵉ reste « 03 ».
+    const chronoRank = useMemo(() => {
+        const sorted = [...commandeProduits].sort(
+            (a, b) => (a.id ?? Number.MAX_SAFE_INTEGER) - (b.id ?? Number.MAX_SAFE_INTEGER)
+        );
+        const m = new Map<CommandeProduit, number>();
+        sorted.forEach((p, i) => m.set(p, i + 1));
+        return m;
+    }, [commandeProduits]);
+
+    // Un autre fournisseur l'a moins cher que le prix saisi ?
+    const cheaperFor = (p: CommandeProduit) => {
+        const prodId = typeof p.produit === 'object' ? p.produit?.id : p.produit;
+        const cs = prodId ? cheaperMap.get(prodId) : undefined;
+        if (!cs || !(cs.price < Number(p.price || 0))) return null;
+        if (cs.fournisseur_id && selectedCommande?.fournisseur && cs.fournisseur_id === selectedCommande.fournisseur) return null;
+        return { name: cs.fournisseur_name, price: cs.price };
+    };
     const { settings: pharmacySettings } = usePharmacySettings();
     const marginThreshold = pharmacySettings?.min_margin_threshold ?? 1.34;
 
@@ -160,6 +204,8 @@ export default function CommandeProductTable({
                                         focusedField={focusedField}
                                         selectedRows={selectedRows}
                                         highlightedIndex={highlightedIndex}
+                                        cheaperSupplier={cheaperFor(p)}
+                                        lineNumber={chronoRank.get(p)}
                                         isExpanded={expandedRow === index}
                                         marginThreshold={marginThreshold}
                                         searchQuery={searchQuery}
@@ -169,6 +215,7 @@ export default function CommandeProductTable({
                                         handleSellingPriceBlur={handleSellingPriceBlur}
                                         onToggleExpand={() => setExpandedRow(expandedRow === index ? null : index)}
                                         onDeleteProduct={() => setProductToDelete(index)}
+                                        onDuplicateProduct={onDuplicateProduct ? () => onDuplicateProduct(index) : undefined}
                                         onEditProduct={(() => {
                                             const produitId = p.produit && typeof p.produit === 'object' ? p.produit.id : p.produit;
                                             return onEditProduct && produitId ? () => onEditProduct(produitId as number) : undefined;

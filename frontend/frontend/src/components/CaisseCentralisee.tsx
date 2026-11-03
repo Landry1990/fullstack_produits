@@ -67,6 +67,7 @@ const _navigate = useNavigate()
   
   // États pour le multi-caisse et sessions — gérés par useCaisseSession
   const {
+    sessionInitialized,
     postesCaisses,
     selectedPosteCaisseId,
     setSelectedPosteCaisseId,
@@ -81,6 +82,25 @@ const _navigate = useNavigate()
   } = useCaisseSession()
 
   const [showOpenSessionModal, setShowOpenSessionModal] = useState(false)
+  const sessionPromptedRef = useRef(false)
+
+  useEffect(() => {
+    if (!sessionInitialized || !user || sessionPromptedRef.current) return
+    const key = `caisse-session-prompted:${user.id}`
+    try {
+      if (sessionStorage.getItem(key)) {
+        sessionPromptedRef.current = true
+        return
+      }
+    } catch { /* Le ref reste utilisable si le stockage est indisponible. */ }
+    const hasAvailableCaisse = postesCaisses.some(poste =>
+      !poste.est_actif && !('actif' in poste && poste.actif === false))
+    if (!myActivePoste && !hasAvailableCaisse) return
+    sessionPromptedRef.current = true
+    try { sessionStorage.setItem(key, '1') } catch { /* Stockage facultatif. */ }
+    // Ne pas utiliser autoOpen : cette prop ouvre aussi le poste sans confirmation.
+    if (!myActivePoste) setShowOpenSessionModal(true)
+  }, [sessionInitialized, myActivePoste, postesCaisses, user])
   const [closingReport, setClosingReport] = useState<unknown>(null)
   const [showClosingReport, setShowClosingReport] = useState(false)
   const { sudoState, requireSudo, closeSudo } = useSudo()
@@ -109,7 +129,7 @@ const _navigate = useNavigate()
     } finally {
       fetchingRef.current = false
     }
-  }, [selectedPosteCaisseId])
+  }, [selectedPosteCaisseId, t])
 
 
   // Hook pour la logique des coupons

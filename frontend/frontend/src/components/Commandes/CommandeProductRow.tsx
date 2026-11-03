@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, Info, Trash2 } from 'lucide-react';
+import { AlertTriangle, Copy, Info, Trash2 } from 'lucide-react';
 import type { CommandeProduit, ProduitModel } from '../../types';
 import { Button } from '../shadcn/button';
 import { Input } from '../shadcn/input';
 import { Checkbox } from '../shadcn/checkbox';
 import { TableRow, TableCell } from '../shadcn/table';
-import { normalizeNumberInput } from '../../utils/formatters';
+import { normalizeNumberInput, formatCurrency } from '../../utils/formatters';
 import {
     type FieldConfig,
     type FieldType,
@@ -28,6 +28,8 @@ interface CommandeProductRowProps {
     focusedField: { row: number; field: number } | null;
     selectedRows: Set<number>;
     highlightedIndex?: number | null;
+    cheaperSupplier?: { name: string; price: number } | null;
+    lineNumber?: number;
     isExpanded: boolean;
     marginThreshold: number;
     searchQuery: string;
@@ -37,6 +39,7 @@ interface CommandeProductRowProps {
     handleSellingPriceBlur?: (index: number) => void;
     onToggleExpand: () => void;
     onDeleteProduct: () => void;
+    onDuplicateProduct?: () => void;
     onEditProduct?: () => void;
 }
 
@@ -49,6 +52,8 @@ export function CommandeProductRow({
     focusedField,
     selectedRows,
     highlightedIndex = null,
+    cheaperSupplier = null,
+    lineNumber,
     isExpanded: _isExpanded,
     marginThreshold,
     searchQuery,
@@ -58,6 +63,7 @@ export function CommandeProductRow({
     handleSellingPriceBlur,
     onToggleExpand,
     onDeleteProduct,
+    onDuplicateProduct,
     onEditProduct,
 }: CommandeProductRowProps) {
     const { t, i18n } = useTranslation(['orders', 'common']);
@@ -116,6 +122,18 @@ export function CommandeProductRow({
                 <TableCell className="pl-2 py-0.5 min-w-[260px] w-full">
                     <div className="font-medium text-sm">
                         <div className="flex min-w-0 items-center gap-1">
+                            {/* Repère de position — l'ordre est chronologique (id croissant) */}
+                            <span className="shrink-0 w-6 text-[10px] font-black text-slate-400 tabular-nums select-none">
+                                {String(lineNumber ?? index + 1).padStart(2, '0')}
+                            </span>
+                            {cheaperSupplier && (
+                                <span
+                                    className="shrink-0 inline-flex items-center rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200"
+                                    title={t('orders:product_table.cheaper_tooltip')}
+                                >
+                                    ↓ {cheaperSupplier.name} {formatCurrency(Math.round(cheaperSupplier.price))}
+                                </span>
+                            )}
                             <span
                                 className={`min-w-0 ${isDeleted ? 'italic text-slate-400' : ''} whitespace-nowrap overflow-hidden text-ellipsis ${onEditProduct ? 'cursor-pointer hover:text-blue-600 hover:underline' : ''}`}
                                 title={produitName}
@@ -383,6 +401,11 @@ export function CommandeProductRow({
                         <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0 text-blue-600" onClick={onToggleExpand} aria-label={t('common:details')}>
                             <Info className="size-3.5" />
                         </Button>
+                        {onDuplicateProduct && (
+                            <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0 text-emerald-600" onClick={onDuplicateProduct} aria-label={t('orders:product_table.duplicate_line')} title={t('orders:product_table.duplicate_line')}>
+                                <Copy className="size-3.5" />
+                            </Button>
+                        )}
                         <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-600" onClick={onDeleteProduct} aria-label={t('common:delete')}>
                             <Trash2 className="size-3.5" />
                         </Button>

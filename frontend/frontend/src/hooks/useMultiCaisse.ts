@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { cashSessionService, type PosteCaisse, type PosteVente } from '../services/cashSessionService'
 import { usePosteCaisseMode } from '../context/PosteCaisseModeContext'
+import { useInvoiceSettings } from './useInvoiceSettings'
 import { logger } from '../utils/logger'
 
 export type UseMultiCaisseOptions = Record<string, never>
@@ -22,6 +23,7 @@ export interface UseMultiCaisseReturn {
 }
 
 export function useMultiCaisse(_options: UseMultiCaisseOptions = {}): UseMultiCaisseReturn {
+    const { settings: invoiceSettings } = useInvoiceSettings()
     const [centralizedCashRegister, setCentralizedCashRegister] = useState<boolean>(true)
     const [isMultiCaisse, setIsMultiCaisse] = useState<boolean>(false)
     const [postesCaisses, setPostesCaisses] = useState<PosteCaisse[]>([])
@@ -34,6 +36,15 @@ export function useMultiCaisse(_options: UseMultiCaisseOptions = {}): UseMultiCa
         selectPoste,
         refresh: refreshActivePoste
     } = usePosteCaisseMode()
+
+    // Le réglage invoice-settings pilote le mode : true = ventes envoyées en
+    // caisse centralisée, false = le vendeur encaisse directement sur son poste.
+    // True par défaut tant que les réglages ne sont pas chargés (comportement historique).
+    useEffect(() => {
+        if (invoiceSettings) {
+            setCentralizedCashRegister(invoiceSettings.centralized_cash_register ?? true)
+        }
+    }, [invoiceSettings])
 
     const selectedPosteCaisseIdRef = useRef<number | null>(null)
     selectedPosteCaisseIdRef.current = selectedPosteCaisseId

@@ -136,6 +136,20 @@ export function PrintingTab({ formData, handleChange, t, invSettings, updateInvS
         </div>
       </div>
 
+      {invSettings && (
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 space-y-2">
+          <label className="flex items-center justify-between gap-4" htmlFor="auto-print-ticket">
+            <span className="text-sm font-bold text-slate-500">{t('labels.auto_print_ticket')}</span>
+            <Checkbox
+              id="auto-print-ticket"
+              checked={invSettings.auto_print_ticket ?? false}
+              onCheckedChange={(checked) => updateInvSettings({ auto_print_ticket: !!checked })}
+            />
+          </label>
+          <p className="text-xs text-slate-400">{t('hints.auto_print_ticket')}</p>
+        </div>
+      )}
+
       {/* Section: Format & Multi-Caisse */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="bg-white shadow-xl border border-slate-200 rounded-2xl">
@@ -204,6 +218,20 @@ export function PrintingTab({ formData, handleChange, t, invSettings, updateInvS
                 <p className="text-xs text-slate-500">
                   {t('hints.centralized_cash_register')}
                 </p>
+                {invSettings?.centralized_cash_register && (
+                  <>
+                    <div className="flex items-center justify-between border-t border-indigo-100 pt-4">
+                      <span className="text-sm font-bold">{t('labels.require_validator_password')}</span>
+                      <Checkbox
+                        checked={invSettings?.require_validator_password !== false}
+                        onCheckedChange={(checked) => updateInvSettings({ require_validator_password: !!checked })}
+                      />
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      {t('hints.require_validator_password')}
+                    </p>
+                  </>
+                )}
               </div>
             )}
           </div>

@@ -9,6 +9,7 @@ export interface InvoiceSettings {
     is_multi_caisse: boolean;
     centralized_cash_register: boolean;
     require_validator_password: boolean;
+    auto_print_ticket: boolean;
     show_profit_on_invoice: boolean;
     default_invoice_type: string;
 }

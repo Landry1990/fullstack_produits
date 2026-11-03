@@ -35,6 +35,9 @@ export interface CommandeProduit {
     produit_nom?: string
     quantity: number
     unites_gratuites?: number
+    // Quantité réellement reçue (écart commandé/reçu) — null = non saisi,
+    // la clôture retombe alors sur `quantity`.
+    quantity_received?: number | null
     price: string
     price_cost?: string
     selling_price?: string

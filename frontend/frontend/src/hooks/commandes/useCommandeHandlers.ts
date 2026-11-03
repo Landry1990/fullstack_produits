@@ -74,20 +74,14 @@ export function useCommandeHandlers(params: UseCommandeHandlersParams) {
         // Vérifier les produits sans date de péremption
         const produits = (commandeProduits.length > 0 ? commandeProduits : (selectedCommande?.produits || [])) as CommandeProduit[];
         const sansPeremption = produits.filter((p) => !p.date_expiration);
+        const warnings: string[] = [];
 
         if (sansPeremption.length > 0) {
             const noms = sansPeremption.map((p) => {
                 const nom = typeof p.produit === 'object' ? (p.produit as ProduitModel).name : p.produit_nom;
                 return `   • ${nom || t('orders:messages.product_reference', { id: String(p.id || t('common:unknown')) })}`;
             });
-            const confirmMissing = await confirm({
-                title: t('orders:messages.missing_expiration_title'),
-                message: t('orders:messages.missing_expiration_message', { count: sansPeremption.length, products: noms.join('\n') }),
-                confirmText: t('orders:messages.missing_expiration_continue'),
-                cancelText: t('orders:messages.missing_expiration_verify'),
-                variant: 'warning'
-            });
-            if (!confirmMissing) return;
+            warnings.push(`${t('orders:messages.section_missing_expiration')}\n${noms.join('\n')}`);
         }
 
         // Vérifier les produits vendus à perte (prix de vente HT < prix d'achat)
@@ -106,17 +100,16 @@ export function useCommandeHandlers(params: UseCommandeHandlersParams) {
                 const productName = nom || t('orders:messages.product_reference', { id: String(p.id || t('common:unknown')) });
                 return t('orders:messages.loss_product_line', { nom: productName, price, sellingHT });
             });
-            const confirmPerte = await confirm({
-                title: t('orders:messages.selling_below_cost_title'),
-                message: t('orders:messages.selling_below_cost_message', { count: produitsEnPerte.length, products: nomsPerte.join('\n') }),
-                confirmText: t('orders:messages.selling_below_cost_confirm'),
-                cancelText: t('common:cancel'),
-                variant: 'warning'
-            });
-            if (!confirmPerte) return;
+            warnings.push(`${t('orders:messages.section_selling_below_cost')}\n${nomsPerte.join('\n')}`);
         }
 
-        const confirmed = await confirm({
+        const confirmed = await confirm(warnings.length > 0 ? {
+            title: t('orders:messages.close_warnings_title'),
+            message: [t('orders:messages.close_warnings_intro'), ...warnings, t('orders:messages.close_confirm')].join('\n\n'),
+            confirmText: t('orders:details.close'),
+            cancelText: t('orders:messages.missing_expiration_verify'),
+            variant: 'warning'
+        } : {
             title: t('orders:details.close'),
             message: t('orders:messages.close_confirm'),
             confirmText: t('common:confirm')
@@ -186,8 +179,18 @@ export function useCommandeHandlers(params: UseCommandeHandlersParams) {
         if (selectedCommande) handleMettreEnAttente(selectedCommande);
     };
 
-    const onAnnulerReception = () => {
+    const onAnnulerReception = async () => {
         if (!selectedCommande) return;
+
+        const confirmed = await confirm({
+            title: t('orders:messages.cancel_reception_confirm_title'),
+            message: t('orders:messages.cancel_reception_confirm_message'),
+            confirmText: t('orders:messages.cancel_reception_confirm_button'),
+            cancelText: t('common:cancel'),
+            variant: 'danger'
+        });
+        if (!confirmed) return;
+
         requireSudo(
             (validatorId, password) => handleAnnulerReception(selectedCommande, {
                 validated_by_id: validatorId,

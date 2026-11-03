@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { HelpCircle, SearchX, ChevronDown, ChevronUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../shadcn/card';
-import { Badge } from '../shadcn/badge';
 import { EmptyState } from '../ui/EmptyState';
 
 interface FaqItem {

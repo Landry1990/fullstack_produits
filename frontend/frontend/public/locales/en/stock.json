@@ -686,6 +686,7 @@
         },
         "form": {
             "title_new": "New Return",
+            "type_label": "Return type",
             "title_edit": "Edit Return #{{id}}",
             "subtitle": "Create or modify a supplier return",
             "cancel": "Cancel",
@@ -779,6 +780,12 @@
             "auto_validated": "Return automatically validated (all lines closed)"
         },
         "confirms": {
+            "title_warning": "Leave this return?",
+            "title_danger": "Confirm destructive action",
+            "title_info": "Validate return",
+            "confirm": "Confirm",
+            "cancel": "Cancel",
+            "cancel_unload": "Cancel stock unloading for return {{numero}}? Products will be restored to stock.",
             "back_to_list": "Are you sure you want to leave? Unsaved changes will be lost.",
             "back_unloaded": "Stock has not been unloaded. Are you sure you want to return to the list without unloading?",
             "delete_avoir": "Are you sure you want to delete draft return {{numero}}?",
@@ -796,7 +803,9 @@
             "col_stock": "Stock",
             "col_price": "Purchase price",
             "days_left": "({{days}}d)",
-            "choose": "Choose"
+            "choose": "Choose",
+            "other_suppliers": "Lots from another supplier",
+            "unknown_supplier": "Unknown origin"
         }
     },
     "promis": {

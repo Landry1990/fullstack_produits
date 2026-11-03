@@ -20,6 +20,9 @@ interface LotModalProps {
     availableLots: StockLot[];
     loadingLots: boolean;
     onSelectLot: (lot: StockLot) => void;
+    /** Fournisseur de l'avoir en cours — les lots d'autres provenances sont signalés. */
+    fournisseurId?: number | null;
+    fournisseurName?: string;
 }
 
 const formatExpiry = (dateStr: string | null) => {
@@ -35,9 +38,69 @@ export const AvoirsLotModal: React.FC<LotModalProps> = ({
     onClose,
     availableLots,
     loadingLots,
-    onSelectLot
+    onSelectLot,
+    fournisseurId,
+    fournisseurName
 }) => {
     const { t } = useTranslation(['stock', 'common']);
+
+    const matchesSupplier = (lot: StockLot) => {
+        if (!fournisseurId) return true;
+        if (lot.fournisseur === fournisseurId) return true;
+        if (fournisseurName && lot.fournisseur_nom &&
+            lot.fournisseur_nom.toLowerCase() === fournisseurName.toLowerCase()) return true;
+        return false;
+    };
+    const matchingLots = availableLots.filter(matchesSupplier);
+    const otherLots = availableLots.filter(l => !matchesSupplier(l));
+
+    const renderLotRow = (lot: StockLot, dimmed: boolean) => {
+        const expire = lot.date_expiration ? new Date(lot.date_expiration) : null;
+        const daysLeft = expire ? Math.ceil((expire.getTime() - Date.now()) / 86400000) : null;
+        const expiryClass = daysLeft === null ? 'text-slate-500'
+            : daysLeft < 0 ? 'text-red-600 font-bold'
+            : daysLeft < 30 ? 'text-amber-500 font-bold'
+            : 'text-slate-700';
+        return (
+            <TableRow key={lot.id} className={dimmed ? 'opacity-60' : undefined}>
+                <TableCell>
+                    <span className="font-mono font-bold text-xs text-slate-900 bg-slate-100 px-2 py-0.5 rounded">
+                        {lot.lot || 'N/A'}
+                    </span>
+                    {dimmed && (
+                        <div className="text-caption text-amber-600 mt-1">
+                            {lot.fournisseur_nom || t('stock:avoirs.avoirs_lot_modal.unknown_supplier')}
+                        </div>
+                    )}
+                </TableCell>
+                <TableCell className={`text-center text-xs ${expiryClass}`}>
+                    {formatExpiry(lot.date_expiration)}
+                    {daysLeft !== null && daysLeft >= 0 && daysLeft < 30 && (
+                        <div className="text-caption text-amber-400">{t('stock:avoirs.avoirs_lot_modal.days_left', { days: daysLeft })}</div>
+                    )}
+                </TableCell>
+                <TableCell className="text-center">
+                    <span className="inline-flex items-center justify-center min-w-[2rem] px-2 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                        {lot.quantity_remaining}
+                    </span>
+                </TableCell>
+                <TableCell className="text-right font-mono text-xs text-slate-700">
+                    {formatCurrency(Number(lot.price_cost) || 0)}
+                </TableCell>
+                <TableCell className="text-right">
+                    <Button
+                        type="button"
+                        size="sm"
+                        variant={dimmed ? 'outline' : 'default'}
+                        className="h-7 text-xs"
+                        onClick={() => onSelectLot(lot)}
+                    >
+                        {t('stock:avoirs.avoirs_lot_modal.choose')}
+                    </Button>
+                </TableCell>
+            </TableRow>
+        );
+    };
     return (
         <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
             <DialogContent className="max-w-lg max-h-[90vh] p-0 overflow-hidden flex flex-col" aria-describedby="lot-modal-desc">
@@ -78,47 +141,15 @@ export const AvoirsLotModal: React.FC<LotModalProps> = ({
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {availableLots.map(lot => {
-                                        const expire = lot.date_expiration ? new Date(lot.date_expiration) : null;
-                                        const daysLeft = expire ? Math.ceil((expire.getTime() - Date.now()) / 86400000) : null;
-                                        const expiryClass = daysLeft === null ? 'text-slate-500'
-                                            : daysLeft < 0 ? 'text-red-600 font-bold'
-                                            : daysLeft < 30 ? 'text-amber-500 font-bold'
-                                            : 'text-slate-700';
-                                        return (
-                                            <TableRow key={lot.id}>
-                                                <TableCell>
-                                                    <span className="font-mono font-bold text-xs text-slate-900 bg-slate-100 px-2 py-0.5 rounded">
-                                                        {lot.lot || 'N/A'}
-                                                    </span>
-                                                </TableCell>
-                                                <TableCell className={`text-center text-xs ${expiryClass}`}>
-                                                    {formatExpiry(lot.date_expiration)}
-                                                    {daysLeft !== null && daysLeft >= 0 && daysLeft < 30 && (
-                                                        <div className="text-caption text-amber-400">{t('stock:avoirs.avoirs_lot_modal.days_left', { days: daysLeft })}</div>
-                                                    )}
-                                                </TableCell>
-                                                <TableCell className="text-center">
-                                                    <span className="inline-flex items-center justify-center min-w-[2rem] px-2 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
-                                                        {lot.quantity_remaining}
-                                                    </span>
-                                                </TableCell>
-                                                <TableCell className="text-right font-mono text-xs text-slate-700">
-                                                    {formatCurrency(Number(lot.price_cost) || 0)}
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <Button
-                                                        type="button"
-                                                        size="sm"
-                                                        className="h-7 text-xs"
-                                                        onClick={() => onSelectLot(lot)}
-                                                    >
-                                                        {t('stock:avoirs.avoirs_lot_modal.choose')}
-                                                    </Button>
-                                                </TableCell>
-                                            </TableRow>
-                                        );
-                                    })}
+                                    {matchingLots.map(lot => renderLotRow(lot, false))}
+                                    {otherLots.length > 0 && (
+                                        <TableRow>
+                                            <TableCell colSpan={5} className="bg-amber-50 text-caption font-bold text-amber-700 uppercase tracking-wider py-1.5">
+                                                {t('stock:avoirs.avoirs_lot_modal.other_suppliers')}
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                    {otherLots.map(lot => renderLotRow(lot, true))}
                                 </TableBody>
                             </Table>
                         </div>

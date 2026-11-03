@@ -45,7 +45,10 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
         return qs
 
     def perform_create(self, serializer):
-        selling_price = serializer.validated_data.pop('selling_price', None)
+        # .get() et non .pop() : le prix doit rester sur la ligne (le lot à la
+        # clôture lit item.selling_price). pop() laissait la ligne à 0 et,
+        # pire, une ligne à 0 transférée écrasait le prix catalogue produit.
+        selling_price = serializer.validated_data.get('selling_price')
         commande = serializer.validated_data.get('commande')
         if commande is not None and commande.status == Commande.Status.CLOTUREE:
             from rest_framework.exceptions import PermissionDenied
@@ -54,7 +57,7 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
             )
         with transaction.atomic():
             commande_produit = serializer.save()
-            if selling_price is not None and commande_produit.produit_id:
+            if selling_price and selling_price > 0 and commande_produit.produit_id:
                 produit = commande_produit.produit
                 old_price = produit.selling_price
                 if old_price != selling_price:
@@ -403,6 +406,41 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
             'deleted': deleted_count,
             'warnings': warnings_list
         })
+
+    @action(detail=False, methods=['get'], url_path='cheaper-suppliers')
+    def cheaper_suppliers(self, request):
+        """Pour chaque produit demandé (?ids=1,2,3), le fournisseur le moins
+        cher : min(price_cost) sur les lignes de commandes clôturées,
+        tous fournisseurs. Sert à signaler à la saisie qu'un autre
+        fournisseur l'a moins cher."""
+        from django.db.models import Min
+        ids = [
+            int(v) for v in str(request.query_params.get('ids', '')).split(',')
+            if v.strip().isdigit()
+        ][:300]
+        if not ids:
+            return Response({})
+        rows = (
+            CommandeProduit.objects
+            .filter(produit_id__in=ids, commande__status=Commande.Status.CLOTUREE)
+            .values('produit_id', 'commande__fournisseur_id', 'commande__fournisseur__name',
+                    'commande__fournisseur_nom')
+            .annotate(prix_min=Min('price_cost'))
+        )
+        best = {}
+        for r in rows:
+            prix = r['prix_min']
+            if prix is None or prix <= 0:
+                continue
+            pid = r['produit_id']
+            cur = best.get(pid)
+            if cur is None or prix < cur['price']:
+                best[pid] = {
+                    'fournisseur_id': r['commande__fournisseur_id'],
+                    'fournisseur_name': r['commande__fournisseur__name'] or r['commande__fournisseur_nom'],
+                    'price': float(prix),
+                }
+        return Response(best)
 
     @action(detail=True, methods=['patch'], url_path='correct_lot')
     @transaction.atomic

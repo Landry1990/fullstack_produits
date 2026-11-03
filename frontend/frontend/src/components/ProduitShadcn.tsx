@@ -85,14 +85,7 @@ export default function ProduitShadcn() {
           <Button variant="primary" size="sm" leftIcon={<Package className="size-4" />} onClick={() => handleOpenCreate()}>
             {t('products:actions.new', { defaultValue: 'Nouveau' })}
           </Button>
-          <Button variant="outline" size="sm" leftIcon={<Upload className="size-4" />} onClick={() => {
-            setPasswordConfig({
-              title: t('products:messages.password_confirm_import_title', { defaultValue: 'Confirmation requise' }),
-              message: t('products:messages.password_confirm_import_body', { defaultValue: 'Veuillez saisir votre mot de passe pour importer des produits.' })
-            })
-            pendingActionRef.current = async () => { setIsImportOpen(true) }
-            setIsPasswordOpen(true)
-          }}>
+          <Button variant="outline" size="sm" leftIcon={<Upload className="size-4" />} onClick={() => setIsImportOpen(true)}>
             {t('products:import.title', { defaultValue: 'Importer' })}
           </Button>
           <Button variant="danger" size="sm" leftIcon={<Eraser className="size-4" />} onClick={handleResetAllStock}>
@@ -238,6 +231,14 @@ export default function ProduitShadcn() {
         isImportOpen={isImportOpen}
         onImportClose={() => setIsImportOpen(false)}
         onImportSuccess={() => { queryClient.invalidateQueries({ queryKey: ['produits'] }); setIsImportOpen(false); }}
+        onImportRequireConfirm={(action) => {
+          setPasswordConfig({
+            title: t('products:messages.password_confirm_import_title', { defaultValue: 'Confirmation requise' }),
+            message: t('products:messages.password_confirm_import_body', { defaultValue: 'Veuillez saisir votre mot de passe pour importer des produits.' })
+          })
+          pendingActionRef.current = async () => { action() }
+          setIsPasswordOpen(true)
+        }}
         showSalesModal={showSalesModal}
         onSalesClose={() => { setShowSalesModal(false); setSelectedFacture(null); }}
         selectedFacture={selectedFacture}

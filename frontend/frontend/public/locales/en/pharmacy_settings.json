@@ -35,6 +35,7 @@
         "sales_points": "Sales Points"
     },
     "labels": {
+        "auto_print_ticket": "Print receipt automatically after payment",
         "pharmacy_name": "Pharmacy Name",
         "niu": "Unique Identification Number (NIU)",
         "rccm": "Trade Register (RCCM)",
@@ -67,6 +68,7 @@
         "pharmacist_whatsapp": "Holder WhatsApp Number",
         "add_custom_mode": "Add a custom payment mode",
         "centralized_cash_register": "Centralized Cash Register",
+        "require_validator_password": "Validator password on every sale",
         "qz_printer": "QZ Tray Printer",
         "qz_printer_auto": "Default printer (auto)",
         "open_drawer": "Open cash drawer",
@@ -116,6 +118,7 @@
         "report_recipients": "email1@example.com, email2@example.com"
     },
     "hints": {
+        "auto_print_ticket": "In centralized checkout, starts printing when the preview opens. Silent with QZ Tray; otherwise the usual print dialog opens.",
         "pharmacy_name": "The official name as it will appear on invoices and receipts.",
         "pharmacy_name_from_licence": "The pharmacy name is defined by the activation licence. To change it, contact your system administrator.",
         "niu": "Mandatory tax identifier for tax filing.",
@@ -137,6 +140,7 @@
         "custom_mode": "Type a name and press Enter or click Add. Do not forget to save.",
         "multi_pos": "If enabled, the system allows dispatching sales to different physical terminals.",
         "centralized_cash_register": "Groups sales by daily session for centralized closing.",
+        "require_validator_password": "When disabled, the seller no longer has to enter a password to send a sale to the register. Specific validations (discount, price override, return, negative stock) are still required.",
         "qz_tray": "Requires QZ Tray installed and running on this workstation. The thermal printer will be used in native ESC/POS mode when available.",
         "telegram": "Create a bot via @BotFather, copy the token, send /start to the bot, then retrieve the Chat ID.",
         "telegram_start": "Send /start to your bot before clicking Retrieve.",

@@ -38,6 +38,7 @@ interface ProduitPageModalsProps {
   isImportOpen: boolean;
   onImportClose: () => void;
   onImportSuccess: () => void;
+  onImportRequireConfirm: (action: () => void) => void;
   /* Facture / avoir depuis l'onglet MVMTS */
   showSalesModal: boolean;
   onSalesClose: () => void;
@@ -58,7 +59,7 @@ export const ProduitPageModals: React.FC<ProduitPageModalsProps> = ({
   isAdjustOpen, onAdjustClose, selectedProduit, adjustForm, setAdjustForm, onAdjustSubmit, isAdjusting,
   isPasswordOpen, onPasswordClose, onPasswordConfirm, passwordTitle, passwordMessage,
   isCreateOpen, createInitialData, onCreateClose, onCreated,
-  isImportOpen, onImportClose, onImportSuccess,
+  isImportOpen, onImportClose, onImportSuccess, onImportRequireConfirm,
   showSalesModal, onSalesClose, selectedFacture, loadingFacture,
   showAvoirModal, onAvoirClose, selectedAvoirId,
   rayons, fournisseurs, formes, groupes,
@@ -103,6 +104,7 @@ export const ProduitPageModals: React.FC<ProduitPageModalsProps> = ({
       <ImportProductsModal
         onClose={onImportClose}
         onSuccess={onImportSuccess}
+        requireConfirm={onImportRequireConfirm}
       />
     )}
     <SalesDetailsModal

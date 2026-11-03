@@ -230,7 +230,7 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                             <TableHead className="w-12 px-3 py-2 text-center">
                                 <span className="sr-only">{t('common:single_selection')}</span>
                             </TableHead>
-                            {headers.map((h, i) => (
+                            {headers.map((h) => (
                                 <TableHead
                                     key={h.key}
                                     className={`px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 ${h.width} ${

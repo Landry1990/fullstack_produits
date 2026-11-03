@@ -64,7 +64,8 @@
             "identification": "Identification",
             "stock_location": "Stock & Location",
             "classification": "Classification",
-            "pricing": "Pricing"
+            "pricing": "Pricing",
+            "options": "Options"
         },
         "validation": {
             "required_fields": "Please fill in all required fields (*)",
@@ -167,6 +168,14 @@
         "new_shelf_stock": "New Shelf Stock",
         "new_reserve_stock": "New Reserve Stock",
         "difference": "Difference:",
+        "mode_absolute": "New value",
+        "mode_delta": "Delta ±",
+        "delta_quantity": "Delta (e.g. +5, -3)",
+        "delta_shelf": "Shelf delta (e.g. +5, -3)",
+        "delta_reserve": "Reserve delta (e.g. +5, -3)",
+        "delta_placeholder": "E.g. +5 or -3",
+        "result": "Result: {{value}}",
+        "delta_invalid": "Resulting quantity cannot be negative",
         "reason_type": "Reason type *",
         "lot_concerned": "Concerned lot",
         "lot_number": "Lot number",

@@ -277,6 +277,10 @@ class CommandeProduit(models.Model):
         default=0, validators=[MinValueValidator(0)],
         help_text="Unités gratuites reçues (ex: promotion 3+1)"
     )
+    quantity_received = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(0)],
+        help_text="Quantité réellement reçue (null = non saisi → la clôture utilise 'quantity')"
+    )
     prix_euro = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True,
         validators=[MinValueValidator(Decimal('0'))]

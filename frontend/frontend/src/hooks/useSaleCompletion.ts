@@ -217,13 +217,18 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
             }
 
             // 3. VÉRIFICATION DU STOCK EN TEMPS RÉEL
+            // Si handlePaymentClick (F9) vient de rafraîchir les stocks (< 15 s),
+            // les lignes portent déjà les valeurs fraîches : on saute le refetch.
+            const stockIsFresh = !!params.stockCheckedAt && (Date.now() - params.stockCheckedAt) < 15000;
             const productIds = params.lignesFacture.map(l => l.produit.id);
             if (productIds.length > 0) {
-                const realTimeProducts = await produitService.bulkRefresh(productIds);
-
-                // On indexe les résultats
                 const realStockMap = new Map<number, ProduitModel>();
-                realTimeProducts.forEach(p => realStockMap.set(p.id, p));
+                if (stockIsFresh) {
+                    params.lignesFacture.forEach(l => realStockMap.set(l.produit.id, l.produit));
+                } else {
+                    const realTimeProducts = await produitService.bulkRefresh(productIds);
+                    realTimeProducts.forEach(p => realStockMap.set(p.id, p));
+                }
 
                 for (const ligne of params.lignesFacture) {
                     const realProd = realStockMap.get(ligne.produit.id);

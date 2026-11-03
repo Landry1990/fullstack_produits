@@ -240,6 +240,8 @@
         "edit": "Modifier",
         "resume": "Reprendre",
         "suspend": "Mettre en attente",
+        "mark_sent": "Marquer envoyée",
+        "mark_sent_help": "Exporte le CSV de la commande puis la marque comme envoyée au fournisseur (statut « En attente »).",
         "close": "Clôturer",
         "labels": "Étiquettes",
         "labels_clot_only": "Uniquement pour les commandes clôturées",
@@ -290,6 +292,8 @@
         },
         "provider_label": "Fournisseur",
         "provider_placeholder": "Sélectionner un fournisseur",
+        "provider_search_placeholder": "Rechercher ou sélectionner un fournisseur…",
+        "provider_no_result": "Aucun fournisseur trouvé",
         "invoice_label": "N° de Facture",
         "invoice_placeholder": "Ex: FACT-2024-001",
         "mise_en_place_label": "Mise en place / condition négociée",
@@ -298,6 +302,7 @@
         "paye_a_la_cloture_label": "Payé au comptant",
         "paye_a_la_cloture_help": "Commande déjà entièrement réglée avant / à la mise en stock (certains grossistes ne font pas crédit). Un paiement fournisseur du montant total est enregistré automatiquement à la clôture.",
         "export_btn": "Exporter",
+        "export_requires_save": "Enregistrez d'abord la commande pour pouvoir l'exporter",
         "export_options": {
             "ubipharm": "Principal (CIP1)",
             "laborex": "Secondaire (CIP2)",
@@ -327,6 +332,10 @@
         "coeff_label": "COEFF"
     },
     "product_table": {
+        "quick_reception": "Réception rapide",
+        "quick_reception_tooltip": "Saisie rapide : Entrée passe de quantité à lot, puis péremption et recherche produit. Les prix restent modifiables.",
+        "cheaper_tooltip": "Un autre fournisseur a ce produit moins cher",
+        "duplicate_line": "Dupliquer la ligne (autre lot)",
         "title": "Produits ({{count}})",
         "import_btn": "Import",
         "new_product_btn": "Nouveau produit",
@@ -427,6 +436,13 @@
         "add_at_least_one": "Veuillez ajouter au moins un produit à la commande",
         "mise_en_place_delai_required": "Veuillez saisir le délai de paiement négocié pour cet achat de mise en place",
         "close_confirm": "Voulez-vous vraiment clôturer cette commande ?",
+        "close_warnings_title": "Vérifications avant clôture",
+        "close_warnings_intro": "Les problèmes suivants ont été détectés dans cette commande :",
+        "section_missing_expiration": "Produits sans date de péremption :",
+        "section_selling_below_cost": "Produits vendus à perte (prix de vente HT inférieur au prix d'achat) :",
+        "cancel_reception_confirm_title": "Annuler la réception ?",
+        "cancel_reception_confirm_message": "L'annulation supprimera les lots créés à la réception et repassera la commande en brouillon. Voulez-vous continuer ?",
+        "cancel_reception_confirm_button": "Annuler la réception",
         "exclusive_product_title": "Produit Exclusif",
         "exclusive_product_message": "Ce produit est normalement exclusif au fournisseur : {{supplier}}. Voulez-vous quand même l'ajouter ?",
         "exclusive_product_confirm": "Oui, ajouter",
@@ -498,7 +514,9 @@
         "merge_impossible": "Fusion impossible",
         "merge_success_detailed": "Fusion réussie : {{count}} produits transférés",
         "lot_or_product_not_found": "Lot ou produit introuvable",
-        "transfer_select_products": "Veuillez sélectionner des produits à transférer"
+        "transfer_select_products": "Veuillez sélectionner des produits à transférer",
+        "transfer_success": "{{count}} produit(s) transféré(s) vers {{supplier}}",
+        "send_export_error": "Erreur lors de l'export de la commande"
     },
     "quick_create": {
         "title": "Création rapide de produit",

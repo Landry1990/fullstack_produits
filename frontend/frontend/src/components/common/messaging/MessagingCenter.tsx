@@ -53,7 +53,6 @@ function tabToBox(tab: MessagingTab): 'received' | 'sent' | 'archived' | 'all' |
 export function MessagingCenter({ currentUser, isOpen, onMessageRead }: MessagingCenterProps) {
   const { t } = useTranslation(['messaging', 'common']);
   const isAdmin = Boolean(currentUser?.is_staff || currentUser?.is_superuser);
-  const myId = currentUser?.id ?? null;
 
   const [activeTab, setActiveTab] = useState<MessagingTab>('received');
   const [selectedId, setSelectedId] = useState<number | null>(null);

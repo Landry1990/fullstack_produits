@@ -50,6 +50,8 @@ export default function Avoirs() {
                     availableLots={avoirsData.availableLots}
                     loadingLots={avoirsData.loadingLots}
                     onSelectLot={avoirsData.handleSelectLot}
+                    fournisseurId={avoirsData.selectedFournisseurId ? Number(avoirsData.selectedFournisseurId) : null}
+                    fournisseurName={avoirsData.fournisseurSearch}
                 />
             </>
         );

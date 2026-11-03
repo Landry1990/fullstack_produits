@@ -10,6 +10,7 @@ import type { TicketCaisse, Facture, PharmacySettings } from '../../types'
 import { printTicketInIframe } from '../../utils/print/printHelpers'
 import { printTicketSmart } from '../../utils/print/printTicketSmart'
 import { preparePrintAuthSync } from '../../utils/storage'
+import { useInvoiceSettings } from '../../hooks/useInvoiceSettings'
 
 interface CaisseTicketPreviewModalProps {
   isOpen: boolean
@@ -36,6 +37,8 @@ export function CaisseTicketPreviewModal({
   loading = false
 }: CaisseTicketPreviewModalProps) {
   const { t } = useTranslation(['caisse', 'common'])
+  const { settings: invoiceSettings } = useInvoiceSettings()
+  const autoPrintedTicketRef = useRef<TicketCaisse['id'] | null>(null)
 
   // Refs pour la navigation clavier dans le footer
   const closeButtonRef = useRef<HTMLButtonElement>(null)
@@ -153,6 +156,7 @@ export function CaisseTicketPreviewModal({
 
   const handlePrint = useCallback(async () => {
     if (!ticket || !settings || printing) return
+    autoPrintedTicketRef.current = ticket.id
     setPrinting(true)
 
     const htmlFallback = () => {
@@ -172,6 +176,20 @@ export function CaisseTicketPreviewModal({
       setPrinting(false)
     }
   }, [settings, styleTags, t, ticket, printing])
+
+  // Un seul déclenchement par ticket et par ouverture, même en StrictMode.
+  useEffect(() => {
+    if (!isOpen) {
+      autoPrintedTicketRef.current = null
+      return
+    }
+    if (!ticket || loading || !invoiceSettings?.auto_print_ticket || autoPrintedTicketRef.current === ticket.id) return
+    const timer = setTimeout(() => {
+      autoPrintedTicketRef.current = ticket.id
+      void handlePrint().catch(() => gooeyToast.error(t('ticket.print_error')))
+    }, 100)
+    return () => clearTimeout(timer)
+  }, [isOpen, ticket, loading, invoiceSettings?.auto_print_ticket, handlePrint, t])
 
   const handleTicketKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (event.key !== 'Enter' || event.repeat || event.defaultPrevented || showClientNameModal) return

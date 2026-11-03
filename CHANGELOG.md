@@ -2,6 +2,235 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-11-03 — 🔧 Correctifs post-revue + nettoyage lint
+
+- `commande-produits/cheaper-suppliers` : repli sur `commande__fournisseur_nom`
+  quand le fournisseur lié est NULL (le badge affichait un prix sans nom).
+- `useCaisseSession` : `sessionInitialized` en `finally` — une erreur
+  `mes_actives/` ne bloque plus l'UI sur un chargement infini, et le prompt
+  « ouvrir une caisse » n'apparaît toujours pas sur des données incomplètes.
+- `StockAdjustmentModal` : basculer entre « Valeur » et « Écart ± » réinitialise
+  les saisies (fini le submit bloqué par une valeur stale de l'autre mode).
+- `AUDIT_UX.md` déplacé vers `docs/AUDIT_UX_2026-11-03.md` (nommage daté).
+- Lint : 22 erreurs préexistantes corrigées (imports/vars/args inutilisés dans
+  `ReconditionnementModal`, `UserSessionsShadcn`, `CashForceClosePanel`,
+  `ChallengeFormModal`, `ClientMergeModal`, `MessagingCenter`, `ClientSection`,
+  `HelpFaq`, `HelpOverview`, `HelpVideos`, `PromisTable`, `useMultiCaisse.test`,
+  `useCommandeTotals` (`selectedCommande` → `_selectedCommande`),
+  `loyaltyService`, `recentProducts` (fonction morte), `printHelpers.test`
+  (espaces irréguliers → escapes unicode identiques), `responsive.spec`).
+  `npx eslint .` : **0 erreur** ; tsc OK ; 38 tests vitest ciblés OK.
+
+## 2026-11-03 — ⚡ Audit UX P2 : commandes & produits
+
+- **Commandes** : bouton « Marquer envoyée » (export CSV + passage PREP→ATT en
+  une action, `CommandeForm`) ; export désactivé tant que la commande n'est
+  pas sauvegardée (le modal retournait `null` → clic mort) ; sélecteur
+  fournisseur remplacé par un combobox avec recherche (F4 focalise l'input).
+- **Ajustement stock** : mode « Écart ± » dans `StockAdjustmentModal` —
+  saisie d'un delta avec résultat calculé avant validation (payload absolu
+  inchangé, résultat < 0 bloqué).
+- **Fiche produit** : sections repliables dans `ProduitFormModal` — sections
+  avancées fermées par défaut, auto-ouverture en édition si renseignées.
+
+## 2026-11-03 — Réception : écarts commandé/reçu (`quantity_received`)
+
+- `CommandeProduit.quantity_received` (IntegerField null/blank, ≥ 0, migration
+  `0285`) : quantité réellement reçue par ligne ; `null` = non saisi → la
+  clôture retombe sur `quantity` (comportement inchangé).
+- `cloture_mixin.py` : lots `StockLot`, PMP/coûts, `received_qty_by_product`,
+  mouvements de stock, paiement auto « paye_a_la_cloture » et
+  `transformations_disponibles` utilisent `quantity_received ?? quantity`.
+  Ligne à `quantity_received=0` sans UG : aucun lot ni mouvement créé.
+  `annuler_reception` applique le même repli pour retirer ce qui fut reçu.
+- `quantity_received` exposé en PATCH via `commande-produits/{id}/`
+  (serializer `__all__`, `partial_update` existant). Type TS ajouté dans
+  `src/types/procurement.ts`.
+
+## 2026-11-03 — Dialogues natifs : génériques et configurations des rapports
+
+- `frontend/frontend/src/components/GenericsManager.tsx` : trois confirmations
+  navigateur remplacées par `useConfirm` (association et forçage en warning,
+  suppression de lien en danger), sans changer les requêtes métier.
+- `frontend/frontend/src/components/dashboard/reports/ReportFilters.tsx` : saisie
+  du nom de configuration dans une modale shadcn Dialog + Input, validation par
+  Entrée et annulation sans sauvegarde. Réutilisation exclusive des clés i18n
+  existantes ; aucun fichier de traduction ni test modifié.
+- Audit : deux prompts WhatsApp restent dans `CaisseCentralisee.tsx` et
+  `hooks/useFacturationActions.ts` ; ils demandent une saisie, pas un oui/non,
+  et nécessitent un câblage dédié aux modales de ticket.
+
+## 2026-11-03 — ✨ Avoirs : lots d'une autre provenance signalés
+
+- `AvoirsLotModal` : les lots sont désormais partitionnés — lots du fournisseur
+  choisi (match `fournisseur` id ou `fournisseur_nom`) en premier, lots d'une
+  autre provenance dans une section ambrée « Lots d'une autre provenance »,
+  lignes grisées avec le nom du fournisseur d'origine (ou « Provenance
+  inconnue »). Restent sélectionnables (lots legacy sans lien fournisseur)
+  mais visuellement distingués — fini le retour silencieux au mauvais
+  fournisseur. Props `fournisseurId`/`fournisseurName` depuis `Avoirs.tsx`.
+- i18n `stock:avoirs.avoirs_lot_modal.{other_suppliers,unknown_supplier}` fr/en.
+
+## 2026-11-03 — ⚡ Audit UX P1 : câblage réglages + corrections diverses
+
+- **`centralized_cash_register` désormais réel** : `useMultiCaisse` lit le réglage
+  `invoice-settings` (était forcé `true` en dur). Migration `0284` : défaut `True`
+  + `RunPython` alignant les bases existantes (elles tournaient déjà en centralisé
+  forcé) — comportement préservé, l'admin peut désormais opter pour le mode
+  « vendeur encaisse au comptoir ». Sudo non-centralisé : la modale demande
+  désormais `can_cash_out` (exigé backend) au lieu de `can_validate_sales`.
+- **Avoirs fournisseur** : sélecteur `type_avoir` (PERIME/AVARIE/NON_FACTURE/
+  ERREUR/AUTRE) dans `AvoirsForm` — avant : toujours `AUTRE` dans le payload
+  malgré le défaut PERIME du store. Les 7 `window.confirm` natifs remplacés par
+  `useConfirm`/`ConfirmDialog` + confirm danger avant annulation de déchargement.
+  `Avoirs.test.tsx` enveloppé dans `ConfirmProvider`.
+- **`auto_print_ticket`** : champ `InvoiceSettings` (défaut False) + toggle
+  Paramètres → Impression ; impression auto à l'ouverture du ticket caisse.
+- **Fermeture de poste caisse** : bouton Imprimer (iframe du récap) + billetage
+  facultatif via `CashBreakdownModal` avec écart dans `ClosingReportModal`.
+- **Ouverture caisse** : proposition de la modale de choix une fois par
+  utilisateur/onglet à l'arrivée sur `/app/caisse-centralisee` (la prop
+  `autoOpen` existante ouvrait le poste sans confirmation — non utilisée).
+- **Réception rapide commandes** : toggle Zap dans `CommandeProductToolbar` —
+  Enter traverse qté → lot → péremption → recherche (persisté localStorage).
+- **`bulk_refresh` dédupliqué** : le refresh F9 horodaté (< 15 s) saute le
+  second appel dans `completeSale` (`useSaleCompletion.ts`, `stockCheckedAt`).
+- **Import produits** : le mot de passe est demandé au clic « Importer » de la
+  modale (après choix du fichier) au lieu d'avant l'écran
+  (`ImportProductsModal.requireConfirm`, `ProduitShadcn`, `ProduitPageModals`).
+- Vérifié : eslint 0 erreur, `tsc --noEmit` 0 erreur, vitest Avoirs/Commandes/
+  useMultiCaisse 14/14, migrations 0284 appliquée, `makemigrations --check`
+  propre, locales JSON valides.
+
+## 2026-11-03 — Caisse : ticket automatique, rapport imprimable et proposition de session
+
+- `InvoiceSettings.auto_print_ticket` (défaut `False`) et toggle dédié dans
+  `PrintingTab.tsx` ; `useInvoiceSettings.ts` et `CaisseTicketPreviewModal.tsx`
+  déclenchent le flux QZ/fallback existant une seule fois à l'ouverture du ticket,
+  sans masquer l'aperçu.
+- `ClosingReportModal.tsx` : impression du récap visible via le helper iframe,
+  billetage facultatif via `CashBreakdownModal`, total compté et écart si le
+  théorique est disponible et non masqué. Comptage indicatif, non enregistré ;
+  aucune modification du flux de fermeture.
+- `CaisseCentralisee.tsx` / `hooks/caisse/useCaisseSession.ts` : proposition du
+  choix de caisse après initialisation, une fois par utilisateur/onglet (sessionStorage),
+  sans ouvrir le poste avant confirmation. La prop `autoOpen` existante n'est pas
+  utilisée car elle ouvrait directement le poste lorsqu'une seule caisse était libre.
+- Traductions `caisse` et `pharmacy_settings` fr/en.
+- À terminer par l'agent principal : génération/application de migration Docker,
+  validation JSON et contrôles TypeScript/tests (commandes refusées au sous-agent
+  en arrière-plan faute de préautorisation).
+
+## 2026-11-03 — Réception rapide des commandes fournisseur
+
+- Toggle shadcn avec icône Zap dans `CommandeProductToolbar.tsx`, état actif et
+  infobulle traduits (`orders:product_table.quick_reception` et
+  `quick_reception_tooltip`, fr/en).
+- Préférence `quickReceptionMode` dans `useCommandesStore.ts`, persistée sous
+  `zenith_cmd_quick_reception` (stockage indisponible toléré).
+- `useCommandeProductLines.tsx` : navigation rapide quantité → lot → péremption
+  → recherche ; Tab et Ctrl+flèches suivent également ce parcours (retour inverse
+  cohérent). Prix/UG restent modifiables, parcours complet et focus initial conservés.
+
+## 2026-11-03 — ⚡ Audit UX P0 : 6 frictions corrigées
+
+- **Sudo à chaque vente → réglable** : `InvoiceSettings.require_validator_password`
+  (Boolean, défaut `True` = comportement inchangé) — migration `0283`.
+  Quand désactivé, la modale sudo d'identité est sautée en caisse centralisée
+  (`useFacturationState.ts`) ; le backend n'exigeait de toute façon aucune
+  permission pour une vente standard — remise/prix/retour/stock négatif/montant
+  nul gardent leurs validations dédiées. Toggle dans Paramètres → Impression
+  (visible si caisse centralisée cochée), i18n `pharmacy_settings` fr/en.
+- **`Enter` = 1er résultat** en recherche produit facturation : sans sélection
+  active, Enter ajoute le premier résultat au lieu de ne rien faire
+  (`useFacturationSearch.ts`).
+- **Clôture commande : 3 modales → 1** : warnings péremption + vente à perte +
+  confirmation regroupés en une seule modale listant les deux problèmes
+  (`useCommandeHandlers.ts`). Clés `messages.close_warnings_*`/`section_*` fr/en.
+- **Annulation de réception** : ajout d'une confirmation `danger` avant le sudo
+  (l'action supprime les lots créés — `useCommandeHandlers.ts`).
+- **Raccourcis commandes implémentés** : les hints F2/F4/Ctrl+A affichés dans
+  `CommandeForm` n'avaient aucun handler — `useCommandeKeyboard.ts` câble
+  F2 → focus recherche produit, F4 → focus fournisseur (ref désormais branchée
+  sur le Select), Ctrl+A → sélection des lignes (hors champs texte).
+- **Transfert de lignes** : toast de succès (`orders:messages.transfer_success`)
+  + ouverture automatique de la commande créée en édition
+  (`useCommandeProductLines.tsx`, `useCommandesState.tsx`,
+  `TransferCommandeModal.tsx` — fallback prix catalogue sur lignes à 0).
+- Vérifié : eslint propre, `tsc --noEmit` 0 erreur, vitest Commandes 6/6,
+  migration appliquée, `makemigrations --check` propre, locales JSON valides.
+
+## 2026-11-03 — 🔍 Audit UX « simplicité / praticité / fiabilité » (lecture seule)
+
+- Cartographie des parcours vente/caisse, commande fournisseur, inventaire/stock
+  (comptage des clics). Rapport complet : **`AUDIT_UX.md`** (recommandations P0/P1/P2).
+  Verdict : fiabilité forte (idempotence, verrous, audit,
+  autosave, PDA offline), praticité correcte (clavier POS, Ctrl+K, hubs),
+  **simplicité = maillon faible** (cascades de modales, sudo systématique).
+- Frictions majeures relevées : sudo `can_validate_sales` à chaque vente ;
+  clôture commande = jusqu'à 4-5 modales ; réglage `centralized_cash_register`
+  mort (`useMultiCaisse.ts:25` forcé `true`) ; hints F2/F4/Ctrl+A affichés sans
+  handlers (`CommandeForm.tsx:228-233`) ; annulation de réception sans confirm ;
+  `Enter` ne sélectionne pas le 1er résultat en facturation ; avoir fournisseur
+  sans sélecteur de type ; ajustement stock = 3 modales ; pas de billetage ni
+  d'impression à la fermeture de poste caisse.
+
+## 2026-11-03 — ✨ Dupliquer une ligne de commande (multi-lots)
+
+- `duplicateCommandeProduit` (hook) : clone la ligne sans `id` ni
+  `lot`/`date_expiration`, insérée juste en dessous, focus+scroll sur le
+  champ lot — cas d'usage : même produit reçu en plusieurs lots.
+- Bouton `Copy` (émeraude) dans les actions de ligne (hover), chaîne
+  props hook → useCommandesState → CommandeForm → Table → Row.
+- i18n `orders:product_table.duplicate_line` fr/en.
+
+## 2026-11-03 — ✨ Numéros de ligne stables au tri (rang chronologique)
+
+- `CommandeProductTable` : `chronoRank` = rang par id (ordre de saisie),
+  passé en prop `lineNumber` à la row — le n° suit la ligne, pas la
+  position affichée. Tri par nom/stock : `03` reste `03`.
+
+## 2026-11-03 — ✨ Badge « moins cher ailleurs » en saisie commande
+
+- `commande-produits/cheaper-suppliers/?ids=` : nouveau GET — pour chaque
+  produit, le fournisseur au min(`price_cost`) sur les commandes CLOT.
+- `CommandeProductTable` : fetch par lot d'ids + `cheaperFor()` (badge
+  seulement si autre fournisseur ET prix < prix saisi).
+- `CommandeProductRow` : badge émeraude « ↓ Fournisseur prix » devant le
+  nom. i18n `product_table.cheaper_tooltip` fr/en.
+
+## 2026-11-03 — ✨ Numéros de ligne dans la saisie commande
+
+- `CommandeProductRow` : badge `01`, `02`… devant le nom produit —
+  repère de position stable (ordre chronologique garanti par
+  `ordering=['id']`).
+
+## 2026-11-03 — ✨ Reprise de saisie commande : repère sur la dernière ligne
+
+- `useCommandeProductLines` : chaque édition mémorise la ligne
+  (`localStorage` par commande, clé `zenith_cmd_last_line_{id}`).
+  À la réouverture du brouillon : scroll fluide sur cette ligne + flash
+  ambre ~2,6s (classes existantes du scanner). Fallback produit-id pour
+  les lignes non encore sauvegardées.
+
+## 2026-11-03 — 🐛 Prix d'achat édité à la commande non propagé au lot/PMP
+
+- `useCommandeProductLines` : `price_cost` (coût réel lu par le lot et le
+  PMP à la clôture) restait figé au `cost_price` produit initial — éditer le
+  champ "prix d'achat" (`price`) ne le mettait jamais à jour. Désormais
+  `field === 'price'` → `price_cost = price`. Constat commande #112 :
+  lignes avec price≠price_cost → lots créés au vieux coût.
+
+## 2026-11-02 — 🐛 Transfert fournisseur : prix de vente perdu + risque d'écrasement
+
+- `commande_produits.py` `perform_create` : `selling_price` était
+  `.pop()`é du validated_data → la ligne créée via POST unitaire (transfert,
+  quick-add) gardait 0. Maintenant `.get()` : la ligne conserve son prix.
+  Et garde `> 0` : une ligne à 0 envoyée n'écrase plus le prix catalogue
+  du produit (bug latent : transfert d'une ligne à 0 → produit.selling_price=0).
+- `TransferCommandeModal` : fallback sur le prix catalogue produit quand la
+  ligne source n'a pas de prix de vente.
+
 ## 2026-11-02 — 🐛 Lignes de commande ET d'inventaire : ordre chronologique
 
 - `LigneInventaire` idem : ajout de `ordering = ['id']` dans Meta.

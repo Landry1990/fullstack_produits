@@ -55,7 +55,6 @@ test.describe('Responsivité — Menu latéral', () => {
     await expect(dashboardLink).toBeVisible()
 
     // Fermer le menu en cliquant sur l'overlay
-    const overlay = page.locator('div').filter({ has: page.locator('nav') }).first()
     await page.mouse.click(20, 20)
     await page.waitForTimeout(300)
 

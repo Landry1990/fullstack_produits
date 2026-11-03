@@ -15,6 +15,8 @@ import { useProductSearch } from './useProductSearch';
 import { usePharmacySettings } from './usePharmacySettings';
 import { useFormes } from './useProduits';
 import { useCommandesStore } from '../stores/useCommandesStore';
+import commandeService from '../services/commandeService';
+import { logger } from '../utils/logger';
 
 import { useCommandeTotals } from './commandes/useCommandeTotals';
 import { useCommandeListSelection } from './commandes/useCommandeListSelection';
@@ -136,7 +138,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
   })
 
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const fournisseurSelectRef = useRef<HTMLSelectElement>(null);
+  const fournisseurSelectRef = useRef<HTMLElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -149,6 +151,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
     handleDuplicateAddNewLine,
     handleDuplicateIncrementExisting,
     removeProductFromCommande,
+    duplicateCommandeProduit,
     toggleRowSelection,
     toggleAllRows,
     deleteSelectedRows,
@@ -357,12 +360,31 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       setCommandeProduits,
   });
 
+  // Après un transfert : nettoyer les lignes transférées (handleTransferSuccess
+  // affiche aussi le toast), rafraîchir la liste et ouvrir la commande créée.
+  const handleTransferSuccessWithOpen = useCallback(async (
+    transferredCount: number,
+    supplierName: string,
+    newCommandeId: number
+  ) => {
+    handleTransferSuccess(transferredCount, supplierName, newCommandeId);
+    queryClient.invalidateQueries({ queryKey: ['commandes'] });
+    try {
+      const data = await commandeService.getById(newCommandeId);
+      await openEditView(data);
+    } catch (err) {
+      logger.error('Erreur lors de l\'ouverture de la commande créée par transfert:', err);
+    }
+  }, [handleTransferSuccess, openEditView, queryClient]);
+
   useCommandeKeyboard({
       viewMode,
       commandeProduits,
       selectedRows,
       setCommandeProduits,
       setSelectedRows,
+      searchInputRef,
+      fournisseurSelectRef,
   });
 
   const { handleKeyDown: handleSearchKeyDown, getItemProps } = useSearchNavigation(
@@ -543,6 +565,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       handleSellingPriceBlur,
       handleTableFieldKeyDown,
       onRemoveProduct: removeProductFromCommande,
+      onDuplicateProduct: duplicateCommandeProduit,
       onCreateAvoir: handleCreateAvoirFromCommande,
       commandeSortBy,
       onSortProduits: handleSortProduits,
@@ -564,7 +587,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       newCommandeFournisseurId,
       commandesEndpoint,
       fournisseursEndpoint,
-      handleTransferSuccess,
+      handleTransferSuccess: handleTransferSuccessWithOpen,
       selectedOrderIds,
       handleMergeSuccess,
     },

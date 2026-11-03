@@ -526,12 +526,20 @@ class InvoiceSettings(models.Model):
     header_layout = models.CharField(max_length=20, choices=HEADER_LAYOUT_CHOICES, default='split')
     primary_color = models.CharField(max_length=7, default="#000000")
     centralized_cash_register = models.BooleanField(
-        default=False, 
+        default=True,
         help_text="Activer le mode Caisse Centralisée"
     )
     is_multi_caisse = models.BooleanField(
         default=False, 
         help_text="Activer le mode Multi-Caisse (plusieurs postes de caisse)"
+    )
+    auto_print_ticket = models.BooleanField(
+        default=False,
+        help_text="Imprimer automatiquement le ticket après encaissement en caisse centralisée"
+    )
+    require_validator_password = models.BooleanField(
+        default=True,
+        help_text="Exiger la saisie d'un mot de passe validateur pour envoyer une vente en caisse"
     )
 
     def save(self, *args, **kwargs):

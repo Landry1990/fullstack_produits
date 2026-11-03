@@ -20,6 +20,7 @@ interface CommandesStoreState {
   payeALaCloture: boolean;
   commandeProduits: CommandeProduit[];
   commandeSortBy: 'chrono' | 'stock' | 'name' | 'qty';
+  quickReceptionMode: boolean;
   selectedRows: Set<number>;
   focusedField: { row: number; field: number } | null;
   sortKey: 'numero' | 'date' | 'fournisseur' | 'status';
@@ -52,6 +53,7 @@ interface CommandesStoreActions {
   setPayeALaCloture: (value: boolean) => void;
   setCommandeProduits: (updater: CommandeProduit[] | ((prev: CommandeProduit[]) => CommandeProduit[])) => void;
   setCommandeSortBy: (value: 'chrono' | 'stock' | 'name' | 'qty') => void;
+  setQuickReceptionMode: (value: boolean) => void;
   setSelectedRows: (updater: Set<number> | ((prev: Set<number>) => Set<number>)) => void;
   setFocusedField: (value: { row: number; field: number } | null) => void;
   setSortKey: (value: 'numero' | 'date' | 'fournisseur' | 'status') => void;
@@ -87,6 +89,10 @@ const createInitialState = (): CommandesStoreState => ({
   payeALaCloture: false,
   commandeProduits: [],
   commandeSortBy: 'chrono',
+  quickReceptionMode: (() => {
+    try { return localStorage.getItem('zenith_cmd_quick_reception') === 'true'; }
+    catch { return false; }
+  })(),
   selectedRows: new Set<number>(),
   focusedField: null,
   sortKey: 'date',
@@ -123,6 +129,11 @@ export const useCommandesStore = create<CommandesStore>((set, get) => ({
       commandeProduits: typeof updater === 'function' ? updater(state.commandeProduits) : updater,
     })),
   setCommandeSortBy: (value) => set({ commandeSortBy: value }),
+  setQuickReceptionMode: (value) => {
+    try { localStorage.setItem('zenith_cmd_quick_reception', String(value)); }
+    catch { /* stockage indisponible : conserver la préférence en mémoire */ }
+    set({ quickReceptionMode: value });
+  },
   setSelectedRows: (updater) =>
     set((state) => ({
       selectedRows: typeof updater === 'function' ? updater(state.selectedRows) : updater,

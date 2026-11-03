@@ -5,6 +5,7 @@ import { useDebounce } from 'use-debounce';
 import { useLocation } from 'react-router-dom';
 import type { Fournisseur, ProduitModel, Avoir, LigneAvoir, StockLot, SudoState, SudoOptions, PaginatedResponse } from '../types';
 import { useSudo } from './useSudo';
+import { useConfirm } from './useConfirm';
 import avoirService from '../services/avoirService';
 import fournisseurService from '../services/fournisseurService';
 import produitService from '../services/produitService';
@@ -93,6 +94,14 @@ export interface UseAvoirsDataReturn {
 export function useAvoirsData(): UseAvoirsDataReturn {
     const { t } = useTranslation(['stock', 'common']);
     const location = useLocation();
+    const confirm = useConfirm();
+    const confirmAction = (message: string, variant: 'danger' | 'warning' | 'info' = 'warning') => confirm({
+        title: t(`avoirs.confirms.title_${variant}`),
+        message,
+        confirmText: t('avoirs.confirms.confirm'),
+        cancelText: t('avoirs.confirms.cancel'),
+        variant
+    });
 
     const viewMode = useAvoirsStore((s) => s.viewMode);
     const setViewMode = useAvoirsStore((s) => s.setViewMode);
@@ -195,7 +204,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
         setEditingAvoirId(null);
         setSelectedFournisseurId('');
         setFournisseurSearch('');
-        setTypeAvoir('AUTRE');
+        setTypeAvoir('PERIME');
         setObservations('');
         setLignes([]);
     };
@@ -232,7 +241,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
                 setFournisseurSearch(data.fournisseur_nom || '');
             }
 
-            setTypeAvoir('AUTRE');
+            setTypeAvoir('PERIME');
             setObservations(`Retour suite à commande #${data.source_commande}`);
 
             if (Array.isArray(data.produits)) {
@@ -286,17 +295,17 @@ export function useAvoirsData(): UseAvoirsDataReturn {
         setViewMode('EDIT');
     };
 
-    const handleBackToList = () => {
+    const handleBackToList = async () => {
         if (viewMode === 'DETAILS') {
             if (selectedAvoir && !selectedAvoir.stock_decharge) {
-                if (!confirm(t('avoirs.confirms.back_unloaded', { defaultValue: "Le stock n'a pas été déchargé. Voulez-vous vraiment retourner à la liste sans décharger ?" }))) return;
+                if (!await confirmAction(t('avoirs.confirms.back_unloaded'))) return;
             }
             setViewMode('LIST');
             setSelectedAvoir(null);
             return;
         }
 
-        if (confirm(t('avoirs.confirms.back_to_list'))) {
+        if (await confirmAction(t('avoirs.confirms.back_to_list'))) {
             setViewMode('LIST');
             setSelectedAvoir(null);
         }
@@ -363,7 +372,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
     };
 
     const handleDelete = async (avoir: Avoir) => {
-        if (!confirm(t('avoirs.confirms.delete_avoir', { numero: avoir.numero }))) return;
+        if (!await confirmAction(t('avoirs.confirms.delete_avoir', { numero: avoir.numero }), 'danger')) return;
         const originalAvoirs = avoirs;
         const originalViewMode = viewMode;
         setAvoirs(prev => prev.filter(a => a.id !== avoir.id));
@@ -383,7 +392,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
     };
 
     const handleValidate = async (avoir: Avoir) => {
-        if (!confirm(t('avoirs.confirms.validate_avoir', { numero: avoir.numero }))) return;
+        if (!await confirmAction(t('avoirs.confirms.validate_avoir', { numero: avoir.numero }), 'info')) return;
         try {
             setSavingValidation(true);
             const updated = await avoirService.valider(avoir.id);
@@ -425,6 +434,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
     };
 
     const handleAnnulerDechargement = async (avoir: Avoir) => {
+        if (!await confirmAction(t('avoirs.confirms.cancel_unload', { numero: avoir.numero }), 'danger')) return;
         requireSudo(async (validatorId, password) => {
             try {
                 setLoading(true);
@@ -581,7 +591,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
 
     const handleDeleteLigne = async (ligneId: number) => {
         if (!selectedAvoir) return;
-        if (!confirm(t('stock:avoirs.confirms.delete_ligne', 'Supprimer cette ligne de l\'avoir ?'))) return;
+        if (!await confirmAction(t('avoirs.confirms.delete_ligne'), 'danger')) return;
         try {
             setLoading(true);
             await avoirService.deleteLigne(ligneId);
@@ -661,7 +671,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
     const handleBulkDelete = async () => {
         const count = selectedIds.size;
         if (count === 0) return;
-        if (!confirm(t('avoirs.confirms.bulk_delete', { count }))) return;
+        if (!await confirmAction(t('avoirs.confirms.bulk_delete', { count }), 'danger')) return;
 
         setBulkLoading(true);
         try {
@@ -680,7 +690,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
     const handleBulkValidate = async () => {
         const count = selectedIds.size;
         if (count === 0) return;
-        if (!confirm(t('avoirs.confirms.bulk_validate', { count }))) return;
+        if (!await confirmAction(t('avoirs.confirms.bulk_validate', { count }), 'info')) return;
 
         setBulkLoading(true);
         try {

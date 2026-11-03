@@ -35,6 +35,7 @@
         "sales_points": "Points de vente"
     },
     "labels": {
+        "auto_print_ticket": "Imprimer le ticket automatiquement après encaissement",
         "pharmacy_name": "Nom de la pharmacie",
         "niu": "Numéro d'Identifiant Unique (NIU)",
         "rccm": "Registre du Commerce (RCCM)",
@@ -67,6 +68,7 @@
         "pharmacist_whatsapp": "Numéro WhatsApp Titulaire",
         "add_custom_mode": "Ajouter un mode personnalisé",
         "centralized_cash_register": "Caisse Centralisée",
+        "require_validator_password": "Mot de passe validateur à chaque vente",
         "qz_printer": "Imprimante QZ Tray",
         "qz_printer_auto": "Imprimante par défaut (auto)",
         "open_drawer": "Ouvrir le tiroir-caisse",
@@ -116,6 +118,7 @@
         "report_recipients": "email1@exemple.com, email2@exemple.com"
     },
     "hints": {
+        "auto_print_ticket": "En caisse centralisée, lance l'impression à l'ouverture de l'aperçu. Silencieuse avec QZ Tray ; sinon la boîte d'impression habituelle s'ouvre.",
         "pharmacy_name": "Le nom officiel tel qu'il apparaîtra sur les factures et tickets.",
         "pharmacy_name_from_licence": "Le nom de la pharmacie est défini par la licence d'activation. Pour le modifier, contactez votre administrateur système.",
         "niu": "Identifiant fiscal obligatoire pour la liasse fiscale.",
@@ -137,6 +140,7 @@
         "custom_mode": "Saisissez un nom et appuyez sur Entrée ou cliquez Ajouter. N'oubliez pas de sauvegarder.",
         "multi_pos": "Si activé, le système permet de dispatcher les ventes vers différents terminaux physiques.",
         "centralized_cash_register": "Active le groupement des ventes par session journalière pour une clôture centralisée.",
+        "require_validator_password": "Si désactivé, le vendeur n'a plus à saisir de mot de passe pour envoyer une vente en caisse. Les validations spécifiques (remise, prix modifié, retour, stock négatif) restent exigées.",
         "qz_tray": "Nécessite QZ Tray installé et lancé sur ce poste. L'imprimante thermique sera utilisée en mode natif ESC/POS quand elle est disponible.",
         "telegram": "Créez un bot via @BotFather, copiez le token, envoyez /start au bot, puis récupérez le Chat ID.",
         "telegram_start": "Envoyez /start à votre bot avant de cliquer sur Récupérer.",

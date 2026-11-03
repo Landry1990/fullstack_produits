@@ -8,6 +8,8 @@ import { logger } from '../../utils/logger'
 interface ImportProductsModalProps {
   onClose: () => void
   onSuccess: () => void
+  /** Gate optionnelle : appelée avec l'upload en callback (ex. confirmation mot de passe). */
+  requireConfirm?: (action: () => void) => void
 }
 
 interface ImportResult {
@@ -19,7 +21,7 @@ interface ImportResult {
   rapport_txt?: string | null
 }
 
-export default function ImportProductsModal({ onClose, onSuccess }: ImportProductsModalProps) {
+export default function ImportProductsModal({ onClose, onSuccess, requireConfirm }: ImportProductsModalProps) {
   const { t } = useTranslation(['products', 'common'])
   const [file, setFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -51,6 +53,11 @@ export default function ImportProductsModal({ onClose, onSuccess }: ImportProduc
       setFile(e.dataTransfer.files[0])
       setResult(null)
     }
+  }
+
+  const handleUploadClick = () => {
+    if (requireConfirm) requireConfirm(handleUpload)
+    else handleUpload()
   }
 
   const handleUpload = async () => {
@@ -214,7 +221,7 @@ export default function ImportProductsModal({ onClose, onSuccess }: ImportProduc
               <button className="px-6 py-2 text-sm font-medium text-base-content bg-base-100 border border-base-300 rounded-lg hover:bg-base-200 transition-colors" onClick={onClose} disabled={uploading}>{t('common:cancel')}</button>
               <button
                 className="px-6 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-focus transition-colors shadow-sm disabled:text-base-content/50"
-                onClick={handleUpload}
+                onClick={handleUploadClick}
                 disabled={!file || uploading}
               >
                 {uploading ? (

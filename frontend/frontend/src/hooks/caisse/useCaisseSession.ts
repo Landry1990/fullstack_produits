@@ -22,6 +22,7 @@ interface SessionRecap {
  * - Possède l'état selectedPosteCaisseId (source de vérité pour la caisse sélectionnée)
  */
 export function useCaisseSession() {
+  const [sessionInitialized, setSessionInitialized] = useState(false)
   const [postesCaisses, setPostesCaisses] = useState<PosteCaisse[]>([])
   const [selectedPosteCaisseId, setSelectedPosteCaisseId] = useState<string>('all')
   const [isMultiCaisse, setIsMultiCaisse] = useState(false)
@@ -54,7 +55,7 @@ export function useCaisseSession() {
         const [settingsRes, postesRes, myActive, allActivePostes] = await Promise.all([
           api.get('pharmacy-settings/').catch(() => ({ data: {} })),
           api.get('postes-caisses/').catch(() => ({ data: { results: [] } })),
-          cashSessionService.getMyActivePostesVente().catch(() => []),
+          cashSessionService.getMyActivePostesVente(),
           cashSessionService.getActivePostesVente().catch(() => [])
         ])
 
@@ -83,6 +84,11 @@ export function useCaisseSession() {
         setIsMultiCaisse(activeCaisseIds.size > 1)
       } catch (err) {
         logger.error('Erreur initialisation page:', err)
+      } finally {
+        // Toujours marquer l'init comme terminée : en cas d'erreur, les
+        // listes restent vides → pas de prompt "ouvrir une caisse", mais
+        // l'UI ne reste pas bloquée sur un état de chargement infini.
+        setSessionInitialized(true)
       }
     }
     initPage()
@@ -99,6 +105,7 @@ export function useCaisseSession() {
   }, [myActivePoste])
 
   return {
+    sessionInitialized,
     postesCaisses,
     setPostesCaisses,
     selectedPosteCaisseId,

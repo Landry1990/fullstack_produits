@@ -141,13 +141,16 @@ export const useFacturationSearch = (params: UseFacturationSearchParams) => {
           return newIndex
         })
         break
-      case 'Enter':
+      case 'Enter': {
         e.preventDefault()
-        if (selectedIndex >= 0 && selectedIndex < resultCount) {
-          const element = document.querySelector(`[data-search-index="${selectedIndex}"]`)
+        // Sans sélection active, Enter prend le premier résultat
+        const targetIndex = selectedIndex >= 0 ? selectedIndex : 0
+        if (resultCount > 0 && targetIndex < resultCount) {
+          const element = document.querySelector(`[data-search-index="${targetIndex}"]`)
           element?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
         }
         break
+      }
       case 'Escape':
         setSelectedIndex(-1)
         if (selectedDci) {

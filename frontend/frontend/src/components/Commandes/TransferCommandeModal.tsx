@@ -129,14 +129,20 @@ export default function TransferCommandeModal({
             const { data: newCommande } = await api.post<Commande>(commandesEndpoint, newCommandePayload);
 
             await Promise.all(selectedProducts.map(async (p) => {
+                const produitId = typeof p.produit === 'object' ? p.produit.id : p.produit;
+                // Ligne sans prix de vente (0) → fallback sur le prix catalogue
+                // produit ; sinon envoyer 0 réinitialiserait le prix sur la ligne.
+                const cataloguePrice = typeof p.produit === 'object'
+                    ? p.produit.selling_price
+                    : produitsList.find(pr => pr.id === produitId)?.selling_price;
                 const payload = {
                     commande: newCommande.id,
-                    produit: typeof p.produit === 'object' ? p.produit.id : p.produit,
+                    produit: produitId,
                     quantity: parseInt(String(p.quantity || 0)),
                     unites_gratuites: parseInt(String(p.unites_gratuites || 0)),
                     price: parseFloat(String(p.price || 0)).toFixed(0),
                     price_cost: parseFloat(String(p.price || 0)).toFixed(0),
-                    selling_price: parseFloat(String(p.selling_price || 0)).toFixed(0),
+                    selling_price: parseFloat(String(p.selling_price || cataloguePrice || 0)).toFixed(0),
                     prix_euro: p.prix_euro ? parseFloat(String(p.prix_euro)).toFixed(0) : null,
                     tva: parseFloat(String(p.tva || 0)).toFixed(0),
                     marge: normalizeNumberInput(String(p.marge || 1.3)).toFixed(4),

@@ -44,6 +44,18 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
   const [dynamicReasons, setDynamicReasons] = useState<{ value: string; label: string }[]>([]);
   const [lots, setLots] = useState<StockLot[]>([]);
   const [_loadingLots, setLoadingLots] = useState(false);
+  // Mode de saisie : valeur absolue (comportement historique) ou écart ± (delta)
+  const [inputMode, setInputMode] = useState<'absolute' | 'delta'>('absolute');
+  const [shelfDelta, setShelfDelta] = useState('');
+  const [reserveDelta, setReserveDelta] = useState('');
+
+  useEffect(() => {
+    if (!isOpen) {
+      setInputMode('absolute');
+      setShelfDelta('');
+      setReserveDelta('');
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     const fetchReasons = async () => {
@@ -91,6 +103,23 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
   const selectedLot = lots.find(l => String(l.id) === form.stock_lot_id);
   const lotRayonQty = selectedLot?.quantity_remaining ?? 0;
   const lotReserveQty = selectedLot?.quantity_reserved ?? 0;
+
+  // Mode delta : l'utilisateur saisit un écart, on calcule la valeur absolue
+  // qui sera envoyée au backend (payload inchangé : toujours une valeur absolue)
+  const applyDelta = (current: number, deltaStr: string, field: 'new_quantity' | 'new_reserve_quantity') => {
+    const delta = parseInt(deltaStr, 10);
+    const result = Number.isFinite(delta) ? current + delta : NaN;
+    setForm((prev) => ({ ...prev, [field]: Number.isFinite(result) && result >= 0 ? String(result) : '' }));
+  };
+
+  const shelfDeltaNum = parseInt(shelfDelta, 10);
+  const shelfDeltaResult = Number.isFinite(shelfDeltaNum) ? (selectedProduit?.stock ?? 0) + shelfDeltaNum : null;
+  const reserveDeltaNum = parseInt(reserveDelta, 10);
+  const reserveDeltaResult = Number.isFinite(reserveDeltaNum) ? (selectedProduit?.stock_reserve ?? 0) + reserveDeltaNum : null;
+  const deltaInvalid = inputMode === 'delta' && (
+    shelfDeltaResult === null || shelfDeltaResult < 0 ||
+    (Boolean(selectedProduit?.has_reserve_storage) && (reserveDeltaResult === null || reserveDeltaResult < 0))
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
@@ -202,54 +231,148 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
             </div>
           )}
 
-          {/* New shelf quantity */}
-          <Input
-            type="number"
-            label={selectedProduit?.has_reserve_storage ? t('products:adjustment.new_shelf_stock') : t('products:adjustment.new_quantity')}
-            value={form.new_quantity}
-            onChange={(e) => setForm((prev) => ({ ...prev, new_quantity: e.target.value }))}
-            required
-            min={0}
-            size="lg"
-            className="text-center text-xl font-bold"
-          />
-          {form.new_quantity && selectedProduit && (
-            <div className="text-center -mt-2">
-              <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold ${
-                parseInt(form.new_quantity) > (selectedProduit.stock || 0) ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
-                parseInt(form.new_quantity) < (selectedProduit.stock || 0) ? 'bg-red-50 text-red-700 border border-red-100' :
-                'bg-slate-100 text-slate-500 border border-slate-200'
-              }`}>
-                {t('products:adjustment.difference')} {parseInt(form.new_quantity) - (selectedProduit.stock || 0) > 0 ? '+' : ''}
-                {parseInt(form.new_quantity) - (selectedProduit.stock || 0)}
-              </span>
-            </div>
-          )}
+          {/* Input mode toggle: absolute value vs delta */}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => { setInputMode('absolute'); setShelfDelta(''); setReserveDelta(''); }}
+              aria-pressed={inputMode === 'absolute'}
+              className={`flex-1 px-3 py-2 rounded-lg text-xs font-semibold border transition-colors ${
+                inputMode === 'absolute' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              {t('products:adjustment.mode_absolute')}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setInputMode('delta'); setShelfDelta(''); setReserveDelta(''); setForm((prev) => ({ ...prev, new_quantity: '', new_reserve_quantity: '' })); }}
+              aria-pressed={inputMode === 'delta'}
+              className={`flex-1 px-3 py-2 rounded-lg text-xs font-semibold border transition-colors ${
+                inputMode === 'delta' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              {t('products:adjustment.mode_delta')}
+            </button>
+          </div>
 
-          {/* New reserve quantity */}
-          {selectedProduit?.has_reserve_storage && (
+          {inputMode === 'absolute' ? (
             <>
+              {/* New shelf quantity (absolute) */}
               <Input
                 type="number"
-                label={t('products:adjustment.new_reserve_stock')}
-                value={form.new_reserve_quantity}
-                onChange={(e) => setForm((prev) => ({ ...prev, new_reserve_quantity: e.target.value }))}
+                label={selectedProduit?.has_reserve_storage ? t('products:adjustment.new_shelf_stock') : t('products:adjustment.new_quantity')}
+                value={form.new_quantity}
+                onChange={(e) => setForm((prev) => ({ ...prev, new_quantity: e.target.value }))}
                 required
                 min={0}
                 size="lg"
                 className="text-center text-xl font-bold"
               />
-              {form.new_reserve_quantity && (
+              {form.new_quantity && selectedProduit && (
                 <div className="text-center -mt-2">
                   <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold ${
-                    parseInt(form.new_reserve_quantity) > (selectedProduit.stock_reserve || 0) ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
-                    parseInt(form.new_reserve_quantity) < (selectedProduit.stock_reserve || 0) ? 'bg-red-50 text-red-700 border border-red-100' :
+                    parseInt(form.new_quantity) > (selectedProduit.stock || 0) ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
+                    parseInt(form.new_quantity) < (selectedProduit.stock || 0) ? 'bg-red-50 text-red-700 border border-red-100' :
                     'bg-slate-100 text-slate-500 border border-slate-200'
                   }`}>
-                    {t('products:adjustment.difference')} {parseInt(form.new_reserve_quantity) - (selectedProduit.stock_reserve || 0) > 0 ? '+' : ''}
-                    {parseInt(form.new_reserve_quantity) - (selectedProduit.stock_reserve || 0)}
+                    {t('products:adjustment.difference')} {parseInt(form.new_quantity) - (selectedProduit.stock || 0) > 0 ? '+' : ''}
+                    {parseInt(form.new_quantity) - (selectedProduit.stock || 0)}
                   </span>
                 </div>
+              )}
+
+              {/* New reserve quantity (absolute) */}
+              {selectedProduit?.has_reserve_storage && (
+                <>
+                  <Input
+                    type="number"
+                    label={t('products:adjustment.new_reserve_stock')}
+                    value={form.new_reserve_quantity}
+                    onChange={(e) => setForm((prev) => ({ ...prev, new_reserve_quantity: e.target.value }))}
+                    required
+                    min={0}
+                    size="lg"
+                    className="text-center text-xl font-bold"
+                  />
+                  {form.new_reserve_quantity && (
+                    <div className="text-center -mt-2">
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold ${
+                        parseInt(form.new_reserve_quantity) > (selectedProduit.stock_reserve || 0) ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
+                        parseInt(form.new_reserve_quantity) < (selectedProduit.stock_reserve || 0) ? 'bg-red-50 text-red-700 border border-red-100' :
+                        'bg-slate-100 text-slate-500 border border-slate-200'
+                      }`}>
+                        {t('products:adjustment.difference')} {parseInt(form.new_reserve_quantity) - (selectedProduit.stock_reserve || 0) > 0 ? '+' : ''}
+                        {parseInt(form.new_reserve_quantity) - (selectedProduit.stock_reserve || 0)}
+                      </span>
+                    </div>
+                  )}
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              {/* Delta mode: shelf */}
+              <Input
+                type="number"
+                label={selectedProduit?.has_reserve_storage ? t('products:adjustment.delta_shelf') : t('products:adjustment.delta_quantity')}
+                value={shelfDelta}
+                onChange={(e) => {
+                  setShelfDelta(e.target.value);
+                  applyDelta(selectedProduit?.stock ?? 0, e.target.value, 'new_quantity');
+                }}
+                required
+                size="lg"
+                className="text-center text-xl font-bold"
+                placeholder={t('products:adjustment.delta_placeholder')}
+              />
+              <div className="text-center -mt-2">
+                {shelfDeltaResult !== null && shelfDeltaResult >= 0 ? (
+                  <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold ${
+                    shelfDeltaResult > (selectedProduit?.stock || 0) ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
+                    shelfDeltaResult < (selectedProduit?.stock || 0) ? 'bg-red-50 text-red-700 border border-red-100' :
+                    'bg-slate-100 text-slate-500 border border-slate-200'
+                  }`}>
+                    {t('products:adjustment.result', { value: shelfDeltaResult })}
+                  </span>
+                ) : shelfDeltaResult !== null && shelfDeltaResult < 0 ? (
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-red-50 text-red-700 border border-red-100">
+                    {t('products:adjustment.delta_invalid')}
+                  </span>
+                ) : null}
+              </div>
+
+              {/* Delta mode: reserve */}
+              {selectedProduit?.has_reserve_storage && (
+                <>
+                  <Input
+                    type="number"
+                    label={t('products:adjustment.delta_reserve')}
+                    value={reserveDelta}
+                    onChange={(e) => {
+                      setReserveDelta(e.target.value);
+                      applyDelta(selectedProduit?.stock_reserve ?? 0, e.target.value, 'new_reserve_quantity');
+                    }}
+                    required
+                    size="lg"
+                    className="text-center text-xl font-bold"
+                    placeholder={t('products:adjustment.delta_placeholder')}
+                  />
+                  <div className="text-center -mt-2">
+                    {reserveDeltaResult !== null && reserveDeltaResult >= 0 ? (
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold ${
+                        reserveDeltaResult > (selectedProduit.stock_reserve || 0) ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
+                        reserveDeltaResult < (selectedProduit.stock_reserve || 0) ? 'bg-red-50 text-red-700 border border-red-100' :
+                        'bg-slate-100 text-slate-500 border border-slate-200'
+                      }`}>
+                        {t('products:adjustment.result', { value: reserveDeltaResult })}
+                      </span>
+                    ) : reserveDeltaResult !== null && reserveDeltaResult < 0 ? (
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-red-50 text-red-700 border border-red-100">
+                        {t('products:adjustment.delta_invalid')}
+                      </span>
+                    ) : null}
+                  </div>
+                </>
               )}
             </>
           )}
@@ -273,7 +396,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
             <Button type="button" variant="outline" onClick={onClose}>
               {t('common:actions.cancel')}
             </Button>
-            <Button type="submit" variant="primary" disabled={!form.new_quantity || isSubmitting}>
+            <Button type="submit" variant="primary" disabled={!form.new_quantity || deltaInvalid || isSubmitting}>
               {isSubmitting ? t('common:actions.processing', { defaultValue: 'Traitement…' }) : t('common:actions.confirm')}
             </Button>
           </DialogFooter>

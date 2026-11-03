@@ -7,6 +7,8 @@ import type { QueryDefinition, Client, Supplier, User, Famille } from '../../../
 import { Search, User as UserIcon, Truck, Users, Tag, Save, History, Trash2, LayoutPanelTop, Filter, Plus, X } from 'lucide-react';
 import { Button } from '../../ui/Button';
 import { Input } from '../../shadcn/input';
+import { Button as DialogButton } from '../../shadcn/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../../shadcn/dialog';
 import { Select } from '../../ui/Select';
 import { Checkbox } from '../../shadcn/checkbox';
 import { Badge } from '../../shadcn/badge';
@@ -101,6 +103,8 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
     presetList
 }) => {
     const { t } = useTranslation(['reports', 'common', 'products']);
+    const [presetDialogOpen, setPresetDialogOpen] = useState(false);
+    const [presetName, setPresetName] = useState('');
     const [conditionsOpen, setConditionsOpen] = useState(false);
     const [fieldsOpen, setFieldsOpen] = useState(false);
     const conditionsRef = useRef<HTMLDivElement>(null);
@@ -149,6 +153,32 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
 
     return (
         <div className="flex flex-col gap-6">
+            <Dialog open={presetDialogOpen} onOpenChange={setPresetDialogOpen}>
+                <DialogContent>
+                    <form onSubmit={event => {
+                        event.preventDefault();
+                        if (!presetName.trim()) return;
+                        presets.save(presetName.trim());
+                        setPresetDialogOpen(false);
+                    }}>
+                        <DialogHeader>
+                            <DialogTitle>{t('reports:preset_save_btn', { defaultValue: 'Sauvegarder' })}</DialogTitle>
+                            <DialogDescription>{t('reports:preset_prompt_name', { defaultValue: 'Nom de cette configuration ?' })}</DialogDescription>
+                        </DialogHeader>
+                        <Input
+                            className="my-4"
+                            autoFocus
+                            value={presetName}
+                            onChange={event => setPresetName(event.target.value)}
+                            aria-label={t('reports:preset_prompt_name', { defaultValue: 'Nom de cette configuration ?' })}
+                        />
+                        <DialogFooter>
+                            <DialogButton type="button" variant="outline" onClick={() => setPresetDialogOpen(false)}>{t('common:cancel')}</DialogButton>
+                            <DialogButton type="submit" disabled={!presetName.trim()}>{t('common:confirm')}</DialogButton>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
             {/* Presets Toolbar */}
             <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 pb-4">
                 <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-300">
@@ -179,8 +209,8 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                 <Button 
                     variant="outline" size="sm"
                     onClick={() => {
-                        const name = prompt(t('reports:preset_prompt_name', { defaultValue: 'Nom de cette configuration ?' }));
-                        if (name) presets.save(name);
+                        setPresetName('');
+                        setPresetDialogOpen(true);
                     }}
                     className="rounded-full gap-2"
                 >

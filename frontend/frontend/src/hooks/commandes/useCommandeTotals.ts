@@ -16,7 +16,7 @@ export interface CommandeTotals {
 
 export function useCommandeTotals(
     commandeProduits: CommandeProduit[],
-    selectedCommande: Commande | null
+    _selectedCommande: Commande | null
 ): CommandeTotals {
     return useMemo(() => {
         let totalTVA = 0;  // TVA de vente

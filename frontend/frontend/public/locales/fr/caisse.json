@@ -52,6 +52,7 @@
         "increase_quantity": "Augmenter la quantité"
     },
     "ticket": {
+        "print_error": "Erreur lors de l'impression. Vous pouvez réessayer avec le bouton Imprimer.",
         "title": "Ticket de Caisse",
         "invoice_a4": "Facture A4"
     },
@@ -476,6 +477,10 @@
     "poste_label": "Poste :",
     "all_posts": "Tous les postes",
     "cash_session": {
+        "breakdown": "Billetage",
+        "breakdown_hint": "Comptage facultatif (espèces et mobile money), non enregistré. La fermeture du poste n'est pas bloquée.",
+        "counted_total": "Total compté",
+        "counted_gap": "Écart avec le total théorique de la session",
         "pending_sales_error": "Impossible de fermer : {{count}} vente(s) en attente de règlement. Veuillez régler ou annuler les ventes avant de clôturer.",
         "confirm_close": "Fermer votre caisse ?",
         "close_error": "Erreur fermeture",

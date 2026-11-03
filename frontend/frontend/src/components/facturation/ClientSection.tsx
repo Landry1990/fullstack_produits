@@ -21,7 +21,7 @@ function HighlightText({ text, query }: { text: string; query: string }) {
   const parts = text.split(new RegExp(`(${safeQuery})`, 'gi'))
   return (
     <span>
-      {parts.map((part, i) => {
+      {parts.map((part) => {
         const isMatch = regex.test(part)
         return isMatch
           ? <strong key={`m-${part}`} className="font-bold text-emerald-700">{part}</strong>
@@ -339,7 +339,7 @@ export default function ClientSection({
                   <div className="px-3 py-1 text-caption font-semibold uppercase tracking-wider text-slate-500 bg-slate-100 border-y border-slate-200">
                     {t('facturation:client.recent_label')}
                   </div>
-                  {recentItems.map((r, idx) => (
+                  {recentItems.map((r) => (
                     <div
                       key={`recent-${r.type}-${r.id}`}
                       role="option"

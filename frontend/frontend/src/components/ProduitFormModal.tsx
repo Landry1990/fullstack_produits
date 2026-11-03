@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { FormEvent } from 'react';
+import type { FormEvent, ReactNode } from 'react';
 import api from '../services/api';
 import type { ProduitForm, ProduitModel, Rayon, Fournisseur, Forme, Groupe } from '../types';
 import { useTVA } from '../hooks/useTVA';
 import {
-  X, Package, Hash, Layers, DollarSign, AlertTriangle, Loader2, Save, Wrench
+  X, Package, Hash, Layers, DollarSign, AlertTriangle, Loader2, Save, Wrench, ChevronDown
 } from 'lucide-react';
 import { gooeyToast } from 'goey-toast';
 import { normalizeNumberInput } from '../utils/formatters';
@@ -116,6 +116,39 @@ export default function ProduitFormModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cipErrors, setCipErrors] = useState<Partial<Record<'cip1' | 'cip2' | 'cip3' | 'cip4', boolean>>>({});
+
+  // Sections repliables — les 2 premières (identification, tarification) restent
+  // ouvertes et fixes ; les sections avancées sont repliées par défaut sauf
+  // si elles contiennent une valeur en mode édition.
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    if (!open) return;
+    setCollapsed({
+      stock_location: false,
+      classification: false,
+      options: false,
+      counter_alert: !initialData?.message_alerte,
+      reserve: !initialData?.has_reserve_storage,
+      chronic: !initialData?.is_chronic,
+    });
+  }, [open, initialData]);
+  const toggleSection = (key: string) => setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }));
+  const sectionHeaderButton = (
+    key: string,
+    icon: ReactNode,
+    label: string,
+    colorClass = 'text-slate-500'
+  ) => (
+    <button
+      type="button"
+      onClick={() => toggleSection(key)}
+      aria-expanded={!collapsed[key]}
+      className={`w-full text-left text-caption font-black uppercase tracking-widest mb-2 flex items-center gap-1.5 ${colorClass}`}
+    >
+      {icon} {label}
+      <ChevronDown className={`ml-auto size-4 shrink-0 transition-transform ${collapsed[key] ? '-rotate-90' : ''}`} />
+    </button>
+  );
 
   const CIP_FIELDS = ['cip1', 'cip2', 'cip3', 'cip4'] as const;
   const isCipValid = (value: string) => {
@@ -452,9 +485,9 @@ export default function ProduitFormModal({
 
           {/* Section: Stock & Localisation */}
           <div className="bg-slate-50 rounded-lg border border-slate-200 p-3">
-            <h4 className="text-caption font-black uppercase tracking-widest text-slate-500 mb-2 flex items-center gap-1.5">
-              <Layers size={12} /> {t('products:form.sections.stock_location')}
-            </h4>
+            {sectionHeaderButton('stock_location', <Layers size={12} />, t('products:form.sections.stock_location'))}
+            {!collapsed.stock_location && (
+              <>
             {isService && (
               <p className="mb-2 text-caption font-semibold text-violet-600">{t('products:form.service_no_stock_hint')}</p>
             )}
@@ -501,13 +534,14 @@ export default function ProduitFormModal({
                 </div>
               )}
             </div>
+              </>
+            )}
           </div>
 
           {/* Section: Classification */}
           <div className="bg-slate-50 rounded-lg border border-slate-200 p-3">
-            <h4 className="text-caption font-black uppercase tracking-widest text-slate-500 mb-2 flex items-center gap-1.5">
-              <Layers size={12} /> {t('products:form.sections.classification')}
-            </h4>
+            {sectionHeaderButton('classification', <Layers size={12} />, t('products:form.sections.classification'))}
+            {!collapsed.classification && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.forme')}</label>
@@ -524,6 +558,7 @@ export default function ProduitFormModal({
                 </Select>
               </div>
             </div>
+            )}
           </div>
 
           {/* Section: Tarification */}
@@ -606,6 +641,9 @@ export default function ProduitFormModal({
           </div>
 
           {/* Section: Options */}
+          <div className="bg-slate-50 rounded-lg border border-slate-200 p-3">
+            {sectionHeaderButton('options', <Package size={12} />, t('products:form.sections.options'))}
+            {!collapsed.options && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {!isService && (
             <div
@@ -650,12 +688,14 @@ export default function ProduitFormModal({
               </div>
             </div>
           </div>
+            )}
+          </div>
 
           {/* Section: Alerte comptoir */}
           <div className="bg-red-50 rounded-lg border border-red-100 p-3">
-            <label className="block text-caption font-semibold text-red-600 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-              <AlertTriangle size={12} /> {t('products:counter_alert_message')}
-            </label>
+            {sectionHeaderButton('counter_alert', <AlertTriangle size={12} />, t('products:counter_alert_message'), 'text-red-600')}
+            {!collapsed.counter_alert && (
+              <>
             <textarea
               className="w-full rounded-lg border border-slate-200 bg-white hover:border-slate-300 focus:border-red-400 focus:ring-1 focus:ring-red-100 transition-all min-h-[60px] text-sm p-2 outline-none"
               aria-label={t('products:counter_alert_message')}
@@ -664,25 +704,33 @@ export default function ProduitFormModal({
               onChange={(e) => setForm((p) => ({ ...p, message_alerte: e.target.value }))}
             />
             <p className="text-caption text-slate-400 mt-1">{t('products:counter_alert_description')}</p>
+              </>
+            )}
           </div>
 
           {/* Section: Réserve */}
           {!isService && (
           <div className="bg-indigo-50/50 rounded-lg border border-indigo-100 p-3">
             <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => toggleSection('reserve')}
+                aria-expanded={!collapsed.reserve}
+                className="flex-1 flex items-center gap-2 text-left"
+              >
                 <Layers className="text-indigo-600 size-4" />
                 <div>
                   <h4 className="text-sm font-semibold text-indigo-600">{t('products:form.reserve_title')}</h4>
                   <p className="text-caption text-indigo-400 font-medium">{t('products:form.reserve_desc')}</p>
                 </div>
-              </div>
+                <ChevronDown className={`ml-auto size-4 shrink-0 text-indigo-400 transition-transform ${collapsed.reserve ? '-rotate-90' : ''}`} />
+              </button>
               <Checkbox checked={form.has_reserve_storage} aria-label={t('products:form.reserve_title')} onCheckedChange={(checked) => {
                 const isChecked = !!checked;
                 setForm(p => ({ ...p, has_reserve_storage: isChecked, capacite_rayon: (isChecked && (p.capacite_rayon === '0' || !p.capacite_rayon)) ? '50' : p.capacite_rayon, min_rayon: (isChecked && (p.min_rayon === '0' || !p.min_rayon)) ? '10' : p.min_rayon }));
               }} />
             </div>
-            {form.has_reserve_storage && (
+            {!collapsed.reserve && form.has_reserve_storage && (
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                 <div>
                   <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.rayon_capacity')}</label>
@@ -700,6 +748,9 @@ export default function ProduitFormModal({
           )}
 
           {/* Pathologie Chronique */}
+          <div className="bg-emerald-50/40 rounded-lg border border-emerald-100 p-3">
+            {sectionHeaderButton('chronic', <AlertTriangle size={12} />, t('products:form.chronic_pathology'), 'text-emerald-700')}
+            {!collapsed.chronic && (
           <div
             className={`p-3 rounded-lg border transition-all cursor-pointer ${form.is_chronic ? 'bg-emerald-50 border-emerald-100' : 'bg-white border-slate-200 hover:bg-slate-100'}`}
             role="checkbox"
@@ -732,6 +783,8 @@ export default function ProduitFormModal({
                 </div>
               )}
             </div>
+          </div>
+            )}
           </div>
 
           <div className="sticky bottom-0 z-10 -mx-4 -mb-4 mt-4 flex justify-end gap-3 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur">

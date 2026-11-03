@@ -240,6 +240,8 @@
         "edit": "Edit",
         "resume": "Resume",
         "suspend": "Wait / Suspend",
+        "mark_sent": "Mark as sent",
+        "mark_sent_help": "Exports the order CSV then marks it as sent to the supplier (\"Pending\" status).",
         "close": "Close / Validate",
         "labels": "Labels",
         "labels_clot_only": "Only for closed orders",
@@ -290,6 +292,8 @@
         },
         "provider_label": "Supplier",
         "provider_placeholder": "Select a supplier",
+        "provider_search_placeholder": "Search or select a supplier…",
+        "provider_no_result": "No supplier found",
         "invoice_label": "Invoice Number",
         "invoice_placeholder": "e.g., FACT-2024-001",
         "mise_en_place_label": "Initial stocking / negotiated terms",
@@ -298,6 +302,7 @@
         "paye_a_la_cloture_label": "Paid in cash",
         "paye_a_la_cloture_help": "Order already fully paid before / at stocking (some wholesalers offer no credit). A supplier payment for the full amount is recorded automatically when the order is closed.",
         "export_btn": "Export",
+        "export_requires_save": "Save the order first to export it",
         "export_options": {
             "ubipharm": "Primary (CIP1)",
             "laborex": "Secondary (CIP2)",
@@ -327,6 +332,10 @@
         "coeff_label": "COEFF"
     },
     "product_table": {
+        "quick_reception": "Quick reception",
+        "quick_reception_tooltip": "Quick entry: Enter moves from quantity to lot, then expiry and product search. Prices remain editable.",
+        "cheaper_tooltip": "Another supplier has this product cheaper",
+        "duplicate_line": "Duplicate line (another lot)",
         "title": "Products ({{count}})",
         "import_btn": "Import",
         "new_product_btn": "New Product",
@@ -427,6 +436,13 @@
         "add_at_least_one": "Please add at least one product to the order",
         "mise_en_place_delai_required": "Please enter the negotiated payment delay for this initial stocking purchase",
         "close_confirm": "Are you sure you want to close this order?",
+        "close_warnings_title": "Checks before closing",
+        "close_warnings_intro": "The following issues were found in this order:",
+        "section_missing_expiration": "Products without an expiry date:",
+        "section_selling_below_cost": "Products sold below cost (selling price excluding tax lower than purchase price):",
+        "cancel_reception_confirm_title": "Cancel reception?",
+        "cancel_reception_confirm_message": "Cancelling will delete the lots created during reception and return the order to draft status. Do you want to continue?",
+        "cancel_reception_confirm_button": "Cancel reception",
         "exclusive_product_title": "Exclusive Product",
         "exclusive_product_message": "This product is usually exclusive to supplier: {{supplier}}. Do you still want to add it?",
         "exclusive_product_confirm": "Yes, add it",
@@ -498,7 +514,9 @@
         "merge_success_detailed": "Merge successful: {{count}} products transferred",
         "lot_or_product_not_found": "Lot or product not found",
         "transfer_select_products": "Please select products to transfer",
-        "products_added_from_cadencier": "{{count}} products added from schedule"
+        "transfer_success": "{{count}} product(s) transferred to {{supplier}}",
+        "products_added_from_cadencier": "{{count}} products added from schedule",
+        "send_export_error": "Order export failed"
     },
     "quick_create": {
         "title": "Quick Product Creation",

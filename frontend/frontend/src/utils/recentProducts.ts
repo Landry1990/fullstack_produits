@@ -19,6 +19,3 @@ export function addRecentProducts(products: SearchResult[]) {
   window.dispatchEvent(new CustomEvent('recent-products-updated', { detail: next }))
 }
 
-function addRecentProduct(product: SearchResult) {
-  addRecentProducts([product])
-}

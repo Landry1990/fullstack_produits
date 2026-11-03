@@ -373,6 +373,8 @@ export interface SaleCompletionParams {
     promisClientName?: string;
     promisPhone?: string;
     idempotencyKey?: string;
+    /** Timestamp (ms) du dernier bulk_refresh stock — évite un second appel si récent. */
+    stockCheckedAt?: number;
 }
 
 export interface SaleCompletionResult {

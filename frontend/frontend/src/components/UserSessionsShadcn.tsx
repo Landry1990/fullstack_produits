@@ -8,7 +8,6 @@ import { gooeyToast } from 'goey-toast';
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './shadcn/card';
 import { Button } from './shadcn/button';
-import { Input } from './shadcn/input';
 import { LocalizedDateInput } from './LocalizedDateInput';
 import { Badge } from './shadcn/badge';
 import { Tabs, TabsList, TabsTrigger } from './shadcn/tabs';

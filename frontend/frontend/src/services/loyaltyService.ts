@@ -1,5 +1,5 @@
 import api from './api';
-import type { LoyaltyHistoryEntry, LoyaltySettings } from '../types';
+import type { LoyaltySettings } from '../types';
 
 export const loyaltyService = {
     getHistory: (params?: { client?: number; type_transaction?: string; page?: number }) =>

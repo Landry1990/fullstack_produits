@@ -10,7 +10,7 @@ from decimal import Decimal
 
 from django.core.cache import cache
 from django.db import transaction
-from django.db.models import DecimalField, F, Sum
+from django.db.models import F, Sum
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import action
@@ -158,21 +158,24 @@ class CommandeClotureMixin:
                     
                     # Phase 1: Calculs en mémoire
                     for position, item in enumerate(items, 1):
-                        quantity_paid = item.quantity
+                        # Quantité réellement reçue si saisie (écart commandé/reçu),
+                        # sinon repli sur la quantité commandée (comportement historique).
+                        quantity_paid = item.quantity_received if item.quantity_received is not None else item.quantity
                         quantity_free = item.unites_gratuites
                         total_qty = quantity_paid + quantity_free
-                        
+
                         if total_qty > 0:
                             effective_cost = (quantity_paid * item.price_cost) / total_qty
                         else:
                             effective_cost = item.price_cost
-                        
+
                         produit = product_map.get(item.produit_id)
                         if not produit:
                             continue
-                        
-                        # Préparer le lot de stock
-                        if produit.use_lot_management:
+
+                        # Préparer le lot de stock — total_qty == 0 (rien reçu,
+                        # ex. quantity_received=0 sans UG) : aucun lot à créer.
+                        if produit.use_lot_management and total_qty > 0:
                             lot_number = item.lot
                             if not lot_number:
                                 lot_number = f"CMD{commande.id}-{position:02d}"
@@ -266,7 +269,8 @@ class CommandeClotureMixin:
                             items_to_update_stock.append(item)
                             received_qty_by_product[item.produit_id] = (
                                 received_qty_by_product.get(item.produit_id, 0)
-                                + item.quantity + item.unites_gratuites
+                                + (item.quantity_received if item.quantity_received is not None else item.quantity)
+                                + item.unites_gratuites
                             )
                     
                     # Phase 2: Écritures en base avec optimistic locking
@@ -396,9 +400,16 @@ class CommandeClotureMixin:
                             notes__startswith=f"Paiement automatique - achat au comptant / mise en place (Commande #{commande.id})"
                         ).exists()
                         if not existing_auto:
-                            total_cost = CommandeProduit.objects.filter(commande=commande).aggregate(
-                                total=Sum(F('quantity') * F('price_cost'), output_field=DecimalField())
-                            )['total'] or Decimal('0.00')
+                            # Montant basé sur la quantité réellement reçue
+                            # (quantity_received saisi) sinon sur quantity.
+                            total_cost = sum(
+                                (
+                                    Decimal(item.quantity_received if item.quantity_received is not None else item.quantity)
+                                    * Decimal(item.price_cost)
+                                    for item in items
+                                ),
+                                Decimal('0.00'),
+                            )
                             if total_cost > 0:
                                 paiement = PaiementFournisseur.objects.create(
                                     fournisseur=commande.fournisseur,
@@ -420,7 +431,9 @@ class CommandeClotureMixin:
                         produit = product_map.get(item.produit_id)
                         if not produit:
                             continue
-                        total_qty = item.quantity + item.unites_gratuites
+                        total_qty = (item.quantity_received if item.quantity_received is not None else item.quantity) + item.unites_gratuites
+                        if total_qty <= 0:
+                            continue  # Rien reçu sur cette ligne : pas de mouvement
                         fournisseur_name = commande.fournisseur.name if commande.fournisseur else (commande.fournisseur_nom or 'N/A')
                         mouvements_to_create.append(MouvementStock(
                             produit=produit,
@@ -518,8 +531,10 @@ class CommandeClotureMixin:
         produits_dict = {}
         
         # Phase 1: Calculer les retraits de stock
+        # Même repli qu'à la clôture : quantity_received saisi sinon quantity,
+        # pour retirer exactement ce qui avait été réceptionné.
         for item in items:
-            quantity_paid = item.quantity
+            quantity_paid = item.quantity_received if item.quantity_received is not None else item.quantity
             quantity_free = item.unites_gratuites
             total_qty = quantity_paid + quantity_free
             
@@ -782,7 +797,7 @@ class CommandeClotureMixin:
         for item in items:
             if not item.produit_id:
                 continue
-            total_qty = item.quantity + item.unites_gratuites
+            total_qty = (item.quantity_received if item.quantity_received is not None else item.quantity) + item.unites_gratuites
             if total_qty <= 0:
                 continue
             source_qty_map[item.produit_id] = source_qty_map.get(item.produit_id, 0) + total_qty

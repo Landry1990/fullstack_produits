@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import Avoirs from '../Avoirs'
 import { MemoryRouter } from 'react-router-dom'
+import { ConfirmProvider } from '../../hooks/useConfirm'
 
 // Mock libs externes
 vi.mock('react-hot-toast', () => ({
@@ -58,8 +59,12 @@ describe('Avoirs Component', () => {
     })
   })
 
+  const renderAvoirs = () => render(
+    <MemoryRouter><ConfirmProvider><Avoirs /></ConfirmProvider></MemoryRouter>
+  )
+
   it('affiche la liste des avoirs', async () => {
-    render(<MemoryRouter><Avoirs /></MemoryRouter>)
+    renderAvoirs()
     
     expect(screen.getByText(/Gestion des Avoirs/i)).toBeInTheDocument()
     
@@ -70,7 +75,7 @@ describe('Avoirs Component', () => {
   })
 
   it('permet de créer un nouvel avoir', async () => {
-    render(<MemoryRouter><Avoirs /></MemoryRouter>)
+    renderAvoirs()
 
     const newBtn = await screen.findByText(/Nouvel Avoir/i)
     fireEvent.click(newBtn)

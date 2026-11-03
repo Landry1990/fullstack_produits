@@ -44,7 +44,6 @@ interface LineResult {
 const ReconditionnementModal: React.FC<ReconditionnementModalProps> = ({
   open,
   onOpenChange,
-  commandeId,
   commandeNumero,
   transformations,
   onDone,
@@ -149,7 +148,6 @@ const ReconditionnementModal: React.FC<ReconditionnementModalProps> = ({
     setResults(lineResults);
     setSubmitting(false);
 
-    const okCount = lineResults.filter((r) => r.ok).length;
     const errCount = lineResults.filter((r) => !r.ok).length;
     if (errCount === 0) {
       setTimeout(() => {
@@ -201,7 +199,7 @@ const ReconditionnementModal: React.FC<ReconditionnementModalProps> = ({
               </div>
             </div>
 
-            {results.map((r, i) => (
+            {results.map((r) => (
               <div
                 key={r.relation_id}
                 className={`flex items-center gap-2 text-sm rounded-lg px-3 py-2 border ${

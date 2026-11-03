@@ -1190,6 +1190,7 @@
         },
         "form": {
             "title_new": "Nouvel Avoir",
+            "type_label": "Type d'avoir",
             "title_edit": "Modifier l'Avoir #{{id}}",
             "subtitle": "Créez ou modifiez un retour fournisseur",
             "cancel": "Annuler",
@@ -1283,6 +1284,12 @@
             "auto_validated": "Avoir validé automatiquement (toutes lignes clôturées)"
         },
         "confirms": {
+            "title_warning": "Quitter l'avoir ?",
+            "title_danger": "Confirmer l'action destructive",
+            "title_info": "Valider l'avoir",
+            "confirm": "Confirmer",
+            "cancel": "Annuler",
+            "cancel_unload": "Annuler le déchargement de l'avoir {{numero}} ? Les produits seront réintégrés au stock.",
             "back_to_list": "Voulez-vous vraiment quitter ? Les modifications non enregistrées seront perdues.",
             "back_unloaded": "Le stock n'a pas été déchargé. Voulez-vous vraiment retourner à la liste sans décharger ?",
             "delete_avoir": "Voulez-vous vraiment supprimer l'avoir brouillon {{numero}} ?",
@@ -1300,7 +1307,9 @@
             "col_stock": "Stock",
             "col_price": "Prix achat",
             "days_left": "({{days}}j)",
-            "choose": "Choisir"
+            "choose": "Choisir",
+            "other_suppliers": "Lots d'une autre provenance",
+            "unknown_supplier": "Provenance inconnue"
         }
     },
     "ruptures": {

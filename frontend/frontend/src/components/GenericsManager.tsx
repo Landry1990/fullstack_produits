@@ -8,6 +8,7 @@ import { Badge } from './ui/Badge';
 import { EmptyState } from './ui/EmptyState';
 import { Skeleton } from './ui/Skeleton';
 import { logger } from '../utils/logger';
+import { useConfirm } from '../hooks/useConfirm';
 
 interface ProductLite {
   id: number;
@@ -33,6 +34,7 @@ interface GenericsResponse {
  */
 export default function GenericsManager() {
   const { t } = useTranslation(['products', 'common']);
+  const confirm = useConfirm();
   const [reference, setReference] = useState<ProductLite | null>(null);
   const [generics, setGenerics] = useState<GenericItem[] | null>(null);
   const [loadingGenerics, setLoadingGenerics] = useState(false);
@@ -68,14 +70,20 @@ export default function GenericsManager() {
         fetchGenerics();
         setBusyId(null);
       })
-      .catch(err => {
+      .catch(async err => {
         const data = err.response?.data;
         if (err.response?.status === 409 && data?.requires_confirmation) {
           const details = t('products:dci.generics.mismatch_detail', {
             generic: (data.generic_substances || []).join(', ') || '-',
             reference: (data.reference_substances || []).join(', ') || '-',
           });
-          if (window.confirm(`${data.error}\n\n${details}\n\n${t('products:dci.generics.mismatch_confirm')}`)) {
+          if (await confirm({
+            title: t('common:confirmation'),
+            message: `${data.error}\n\n${details}\n\n${t('products:dci.generics.mismatch_confirm')}`,
+            confirmText: t('common:confirm'),
+            cancelText: t('common:cancel'),
+            variant: 'warning',
+          })) {
             // busyId reste actif : libéré à la fin de la requête forcée
             postLink(candidate, true);
             return;
@@ -85,19 +93,29 @@ export default function GenericsManager() {
         }
         setBusyId(null);
       });
-  }, [reference, fetchGenerics, t]);
+  }, [reference, fetchGenerics, t, confirm]);
 
-  const handleLink = (candidate: ProductLite) => {
+  const handleLink = async (candidate: ProductLite) => {
     if (!reference) return;
-    if (!window.confirm(
-      t('products:dci.generics.confirm_link', { generic: candidate.name, reference: reference.name })
-    )) return;
+    if (!(await confirm({
+      title: t('common:confirmation'),
+      message: t('products:dci.generics.confirm_link', { generic: candidate.name, reference: reference.name }),
+      confirmText: t('common:confirm'),
+      cancelText: t('common:cancel'),
+      variant: 'warning',
+    }))) return;
     postLink(candidate);
   };
 
-  const handleUnlink = (item: GenericItem) => {
+  const handleUnlink = async (item: GenericItem) => {
     if (!reference) return;
-    if (!window.confirm(t('products:dci.generics.confirm_unlink', { name: item.name }))) return;
+    if (!(await confirm({
+      title: t('common:confirmation'),
+      message: t('products:dci.generics.confirm_unlink', { name: item.name }),
+      confirmText: t('common:confirm'),
+      cancelText: t('common:cancel'),
+      variant: 'danger',
+    }))) return;
     setBusyId(item.id);
     api.post('dci-admin/unlink_generic/', { produit_id: reference.id, generic_id: item.id })
       .then(() => {

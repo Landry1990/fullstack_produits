@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Play, Clock, X, ShoppingCart, Package, Truck, Users, TrendingUp, Settings } from 'lucide-react';
-import { Card, CardContent } from '../shadcn/card';
+import { Card } from '../shadcn/card';
 import { Button } from '../shadcn/button';
 import { Badge } from '../shadcn/badge';
 import { EmptyState } from '../ui/EmptyState';

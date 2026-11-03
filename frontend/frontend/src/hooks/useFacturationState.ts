@@ -27,6 +27,7 @@ import { useSecureCartOperations } from './useSecureCartOperations'
 import { useDevisLoader } from './useDevisLoader'
 import { useFacturationImport } from './useFacturationImport'
 import { useRecallInvoice } from './useRecallInvoice'
+import { useInvoiceSettings } from './useInvoiceSettings'
 import { generateUUID } from '../utils/uuid'
 
 export type FacturationState = ReturnType<typeof useFacturationState>
@@ -49,6 +50,7 @@ export function useFacturationState() {
   const { t } = useTranslation(['prescriptions', 'common', 'facturation', 'sales'])
   const queryClient = useQueryClient()
   const { settings: pharmacySettings } = usePharmacySettings()
+  const { settings: invoiceSettings } = useInvoiceSettings()
   const { isZenithMode, toggleZenithMode, isMidnightTheme, toggleMidnightTheme } = useSidebar()
   const { user } = useAuth()
 
@@ -57,6 +59,7 @@ export function useFacturationState() {
   const saleInProgressRef = useRef(false)
   const requestInFlightRef = useRef(false)
   const pendingPrintWindowRef = useRef<Window | null>(null)
+  const stockCheckedAtRef = useRef<number>(0)
   const [isRetrocession, setIsRetrocession] = useState(false)
   const [isFactureA4, setIsFactureA4] = useState(false)
   const [sortBy, setSortBy] = useState<'chrono' | 'stock' | 'name' | 'qty'>('chrono')
@@ -446,8 +449,14 @@ export function useFacturationState() {
       return
     }
 
+    // En caisse centralisée, le sudo ne fait que confirmer l'identité (le
+    // backend n'exige aucune permission pour une vente standard — les cas
+    // remise/prix/retour/stock négatif/montant nul ont leurs validations
+    // dédiées). Le réglage require_validator_password permet de le désactiver.
+    const identitySudoBypassed = multiCaisse.centralizedCashRegister
+      && invoiceSettings?.require_validator_password === false
     // Sudo required when sending to centralized cash register or when selling on an opened cash register point
-    if ((multiCaisse.centralizedCashRegister || isPosteCaisseActive) && !sudoCredentials) {
+    if ((multiCaisse.centralizedCashRegister || isPosteCaisseActive) && !sudoCredentials && !identitySudoBypassed) {
       requireSudo(async (validatorId, password) => {
         await handleCompleteSale({ validatorId, password })
       }, {
@@ -455,7 +464,8 @@ export function useFacturationState() {
         message: isPosteCaisseActive
           ? t('facturation:payment.sudo_seller_message')
           : t('facturation:payment.sudo_send_to_caisse'),
-        permission: 'can_validate_sales',
+        // Encaissement direct (non centralisé) → le backend exige can_cash_out
+        permission: multiCaisse.centralizedCashRegister ? 'can_validate_sales' : 'can_cash_out',
         forceCurrentUser: false,
         onCancel: () => { saleInProgressRef.current = false },
       })
@@ -526,6 +536,7 @@ export function useFacturationState() {
       promisClientName: ui.promisClientName,
       promisPhone: ui.promisPhone,
       idempotencyKey: saleIdempotencyKey,
+      stockCheckedAt: stockCheckedAtRef.current,
     }
     // Garde couvrant aussi les appels avec credentials sudo : le verrou
     // saleInProgressRef ci-dessus ne filtre que les appels sans credentials.
@@ -569,6 +580,7 @@ export function useFacturationState() {
     try {
       const productIds = cart.lignesFacture.map((l: LigneFacture) => l.produit.id)
       const { data: freshProductsData } = await api.post<ProduitModel[]>('produits/bulk_refresh/', { ids: productIds })
+      stockCheckedAtRef.current = Date.now()
 
       const productMap = new Map(freshProductsData.map((p: ProduitModel) => [p.id, p]))
       freshLignes = cart.lignesFacture.map((ligne: LigneFacture) => {

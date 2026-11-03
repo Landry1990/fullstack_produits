@@ -7,8 +7,6 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../shadcn/card';
 import { Progress } from '../shadcn/progress';
 import { Button } from '../shadcn/button';
-import type { TFunction } from 'i18next';
-
 interface SectionCard {
   id: string;
   icon: React.ElementType;
@@ -16,7 +14,7 @@ interface SectionCard {
   bgClass: string;
 }
 
-function getSectionCards(t: TFunction): SectionCard[] {
+function getSectionCards(): SectionCard[] {
   return [
     {
       id: 'videos',
@@ -65,7 +63,7 @@ const HelpOverview: React.FC<HelpOverviewProps> = ({
   onResetProgress,
 }) => {
   const { t } = useTranslation('help');
-  const cards = getSectionCards(t);
+  const cards = getSectionCards();
   const progress = totalGuides > 0 ? Math.round((completedCount / totalGuides) * 100) : 0;
 
   return (

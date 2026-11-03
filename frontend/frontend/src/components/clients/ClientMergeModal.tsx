@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Users, Merge, UserPlus, Phone, X } from 'lucide-react';
+import { Users, UserPlus, Phone, X } from 'lucide-react';
 import { Button } from '../shadcn/button';
 import {
   Dialog,

@@ -52,6 +52,7 @@
         "increase_quantity": "Increase quantity"
     },
     "ticket": {
+        "print_error": "Printing failed. You can try again using the Print button.",
         "title": "Receipt",
         "invoice_a4": "A4 Invoice"
     },
@@ -476,6 +477,10 @@
     "poste_label": "Post: ",
     "all_posts": "All posts",
     "cash_session": {
+        "breakdown": "Cash breakdown",
+        "breakdown_hint": "Optional count (cash and mobile money), not saved. Closing the terminal is not blocked.",
+        "counted_total": "Counted total",
+        "counted_gap": "Difference from the session theoretical total",
         "pending_sales_error": "Cannot close: {{count}} sale(s) pending settlement. Please settle or cancel the sales before closing.",
         "confirm_close": "Close your cash register?",
         "close_error": "Closing error",
