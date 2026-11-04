@@ -125,7 +125,7 @@ const _navigate = useNavigate()
       setFacturesEnAttente(facturesList)
     } catch (err) {
       logger.error('Erreur lors du chargement des factures en attente:', err)
-      gooeyToast.error(getApiErrorDetail(err, t('messages.load_pending_error', { defaultValue: 'Erreur lors du chargement des factures en attente' })))
+      gooeyToast.error(getApiErrorDetail(err, t('messages.load_pending_error')))
     } finally {
       fetchingRef.current = false
     }
@@ -205,7 +205,6 @@ const _navigate = useNavigate()
     if (facturesEnAttente.length > 0) {
       gooeyToast.error(
         t('cash_session.pending_sales_error', {
-          defaultValue: `Impossible de fermer : ${facturesEnAttente.length} vente(s) en attente de règlement. Veuillez régler ou annuler les ventes avant de clôturer.`,
           count: facturesEnAttente.length
         }),
         { duration: 5000 }
@@ -215,7 +214,7 @@ const _navigate = useNavigate()
 
     const confirmedClose = await confirm({
       title: t('common:confirmation'),
-      message: t('cash_session.confirm_close', { defaultValue: 'Fermer votre caisse ?' }),
+      message: t('cash_session.confirm_close'),
       confirmText: t('common:confirm'),
       variant: 'danger'
     })
@@ -228,7 +227,7 @@ const _navigate = useNavigate()
       setSessionRecap(null)
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { detail?: string } } }
-      gooeyToast.error(axiosErr.response?.data?.detail || t('cash_session.close_error', { defaultValue: 'Erreur fermeture' }))
+      gooeyToast.error(axiosErr.response?.data?.detail || t('cash_session.close_error'))
     }
   }
 
@@ -515,8 +514,8 @@ const _navigate = useNavigate()
             </div>
             <div className="flex flex-wrap gap-3">
               <span><kbd className="inline-block px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-caption font-mono">↑↓</kbd> {t('shortcuts.navigate')}</span>
-              <span><kbd className="inline-block px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-caption font-mono">{t('shortcuts.enter_key', 'Entrée')}</kbd> {t('shortcuts.cash_in')}</span>
-              <span><kbd className="inline-block px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-caption font-mono">{t('shortcuts.space_key', 'Espace')}</kbd> {t('shortcuts.view_products')}</span>
+              <span><kbd className="inline-block px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-caption font-mono">{t('shortcuts.enter_key')}</kbd> {t('shortcuts.cash_in')}</span>
+              <span><kbd className="inline-block px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-caption font-mono">{t('shortcuts.space_key')}</kbd> {t('shortcuts.view_products')}</span>
               <span><kbd className="inline-block px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-caption font-mono">C</kbd> {t('shortcuts.coupon')}</span>
               <span><kbd className="inline-block px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-caption font-mono">R</kbd> {t('shortcuts.refresh')}</span>
               <span><kbd className="inline-block px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-caption font-mono">1-9</kbd> {t('shortcuts.quick_select')}</span>
@@ -612,7 +611,7 @@ const _navigate = useNavigate()
       <PremiumModal
         isOpen={showCaisseHelp}
         onClose={() => setShowCaisseHelp(false)}
-        title={t('shortcuts.title', { defaultValue: 'Raccourcis :' })}
+        title={t('shortcuts.title')}
         icon={<Keyboard className="size-5" />}
         footer={
           <button

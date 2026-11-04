@@ -20,6 +20,7 @@
     "avoir_client_indicator": "Cette vente a {{count}} avoir(s) client : {{avoirs}}",
     "select_all": "Tout sélectionner",
     "select_invoice": "Sélectionner la facture {{number}}",
+    "load_to_facturation": "Charger en facturation",
     "modals": {
         "print_invoice": "Imprimer Facture"
     },

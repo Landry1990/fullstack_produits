@@ -253,7 +253,8 @@
         "poste_caisse_id": "Checkout point",
         "fournisseur_id": "Supplier",
         "valorisation": "Valuation method",
-        "vue": "Display"
+        "vue": "Display",
+        "all_vendors": "All vendors"
     },
     "results": {
         "title": "Results",
@@ -279,6 +280,7 @@
         "lines_count": "{{filtered}} / {{total}} lines",
         "footer_avg_label": "average",
         "footer_global_label": "global",
+        "limited_display": "Display limited to the first 100 results out of {{total}}",
         "sources": {
             "CAISSE_CENTRALE": "Central Cashier",
             "VENTES": "Sales",

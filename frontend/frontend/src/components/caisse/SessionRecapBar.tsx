@@ -25,11 +25,11 @@ export function SessionRecapBar({ sessionRecap }: SessionRecapBarProps) {
         <div className="flex items-center gap-2">
           <TrendingUp className="size-4 text-emerald-600" />
           <span className="text-xs font-black text-emerald-600 uppercase tracking-widest">
-            {t('recap.title', { defaultValue: 'Récap caisse' })} — {sessionRecap.poste_nom}
+            {t('recap.title')} — {sessionRecap.poste_nom}
           </span>
           {sessionRecap.date_ouverture && (
             <span className="text-caption text-slate-400 font-mono">
-              {t('recap.since', { defaultValue: 'depuis' })} {new Date(sessionRecap.date_ouverture).toLocaleTimeString(i18n.language === 'en' ? 'en-GB' : 'fr-FR', { hour: '2-digit', minute: '2-digit' })}
+              {t('recap.since')} {new Date(sessionRecap.date_ouverture).toLocaleTimeString(i18n.language === 'en' ? 'en-GB' : 'fr-FR', { hour: '2-digit', minute: '2-digit' })}
             </span>
           )}
         </div>
@@ -43,7 +43,7 @@ export function SessionRecapBar({ sessionRecap }: SessionRecapBarProps) {
       <div className="p-4 flex flex-wrap gap-3 items-center">
         {(sessionRecap.fond_de_caisse ?? 0) > 0 && (
           <div className="flex flex-col items-center px-4 py-2 bg-blue-50 border border-blue-100 rounded-xl min-w-[100px]">
-            <span className="text-caption font-bold text-blue-500/70 uppercase tracking-wider">{t('recap.fond', { defaultValue: 'Fond' })}</span>
+            <span className="text-caption font-bold text-blue-500/70 uppercase tracking-wider">{t('recap.fond')}</span>
             <span className="text-base font-black text-blue-600">+{formatCurrency(Math.round(sessionRecap.fond_de_caisse ?? 0))}</span>
           </div>
         )}
@@ -53,7 +53,7 @@ export function SessionRecapBar({ sessionRecap }: SessionRecapBarProps) {
           .map(([mode, montant]) => {
 const _modeConfig = getPaymentMode(mode)
             const label = mode === 'coupon'
-              ? `🎫 ${t('recap.coupons', { defaultValue: 'Coupons' })}`
+              ? `🎫 ${t('recap.coupons')}`
               : getPaymentModeWithIcon(mode, t)
             const isNegative = mode === 'coupon'
             return (
@@ -70,12 +70,12 @@ const _modeConfig = getPaymentMode(mode)
         }
         <div className="ml-auto flex flex-col items-end gap-1">
           <div className="text-caption font-bold text-slate-400 uppercase tracking-wider">
-            {sessionRecap.nb_transactions} {t('recap.sales', { defaultValue: 'vente(s)', count: sessionRecap.nb_transactions ?? 0 })}
+            {sessionRecap.nb_transactions} {t('recap.sales', { count: sessionRecap.nb_transactions ?? 0 })}
           </div>
           <div className="text-2xl font-black text-emerald-600">
             {formatCurrency(Math.round(sessionRecap.total_avec_fond ?? 0))}
           </div>
-          <div className="text-caption text-slate-400">{t('recap.total_register', { defaultValue: 'total caisse' })}</div>
+          <div className="text-caption text-slate-400">{t('recap.total_register')}</div>
         </div>
       </div>
     </div>

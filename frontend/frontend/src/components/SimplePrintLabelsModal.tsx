@@ -1,6 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { Loader2, Info } from 'lucide-react'
 import JsBarcode from 'jsbarcode'
+import { gooeyToast } from 'goey-toast'
+import { getSavedLabelPrinterName } from '../services/qzPrinter'
+import { printLabelsSmart } from '../utils/print/printLabelSmart'
+import type { LabelTsplItem } from '../utils/escpos/labelTspl'
 import PremiumModal from './common/PremiumModal'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
@@ -656,6 +660,7 @@ export default function SimplePrintLabelsModal({
     const w = isCompact ? '30mm' : '40mm'
     const h = isCompact ? '15mm' : '20mm'
 
+    const htmlFallback = async () => {
     // Build print-ready HTML
     const printWindow = window.open('about:blank', '_blank', 'width=600,height=800')
     if (!printWindow) {
@@ -878,6 +883,43 @@ ${labelsHTML}
     } else {
       setTimeout(triggerPrint, 1000)
     }
+    }
+
+    if (getSavedLabelPrinterName()) {
+      // labelsData is the final expanded queue (selection, free units and fixed quantity).
+      // Collapse only consecutive identical labels to preserve order and native copies.
+      const items: LabelTsplItem[] = []
+      for (const label of labelsData) {
+        const item: LabelTsplItem = {
+          name: label.productName,
+          barcode: label.barcode,
+          barcodeType,
+          price: fields.find(f => f.key === 'sellingPrice')?.enabled
+            ? `${label.sellingPrice.toLocaleString(i18n.language.startsWith('en') ? 'en-GB' : 'fr-FR', { maximumFractionDigits: 0 }).replace(/[\u00a0\u202f]/g, ' ')} ${t('common:currency_symbol', { defaultValue: 'F' })}`
+            : undefined,
+          count: 1,
+        }
+        const previous = items[items.length - 1]
+        if (previous && previous.name === item.name && previous.barcode === item.barcode && previous.price === item.price) {
+          previous.count++
+        } else {
+          items.push(item)
+        }
+      }
+      try {
+        if (await printLabelsSmart(items, labelFormat, htmlFallback) === 'tspl') {
+          gooeyToast.success(t('labels:print.tspl_success'))
+          setPrinting(false)
+          onClose()
+        }
+      } catch {
+        setPrinting(false)
+        gooeyToast.error(t('error_print'))
+      }
+    } else {
+      // No await before window.open: keep the existing browser user gesture.
+      await htmlFallback()
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [labelsData, fields, labelFormat, barcodeType, commandeNumero, onClose])
 
@@ -1061,7 +1103,7 @@ ${labelsHTML}
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
-                  {t('common:reset_default', { defaultValue: 'Par défaut' })}
+                  {t('common:reset_default')}
                 </Button>
               </div>
             </div>
@@ -1082,7 +1124,7 @@ ${labelsHTML}
 
         {/* ── Quantity Selection ── */}
         <div className="space-y-3">
-          <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40">{t('quantity_label', { defaultValue: 'Quantité d\'étiquettes' })}</label>
+          <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40">{t('quantity_label')}</label>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {!isProductMode && (
@@ -1096,7 +1138,7 @@ ${labelsHTML}
               />
               <div className="flex-1 min-w-0">
                 <span className="text-sm font-bold block whitespace-normal leading-tight">{t('qty.by_unit')}</span>
-                <p className="text-caption text-base-content/50 mt-0.5 leading-snug whitespace-normal">{t('qty.received_desc', { defaultValue: 'Total unités + gratuits' })}</p>
+                <p className="text-caption text-base-content/50 mt-0.5 leading-snug whitespace-normal">{t('qty.received_desc')}</p>
               </div>
             </label>
             )}
@@ -1111,14 +1153,14 @@ ${labelsHTML}
               />
               <div className="flex-1 min-w-0">
                 <span className="text-sm font-bold block whitespace-normal leading-tight">{t('qty.fixed')}</span>
-                <p className="text-caption text-base-content/50 mt-0.5 leading-snug whitespace-normal">{t('qty.fixed_desc', { defaultValue: 'Nombre identique par produit' })}</p>
+                <p className="text-caption text-base-content/50 mt-0.5 leading-snug whitespace-normal">{t('qty.fixed_desc')}</p>
               </div>
             </label>
           </div>
 
           {qtyMode === 'fixed' && (
             <div className="flex items-center gap-3 bg-base-100 border border-base-200 p-3 rounded-xl animate-in fade-in slide-in-from-top-1 duration-200">
-              <span className="text-sm font-medium flex-1">{t('qty.fixed_count_label', { defaultValue: "Nombre d'étiquettes par produit :" })}</span>
+              <span className="text-sm font-medium flex-1">{t('qty.fixed_count_label')}</span>
               <div className="flex items-center gap-1">
                 <Button 
                   type="button"
@@ -1178,7 +1220,7 @@ ${labelsHTML}
                 <div className="mt-6 flex flex-col items-center gap-2">
                   <div className="h-px w-12 bg-base-content/10"></div>
                   <span className="text-xs text-base-content/40 font-medium">
-                    {t('qty.hidden_preview', { count: labelsData.length - 10, defaultValue: `+ ${labelsData.length - 10} autre(s) étiqette(s) masquée(s)` })}
+                    {t('qty.hidden_preview', { count: labelsData.length - 10 })}
                   </span>
                 </div>
               )}
@@ -1191,17 +1233,17 @@ ${labelsHTML}
           <EmptyState
             variant="base"
             icon={<Info className="size-8" />}
-            title={t('no_data_title', { defaultValue: 'Aucune donnée produit disponible' })}
+            title={t('no_data_title')}
             description={isProductMode
-              ? t('no_data_desc_product', { defaultValue: 'Définissez une quantité supérieure à zéro pour générer les étiquettes.' })
-              : t('no_data_desc', { defaultValue: 'Les données de la commande doivent être chargées pour générer les étiquettes.' })}
+              ? t('no_data_desc_product')
+              : t('no_data_desc')}
           />
         )}
 
         {/* ── Actions ── */}
         <div className="flex justify-end gap-3 pt-1">
           <Button onClick={onClose} variant="ghost" className="px-6 rounded-xl">
-            {t('cancel')}
+            {t('common:cancel')}
           </Button>
           <Button
             onClick={handlePrint}

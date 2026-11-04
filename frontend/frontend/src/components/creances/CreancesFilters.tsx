@@ -176,8 +176,8 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
                                     >
                                         <FileText className="size-5 text-slate-600 mt-0.5 shrink-0" />
                                         <div>
-                                            <div className="font-bold text-sm text-slate-800">{t('creances:print_statement_simple', { defaultValue: 'Relevé simple' })}</div>
-                                            <div className="text-caption text-slate-500 mt-0.5">{t('creances:print_statement_simple_desc', { defaultValue: 'Liste des factures avec montants' })}</div>
+                                            <div className="font-bold text-sm text-slate-800">{t('creances:print_statement_simple')}</div>
+                                            <div className="text-caption text-slate-500 mt-0.5">{t('creances:print_statement_simple_desc')}</div>
                                         </div>
                                     </button>
                                     <div className="border-t border-slate-100" />
@@ -187,8 +187,8 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
                                     >
                                         <List className="size-5 text-emerald-600 mt-0.5 shrink-0" />
                                         <div>
-                                            <div className="font-bold text-sm text-slate-800">{t('creances:print_statement_detailed', { defaultValue: 'Relevé détaillé' })}</div>
-                                            <div className="text-caption text-slate-500 mt-0.5">{t('creances:print_statement_detailed_desc', { defaultValue: 'Factures avec détail des produits' })}</div>
+                                            <div className="font-bold text-sm text-slate-800">{t('creances:print_statement_detailed')}</div>
+                                            <div className="text-caption text-slate-500 mt-0.5">{t('creances:print_statement_detailed_desc')}</div>
                                         </div>
                                     </button>
                                 </div>

@@ -90,7 +90,8 @@
     },
     "messages": {
         "load_error": "Error loading report",
-        "download_error": "Error downloading PDF"
+        "download_error": "Error downloading PDF",
+        "pdf_success": "PDF generated successfully"
     },
     "pdf": {
         "download": "PDF",

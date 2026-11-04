@@ -1,5 +1,9 @@
 {
     "title": "Vente & Facturation",
+    "zenith_mode_on": "Désactiver le mode Zenith",
+    "zenith_mode_off": "Activer le mode Zenith",
+    "theme_light": "Passer en thème clair",
+    "theme_dark": "Passer en thème sombre",
     "shortcuts": {
         "search": "Rechercher (F2)",
         "pay": "Valider (F9)",
@@ -76,6 +80,8 @@
         "format_a4": "Facture"
     },
     "search": {
+        "out_of_stock_sudo_title": "Vente hors stock",
+        "out_of_stock_sudo_message": "Le produit \"{{name}}\" n'a pas de stock disponible ({{stock}}). Confirmez votre identité pour forcer la vente.",
         "label": "Rechercher un produit (F2)",
         "placeholder": "Ex: PARACÉTAMOL (F2) ou scan datamatrix",
         "min_chars": "Tapez au moins 2 caractères",

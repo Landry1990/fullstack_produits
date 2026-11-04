@@ -215,7 +215,7 @@ api.interceptors.response.use(
                 gooeyToast.error(t('messages.access_denied', 'Accès refusé : permissions insuffisantes'), { id: 'access-denied' });
             }
         } else if (status === 429) {
-            gooeyToast.error(i18n.t('common:messages.rate_limited', { defaultValue: 'Trop de tentatives. Attendez quelques instants.' }), { id: 'rate-limited', duration: 6000 });
+            gooeyToast.error(i18n.t('common:messages.rate_limited'), { id: 'rate-limited', duration: 6000 });
         } else if (status !== undefined && status >= 500) {
             gooeyToast.error(t('messages.server_error', 'Erreur serveur. Réessayez plus tard.'), { id: 'server-error' });
         }

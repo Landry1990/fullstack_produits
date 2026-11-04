@@ -161,7 +161,7 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                             <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 w-12 h-9 text-center px-3">
                                 <input
                                     type="checkbox"
-                                    aria-label={t('common:select_all', { defaultValue: 'Tout sélectionner' })}
+                                    aria-label={t('common:select_all')}
                                     className="size-4 rounded border-slate-200 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
                                     onChange={onSelectAll}
                                     checked={filteredCreances.length > 0 && selectedIds.length === filteredCreances.filter(c => normalizeNumberInput(c.reste_a_payer) > 0).length}
@@ -211,7 +211,7 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                                     <td className="text-center py-2 px-3">
                                         <input
                                             type="checkbox"
-                                            aria-label={t('common:select_row', { defaultValue: 'Sélectionner cette facture' })}
+                                            aria-label={t('common:select_row')}
                                             className="size-4 rounded border-slate-200 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
                                             checked={isSelected}
                                             onChange={() => onSelectOne(creance.id)}

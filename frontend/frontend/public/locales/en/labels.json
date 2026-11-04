@@ -36,10 +36,19 @@
         "title": "Quantity to Print",
         "by_unit": "One label per unit received",
         "fixed": "Fixed quantity for all products",
-        "total_labels": "Total labels: {{count}}"
+        "total_labels": "Total labels: {{count}}",
+        "received_desc": "Total units + free items",
+        "fixed_desc": "Same count per product",
+        "fixed_count_label": "Labels per product:",
+        "hidden_preview": "+ {{count}} other label(s) hidden"
     },
+    "quantity_label": "Number of labels",
+    "no_data_title": "No product data available",
+    "no_data_desc_product": "Set a quantity greater than zero to generate the labels.",
+    "no_data_desc": "Order data must be loaded to generate the labels.",
     "preview": "Label Preview",
     "cancel": "Cancel",
     "print": "Print Labels",
+    "print.tspl_success": "Label(s) sent to the printer",
     "error_print": "Error while printing labels"
 }

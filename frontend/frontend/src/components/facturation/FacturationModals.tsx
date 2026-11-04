@@ -140,14 +140,14 @@ export default function FacturationModals({ hook, showOpenPosteModal, setShowOpe
       <PremiumModal
         isOpen={!!hook.confirmModal?.isOpen}
         onClose={() => hook.setConfirmModal(null)}
-        title={hook.t('common:confirmation', { defaultValue: 'Confirmation' })}
+        title={hook.t('common:confirmation')}
         icon={<span className="text-amber-500 text-xl">⚠️</span>}
         gradientFrom="warning/10"
         gradientTo="warning/5"
         footer={
           <div className="flex justify-end gap-2 w-full">
             <Button variant="outline" onClick={() => hook.setConfirmModal(null)}>
-              {hook.t('common:cancel', { defaultValue: 'Annuler' })}
+              {hook.t('common:cancel')}
             </Button>
             <Button
               variant="destructive"
@@ -156,7 +156,7 @@ export default function FacturationModals({ hook, showOpenPosteModal, setShowOpe
                 hook.setConfirmModal(null);
               }}
             >
-              {hook.t('common:confirm', { defaultValue: 'Confirmer' })}
+              {hook.t('common:confirm')}
             </Button>
           </div>
         }

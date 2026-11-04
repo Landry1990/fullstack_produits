@@ -45,20 +45,20 @@ const BulkActionsMenu: React.FC<BulkActionsMenuProps> = React.memo(({
         if (!selectedFacture) return null;
         return (
             <>
-                <DropdownMenuLabel className="text-caption font-medium text-slate-500 uppercase tracking-widest">{t('common:single_selection', { defaultValue: 'Sélection' })}</DropdownMenuLabel>
+                <DropdownMenuLabel className="text-caption font-medium text-slate-500 uppercase tracking-widest">{t('common:single_selection')}</DropdownMenuLabel>
                 <DropdownMenuItem className={menuItemClass} onSelect={() => onView(selectedFacture)}><Eye className="size-4 text-slate-500" />{t('common:details')}</DropdownMenuItem>
                 <DropdownMenuItem className={menuItemClass} onSelect={() => onPrint(selectedFacture)}><Printer className="size-4 text-emerald-600" />{t('sales:print.a4')}</DropdownMenuItem>
                 <DropdownMenuItem className={menuItemClass} onSelect={() => onPrintTicket(selectedFacture)}><Receipt className="size-4 text-emerald-600" />{t('sales:print.ticket')}</DropdownMenuItem>
                 <DropdownMenuItem className={menuItemClass} onSelect={() => onPrintBL(selectedFacture)}><Truck className="size-4 text-emerald-600" />{t('sales:print.delivery_note')}</DropdownMenuItem>
-                <DropdownMenuItem className={menuItemClass} onSelect={() => onDuplicate(selectedFacture)}><Copy className="size-4 text-blue-500" />{t('common:duplicate', { defaultValue: 'Dupliquer' })}</DropdownMenuItem>
+                <DropdownMenuItem className={menuItemClass} onSelect={() => onDuplicate(selectedFacture)}><Copy className="size-4 text-blue-500" />{t('common:duplicate')}</DropdownMenuItem>
                 {(selectedFacture.status === 'PROF' || selectedFacture.status === 'PROFORMA') && (
-                    <DropdownMenuItem className={menuItemClass} onSelect={() => onRefund(selectedFacture)}><FileEdit className="size-4 text-emerald-600" />{t('sales:load_to_facturation', { defaultValue: 'Charger en facturation' })}</DropdownMenuItem>
+                    <DropdownMenuItem className={menuItemClass} onSelect={() => onRefund(selectedFacture)}><FileEdit className="size-4 text-emerald-600" />{t('sales:load_to_facturation')}</DropdownMenuItem>
                 )}
                 {(selectedFacture.status === 'VALIDEE' || selectedFacture.status === 'PAY' || selectedFacture.status === 'VAL' || selectedFacture.status === 'PAYEE') && (
                     <DropdownMenuItem className={menuItemClass} onSelect={() => onGenerateAvoir(selectedFacture)}><FileDigit className="size-4 text-emerald-600" />{t('actions.generate_avoir')}</DropdownMenuItem>
                 )}
                 {selectedFacture.status !== 'ANN' && selectedFacture.status !== 'BROU' && selectedFacture.status !== 'PROF' && selectedFacture.status !== 'PROFORMA' && (
-                    <DropdownMenuItem className={menuItemClass} onSelect={() => onRefund(selectedFacture)}><RotateCcw className="size-4 text-amber-500" />{t('common:refund', { defaultValue: "Modifier/Retour" })}</DropdownMenuItem>
+                    <DropdownMenuItem className={menuItemClass} onSelect={() => onRefund(selectedFacture)}><RotateCcw className="size-4 text-amber-500" />{t('common:refund')}</DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className={menuItemDangerClass} onSelect={() => onDelete(selectedFacture.id)}><Trash2 className="size-4" />{t('common:delete')}</DropdownMenuItem>
@@ -183,7 +183,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                         <th className="w-12 px-3 py-2 text-center sticky top-0 bg-slate-100 border-b border-slate-200">
                             <input
                                 type="checkbox"
-                                aria-label={t('sales:select_all', { defaultValue: 'Tout sélectionner' })}
+                                aria-label={t('sales:select_all')}
                                 className="size-3.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600"
                                 onChange={(e) => handleSelectAll(e.target.checked)}
                                 checked={factures.length > 0 && selectedIds.length === factures.length}

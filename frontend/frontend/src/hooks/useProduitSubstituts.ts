@@ -14,7 +14,7 @@ export function useProduitSubstituts(produitId: number | null) {
   return useQuery<SubstitutsResponse>({
     queryKey: ['produit-substituts', produitId],
     queryFn: async () => {
-      if (!produitId) throw new Error(i18n.t('products:detail.none_selected', { defaultValue: 'Aucun produit sélectionné' }));
+      if (!produitId) throw new Error(i18n.t('products:detail.none_selected'));
       const response = await api.get<SubstitutsResponse>(`produits/${produitId}/substituts/`);
       return response.data;
     },

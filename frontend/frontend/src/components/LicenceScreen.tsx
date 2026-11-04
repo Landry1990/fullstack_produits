@@ -85,7 +85,7 @@ const LicenceScreen = () => {
     const handleConfirmActivation = async () => {
         if (!cle) return;
         if (!sudoPassword) {
-            gooeyToast.error(t('licence.sudo_required', { defaultValue: 'Mot de passe ou code journalier requis' }));
+            gooeyToast.error(t('licence.sudo_required'));
             return;
         }
         setLoading(true);
@@ -251,18 +251,18 @@ const LicenceScreen = () => {
                             {/* Mot de passe admin OU code journalier requis pour activation */}
                             <div>
                                 <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                                    {t('licence.sudo_label', { defaultValue: 'Mot de passe admin ou code journalier' })}
+                                    {t('licence.sudo_label')}
                                 </label>
                                 <input
                                     type="password"
                                     value={sudoPassword}
                                     onChange={(e) => setSudoPassword(e.target.value)}
-                                    placeholder={t('licence.sudo_placeholder', { defaultValue: 'Mot de passe admin OU code à 6 caractères (support)' })}
+                                    placeholder={t('licence.sudo_placeholder')}
                                     className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-emerald-500 transition-colors"
                                     autoComplete="off"
                                 />
                                 <p className="text-caption text-slate-500 mt-1">
-                                    {t('licence.sudo_hint', { defaultValue: "Mot de passe admin OU code journalier fourni par le support" })}
+                                    {t('licence.sudo_hint')}
                                 </p>
                             </div>
 

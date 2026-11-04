@@ -94,7 +94,7 @@ export default function CentreRapports() {
                 <div className="md:hidden border-b border-slate-200 bg-white/90 backdrop-blur-sm px-3 py-2 flex items-center justify-between print:hidden z-10">
                     <div className="min-w-0">
                         <div className="text-xs font-black uppercase tracking-widest text-slate-400">
-                            {t('title', { defaultValue: 'Centre de Rapports' })}
+                            {t('title')}
                         </div>
                         <div className="text-xs font-bold text-slate-600 truncate">
                             {selectedQuery
@@ -240,7 +240,7 @@ export default function CentreRapports() {
                                 {/* Results Section */}
                                 <div className="flex-1 min-h-0 flex flex-col">
                                     {loading && !results ? (
-                                        <LoadingScreen message={t('results.loading', { defaultValue: 'Calcul des données en cours...' })} size="md" overlay={false} className="min-h-[400px]" />
+                                        <LoadingScreen message={t('results.loading')} size="md" overlay={false} className="min-h-[400px]" />
                                     ) : (
                                         <ReportResults 
                                             selectedQuery={selectedQuery}
@@ -264,7 +264,7 @@ export default function CentreRapports() {
                                     <LayoutPanelTop className="size-16 text-slate-300" />
                                 </div>
                                 <h2 className="text-2xl font-black uppercase tracking-[0.2em]">
-                                    {t('title', 'Centre de Rapports')}
+                                    {t('title')}
                                 </h2>
                                 <p className="text-xs font-bold uppercase tracking-widest mt-2 text-slate-400">
                                     {t('select_query_prompt', 'Sélectionnez un rapport pour commencer')}

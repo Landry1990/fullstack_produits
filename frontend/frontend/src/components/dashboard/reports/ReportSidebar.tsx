@@ -45,7 +45,7 @@ export const ReportSidebar: React.FC<ReportSidebarProps> = ({ selectedQuery, onS
                         type="button"
                         onClick={onClose}
                         className="md:hidden size-8 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors -mr-1"
-                        aria-label={t('common:close', { defaultValue: 'Fermer' }) as string}
+                        aria-label={t('common:close') as string}
                     >
                         <X className="size-4" />
                     </button>
@@ -58,8 +58,8 @@ export const ReportSidebar: React.FC<ReportSidebarProps> = ({ selectedQuery, onS
                         type="text"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        aria-label={t('search_placeholder', { defaultValue: 'Rechercher un rapport...' }) as string}
-                        placeholder={t('search_placeholder', { defaultValue: 'Rechercher un rapport...' }) as string}
+                        aria-label={t('search_placeholder') as string}
+                        placeholder={t('search_placeholder') as string}
                         className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-slate-300 bg-white text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                     />
                 </div>
@@ -68,7 +68,7 @@ export const ReportSidebar: React.FC<ReportSidebarProps> = ({ selectedQuery, onS
                 {filteredQueries.length === 0 && search && (
                     <EmptyState
                         compact
-                        title={t('search_no_results', { defaultValue: 'Aucun rapport trouvé' })}
+                        title={t('search_no_results')}
                     />
                 )}
                 {filteredQueries.map(query => (

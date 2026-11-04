@@ -90,9 +90,9 @@ export const formatColumnHeader = (col: string, t?: unknown): string => {
         const year = match[1];
         const type = match[2];
         let label = type;
-        if (type === 'ca_tva') label = t('reports:ca_tva', { defaultValue: 'CA TVA' });
+        if (type === 'ca_tva') label = t('reports:ca_tva');
         else if (type === 'ca_exo') label = t('reports:ca_exo', { defaultValue: 'CA Exo' });
-        else if (type === 'total') label = t('common:total', { defaultValue: 'Total' });
+        else if (type === 'total') label = t('common:total');
         return `${year} ${label}`;
     }
 
@@ -152,7 +152,7 @@ export const formatValue = (key: string, value: unknown, t?: unknown): string =>
     }
 
     if (key === 'total_general' && t) {
-        return t('common:total_general', { defaultValue: 'TOTAL GÉNÉRAL' });
+        return t('common:total_general');
     }
 
     if (key === 'source' && t) {

@@ -77,11 +77,11 @@ export default function PerformanceOverview({
       icon: Package, accent: '#10b981', isPositive: true,
     },
     {
-      title: t('stats.supplier_debts_title', 'Dettes fournisseurs'),
+      title: t('stats.supplier_debts_title'),
       value: formatCurrencyLocal(totalDettes),
       sub: nbFournisseursDetteurs > 1
-        ? t('stats.supplier_debts_sub_plural', '{{count}} fournisseurs concernés', { count: nbFournisseursDetteurs })
-        : t('stats.supplier_debts_sub', '{{count}} fournisseur concerné', { count: nbFournisseursDetteurs }),
+        ? t('stats.supplier_debts_sub_plural', { count: nbFournisseursDetteurs })
+        : t('stats.supplier_debts_sub', { count: nbFournisseursDetteurs }),
       icon: HandCoins, accent: '#10b981', isPositive: true,
       link: '/app/fournisseurs',
     },
@@ -109,11 +109,11 @@ export default function PerformanceOverview({
       link: '/app/creances',
     },
     {
-      title: t('stats.supplier_debts_title', 'Dettes fournisseurs'),
+      title: t('stats.supplier_debts_title'),
       value: formatCurrencyLocal(totalDettes),
       sub: nbFournisseursDetteurs > 1
-        ? t('stats.supplier_debts_sub_plural', '{{count}} fournisseurs concernés', { count: nbFournisseursDetteurs })
-        : t('stats.supplier_debts_sub', '{{count}} fournisseur concerné', { count: nbFournisseursDetteurs }),
+        ? t('stats.supplier_debts_sub_plural', { count: nbFournisseursDetteurs })
+        : t('stats.supplier_debts_sub', { count: nbFournisseursDetteurs }),
       icon: HandCoins, accent: '#10b981', isPositive: true,
       link: '/app/fournisseurs',
     },
@@ -192,9 +192,9 @@ export default function PerformanceOverview({
               <Package className="size-5 sm:w-6 sm:h-6 text-white" />
             </div>
             <div className="text-white min-w-0">
-              <h3 className="text-xs sm:text-sm font-black uppercase tracking-wide leading-tight">{t('reappro.alert_title', { defaultValue: 'Réapprovisionnement rayon nécessaire' })}</h3>
+              <h3 className="text-xs sm:text-sm font-black uppercase tracking-wide leading-tight">{t('reappro.alert_title')}</h3>
               <p className="text-caption sm:text-xs font-bold opacity-75 mt-0.5 truncate">
-                {t('reappro.products_waiting', '{{count}} produits', { count: reapproStats.product_count })} · +{reapproStats.total_units_suggested} {t('reappro.units_to_transfer', 'unités à transférer')}
+                {t('reappro.products_waiting', { count: reapproStats.product_count })} · +{reapproStats.total_units_suggested} {t('reappro.units_to_transfer')}
               </p>
             </div>
           </div>
@@ -326,7 +326,7 @@ export default function PerformanceOverview({
               <Receipt className="size-4" />
             </div>
             <div>
-              <h2 className="text-xs font-bold text-slate-700 tracking-tight uppercase">{t('charts.pnl_history_title', 'Historique CA & Marges (7 jours)')}</h2>
+              <h2 className="text-xs font-bold text-slate-700 tracking-tight uppercase">{t('charts.pnl_history_title')}</h2>
               <p className="text-caption font-bold text-slate-400 uppercase tracking-widest">{t('charts.pnl_history_desc', "Chiffre d'affaires, coûts d'achat et marges par jour")}</p>
             </div>
           </div>
@@ -399,8 +399,8 @@ export default function PerformanceOverview({
               <AlertTriangle className="size-4" />
             </div>
             <div>
-              <h2 className="text-xs font-bold text-slate-700 tracking-tight uppercase">{t('charts.frequent_stockouts_title', 'Top 10 ruptures fréquentes (30 jours)')}</h2>
-              <p className="text-caption font-bold text-slate-400 uppercase tracking-widest">{t('charts.frequent_stockouts_desc', 'Produits qui tombent à 0 le plus souvent')}</p>
+              <h2 className="text-xs font-bold text-slate-700 tracking-tight uppercase">{t('charts.frequent_stockouts_title')}</h2>
+              <p className="text-caption font-bold text-slate-400 uppercase tracking-widest">{t('charts.frequent_stockouts_desc')}</p>
             </div>
           </div>
           <div className="p-4 sm:p-5 h-64 sm:h-72 overflow-auto">

@@ -80,7 +80,7 @@ export const ProductDetailPanel: React.FC<ProductDetailPanelProps> = (props) => 
                     </>
                   ) : (
                     <>
-                      <span className="text-caption font-bold uppercase tracking-wider opacity-75">{t('products:detail.stock_label', { defaultValue: 'Stock' })}</span>
+                      <span className="text-caption font-bold uppercase tracking-wider opacity-75">{t('products:detail.stock_label')}</span>
                       <span className="text-2xl font-black tabular-nums leading-none">{selectedProduit.stock ?? 0}</span>
                     </>
                   )}

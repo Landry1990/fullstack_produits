@@ -60,7 +60,7 @@ export const ClientCreditsList: React.FC<ClientCreditsListProps> = ({
     onCreate,
 }) => {
     const { t } = useTranslation(['avoirs_client', 'common']);
-    const locale = t('common:locale', { defaultValue: 'fr-FR' });
+    const locale = t('common:locale');
 
     const start = (page - 1) * pageSize + 1;
     const end = Math.min(page * pageSize, total);

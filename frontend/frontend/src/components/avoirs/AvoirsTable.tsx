@@ -189,7 +189,7 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                                             <DropdownMenuTrigger asChild>
                                                 <Button variant="outline" size="sm" className="gap-2">
                                                     <MoreVertical className="size-4" />
-                                                    {t('common:actions_title', { defaultValue: 'Actions' })}
+                                                    {t('common:actions_title')}
                                                     <Badge variant="secondary" className="ml-1">{selectedIds.size}</Badge>
                                                 </Button>
                                             </DropdownMenuTrigger>
@@ -209,7 +209,7 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                                         </DropdownMenu>
                                         <Button variant="ghost" size="sm" onClick={onClearSelection} className="gap-2 text-slate-500">
                                             <X className="size-4" />
-                                            {t('common:actions.cancel', { defaultValue: 'Annuler' })}
+                                            {t('common:actions.cancel')}
                                         </Button>
                                     </div>
                                 </div>

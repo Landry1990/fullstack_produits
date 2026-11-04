@@ -44,6 +44,8 @@
     "avg_trend": "Average Trend",
     "total_closures": "Total Closures",
     "ranking_title": "Performance Ranking",
+    "month_label": "Month",
+    "year_label": "Year",
     "badges": {
       "1st": "1st",
       "2nd": "2nd",
@@ -77,7 +79,8 @@
     "avg_gap": "Avg Gap",
     "trend": "Trend",
     "list_title": "Detailed closings",
-    "daily_title": "Daily summary"
+    "daily_title": "Daily summary",
+    "export_error": "Error exporting Excel file"
   },
   "view_mode": {
     "list": "List",
@@ -114,7 +117,8 @@
       "active": "Active",
       "closed": "Closed",
       "open": "In progress",
-      "in_progress": "— In progress —"
+      "in_progress": "— In progress —",
+      "not_opened": "Not opened"
     },
     "table": {
       "status": "Status",
@@ -165,6 +169,11 @@
     "misc": "Misc: {{amount}}",
     "print": "Reprint ticket",
     "print_title": "Cash Closing #{{id}}",
-    "close": "Close"
+    "close": "Close",
+    "billetage_title": "Cash breakdown (counted denominations)",
+    "billetage_billets": "Bills",
+    "billetage_pieces": "Coins",
+    "billetage_mobile_money": "Mobile Money",
+    "billetage_total": "Total cash breakdown"
   }
 }

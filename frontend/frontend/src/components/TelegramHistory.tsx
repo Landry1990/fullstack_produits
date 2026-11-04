@@ -127,7 +127,7 @@ const TelegramHistory: React.FC = () => {
                     </Button>
                     <Button onClick={fetchLogs} variant="outline" size="sm" className="gap-2" disabled={loading}>
                         <RefreshCcw className={`size-3.5 ${loading ? 'animate-spin' : ''}`} />
-                        {t('refresh')}
+                        {t('common:refresh')}
                     </Button>
                 </div>
             </motion.div>

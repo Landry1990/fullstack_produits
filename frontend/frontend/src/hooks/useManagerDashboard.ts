@@ -59,7 +59,7 @@ export const useManagerDashboard = () => {
                 link.click();
                 link.remove();
                 window.URL.revokeObjectURL(downloadUrl);
-                gooeyToast.success(t('common:export_success', 'Export réussi'));
+                gooeyToast.success(t('common:export_success'));
                 return;
             } else if (type === 'csv') {
                 url = `rapports/export_comptable_csv/?date_debut=${firstDay}&date_fin=${lastDay}`;
@@ -90,7 +90,7 @@ export const useManagerDashboard = () => {
                         filename,
                         title: docT('manager_dashboard.dead_stock_report.title'),
                     });
-                    gooeyToast.success(t('common:export_success', 'Export réussi'));
+                    gooeyToast.success(t('common:export_success'));
                 } else {
                     gooeyToast(t('manager_dashboard.no_dead_stock', 'Aucun stock mort trouvé.'));
                 }
@@ -111,10 +111,10 @@ export const useManagerDashboard = () => {
             link.click();
             link.remove();
             window.URL.revokeObjectURL(downloadUrl);
-            gooeyToast.success(t('common:export_success', 'Export réussi'));
+            gooeyToast.success(t('common:export_success'));
         } catch (error: unknown) {
             logger.error('Export error:', error);
-            gooeyToast.error(t('common:export_error', 'Erreur lors de l\'export'));
+            gooeyToast.error(t('common:export_error'));
         } finally {
             setExporting(false);
         }

@@ -178,7 +178,7 @@ const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ setting
                 <div className="mt-4 mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
                     <h2 className="text-sm font-black text-base-content uppercase tracking-widest border-b-2 border-slate-900 pb-2 mb-6 flex justify-between items-center">
                         <span>{t('stock_valuation.tva_breakdown_title')} – {getGroupLabel()}</span>
-                        <span className="text-caption text-slate-300 font-bold">{data.group_breakdown.length} {t('stock_valuation.categories', { defaultValue: 'Catégories' })}</span>
+                        <span className="text-caption text-slate-300 font-bold">{data.group_breakdown.length} {t('stock_valuation.categories')}</span>
                     </h2>
                     
                     <div className="bg-base-100 border-2 border-slate-100 rounded-3xl overflow-hidden shadow-sm">

@@ -23,10 +23,10 @@ export function CaisseStatsCards({
       <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
         <div>
           <div className="text-xs font-bold text-red-500 uppercase tracking-wider mb-1 flex items-center gap-1">
-            <Clock className="size-3" /> {t('stats_pending_title', { defaultValue: 'En Attente' })}
+            <Clock className="size-3" /> {t('stats_pending_title')}
           </div>
           <div className="text-xl font-bold text-slate-800">{facturesCount}</div>
-          <div className="text-xs text-slate-500">{t('stats_pending_desc', { defaultValue: 'facture(s) à encaisser' })}</div>
+          <div className="text-xs text-slate-500">{t('stats_pending_desc')}</div>
         </div>
         <div className="p-3 bg-red-50 rounded-lg text-red-500">
           <Clock className="size-6" />
@@ -37,10 +37,10 @@ export function CaisseStatsCards({
       <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
         <div>
           <div className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1 flex items-center gap-1">
-            <Banknote className="size-3" /> {t('stats_total_title', { defaultValue: 'Montant Total' })}
+            <Banknote className="size-3" /> {t('stats_total_title')}
           </div>
           <div className="text-xl font-bold text-slate-800">{formatCurrency(Math.round(totalMontantEnAttente))}</div>
-          <div className="text-xs text-slate-500">{t('stats_total_desc', { defaultValue: 'à encaisser' })}</div>
+          <div className="text-xs text-slate-500">{t('stats_total_desc')}</div>
         </div>
         <div className="p-3 bg-emerald-50 rounded-lg text-emerald-600">
           <Banknote className="size-6" />
@@ -51,10 +51,10 @@ export function CaisseStatsCards({
       <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
         <div>
           <div className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-1 flex items-center gap-1">
-            <Ticket className="size-3" /> {t('stats_coupons_title', { defaultValue: 'Coupons Actifs' })}
+            <Ticket className="size-3" /> {t('stats_coupons_title')}
           </div>
           <div className="text-xl font-bold text-slate-800">{activeCouponsCount}</div>
-          <div className="text-xs text-slate-500">{appliedCouponsCount > 0 ? t('coupons_applied', { count: appliedCouponsCount }) : t('stats_coupons_desc', { defaultValue: 'coupon(s) disponible(s)' })}</div>
+          <div className="text-xs text-slate-500">{appliedCouponsCount > 0 ? t('coupons_applied', { count: appliedCouponsCount }) : t('stats_coupons_desc')}</div>
         </div>
         <div className="p-3 bg-blue-50 rounded-lg text-blue-600">
           <Ticket className="size-6" />

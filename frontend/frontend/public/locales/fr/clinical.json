@@ -1,0 +1,12 @@
+{
+    "alerts": {
+        "gravities": {
+            "PRECAUTION": "Précaution",
+            "A_PRENDRE_EN_COMPTE": "À prendre en compte",
+            "DECONSEILLE": "Déconseillé",
+            "CONTRE_INDIQUE": "Contre-indiqué"
+        },
+        "products_label": "Produits :",
+        "to_watch": "À surveiller"
+    }
+}

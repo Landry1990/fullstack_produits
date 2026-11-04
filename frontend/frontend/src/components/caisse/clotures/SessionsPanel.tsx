@@ -129,7 +129,7 @@ export default function SessionsPanel({ state }: Props) {
                         ) : session.est_actif ? (
                           <span className="text-emerald-600 font-bold text-xs animate-pulse">{t('sessions.status.in_progress')}</span>
                         ) : (
-                          <span className="text-slate-400 font-medium text-xs">{t('sessions.status.not_opened', { defaultValue: 'Non ouvert' })}</span>
+                          <span className="text-slate-400 font-medium text-xs">{t('sessions.status.not_opened')}</span>
                         )}
                       </td>
                       <td className="text-right py-2 px-3 font-medium text-slate-700 text-sm">

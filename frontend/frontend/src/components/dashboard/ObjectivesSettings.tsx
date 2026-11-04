@@ -36,7 +36,7 @@ const updateConfig = async (data: ObjectivesConfig): Promise<ObjectivesConfig> =
 
 export function ObjectivesSettings({ isOpen, onClose }: Props) {
     const { t } = useTranslation(['dashboard', 'common']);
-    const currentLocale = t('common:locale', { defaultValue: 'fr-FR' });
+    const currentLocale = t('common:locale');
     const currencySymbol = t('common:currency_symbol', { defaultValue: 'F' });
     const formatCurrencyLocal = (val: number) => formatCurrency(val, currentLocale, currencySymbol);
     const queryClient = useQueryClient();
@@ -87,7 +87,7 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
             onClose();
         },
         onError: () => {
-            gooeyToast.error(t('manager_dashboard.settings.save_error', 'Erreur lors de l\'enregistrement'));
+            gooeyToast.error(t('manager_dashboard.settings.save_error'));
         }
     });
 
@@ -107,10 +107,10 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                     <div>
                         <h2 id="objectives-settings-title" className="text-2xl font-black tracking-tight text-base-content flex items-center gap-3">
                             <Target className="size-6 text-primary" />
-                            {t('manager_dashboard.settings.title', 'Configuration des Objectifs')}
+                            {t('manager_dashboard.settings.title')}
                         </h2>
                         <p className="text-sm font-medium text-base-content/60 mt-1">
-                            {t('manager_dashboard.settings.subtitle', 'Automatisez et personnalisez le calcul de vos cibles de vente.')}
+                            {t('manager_dashboard.settings.subtitle')}
                         </p>
                     </div>
                     <Button

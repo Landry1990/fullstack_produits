@@ -90,7 +90,8 @@
     },
     "messages": {
         "load_error": "Erreur lors du chargement du rapport",
-        "download_error": "Erreur lors du téléchargement du PDF"
+        "download_error": "Erreur lors du téléchargement du PDF",
+        "pdf_success": "PDF généré avec succès"
     },
     "pdf": {
         "download": "PDF",

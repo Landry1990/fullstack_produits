@@ -28,7 +28,7 @@ export function BulkCancelModal({
     <PremiumModal
       isOpen={isOpen}
       onClose={onClose}
-      title={t('bulk_cancel_title', { defaultValue: 'Vider la caisse' })}
+      title={t('bulk_cancel_title')}
       icon={<AlertTriangle className="h-5 w-5 text-red-600" />}
       gradientFrom="red-50"
       gradientTo="amber-50"
@@ -44,7 +44,7 @@ export function BulkCancelModal({
                 : t('bulk_cancel_pending_count', { count: facturesEnAttente.length })}
             </p>
             <p>
-              {t('bulk_cancel_warning', { defaultValue: 'Toutes les factures sélectionnées seront annulées. Le stock des factures déjà validées sera réintégré automatiquement. Cette action est irréversible.' })}
+              {t('bulk_cancel_warning')}
             </p>
           </div>
         </div>
@@ -95,7 +95,7 @@ export function BulkCancelModal({
             onClick={onClose}
             disabled={loading}
           >
-            {t('common:cancel', { defaultValue: 'Annuler' })}
+            {t('common:cancel')}
           </button>
           <button
             type="button"
@@ -108,7 +108,7 @@ export function BulkCancelModal({
             ) : (
               <Trash2 className="size-4" />
             )}
-            {t('bulk_cancel_confirm', { defaultValue: 'Vider la caisse' })}
+            {t('bulk_cancel_confirm')}
           </button>
         </div>
       </div>

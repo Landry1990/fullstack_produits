@@ -75,7 +75,7 @@ export default function PosteVenteSettingsSection() {
   const handleDelete = async (id: number) => {
     const confirmedDelete = await confirm({
       title: t('common:confirmation'),
-      message: t('messages.pos_confirm_delete', { defaultValue: 'Supprimer ce point de vente ?' }),
+      message: t('messages.pos_confirm_delete'),
       confirmText: t('common:confirm'),
       variant: 'danger'
     })
@@ -94,8 +94,8 @@ export default function PosteVenteSettingsSection() {
     const confirmed = await confirm({
       title: t('common:confirmation'),
       message: nouvelEtat
-        ? t('messages.caisse_confirm_activate', { nom: caisse.nom, defaultValue: `Réactiver la caisse ${caisse.nom} ?` })
-        : t('messages.caisse_confirm_deactivate', { nom: caisse.nom, defaultValue: `Désactiver la caisse ${caisse.nom} ? Elle ne pourra plus être ouverte, mais son historique est conservé.` }),
+        ? t('messages.caisse_confirm_activate', { nom: caisse.nom })
+        : t('messages.caisse_confirm_deactivate', { nom: caisse.nom }),
       confirmText: t('common:confirm'),
       variant: nouvelEtat ? 'info' : 'danger'
     })
@@ -103,35 +103,35 @@ export default function PosteVenteSettingsSection() {
     try {
       await cashSessionService.updateCaisse(caisse.id, { actif: nouvelEtat })
       gooeyToast.success(nouvelEtat
-        ? t('messages.caisse_activated', { defaultValue: 'Caisse réactivée.' })
-        : t('messages.caisse_deactivated', { defaultValue: 'Caisse désactivée.' }))
+        ? t('messages.caisse_activated')
+        : t('messages.caisse_deactivated'))
       await loadData()
     } catch (err) {
-      gooeyToast.error(getApiErrorDetail(err, t('messages.caisse_toggle_error', { defaultValue: "Erreur changement d'état caisse" })))
+      gooeyToast.error(getApiErrorDetail(err, t('messages.caisse_toggle_error')))
     }
   }
 
   const handleDeleteCaisse = async (caisse: PosteCaisse) => {
     const confirmedDelete = await confirm({
       title: t('common:confirmation'),
-      message: t('messages.caisse_confirm_delete', { nom: caisse.nom, defaultValue: `Supprimer la caisse ${caisse.nom} ?` }),
+      message: t('messages.caisse_confirm_delete', { nom: caisse.nom }),
       confirmText: t('common:confirm'),
       variant: 'danger'
     })
     if (!confirmedDelete) return
     try {
       await cashSessionService.deleteCaisse(caisse.id)
-      gooeyToast.success(t('messages.caisse_deleted', { defaultValue: 'Caisse supprimée.' }))
+      gooeyToast.success(t('messages.caisse_deleted'))
       await loadData()
     } catch (err) {
-      gooeyToast.error(getApiErrorDetail(err, t('messages.caisse_delete_error', { defaultValue: 'Erreur suppression caisse' })))
+      gooeyToast.error(getApiErrorDetail(err, t('messages.caisse_delete_error')))
     }
   }
 
   const handleClose = async (id: number) => {
     const confirmedClose = await confirm({
       title: t('common:confirmation'),
-      message: t('messages.pos_confirm_close', { defaultValue: 'Fermer ce point de vente ?' }),
+      message: t('messages.pos_confirm_close'),
       confirmText: t('common:confirm'),
       variant: 'danger'
     })
@@ -163,10 +163,10 @@ export default function PosteVenteSettingsSection() {
           <div className="p-2 bg-emerald-50 rounded-lg">
             <Store className="h-5 w-5 text-emerald-600" />
           </div>
-          {t('postes_vente.title', { defaultValue: 'Points de vente' })}
+          {t('postes_vente.title')}
         </h2>
         <p className="text-sm text-slate-500 mt-1">
-          {t('postes_vente.subtitle', { defaultValue: 'Créez les points de vente de votre pharmacie. Ils apparaîtront dans le modal d\'ouverture de session.' })}
+          {t('postes_vente.subtitle')}
         </p>
       </div>
 
@@ -175,7 +175,7 @@ export default function PosteVenteSettingsSection() {
         <div className="bg-slate-50 rounded-2xl border border-slate-200 p-6 space-y-4">
           <h3 className="font-bold text-lg flex items-center gap-2 text-slate-800">
             <Plus className="size-5 text-emerald-600" />
-            {t('postes_vente.add', { defaultValue: 'Créer un point de vente' })}
+            {t('postes_vente.add')}
           </h3>
           <div className="flex items-center gap-3">
             <Input
@@ -188,7 +188,7 @@ export default function PosteVenteSettingsSection() {
                   handleCreate()
                 }
               }}
-              placeholder={t('postes_vente.name_placeholder', { defaultValue: 'Ex: Mobile 1, Mobile 2...' })}
+              placeholder={t('postes_vente.name_placeholder')}
               className="flex-1 h-12 rounded-xl"
             />
             <Button
@@ -202,14 +202,14 @@ export default function PosteVenteSettingsSection() {
               ) : (
                 <>
                   <Plus className="size-5 mr-2" />
-                  {t('postes_vente.create_btn', { defaultValue: 'Créer' })}
+                  {t('postes_vente.create_btn')}
                 </>
               )}
             </Button>
           </div>
           <div className="flex items-center gap-2 text-sm text-slate-500 bg-blue-50 px-4 py-2 rounded-xl border border-blue-100">
             <AlertCircle className="size-4 text-blue-500" />
-            {t('postes_vente.hint', { defaultValue: 'Les caisses Principale et Secondaire restent inchangées.' })}
+            {t('postes_vente.hint')}
           </div>
         </div>
 
@@ -225,22 +225,22 @@ export default function PosteVenteSettingsSection() {
             {/* Points de vente créés dans les paramètres */}
             <div>
               <h4 className="font-bold text-slate-800 mb-3 flex items-center gap-2">
-                {t('postes_vente.available', { defaultValue: 'Points de vente disponibles' })}
+                {t('postes_vente.available')}
                 <Badge className="bg-slate-400 text-white">{definitionsDisponibles.length}</Badge>
               </h4>
               {definitionsDisponibles.length === 0 ? (
                 <EmptyState
                   compact
                   icon={<Store className="size-6" />}
-                  title={t('postes_vente.no_available', { defaultValue: 'Aucun point de vente disponible. Créez-en un ci-dessus.' })}
+                  title={t('postes_vente.no_available')}
                 />
               ) : (
                 <div className="rounded-xl border border-slate-200 overflow-hidden overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead className="bg-slate-100 text-slate-500">
                       <tr>
-                        <th className="px-4 py-3 text-left font-semibold">{t('postes_vente.table.name', { defaultValue: 'Nom' })}</th>
-                        <th className="px-4 py-3 text-right font-semibold">{t('postes_vente.table.actions', { defaultValue: 'Actions' })}</th>
+                        <th className="px-4 py-3 text-left font-semibold">{t('postes_vente.table.name')}</th>
+                        <th className="px-4 py-3 text-right font-semibold">{t('postes_vente.table.actions')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -254,7 +254,7 @@ export default function PosteVenteSettingsSection() {
                               size="sm"
                               onClick={() => handleDelete(p.id)}
                               className="text-red-600 hover:bg-red-50 hover:text-red-600"
-                              title={t('postes_vente.delete', { defaultValue: 'Supprimer' })}
+                              title={t('postes_vente.delete')}
                             >
                               <Trash2 className="size-4" />
                             </Button>
@@ -271,17 +271,17 @@ export default function PosteVenteSettingsSection() {
             {definitionsActives.length > 0 && (
               <div>
                 <h4 className="font-bold text-slate-800 mb-3 flex items-center gap-2">
-                  {t('postes_vente.active', { defaultValue: 'Points de vente actifs' })}
+                  {t('postes_vente.active')}
                   <Badge className="bg-emerald-500 text-white">{definitionsActives.length}</Badge>
                 </h4>
                 <div className="rounded-xl border border-slate-200 overflow-hidden overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead className="bg-slate-100 text-slate-500">
                       <tr>
-                        <th className="px-4 py-3 text-left font-semibold">{t('postes_vente.table.name', { defaultValue: 'Nom' })}</th>
-                        <th className="px-4 py-3 text-left font-semibold">{t('postes_vente.table.vendeur', { defaultValue: 'Vendeur' })}</th>
-                        <th className="px-4 py-3 text-left font-semibold">{t('postes_vente.table.opened', { defaultValue: 'Ouvert' })}</th>
-                        <th className="px-4 py-3 text-right font-semibold">{t('postes_vente.table.actions', { defaultValue: 'Actions' })}</th>
+                        <th className="px-4 py-3 text-left font-semibold">{t('postes_vente.table.name')}</th>
+                        <th className="px-4 py-3 text-left font-semibold">{t('postes_vente.table.vendeur')}</th>
+                        <th className="px-4 py-3 text-left font-semibold">{t('postes_vente.table.opened')}</th>
+                        <th className="px-4 py-3 text-right font-semibold">{t('postes_vente.table.actions')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -297,7 +297,7 @@ export default function PosteVenteSettingsSection() {
                               size="sm"
                               onClick={() => handleClose(p.id)}
                               className="text-red-600 hover:bg-red-50 hover:text-red-600"
-                              title={t('postes_vente.close', { defaultValue: 'Fermer' })}
+                              title={t('postes_vente.close')}
                             >
                               <Trash2 className="size-4" />
                             </Button>
@@ -314,16 +314,16 @@ export default function PosteVenteSettingsSection() {
             {caisses.length > 0 && (
               <div>
                 <h4 className="font-bold text-slate-800 mb-3 flex items-center gap-2">
-                  {t('postes_vente.caisse_available', { defaultValue: 'Points de caisse' })}
+                  {t('postes_vente.caisse_available')}
                   <Badge className="bg-slate-400 text-white">{caisses.length}</Badge>
                 </h4>
                 <div className="rounded-xl border border-slate-200 overflow-hidden overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead className="bg-slate-100 text-slate-500">
                       <tr>
-                        <th className="px-4 py-3 text-left font-semibold">{t('postes_vente.table.name', { defaultValue: 'Nom' })}</th>
-                        <th className="px-4 py-3 text-left font-semibold">{t('postes_vente.table.status', { defaultValue: 'Statut' })}</th>
-                        <th className="px-4 py-3 text-right font-semibold">{t('postes_vente.table.actions', { defaultValue: 'Actions' })}</th>
+                        <th className="px-4 py-3 text-left font-semibold">{t('postes_vente.table.name')}</th>
+                        <th className="px-4 py-3 text-left font-semibold">{t('postes_vente.table.status')}</th>
+                        <th className="px-4 py-3 text-right font-semibold">{t('postes_vente.table.actions')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -337,15 +337,15 @@ export default function PosteVenteSettingsSection() {
                             <td className="px-4 py-3">
                               {desactivee ? (
                                 <Badge variant="outline" className="text-slate-500 border-slate-300">
-                                  {t('postes_vente.status_disabled', { defaultValue: 'Désactivée' })}
+                                  {t('postes_vente.status_disabled')}
                                 </Badge>
                               ) : enCours ? (
                                 <Badge className="bg-amber-500 text-white hover:bg-amber-500">
-                                  {t('postes_vente.status_in_use', { defaultValue: 'En cours' })}
+                                  {t('postes_vente.status_in_use')}
                                 </Badge>
                               ) : (
                                 <Badge className="bg-emerald-500 text-white hover:bg-emerald-500">
-                                  {t('postes_vente.status_active', { defaultValue: 'Active' })}
+                                  {t('postes_vente.status_active')}
                                 </Badge>
                               )}
                             </td>
@@ -363,8 +363,8 @@ export default function PosteVenteSettingsSection() {
                                   title={derniereActive
                                     ? t('postes_vente.last_active_hint', { defaultValue: 'Dernière caisse active : impossible à désactiver' })
                                     : desactivee
-                                      ? t('postes_vente.reactivate', { defaultValue: 'Réactiver' })
-                                      : t('postes_vente.deactivate', { defaultValue: 'Désactiver' })}
+                                      ? t('postes_vente.reactivate')
+                                      : t('postes_vente.deactivate')}
                                 >
                                   <Power className="size-4" />
                                 </Button>
@@ -377,7 +377,7 @@ export default function PosteVenteSettingsSection() {
                                   className="text-red-600 hover:bg-red-50 hover:text-red-600"
                                   title={derniereActive
                                     ? t('postes_vente.last_active_hint', { defaultValue: 'Dernière caisse active : impossible à supprimer' })
-                                    : t('postes_vente.delete', { defaultValue: 'Supprimer' })}
+                                    : t('postes_vente.delete')}
                                 >
                                   <Trash2 className="size-4" />
                                 </Button>
@@ -396,17 +396,17 @@ export default function PosteVenteSettingsSection() {
             {caisseActives.length > 0 && (
               <div>
                 <h4 className="font-bold text-slate-800 mb-3 flex items-center gap-2">
-                  {t('postes_vente.caisse_active', { defaultValue: 'Points de caisse actifs' })}
+                  {t('postes_vente.caisse_active')}
                   <Badge className="bg-emerald-500 text-white">{caisseActives.length}</Badge>
                 </h4>
                 <div className="rounded-xl border border-slate-200 overflow-hidden overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead className="bg-slate-100 text-slate-500">
                       <tr>
-                        <th className="px-4 py-3 text-left font-semibold">{t('postes_vente.table.name', { defaultValue: 'Nom' })}</th>
-                        <th className="px-4 py-3 text-left font-semibold">{t('postes_vente.table.vendeur', { defaultValue: 'Vendeur' })}</th>
-                        <th className="px-4 py-3 text-left font-semibold">{t('postes_vente.table.opened', { defaultValue: 'Ouvert' })}</th>
-                        <th className="px-4 py-3 text-right font-semibold">{t('postes_vente.table.actions', { defaultValue: 'Actions' })}</th>
+                        <th className="px-4 py-3 text-left font-semibold">{t('postes_vente.table.name')}</th>
+                        <th className="px-4 py-3 text-left font-semibold">{t('postes_vente.table.vendeur')}</th>
+                        <th className="px-4 py-3 text-left font-semibold">{t('postes_vente.table.opened')}</th>
+                        <th className="px-4 py-3 text-right font-semibold">{t('postes_vente.table.actions')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -422,7 +422,7 @@ export default function PosteVenteSettingsSection() {
                               size="sm"
                               onClick={() => handleClose(p.id)}
                               className="text-red-600 hover:bg-red-50 hover:text-red-600"
-                              title={t('postes_vente.close', { defaultValue: 'Fermer' })}
+                              title={t('postes_vente.close')}
                             >
                               <Trash2 className="size-4" />
                             </Button>

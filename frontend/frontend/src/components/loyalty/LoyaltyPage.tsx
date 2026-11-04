@@ -64,7 +64,7 @@ const StatCard: React.FC<StatCardProps> = ({ label, value, hint, icon, accent })
 
 const LoyaltyPage: React.FC = () => {
     const { t } = useTranslation(['loyalty', 'common']);
-    const locale = t('common:locale', { defaultValue: 'fr-FR' });
+    const locale = t('common:locale');
     const location = useLocation();
 
     const [configOpen, setConfigOpen] = useState(false);
@@ -346,7 +346,7 @@ const LoyaltyPage: React.FC = () => {
                                     <TableCell colSpan={9} className="h-64 text-center text-slate-500">
                                         <div className="flex flex-col items-center justify-center gap-3">
                                             <Loader2 className="size-8 animate-spin text-emerald-600" />
-                                            <span className="text-sm">{t('loyalty:loading')}</span>
+                                            <span className="text-sm">{t('common:loading')}</span>
                                         </div>
                                     </TableCell>
                                 </TableRow>
@@ -405,7 +405,7 @@ const LoyaltyPage: React.FC = () => {
                 {/* ── Pagination ── */}
                 <div className="border-t border-slate-200 bg-slate-50 px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3">
                     <span className="text-sm text-slate-500">
-                        {t('common:pagination.showing', { defaultValue: '{{start}}–{{end}} sur {{total}}', start, end, total })}
+                        {t('common:pagination.showing', { start, end, total })}
                     </span>
                     <div className="flex items-center gap-2">
                         <PaginationControls

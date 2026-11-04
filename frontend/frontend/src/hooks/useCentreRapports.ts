@@ -111,7 +111,7 @@ export function useCentreRapports() {
                 const clientList = data.results || data;
                 setClients(clientList);
             } catch (err) {
-                if (err instanceof Error && err.name !== 'CanceledError') logger.error(t('reports:err_load_clients', { defaultValue: 'Erreur chargement clients:' }), err);
+                if (err instanceof Error && err.name !== 'CanceledError') logger.error(t('reports:err_load_clients'), err);
             }
         };
         loadClients();
@@ -121,7 +121,7 @@ export function useCentreRapports() {
                 const { data } = await api.get('rapports/suppliers_with_stock/', { signal });
                 setSuppliers(data);
             } catch (err) {
-                if (err instanceof Error && err.name !== 'CanceledError') logger.error(t('reports:err_load_suppliers', { defaultValue: 'Erreur chargement fournisseurs:' }), err);
+                if (err instanceof Error && err.name !== 'CanceledError') logger.error(t('reports:err_load_suppliers'), err);
             }
         };
         loadSuppliers();
@@ -131,7 +131,7 @@ export function useCentreRapports() {
                 const { data } = await api.get('users/', { signal });
                 setUsers(data.results || data);
             } catch (err) {
-                if (err instanceof Error && err.name !== 'CanceledError') logger.error(t('reports:err_load_users', { defaultValue: 'Erreur chargement utilisateurs:' }), err);
+                if (err instanceof Error && err.name !== 'CanceledError') logger.error(t('reports:err_load_users'), err);
             }
         };
         loadUsers();
@@ -141,7 +141,7 @@ export function useCentreRapports() {
                 const { data } = await api.get('familles/', { signal });
                 setFamilles(data.results || data);
             } catch (err) {
-                if (err instanceof Error && err.name !== 'CanceledError') logger.error(t('reports:err_load_families', { defaultValue: 'Erreur chargement familles:' }), err);
+                if (err instanceof Error && err.name !== 'CanceledError') logger.error(t('reports:err_load_families'), err);
             }
         };
         loadFamilles();
@@ -216,7 +216,7 @@ export function useCentreRapports() {
         const updated = [...presets, newPreset];
         setPresets(updated);
         localStorage.setItem('report_presets:v1', JSON.stringify(updated));
-        gooeyToast.success(t('reports:preset_saved', { defaultValue: 'Configuration enregistrée !' }));
+        gooeyToast.success(t('reports:preset_saved'));
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedQuery, params, presets]);
 
@@ -232,7 +232,7 @@ export function useCentreRapports() {
         if (query) {
             setSelectedQuery(query);
             setParams(p.params);
-            gooeyToast.success(t('reports:preset_loaded', { name: p.name, defaultValue: `Chargement de : ${p.name}` }));
+            gooeyToast.success(t('reports:preset_loaded', { name: p.name }));
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -336,11 +336,11 @@ export function useCentreRapports() {
                 setPagination(null);
             }
 
-            if (!urlOverride) gooeyToast.success(t('reports:results.execute_success', { name: selectedQuery.name, defaultValue: `Requête "${selectedQuery.name}" exécutée` }));
+            if (!urlOverride) gooeyToast.success(t('reports:results.execute_success', { name: selectedQuery.name }));
         } catch (err) {
             logger.error('Erreur requête:', err);
-            setError(getApiErrorDetail(err, err instanceof Error ? err.message : t('reports:results.error_execution', { defaultValue: 'Erreur lors de l\'exécution de la requête' })));
-            gooeyToast.error(t('reports:results.error_execution_toast', { defaultValue: 'Erreur lors de l\'exécution' }));
+            setError(getApiErrorDetail(err, err instanceof Error ? err.message : t('reports:results.error_execution')));
+            gooeyToast.error(t('reports:results.error_execution_toast'));
         } finally {
             setLoading(false);
         }
@@ -426,11 +426,11 @@ export function useCentreRapports() {
             columns.forEach((col, idx) => {
                 const header = formatColumnHeader(col, t);
                 if (idx === 0) {
-                    footerRow[header] = t('reports:footer_total_avg', { defaultValue: 'TOTAL / MOYENNE' });
+                    footerRow[header] = t('reports:footer_total_avg');
                 } else if (isAverageColumn(col)) {
                     const total = results.reduce((sum: number, r: unknown) => sum + (Number((r as Record<string, unknown>)[col]) || 0), 0);
                     const avg = results.length > 0 ? total / results.length : 0;
-                    footerRow[header] = `${Math.round(avg)} ${t('reports:footer_avg_suffix', { defaultValue: '(Moy)' })}`;
+                    footerRow[header] = `${Math.round(avg)} ${t('reports:footer_avg_suffix')}`;
                 } else if (isSummableColumn(col)) {
                     const total = results.reduce((sum: number, r: unknown) => sum + (Number((r as Record<string, unknown>)[col]) || 0), 0);
                     footerRow[header] = Math.round(total);

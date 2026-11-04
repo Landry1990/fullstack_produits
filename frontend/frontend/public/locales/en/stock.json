@@ -121,6 +121,7 @@
         "deselect": "Deselect",
         "merge_btn": "Merge",
         "delete_confirm": "Delete inventory?",
+        "delete_confirm_named": "Do you really want to delete the inventory {{name}}?",
         "product_exists": "This product is already in the list",
         "validation": {
             "success": "Inventory validated successfully",
@@ -159,6 +160,7 @@
             "choose_placeholder": "Choose an inventory...",
             "confirm_msg": "Merge selected inventory into current one? Source inventory will be deleted.",
             "need_two": "Select at least 2 inventories.",
+            "same_status_required": "Selected inventories must have the same status (all in preparation or all closed).",
             "btn": "Merge",
             "success": "Merge successful",
             "success_count": "{{count}} inventory(ies) merged successfully!",
@@ -717,6 +719,18 @@
         "details": {
             "back": "Back to list",
             "title": "Return No. {{numero}}",
+            "subtitle": "Supplier return details",
+            "not_found": "Return not found",
+            "numero_label": "Return No.",
+            "date_label": "Date",
+            "fournisseur_label": "Supplier",
+            "status_label": "Status",
+            "total_label": "Total (Excl. Tax)",
+            "product": "Product",
+            "lot": "Lot",
+            "qty": "Qty",
+            "price": "Price",
+            "total": "Total",
             "created_at": "Created on {{date}}",
             "created_by": "by {{name}}",
             "print": "Print",
@@ -738,6 +752,7 @@
             "close_all": "Close all",
             "reopen_all": "Reopen all",
             "no_lines": "This return contains no lines.",
+            "delete_line": "Delete this line",
             "unload_warning": "Stock not unloaded: remember to unload to physically remove products from stock."
         },
         "modals": {

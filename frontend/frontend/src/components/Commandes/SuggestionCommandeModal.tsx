@@ -304,7 +304,7 @@ export default function SuggestionCommandeModal({
             </div>
             {stepSuggestion === 2 && (
               <Badge className="ml-auto bg-emerald-100 text-emerald-700 border-emerald-200 font-semibold">
-                {suggestions.length} {t('orders:suggestion_modal.results_unit', 'articles')}
+                {suggestions.length} {t('orders:suggestion_modal.results_unit')}
               </Badge>
             )}
           </div>
@@ -325,7 +325,7 @@ export default function SuggestionCommandeModal({
                   'text-xs font-medium',
                   s === stepSuggestion ? 'text-emerald-700' : 'text-slate-400'
                 )}>
-                  {s === 1 ? t('orders:suggestion_modal.step_config', 'Paramètres') : t('orders:suggestion_modal.step_results', 'Résultats')}
+                  {s === 1 ? t('orders:suggestion_modal.step_config') : t('orders:suggestion_modal.step_results')}
                 </span>
                 {s < 2 && <div className="w-8 h-px bg-slate-200 mx-1" />}
               </div>
@@ -341,7 +341,7 @@ export default function SuggestionCommandeModal({
               {/* Mode Selection */}
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">
-                  {t('orders:suggestion_modal.mode_label', 'Mode d\'analyse')}
+                  {t('orders:suggestion_modal.mode_label')}
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   {modes.map(m => (
@@ -650,7 +650,7 @@ export default function SuggestionCommandeModal({
                             <div className="flex flex-col items-end">
                               <span className="text-base font-bold text-emerald-600">{item.quantite_suggeree}</span>
                               <span className="text-caption text-slate-400">
-                                {formatPrice(item.prix_achat)} {t('common:currency_symbol', 'F')}/{t('common:units_short', 'u')}
+                                {formatPrice(item.prix_achat)} {t('common:currency_symbol', 'F')}/{t('common:units_short')}
                               </span>
                             </div>
                           </TableCell>

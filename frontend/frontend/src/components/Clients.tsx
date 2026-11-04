@@ -587,11 +587,11 @@ export default function Clients() {
         <div className="p-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between bg-white/50 dark:bg-slate-900/50">
           <div className="text-sm text-slate-500 dark:text-slate-400">
             {t('common:pagination_info', {
-              defaultValue: `Page ${currentPage} sur ${Math.ceil(totalCount / itemsPerPage)} (${totalCount} ${t('common:items', { defaultValue: 'éléments' })})`,
+              defaultValue: `Page ${currentPage} sur ${Math.ceil(totalCount / itemsPerPage)} (${totalCount} ${t('common:items')})`,
               page: currentPage,
               total: Math.ceil(totalCount / itemsPerPage),
               count: totalCount,
-              label: t('common:items', { defaultValue: 'éléments', count: totalCount })
+              label: t('common:items', { count: totalCount })
             })}
           </div>
           <PaginationControls
@@ -622,7 +622,7 @@ export default function Clients() {
                     size="icon"
                     className="lg:hidden mr-1"
                     onClick={handleDeselectClient}
-                    aria-label={t('common:back', { defaultValue: 'Retour' })}
+                    aria-label={t('common:back')}
                   >
                     <ArrowLeft className="size-5 text-slate-500" />
                   </Button>

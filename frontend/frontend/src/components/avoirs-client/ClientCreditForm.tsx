@@ -50,7 +50,7 @@ export const ClientCreditForm: React.FC<ClientCreditFormProps> = ({
     isSubmitting,
 }) => {
     const { t } = useTranslation(['avoirs_client', 'common']);
-    const locale = t('common:locale', { defaultValue: 'fr-FR' });
+    const locale = t('common:locale');
 
     const [invoiceSearch, setInvoiceSearch] = useState('');
     const [debouncedInvoiceSearch] = useDebounce(invoiceSearch, 300);

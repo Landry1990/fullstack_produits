@@ -79,7 +79,7 @@ export default function DashboardShadcn() {
   const { data: ugStats } = useUgStats(isFinanceTab);
   const { data: echeances = [] } = useEcheances(isFinanceTab);
 
-  const currentLocale = t('common:locale', { defaultValue: 'fr-FR' });
+  const currentLocale = t('common:locale');
   const currencySymbol = t('common:currency_symbol', { defaultValue: 'F' });
   const formatCurrencyLocal = (val: number) => formatCurrency(val, currentLocale, currencySymbol);
 
@@ -87,9 +87,9 @@ export default function DashboardShadcn() {
   const { data: frequentStockouts } = useFrequentStockouts(!isVendeur);
 
   const tabConfig = useMemo(() => [
-    { key: 'overview', label: t('tabs.overview', { defaultValue: 'Performance' }), icon: TrendingUp, color: 'text-emerald-600' },
-    { key: 'stock', label: t('tabs.stock', { defaultValue: 'Stock' }), icon: Package, color: 'text-amber-600' },
-    { key: 'finance', label: t('tabs.finance', { defaultValue: 'Finance' }), icon: Wallet, color: 'text-blue-600' },
+    { key: 'overview', label: t('tabs.overview'), icon: TrendingUp, color: 'text-emerald-600' },
+    { key: 'stock', label: t('tabs.stock'), icon: Package, color: 'text-amber-600' },
+    { key: 'finance', label: t('tabs.finance'), icon: Wallet, color: 'text-blue-600' },
   ] as const, [t]);
 
   const mergedStats = stats ? {
@@ -164,8 +164,8 @@ export default function DashboardShadcn() {
     if (retards.length > 0) {
       gooeyToast.error(
         retards.length > 1
-          ? t('echeances_overdue_toast_plural', '{{count}} échéances fournisseurs en retard !', { count: retards.length })
-          : t('echeances_overdue_toast', '{{count}} échéance fournisseur en retard !', { count: retards.length }),
+          ? t('echeances_overdue_toast_plural', { count: retards.length })
+          : t('echeances_overdue_toast', { count: retards.length }),
         { duration: 6000, id: 'echeances-retard-dashboard', icon: <CreditCard className="size-4" /> }
       );
     }
@@ -184,7 +184,7 @@ export default function DashboardShadcn() {
 
   if (loading) {
     return (
-      <div className="h-full min-h-0 bg-slate-50 p-3 space-y-3" aria-busy="true" aria-label={t('loading', 'Chargement...')}>
+      <div className="h-full min-h-0 bg-slate-50 p-3 space-y-3" aria-busy="true" aria-label={t('loading')}>
         <div className="flex items-center gap-4">
           <Skeleton className="size-12 rounded-xl" />
           <div className="space-y-2 flex-1">

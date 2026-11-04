@@ -158,8 +158,8 @@ export default function InteractionsManager() {
     const confirmed = await confirm({
       title: t('common:confirmation', { defaultValue: 'Confirmer la suppression' }),
       message: t('common:messages.confirm_delete', { defaultValue: 'Voulez-vous vraiment supprimer cette interaction ?' }),
-      confirmText: t('common:delete', { defaultValue: 'Supprimer' }),
-      cancelText: t('common:cancel', { defaultValue: 'Annuler' }),
+      confirmText: t('common:delete'),
+      cancelText: t('common:cancel'),
     });
     if (!confirmed) return;
     api.delete(`interactions/${id}/`)

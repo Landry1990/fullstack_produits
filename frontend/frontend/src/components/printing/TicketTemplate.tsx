@@ -98,7 +98,7 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
       <div className="text-center mb-2">
         {settings.logo && (
           <div className="mb-2">
-            <img src={settings.logo} alt={t('common:aria.logo', { defaultValue: 'Logo' })} className="h-12 inline-block grayscale object-contain" />
+            <img src={settings.logo} alt={t('common:aria.logo')} className="h-12 inline-block grayscale object-contain" />
           </div>
         )}
         <h2 className="mb-1 text-sm font-bold uppercase leading-none tracking-tight">
@@ -114,7 +114,7 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
             )}
             <div className="font-mono text-[8px]">
                {(settings.phone || settings.phone2) && <div>{t('invoice.tel')}: {settings.phone}{settings.phone2 ? ` / ${settings.phone2}` : ''}</div>}
-               {settings.email && <div>{t('invoice.email', { defaultValue: 'Email' })}: {settings.email}</div>}
+               {settings.email && <div>{t('invoice.email')}: {settings.email}</div>}
                {settings.niu && <div>{t('invoice.niu')}: {settings.niu}</div>}
                {settings.registre_commerce && <div>{t('invoice.rc')}: {settings.registre_commerce}</div>}
                {settings.show_pharmacist_on_documents && settings.pharmacist_name && <div>{t('invoice.pharmacist')}: {settings.pharmacist_name}</div>}

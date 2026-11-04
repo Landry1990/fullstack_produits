@@ -1,5 +1,7 @@
 {
     "title": "Centralized Register",
+    "bulk_cancel_sudo_title": "Authorization required — Clear register",
+    "bulk_cancel_sudo_msg": "This action cancels invoices and returns items to stock. Administrator authorization is required.",
     "subtitle": "Payment Management",
     "auto_refresh": "Auto refresh",
     "coupons_active": "{{count}} active coupon(s)",
@@ -53,6 +55,7 @@
     },
     "ticket": {
         "print_error": "Printing failed. You can try again using the Print button.",
+        "printed": "Ticket sent to printer",
         "title": "Receipt",
         "invoice_a4": "A4 Invoice"
     },
@@ -138,7 +141,8 @@
         "insufficient_deposit": "Insufficient deposit balance",
         "select_post": "Please select a cash register.",
         "caisse_opened": "Register opened.",
-        "error_loading_caisses": "Error loading cash registers"
+        "error_loading_caisses": "Error loading cash registers",
+        "load_pending_error": "Error loading pending invoices"
     },
     "confirm_cancel_invoice": "Do you really want to cancel invoice #{{numero}}?",
     "confirm_modify_invoice": "Modify this invoice?\nIt will be removed from the list and reloaded in the sales screen.",

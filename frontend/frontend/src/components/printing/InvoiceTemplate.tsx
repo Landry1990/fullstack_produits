@@ -142,7 +142,7 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
         {/* Left: Pharmacy Info */}
         <div className="flex-1 flex items-start gap-4">
             {settings.logo && (
-              <img src={settings.logo} alt={t('common:aria.logo', { defaultValue: 'Logo' })} className={`object-contain shrink-0 ${isSmallWidth ? 'w-16 h-16' : 'w-20 h-20'}`} />
+              <img src={settings.logo} alt={t('common:aria.logo')} className={`object-contain shrink-0 ${isSmallWidth ? 'w-16 h-16' : 'w-20 h-20'}`} />
             )}
             <div>
             <h1 className={`font-black uppercase tracking-tight text-base-content mb-1 leading-none ${isSmallWidth ? 'text-xl' : 'text-2xl'}`}>
@@ -156,7 +156,7 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
         {/* Right: Invoice Info Boxed */}
         <div className="text-right">
             <div className="border-2 border-slate-900 text-base-content px-6 py-2 rounded-sm text-xl font-black mb-2 inline-block uppercase tracking-wider">
-                {isBonDeLivraison ? t('invoice.delivery_note') : (data.type === 'DEVIS' || data.status === 'PROFORMA' || data.status === 'PROF' ? t('invoice.quote', { defaultValue: 'DEVIS' }) : t('invoice.invoice'))}
+                {isBonDeLivraison ? t('invoice.delivery_note') : (data.type === 'DEVIS' || data.status === 'PROFORMA' || data.status === 'PROF' ? t('invoice.quote') : t('invoice.invoice'))}
             </div>
             <div className="text-base-content/60 font-bold text-caption uppercase tracking-widest">
                 {t('invoice.ref')} : {data.numero_facture || data.id}

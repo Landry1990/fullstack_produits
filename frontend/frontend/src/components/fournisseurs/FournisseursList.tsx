@@ -65,7 +65,7 @@ export default function FournisseursList({ hook }: Props) {
                     className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors cursor-pointer"
                   >
                     <MoreVertical className="size-4" />
-                    {t('common:actions_title', { defaultValue: 'Actions' })}
+                    {t('common:actions_title')}
                     <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 text-xs bg-white/20 rounded-full">{selectedIds.length}</span>
                   </div>
                   {isOpen && (
@@ -86,7 +86,7 @@ export default function FournisseursList({ hook }: Props) {
                         }}
                         className="flex items-center gap-2 py-2 hover:bg-red-50 text-red-600 font-medium text-sm"
                       >
-                        <Trash2 className="size-4" /> {t('common:actions.delete', { defaultValue: 'Supprimer' })}
+                        <Trash2 className="size-4" /> {t('common:actions.delete')}
                       </a>
                     </li>
                   </ul>
@@ -99,7 +99,7 @@ export default function FournisseursList({ hook }: Props) {
                   className="ml-auto gap-1.5 text-slate-500"
                 >
                   <X className="size-4" />
-                  {t('common:actions.cancel', { defaultValue: 'Annuler' })}
+                  {t('common:actions.cancel')}
                 </Button>
               </div>
             ) : (
@@ -225,7 +225,7 @@ export default function FournisseursList({ hook }: Props) {
                          {fournisseur.phone}
                        </div>
                     ) : (
-                      <span className="text-caption text-slate-400 italic">{t('common:no_phone', { defaultValue: 'Aucun numéro' })}</span>
+                      <span className="text-caption text-slate-400 italic">{t('common:no_phone')}</span>
                     )}
                   </div>
                 </div>
@@ -248,7 +248,7 @@ export default function FournisseursList({ hook }: Props) {
             className="h-full py-20"
             icon={<Truck className="size-8" />}
             title={searchTerm ? t('providers:no_result') : t('providers:empty_list')}
-            description={t('providers:search_hint', { defaultValue: 'Essayez de changer vos critères de recherche.' })}
+            description={t('providers:search_hint')}
           />
         )}
       </div>

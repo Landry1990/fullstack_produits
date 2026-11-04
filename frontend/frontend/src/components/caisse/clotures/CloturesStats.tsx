@@ -83,7 +83,7 @@ export default function CloturesStats({ state }: Props) {
             {showPerfSection && (
             <div className="flex flex-wrap gap-2 items-center justify-end w-full sm:w-auto">
               <select
-                aria-label={t('performance.month_label', { defaultValue: 'Mois' })}
+                aria-label={t('performance.month_label')}
                 className="h-8 px-2 rounded-md bg-slate-100 border border-slate-200 text-xs text-slate-700 focus:outline-none focus:border-emerald-300 font-bold"
                 value={metricMonth}
                 onChange={(e) => {
@@ -109,7 +109,7 @@ export default function CloturesStats({ state }: Props) {
                 <option value="12">{t('performance.months.12')}</option>
               </select>
               <select
-                aria-label={t('performance.year_label', { defaultValue: 'Année' })}
+                aria-label={t('performance.year_label')}
                 className="h-8 px-2 rounded-md bg-slate-100 border border-slate-200 text-xs text-slate-700 focus:outline-none focus:border-emerald-300 font-bold"
                 value={metricYear}
                 onChange={(e) => {

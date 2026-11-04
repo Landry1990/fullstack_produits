@@ -212,7 +212,7 @@ export default function ForcePasswordChangeGuard() {
                 window.location.reload();
               }}
             >
-              {t('force_change.skip_dev', { defaultValue: 'Ignorer (dev)' })}
+              {t('force_change.skip_dev')}
             </Button>
           )}
         </form>

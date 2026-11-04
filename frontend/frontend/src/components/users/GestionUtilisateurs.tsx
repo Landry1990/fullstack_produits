@@ -91,7 +91,7 @@ export default function GestionUtilisateurs() {
       title: t('messages.deactivate_confirm_title', { defaultValue: 'Désactiver l\'utilisateur ?' }),
       message: t('messages.deactivate_confirm', { username: user.username, defaultValue: `Voulez-vous désactiver l'utilisateur ${user.username} ? Il sera déplacé vers le menu Corbeille et pourra être restauré depuis là-bas.` }),
       variant: 'danger',
-      confirmText: t('messages.deactivate_btn', { defaultValue: 'Désactiver' })
+      confirmText: t('messages.deactivate_btn')
     });
 
     if (confirmed) {

@@ -597,7 +597,7 @@ export function useFacturationState() {
         return ligne
       })
     } catch {
-      gooeyToast.error(t('facturation:messages.refresh_failed', { defaultValue: 'Erreur de rafraîchissement des stocks' }))
+      gooeyToast.error(t('facturation:messages.refresh_failed'))
     }
 
     cart.setLignesFacture(freshLignes)

@@ -397,7 +397,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
               {t('common:actions.cancel')}
             </Button>
             <Button type="submit" variant="primary" disabled={!form.new_quantity || deltaInvalid || isSubmitting}>
-              {isSubmitting ? t('common:actions.processing', { defaultValue: 'Traitement…' }) : t('common:actions.confirm')}
+              {isSubmitting ? t('common:actions.processing') : t('common:actions.confirm')}
             </Button>
           </DialogFooter>
         </form>

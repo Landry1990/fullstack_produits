@@ -132,7 +132,7 @@ const SelectionBar: React.FC<SelectionBarProps> = ({ selectedCount, onClear, act
                 <div ref={containerRef} className="relative">
                     <Button variant="default" size="sm" className="gap-2 h-8" onClick={() => setIsOpen(prev => !prev)}>
                         <MoreVertical className="size-4" />
-                        {t('common:actions_title', { defaultValue: 'Actions' })}
+                        {t('common:actions_title')}
                         <Badge className="bg-white/20 text-white">{selectedCount}</Badge>
                     </Button>
                     {isOpen && (
@@ -148,7 +148,7 @@ const SelectionBar: React.FC<SelectionBarProps> = ({ selectedCount, onClear, act
                     className="text-slate-500 hover:text-slate-900 h-8"
                 >
                     <X className="size-4" />
-                    {t('common:actions.cancel', { defaultValue: 'Annuler' })}
+                    {t('common:actions.cancel')}
                 </Button>
             </div>
         </div>

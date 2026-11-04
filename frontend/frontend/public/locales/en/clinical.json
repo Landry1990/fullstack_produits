@@ -1,0 +1,12 @@
+{
+    "alerts": {
+        "gravities": {
+            "PRECAUTION": "Precaution",
+            "A_PRENDRE_EN_COMPTE": "Consider",
+            "DECONSEILLE": "Not recommended",
+            "CONTRE_INDIQUE": "Contraindicated"
+        },
+        "products_label": "Products:",
+        "to_watch": "Watch"
+    }
+}

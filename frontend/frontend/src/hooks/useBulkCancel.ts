@@ -121,8 +121,8 @@ export const useBulkCancel = ({
         }
       },
       {
-        title: t('bulk_cancel_sudo_title', { defaultValue: 'Validation requise — Vidange caisse' }),
-        message: t('bulk_cancel_sudo_msg', { defaultValue: 'Cette action annule des factures et réintègre le stock. Validation d\'un administrateur requise.' }),
+        title: t('bulk_cancel_sudo_title'),
+        message: t('bulk_cancel_sudo_msg'),
         permission: 'can_cancel_invoice',
       }
     )

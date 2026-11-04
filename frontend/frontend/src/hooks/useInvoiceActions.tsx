@@ -294,7 +294,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
 
         // Sauvegarder la facture "dupliquée" pour le chargement dans Facturation
         safeStorage.setItem('devis_to_load', JSON.stringify(duplicatedFacture), 'local');
-        gooeyToast.success(t('messages.duplicated_to_cart', { defaultValue: 'Facture copiée vers la facturation' }));
+        gooeyToast.success(t('messages.duplicated_to_cart'));
         
         // Rediriger vers la facturation
         navigate('/app/facturation');
@@ -324,7 +324,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
 
             // Sauvegarder la facture "avoir" pour le chargement dans Facturation
             safeStorage.setItem('devis_to_load', JSON.stringify(newDraftAvoir), 'local');
-            gooeyToast.success(t('messages.avoir_to_cart', { defaultValue: 'Produits en négatif ajoutés à la facturation' }));
+            gooeyToast.success(t('messages.avoir_to_cart'));
             
             // Rediriger vers la facturation
             navigate('/app/facturation');

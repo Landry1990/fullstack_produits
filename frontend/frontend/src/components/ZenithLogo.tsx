@@ -11,7 +11,7 @@ export default function ZenithLogo({ className = '', size = 48 }: ZenithLogoProp
   return (
     <img
       src="/logo.png"
-      alt={t('aria.zenith_logo', { defaultValue: 'Zenith Pharma' })}
+      alt={t('aria.zenith_logo')}
       className={className}
       style={{ width: size, height: size, objectFit: 'contain' }}
     />

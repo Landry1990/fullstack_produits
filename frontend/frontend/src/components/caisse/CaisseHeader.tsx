@@ -85,10 +85,10 @@ export function CaisseHeader({
                 ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                 : 'bg-amber-50 text-amber-700 border-amber-200'
             }`}
-            title={myActivePoste ? t('cash_session.status_open', { defaultValue: 'Caisse ouverte' }) : t('cash_session.status_closed', { defaultValue: 'Caisse fermée' })}
+            title={myActivePoste ? t('cash_session.status_open') : t('cash_session.status_closed')}
           >
             {myActivePoste ? <Unlock className="size-3.5" /> : <Lock className="size-3.5" />}
-            <span className="hidden sm:inline">{myActivePoste ? t('cash_session.status_open', { defaultValue: 'Caisse ouverte' }) : t('cash_session.status_closed', { defaultValue: 'Caisse fermée' })}</span>
+            <span className="hidden sm:inline">{myActivePoste ? t('cash_session.status_open') : t('cash_session.status_closed')}</span>
           </div>
 
           {/* Session de caisse - Bouton principal */}
@@ -96,10 +96,10 @@ export function CaisseHeader({
             <button
               onClick={onCloseSession}
               className="inline-flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-semibold bg-amber-500 text-white shadow-sm hover:bg-amber-600 transition-colors"
-              title={t('cash_session.close_title', { defaultValue: 'Fermer ma caisse' })}
+              title={t('cash_session.close_title')}
             >
               <Lock className="size-4" />
-              <span className="hidden sm:inline">{myActivePoste.nom} - {t('cash_session.close_short', { defaultValue: 'Fermer' })}</span>
+              <span className="hidden sm:inline">{myActivePoste.nom} - {t('cash_session.close_short')}</span>
               {myActivePoste.fond_de_caisse && (
                 <span className="text-caption opacity-80">({Number(myActivePoste.fond_de_caisse).toLocaleString()} F)</span>
               )}
@@ -108,10 +108,10 @@ export function CaisseHeader({
             <button
               onClick={onOpenSession}
               className="inline-flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-semibold bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 transition-colors"
-              title={t('cash_session.open_title', { defaultValue: 'Ouvrir ma caisse' })}
+              title={t('cash_session.open_title')}
             >
               <Unlock className="size-4" />
-              <span className="hidden sm:inline">{t('cash_session.open_short', { defaultValue: 'Ouvrir caisse' })}</span>
+              <span className="hidden sm:inline">{t('cash_session.open_short')}</span>
             </button>
           )}
 
@@ -130,17 +130,17 @@ export function CaisseHeader({
                     ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
                     : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                 }`}
-                title={t('cash_session.security_mode', { defaultValue: 'Mode sécurité : masquer les montants aux caissiers' })}
+                title={t('cash_session.security_mode')}
               >
                 <Lock className="size-4" />
-                <span className="hidden sm:inline">{t('cash_session.hide_amounts', { defaultValue: 'Masquer montants' })}</span>
+                <span className="hidden sm:inline">{t('cash_session.hide_amounts')}</span>
               </button>
             )}
 
             <button
               onClick={onToggleCouponPanel}
               className={`inline-flex items-center gap-2 h-9 px-3 rounded-lg text-xs font-semibold transition-all ${isCouponPanelOpen ? 'bg-emerald-600 text-white shadow-sm' : 'border-2 border-slate-200 bg-white text-emerald-600 hover:border-emerald-500'}`}
-              title={t('coupons.title', { defaultValue: 'Gestion des Coupons' })}
+              title={t('coupons.title')}
             >
               <Ticket className="size-4" />
               {t('coupons_active', { count: activeCouponsCount })}
@@ -155,13 +155,13 @@ export function CaisseHeader({
                 onClick={onBulkCancelClick}
                 disabled={selectedFactureIds.size === 0 && facturesCount === 0}
                 className="inline-flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-semibold bg-red-600 text-white shadow-sm hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                title={t('bulk_cancel_tooltip', { defaultValue: 'Annuler les factures sélectionnées (ou toutes) avec réintégration stock' })}
+                title={t('bulk_cancel_tooltip')}
               >
                 <Trash2 className="size-4" />
                 <span className="hidden sm:inline">
                   {selectedFactureIds.size > 0
-                    ? `${t('bulk_cancel_selected', { defaultValue: 'Vider' })} (${selectedFactureIds.size})`
-                    : t('bulk_cancel_all', { defaultValue: 'Vider la caisse' })}
+                    ? `${t('bulk_cancel_selected')} (${selectedFactureIds.size})`
+                    : t('bulk_cancel_all')}
                 </span>
               </button>
             )}
@@ -178,9 +178,9 @@ export function CaisseHeader({
 
       {!myActivePoste && (
         <div className="px-4 pb-4 sm:px-6 sm:pb-6 -mt-2">
-          <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm font-medium flex items-center gap-2" title={t('cash_session.open_to_cash_title', { defaultValue: 'Ouvrez une caisse pour encaisser' })}>
+          <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm font-medium flex items-center gap-2" title={t('cash_session.open_to_cash_title')}>
             <Lock className="size-4 shrink-0" />
-            <span>{t('table.open_cash_register_first', { defaultValue: 'Veuillez d\'abord ouvrir votre caisse' })}</span>
+            <span>{t('table.open_cash_register_first')}</span>
           </div>
         </div>
       )}

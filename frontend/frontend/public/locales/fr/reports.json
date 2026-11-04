@@ -253,7 +253,8 @@
         "sort_by": "Trier par",
         "sort_order": "Ordre de tri",
         "poste_caisse_id": "Poste de caisse",
-        "vue": "Affichage"
+        "vue": "Affichage",
+        "all_vendors": "Tous les vendeurs"
     },
     "results": {
         "title": "Résultats",
@@ -279,6 +280,7 @@
         "lines_count": "{{filtered}} / {{total}} lignes",
         "footer_avg_label": "moyenne",
         "footer_global_label": "global",
+        "limited_display": "Affichage limité aux 100 premiers résultats sur {{total}}",
         "sources": {
             "CAISSE_CENTRALE": "Caisse Centrale",
             "VENTES": "Ventes",

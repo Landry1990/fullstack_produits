@@ -64,7 +64,7 @@ export const ProductResultContent: React.FC<ProductResultContentProps> = ({
           {isService
             ? t('products:form.service_badge')
             : isZeroStock
-              ? t('facturation:search.out_of_stock', { defaultValue: 'Épuisé' })
+              ? t('facturation:search.out_of_stock')
               : `${t('facturation:search.stock_label')} ${stock}`}
         </span>
         {showPrice && product.selling_price !== undefined && product.selling_price !== null && (

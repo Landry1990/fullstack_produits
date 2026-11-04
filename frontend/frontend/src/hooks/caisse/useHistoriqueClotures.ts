@@ -35,7 +35,7 @@ export function useHistoriqueClotures() {
   const { lang: docLang } = useDocumentLocale()
   const { t: docT } = useTranslation(['cash_closings', 'common'], { lng: docLang })
   const { user: currentUser } = useAuth()
-  const currentLocale = t('common:locale', { defaultValue: 'fr-FR' })
+  const currentLocale = t('common:locale')
   const currencySymbol = t(['common:currency_symbol', 'currency_symbol'], 'F')
   const [clotures, setClotures] = useState<ClotureCaisse[]>([])
   const [loading, setLoading] = useState(false)

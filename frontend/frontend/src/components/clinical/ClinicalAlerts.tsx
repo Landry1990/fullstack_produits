@@ -15,7 +15,7 @@ interface ClinicalAlertsProps {
 }
 
 export default function ClinicalAlerts({ alerts }: ClinicalAlertsProps) {
-  const { t } = useTranslation(['common']);
+  const { t } = useTranslation(['clinical']);
   if (!alerts || alerts.length === 0) return null
 
   // Group by gravity for sorting/styling
@@ -31,11 +31,11 @@ export default function ClinicalAlerts({ alerts }: ClinicalAlertsProps) {
           <div className="flex-1">
             <h3 className="font-bold uppercase tracking-wide flex items-center gap-2">
               {alert.title}
-              <Badge variant="outline" size="sm" className="text-error font-extrabold">{t(`clinical.alerts.gravities.${alert.gravity}`)}</Badge>
+              <Badge variant="outline" size="sm" className="text-error font-extrabold">{t(`clinical:alerts.gravities.${alert.gravity}`)}</Badge>
             </h3>
             <div className="text-sm mt-1">{alert.description}</div>
             <div className="text-xs mt-1 opacity-90 font-mono">
-              {t('clinical.alerts.products_label')} {alert.product_a.name} ↔ {alert.product_b.name}
+              {t('clinical:alerts.products_label')} {alert.product_a.name} ↔ {alert.product_b.name}
             </div>
           </div>
         </div>
@@ -48,7 +48,7 @@ export default function ClinicalAlerts({ alerts }: ClinicalAlertsProps) {
           <div className="flex-1">
             <h3 className="font-bold flex items-center gap-2">
               {alert.title}
-              {alert.gravity === 'A_PRENDRE_EN_COMPTE' && <Badge variant="ghost" size="sm">{t('clinical.alerts.to_watch')}</Badge>}
+              {alert.gravity === 'A_PRENDRE_EN_COMPTE' && <Badge variant="ghost" size="sm">{t('clinical:alerts.to_watch')}</Badge>}
             </h3>
             <div className="text-xs">{alert.description}</div>
             <div className="text-xs mt-1 font-mono opacity-80">

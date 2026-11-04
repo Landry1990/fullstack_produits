@@ -20,6 +20,7 @@
     "avoir_client_indicator": "This sale has {{count}} customer credit(s): {{avoirs}}",
     "select_all": "Select all",
     "select_invoice": "Select invoice {{number}}",
+    "load_to_facturation": "Load into invoicing",
     "modals": {
         "print_invoice": "Print Invoice"
     },

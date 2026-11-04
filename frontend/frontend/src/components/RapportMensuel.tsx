@@ -230,7 +230,7 @@ export default function RapportMensuel() {
                 try {
                   const { generateMonthlyReportPdfDraft } = await import('../utils/print/reportPdfDraft');
                   await generateMonthlyReportPdfDraft(rapport, settings, periodeLabel);
-                  gooeyToast.success(t('messages.pdf_success', { defaultValue: 'PDF généré avec succès' }));
+                  gooeyToast.success(t('messages.pdf_success'));
                 } catch (error) {
                   logger.error('Erreur génération PDF:', error);
                   gooeyToast.error(t('messages.download_error'));

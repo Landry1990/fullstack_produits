@@ -116,12 +116,12 @@ export const ProductDetailHeader: React.FC<ProductDetailHeaderProps> = ({
             {t('products:actions.adjust_stock', { defaultValue: 'Stock' })}
           </Button>
         )}
-        <Button variant="outline" size="sm" onClick={() => onOpenEdit(produit)} leftIcon={<Pencil className="size-4" />} title={t('common:actions.edit', { defaultValue: 'Modifier' })}>
-          {t('common:actions.edit', { defaultValue: 'Modifier' })}
+        <Button variant="outline" size="sm" onClick={() => onOpenEdit(produit)} leftIcon={<Pencil className="size-4" />} title={t('common:actions.edit')}>
+          {t('common:actions.edit')}
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" aria-label={t('common:actions_title', { defaultValue: 'Actions' })} className="!px-2">
+            <Button variant="outline" size="sm" aria-label={t('common:actions_title')} className="!px-2">
               <MoreVertical className="size-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -134,7 +134,7 @@ export const ProductDetailHeader: React.FC<ProductDetailHeaderProps> = ({
             )}
             <DropdownMenuItem onSelect={() => onGenerateLabels(produit)}>
               <Tags className="size-4" />
-              {t('products:actions.labels', { defaultValue: 'Étiquettes' })}
+              {t('products:actions.labels')}
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => onToggleActive(produit)}>
               {produit.is_active === false ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
@@ -143,7 +143,7 @@ export const ProductDetailHeader: React.FC<ProductDetailHeaderProps> = ({
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={() => onDelete(produit)} className="text-red-600 focus:text-red-700">
               <Trash2 className="size-4" />
-              {t('common:actions.delete', { defaultValue: 'Supprimer' })}
+              {t('common:actions.delete')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

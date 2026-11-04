@@ -48,7 +48,7 @@ interface SupplierDashboardProps {
 export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashboardProps) {
   const { stats, loading, error, refresh } = useSupplierDashboard();
   const { t } = useTranslation(['providers', 'common']);
-  const currentLocale = t('common:locale', { defaultValue: 'fr-FR' });
+  const currentLocale = t('common:locale');
   const Recharts = useRecharts();
   if (!Recharts) return <div className="p-4"><Skeleton className="h-64 w-full" /></div>;
   const { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } = Recharts;

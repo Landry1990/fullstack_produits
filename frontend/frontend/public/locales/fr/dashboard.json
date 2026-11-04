@@ -218,7 +218,10 @@
         "na": "N/A",
         "units_suffix": "{{count}}u",
         "open_product": "Ouvrir la fiche de {{name}}",
-        "open_promis": "Voir le produit promis {{name}}"
+        "open_promis": "Voir le produit promis {{name}}",
+        "expiry_days_only": "{{days}}j",
+        "expiry_months_only": "{{months}}mois",
+        "expiry_duration": "{{months}}mois {{days}}j"
     },
     "vendeur": {
         "loading": "Chargement…",

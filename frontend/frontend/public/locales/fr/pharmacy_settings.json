@@ -35,6 +35,8 @@
         "sales_points": "Points de vente"
     },
     "labels": {
+        "label_printer": "Imprimante étiquettes",
+        "label_printer_browser": "Aucune — impression navigateur",
         "auto_print_ticket": "Imprimer le ticket automatiquement après encaissement",
         "pharmacy_name": "Nom de la pharmacie",
         "niu": "Numéro d'Identifiant Unique (NIU)",
@@ -44,6 +46,7 @@
         "city": "Ville",
         "country": "Pays",
         "phone": "Téléphone de contact",
+        "phone2": "Téléphone 2",
         "email": "Email de contact",
         "logo": "Logo de la pharmacie",
         "receipt_header": "En-tête du Ticket",
@@ -99,6 +102,7 @@
         "city": "Ex: Douala",
         "country": "Ex: Cameroun",
         "phone": "+237...",
+        "phone2": "Numéro secondaire",
         "email": "contact@pharmacie.com",
         "receipt_header": "Texte qui apparaîtra en haut du ticket...",
         "ticket_footer": "Merci de votre visite !",
@@ -118,6 +122,7 @@
         "report_recipients": "email1@exemple.com, email2@exemple.com"
     },
     "hints": {
+        "label_printer": "Utilisez Détecter puis sélectionnez l'imprimante dédiée en mode étiquette TSPL (Hoin HL80B/HLB480B). Réglage local à ce poste ; en cas d'indisponibilité, impression via le navigateur.",
         "auto_print_ticket": "En caisse centralisée, lance l'impression à l'ouverture de l'aperçu. Silencieuse avec QZ Tray ; sinon la boîte d'impression habituelle s'ouvre.",
         "pharmacy_name": "Le nom officiel tel qu'il apparaîtra sur les factures et tickets.",
         "pharmacy_name_from_licence": "Le nom de la pharmacie est défini par la licence d'activation. Pour le modifier, contactez votre administrateur système.",
@@ -225,7 +230,20 @@
         "print_test_sent": "Ticket de test envoyé à l'imprimante QZ Tray."
     },
     "postes_vente": {
-        "table": { "status": "Statut" },
+        "title": "Points de vente",
+        "subtitle": "Créez les points de vente de votre pharmacie. Ils apparaîtront dans le modal d'ouverture de session.",
+        "add": "Créer un point de vente",
+        "name_placeholder": "Ex: Mobile 1, Mobile 2...",
+        "create_btn": "Créer",
+        "hint": "Les caisses Principale et Secondaire restent inchangées.",
+        "available": "Points de vente disponibles",
+        "no_available": "Aucun point de vente disponible. Créez-en un ci-dessus.",
+        "delete": "Supprimer",
+        "active": "Points de vente actifs",
+        "close": "Fermer",
+        "caisse_available": "Points de caisse",
+        "caisse_active": "Points de caisse actifs",
+        "table": { "status": "Statut", "name": "Nom", "actions": "Actions", "vendeur": "Vendeur", "opened": "Ouvert" },
         "status_active": "Active",
         "status_in_use": "En cours",
         "status_disabled": "Désactivée",

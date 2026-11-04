@@ -204,7 +204,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
   function getStatusLabel(us: string): string {
     switch (us) {
       case 'PREP': return t('orders:status.prep', 'Préparation');
-      case 'ATT': return t('orders:status.att', 'En attente');
+      case 'ATT': return t('orders:status.att');
       case 'CLOT': return t('orders:status.clot', 'Clôturé');
       default: return us;
     }
@@ -418,7 +418,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
             className="flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-slate-600 transition-colors"
           >
             <Eye className="size-4" />
-            {t('orders:details.recap.show', { defaultValue: 'Afficher la synthèse' })}
+            {t('orders:details.recap.show')}
           </button>
         ) : (
         <div className="flex flex-wrap gap-3 items-center flex-1">
@@ -468,7 +468,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
           <button
             type="button"
             onClick={() => setShowRecap(false)}
-            title={t('orders:details.recap.hide', { defaultValue: 'Masquer la synthèse' })}
+            title={t('orders:details.recap.hide')}
             className="shrink-0 p-1 rounded-lg text-slate-300 hover:text-slate-500 hover:bg-slate-100 transition-colors"
           >
             <EyeOff className="size-4" />
@@ -513,8 +513,8 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
             <div className="relative">
               <Input
                 type="text"
-                placeholder={t('orders:product_table.search_placeholder', 'Rechercher un produit...')}
-                aria-label={t('orders:product_table.search_placeholder', 'Rechercher un produit...')}
+                placeholder={t('orders:product_table.search_placeholder')}
+                aria-label={t('orders:product_table.search_placeholder')}
                 className="w-full sm:w-64 pl-8 h-9"
                 value={searchDetailQuery}
                 onChange={(e) => setSearchDetailQuery(e.target.value)}
@@ -558,7 +558,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
                   </TableHead>
                   <TableHead className="w-28 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('orders:product_table.headers.cip')}</TableHead>
                   <TableHead className="w-16 px-3 py-2 whitespace-nowrap text-center text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:table.stock')}</TableHead>
-                  <TableHead className="w-20 px-3 py-2 whitespace-nowrap text-center text-xs font-semibold uppercase tracking-wide text-slate-500">{t('orders:product_table.headers.rotation', 'Rot.')}</TableHead>
+                  <TableHead className="w-20 px-3 py-2 whitespace-nowrap text-center text-xs font-semibold uppercase tracking-wide text-slate-500">{t('orders:product_table.headers.rotation')}</TableHead>
                   <TableHead className="w-20 px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 cursor-pointer hover:text-emerald-600 transition-colors" onClick={() => { if (detailSortKey === 'quantity') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('quantity'); setDetailSortOrder('desc'); } }} tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (detailSortKey === 'quantity') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('quantity'); setDetailSortOrder('desc'); } } }}>
                     {t('orders:product_table.headers.qty')} {detailSortKey === 'quantity' && (detailSortOrder === 'asc' ? '↑' : '↓')}
 
@@ -603,7 +603,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
                         <TableCell className={cn("px-3 py-2 text-sm font-medium", isDeleted ? 'italic text-slate-400' : 'text-slate-800')}>
                           <div className="truncate" title={p.produitName}>
                             {p.produitName}
-                            {isDeleted && <span className="text-xs ml-2 text-slate-400">({t('products:us.deleted', 'Supprimé')})</span>}
+                            {isDeleted && <span className="text-xs ml-2 text-slate-400">({t('products:us.deleted')})</span>}
                           </div>
                         </TableCell>
                         <TableCell className="px-3 py-2 font-mono text-xs text-slate-500">{p.cip}</TableCell>

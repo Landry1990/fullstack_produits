@@ -47,8 +47,8 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
           variant="base"
           className="h-full py-16"
           icon={<Package className="size-8" />}
-          title={t('products:table.empty_title', { defaultValue: 'Aucun produit' })}
-          description={t('products:table.empty_subtitle', { defaultValue: 'Créez votre premier produit ou service pour commencer.' })}
+          title={t('products:table.empty_title')}
+          description={t('products:table.empty_subtitle')}
           action={
             <button
               className="inline-flex items-center gap-2 px-6 py-2 text-sm font-medium rounded-lg text-white bg-primary hover:bg-primary-focus transition-colors"
@@ -75,11 +75,11 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
                       indeterminate={isPartiallySelected}
                       onChange={onSelectAll}
                       size="sm"
-                      aria-label={t('common:maintenance.select_all', { defaultValue: 'Tout sélectionner' })}
+                      aria-label={t('common:maintenance.select_all')}
                     />
                   </th>
                   <th scope="col" className="py-2.5 px-3 text-left text-caption font-semibold uppercase tracking-wider w-32">{t('products:table.cip')}</th>
-                  <th scope="col" className="py-2.5 px-3 text-left text-caption font-semibold uppercase tracking-wider">{t('products:table.product', { defaultValue: 'Produit' })}</th>
+                  <th scope="col" className="py-2.5 px-3 text-left text-caption font-semibold uppercase tracking-wider">{t('products:table.product')}</th>
                 </tr>
               </TableHeader>
               <TableBody className="bg-base-100 divide-y divide-base-200">
@@ -138,7 +138,7 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
                           {produit.is_supplier_exclusive && (
                             <span
                               className="inline-flex items-center px-1.5 py-0.5 rounded text-caption font-medium bg-success/10 text-success border border-emerald-100 shrink-0"
-                              title={`${t('products:table.exclusivity', { defaultValue: 'Exclusivité' })}: ${produit.fournisseur_name || t('products:form.provider_placeholder')}`}
+                              title={`${t('products:table.exclusivity')}: ${produit.fournisseur_name || t('products:form.provider_placeholder')}`}
                             >
                               {t('products:table.exclusive_badge')}
                             </span>

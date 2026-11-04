@@ -305,9 +305,9 @@ export function useProduitPage() {
       const numero = item.avoir_client_numero || item.avoir_numero || String(item.avoir)
       try {
         await navigator.clipboard.writeText(numero)
-        gooeyToast.success(t('products:messages.avoir_copied', { numero, defaultValue: `Avoir client ${numero} copié dans le presse-papiers` }))
+        gooeyToast.success(t('products:messages.avoir_copied', { numero }))
       } catch {
-        gooeyToast.success(t('products:messages.avoir_number', { numero, defaultValue: `Avoir client : ${numero}` }))
+        gooeyToast.success(t('products:messages.avoir_number', { numero }))
       }
     }
   }

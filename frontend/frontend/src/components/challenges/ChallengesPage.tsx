@@ -64,7 +64,7 @@ const STATUTS: (Challenge['statut'] | '')[] = ['', 'BROU', 'ENC', 'CLO', 'ANN'];
 
 const ChallengesPage: React.FC = () => {
     const { t } = useTranslation(['challenges', 'common']);
-    const locale = t('common:locale', { defaultValue: 'fr-FR' });
+    const locale = t('common:locale');
 
     const [statutFilter, setStatutFilter] = useState<string>('');
     const [searchInput, setSearchInput] = useState('');
@@ -406,11 +406,11 @@ const ChallengesPage: React.FC = () => {
                                                     size="sm"
                                                     className="gap-1.5 h-8 px-2.5 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
                                                     onClick={() => setDeleteTarget(challenge)}
-                                                    title={t('challenges:delete')}
-                                                    aria-label={t('challenges:delete')}
+                                                    title={t('common:delete')}
+                                                    aria-label={t('common:delete')}
                                                 >
                                                     <Trash2 className="size-3.5" />
-                                                    <span className="hidden xl:inline">{t('challenges:delete')}</span>
+                                                    <span className="hidden xl:inline">{t('common:delete')}</span>
                                                 </Button>
                                             </div>
                                         </TableCell>
@@ -487,7 +487,7 @@ const ChallengesPage: React.FC = () => {
                                 <Trash2 className="size-5" />
                             </div>
                             <div>
-                                <DialogTitle>{t('challenges:delete')}</DialogTitle>
+                                <DialogTitle>{t('common:delete')}</DialogTitle>
                                 <DialogDescription>{t('challenges:confirm_delete')}</DialogDescription>
                             </div>
                         </div>
@@ -516,7 +516,7 @@ const ChallengesPage: React.FC = () => {
                             onClick={confirmDelete}
                         >
                             {deleteMutation.isPending && <Loader2 className="size-4 animate-spin mr-2" />}
-                            {t('challenges:delete')}
+                            {t('common:delete')}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

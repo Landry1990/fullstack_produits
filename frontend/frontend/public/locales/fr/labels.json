@@ -36,10 +36,19 @@
         "title": "Quantité à imprimer",
         "by_unit": "Une étiquette par unité reçue",
         "fixed": "Quantité fixe pour tous les produits",
-        "total_labels": "Total étiquettes : {{count}}"
+        "total_labels": "Total étiquettes : {{count}}",
+        "received_desc": "Total unités + gratuits",
+        "fixed_desc": "Nombre identique par produit",
+        "fixed_count_label": "Nombre d'étiquettes par produit :",
+        "hidden_preview": "+ {{count}} autre(s) étiquette(s) masquée(s)"
     },
+    "quantity_label": "Quantité d'étiquettes",
+    "no_data_title": "Aucune donnée produit disponible",
+    "no_data_desc_product": "Définissez une quantité supérieure à zéro pour générer les étiquettes.",
+    "no_data_desc": "Les données de la commande doivent être chargées pour générer les étiquettes.",
     "preview": "Aperçu de l'étiquette",
     "cancel": "Annuler",
     "print": "Imprimer les étiquettes",
+    "print.tspl_success": "Étiquette(s) envoyée(s) à l'imprimante",
     "error_print": "Erreur lors de l'impression des étiquettes"
 }

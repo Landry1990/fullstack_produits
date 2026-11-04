@@ -8,6 +8,7 @@
     "new_provider": "Nouveau Fournisseur",
     "search_placeholder": "Rechercher par nom, téléphone...",
     "no_result": "Aucun fournisseur trouvé",
+    "search_hint": "Essayez de changer vos critères de recherche.",
     "empty_list": "Aucun fournisseur enregistré",
     "table": {
         "provider": "Fournisseur",
@@ -110,6 +111,7 @@
         "notes": "Notes / Commentaires",
         "notes_placeholder": "Ajoutez une précision...",
         "save_payment": "Enregistrer le règlement",
+        "payment_saved": "Règlement enregistré",
         "history": "Historique des règlements",
         "no_payments": "Aucun règlement enregistré",
         "table": {

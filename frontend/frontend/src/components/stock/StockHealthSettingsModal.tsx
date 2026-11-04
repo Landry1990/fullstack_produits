@@ -46,7 +46,7 @@ const StockHealthSettingsModal: React.FC<StockHealthSettingsModalProps> = ({ isO
             });
 
             if (!validation.success) {
-                const message = validation.error.issues[0]?.message ?? t('common:validation_error', { defaultValue: 'Erreur de validation' });
+                const message = validation.error.issues[0]?.message ?? t('common:validation_error');
                 gooeyToast.error(message);
                 return;
             }

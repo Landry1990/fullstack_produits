@@ -35,8 +35,8 @@ export const SupplierLotsReport: React.FC<SupplierLotsReportProps> = ({ rows }) 
         aggregateRow(
             `${key}-total`,
             grandTotal
-                ? t('reports:supplier_lots.grand_total', { count: agg.count, defaultValue: 'TOTAL GÉNÉRAL ({{count}} lots)' })
-                : t('reports:supplier_lots.total', { name, count: agg.count, defaultValue: 'Total {{name}} ({{count}} lots)' }),
+                ? t('reports:supplier_lots.grand_total', { count: agg.count })
+                : t('reports:supplier_lots.total', { name, count: agg.count }),
             agg.totals,
             grandTotal
                 ? 'font-black text-emerald-800 bg-emerald-100/70 hover:bg-emerald-100/70 border-t-2 border-emerald-300'
@@ -44,7 +44,7 @@ export const SupplierLotsReport: React.FC<SupplierLotsReportProps> = ({ rows }) 
         ),
         aggregateRow(
             `${key}-avg`,
-            t('reports:supplier_lots.average', { defaultValue: 'Marge moyenne par lot' }),
+            t('reports:supplier_lots.average'),
             agg.averages,
             grandTotal
                 ? 'italic text-emerald-700 bg-emerald-50 hover:bg-emerald-50'
@@ -57,12 +57,11 @@ export const SupplierLotsReport: React.FC<SupplierLotsReportProps> = ({ rows }) 
             <CardHeader className="border-b border-slate-200 bg-slate-50 py-4 px-6">
                 <div className="flex items-center justify-between gap-3">
                     <CardTitle className="text-sm font-bold uppercase tracking-widest text-slate-500">
-                        {t('results.title', { defaultValue: 'Résultats' })}
+                        {t('results.title')}
                     </CardTitle>
                     <span className="text-caption text-slate-400 font-bold">
                         {t('reports:supplier_lots.summary', {
                             suppliers: groups.length, lots: grand.count,
-                            defaultValue: '{{suppliers}} fournisseur(s) · {{lots}} lot(s)',
                         })}
                     </span>
                 </div>

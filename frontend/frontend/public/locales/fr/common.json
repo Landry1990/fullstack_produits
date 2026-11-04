@@ -40,6 +40,8 @@
     "loading": "Chargement...",
     "retry": "Réessayer",
     "back": "Retour",
+    "all_statuses": "Tous statuts",
+    "all_types": "Tous types",
     "today": "Aujourd'hui",
     "dashboard": "Tableau de bord",
     "name": "Nom",
@@ -84,6 +86,8 @@
     "increase": "Augmenter",
     "clear": "Effacer",
     "restore": "Restaurer",
+    "reset_default": "Par défaut",
+    "validation_error": "Erreur de validation",
     "merge": "Fusionner",
     "import": "Import",
     "no_address": "Sans adresse",
@@ -106,6 +110,7 @@
     },
     "no_number": "Sans numéro",
     "stock": "Stock",
+    "active": "Activé",
     "actions": {
         "confirm": "Confirmer",
         "search": "Chercher",
@@ -115,7 +120,9 @@
         "add": "Ajouter",
         "edit": "Modifier",
         "cancel": "Annuler",
-        "delete": "Supprimer"
+        "delete": "Supprimer",
+        "show_less": "Voir moins",
+        "show_more": "Voir {{count}} de plus"
     },
     "telegram": {
         "send_success": "Rapport envoyé sur Telegram !",
@@ -137,6 +144,8 @@
     "validate": "Valider",
     "validate_all": "Tout valider",
     "select_all": "Tout sélectionner",
+    "select_row": "Sélectionner cette facture",
+    "no_phone": "Aucun numéro",
     "export_csv_title": "Exporter en CSV",
     "delete_all": "Tout supprimer",
     "single_selection": "Sélection",
@@ -147,6 +156,7 @@
         "prev": "Précédent",
         "next": "Suivant",
         "page_info": "Page {{page}} sur {{total}}",
+        "showing": "{{start}}–{{end}} sur {{total}}",
         "page_info_simple": "Page {{page}}",
         "page_of": "sur {{count}}",
         "page": "Page",
@@ -229,6 +239,8 @@
     "pagination_info": "Page {{page}} sur {{total}} ({{count}} {{label}})",
     "previous": "Précédent",
     "next": "Suivant",
+    "first_page": "Première page",
+    "last_page": "Dernière page",
     "all_rayons": "Tous les rayons",
     "no_rayon": "Sans Rayon",
     "rayon": "Rayon",
@@ -299,7 +311,8 @@
     "count_days_one": "{{count}} jour",
     "buttons": {
         "done": "Terminer",
-        "excel": "Excel"
+        "excel": "Excel",
+        "actions": "Actions"
     },
     "total_general": "TOTAL GÉNÉRAL",
     "no_cip": "Sans CIP",
@@ -431,6 +444,7 @@
         "cancel": "Annuler"
     },
     "omnisearch": {
+        "title": "Recherche globale",
         "trigger": "Rechercher produits, clients, pages…",
         "placeholder": "Rechercher (produits, clients, navigation)...",
         "empty": "Aucun résultat trouvé.",

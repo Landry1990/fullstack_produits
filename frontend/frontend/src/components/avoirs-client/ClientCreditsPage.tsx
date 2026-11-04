@@ -27,7 +27,7 @@ const PAGE_SIZE = 25;
 
 export const ClientCreditsPage: React.FC = () => {
     const { t } = useTranslation(['avoirs_client', 'common']);
-    const locale = t('common:locale', { defaultValue: 'fr-FR' });
+    const locale = t('common:locale');
     const [showForm, setShowForm] = useState(false);
     const [selectedCredit, setSelectedCredit] = useState<ClientCredit | null>(null);
     const [refundCredit, setRefundCredit] = useState<ClientCredit | null>(null);

@@ -360,7 +360,7 @@ export default function ClientFormModal({
                   type="button"
                   onClick={addAD}
                   disabled={!tempAD.nom || !tempAD.matricule}
-                  aria-label={t('common:add', { defaultValue: 'Ajouter' })}
+                  aria-label={t('common:add')}
                   className="inline-flex items-center px-3 py-2 h-9 border border-transparent text-sm font-medium rounded-lg text-white bg-primary hover:bg-primary-focus disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
                 >
                   <Plus className="size-4" />

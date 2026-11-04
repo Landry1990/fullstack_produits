@@ -25,10 +25,9 @@ export const SmsModal: React.FC<SmsModalProps> = ({
 
     useEffect(() => {
         if (promis && isOpen) {
-            setMessage(t('stock:promis.messages.sms_default_body', { 
-                name: promis.client_display, 
-                product: promis.produit_name,
-                defaultValue: `Bonjour ${promis.client_display}, votre produit ${promis.produit_name} est disponible à la pharmacie.`
+            setMessage(t('stock:promis.messages.sms_default_body', {
+                name: promis.client_display,
+                product: promis.produit_name
             }));
         } else if (!isOpen) {
             setMessage('');

@@ -103,7 +103,7 @@ export default function LoginShadcn() {
       if (!e.response) {
         msg = t('common:messages.server_unreachable', { defaultValue: 'Impossible de joindre le serveur.' });
       } else if (e.response.status === 400 || e.response.status === 401) {
-        msg = t('common:messages.login_invalid', { defaultValue: 'Identifiant ou mot de passe incorrect' });
+        msg = t('common:messages.login_invalid');
       } else if (e.response.status === 429) {
         msg = t('auth:too_many_attempts');
       } else if (e.response.status === 403) {

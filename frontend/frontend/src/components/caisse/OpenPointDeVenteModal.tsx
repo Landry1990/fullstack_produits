@@ -86,7 +86,7 @@ export const OpenPointDeVenteModal: React.FC<OpenPointDeVenteModalProps> = ({
         handleOpenSessionRef.current(available[0].id)
       }
     } catch {
-      gooeyToast.error(t('messages.error_loading_posts', { defaultValue: 'Erreur chargement points de vente' }))
+      gooeyToast.error(t('messages.error_loading_posts'))
     } finally {
       setLoadingPostes(false)
     }
@@ -149,19 +149,19 @@ export const OpenPointDeVenteModal: React.FC<OpenPointDeVenteModalProps> = ({
   const handleOpenSession = useCallback(async (posteId?: number) => {
     const id = posteId ?? selectedPosteId
     if (!id) {
-      gooeyToast.error(t('messages.select_poste', { defaultValue: 'Veuillez sélectionner un point de vente.' }))
+      gooeyToast.error(t('messages.select_poste'))
       return
     }
 
     const poste = allPostes.find((p) => p.id === id)
     if (!poste) {
-      gooeyToast.error(t('messages.select_poste', { defaultValue: 'Veuillez sélectionner un point de vente.' }))
+      gooeyToast.error(t('messages.select_poste'))
       return
     }
 
     const isMyActivePoste = poste.est_actif && (poste.vendeur === user?.id || poste.vendeur_name === (user?.username || '') || user?.is_superuser)
     if (poste.est_actif && !isMyActivePoste) {
-      gooeyToast.error(t('messages.poste_occupied', { defaultValue: 'Ce point de vente est déjà ouvert par un autre utilisateur.' }))
+      gooeyToast.error(t('messages.poste_occupied'))
       return
     }
 
@@ -170,15 +170,15 @@ export const OpenPointDeVenteModal: React.FC<OpenPointDeVenteModalProps> = ({
       if (isMyActivePoste) {
         // Réactivation locale: le poste est déjà actif côté backend, on le rattache à cet onglet
         setActivePosteVente(poste)
-        gooeyToast.success(t('messages.session_reactivated', { defaultValue: 'Point de vente réactivé.' }))
+        gooeyToast.success(t('messages.session_reactivated'))
       } else {
         await openPoste(id)
-        gooeyToast.success(t('messages.session_opened', { defaultValue: 'Point de vente ouvert.' }))
+        gooeyToast.success(t('messages.session_opened'))
       }
       onSessionOpened?.()
       onClose()
     } catch (err) {
-      gooeyToast.error(getApiErrorDetail(err, t('messages.error_opening', { defaultValue: 'Erreur ouverture.' })))
+      gooeyToast.error(getApiErrorDetail(err, t('messages.error_opening')))
     } finally {
       setIsLoading(false)
     }
@@ -209,10 +209,10 @@ export const OpenPointDeVenteModal: React.FC<OpenPointDeVenteModalProps> = ({
             </div>
             <div>
               <DialogTitle className="text-xl font-bold text-slate-900">
-                {t('open_point_vente.title', { defaultValue: 'Ouvrir un point de vente' })}
+                {t('open_point_vente.title')}
               </DialogTitle>
               <DialogDescription className="text-sm text-slate-500 mt-1">
-                {t('open_point_vente.subtitle', { defaultValue: 'Sélectionnez un point de vente pour commencer à facturer.' })}
+                {t('open_point_vente.subtitle')}
               </DialogDescription>
             </div>
           </div>
@@ -230,8 +230,8 @@ export const OpenPointDeVenteModal: React.FC<OpenPointDeVenteModalProps> = ({
             <EmptyState
               className="bg-slate-50 rounded-2xl border border-slate-200"
               icon={<Store className="size-7" />}
-              title={t('open_point_vente.no_points', { defaultValue: 'Aucun point de vente disponible.' })}
-              description={t('open_point_vente.create_hint', { defaultValue: 'Créez-en un dans Paramètres > Points de vente.' })}
+              title={t('open_point_vente.no_points')}
+              description={t('open_point_vente.create_hint')}
             />
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -275,19 +275,19 @@ export const OpenPointDeVenteModal: React.FC<OpenPointDeVenteModalProps> = ({
                         <div className="mt-2 flex items-center gap-2 flex-wrap">
                           {isActive ? (
                             <Badge variant="default" className="bg-emerald-500 hover:bg-emerald-500">
-                              {t('open_point_vente.open', { defaultValue: 'Ouvert' })}
+                              {t('open_point_vente.open')}
                             </Badge>
                           ) : (
                             <Badge variant="outline" className="text-slate-600 border-slate-300">
-                              {t('open_point_vente.available', { defaultValue: 'Disponible' })}
+                              {t('open_point_vente.available')}
                             </Badge>
                           )}
                         </div>
                         {isActive && poste.vendeur_name && (
                           <p className="text-xs text-slate-500 mt-2 truncate">
                             {isMine
-                              ? t('open_point_vente.your_post', { defaultValue: 'Votre poste actif' })
-                              : t('open_point_vente.opened_by', { defaultValue: 'Ouvert par {{name}}', name: poste.vendeur_name })}
+                              ? t('open_point_vente.your_post')
+                              : t('open_point_vente.opened_by', { name: poste.vendeur_name })}
                           </p>
                         )}
                       </div>
@@ -303,11 +303,11 @@ export const OpenPointDeVenteModal: React.FC<OpenPointDeVenteModalProps> = ({
           {isForced ? (
             <Button type="button" variant="outline" onClick={handleQuit} className="rounded-xl">
               <LogOut className="size-4 mr-2" />
-              {t('open_point_vente.quit', { defaultValue: 'Quitter la facturation' })}
+              {t('open_point_vente.quit')}
             </Button>
           ) : (
             <Button type="button" variant="outline" onClick={onClose} className="rounded-xl">
-              {t('open_point_vente.cancel', { defaultValue: 'Annuler' })}
+              {t('open_point_vente.cancel')}
             </Button>
           )}
           <Button
@@ -322,7 +322,7 @@ export const OpenPointDeVenteModal: React.FC<OpenPointDeVenteModalProps> = ({
               <Store className="size-4 mr-2" />
             )}
             {selectedPoste?.est_actif && isSelectedMine
-              ? t('open_point_vente.reactivate', { defaultValue: 'Réactiver' })
+              ? t('open_point_vente.reactivate')
               : t('open_point_vente.open', { defaultValue: 'Ouvrir' })}
           </Button>
         </DialogFooter>

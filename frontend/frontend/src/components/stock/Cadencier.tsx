@@ -299,7 +299,7 @@ const Cadencier: React.FC = () => {
                       className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                     >
                       {[7, 15, 30, 45, 60, 90].map((d) => (
-                        <option key={d} value={String(d)}>{t('stock:cadencier.days_option', { days: d, defaultValue: `${d} jours` })}</option>
+                        <option key={d} value={String(d)}>{t('stock:cadencier.days_option', { days: d })}</option>
                       ))}
                     </select>
                   </div>
@@ -614,7 +614,7 @@ const Cadencier: React.FC = () => {
           {totalPages > 1 && (
             <div className="px-4 py-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
               <p className="text-sm text-slate-500">
-                {t('common:pagination.page_info', { page, total: totalPages, defaultValue: `Page ${page} sur ${totalPages}` })}
+                {t('common:pagination.page_info', { page, total: totalPages })}
               </p>
               <div className="flex items-center gap-2">
                 <PaginationControls

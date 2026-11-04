@@ -229,7 +229,7 @@ export default function ConfigOptionManager({
                      <div className="flex items-center gap-4 text-xs font-medium text-slate-400">
                         <div className="flex items-center gap-1">
                            <Hash size={12} />
-                           {t('stock:organisation.category_manager.order_label', { defaultValue: 'Ordre' })}: {option.order}
+                           {t('stock:organisation.category_manager.order_label')}: {option.order}
                         </div>
                         {option.value && (
                            <div className="flex items-center gap-1">

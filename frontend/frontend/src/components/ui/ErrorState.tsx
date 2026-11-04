@@ -44,7 +44,7 @@ export function ErrorState({ error, onRetry, retrying = false, compact = false, 
                     className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50 transition-colors cursor-pointer"
                 >
                     <RefreshCw className={cn("size-3.5", retrying && "animate-spin")} />
-                    {t('common:retry', { defaultValue: 'Réessayer' })}
+                    {t('common:retry')}
                 </button>
             )}
         </div>

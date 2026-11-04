@@ -134,7 +134,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
             if (!conds) return [];
             return typeof conds === 'string' ? JSON.parse(conds) : conds as Condition[];
         } catch (e) {
-            logger.error(t('reports:err_parse_conditions', { defaultValue: 'Erreur de parsing des conditions:' }), e);
+            logger.error(t('reports:err_parse_conditions'), e);
             return [];
         }
     };
@@ -162,15 +162,15 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                         setPresetDialogOpen(false);
                     }}>
                         <DialogHeader>
-                            <DialogTitle>{t('reports:preset_save_btn', { defaultValue: 'Sauvegarder' })}</DialogTitle>
-                            <DialogDescription>{t('reports:preset_prompt_name', { defaultValue: 'Nom de cette configuration ?' })}</DialogDescription>
+                            <DialogTitle>{t('reports:preset_save_btn')}</DialogTitle>
+                            <DialogDescription>{t('reports:preset_prompt_name')}</DialogDescription>
                         </DialogHeader>
                         <Input
                             className="my-4"
                             autoFocus
                             value={presetName}
                             onChange={event => setPresetName(event.target.value)}
-                            aria-label={t('reports:preset_prompt_name', { defaultValue: 'Nom de cette configuration ?' })}
+                            aria-label={t('reports:preset_prompt_name')}
                         />
                         <DialogFooter>
                             <DialogButton type="button" variant="outline" onClick={() => setPresetDialogOpen(false)}>{t('common:cancel')}</DialogButton>
@@ -183,7 +183,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
             <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 pb-4">
                 <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-300">
                     <History className="size-3" />
-                    {t('reports:my_configs', { defaultValue: 'Mes Configurations :' })}
+                    {t('reports:my_configs')}
                 </div>
                 {presetList.flatMap(p => {
                     const preset = p as unknown as Preset;
@@ -199,7 +199,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                         <button
                             onClick={() => presets.delete(preset.id)}
                             className="size-7 p-0 rounded-full opacity-0 group-hover:opacity-100 text-red-600 hover:bg-red-50 transition-all flex items-center justify-center"
-                            aria-label={`${t('common:delete', { defaultValue: 'Supprimer' })} ${preset.name}`}
+                            aria-label={`${t('common:delete')} ${preset.name}`}
                         >
                             <Trash2 className="size-3" aria-hidden="true" />
                         </button>
@@ -215,7 +215,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                     className="rounded-full gap-2"
                 >
                     <Save className="size-3" />
-                    {t('reports:preset_save_btn', { defaultValue: 'Sauvegarder' })}
+                    {t('reports:preset_save_btn')}
                 </Button>
             </div>
 
@@ -434,7 +434,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                                     <Users className="size-4" />
                                                 </div>
                                                 <div className="flex-1">
-                                                    <div className="font-bold text-sm text-slate-600">{t('params.all_vendors', 'Tous les vendeurs')}</div>
+                                                    <div className="font-bold text-sm text-slate-600">{t('params.all_vendors')}</div>
                                                 </div>
                                             </button>
                                         </li>
@@ -534,7 +534,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                     aria-label={t(`params.${param.key}`, { defaultValue: param.label })}
                                 />
                                 <span className="text-xs font-bold uppercase tracking-tight text-slate-500">
-                                    {t(`params.${param.key}_active`, { defaultValue: t('common:active', { defaultValue: 'Activé' }) })}
+                                    {t(`params.${param.key}_active`, { defaultValue: t('common:active') })}
                                 </span>
                             </div>
                         )}
@@ -615,7 +615,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
 
                                                         <Select
                                                             className="rounded-lg w-32 font-bold text-label bg-white h-8 px-2 text-xs border border-slate-200"
-                                                            aria-label={t('dynamic_constructor.operator_label', 'Opérateur')}
+                                                            aria-label={t('dynamic_constructor.operator_label')}
                                                             value={cond.operator}
                                                             onChange={(e) => {
                                                                 const newConds = [...currentConditions];
@@ -653,7 +653,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
 
                                                         <button
                                                             className="size-7 p-0 rounded-full text-red-600 hover:bg-red-50 ml-auto flex items-center justify-center transition-colors"
-                                                            aria-label={t('dynamic_constructor.remove_condition', 'Supprimer la condition')}
+                                                            aria-label={t('dynamic_constructor.remove_condition')}
                                                             onClick={() => {
                                                                 const newConds = currentConditions.filter((_: Condition, i: number) => i !== idx);
                                                                 setParam('conditions', JSON.stringify(newConds));
@@ -741,7 +741,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                         </div>
                                         <div className="mt-4 pt-4 border-t border-slate-200 flex justify-between items-center">
                                             <div className="text-micro font-bold uppercase text-slate-300 italic">
-                                                * {t('reports:select_columns_hint', { defaultValue: 'Sélectionnez les colonnes à afficher' })}
+                                                * {t('reports:select_columns_hint')}
                                             </div>
                                             <button 
                                                 className="text-xs font-medium text-indigo-600 hover:bg-indigo-50 px-2 py-1 rounded-lg transition-colors"

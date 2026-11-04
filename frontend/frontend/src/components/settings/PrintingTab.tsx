@@ -5,6 +5,8 @@ import { Select } from '../ui/Select'
 import { gooeyToast } from 'goey-toast'
 import {
   getSavedPrinterName,
+  getSavedLabelPrinterName,
+  setLabelPrinterName as setSavedLabelPrinterName,
   setPrinterName as setSavedPrinterName,
   shouldOpenDrawer,
   setOpenDrawer as setSavedOpenDrawer,
@@ -16,6 +18,7 @@ import type { PrintingTabProps } from './types'
 
 export function PrintingTab({ formData, handleChange, t, invSettings, updateInvSettings }: PrintingTabProps) {
   const [printerName, setPrinterName] = useState(getSavedPrinterName() || '')
+  const [labelPrinterName, setLabelPrinterName] = useState(getSavedLabelPrinterName() || '')
   const [openDrawer, setOpenDrawer] = useState(shouldOpenDrawer())
   const [printers, setPrinters] = useState<string[]>([])
   const [detecting, setDetecting] = useState(false)
@@ -23,6 +26,7 @@ export function PrintingTab({ formData, handleChange, t, invSettings, updateInvS
 
   useEffect(() => {
     setPrinterName(getSavedPrinterName() || '')
+    setLabelPrinterName(getSavedLabelPrinterName() || '')
     setOpenDrawer(shouldOpenDrawer())
   }, [])
 
@@ -280,6 +284,29 @@ export function PrintingTab({ formData, handleChange, t, invSettings, updateInvS
                 {t('buttons.detect')}
               </button>
             </div>
+          </div>
+
+          <div className="mt-5 flex flex-col gap-1">
+            <label htmlFor="qz-label-printer" className="text-sm font-bold text-slate-500">
+              {t('labels.label_printer')}
+            </label>
+            <Select
+              id="qz-label-printer"
+              size="lg"
+              value={labelPrinterName}
+              onChange={(e) => {
+                setLabelPrinterName(e.target.value)
+                setSavedLabelPrinterName(e.target.value)
+              }}
+              className="rounded-xl"
+            >
+              <option value="">{t('labels.label_printer_browser')}</option>
+              {labelPrinterName && !printers.includes(labelPrinterName) && (
+                <option value={labelPrinterName}>{labelPrinterName}</option>
+              )}
+              {printers.map((p) => <option key={p} value={p}>{p}</option>)}
+            </Select>
+            <p className="text-xs text-slate-400">{t('hints.label_printer')}</p>
           </div>
 
           <div className="mt-5 flex items-center justify-between">

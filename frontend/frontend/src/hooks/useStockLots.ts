@@ -31,7 +31,7 @@ export function useStockLots(produitId: number | null) {
             } catch (err) {
                 if (err instanceof Error && err.name === 'AbortError') return;
                 logger.error('Error fetching stock lots:', err)
-                setError(t('stock:lots.load_error', { defaultValue: 'Impossible de charger les lots du produit' }))
+                setError(t('stock:lots.load_error'))
             } finally {
                 setLoading(false)
             }

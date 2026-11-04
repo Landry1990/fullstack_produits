@@ -23,25 +23,25 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
   });
 
   const categoryOptions = [
-    { value: 'BUG', label: t('feedback.category_bug', 'Bug / Erreur'), icon: Bug },
-    { value: 'FEATURE', label: t('feedback.category_feature', 'Nouvelle fonctionnalité'), icon: Lightbulb },
-    { value: 'IMPROVEMENT', label: t('feedback.category_improvement', 'Amélioration'), icon: TrendingUp },
-    { value: 'QUESTION', label: t('feedback.category_question', 'Question'), icon: HelpCircle },
-    { value: 'OTHER', label: t('feedback.category_other', 'Autre'), icon: MoreHorizontal },
+    { value: 'BUG', label: t('feedback.category_bug'), icon: Bug },
+    { value: 'FEATURE', label: t('feedback.category_feature'), icon: Lightbulb },
+    { value: 'IMPROVEMENT', label: t('feedback.category_improvement'), icon: TrendingUp },
+    { value: 'QUESTION', label: t('feedback.category_question'), icon: HelpCircle },
+    { value: 'OTHER', label: t('feedback.category_other'), icon: MoreHorizontal },
   ];
 
   const priorityOptions = [
-    { value: 'LOW', label: t('feedback.priority_low', 'Faible'), color: 'bg-emerald-100 text-emerald-700' },
-    { value: 'MEDIUM', label: t('feedback.priority_medium', 'Moyenne'), color: 'bg-yellow-100 text-yellow-700' },
-    { value: 'HIGH', label: t('feedback.priority_high', 'Haute'), color: 'bg-orange-100 text-orange-700' },
-    { value: 'URGENT', label: t('feedback.priority_urgent', 'Urgente'), color: 'bg-red-100 text-red-700' },
+    { value: 'LOW', label: t('feedback.priority_low'), color: 'bg-emerald-100 text-emerald-700' },
+    { value: 'MEDIUM', label: t('feedback.priority_medium'), color: 'bg-yellow-100 text-yellow-700' },
+    { value: 'HIGH', label: t('feedback.priority_high'), color: 'bg-orange-100 text-orange-700' },
+    { value: 'URGENT', label: t('feedback.priority_urgent'), color: 'bg-red-100 text-red-700' },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.subject.trim() || !formData.description.trim()) {
-      gooeyToast.error(t('feedback.error_required', 'Veuillez remplir le sujet et la description'));
+      gooeyToast.error(t('feedback.error_required'));
       return;
     }
 
@@ -52,7 +52,7 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
         page_url: window.location.href,
         browser_info: navigator.userAgent,
       });
-      gooeyToast.success(t('feedback.success', 'Feedback envoyé avec succès'));
+      gooeyToast.success(t('feedback.success'));
       setFormData({
         category: 'OTHER',
         priority: 'MEDIUM',
@@ -62,7 +62,7 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
       onClose();
     } catch (error) {
       logger.error('Error submitting feedback:', error);
-      gooeyToast.error(t('feedback.error', 'Erreur lors de l\'envoi du feedback'));
+      gooeyToast.error(t('feedback.error'));
     } finally {
       setLoading(false);
     }
@@ -86,10 +86,10 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
           <div>
             <h2 id="feedback-modal-title" className="text-lg font-bold text-gray-900">
-              {t('feedback.title', 'Envoyer un Feedback')}
+              {t('feedback.title')}
             </h2>
             <p className="text-sm text-gray-500 mt-1">
-              {t('feedback.subtitle', 'Aidez-nous à améliorer l\'application')}
+              {t('feedback.subtitle')}
             </p>
           </div>
           <button
@@ -106,7 +106,7 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
           {/* Category */}
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">
-              {t('feedback.category_label', 'Catégorie')}
+              {t('feedback.category_label')}
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {categoryOptions.map((option) => {
@@ -133,7 +133,7 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
           {/* Priority */}
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">
-              {t('feedback.priority_label', 'Priorité')}
+              {t('feedback.priority_label')}
             </label>
             <div className="flex flex-wrap gap-2">
               {priorityOptions.map((option) => (
@@ -156,14 +156,14 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
           {/* Subject */}
           <div>
             <label htmlFor="subject" className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
-              {t('feedback.subject_label', 'Sujet')}
+              {t('feedback.subject_label')}
             </label>
             <input
               type="text"
               id="subject"
               value={formData.subject}
               onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-              placeholder={t('feedback.subject_placeholder', 'Résumez votre feedback en quelques mots')}
+              placeholder={t('feedback.subject_placeholder')}
               maxLength={200}
               className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 outline-none transition-all text-gray-700 normal-case"
               required
@@ -173,13 +173,13 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
           {/* Description */}
           <div>
             <label htmlFor="description" className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
-              {t('feedback.description_label', 'Description')}
+              {t('feedback.description_label')}
             </label>
             <textarea
               id="description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder={t('feedback.description_placeholder', 'Décrivez votre feedback en détail...')}
+              placeholder={t('feedback.description_placeholder')}
               rows={5}
               className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 outline-none transition-all text-gray-700 resize-none normal-case"
               required
@@ -193,7 +193,7 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
               onClick={onClose}
               className="px-6 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
             >
-              {t('common:cancel', 'Annuler')}
+              {t('common:cancel')}
             </button>
             <button
               type="submit"
@@ -203,12 +203,12 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
               {loading ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
-                  {t('common:sending', 'Envoi...')}
+                  {t('common:sending')}
                 </>
               ) : (
                 <>
                   <Send className="size-4" />
-                  {t('feedback.send', 'Envoyer')}
+                  {t('feedback.send')}
                 </>
               )}
             </button>

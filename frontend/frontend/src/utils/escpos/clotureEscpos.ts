@@ -80,7 +80,7 @@ export function buildClotureEscpos(
   const ticketWidth = settings.ticket_paper_width || 80;
   const cols = ticketWidth <= 60 ? CHAR_WIDTH_58 : CHAR_WIDTH_80;
 
-  const pharmacyName = settings.pharmacy_name || t('cloture.pharmacy_default', { defaultValue: 'PHARMACIE' });
+  const pharmacyName = settings.pharmacy_name || t('cloture.pharmacy_default');
   const startDate = data.date_debut ?? data.start_date;
   const endDate = data.date_fin ?? data.end_date;
   const cashierName =
@@ -88,7 +88,7 @@ export function buildClotureEscpos(
     data.username ||
     data.cloture_par_name ||
     (typeof data.user === 'string' ? data.user : null) ||
-    t('cloture.cashier_default', { defaultValue: 'N/A' });
+    t('cloture.cashier_default');
 
   const totalTheorique = Number(
     data.montant_theorique ?? data.total_theorique ?? 0
@@ -125,7 +125,7 @@ export function buildClotureEscpos(
   parts.push(esc.columns(t('cloture.date'), formatDate(data.date, docLocale), cols));
   parts.push(esc.columns(t('cloture.cashier'), cashierName.toUpperCase(), cols));
   if (data.id) {
-    parts.push(esc.columns(t('cloture.id_label', { defaultValue: 'ID' }), `#${data.id}`, cols));
+    parts.push(esc.columns(t('cloture.id_label'), `#${data.id}`, cols));
   }
   parts.push(esc.hr(cols));
 
@@ -147,13 +147,13 @@ export function buildClotureEscpos(
       parts.push(esc.columns(label, `${formatM(montant)} F`, cols));
     }
   } else {
-    parts.push(esc.line(t('cloture.no_details', { defaultValue: 'Aucun detail' })));
+    parts.push(esc.line(t('cloture.no_details')));
   }
   parts.push(esc.hr(cols));
 
   // ACTIVITÉ
   parts.push(esc.center(), esc.boldOn());
-  parts.push(esc.line(t('cloture.activity_summary', { defaultValue: 'ACTIVITE' })));
+  parts.push(esc.line(t('cloture.activity_summary')));
   parts.push(esc.boldOff(), esc.left());
   if (totalCaDivers > 0) {
     parts.push(esc.columns(t('cloture.pharmacy_sales'), `${formatM(totalCaPharmacie)} F`, cols));

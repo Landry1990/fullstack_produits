@@ -55,26 +55,26 @@ export default function ForceStockModal({ product, onClose, onSubstitute, onForc
         aria-labelledby="force-stock-modal-title"
       >
         <h3 id="force-stock-modal-title" className="font-bold text-lg mb-2 text-slate-800">
-          {t('common:force_stock.title', { produit: product.name, defaultValue: `Stock insuffisant — ${product.name}` })}
+          {t('common:force_stock.title', { produit: product.name })}
         </h3>
         <p className="text-sm text-slate-600 mb-4">
-          {t('common:force_stock.message', { stock: product.stock, defaultValue: `Ce produit a un stock de ${product.stock}. Souhaitez-vous forcer la vente malgré tout ?` })}
+          {t('common:force_stock.message', { stock: product.stock })}
         </p>
         <div className="flex gap-2 justify-end">
           <Button variant="ghost" size="sm" data-action="substitute" onClick={() => {
             onSubstitute(product)
             onClose()
           }}>
-            {t('common:force_stock.substitute', { defaultValue: 'Voir les substituts' })}
+            {t('common:force_stock.substitute')}
           </Button>
           <Button variant="default" size="sm" data-action="confirm" onClick={() => {
             onForceStock(product)
             onClose()
           }}>
-            {t('common:force_stock.force', { defaultValue: 'Forcer la vente' })}
+            {t('common:force_stock.force')}
           </Button>
           <Button variant="outline" size="sm" data-action="cancel" onClick={onClose}>
-            {t('common:force_stock.cancel', { defaultValue: 'Annuler' })}
+            {t('common:force_stock.cancel')}
           </Button>
         </div>
       </div>

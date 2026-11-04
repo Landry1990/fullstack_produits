@@ -330,16 +330,15 @@ const Transformations: React.FC = () => {
     if (!transformationData.relation) return;
 
     const confirmed = await confirm({
-      title: t('transformations.messages.transform_confirm_title', { defaultValue: 'Confirmer la transformation' }),
+      title: t('transformations.messages.transform_confirm_title'),
       message: t('transformations.messages.transform_confirm_message', {
         qty: transformationData.quantite,
         source: transformationData.relation.produit_source_nom,
         destQty: quantiteDestinationCalculee,
-        dest: transformationData.relation.produit_destination_nom,
-        defaultValue: `Transformer ${transformationData.quantite} ${transformationData.relation.produit_source_nom} en ${quantiteDestinationCalculee} ${transformationData.relation.produit_destination_nom} ?`
+        dest: transformationData.relation.produit_destination_nom
       }),
       variant: 'warning',
-      confirmText: t('transformations.messages.transform_confirm_btn', { defaultValue: 'Oui, transformer' })
+      confirmText: t('transformations.messages.transform_confirm_btn')
     });
     if (!confirmed) return;
 
@@ -365,16 +364,15 @@ const Transformations: React.FC = () => {
 
   const handleReverser = async (histId: number, hist: HistoriqueTransformation) => {
     const confirmed = await confirm({
-      title: t('transformations.messages.reverse_confirm_title', { defaultValue: 'Annuler cette transformation' }),
+      title: t('transformations.messages.reverse_confirm_title'),
       message: t('transformations.messages.reverse_confirm_message', {
         qty: hist.quantite_source,
         source: hist.produit_source_nom,
         destQty: hist.quantite_destination,
-        dest: hist.produit_destination_nom,
-        defaultValue: `Annuler la transformation de ${hist.quantite_source} ${hist.produit_source_nom} en ${hist.quantite_destination} ${hist.produit_destination_nom} ? Le stock sera restitué automatiquement.`
+        dest: hist.produit_destination_nom
       }),
       variant: 'danger',
-      confirmText: t('transformations.messages.reverse_confirm_btn', { defaultValue: 'Oui, annuler' })
+      confirmText: t('transformations.messages.reverse_confirm_btn')
     });
     if (!confirmed) return;
 
@@ -382,11 +380,11 @@ const Transformations: React.FC = () => {
     try {
       const res = await api.post(`historique-transformation/${histId}/reverser/`, {});
       if (res.data.success) {
-        gooeyToast.success(res.data.message || t('transformations.messages.reverse_success', { defaultValue: 'Transformation annulée avec succès' }));
+        gooeyToast.success(res.data.message || t('transformations.messages.reverse_success'));
         fetchData();
       }
     } catch (error) {
-      gooeyToast.error(getApiErrorDetail(error, t('transformations.messages.reverse_error', { defaultValue: 'Erreur lors de l\'annulation' })));
+      gooeyToast.error(getApiErrorDetail(error, t('transformations.messages.reverse_error')));
     } finally {
       setReversingId(null);
     }
@@ -568,7 +566,7 @@ const Transformations: React.FC = () => {
                         <div className="text-micro font-black text-slate-400 uppercase tracking-widest mb-0.5">{t('common:source')}</div>
                         <div className="font-bold text-sm text-slate-700 truncate" title={relation.produit_source_nom}>{relation.produit_source_nom}</div>
                         <div className="text-caption flex items-center gap-1.5 mt-0.5">
-                          <span className="text-slate-400">{t('common:stock', { defaultValue: 'Stock' })}:</span>
+                          <span className="text-slate-400">{t('common:stock')}:</span>
                           <b className={(relation.produit_source_stock ?? 0) <= 0 ? 'text-red-500' : 'text-emerald-600'}>
                             {formatNumber(relation.produit_source_stock ?? 0)}
                           </b>
@@ -596,7 +594,7 @@ const Transformations: React.FC = () => {
                         className="h-9 px-5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition-colors disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
                         onClick={() => openTransformerModal(relation)}
                         disabled={(relation.produit_source_stock ?? 0) <= 0}
-                        title={(relation.produit_source_stock ?? 0) <= 0 ? t('stock:transformations.labels.no_stock_tooltip', { defaultValue: 'Stock source insuffisant pour transformer' }) : undefined}
+                        title={(relation.produit_source_stock ?? 0) <= 0 ? t('stock:transformations.labels.no_stock_tooltip') : undefined}
                       >
                         {t('stock:transformations.labels.transformer')}
                       </button>
@@ -640,10 +638,10 @@ const Transformations: React.FC = () => {
                              <div className="font-bold text-xs text-slate-800">{formatDate(hist.date_transformation)}</div>
                              <div className="text-caption text-slate-400 font-mono uppercase tracking-tighter">{formatDateTime(hist.date_transformation).split(' ').slice(1).join(' ')}</div>
                              {hist.reversed && (
-                               <span className="inline-block mt-1 text-micro font-black uppercase tracking-wider text-red-500 bg-red-50 px-1.5 py-0.5 rounded">{t('stock:transformations.labels.reversed', { defaultValue: 'Annulée' })}</span>
+                               <span className="inline-block mt-1 text-micro font-black uppercase tracking-wider text-red-500 bg-red-50 px-1.5 py-0.5 rounded">{t('stock:transformations.labels.reversed')}</span>
                              )}
                              {hist.reversed_by && (
-                               <span className="inline-block mt-1 text-micro font-black uppercase tracking-wider text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">{t('stock:transformations.labels.reversal', { defaultValue: 'Annulation' })}</span>
+                               <span className="inline-block mt-1 text-micro font-black uppercase tracking-wider text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">{t('stock:transformations.labels.reversal')}</span>
                              )}
                           </td>
                           <td className="w-28 px-3 py-2 font-black text-xs text-emerald-700">{hist.user_nom}</td>
@@ -670,14 +668,14 @@ const Transformations: React.FC = () => {
                                  className="h-8 px-3 rounded-lg text-xs font-bold text-amber-600 hover:bg-amber-50 transition-colors inline-flex items-center gap-1.5 disabled:opacity-50"
                                  onClick={() => handleReverser(hist.id, hist)}
                                  disabled={reversingId === hist.id}
-                                 title={t('stock:transformations.messages.reverse_confirm_title', { defaultValue: 'Annuler cette transformation' })}
+                                 title={t('stock:transformations.messages.reverse_confirm_title')}
                                >
                                  {reversingId === hist.id ? (
                                    <span className="size-3.5 border-2 border-amber-300 border-t-amber-600 rounded-full animate-spin"></span>
                                  ) : (
                                    <Undo2 size={14} />
                                  )}
-                                 {t('stock:transformations.labels.reverse_btn', { defaultValue: 'Annuler' })}
+                                 {t('stock:transformations.labels.reverse_btn')}
                                </button>
                              )}
                           </td>
@@ -927,7 +925,7 @@ const Transformations: React.FC = () => {
                             <Checkbox
                               checked={currentQty > 0}
                               onChange={() => toggleManualLot(lot.lot_id, lot.quantity_remaining, currentQty)}
-                              aria-label={t('stock:lot_selection.select_lot_aria', { lot: lot.lot, defaultValue: `Sélectionner lot ${lot.lot}` })}
+                              aria-label={t('stock:lot_selection.select_lot_aria', { lot: lot.lot })}
                             />
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">

@@ -442,7 +442,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
                     validated_by_id: validatorId,
                     password: password
                 });
-                gooeyToast.success(t('stock:avoirs.toasts.dechargement_cancelled', 'Déchargement annulé. Stock réintégré.'));
+                gooeyToast.success(t('stock:avoirs.toasts.dechargement_cancelled'));
                 setAvoirs(avoirs.map(a => a.id === avoir.id ? updated : a));
                 setSelectedAvoir(updated);
             } catch (err: unknown) {
@@ -539,7 +539,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
             await Promise.all(promises);
             gooeyToast.success(targetStatus ? t('avoirs.toasts.bulk_lines_closed') : t('avoirs.toasts.bulk_lines_reopened'));
             if (targetStatus && selectedAvoir.status === 'BROUILLON') {
-                gooeyToast.success(t('avoirs.toasts.auto_validated', { defaultValue: 'Avoir validé automatiquement (toutes lignes clôturées)' }));
+                gooeyToast.success(t('avoirs.toasts.auto_validated'));
             }
         } catch {
             gooeyToast.error(t('avoirs.toasts.bulk_update_error'));
@@ -599,9 +599,9 @@ export function useAvoirsData(): UseAvoirsDataReturn {
             const newTotal = updatedProduits.reduce((sum, p) => sum + Number(p.total || (Number(p.quantity) * Number(p.price))), 0);
             setSelectedAvoir(prev => prev ? { ...prev, produits: updatedProduits, total_ht: newTotal.toString() } : null);
             setAvoirs(prev => prev.map(a => a.id === selectedAvoir.id ? { ...a, produits: updatedProduits, total_ht: newTotal.toString() } : a));
-            gooeyToast.success(t('stock:avoirs.toasts.ligne_deleted', 'Ligne supprimée'));
+            gooeyToast.success(t('stock:avoirs.toasts.ligne_deleted'));
         } catch {
-            gooeyToast.error(t('stock:avoirs.toasts.ligne_delete_error', 'Erreur lors de la suppression'));
+            gooeyToast.error(t('stock:avoirs.toasts.ligne_delete_error'));
         } finally {
             setLoading(false);
         }

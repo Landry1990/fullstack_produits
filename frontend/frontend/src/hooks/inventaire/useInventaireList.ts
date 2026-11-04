@@ -101,7 +101,7 @@ export const useInventaireList = () => {
         } catch (error) {
             if (error instanceof Error && error.name === 'CanceledError') return;
             logger.error(error);
-            gooeyToast.error(t('common:messages.error_loading', { defaultValue: 'Erreur lors du chargement' }));
+            gooeyToast.error(t('common:messages.error_loading'));
         } finally {
             setLoading(false);
         }
@@ -139,9 +139,9 @@ export const useInventaireList = () => {
         if (deleting) return;
         const confirmed = await confirm({
             title: t('common:confirmation', { defaultValue: 'Confirmer la suppression' }),
-            message: t('inventory:messages.delete_confirm', { name: nom || '', defaultValue: `Voulez-vous vraiment supprimer l'inventaire ${nom || ''} ?` }),
-            confirmText: t('common:delete', { defaultValue: 'Supprimer' }),
-            cancelText: t('common:cancel', { defaultValue: 'Annuler' }),
+            message: t('stock:inventaire.delete_confirm_named', { name: nom || '' }),
+            confirmText: t('common:delete'),
+            cancelText: t('common:cancel'),
         });
         if (!confirmed) return;
         setDeleting(true);

@@ -41,14 +41,14 @@ export const useInventaireMerge = ({
     const mergeControllerRef = useRef<AbortController | null>(null);
 
     const canMergeSelectedInventaires = () => {
-        if (selectedInventaireIds.size < 2) return { canMerge: false, reason: t('inventaire.merge.need_two', { defaultValue: 'Sélectionnez au moins 2 inventaires.' }) };
+        if (selectedInventaireIds.size < 2) return { canMerge: false, reason: t('inventaire.merge.need_two') };
 
         const selectedDocs = inventaires.filter(i => selectedInventaireIds.has(i.id));
         if (selectedDocs.length === 0) return { canMerge: false, reason: t('inventaire.merge.error', { defaultValue: 'Erreur lors de la sélection.' }) };
 
         const firstStatus = selectedDocs[0].status;
         const allSameStatus = selectedDocs.every((i: Inventaire) => i.status === firstStatus);
-        if (!allSameStatus) return { canMerge: false, reason: t('inventaire.merge.same_status_required', { defaultValue: 'Les inventaires sélectionnés doivent avoir le même état (tous en préparation ou tous clôturés).' }) };
+        if (!allSameStatus) return { canMerge: false, reason: t('inventaire.merge.same_status_required') };
 
         return { canMerge: true, reason: null };
     };
@@ -131,7 +131,7 @@ export const useInventaireMerge = ({
             setSelectedMergeSource(null);
         } catch (err: unknown) {
             logger.error("Erreur fusion", err);
-            gooeyToast.error(getApiErrorDetail(err, t('inventaire.merge.error', { defaultValue: 'Erreur lors de la fusion' })));
+            gooeyToast.error(getApiErrorDetail(err, t('inventaire.merge.error')));
             fetchInventaires();
         } finally {
             setMerging(false);

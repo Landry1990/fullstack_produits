@@ -108,7 +108,7 @@ export default function PendingSalesDrawer({
       : total * (normalizeNumberInput(vente.remise) / 100)
     const totalNet = total - remiseMontant
     const linesHtml = vente.lignes.map(l =>
-      `<tr><td style="text-align:left;padding:2px 0;">${l.quantite ?? 1}x ${l.produit?.name || t('facturation:pending_sales.unspecified_product', { defaultValue: 'Produit' })}</td><td style="text-align:right;padding:2px 0;">${formatCurrency(normalizeNumberInput(l.total_ligne) || 0)}</td></tr>`
+      `<tr><td style="text-align:left;padding:2px 0;">${l.quantite ?? 1}x ${l.produit?.name || t('facturation:pending_sales.unspecified_product')}</td><td style="text-align:right;padding:2px 0;">${formatCurrency(normalizeNumberInput(l.total_ligne) || 0)}</td></tr>`
     ).join('')
 
     const html = `
@@ -183,7 +183,7 @@ export default function PendingSalesDrawer({
               {hasOldPending && (
                 <div className="flex items-center gap-2 p-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium">
                   <AlertTriangle className="size-4 shrink-0" />
-                  {t('facturation:pending_sales.old_warning', { defaultValue: 'Certaines ventes attendent depuis plus de 15 min.' })}
+                  {t('facturation:pending_sales.old_warning')}
                 </div>
               )}
 
@@ -240,7 +240,7 @@ export default function PendingSalesDrawer({
                           <div key={`${lineIdx}-${ligne.produit?.name ?? 'prod'}-${ligne.quantite}-${ligne.total_ligne}`} className="flex justify-between gap-2">
                             <span className="truncate">
                               <span className="font-semibold tabular-nums">{ligne.quantite ?? 1}x</span>{' '}
-                              {ligne.produit?.name || t('facturation:pending_sales.unspecified_product', { defaultValue: 'Produit' })}
+                              {ligne.produit?.name || t('facturation:pending_sales.unspecified_product')}
                             </span>
                             <span className="tabular-nums text-slate-500 shrink-0">
                               {formatCurrency(normalizeNumberInput(ligne.total_ligne) || 0)}
@@ -258,7 +258,7 @@ export default function PendingSalesDrawer({
                         <Input
                           value={vente.note || ''}
                           onChange={(e) => onUpdateNote(vente.id, e.target.value)}
-                          placeholder={t('facturation:pending_sales.note_placeholder', { defaultValue: 'Note…' })}
+                          placeholder={t('facturation:pending_sales.note_placeholder')}
                           className="h-8 text-xs"
                         />
                       </div>
@@ -280,8 +280,8 @@ export default function PendingSalesDrawer({
                             variant="outline"
                             size="sm"
                             className="h-8 w-8 p-0 rounded-md border-slate-200 text-slate-600 hover:bg-slate-50"
-                            aria-label={t('facturation:pending_sales.print_ticket', { defaultValue: 'Imprimer ticket' })}
-                            title={t('facturation:pending_sales.print_ticket', { defaultValue: 'Imprimer ticket' })}
+                            aria-label={t('facturation:pending_sales.print_ticket')}
+                            title={t('facturation:pending_sales.print_ticket')}
                           >
                             <Printer className="size-3.5" />
                           </Button>
@@ -292,10 +292,10 @@ export default function PendingSalesDrawer({
                               variant="outline"
                               size="sm"
                               className="h-8 px-2.5 rounded-md border-sky-200 text-sky-700 hover:bg-sky-50 text-xs font-bold"
-                              title={t('facturation:pending_sales.merge', { defaultValue: 'Ajouter au panier actuel' })}
+                              title={t('facturation:pending_sales.merge')}
                             >
                               <GitMerge className="size-3.5 mr-1" />
-                              {t('common:merge', { defaultValue: 'Fusionner' })}
+                              {t('common:merge')}
                             </Button>
                           )}
 

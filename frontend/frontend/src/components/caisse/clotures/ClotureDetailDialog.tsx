@@ -126,7 +126,7 @@ export default function ClotureDetailDialog({ state }: Props) {
                 >
                   <span className="flex items-center gap-2">
                     <Banknote className="size-4" />
-                    {t('modal.billetage_title', { defaultValue: 'Billetage (coupures comptées)' })}
+                    {t('modal.billetage_title')}
                   </span>
                   <span className="text-slate-400">{showBilletage ? '▲' : '▼'}</span>
                 </button>
@@ -135,7 +135,7 @@ export default function ClotureDetailDialog({ state }: Props) {
                     {/* Billets */}
                     {selectedCloture.billetage.billets && Object.entries(selectedCloture.billetage.billets).filter(([, q]) => q > 0).length > 0 && (
                       <div>
-                        <div className="text-caption font-bold uppercase text-slate-400 mb-1">{t('modal.billetage_billets', { defaultValue: 'Billets' })}</div>
+                        <div className="text-caption font-bold uppercase text-slate-400 mb-1">{t('modal.billetage_billets')}</div>
                         {Object.entries(selectedCloture.billetage.billets).filter(([, q]) => q > 0).map(([valeur, qte]) => (
                           <div key={valeur} className="flex justify-between text-xs py-0.5">
                             <span>{qte} × {formatMoney(parseInt(valeur))}</span>
@@ -147,7 +147,7 @@ export default function ClotureDetailDialog({ state }: Props) {
                     {/* Pièces */}
                     {selectedCloture.billetage.pieces && Object.entries(selectedCloture.billetage.pieces).filter(([, q]) => q > 0).length > 0 && (
                       <div>
-                        <div className="text-caption font-bold uppercase text-slate-400 mb-1">{t('modal.billetage_pieces', { defaultValue: 'Pièces' })}</div>
+                        <div className="text-caption font-bold uppercase text-slate-400 mb-1">{t('modal.billetage_pieces')}</div>
                         {Object.entries(selectedCloture.billetage.pieces).filter(([, q]) => q > 0).map(([valeur, qte]) => (
                           <div key={valeur} className="flex justify-between text-xs py-0.5">
                             <span>{qte} × {formatMoney(parseInt(valeur))}</span>
@@ -159,7 +159,7 @@ export default function ClotureDetailDialog({ state }: Props) {
                     {/* Mobile Money */}
                     {((selectedCloture.billetage.orange_money ?? 0) > 0 || (selectedCloture.billetage.mtn_momo ?? 0) > 0) && (
                       <div>
-                        <div className="text-caption font-bold uppercase text-slate-400 mb-1">{t('modal.billetage_mobile_money', { defaultValue: 'Mobile Money' })}</div>
+                        <div className="text-caption font-bold uppercase text-slate-400 mb-1">{t('modal.billetage_mobile_money')}</div>
                         {(selectedCloture.billetage.orange_money ?? 0) > 0 && (
                           <div className="flex justify-between text-xs py-0.5">
                             <span>Orange Money</span>
@@ -177,7 +177,7 @@ export default function ClotureDetailDialog({ state }: Props) {
                     {/* Total */}
                     {(selectedCloture.billetage.total ?? 0) > 0 && (
                       <div className="flex justify-between text-sm font-black pt-2 border-t border-slate-200">
-                        <span>{t('modal.billetage_total', { defaultValue: 'Total billetage' })}</span>
+                        <span>{t('modal.billetage_total')}</span>
                         <span>{formatMoney(selectedCloture.billetage.total ?? 0)}</span>
                       </div>
                     )}

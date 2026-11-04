@@ -2,6 +2,77 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-11-04 — Étiquettes produits : impression native TSPL via QZ Tray
+
+- Frontend uniquement : `qzPrinter.ts` conserve une imprimante étiquettes dédiée
+  (`qz_label_printer_name`). Un override ne se replie jamais sur l'imprimante
+  ticket ni sur celle par défaut ; le comportement ESC/POS sans override reste inchangé.
+- `utils/escpos/labelTspl.ts` génère SIZE/GAP/TEXT/BARCODE CODE128 ou DMATRIX
+  natif (ECC200), formats 40×20 et 30×15 mm à 203 dpi et copies PRINT natives.
+- `utils/print/printLabelSmart.ts` et `SimplePrintLabelsModal.tsx` réutilisent
+  la queue finale (quantités et sélection), avec secours sur le flux HTML existant.
+  Sans imprimante dédiée configurée, le navigateur s'ouvre toujours sans attente QZ.
+- `settings/PrintingTab.tsx` : second sélecteur persistant, liste QZ partagée,
+  désactivation explicite pour revenir au navigateur ; traductions fr/en dans
+  `pharmacy_settings.json` et `labels.json` (clé plate `print.tspl_success`
+  pour préserver la chaîne historique `print`). Aucun changement backend/caisse.
+- Validation automatisée à lancer par l'agent principal : commande TypeScript
+  refusée par les permissions du sous-agent. Test matériel Hoin restant nécessaire.
+
+## 2026-11-04 — 🖨️ Caisse : impression ticket sans modale
+
+- `useCaissePayment.ts` : quand `auto_print_ticket` est actif, le ticket part
+  directement via `printTicketSmart` (ESC/POS/QZ Tray) — **plus de modale**
+  d'aperçu après encaissement. La modale ne s'ouvre que si l'impression
+  silencieuse échoue (secours : l'auto-print de la modale retente alors le
+  flux navigateur/iframe avec le DOM du ticket). Toast « Ticket envoyé à
+  l'imprimante » sur succès. Réglage désactivé → aperçu inchangé.
+
+## 2026-11-04 — 🧹 i18n : nettoyage fallbacks FR + namespaces dupliqués
+
+- **~580 `defaultValue` FR supprimés** dans `t()` sur tout `src/` (facturation,
+  caisse, commandes, produits, dashboard, avoirs, hooks, settings, printing,
+  sales, users, challenges, loyalty, utils, services…). Divergences conservées
+  volontairement : quand la valeur JSON diffère du fallback, le JSON gagnait
+  déjà l'affichage — retirer le fallback aurait changé le texte visible.
+- **~90 clés i18n ajoutées** fr+en (cas où le `defaultValue` était la seule
+  traduction) : facturation, cash_closings, stock (avoirs.details, inventaire
+  .merge), caisse (bulk_cancel_sudo, load_pending_error), common, products,
+  dashboard, reports, pharmacy_settings (postes_vente.*, labels/placeholders
+  phone2), labels, sales, providers, auth (licence.sudo_*), monthly_report.
+- **Déduplication namespaces** : 16 remplacements vers `common:*` (challenges
+  delete/loading, maintenance/labels cancel, telegram refresh, facturation
+  common.pay/receipt…) ; 4 clés EN manquantes ajoutées (common messages.
+  load_error, pagination.page/of, facturation payment.point_de_vente_label).
+  Doublons/orphelins inventoriés, non supprimés par prudence.
+- **Namespace `clinical` réparé** : déclaré dans `i18n.ts` mais `clinical.json`
+  absent → 404 au chargement et alertes d'interaction en clés brutes. Créé
+  `fr/en/clinical.json` (alerts.gravities.*, products_label, to_watch) +
+  `ClinicalAlerts.tsx` pointe désormais sur `clinical:`.
+- **Namespace `inventory` fantôme** : `t('inventory:messages.delete_confirm')`
+  (ns jamais déclaré) → raccordé à `stock:inventaire.delete_confirm_named`
+  (clé créée fr/en, conserve l'interpolation du nom).
+- **Divergences notables conservées** (à revoir un jour) : `common:actions`
+  (clé = objet JSON dans common — le code l'utilise comme chaîne dans
+  Transformations), `common:currency_symbol` ('F' vs 'FCFA' ×~15), labels
+  orphelins `common:messages.internal.*` et `clients:hints.*` (fr seul,
+  inutilisés), `translation.json` vide non référencé.
+- Vérifié : JSON 100% valides fr/en, `tsc --noEmit` 0 erreur, eslint ciblé
+  propre. Reste ~145 `defaultValue` = gardes volontaires (divergences +
+  templates dynamiques + paramètres non-i18n).
+
+## 2026-11-03 — Nettoyage des fallbacks i18n de facturation
+
+- `frontend/frontend/src/components/facturation/` : suppression de 21 fallbacks
+  redondants avec les traductions FR existantes (en-tête, paiement, confirmation,
+  ventes en attente et dialogue de stock), paramètres d'interpolation conservés.
+- `public/locales/{fr,en}/facturation.json` : ajout de six clés manquantes
+  (mode Zenith, thèmes et confirmation de vente hors stock), puis suppression
+  de leurs six fallbacks dans `FacturationHeader` et `FacturationLeftPanel`.
+- Le fallback divergent `client.apply_reward_button` et le fallback vide de
+  description des ventes en attente sont conservés. Validation automatisée
+  à relancer : commande Node refusée par les permissions du sous-agent.
+
 ## 2026-11-03 — 🔧 Correctifs post-revue + nettoyage lint
 
 - `commande-produits/cheaper-suppliers` : repli sur `commande__fournisseur_nom`

@@ -87,7 +87,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                 <Card className="border-emerald-200 bg-emerald-50/50 animate-in zoom-in duration-500">
                     <CardContent className="flex flex-col items-center justify-center py-20 text-emerald-700">
                         <Download className="size-16 mb-4" />
-                        <CardTitle className="text-lg font-black uppercase tracking-widest">{t('results.export_success_short', { defaultValue: 'Rapport Généré' })}</CardTitle>
+                        <CardTitle className="text-lg font-black uppercase tracking-widest">{t('results.export_success_short')}</CardTitle>
                         {results && typeof results === 'object' && (results as { filename?: string }).filename && (
                             <CardDescription className="mt-2 opacity-70">{(results as { filename?: string }).filename}</CardDescription>
                         )}
@@ -192,13 +192,13 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                     <CardHeader className="border-b border-slate-200 bg-slate-50 py-4 px-6">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <CardTitle className="text-sm font-bold uppercase tracking-widest text-slate-500">
-                                {t('results.title', { defaultValue: 'Résultats' })}
+                                {t('results.title')}
                             </CardTitle>
                             {/* Filtre marge — visible uniquement pour detail_marges_lots */}
                             {isMargesReport && (
                                 <div className="flex flex-wrap items-center gap-2">
                                     <AlertTriangle className="size-3.5 text-amber-600 shrink-0" />
-                                    <span className="text-caption font-black uppercase tracking-widest text-slate-400 mr-2">{t('reports:results.filter_margin', { defaultValue: 'Filtre marge :' })}</span>
+                                    <span className="text-caption font-black uppercase tracking-widest text-slate-400 mr-2">{t('reports:results.filter_margin')}</span>
                                     {(['all', 'negative', 'low'] as const).map(f => (
                                         <Button
                                             key={f}
@@ -212,7 +212,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                                                     : 'text-slate-500'
                                             }`}
                                         >
-                                            {f === 'all' ? t('reports:results.filter_all', { defaultValue: 'Toutes' }) : f === 'negative' ? t('reports:results.filter_negative', { defaultValue: 'Négatives' }) : t('reports:results.filter_low', { defaultValue: '< 25%' })}
+                                            {f === 'all' ? t('reports:results.filter_all') : f === 'negative' ? t('reports:results.filter_negative') : t('reports:results.filter_low')}
                                         </Button>
                                     ))}
                                 </div>
@@ -220,7 +220,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                         </div>
                         <div className="mt-2 flex items-center justify-end">
                             <span className="text-caption text-slate-400 font-bold">
-                                {t('reports:results.lines_count', { filtered: filteredResults.length, total: results.length, defaultValue: `${filteredResults.length} / ${results.length} lignes` })}
+                                {t('reports:results.lines_count', { filtered: filteredResults.length, total: results.length })}
                             </span>
                         </div>
                     </CardHeader>
@@ -295,7 +295,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                                                     <TableCell key={col} className={`text-right text-sm ${isNumericColumn(col) ? 'text-right' : ''}`}>
                                                         <div className="flex flex-col items-end">
                                                             <span>{formatValue(col, avg, t)}</span>
-                                                            <span className="text-micro opacity-50 uppercase tracking-wider">{t('reports:results.footer_avg_label', { defaultValue: 'moyenne' })}</span>
+                                                            <span className="text-micro opacity-50 uppercase tracking-wider">{t('reports:results.footer_avg_label')}</span>
                                                         </div>
                                                     </TableCell>
                                                 );
@@ -315,7 +315,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                                                         <TableCell key={col} className="text-right text-sm">
                                                             <div className="flex flex-col items-end">
                                                                 <span>{tauxGlobal.toFixed(1)} %</span>
-                                                                <span className="text-micro opacity-50 uppercase tracking-wider">{t('reports:results.footer_global_label', { defaultValue: 'global' })}</span>
+                                                                <span className="text-micro opacity-50 uppercase tracking-wider">{t('reports:results.footer_global_label')}</span>
                                                             </div>
                                                         </TableCell>
                                                     );
@@ -336,7 +336,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                     {!isMargesReport && filteredResults.length > 100 && !pagination && (
                         <CardFooter className="p-4 bg-slate-50 border-t border-slate-200 justify-center">
                             <span className="text-caption font-black uppercase text-slate-400 tracking-[0.2em]">
-                                {t('results.limited_display', 'Affichage limité aux 100 premiers résultats sur {{total}}', { total: Array.isArray(results) ? results.length : 0 })}
+                                {t('results.limited_display', { total: Array.isArray(results) ? results.length : 0 })}
                             </span>
                         </CardFooter>
                     )}

@@ -35,7 +35,7 @@ export function CommandeDeleteModals({
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle className="text-red-600">{t('orders:messages.confirm_delete_title')}</DialogTitle>
-                        <DialogDescription>{t('orders:messages.remove_product_confirm', 'Êtes-vous sûr de vouloir retirer ce produit de la commande ?')}</DialogDescription>
+                        <DialogDescription>{t('orders:messages.remove_product_confirm')}</DialogDescription>
                     </DialogHeader>
                     <div className="flex justify-end gap-3 pt-4">
                         <Button type="button" variant="ghost" onClick={onClearProductToDelete}>{t('common:cancel')}</Button>

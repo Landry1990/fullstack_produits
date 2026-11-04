@@ -166,13 +166,10 @@ const ReconditionnementModal: React.FC<ReconditionnementModalProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg font-bold text-slate-800">
             <Package className="size-5 text-emerald-600" />
-            {t('orders:reconditionnement.title', { defaultValue: 'Reconditionnement automatique' })}
+            {t('orders:reconditionnement.title')}
           </DialogTitle>
           <DialogDescription>
-            {t('orders:reconditionnement.subtitle', {
-              numero: commandeNumero,
-              defaultValue: `Commande #${commandeNumero} — produits reçus pouvant être reconditionnés`,
-            })}
+            {t('orders:reconditionnement.subtitle', { numero: commandeNumero })}
           </DialogDescription>
         </DialogHeader>
 
@@ -272,13 +269,13 @@ const ReconditionnementModal: React.FC<ReconditionnementModalProps> = ({
                           </div>
                           <div className="text-label text-slate-400 mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
                             <span>
-                              {t('orders:reconditionnement.received', { defaultValue: 'Reçu' })}: {tr.qty_recue}
+                              {t('orders:reconditionnement.received')}: {tr.qty_recue}
                             </span>
                             <span>
-                              {t('common:stock', { defaultValue: 'Stock' })}: {tr.source_stock}
+                              {t('common:stock')}: {tr.source_stock}
                             </span>
                             <span>
-                              {t('orders:reconditionnement.ratio', { defaultValue: 'Ratio' })}: 1:{tr.ratio}
+                              {t('orders:reconditionnement.ratio')}: 1:{tr.ratio}
                             </span>
                           </div>
                         </div>
@@ -320,7 +317,7 @@ const ReconditionnementModal: React.FC<ReconditionnementModalProps> = ({
                   })}
                 </span>
                 <span className="font-bold text-emerald-700">
-                  +{totalDestObtained} {t('orders:reconditionnement.units', { defaultValue: 'unités' })}
+                  +{totalDestObtained} {t('orders:reconditionnement.units')}
                 </span>
               </div>
             )}
@@ -334,7 +331,7 @@ const ReconditionnementModal: React.FC<ReconditionnementModalProps> = ({
               onClick={() => { onOpenChange(false); onDone(); }}
               disabled={submitting}
             >
-              {t('common:close', { defaultValue: 'Fermer' })}
+              {t('common:close')}
             </Button>
           ) : (
             <>
@@ -343,7 +340,7 @@ const ReconditionnementModal: React.FC<ReconditionnementModalProps> = ({
                 onClick={() => { onOpenChange(false); onDone(); }}
                 disabled={submitting}
               >
-                {t('orders:reconditionnement.skip', { defaultValue: 'Passer' })}
+                {t('orders:reconditionnement.skip')}
               </Button>
               <Button
                 onClick={handleConfirm}
@@ -358,7 +355,7 @@ const ReconditionnementModal: React.FC<ReconditionnementModalProps> = ({
                 ) : (
                   <>
                     <CheckCircle2 className="size-4" />
-                    {t('orders:reconditionnement.confirm', { defaultValue: 'Reconditionner' })}
+                    {t('orders:reconditionnement.confirm')}
                   </>
                 )}
               </Button>

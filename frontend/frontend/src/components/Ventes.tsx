@@ -174,11 +174,11 @@ const Ventes: React.FC = () => {
                         <div className="p-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between bg-white/50 dark:bg-slate-900/50">
                             <div className="text-sm text-slate-500 dark:text-slate-400">
                                 {t('common:pagination_info', {
-                                    defaultValue: `Page ${pagination?.currentPage || 1} sur ${pagination?.totalPages || 1} (${pagination?.totalItems || 0} ${t('common:items', { defaultValue: 'éléments' })})`,
+                                    defaultValue: `Page ${pagination?.currentPage || 1} sur ${pagination?.totalPages || 1} (${pagination?.totalItems || 0} ${t('common:items')})`,
                                     page: pagination?.currentPage || 1,
                                     total: pagination?.totalPages || 1,
                                     count: pagination?.totalItems || 0,
-                                    label: t('common:items', { defaultValue: 'éléments', count: pagination?.totalItems || 0 })
+                                    label: t('common:items', { count: pagination?.totalItems || 0 })
                                 })}
                             </div>
                             <PaginationControls

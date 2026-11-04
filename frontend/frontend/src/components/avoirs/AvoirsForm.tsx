@@ -115,7 +115,7 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                         variant="ghost"
                         size="icon"
                         onClick={handleBackToList}
-                        aria-label={t('common:back', { defaultValue: 'Retour' })}
+                        aria-label={t('common:back')}
                         className="text-slate-500 hover:text-slate-700 hover:bg-slate-100"
                     >
                         <ArrowLeft className="size-5" />
@@ -283,7 +283,7 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                                             return (
                                                 <TableRow key={prod?.id ?? ligne.id ?? `ligne-${prod?.name ?? ligne.lot}`}>
                                                     <TableCell>
-                                                        <div className="font-semibold text-slate-800">{prod?.name || t('common:unknown_product', { defaultValue: 'Produit Inconnu' })}</div>
+                                                        <div className="font-semibold text-slate-800">{prod?.name || t('common:unknown_product')}</div>
                                                         <div className="text-xs text-slate-400 font-mono mt-0.5">{prod?.cip1}</div>
                                                     </TableCell>
                                                     <TableCell>

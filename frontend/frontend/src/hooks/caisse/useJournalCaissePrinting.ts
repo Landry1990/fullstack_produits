@@ -61,7 +61,7 @@ export function useJournalCaissePrinting({
   // t / currentLocale / formatCurrencyLocal restent dans la langue de
   // l'interface (réutilisés par les composants UI via useJournalCaisse).
   const { t } = useTranslation(['cash_journal', 'common']);
-  const currentLocale = t('common:locale', { defaultValue: 'fr-FR' });
+  const currentLocale = t('common:locale');
   const currencySymbol = t(['common:currency_symbol', 'currency_symbol'], 'F');
 
   // docT / docLocale : langue du document imprimé (PharmacySettings.locale),

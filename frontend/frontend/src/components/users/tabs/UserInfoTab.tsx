@@ -26,7 +26,7 @@ export default function UserInfoTab({ form, users, isEditing }: Props) {
     const sourceUser = users.find(u => u.id === sourceUserId);
     if (!sourceUser) return;
     copyFromUser(sourceUser);
-    gooeyToast.success(t('messages.permissions_copied', { username: sourceUser.username, defaultValue: `Droits copiés de ${sourceUser.username}` }));
+    gooeyToast.success(t('messages.permissions_copied', { username: sourceUser.username }));
   };
 
   return (

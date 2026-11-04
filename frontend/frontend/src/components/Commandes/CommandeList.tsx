@@ -166,7 +166,7 @@ export default function CommandeList({
   const getStatusLabel = (us: string) => {
     switch (us) {
       case 'PREP': return t('orders:status.prep', 'Préparation');
-      case 'ATT': return t('orders:status.att', 'En attente');
+      case 'ATT': return t('orders:status.att');
       case 'CLOT': return t('orders:status.clot', 'Clôturé');
       default: return us;
     }
@@ -279,8 +279,8 @@ export default function CommandeList({
               type="text"
               value={searchQuery}
               onChange={(e) => onSearchQueryChange(e.target.value)}
-              aria-label={t('orders:list.search_placeholder', 'Rechercher (N° facture, ID)…')}
-              placeholder={t('orders:list.search_placeholder', 'Rechercher (N° facture, ID)…')}
+              aria-label={t('orders:list.search_placeholder')}
+              placeholder={t('orders:list.search_placeholder')}
               className="w-full h-8 pl-8 pr-7 text-xs"
             />
             {searchQuery && (

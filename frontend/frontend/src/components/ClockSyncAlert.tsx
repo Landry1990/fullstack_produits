@@ -16,9 +16,9 @@ import { Clock, AlertTriangle, X, Copy, Check } from 'lucide-react'
 
 function formatDrift(ms: number, t: TFunction): string {
   const abs = Math.abs(ms)
-  if (abs < 60_000) return t('clock_sync.seconds', { count: Math.round(abs / 1000), defaultValue: '{{count}} secondes' })
-  if (abs < 3_600_000) return t('clock_sync.minutes', { count: Math.round(abs / 60_000), defaultValue: '{{count}} minutes' })
-  return t('clock_sync.hours', { count: Math.round(abs / 3_600_000), defaultValue: '{{count}} heures' })
+  if (abs < 60_000) return t('clock_sync.seconds', { count: Math.round(abs / 1000) })
+  if (abs < 3_600_000) return t('clock_sync.minutes', { count: Math.round(abs / 60_000) })
+  return t('clock_sync.hours', { count: Math.round(abs / 3_600_000) })
 }
 
 function formatTime(date: Date, locale: string): string {
@@ -83,10 +83,10 @@ Write-Host "Horloge synchronisee." -ForegroundColor Green
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-bold text-amber-900">
-              {t('clock_sync.title', { defaultValue: 'Horloge désynchronisée' })}
+              {t('clock_sync.title')}
             </p>
             <p className="text-label text-amber-700">
-              {t('clock_sync.subtitle', { defaultValue: 'Décalage détecté avec le serveur' })}
+              {t('clock_sync.subtitle')}
             </p>
           </div>
           <button
@@ -102,7 +102,7 @@ Write-Host "Horloge synchronisee." -ForegroundColor Green
           {/* Décalage */}
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-500">
-              {t('clock_sync.drift', { defaultValue: 'Décalage' })}
+              {t('clock_sync.drift')}
             </span>
             <span className={`text-sm font-black ${isAhead ? 'text-red-600' : 'text-orange-600'}`}>
               {isAhead ? '+' : '−'}{formatDrift(driftMs, t)}
@@ -114,14 +114,14 @@ Write-Host "Horloge synchronisee." -ForegroundColor Green
             <div className="rounded-xl bg-slate-50 px-3 py-2">
               <div className="flex items-center gap-1.5 text-caption font-bold uppercase tracking-wider text-slate-400">
                 <Clock className="size-3" />
-                {t('clock_sync.server', { defaultValue: 'Serveur' })}
+                {t('clock_sync.server')}
               </div>
               <p className="text-sm font-bold text-slate-700 tabular-nums">{formatTime(serverTime, i18n.language)}</p>
             </div>
             <div className="rounded-xl bg-slate-50 px-3 py-2">
               <div className="flex items-center gap-1.5 text-caption font-bold uppercase tracking-wider text-slate-400">
                 <Clock className="size-3" />
-                {t('clock_sync.local', { defaultValue: 'Ce poste' })}
+                {t('clock_sync.local')}
               </div>
               <p className="text-sm font-bold text-slate-700 tabular-nums">{formatTime(localTime, i18n.language)}</p>
             </div>
@@ -130,12 +130,8 @@ Write-Host "Horloge synchronisee." -ForegroundColor Green
           {/* Message d'explication */}
           <p className="text-label text-slate-500 leading-relaxed">
             {isAhead
-              ? t('clock_sync.ahead_msg', {
-                  defaultValue: "L'horloge de ce poste est en avance. Cela peut causer des erreurs dans les factures, tickets et rapports."
-                })
-              : t('clock_sync.behind_msg', {
-                  defaultValue: "L'horloge de ce poste est en retard (pile CMOS ?). Cela peut causer des erreurs dans les factures, tickets et rapports."
-                })
+              ? t('clock_sync.ahead_msg')
+              : t('clock_sync.behind_msg')
             }
           </p>
 
@@ -147,14 +143,12 @@ Write-Host "Horloge synchronisee." -ForegroundColor Green
             >
               {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
               {copied
-                ? t('clock_sync.copied', { defaultValue: 'Script copié !' })
-                : t('clock_sync.copy_script', { defaultValue: 'Copier le script de synchro' })
+                ? t('clock_sync.copied')
+                : t('clock_sync.copy_script')
               }
             </button>
             <p className="text-caption text-slate-400 text-center leading-tight">
-              {t('clock_sync.script_hint', {
-                defaultValue: "À exécuter en tant qu'administrateur (PowerShell)"
-              })}
+              {t('clock_sync.script_hint')}
             </p>
           </div>
         </div>

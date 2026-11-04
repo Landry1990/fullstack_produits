@@ -36,7 +36,7 @@ export default function Omnisearch() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="max-w-5xl p-0 overflow-hidden border-slate-200 rounded-2xl font-sans">
-        <DialogTitle className="sr-only">{t('omnisearch.title', 'Recherche globale')}</DialogTitle>
+        <DialogTitle className="sr-only">{t('omnisearch.title')}</DialogTitle>
         <Command
           label={t('common:command_palette')}
           shouldFilter={false}
@@ -54,7 +54,7 @@ export default function Omnisearch() {
                 value={search}
                 onValueChange={setSearch}
                 autoFocus
-                placeholder={t('omnisearch.placeholder', 'Rechercher (produits, clients, navigation) …')}
+                placeholder={t('omnisearch.placeholder')}
                 className="h-12 w-full bg-transparent text-base text-slate-800 outline-none focus-visible:outline-none! placeholder:text-slate-500"
               />
               <Badge variant="outline" className="shrink-0 text-caption font-bold tracking-wider text-slate-500">
@@ -92,15 +92,15 @@ export default function Omnisearch() {
           <div className="flex items-center gap-5 border-t border-slate-200 bg-slate-50/80 px-6 py-2.5 text-caption font-semibold text-slate-500">
             <span className="flex items-center gap-1.5">
               <kbd className="rounded border border-slate-300 bg-white px-1.5 py-0.5 font-mono shadow-sm">↑↓</kbd>
-              {t('omnisearch.hints.navigate', 'Naviguer')}
+              {t('omnisearch.hints.navigate')}
             </span>
             <span className="flex items-center gap-1.5">
               <kbd className="rounded border border-slate-300 bg-white px-1.5 py-0.5 font-mono shadow-sm">↵</kbd>
-              {t('omnisearch.hints.open', 'Ouvrir')}
+              {t('omnisearch.hints.open')}
             </span>
             <span className="flex items-center gap-1.5">
               <kbd className="rounded border border-slate-300 bg-white px-1.5 py-0.5 font-mono shadow-sm">esc</kbd>
-              {t('omnisearch.hints.close', 'Fermer')}
+              {t('omnisearch.hints.close')}
             </span>
           </div>
         </Command>

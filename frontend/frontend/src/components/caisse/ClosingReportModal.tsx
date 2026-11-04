@@ -68,7 +68,7 @@ export function ClosingReportModal({
     <PremiumModal
       isOpen={isOpen}
       onClose={onClose}
-      title={t('cash_session.closing_report', { defaultValue: 'Rapport de Clôture' })}
+      title={t('cash_session.closing_report')}
       icon={<Ticket className="text-emerald-600 size-5" />}
       footer={
         <div className="flex flex-wrap justify-end gap-2 w-full">
@@ -82,7 +82,7 @@ export function ClosingReportModal({
             className="inline-flex items-center justify-center h-8 px-4 rounded-lg text-xs font-semibold bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 transition-colors"
             onClick={onClose}
           >
-            {t('common:actions.close', { defaultValue: 'Fermer' })}
+            {t('common:actions.close')}
           </button>
         </div>
       }
@@ -102,13 +102,13 @@ export function ClosingReportModal({
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="bg-white p-3 rounded-lg border border-slate-200">
-                  <p className="text-caption uppercase text-slate-500">{t('cash_session.fond_initial', { defaultValue: 'Fond Initial' })}</p>
+                  <p className="text-caption uppercase text-slate-500">{t('cash_session.fond_initial')}</p>
                   <p className="font-mono font-bold text-lg text-slate-800">
                     {r.session?.fond_de_caisse?.toLocaleString('fr-FR')} F
                   </p>
                 </div>
                 <div className="bg-emerald-50 p-3 rounded-lg border border-emerald-100">
-                  <p className="text-caption uppercase text-emerald-600">{t('cash_session.encaisse', { defaultValue: 'Encaissé' })}</p>
+                  <p className="text-caption uppercase text-emerald-600">{t('cash_session.encaisse')}</p>
                   <p className="font-mono font-bold text-lg text-emerald-600">
                     {r.session?.montant_encaisse?.toLocaleString('fr-FR')} F
                   </p>
@@ -118,7 +118,7 @@ export function ClosingReportModal({
               {/* Total théorique */}
               <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-100">
                 <p className="text-caption uppercase text-emerald-600 font-semibold mb-1">
-                  {t('cash_session.total_theorique', { defaultValue: 'Total Théorique en Caisse' })}
+                  {t('cash_session.total_theorique')}
                 </p>
                 <p className="font-mono font-bold text-2xl text-emerald-600">
                   {r.session?.montant_theorique?.toLocaleString('fr-FR')} F
@@ -129,7 +129,7 @@ export function ClosingReportModal({
               {r.details_par_mode && Object.keys(r.details_par_mode).length > 0 && (
                 <div className="bg-white p-4 rounded-lg border border-slate-200">
                   <p className="text-caption uppercase text-slate-500 font-semibold mb-2">
-                    {t('cash_session.details_by_mode', { defaultValue: 'Détails par mode de règlement' })}
+                    {t('cash_session.details_by_mode')}
                   </p>
                   <div className="space-y-1.5">
                     {Object.entries(r.details_par_mode)
@@ -180,7 +180,7 @@ export function ClosingReportModal({
 
           {/* Transactions */}
           <div className="flex justify-between items-center text-sm">
-            <span className="text-slate-500">{t('cash_session.transactions', { defaultValue: 'Transactions' })}</span>
+            <span className="text-slate-500">{t('cash_session.transactions')}</span>
             <span className="font-bold text-slate-800">{r.transactions?.total || 0}</span>
           </div>
 

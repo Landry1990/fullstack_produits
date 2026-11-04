@@ -91,7 +91,7 @@ export function usePromisData(): UsePromisDataReturn {
             setPromisList(Array.isArray(results) ? results : (results as PaginatedResponse<Promis>).results || []);
             setError(null);
         } catch (err) {
-            setError(t('stock:promis.messages.load_error', 'Erreur lors du chargement des promis'));
+            setError(t('stock:promis.messages.load_error'));
             logger.error(err);
         } finally {
             setLoading(false);
@@ -151,16 +151,16 @@ export function usePromisData(): UsePromisDataReturn {
     const handleDelivrer = async (id: number) => {
         const confirmed = await confirm({
             title: t('stock:promis.actions.deliver', 'Marquer comme délivré'),
-            message: t('stock:promis.messages.deliver_confirm', 'Marquer ce promis comme délivré ?'),
+            message: t('stock:promis.messages.deliver_confirm'),
             variant: 'success',
-            confirmText: t('stock:promis.actions.deliver', 'Délivrer')
+            confirmText: t('stock:promis.actions.deliver')
         });
         if (!confirmed) return;
         setPromisStatus([id], 'DEL');
         try {
             await promisService.delivrer(id);
         } catch (err) {
-            gooeyToast.error(t('stock:promis.messages.deliver_error', 'Erreur lors de la livraison'));
+            gooeyToast.error(t('stock:promis.messages.deliver_error'));
             logger.error(err);
             fetchPromis();
         }
@@ -283,7 +283,7 @@ export function usePromisData(): UsePromisDataReturn {
             const data = await promisService.bulkDelivrer(Array.from(selectedIds));
             gooeyToast.success(t('stock:promis.messages.bulk_delivery_success', { count: data.delivered, defaultValue: `${data.delivered} promis livrés` }));
         } catch (err) {
-            gooeyToast.error(t('stock:promis.messages.bulk_delivery_error', 'Erreur lors de la livraison multiple'));
+            gooeyToast.error(t('stock:promis.messages.bulk_delivery_error'));
             logger.error(err);
             fetchPromis();
         } finally {
@@ -295,7 +295,7 @@ export function usePromisData(): UsePromisDataReturn {
         if (selectedIds.size === 0) return;
         const confirmed = await confirm({
             title: t('stock:promis.modals.bulk_cancel_title', 'Annulation en masse'),
-            message: t('stock:promis.modals.bulk_cancel_message', { count: selectedIds.size, defaultValue: `Confirmer l'annulation de ${selectedIds.size} promis ?` }) + '\n\n' + t('stock:promis.messages.sudo_required_note', 'Une confirmation par mot de passe sera requise.'),
+            message: t('stock:promis.modals.bulk_cancel_message', { count: selectedIds.size, defaultValue: `Confirmer l'annulation de ${selectedIds.size} promis ?` }) + '\n\n' + t('stock:promis.messages.sudo_required_note'),
             variant: 'danger',
             confirmText: t('stock:promis.modals.bulk_cancel_confirm', 'Annuler')
         });

@@ -103,7 +103,7 @@ const PriceEvolutionChart = ({ achats, t }: { achats: AchatProduit[]; t: TFuncti
                             value={selectedFournisseur}
                             onChange={(e) => setSelectedFournisseur(e.target.value)}
                         >
-                            <option value="all">{t('products:detail.purchases.all_providers', { defaultValue: 'Tous les fournisseurs' })}</option>
+                            <option value="all">{t('products:detail.purchases.all_providers')}</option>
                             {fournisseurs.map((f) => (
                                 <option key={f} value={f}>{f}</option>
                             ))}
@@ -273,8 +273,8 @@ const LotsTabContent = ({ lots, produitId, t }: { lots: StockLot[]; produitId: n
                     <TableHead scope="col" className="w-36 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.lots.lot_number')}</TableHead>
                     <TableHead scope="col" className="w-32 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.lots.expiration')}</TableHead>
                     <TableHead scope="col" className="w-40 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.lots.provider')}</TableHead>
-                    <TableHead scope="col" className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-28">{t('products:detail.purchases.price', { defaultValue: 'Prix' })}</TableHead>
-                    <TableHead scope="col" className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-28">{t('products:detail.lots.selling_price', { defaultValue: 'Prix Vente' })}</TableHead>
+                    <TableHead scope="col" className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-28">{t('products:detail.purchases.price')}</TableHead>
+                    <TableHead scope="col" className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-28">{t('products:detail.lots.selling_price')}</TableHead>
                     <TableHead scope="col" className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-20">{t('products:detail.lots.initial_qty')}</TableHead>
                     <TableHead scope="col" className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-20">{t('products:detail.lots.remaining_qty')}</TableHead>
                     <TableHead scope="col" className="w-16 px-3 py-2 whitespace-nowrap text-center text-xs font-semibold uppercase tracking-wide text-slate-500"></TableHead>

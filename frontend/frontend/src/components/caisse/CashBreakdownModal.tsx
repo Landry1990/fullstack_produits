@@ -179,7 +179,7 @@ export const CashBreakdownModal: React.FC<CashBreakdownModalProps> = ({
           inputMode="numeric"
           placeholder="0"
           data-billetage="1"
-          aria-label={`${t('journal.closing.breakdown.bills', { defaultValue: 'Billets' })} ${fmt(valeur)}`}
+          aria-label={`${t('journal.closing.breakdown.bills')} ${fmt(valeur)}`}
           className="h-9 w-full px-1 rounded-md border border-slate-200 bg-slate-50 text-center text-sm font-mono font-bold text-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none"
           value={qte}
           onChange={(e) => handleCountChange(key, e.target.value)}
@@ -209,7 +209,7 @@ export const CashBreakdownModal: React.FC<CashBreakdownModalProps> = ({
           inputMode="numeric"
           placeholder="0"
           data-billetage="1"
-          aria-label={`${t('journal.closing.breakdown.coins', { defaultValue: 'Pièces' })} ${fmt(valeur)}`}
+          aria-label={`${t('journal.closing.breakdown.coins')} ${fmt(valeur)}`}
           className="h-9 w-full px-1 rounded-md border border-slate-200 bg-slate-50 text-center text-sm font-mono font-bold text-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none"
           value={qte}
           onChange={(e) => handleCountChange(key, e.target.value)}
@@ -232,15 +232,10 @@ export const CashBreakdownModal: React.FC<CashBreakdownModalProps> = ({
             </div>
             <div>
               <DialogTitle className="text-lg font-black text-white">
-                {t('journal.closing.breakdown.title', {
-                  defaultValue: 'Billetage de caisse',
-                })}
+                {t('journal.closing.breakdown.title')}
               </DialogTitle>
               <DialogDescription className="text-emerald-50 text-xs mt-0.5">
-                {t('journal.closing.breakdown.subtitle', {
-                  defaultValue:
-                    'Comptez vos coupures, le total reviendra dans le champ',
-                })}
+                {t('journal.closing.breakdown.subtitle')}
               </DialogDescription>
             </div>
           </div>
@@ -252,9 +247,7 @@ export const CashBreakdownModal: React.FC<CashBreakdownModalProps> = ({
             <div className="flex items-center gap-2 mb-2">
               <Banknote className="size-4 text-emerald-600" />
               <h4 className="text-xs font-black uppercase tracking-wider text-slate-500">
-                {t('journal.closing.breakdown.bills', {
-                  defaultValue: 'Billets',
-                })}
+                {t('journal.closing.breakdown.bills')}
               </h4>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
@@ -267,9 +260,7 @@ export const CashBreakdownModal: React.FC<CashBreakdownModalProps> = ({
             <div className="flex items-center gap-2 mb-2">
               <Coins className="size-4 text-amber-600" />
               <h4 className="text-xs font-black uppercase tracking-wider text-slate-500">
-                {t('journal.closing.breakdown.coins', {
-                  defaultValue: 'Pièces',
-                })}
+                {t('journal.closing.breakdown.coins')}
               </h4>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
@@ -282,24 +273,20 @@ export const CashBreakdownModal: React.FC<CashBreakdownModalProps> = ({
             <div className="flex items-center gap-2 mb-2">
               <Smartphone className="size-4 text-orange-600" />
               <h4 className="text-xs font-black uppercase tracking-wider text-slate-500">
-                {t('journal.closing.breakdown.mobile_money', {
-                  defaultValue: 'Mobile Money',
-                })}
+                {t('journal.closing.breakdown.mobile_money')}
               </h4>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div className="flex flex-col items-center gap-1 p-2 rounded-lg border border-orange-200 bg-orange-50/40">
                 <span className="text-xs font-black text-orange-600 leading-none">
-                  {t('journal.closing.breakdown.orange_money', {
-                    defaultValue: 'Orange Money',
-                  })}
+                  {t('journal.closing.breakdown.orange_money')}
                 </span>
                 <input
                   type="text"
                   inputMode="decimal"
                   placeholder="0"
                   data-billetage="1"
-                  aria-label={t('journal.closing.breakdown.orange_money', { defaultValue: 'Orange Money' })}
+                  aria-label={t('journal.closing.breakdown.orange_money')}
                   className="h-9 w-full px-2 rounded-md border border-slate-200 bg-white text-right text-sm font-mono font-bold text-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none"
                   value={omAmount}
                   onChange={(e) =>
@@ -310,16 +297,14 @@ export const CashBreakdownModal: React.FC<CashBreakdownModalProps> = ({
               </div>
               <div className="flex flex-col items-center gap-1 p-2 rounded-lg border border-yellow-200 bg-yellow-50/40">
                 <span className="text-xs font-black text-yellow-600 leading-none">
-                  {t('journal.closing.breakdown.mtn_momo', {
-                    defaultValue: 'MTN MoMo',
-                  })}
+                  {t('journal.closing.breakdown.mtn_momo')}
                 </span>
                 <input
                   type="text"
                   inputMode="decimal"
                   placeholder="0"
                   data-billetage="1"
-                  aria-label={t('journal.closing.breakdown.mtn_momo', { defaultValue: 'MTN MoMo' })}
+                  aria-label={t('journal.closing.breakdown.mtn_momo')}
                   className="h-9 w-full px-2 rounded-md border border-slate-200 bg-white text-right text-sm font-mono font-bold text-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none"
                   value={momoAmount}
                   onChange={(e) =>
@@ -335,9 +320,7 @@ export const CashBreakdownModal: React.FC<CashBreakdownModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
             <div className="rounded-lg bg-slate-50 border border-slate-200 p-2.5">
               <div className="text-caption font-bold uppercase text-slate-400">
-                {t('journal.closing.breakdown.cash_subtotal', {
-                  defaultValue: 'Espèces',
-                })}
+                {t('journal.closing.breakdown.cash_subtotal')}
               </div>
               <div className="font-black text-slate-700 tabular-nums">
                 {fmt(cashTotal)}
@@ -345,9 +328,7 @@ export const CashBreakdownModal: React.FC<CashBreakdownModalProps> = ({
             </div>
             <div className="rounded-lg bg-orange-50 border border-orange-200 p-2.5">
               <div className="text-caption font-bold uppercase text-orange-400">
-                {t('journal.closing.breakdown.mobile_subtotal', {
-                  defaultValue: 'Mobile Money',
-                })}
+                {t('journal.closing.breakdown.mobile_subtotal')}
               </div>
               <div className="font-black text-orange-700 tabular-nums">
                 {fmt(omTotal + momoTotal)}
@@ -360,9 +341,7 @@ export const CashBreakdownModal: React.FC<CashBreakdownModalProps> = ({
         <DialogFooter className="p-5 pt-3 border-t border-slate-100 flex-col sm:flex-col gap-3">
           <div className="w-full rounded-xl bg-emerald-600 text-white p-3 flex items-center justify-between">
             <span className="text-caption font-black uppercase tracking-widest text-emerald-100">
-              {t('journal.closing.breakdown.grand_total', {
-                defaultValue: 'Total à reporter',
-              })}
+              {t('journal.closing.breakdown.grand_total')}
             </span>
             <span className="text-2xl font-black tabular-nums">
               {fmt(grandTotal)}
@@ -376,18 +355,14 @@ export const CashBreakdownModal: React.FC<CashBreakdownModalProps> = ({
               onClick={handleReset}
             >
               <RotateCcw className="size-4 mr-1.5" />
-              {t('journal.closing.breakdown.reset', {
-                defaultValue: 'Réinitialiser',
-              })}
+              {t('journal.closing.breakdown.reset')}
             </Button>
             <Button
               type="button"
               className="rounded-xl flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
               onClick={handleConfirm}
             >
-              {t('journal.closing.breakdown.confirm', {
-                defaultValue: 'Reporter le total',
-              })}
+              {t('journal.closing.breakdown.confirm')}
             </Button>
           </div>
         </DialogFooter>

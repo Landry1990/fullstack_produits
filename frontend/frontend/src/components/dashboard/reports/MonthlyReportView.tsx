@@ -97,7 +97,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ data }) =>
                 <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 shadow-sm">
                     <div className="flex items-center gap-2 text-indigo-600 text-caption font-bold uppercase tracking-widest mb-1">
                         <TrendingUp className="size-3" />
-                        <span>{t('monthly_report.ca_ttc', 'CA TTC')}</span>
+                        <span>{t('monthly_report.ca_ttc')}</span>
                     </div>
                     <div className="text-xl font-black text-indigo-600">{formatMoney(data.ca?.ca_ttc)}</div>
                 </div>

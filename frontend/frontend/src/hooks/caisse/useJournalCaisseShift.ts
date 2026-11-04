@@ -61,12 +61,12 @@ export function useJournalCaisseShift({
         const endToday = getServerDate();
         endToday.setHours(23, 59, 59, 999);
         onNoShift(today, endToday);
-        gooeyToast(t('messages.no_shift_found', { defaultValue: 'Aucune activité pour ce caissier...' }));
+        gooeyToast(t('messages.no_shift_found'));
       }
     } catch (err) {
       logger.error("Erreur détection shift:", err);
       setDetectedShift(null);
-      gooeyToast.error(t('messages.shift_error', { defaultValue: 'Erreur lors de la détection du shift' }));
+      gooeyToast.error(t('messages.shift_error'));
     } finally {
       setIsDetectingShift(false);
     }

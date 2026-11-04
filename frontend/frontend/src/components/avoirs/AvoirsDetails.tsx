@@ -136,7 +136,7 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                                 className="gap-2 border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100"
                             >
                                 <Pencil className="size-4" />
-                                {t('stock:avoirs.details.edit', { defaultValue: 'Modifier' })}
+                                {t('stock:avoirs.details.edit')}
                             </Button>
                             <Button
                                 type="button"
@@ -323,8 +323,8 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                                                         size="icon"
                                                         onClick={() => handleDeleteLigne(ligne.id)}
                                                         className="size-8 rounded-full text-red-400 hover:text-red-600 hover:bg-red-50"
-                                                        title={t('stock:avoirs.details.delete_line', 'Supprimer cette ligne')}
-                                                        aria-label={t('stock:avoirs.details.delete_line', 'Supprimer cette ligne')}
+                                                        title={t('stock:avoirs.details.delete_line')}
+                                                        aria-label={t('stock:avoirs.details.delete_line')}
                                                     >
                                                         <Trash2 className="size-4" />
                                                     </Button>

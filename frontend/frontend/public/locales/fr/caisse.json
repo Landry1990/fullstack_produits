@@ -1,5 +1,7 @@
 {
     "title": "Caisse Centralisée",
+    "bulk_cancel_sudo_title": "Validation requise — Vidange caisse",
+    "bulk_cancel_sudo_msg": "Cette action annule des factures et réintègre le stock. Validation d'un administrateur requise.",
     "subtitle": "Gestion des encaissements",
     "auto_refresh": "Actualisation auto",
     "coupons_active": "{{count}} coupon(s) actif(s)",
@@ -53,6 +55,7 @@
     },
     "ticket": {
         "print_error": "Erreur lors de l'impression. Vous pouvez réessayer avec le bouton Imprimer.",
+        "printed": "Ticket envoyé à l'imprimante",
         "title": "Ticket de Caisse",
         "invoice_a4": "Facture A4"
     },
@@ -138,7 +141,8 @@
         "caisse_opened": "Caisse ouverte.",
         "error_opening": "Erreur ouverture.",
         "error_loading_posts": "Erreur chargement points de vente",
-        "error_loading_caisses": "Erreur chargement postes de caisse"
+        "error_loading_caisses": "Erreur chargement postes de caisse",
+        "load_pending_error": "Erreur lors du chargement des factures en attente"
     },
     "confirm_cancel_invoice": "Voulez-vous vraiment annuler la facture #{{numero}} ?",
     "confirm_modify_invoice": "Modifier cette facture ?\nElle sera retirée de la liste et rechargée dans l'écran de vente.",

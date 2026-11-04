@@ -86,7 +86,7 @@ export const useSaveCommande = () => {
                 await commandeService.update(commandeId, commandeData);
             }
 
-            if (!commandeId) throw new Error(i18n.t('orders:messages.missing_id', { defaultValue: 'ID de commande manquant' }));
+            if (!commandeId) throw new Error(i18n.t('orders:messages.missing_id'));
 
             const productsPayload = commandeProduits.map(p => ({
                 id: p.id && !String(p.id).startsWith('temp-') && typeof p.id === 'number' && p.id < 1000000000 ? p.id : null,

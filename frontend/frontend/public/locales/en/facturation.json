@@ -1,5 +1,9 @@
 {
     "title": "Sales & Invoicing",
+    "zenith_mode_on": "Disable Zenith mode",
+    "zenith_mode_off": "Enable Zenith mode",
+    "theme_light": "Switch to light theme",
+    "theme_dark": "Switch to dark theme",
     "shortcuts": {
         "search": "Search (F2)",
         "pay": "Validate (F9)",
@@ -76,6 +80,8 @@
         "format_a4": "Invoice"
     },
     "search": {
+        "out_of_stock_sudo_title": "Out-of-stock sale",
+        "out_of_stock_sudo_message": "The product \"{{name}}\" has no stock available ({{stock}}). Confirm your identity to force the sale.",
         "label": "Search a product (F2)",
         "placeholder": "Ex: PARACETAMOL (F2) or datamatrix scan",
         "min_chars": "Type at least 2 characters",
@@ -153,6 +159,7 @@
         "caisse_centrale": "Main Cash",
         "en_compte_auto": "On account (automatic)",
         "payment_mode_label": "Cash register",
+        "point_de_vente_label": "Point of sale",
         "add_btn": "Add",
         "sudo_title": "Validation Required",
         "sudo_confirm_identity": "Confirm your identity",

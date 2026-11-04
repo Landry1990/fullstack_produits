@@ -70,7 +70,7 @@ export function RestoreConfirmDialog({
 
         <div className="flex justify-end gap-2">
           <Button variant="ghost" onClick={onClose}>
-            {t('cancel')}
+            {t('common:cancel')}
           </Button>
           <Button
             variant="destructive"

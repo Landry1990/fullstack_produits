@@ -46,25 +46,25 @@ export const AvoirsFilters: React.FC<AvoirsFiltersProps> = ({
 
             <div className="md:col-span-3">
                 <select
-                    aria-label={t('common:all_statuses', { defaultValue: 'Tous statuts' })}
+                    aria-label={t('common:all_statuses')}
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
                     className={`h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm focus:ring-1 focus:ring-emerald-500 focus:outline-none ${statusFilter === '' ? 'text-slate-400' : 'text-slate-900'}`}
                 >
-                    <option value="">{t('common:all_statuses', { defaultValue: 'Tous statuts' })}</option>
-                    <option value="BROUILLON">{t('stock:avoirs.statuses.brouillon', { defaultValue: 'Brouillon' })}</option>
-                    <option value="VAL">{t('stock:avoirs.statuses.valide', { defaultValue: 'Validé' })}</option>
+                    <option value="">{t('common:all_statuses')}</option>
+                    <option value="BROUILLON">{t('stock:avoirs.statuses.brouillon')}</option>
+                    <option value="VAL">{t('stock:avoirs.statuses.valide')}</option>
                 </select>
             </div>
 
             <div className="md:col-span-3">
                 <select
-                    aria-label={t('common:all_types', { defaultValue: 'Tous types' })}
+                    aria-label={t('common:all_types')}
                     value={typeFilter}
                     onChange={(e) => setTypeFilter(e.target.value)}
                     className={`h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm focus:ring-1 focus:ring-emerald-500 focus:outline-none ${typeFilter === '' ? 'text-slate-400' : 'text-slate-900'}`}
                 >
-                    <option value="">{t('common:all_types', { defaultValue: 'Tous types' })}</option>
+                    <option value="">{t('common:all_types')}</option>
                     {getTypeOptions().map(opt => (
                         <option key={opt.value} value={opt.value}>
                             {t(opt.labelKey, { defaultValue: opt.defaultLabel })}

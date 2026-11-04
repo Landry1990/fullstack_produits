@@ -271,7 +271,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                     className="w-full h-9 pl-10 pr-4 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                     value={dateDebut}
                     onChange={(e) => setDateDebut(e.target.value)}
-                    aria-label={t('common:from', { defaultValue: 'Du' })}
+                    aria-label={t('common:from')}
                   />
                 </div>
                 <div className="relative w-full">
@@ -280,7 +280,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                     className="w-full h-9 pl-10 pr-4 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                     value={dateFin}
                     onChange={(e) => setDateFin(e.target.value)}
-                    aria-label={t('common:to', { defaultValue: 'Au' })}
+                    aria-label={t('common:to')}
                   />
                 </div>
               </div>
@@ -359,7 +359,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                 </div>
                 <div>
                   <p className="text-caption font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">
-                    {activeTab === 'summary' ? t('history.columns.nb_orders') : t('history.columns.nb_products', { defaultValue: 'Nombre de produits' })}
+                    {activeTab === 'summary' ? t('history.columns.nb_orders') : t('history.columns.nb_products')}
                   </p>
                   <p className="text-xl font-black text-slate-800 leading-none">{totalDisplayCount}</p>
                 </div>

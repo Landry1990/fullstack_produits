@@ -562,6 +562,7 @@
         "deselect": "Désélectionner",
         "merge_btn": "Fusionner",
         "delete_confirm": "Supprimer l'inventaire ?",
+        "delete_confirm_named": "Voulez-vous vraiment supprimer l'inventaire {{name}} ?",
         "product_exists": "Ce produit est déjà dans la liste",
         "validation": {
             "success": "Inventaire validé avec succès",
@@ -600,6 +601,7 @@
             "choose_placeholder": "Choisir un inventaire...",
             "confirm_msg": "Fusionner l'inventaire sélectionné dans l'actuel ? L'inventaire source sera supprimé.",
             "need_two": "Sélectionnez au moins 2 inventaires.",
+            "same_status_required": "Les inventaires sélectionnés doivent avoir le même état (tous en préparation ou tous clôturés).",
             "btn": "Fusionner",
             "success": "Fusion effectuée",
             "success_count": "{{count}} inventaire(s) fusionné(s) avec succès !",
@@ -1221,6 +1223,18 @@
         "details": {
             "back": "Retour à la liste",
             "title": "Avoir N° {{numero}}",
+            "subtitle": "Détails du retour fournisseur",
+            "not_found": "Avoir introuvable",
+            "numero_label": "N° Avoir",
+            "date_label": "Date",
+            "fournisseur_label": "Fournisseur",
+            "status_label": "Statut",
+            "total_label": "Total HT",
+            "product": "Produit",
+            "lot": "Lot",
+            "qty": "Qté",
+            "price": "Prix",
+            "total": "Total",
             "created_at": "Créé le {{date}}",
             "created_by": "par {{name}}",
             "print": "Imprimer",
@@ -1242,6 +1256,7 @@
             "close_all": "Tout clôturer",
             "reopen_all": "Tout réouvrir",
             "no_lines": "Cet avoir ne contient aucune ligne.",
+            "delete_line": "Supprimer cette ligne",
             "unload_warning": "Stock non déchargé : pensez à décharger pour retirer physiquement les produits du stock."
         },
         "modals": {

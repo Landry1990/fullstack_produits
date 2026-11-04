@@ -198,7 +198,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
               <TableHead scope="col" className="w-[200px] px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.client')}</TableHead>
               <TableHead scope="col" className="hidden lg:table-cell w-[100px] px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.date')}</TableHead>
               <TableHead scope="col" className="hidden xl:table-cell w-[220px] px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.products')}</TableHead>
-              <TableHead scope="col" className="hidden md:table-cell w-[120px] px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.seller', 'Vendeur')}</TableHead>
+              <TableHead scope="col" className="hidden md:table-cell w-[120px] px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.seller')}</TableHead>
               <TableHead scope="col" className="w-[120px] px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-right">{t('table.amount')}</TableHead>
               <TableHead scope="col" className="w-[190px] px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">{t('table.actions')}</TableHead>
             </TableRow>
@@ -378,12 +378,12 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                         disabled={!canCashOut}
                         title={!canCashOut
                           ? (!hasActiveCashSession && !user?.is_superuser
-                            ? t('table.open_cash_register_first', { defaultValue: 'Veuillez d\'abord ouvrir votre caisse' })
+                            ? t('table.open_cash_register_first')
                             : t('table.not_authorized'))
                           : t('table.cash_in')}
                         aria-label={!canCashOut
                           ? (!hasActiveCashSession && !user?.is_superuser
-                            ? t('table.open_cash_register_first', { defaultValue: 'Veuillez d\'abord ouvrir votre caisse' })
+                            ? t('table.open_cash_register_first')
                             : t('table.not_authorized'))
                           : t('table.cash_in')}
                       >
@@ -414,7 +414,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
               <option value={100}>100</option>
             </select>
             <span className="text-slate-500">
-              {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, sortedFactures.length)} {t('common:pagination.of', 'sur')} {sortedFactures.length}
+              {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, sortedFactures.length)} {t('common:pagination.of')} {sortedFactures.length}
             </span>
           </div>
           <div className="flex items-center gap-1">
@@ -437,7 +437,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                   {t('table.products_preview_title', { numero: previewFacture?.numero_facture })}
                 </DialogTitle>
                 <DialogDescription id="preview-desc" className="text-xs text-slate-500 truncate">
-                  {t('table.seller', 'Vendeur')} : {previewFacture?.created_by_name || '?'}
+                  {t('table.seller')} : {previewFacture?.created_by_name || '?'}
                 </DialogDescription>
               </div>
             </div>
@@ -479,7 +479,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                                     variant="ghost"
                                     size="icon"
                                     className="size-7 text-red-600 hover:bg-red-50"
-                                    aria-label={t('table.decrease_quantity', { defaultValue: 'Diminuer la quantité' })}
+                                    aria-label={t('table.decrease_quantity')}
                                     onClick={async (e) => {
                                       e.stopPropagation();
                                       if (qty > 1) {
@@ -501,7 +501,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                                     variant="ghost"
                                     size="icon"
                                     className="size-7 text-emerald-600 hover:bg-emerald-50"
-                                    aria-label={t('table.increase_quantity', { defaultValue: 'Augmenter la quantité' })}
+                                    aria-label={t('table.increase_quantity')}
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       onUpdateProductQuantity(previewFacture.id, p.produit as number, qty + 1);
@@ -523,7 +523,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                                 variant="ghost"
                                 size="icon"
                                 className="size-7 text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity"
-                                aria-label={t('common:delete', { defaultValue: 'Supprimer' })}
+                                aria-label={t('common:delete')}
                                 onClick={async (e) => {
                                   e.stopPropagation();
                                   if (await confirm({

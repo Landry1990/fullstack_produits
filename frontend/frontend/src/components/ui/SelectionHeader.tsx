@@ -40,7 +40,7 @@ const SelectionHeader: React.FC<SelectionHeaderProps> = ({
               <DropdownMenuTrigger asChild>
                 <Button variant="default" size="sm" className="gap-2">
                   <MoreVertical className="size-4" />
-                  {t('common:actions_title', { defaultValue: 'Actions' })}
+                  {t('common:actions_title')}
                   <Badge variant="primary" size="sm">{selectedCount}</Badge>
                 </Button>
               </DropdownMenuTrigger>
@@ -54,7 +54,7 @@ const SelectionHeader: React.FC<SelectionHeaderProps> = ({
               className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
             >
               <X className="size-4" />
-              {t('common:actions.cancel', { defaultValue: 'Annuler' })}
+              {t('common:actions.cancel')}
             </Button>
           </div>
         ) : (

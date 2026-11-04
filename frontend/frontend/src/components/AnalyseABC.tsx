@@ -263,7 +263,7 @@ export default function AnalyseABC() {
       t('stock:abc.table.ca'),
       t('stock:abc.table.ca_percent'),
       t('stock:abc.table.margin'),
-      t('stock:abc.table.category', { defaultValue: 'Catégorie' })
+      t('stock:abc.table.category')
     ]
 
     // Lignes de données — toutes les classes A, B et C d'un coup

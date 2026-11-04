@@ -30,7 +30,7 @@ export function PharmacyContactBlock({ settings, t }: { settings: PharmacyContac
         )}
         {settings.email && (
           <div className="flex items-center gap-1">
-            <span>{t('invoice.email', { defaultValue: 'Email' })} : {settings.email}</span>
+            <span>{t('invoice.email')} : {settings.email}</span>
           </div>
         )}
         <div className="flex items-center gap-1 uppercase">

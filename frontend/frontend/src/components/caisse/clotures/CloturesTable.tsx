@@ -29,7 +29,7 @@ export default function CloturesTable({ state }: Props) {
         {/* Header + Toggle */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-slate-50 shrink-0">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-            {viewMode === 'list' ? t('table.list_title', { defaultValue: 'Clôtures détaillées' }) : t('table.daily_title', { defaultValue: 'Récapitulatif journalier' })}
+            {viewMode === 'list' ? t('table.list_title') : t('table.daily_title')}
           </h3>
           <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
             <Button
@@ -39,7 +39,7 @@ export default function CloturesTable({ state }: Props) {
               className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all", viewMode === 'list' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700')}
             >
               <List className="size-3.5" />
-              {t('view_mode.list', { defaultValue: 'Liste' })}
+              {t('view_mode.list')}
             </Button>
             <Button
               variant="ghost"
@@ -48,7 +48,7 @@ export default function CloturesTable({ state }: Props) {
               className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all", viewMode === 'daily' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700')}
             >
               <CalendarDays className="size-3.5" />
-              {t('view_mode.daily', { defaultValue: 'Par jour' })}
+              {t('view_mode.daily')}
             </Button>
           </div>
         </div>
@@ -171,14 +171,14 @@ export default function CloturesTable({ state }: Props) {
             <table className="min-w-full table-fixed divide-y divide-slate-200">
               <thead className="bg-slate-100 sticky top-0 z-10 opacity-100">
                 <tr>
-                  <th className="py-2 px-3 text-caption lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('daily.header_date', { defaultValue: 'Date' })}</th>
-                  <th className="text-center py-2 px-3 text-caption lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('daily.header_count', { defaultValue: 'Clôtures' })}</th>
-                  <th className="text-right py-2 px-3 text-caption lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('daily.header_theoretical', { defaultValue: 'Théorique' })}</th>
-                  <th className="text-right py-2 px-3 text-caption lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('daily.header_real', { defaultValue: 'Réel' })}</th>
-                  <th className="text-right py-2 px-3 text-caption lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('daily.header_gap', { defaultValue: 'Écart' })}</th>
-                  <th className="text-right py-2 px-3 text-caption lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('daily.header_sales', { defaultValue: 'Ventes' })}</th>
-                  <th className="text-right py-2 px-3 text-caption lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('daily.header_entries', { defaultValue: 'Entrées' })}</th>
-                  <th className="text-right py-2 px-3 text-caption lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('daily.header_exits', { defaultValue: 'Sorties' })}</th>
+                  <th className="py-2 px-3 text-caption lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('daily.header_date')}</th>
+                  <th className="text-center py-2 px-3 text-caption lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('daily.header_count')}</th>
+                  <th className="text-right py-2 px-3 text-caption lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('daily.header_theoretical')}</th>
+                  <th className="text-right py-2 px-3 text-caption lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('daily.header_real')}</th>
+                  <th className="text-right py-2 px-3 text-caption lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('daily.header_gap')}</th>
+                  <th className="text-right py-2 px-3 text-caption lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('daily.header_sales')}</th>
+                  <th className="text-right py-2 px-3 text-caption lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('daily.header_entries')}</th>
+                  <th className="text-right py-2 px-3 text-caption lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('daily.header_exits')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 bg-white">
@@ -193,7 +193,7 @@ export default function CloturesTable({ state }: Props) {
                     <td colSpan={8} className="h-64 text-center text-slate-500">
                       <div className="flex flex-col items-center justify-center gap-3">
                         <Banknote className="size-12 text-slate-300" />
-                        <p className="text-lg">{t('daily.no_data', { defaultValue: 'Aucune donnée journalière' })}</p>
+                        <p className="text-lg">{t('daily.no_data')}</p>
                       </div>
                     </td>
                   </tr>
@@ -226,7 +226,7 @@ export default function CloturesTable({ state }: Props) {
                 <tfoot className="bg-slate-50 border-t-2 border-slate-200">
                   <tr className="text-slate-700 font-bold">
                     <td className="py-2 px-3 whitespace-nowrap">
-                      <span className="uppercase text-caption tracking-tight">{t('daily.footer_total', { defaultValue: 'Totaux' })}</span>
+                      <span className="uppercase text-caption tracking-tight">{t('daily.footer_total')}</span>
                     </td>
                     <td className="text-center py-2 px-3">{dailyData.reduce((s, d) => s + d.count, 0)}</td>
                     <td className="text-right py-2 px-3 text-slate-700 font-bold">{formatMoney(dailyData.reduce((s, d) => s + d.montant_theorique, 0))}</td>

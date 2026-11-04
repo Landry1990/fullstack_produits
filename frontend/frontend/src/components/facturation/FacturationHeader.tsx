@@ -40,7 +40,7 @@ export default function FacturationHeader({ hook, setShowOpenPosteModal }: Factu
                   ? 'bg-emerald-600 text-white hover:bg-emerald-700'
                   : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
               )}
-              aria-label={hook.isZenithMode ? hook.t('facturation:zenith_mode_on', { defaultValue: 'Désactiver le mode Zenith' }) : hook.t('facturation:zenith_mode_off', { defaultValue: 'Activer le mode Zenith' })}
+              aria-label={hook.isZenithMode ? hook.t('facturation:zenith_mode_on') : hook.t('facturation:zenith_mode_off')}
             >
               {hook.isZenithMode ? <EyeOff size={16} /> : <Eye size={16} />}
             </Button>
@@ -54,7 +54,7 @@ export default function FacturationHeader({ hook, setShowOpenPosteModal }: Factu
                   ? 'bg-slate-800 text-amber-400 hover:bg-slate-900'
                   : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
               )}
-              aria-label={hook.isMidnightTheme ? hook.t('facturation:theme_light', { defaultValue: 'Passer en thème clair' }) : hook.t('facturation:theme_dark', { defaultValue: 'Passer en thème sombre' })}
+              aria-label={hook.isMidnightTheme ? hook.t('facturation:theme_light') : hook.t('facturation:theme_dark')}
             >
               {hook.isMidnightTheme ? <Sun size={16} /> : <Moon size={16} />}
             </Button>
@@ -123,8 +123,8 @@ export default function FacturationHeader({ hook, setShowOpenPosteModal }: Factu
           <div className="flex items-center gap-2 text-sm text-amber-800 min-w-0">
             <Monitor className="size-4" />
             <span>{hook.hasMyActivePoste
-              ? tCaisse('open_point_vente.banner.active_message', { defaultValue: 'Vous avez un point de vente ouvert sur une autre session. Cliquez pour le réactiver.' })
-              : tCaisse('open_point_vente.banner.required_message', { defaultValue: 'Aucun point de vente ouvert. Ouvrez un point pour verrouiller ce poste sur la facturation.' })}</span>
+              ? tCaisse('open_point_vente.banner.active_message')
+              : tCaisse('open_point_vente.banner.required_message')}</span>
           </div>
           <Button
             type="button"
@@ -132,7 +132,7 @@ export default function FacturationHeader({ hook, setShowOpenPosteModal }: Factu
             onClick={() => setShowOpenPosteModal(true)}
             className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg"
           >
-            {hook.hasMyActivePoste ? tCaisse('open_point_vente.banner.activate', { defaultValue: 'Réactiver' }) : tCaisse('open_point_vente.banner.open', { defaultValue: 'Ouvrir un point de vente' })}
+            {hook.hasMyActivePoste ? tCaisse('open_point_vente.banner.activate') : tCaisse('open_point_vente.banner.open')}
           </Button>
         </div>
       )}

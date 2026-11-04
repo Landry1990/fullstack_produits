@@ -38,7 +38,7 @@ const MEDAL_CONFIG: Record<number, { className: string; rowClassName: string; ic
 
 const ChallengeClassement: React.FC<Props> = ({ challengeId }) => {
     const { t } = useTranslation(['challenges', 'common']);
-    const locale = t('common:locale', { defaultValue: 'fr-FR' });
+    const locale = t('common:locale');
     const { data, isLoading, isError } = useChallengeClassement(challengeId);
 
     const formatCurrency = (value: number) => {
@@ -59,7 +59,7 @@ const ChallengeClassement: React.FC<Props> = ({ challengeId }) => {
         return (
             <div className="flex flex-col items-center justify-center py-12 gap-3">
                 <Loader2 className="size-8 animate-spin text-emerald-600" />
-                <span className="text-sm text-slate-500">{t('challenges:loading')}</span>
+                <span className="text-sm text-slate-500">{t('common:loading')}</span>
             </div>
         );
     }

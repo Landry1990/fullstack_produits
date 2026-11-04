@@ -9,16 +9,16 @@ export function validateSaleData(params: SaleCompletionParams): string | null {
     const { selectedClient, lignesFacture, totals, montantPaye, paiements, validated_by_id, sudo_password } = params;
 
     if (!selectedClient && !params.useManualClient) {
-        return i18n.t('facturation:messages.select_client', { defaultValue: 'Veuillez sélectionner un client' });
+        return i18n.t('facturation:messages.select_client');
     }
 
     if (lignesFacture.length === 0) {
-        return i18n.t('facturation:messages.add_product', { defaultValue: 'Veuillez ajouter au moins un produit' });
+        return i18n.t('facturation:messages.add_product');
     }
 
     // Validation Sudo
     if (validated_by_id && !sudo_password) {
-        return i18n.t('facturation:validation.sudo_password_required', { defaultValue: 'Mot de passe requis pour la validation par un tiers' });
+        return i18n.t('facturation:validation.sudo_password_required');
     }
 
     // Validation du montant
@@ -31,11 +31,11 @@ export function validateSaleData(params: SaleCompletionParams): string | null {
 
         // NaN ou montant négatif : invalide — sinon le contrôle "montant insuffisant" est contourné
         if (!Number.isFinite(montantSaisi) || !Number.isFinite(totalSplit) || montantSaisi < 0) {
-            return i18n.t('facturation:validation.invalid_amount', { defaultValue: 'Veuillez entrer un montant valide' });
+            return i18n.t('facturation:validation.invalid_amount');
         }
 
         if (paiements.length === 0 && (!montantPaye || montantSaisi === 0)) {
-            return i18n.t('facturation:validation.invalid_amount', { defaultValue: 'Veuillez entrer un montant valide' });
+            return i18n.t('facturation:validation.invalid_amount');
         }
 
         // Si paiement partagé, vérifier le total
@@ -46,8 +46,7 @@ export function validateSaleData(params: SaleCompletionParams): string | null {
             if (!Number.isFinite(totalSaisi) || totalSaisi < montantAttendu - 1) {
                 return i18n.t('facturation:validation.insufficient_amount', {
                     total: totalSaisi,
-                    expected: montantAttendu,
-                    defaultValue: `Le montant total (${totalSaisi} F) est insuffisant pour régler la facture (${montantAttendu} F)`
+                    expected: montantAttendu
                 });
             }
         }
@@ -71,11 +70,11 @@ export function validateClientCreditLimit(params: SaleCompletionParams, client: 
     // 1. Validation ayant droit (UNIQUEMENT pour les professionnels)
     if (client.client_type === 'PROFESSIONNEL') {
         if (!useManualClient && (showNewAyantDroit || ayantsDroitList.length === 0) && (!ayantDroitNom || !ayantDroitMatricule)) {
-            return i18n.t('facturation:validation.pro_client_beneficiary_info', { defaultValue: "Pour un client professionnel, veuillez renseigner le nom et le matricule de l'ayant droit" });
+            return i18n.t('facturation:validation.pro_client_beneficiary_info');
         }
         
         if (useManualClient && !selectedAyantDroit) {
-            return i18n.t('facturation:validation.pro_client_beneficiary_select', { defaultValue: 'Pour un client professionnel, veuillez sélectionner un ayant droit ou en créer un nouveau' });
+            return i18n.t('facturation:validation.pro_client_beneficiary_select');
         }
     }
 
@@ -97,12 +96,12 @@ export function validateClientCreditLimit(params: SaleCompletionParams, client: 
         const theoreticalTotalDebt = currentDebt + debtIncrement;
 
         if (theoreticalTotalDebt > plafond + 0.5) { // Tolérance pour les arrondis
-            return `${i18n.t('facturation:validation.credit_limit_exceeded_title', { defaultValue: '⚠️ PLAFOND DE CRÉDIT DÉPASSÉ !' })}\n` +
-                   `${i18n.t('facturation:validation.current_debt', { amount: formatNumber(Math.round(currentDebt)), defaultValue: 'Dette actuelle : {{amount}} F' })}\n` +
-                   `${i18n.t('facturation:validation.new_debt_estimate', { amount: formatNumber(Math.round(debtIncrement)), defaultValue: 'Nouvelle dette (Estimation) : {{amount}} F' })}\n` +
-                   `${i18n.t('facturation:validation.theoretical_total', { amount: formatNumber(Math.round(theoreticalTotalDebt)), defaultValue: 'Total théorique : {{amount}} F' })}\n` +
-                   `${i18n.t('facturation:validation.authorized_limit', { amount: formatNumber(Math.round(plafond)), defaultValue: 'Limite autorisée (Plafond) : {{amount}} F' })}\n\n` +
-                   i18n.t('facturation:validation.credit_limit_exceeded_body', { defaultValue: 'La vente ne peut pas être finalisée car ce client a atteint sa limite de crédit.' });
+            return `${i18n.t('facturation:validation.credit_limit_exceeded_title')}\n` +
+                   `${i18n.t('facturation:validation.current_debt', { amount: formatNumber(Math.round(currentDebt)) })}\n` +
+                   `${i18n.t('facturation:validation.new_debt_estimate', { amount: formatNumber(Math.round(debtIncrement)) })}\n` +
+                   `${i18n.t('facturation:validation.theoretical_total', { amount: formatNumber(Math.round(theoreticalTotalDebt)) })}\n` +
+                   `${i18n.t('facturation:validation.authorized_limit', { amount: formatNumber(Math.round(plafond)) })}\n\n` +
+                   i18n.t('facturation:validation.credit_limit_exceeded_body');
         }
     }
 

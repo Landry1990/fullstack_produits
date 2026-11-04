@@ -12,6 +12,7 @@ function commandsToBase64(commands: string): string {
 }
 
 const STORAGE_PRINTER_KEY = 'qz_printer_name';
+export const STORAGE_LABEL_PRINTER_KEY = 'qz_label_printer_name';
 const STORAGE_DRAWER_KEY = 'qz_open_drawer';
 
 type QzApi = import('qz-tray').default;
@@ -152,6 +153,26 @@ export function setPrinterName(name: string): void {
   }
 }
 
+export function getSavedLabelPrinterName(): string | null {
+  try {
+    return localStorage.getItem(STORAGE_LABEL_PRINTER_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function setLabelPrinterName(name: string): void {
+  try {
+    if (name) {
+      localStorage.setItem(STORAGE_LABEL_PRINTER_KEY, name);
+    } else {
+      localStorage.removeItem(STORAGE_LABEL_PRINTER_KEY);
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
 export function shouldOpenDrawer(): boolean {
   try {
     return localStorage.getItem(STORAGE_DRAWER_KEY) === 'true';
@@ -205,8 +226,8 @@ async function resolvePrinterName(): Promise<string | null> {
  * parallèle (protège la connexion WebSocket et l'imprimante).
  * Retourne `true` si le job a été envoyé, `false` si la connexion/ impression a échoué.
  */
-export async function printEscpos(commands: string | string[]): Promise<boolean> {
-  const task = printQueue.then(() => printEscposInternal(commands));
+export async function printEscpos(commands: string | string[], printerNameOverride?: string): Promise<boolean> {
+  const task = printQueue.then(() => printEscposInternal(commands, printerNameOverride));
   printQueue = task.then(
     () => undefined,
     () => undefined
@@ -214,11 +235,28 @@ export async function printEscpos(commands: string | string[]): Promise<boolean>
   return task;
 }
 
-async function printEscposInternal(commands: string | string[]): Promise<boolean> {
+async function printEscposInternal(commands: string | string[], printerNameOverride?: string): Promise<boolean> {
   const qz = await loadQz();
   await ensureConnected();
 
-  const printer = await resolvePrinterName();
+  let printer: string | null;
+  if (printerNameOverride !== undefined) {
+    // Une imprimante dédiée ne doit jamais retomber sur celle des tickets.
+    try {
+      if (!printerNameOverride) return false;
+      const found = await qz.printers.find(printerNameOverride);
+      printer = Array.isArray(found) ? found[0] || null : found;
+      if (!printer) {
+        logger.warn(`Imprimante QZ Tray dédiée introuvable (${printerNameOverride}).`);
+        return false;
+      }
+    } catch (err) {
+      logger.warn(`Imprimante QZ Tray dédiée introuvable (${printerNameOverride}).`, err);
+      return false;
+    }
+  } else {
+    printer = await resolvePrinterName();
+  }
   if (!printer) {
     logger.warn('Impression ESC/POS annulée : aucune imprimante QZ Tray disponible.');
     return false;

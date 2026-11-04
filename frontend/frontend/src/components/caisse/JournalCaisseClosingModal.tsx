@@ -277,7 +277,7 @@ export default function JournalCaisseClosingModal({ state }: Props) {
                       }}
                       tabIndex={0}
                       role="button"
-                      aria-label={t('caisse:journal.closing.breakdown_open', { defaultValue: 'Ouvrir le billetage' })}
+                      aria-label={t('caisse:journal.closing.breakdown_open')}
                     >
                       <div
                         id="closing-real-amount"
@@ -286,7 +286,7 @@ export default function JournalCaisseClosingModal({ state }: Props) {
                       >
                         {actualAmount ? actualAmount : (
                           <span className="text-sm font-semibold text-slate-400">
-                            {t('caisse:journal.closing.breakdown_placeholder', { defaultValue: 'Touchez pour billetter' })}
+                            {t('caisse:journal.closing.breakdown_placeholder')}
                           </span>
                         )}
                       </div>
@@ -298,7 +298,7 @@ export default function JournalCaisseClosingModal({ state }: Props) {
                         id="closing-real-amount"
                         type="number"
                         min={0}
-                        placeholder={t('caisse:journal.closing.real_amount_placeholder', { defaultValue: 'Saisissez le montant réel' })}
+                        placeholder={t('caisse:journal.closing.real_amount_placeholder')}
                         className="w-full h-12 px-4 rounded-lg bg-slate-100 border border-slate-200 font-black text-2xl text-center text-slate-700 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all"
                         value={actualAmount}
                         onChange={(e) => { setActualAmount(e.target.value); setBreakdown(null); setBilletage(null); }}
@@ -311,15 +311,15 @@ export default function JournalCaisseClosingModal({ state }: Props) {
                     variant="outline"
                     className="h-12 px-3 border-emerald-300 text-emerald-700 hover:bg-emerald-50 shrink-0"
                     onClick={() => setIsBreakdownOpen(true)}
-                    title={t('caisse:journal.closing.breakdown_open', { defaultValue: 'Ouvrir le billetage' })}
-                    aria-label={t('caisse:journal.closing.breakdown_open', { defaultValue: 'Ouvrir le billetage' })}
+                    title={t('caisse:journal.closing.breakdown_open')}
+                    aria-label={t('caisse:journal.closing.breakdown_open')}
                   >
                     <Banknote className="size-5" />
                   </Button>
                 </div>
                 {!billetageObligatoire && (
                   <p className="mt-1 text-caption text-slate-400 font-bold">
-                    {t('caisse:journal.closing.breakdown_optional_hint', { defaultValue: 'Billetage optionnel — cliquez l\'icône pour détailler vos coupures' })}
+                    {t('caisse:journal.closing.breakdown_optional_hint')}
                   </p>
                 )}
                 {computed && computed.gap !== null && (

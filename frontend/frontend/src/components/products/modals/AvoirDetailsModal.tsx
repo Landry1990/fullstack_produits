@@ -65,10 +65,10 @@ export const AvoirDetailsModal: React.FC<AvoirDetailsModalProps> = ({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
         <DialogHeader className="p-6 pb-0">
           <DialogTitle>
-            {t('stock:avoirs.details.title', { numero: avoir?.numero || '—', defaultValue: `Avoir N° ${avoir?.numero || '—'}` })}
+            {t('stock:avoirs.details.title', { numero: avoir?.numero || '—' })}
           </DialogTitle>
           <DialogDescription>
-            {t('stock:avoirs.details.subtitle', { defaultValue: 'Détails du retour fournisseur' })}
+            {t('stock:avoirs.details.subtitle')}
           </DialogDescription>
         </DialogHeader>
 
@@ -84,7 +84,7 @@ export const AvoirDetailsModal: React.FC<AvoirDetailsModalProps> = ({
           {!loading && !avoir && (
             <EmptyState
               compact
-              title={t('stock:avoirs.details.not_found', { defaultValue: 'Avoir introuvable' })}
+              title={t('stock:avoirs.details.not_found')}
             />
           )}
 
@@ -95,7 +95,7 @@ export const AvoirDetailsModal: React.FC<AvoirDetailsModalProps> = ({
                   <div className="flex items-center gap-3">
                     <FileText className="size-5 text-emerald-600" />
                     <div>
-                      <p className="text-xs text-slate-500">{t('stock:avoirs.details.numero_label', { defaultValue: 'N° Avoir' })}</p>
+                      <p className="text-xs text-slate-500">{t('stock:avoirs.details.numero_label')}</p>
                       <p className="font-bold text-slate-900 font-mono">{avoir.numero}</p>
                     </div>
                   </div>
@@ -105,7 +105,7 @@ export const AvoirDetailsModal: React.FC<AvoirDetailsModalProps> = ({
                   <div className="flex items-center gap-3">
                     <Calendar className="size-5 text-emerald-600" />
                     <div>
-                      <p className="text-xs text-slate-500">{t('stock:avoirs.details.date_label', { defaultValue: 'Date' })}</p>
+                      <p className="text-xs text-slate-500">{t('stock:avoirs.details.date_label')}</p>
                       <p className="font-bold text-slate-900">{formatAvoirDate(avoir.date, i18n.language)}</p>
                     </div>
                   </div>
@@ -115,7 +115,7 @@ export const AvoirDetailsModal: React.FC<AvoirDetailsModalProps> = ({
                   <div className="flex items-center gap-3">
                     <Building2 className="size-5 text-emerald-600" />
                     <div>
-                      <p className="text-xs text-slate-500">{t('stock:avoirs.details.fournisseur_label', { defaultValue: 'Fournisseur' })}</p>
+                      <p className="text-xs text-slate-500">{t('stock:avoirs.details.fournisseur_label')}</p>
                       <p className="font-bold text-slate-900">{avoir.fournisseur_name || '—'}</p>
                     </div>
                   </div>
@@ -135,7 +135,7 @@ export const AvoirDetailsModal: React.FC<AvoirDetailsModalProps> = ({
                   <div className="flex items-center gap-3">
                     <User className="size-5 text-emerald-600" />
                     <div>
-                      <p className="text-xs text-slate-500">{t('stock:avoirs.details.status_label', { defaultValue: 'Statut' })}</p>
+                      <p className="text-xs text-slate-500">{t('stock:avoirs.details.status_label')}</p>
                       <p className="font-bold text-slate-900">{avoir.status_display || avoir.status || '—'}</p>
                     </div>
                   </div>
@@ -145,7 +145,7 @@ export const AvoirDetailsModal: React.FC<AvoirDetailsModalProps> = ({
                   <div className="flex items-center gap-3">
                     <FileText className="size-5 text-emerald-600" />
                     <div>
-                      <p className="text-xs text-slate-500">{t('stock:avoirs.details.total_label', { defaultValue: 'Total HT' })}</p>
+                      <p className="text-xs text-slate-500">{t('stock:avoirs.details.total_label')}</p>
                       <p className="font-bold text-slate-900">{formatCurrency(Number(avoir.total_ht || 0))}</p>
                     </div>
                   </div>
@@ -155,7 +155,7 @@ export const AvoirDetailsModal: React.FC<AvoirDetailsModalProps> = ({
               {avoir.observations && (
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-sm">{t('stock:avoirs.details.observations_label', { defaultValue: 'Observations' })}</CardTitle>
+                    <CardTitle className="text-sm">{t('stock:avoirs.details.observations_label')}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-slate-700 whitespace-pre-wrap">{avoir.observations}</p>
@@ -173,12 +173,12 @@ export const AvoirDetailsModal: React.FC<AvoirDetailsModalProps> = ({
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>{t('stock:avoirs.details.product', { defaultValue: 'Produit' })}</TableHead>
-                        <TableHead>{t('stock:avoirs.details.lot', { defaultValue: 'Lot' })}</TableHead>
-                        <TableHead>{t('stock:avoirs.details.motif', { defaultValue: 'Motif' })}</TableHead>
-                        <TableHead className="text-right">{t('stock:avoirs.details.qty', { defaultValue: 'Qté' })}</TableHead>
-                        <TableHead className="text-right">{t('stock:avoirs.details.price', { defaultValue: 'Prix' })}</TableHead>
-                        <TableHead className="text-right">{t('stock:avoirs.details.total', { defaultValue: 'Total' })}</TableHead>
+                        <TableHead>{t('stock:avoirs.details.product')}</TableHead>
+                        <TableHead>{t('stock:avoirs.details.lot')}</TableHead>
+                        <TableHead>{t('stock:avoirs.details.motif')}</TableHead>
+                        <TableHead className="text-right">{t('stock:avoirs.details.qty')}</TableHead>
+                        <TableHead className="text-right">{t('stock:avoirs.details.price')}</TableHead>
+                        <TableHead className="text-right">{t('stock:avoirs.details.total')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -210,7 +210,7 @@ export const AvoirDetailsModal: React.FC<AvoirDetailsModalProps> = ({
 
               <div className="flex justify-end">
                 <Button type="button" onClick={onClose}>
-                  {t('common:actions.close', { defaultValue: 'Fermer' })}
+                  {t('common:actions.close')}
                 </Button>
               </div>
             </>

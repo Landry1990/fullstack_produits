@@ -693,7 +693,7 @@ export default function CategoryManager({
                          <DropdownMenuTrigger asChild>
                            <button
                              className={`inline-flex items-center justify-center size-7 rounded-md transition-colors cursor-pointer ${selectedCategory?.id === cat.id ? 'text-white/70 hover:bg-white/20' : 'text-slate-400 hover:bg-slate-200'}`}
-                             aria-label={t('common:buttons.actions', { defaultValue: 'Actions' })}
+                             aria-label={t('common:buttons.actions')}
                            >
                              <MoreHorizontal size={14} />
                            </button>
@@ -766,7 +766,7 @@ export default function CategoryManager({
                                <DropdownMenuTrigger asChild>
                                  <button
                                    className="inline-flex items-center justify-center size-6 rounded-md text-slate-400 hover:bg-slate-200 transition-colors cursor-pointer"
-                                   aria-label={t('common:buttons.actions', { defaultValue: 'Actions' })}
+                                   aria-label={t('common:buttons.actions')}
                                  >
                                    <MoreHorizontal size={12} />
                                  </button>

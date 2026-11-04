@@ -199,14 +199,14 @@ export function GeneralTab({ formData, handleChange, t, logo, logoInputRef, hand
               </div>
               <div className="flex flex-col gap-1">
                 <label>
-                  <span className="text-sm font-bold text-slate-500">{t('labels.phone2', { defaultValue: 'Téléphone 2' })}</span>
+                  <span className="text-sm font-bold text-slate-500">{t('labels.phone2')}</span>
                 </label>
                 <Input
                   type="tel"
                   value={formData.phone2 || ''}
                   onChange={(e) => handleChange('phone2', e.target.value)}
                   className="w-full rounded-xl border border-slate-300 bg-white h-12 px-4 text-sm font-bold focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 transition-all"
-                  placeholder={t('placeholders.phone2', { defaultValue: 'Numéro secondaire' })}
+                  placeholder={t('placeholders.phone2')}
                 />
               </div>
               <div className="flex flex-col gap-1">
@@ -270,7 +270,7 @@ export function GeneralTab({ formData, handleChange, t, logo, logoInputRef, hand
               />
               <div className="flex-1">
                 <span className="text-sm font-bold text-slate-800 block">
-                  {t('labels.billetage_obligatoire', { defaultValue: 'Billetage obligatoire à la clôture' })}
+                  {t('labels.billetage_obligatoire')}
                 </span>
                 <span className="text-xs text-slate-400 block mt-0.5">
                   {t('hints.billetage_obligatoire', { defaultValue: 'Force la caissière à compter ses coupures (billets, pièces, mobile money) via un assistant à la clôture de caisse' })}

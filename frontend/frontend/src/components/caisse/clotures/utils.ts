@@ -108,7 +108,7 @@ export async function exportCloturesExcel({ viewMode, clotures, dailyData, t }: 
     XLSX.writeFile(wb, filename)
   } catch (err) {
     logger.error('Erreur export Excel:', err)
-    gooeyToast.error(t('table.export_error', { defaultValue: 'Erreur lors de l\'export Excel' }))
+    gooeyToast.error(t('table.export_error'))
   }
 }
 

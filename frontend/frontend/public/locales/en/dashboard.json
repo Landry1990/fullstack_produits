@@ -218,7 +218,10 @@
         "na": "N/A",
         "units_suffix": "{{count}}u",
         "open_product": "Open the {{name}} product sheet",
-        "open_promis": "View promised product {{name}}"
+        "open_promis": "View promised product {{name}}",
+        "expiry_days_only": "{{days}}d",
+        "expiry_months_only": "{{months}}mo",
+        "expiry_duration": "{{months}}mo {{days}}d"
     },
     "vendeur": {
         "loading": "Loading…",

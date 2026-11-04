@@ -280,7 +280,7 @@ function FacturePreview({ data, t }: { data?: Facture; t: TFunction }) {
               ))}
               {produitsDetails.length > 5 && (
                 <div className="px-4 py-2 text-center text-caption text-slate-500 font-medium italic">
-                  {t('omnisearch.preview.more_items', { count: produitsDetails.length - 5, defaultValue: '...et {{count}} article(s) supplémentaire(s)' })}
+                  {t('omnisearch.preview.more_items', { count: produitsDetails.length - 5 })}
                 </div>
               )}
             </div>

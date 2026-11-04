@@ -123,7 +123,7 @@ export default function ReapproHistory() {
       <motion.div variants={fadeInUp} className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
           <Link to="/app/reappro-rayon">
-            <Button variant="outline" size="sm" className="rounded-full w-10 h-10 p-0" aria-label={t('common:back', { defaultValue: 'Retour' })}>
+            <Button variant="outline" size="sm" className="rounded-full w-10 h-10 p-0" aria-label={t('common:back')}>
               <ChevronLeft className="size-5" />
             </Button>
           </Link>

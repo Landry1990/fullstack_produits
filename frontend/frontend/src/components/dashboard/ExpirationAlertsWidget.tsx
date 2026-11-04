@@ -51,7 +51,7 @@ export default function ExpirationAlertsWidget({ className = '' }: ExpirationAle
     enabled: true,
   });
 
-  const currentLocale = t('common:locale', { defaultValue: 'fr-FR' });
+  const currentLocale = t('common:locale');
   const currencySymbol = t('common:currency_symbol', { defaultValue: 'F' });
   const formatCurrencyLocal = (val: number) => formatCurrency(val, currentLocale, currencySymbol);
 
@@ -60,7 +60,7 @@ export default function ExpirationAlertsWidget({ className = '' }: ExpirationAle
       <div className={`bg-base-100 rounded-2xl shadow-sm border border-base-200 p-4 ${className}`}>
         <div className="flex items-center gap-2 mb-3">
           <Package className="size-5 text-base-content/50" />
-          <span className="text-sm font-semibold text-base-content/70">{t('expiration.widget_title', { defaultValue: 'Alertes Péremption' })}</span>
+          <span className="text-sm font-semibold text-base-content/70">{t('expiration.widget_title')}</span>
         </div>
         <div className="space-y-2">
           <Skeleton className="h-12 rounded-lg" />
@@ -75,7 +75,7 @@ export default function ExpirationAlertsWidget({ className = '' }: ExpirationAle
       <div className={`bg-error/10 rounded-2xl shadow-sm border border-red-100 p-4 ${className}`}>
         <div className="flex items-center gap-2 text-error">
           <AlertTriangle className="size-5" />
-          <span className="text-sm font-medium">{t('expiration.error_loading', { defaultValue: 'Erreur chargement alertes' })}</span>
+          <span className="text-sm font-medium">{t('expiration.error_loading')}</span>
         </div>
       </div>
     );
@@ -95,7 +95,7 @@ export default function ExpirationAlertsWidget({ className = '' }: ExpirationAle
           <div className="flex items-center gap-2">
             <Package className="size-5 text-emerald-500" />
             <span className="text-sm font-semibold text-success">
-              {t('expiration.no_alerts', { defaultValue: 'Aucune alerte péremption' })}
+              {t('expiration.no_alerts')}
             </span>
           </div>
           <div className="flex gap-1">
@@ -117,7 +117,7 @@ export default function ExpirationAlertsWidget({ className = '' }: ExpirationAle
           </div>
         </div>
         <p className="text-xs text-success mt-2">
-          {t('expiration.all_good', { days: daysFilter, defaultValue: `Aucun produit n'expire dans les ${daysFilter} prochains jours` })}
+          {t('expiration.all_good', { days: daysFilter })}
         </p>
       </div>
     );
@@ -134,7 +134,7 @@ export default function ExpirationAlertsWidget({ className = '' }: ExpirationAle
             </div>
             <div>
               <h3 className="text-sm font-bold text-base-content">
-                {t('expiration.widget_title', { defaultValue: 'Alertes Péremption' })}
+                {t('expiration.widget_title')}
               </h3>
               <p className="text-xs text-base-content/60">
                 {t('expiration.total_value', { count: stats.total_alerts, value: formatCurrencyLocal(stats.total_valeur) })}
@@ -277,12 +277,12 @@ export default function ExpirationAlertsWidget({ className = '' }: ExpirationAle
           {expanded ? (
             <>
               <ChevronUp className="size-4" />
-              {t('common:actions.show_less', { defaultValue: 'Voir moins' })}
+              {t('common:actions.show_less')}
             </>
           ) : (
             <>
               <ChevronDown className="size-4" />
-              {t('common:actions.show_more', { defaultValue: `Voir ${alerts.length - 3} de plus` })}
+              {t('common:actions.show_more', { count: alerts.length - 3 })}
             </>
           )}
         </button>
@@ -295,7 +295,7 @@ export default function ExpirationAlertsWidget({ className = '' }: ExpirationAle
           className="flex items-center justify-center gap-2 w-full py-2 px-4 bg-base-100 border border-base-300 rounded-xl text-sm font-medium text-base-content hover:bg-base-200 hover:border-base-300 transition-all"
         >
           <Clock className="size-4" />
-          {t('expiration.manage_perimes', { defaultValue: 'Gérer les produits périmés' })}
+          {t('expiration.manage_perimes')}
         </Link>
       </div>
     </div>

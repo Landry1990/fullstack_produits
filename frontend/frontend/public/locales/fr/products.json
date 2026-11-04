@@ -597,5 +597,8 @@
         "different_substances_error": "Les deux substances doivent être différentes.",
         "update": "Mettre à jour",
         "create": "Créer"
+    },
+    "us": {
+        "deleted": "Supprimé"
     }
 }

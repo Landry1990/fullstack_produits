@@ -7,6 +7,9 @@ import type { Facture, TicketCaisse, CouponMonnaie, PaymentDetails } from '../ty
 import { getApiErrorDetail } from '../utils/errorHandling'
 import { logger } from '../utils/logger'
 import { generateUUID } from '../utils/uuid'
+import { usePharmacySettings } from './usePharmacySettings'
+import { useInvoiceSettings } from './useInvoiceSettings'
+import { printTicketSmart } from '../utils/print/printTicketSmart'
 
 interface PaymentState {
   selectedFacture: Facture | null
@@ -121,6 +124,8 @@ export const useCaissePayment = ({
 }: PaymentState) => {
   const { t } = useTranslation('caisse')
   const queryClient = useQueryClient()
+  const { settings: pharmacySettings } = usePharmacySettings()
+  const { settings: invoiceSettings } = useInvoiceSettings()
   const [loading, setLoading] = useState(false)
   // Verrou synchrone : un double Enter/clic avant le re-render ne doit pas
   // enregistrer le paiement deux fois.
@@ -190,9 +195,19 @@ export const useCaissePayment = ({
       const ticketData = createTicketData(factureFinale, paiementsValides, montantTotal, montantAEncaisser, user, t('table.passerby_client'))
       setTicketCaisse(ticketData)
 
-      // 8. Fermer modale et afficher ticket
+      // 8. Fermer modale ; impression auto silencieuse ou aperçu ticket
       setIsPaymentModalOpen(false)
-      setShowTicketPreview(true)
+      if (invoiceSettings?.auto_print_ticket && pharmacySettings) {
+        try {
+          // ESC/POS réussi → aucune modale ; sinon le fallback ouvre l'aperçu
+          const mode = await printTicketSmart(ticketData, pharmacySettings, () => setShowTicketPreview(true))
+          if (mode === 'escpos') gooeyToast.success(t('ticket.printed'))
+        } catch {
+          setShowTicketPreview(true)
+        }
+      } else {
+        setShowTicketPreview(true)
+      }
 
       // 9. Rafraîchir les données
       await fetchFacturesEnAttente()

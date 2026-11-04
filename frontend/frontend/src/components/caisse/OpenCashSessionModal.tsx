@@ -55,7 +55,7 @@ export const OpenCashSessionModal: React.FC<OpenCashSessionModalProps> = ({
         handleOpenSession(available[0].id)
       }
     } catch {
-      gooeyToast.error(t('messages.error_loading_caisses', { defaultValue: 'Erreur chargement postes de caisse' }))
+      gooeyToast.error(t('messages.error_loading_caisses'))
     } finally {
       setLoadingCaisses(false)
     }
@@ -76,7 +76,7 @@ export const OpenCashSessionModal: React.FC<OpenCashSessionModalProps> = ({
 
     const caisse = allCaisses.find((c) => c.id === id)
     if (caisse?.est_actif) {
-      gooeyToast.error(t('messages.caisse_already_open', { defaultValue: 'Ce poste de caisse est déjà ouvert.' }))
+      gooeyToast.error(t('messages.caisse_already_open'))
       return
     }
 
@@ -84,12 +84,12 @@ export const OpenCashSessionModal: React.FC<OpenCashSessionModalProps> = ({
     try {
       const poste = await cashSessionService.openPosteVente(id, fondCaisse || undefined)
       setActivePosteVente(poste)
-      gooeyToast.success(t('messages.caisse_opened', { defaultValue: 'Caisse ouverte.' }))
+      gooeyToast.success(t('messages.caisse_opened'))
       onSessionOpened(poste)
       onClose()
       setFondCaisse('')
     } catch (err: unknown) {
-      gooeyToast.error(err.response?.data?.detail || t('messages.error_opening', { defaultValue: 'Erreur ouverture.' }))
+      gooeyToast.error(err.response?.data?.detail || t('messages.error_opening'))
     } finally {
       setIsLoading(false)
     }
@@ -97,7 +97,7 @@ export const OpenCashSessionModal: React.FC<OpenCashSessionModalProps> = ({
 
   const handleOpen = () => {
     if (!selectedPosteId) {
-      gooeyToast.error(t('messages.select_post', { defaultValue: 'Veuillez sélectionner un poste de caisse.' }))
+      gooeyToast.error(t('messages.select_post'))
       return
     }
     handleOpenSession(selectedPosteId)
@@ -116,10 +116,10 @@ export const OpenCashSessionModal: React.FC<OpenCashSessionModalProps> = ({
             </div>
             <div>
               <DialogTitle className="text-xl font-bold text-slate-900">
-                {t('cash_session.open_title', { defaultValue: 'Ouvrir ma caisse' })}
+                {t('cash_session.open_title')}
               </DialogTitle>
               <DialogDescription className="text-sm text-slate-500 mt-1">
-                {t('cash_session.select_post', { defaultValue: 'Sélectionnez un poste de caisse' })}
+                {t('cash_session.select_post')}
               </DialogDescription>
             </div>
           </div>
@@ -137,7 +137,7 @@ export const OpenCashSessionModal: React.FC<OpenCashSessionModalProps> = ({
             <EmptyState
               className="bg-slate-50 rounded-2xl border border-slate-200"
               icon={<Monitor className="size-7" />}
-              title={t('cash_session.no_caisse', { defaultValue: 'Aucun poste de caisse configuré.' })}
+              title={t('cash_session.no_caisse')}
             />
           ) : (
             <>
@@ -186,11 +186,11 @@ export const OpenCashSessionModal: React.FC<OpenCashSessionModalProps> = ({
                           <div className="mt-2 flex items-center gap-2 flex-wrap">
                             {isActive ? (
                               <Badge variant="default" className="bg-amber-500 hover:bg-amber-500">
-                                {t('cash_session.open', { defaultValue: 'Ouvert' })}
+                                {t('cash_session.open')}
                               </Badge>
                             ) : (
                               <Badge variant="outline" className="text-slate-600 border-slate-300">
-                                {t('cash_session.available', { defaultValue: 'Disponible' })}
+                                {t('cash_session.available')}
                               </Badge>
                             )}
                           </div>
@@ -203,7 +203,7 @@ export const OpenCashSessionModal: React.FC<OpenCashSessionModalProps> = ({
 
               <div className="w-full">
                 <label htmlFor="open-session-fond" className="block py-1 text-xs font-semibold text-slate-700">
-                  {t('cash_session.initial_amount', { defaultValue: 'Fond de caisse (optionnel)' })}
+                  {t('cash_session.initial_amount')}
                 </label>
                 <div className="relative">
                   <Wallet className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
@@ -219,7 +219,7 @@ export const OpenCashSessionModal: React.FC<OpenCashSessionModalProps> = ({
                   />
                 </div>
                 <label className="block py-0 text-caption text-slate-400 mt-1">
-                  {t('cash_session.amount_hint', { defaultValue: 'Laisser vide si pas de fond initial' })}
+                  {t('cash_session.amount_hint')}
                 </label>
               </div>
             </>
@@ -228,7 +228,7 @@ export const OpenCashSessionModal: React.FC<OpenCashSessionModalProps> = ({
 
         <DialogFooter className="p-6 pt-2 border-t border-slate-100 gap-3 shrink-0">
           <Button type="button" variant="outline" onClick={onClose} className="rounded-xl" disabled={isLoading}>
-            {t('common:actions.cancel', 'Annuler')}
+            {t('common:actions.cancel')}
           </Button>
           <Button
             type="button"
@@ -239,7 +239,7 @@ export const OpenCashSessionModal: React.FC<OpenCashSessionModalProps> = ({
             {isLoading ? (
               <Loader2 className="size-4 mr-2 animate-spin" />
             ) : (
-              <><Unlock className="size-4 mr-2" /> {t('cash_session.open_btn', { defaultValue: 'Ouvrir' })}</>
+              <><Unlock className="size-4 mr-2" /> {t('cash_session.open_btn')}</>
             )}
           </Button>
         </DialogFooter>

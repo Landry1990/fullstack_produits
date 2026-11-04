@@ -106,12 +106,12 @@ export const ProductListPanel: React.FC<ProductListPanelProps> = ({
 
         <div className="flex flex-wrap items-center gap-3 mt-3">
           <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-600">
-            <Checkbox size="sm" checked={showInStockOnly} onChange={v => onShowInStockOnlyChange(v)} aria-label={t('products:filters.in_stock_only', { defaultValue: 'En stock uniquement' })} />
-            {t('products:filters.in_stock_only', { defaultValue: 'En stock uniquement' })}
+            <Checkbox size="sm" checked={showInStockOnly} onChange={v => onShowInStockOnlyChange(v)} aria-label={t('products:filters.in_stock_only')} />
+            {t('products:filters.in_stock_only')}
           </label>
           <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-600">
-            <Checkbox size="sm" checked={showInactive} onChange={v => onShowInactiveChange(v)} aria-label={t('products:filters.show_inactive', { defaultValue: 'Afficher inactifs' })} />
-            {t('products:filters.show_inactive', { defaultValue: 'Afficher inactifs' })}
+            <Checkbox size="sm" checked={showInactive} onChange={v => onShowInactiveChange(v)} aria-label={t('products:filters.show_inactive')} />
+            {t('products:filters.show_inactive')}
           </label>
           {hasActiveFilters && (
             <Button variant="ghost" size="sm" onClick={onResetFilters} leftIcon={<X className="size-3" />}>
@@ -137,7 +137,7 @@ export const ProductListPanel: React.FC<ProductListPanelProps> = ({
         <div className="shrink-0 px-4 py-3 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
             <span>{t('products:table.cip')}</span>
-            <span className="ml-6">{t('products:table.product', { defaultValue: 'Produit' })}</span>
+            <span className="ml-6">{t('products:table.product')}</span>
           </div>
         </div>
 
@@ -149,8 +149,8 @@ export const ProductListPanel: React.FC<ProductListPanelProps> = ({
             <EmptyState
               className="py-16"
               icon={<Package className="size-8" />}
-              title={t('products:table.empty_title', { defaultValue: 'Aucun produit' })}
-              description={t('products:table.empty_subtitle', { defaultValue: 'Créez votre premier produit ou service pour commencer.' })}
+              title={t('products:table.empty_title')}
+              description={t('products:table.empty_subtitle')}
               action={
                 <Button variant="primary" size="sm" onClick={onNewProduct}>
                   + {t('products:actions.create', { defaultValue: 'Créer un produit' })}

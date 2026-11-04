@@ -35,6 +35,8 @@
         "sales_points": "Sales Points"
     },
     "labels": {
+        "label_printer": "Label printer",
+        "label_printer_browser": "None — browser printing",
         "auto_print_ticket": "Print receipt automatically after payment",
         "pharmacy_name": "Pharmacy Name",
         "niu": "Unique Identification Number (NIU)",
@@ -44,6 +46,7 @@
         "city": "City",
         "country": "Country",
         "phone": "Contact Phone",
+        "phone2": "Phone 2",
         "email": "Contact Email",
         "logo": "Pharmacy logo",
         "receipt_header": "Receipt Header",
@@ -99,6 +102,7 @@
         "city": "e.g., Douala",
         "country": "e.g., Cameroon",
         "phone": "+237...",
+        "phone2": "Secondary number",
         "email": "contact@pharmacy.com",
         "receipt_header": "Text that will appear at the top of the receipt...",
         "ticket_footer": "Thank you for your visit!",
@@ -118,6 +122,7 @@
         "report_recipients": "email1@example.com, email2@example.com"
     },
     "hints": {
+        "label_printer": "Use Detect, then select the dedicated printer in TSPL label mode (Hoin HL80B/HLB480B). This setting is local to this workstation; browser printing is used if unavailable.",
         "auto_print_ticket": "In centralized checkout, starts printing when the preview opens. Silent with QZ Tray; otherwise the usual print dialog opens.",
         "pharmacy_name": "The official name as it will appear on invoices and receipts.",
         "pharmacy_name_from_licence": "The pharmacy name is defined by the activation licence. To change it, contact your system administrator.",
@@ -225,7 +230,20 @@
         "print_test_sent": "Test ticket sent to the QZ Tray printer."
     },
     "postes_vente": {
-        "table": { "status": "Status" },
+        "title": "Sales points",
+        "subtitle": "Create the sales points of your pharmacy. They will appear in the session opening modal.",
+        "add": "Create a sales point",
+        "name_placeholder": "E.g.: Mobile 1, Mobile 2...",
+        "create_btn": "Create",
+        "hint": "The Main and Secondary cash registers remain unchanged.",
+        "available": "Available sales points",
+        "no_available": "No sales point available. Create one above.",
+        "delete": "Delete",
+        "active": "Active sales points",
+        "close": "Close",
+        "caisse_available": "Cash registers",
+        "caisse_active": "Active cash registers",
+        "table": { "status": "Status", "name": "Name", "actions": "Actions", "vendeur": "Seller", "opened": "Opened" },
         "status_active": "Active",
         "status_in_use": "In use",
         "status_disabled": "Disabled",

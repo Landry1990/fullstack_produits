@@ -73,8 +73,8 @@ export default function ProduitShadcn() {
             <Package className="size-5 text-emerald-600" />
           </div>
           <div>
-            <h1 className="text-lg font-bold text-slate-900">{t('products:title', { defaultValue: 'Gestion des produits' })}</h1>
-            <p className="text-xs text-slate-400 font-medium">{t('products:subtitle', { defaultValue: 'Créez et gérez vos produits et services' })}</p>
+            <h1 className="text-lg font-bold text-slate-900">{t('products:title')}</h1>
+            <p className="text-xs text-slate-400 font-medium">{t('products:subtitle')}</p>
           </div>
         </div>
 
@@ -83,13 +83,13 @@ export default function ProduitShadcn() {
             {t('common:actions.refresh', { defaultValue: 'Rafraîchir' })}
           </Button>
           <Button variant="primary" size="sm" leftIcon={<Package className="size-4" />} onClick={() => handleOpenCreate()}>
-            {t('products:actions.new', { defaultValue: 'Nouveau' })}
+            {t('products:actions.new')}
           </Button>
           <Button variant="outline" size="sm" leftIcon={<Upload className="size-4" />} onClick={() => setIsImportOpen(true)}>
             {t('products:import.title', { defaultValue: 'Importer' })}
           </Button>
           <Button variant="danger" size="sm" leftIcon={<Eraser className="size-4" />} onClick={handleResetAllStock}>
-            {t('products:reset_stock.button', { defaultValue: 'Remise à zéro' })}
+            {t('products:reset_stock.button')}
           </Button>
         </div>
       </motion.header>

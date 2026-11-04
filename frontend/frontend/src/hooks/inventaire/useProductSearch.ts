@@ -117,7 +117,7 @@ export const useProductSearch = (
             setLotQuantities(initialQtys);
         } catch (err) {
             logger.error("Erreur chargement lots", err);
-            gooeyToast.error(t('common:messages.error_loading', { defaultValue: 'Erreur lors du chargement' }));
+            gooeyToast.error(t('common:messages.error_loading'));
         } finally {
             setLoadingLots(false);
         }

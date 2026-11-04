@@ -256,7 +256,7 @@ export function useFacturationActions({
             await api.patch(`factures/${pendingPrintFacture.id}/`,
                 { client_name_override: clientNameInput }
             );
-            gooeyToast.success(t('facturation:messages.client_name_updated', { defaultValue: 'Nom du client mis à jour' }));
+            gooeyToast.success(t('facturation:messages.client_name_updated'));
             let url = `/app/print-invoice/${pendingPrintFacture.id}`;
             if (clientNameInput) url += `?client_name=${encodeURIComponent(clientNameInput)}`;
             printWindow.location.href = url;
@@ -306,7 +306,7 @@ export function useFacturationActions({
         if (!ui.ticketCaisse || !ui.ticketCaisse.facture || typeof ui.ticketCaisse.facture === 'number') return
         const facture = ui.ticketCaisse.facture as unknown as { id: number; client: number | { phone?: string }; client_phone?: string }
         const clientPhone = (typeof facture.client === 'object' ? facture.client?.phone : '') || facture.client_phone
-        const phone = window.prompt(t('facturation:messages.enter_whatsapp_number', { defaultValue: 'Entrez le numéro WhatsApp' }), clientPhone || '')
+        const phone = window.prompt(t('facturation:messages.enter_whatsapp_number'), clientPhone || '')
         if (!phone) return
 
         setLoading(true)
@@ -543,7 +543,7 @@ export function useFacturationActions({
         if (cart.lignesFacture.length > 0) {
             ui.setConfirmModal({
                 isOpen: true,
-                message: t('facturation:messages.cancel_sale_confirm', { defaultValue: 'Êtes-vous sûr de vouloir annuler cette vente en cours ? Tout le panier sera perdu.' }),
+                message: t('facturation:messages.cancel_sale_confirm'),
                 onConfirm: () => _resetSale()
             })
             return
@@ -572,7 +572,7 @@ export function useFacturationActions({
             const uniqueNewLines = vente.lignes.filter(l => !existingIds.has(l.lineId))
             cart.setLignesFacture(prev => [...prev, ...uniqueNewLines])
             if (uniqueNewLines.length < vente.lignes.length) {
-                gooeyToast.info(t('facturation:messages.pending_merge_duplicates_skipped', { defaultValue: 'Certains articles identiques étaient déjà dans le panier.' }))
+                gooeyToast.info(t('facturation:messages.pending_merge_duplicates_skipped'))
             }
         }
         if (setIsRetrocession) setIsRetrocession(!!vente.isRetrocession)
@@ -584,10 +584,10 @@ export function useFacturationActions({
         if (!vente) return
         if (cart.lignesFacture.length > 0) {
             const ok = await confirm({
-                title: t('facturation:pending.replace_title', { defaultValue: 'Remplacer le panier ?' }),
-                message: t('facturation:pending.replace_message', { defaultValue: 'Le panier actuel n\'est pas vide. Voulez-vous le remplacer par la vente en attente ?' }),
-                confirmText: t('common:confirm', { defaultValue: 'Confirmer' }),
-                cancelText: t('common:cancel', { defaultValue: 'Annuler' }),
+                title: t('facturation:pending.replace_title'),
+                message: t('facturation:pending.replace_message'),
+                confirmText: t('common:confirm'),
+                cancelText: t('common:cancel'),
                 variant: 'warning',
             })
             if (!ok) return
@@ -604,7 +604,7 @@ export function useFacturationActions({
         _applyRestoredVente(vente, 'merge')
         pendingSales.deletePendingSale(id)
         pendingSales.setShowPendingSales(false)
-        gooeyToast.success(t('facturation:messages.pending_merge_success', { defaultValue: 'Articles ajoutés au panier actuel.' }))
+        gooeyToast.success(t('facturation:messages.pending_merge_success'))
     }, [pendingSales, _applyRestoredVente])
 
     const supprimerVenteEnAttente = useCallback((id: number) => {

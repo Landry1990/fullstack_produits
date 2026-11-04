@@ -53,7 +53,7 @@ export interface DashboardAlert {
 /* ─── KPI Cards ─── */
 function KPIsShadcn({ kpis }: { kpis: { jour: KPIData; semaine: KPIData; mois: KPIData } }) {
   const { t } = useTranslation(['dashboard', 'common']);
-  const currentLocale = t('common:locale', { defaultValue: 'fr-FR' });
+  const currentLocale = t('common:locale');
   const currencySymbol = t('common:currency_symbol', 'F');
   const fmt = (n: number) => formatCurrency(n, currentLocale, currencySymbol);
 
@@ -69,7 +69,7 @@ function KPIsShadcn({ kpis }: { kpis: { jour: KPIData; semaine: KPIData; mois: K
       gradient: 'from-emerald-500/5 to-transparent',
     },
     {
-      label: t('manager_dashboard.periods.week', 'Semaine'),
+      label: t('manager_dashboard.periods.week'),
       key: 'semaine' as const,
       icon: BarChart3,
       iconBg: 'bg-blue-50',
@@ -79,7 +79,7 @@ function KPIsShadcn({ kpis }: { kpis: { jour: KPIData; semaine: KPIData; mois: K
       gradient: 'from-blue-500/5 to-transparent',
     },
     {
-      label: t('manager_dashboard.periods.month', 'Mois'),
+      label: t('manager_dashboard.periods.month'),
       key: 'mois' as const,
       icon: TrendingUp,
       iconBg: 'bg-amber-50',
@@ -121,7 +121,7 @@ function KPIsShadcn({ kpis }: { kpis: { jour: KPIData; semaine: KPIData; mois: K
               <div className="absolute top-4 right-4 animate-scale-in">
                 <Badge variant="default" className="bg-emerald-500 text-white gap-1">
                   <Trophy className="size-3" />
-                  {t('manager_dashboard.achieved_badge', 'Atteint')}
+                  {t('manager_dashboard.achieved_badge')}
                 </Badge>
               </div>
             )}
@@ -148,7 +148,7 @@ function KPIsShadcn({ kpis }: { kpis: { jour: KPIData; semaine: KPIData; mois: K
                   {data.margin !== undefined && (
                     <div className="mt-1 flex items-center gap-1 text-xs font-medium text-slate-500">
                       <ArrowUpRight className="size-3.5 text-emerald-500" />
-                      {t('manager_dashboard.margin_display', 'Marge : {{value}}', { value: fmt(data.margin) })}
+                      {t('manager_dashboard.margin_display', { value: fmt(data.margin) })}
                     </div>
                   )}
                 </div>
@@ -156,8 +156,8 @@ function KPIsShadcn({ kpis }: { kpis: { jour: KPIData; semaine: KPIData; mois: K
 
               <div className="mt-5 space-y-2">
                 <div className="flex justify-between text-xs font-semibold text-slate-400">
-                  <span>{t('manager_dashboard.progression', 'Progression')}</span>
-                  <span className="text-slate-600">{t('manager_dashboard.target', 'Cible')} : {fmt(data.target)}</span>
+                  <span>{t('manager_dashboard.progression')}</span>
+                  <span className="text-slate-600">{t('manager_dashboard.target')} : {fmt(data.target)}</span>
                 </div>
                 <AnimatedProgress value={Math.min(data.rate, 100)} className={`h-2.5 rounded-full ${isSuccess ? '[&>div]:bg-emerald-500' : `[&>div]:${item.barColor}`}`} />
               </div>
@@ -165,7 +165,7 @@ function KPIsShadcn({ kpis }: { kpis: { jour: KPIData; semaine: KPIData; mois: K
               {isSuccess && (
                 <div className="mt-4 pt-3 border-t border-dashed border-slate-200 space-y-2">
                   <div className="flex justify-between text-xs font-semibold text-amber-600">
-                    <span className="flex items-center gap-1"><Zap className="size-3.5" /> {t('manager_dashboard.next_tier', 'Prochain palier')}</span>
+                    <span className="flex items-center gap-1"><Zap className="size-3.5" /> {t('manager_dashboard.next_tier')}</span>
                     <span>{fmt(data.target * 1.2)}</span>
                   </div>
                   <AnimatedProgress value={Math.min((data.actual / (data.target * 1.2)) * 100, 100)} className="h-1.5 rounded-full [&>div]:bg-amber-400" />
@@ -238,19 +238,19 @@ export function AlertsShadcn({ alerts }: { alerts?: DashboardAlert[] }) {
             </div>
             <div>
               <CardTitle className="text-base font-bold flex items-center gap-2">
-                {t('manager_dashboard.alerts_title', 'Alertes Intelligentes')}
+                {t('manager_dashboard.alerts_title')}
                 {criticalCount > 0 && (
                   <span className="inline-flex items-center justify-center size-5 rounded-full bg-red-500 text-white text-caption font-bold animate-scale-in">
                     {criticalCount}
                   </span>
                 )}
               </CardTitle>
-              <CardDescription>{t('manager_dashboard.alerts_subtitle', 'Actions recommandées')}</CardDescription>
+              <CardDescription>{t('manager_dashboard.alerts_subtitle')}</CardDescription>
             </div>
           </div>
           {sorted.length > 0 && (
             <span className="text-xs text-slate-400 font-medium">
-              {t('manager_dashboard.alerts_count', '{{count}} alerte(s)', { count: sorted.length })}
+              {t('manager_dashboard.alerts_count', { count: sorted.length })}
             </span>
           )}
         </div>
@@ -291,8 +291,8 @@ export function AlertsShadcn({ alerts }: { alerts?: DashboardAlert[] }) {
         ) : (
           <EmptyState
             icon={<CheckCircle2 className="size-8 text-emerald-400" />}
-            title={t('manager_dashboard.all_good', 'Tout va bien !')}
-            description={t('manager_dashboard.no_alerts_sub', 'Aucune alerte pour le moment.')}
+            title={t('manager_dashboard.all_good')}
+            description={t('manager_dashboard.no_alerts_sub')}
             className="py-10"
           />
         )}
@@ -307,9 +307,9 @@ function ObjectivesShadcn({ currentObj, onEdit, onRefresh }: { currentObj: { jou
   const fmt = (n: number) => formatCurrency(n, getLocale(), t('common:currency_symbol', 'F'));
 
   const types = useMemo(() => [
-    { label: t('manager_dashboard.periods.daily', 'Journalier'), code: 'JOUR', color: 'text-emerald-600', bg: 'bg-emerald-50', dot: 'bg-emerald-500' },
-    { label: t('manager_dashboard.periods.weekly', 'Hebdomadaire'), code: 'SEMAINE', color: 'text-blue-600', bg: 'bg-blue-50', dot: 'bg-blue-500' },
-    { label: t('manager_dashboard.periods.monthly', 'Mensuel'), code: 'MOIS', color: 'text-amber-600', bg: 'bg-amber-50', dot: 'bg-amber-500' },
+    { label: t('manager_dashboard.periods.daily'), code: 'JOUR', color: 'text-emerald-600', bg: 'bg-emerald-50', dot: 'bg-emerald-500' },
+    { label: t('manager_dashboard.periods.weekly'), code: 'SEMAINE', color: 'text-blue-600', bg: 'bg-blue-50', dot: 'bg-blue-500' },
+    { label: t('manager_dashboard.periods.monthly'), code: 'MOIS', color: 'text-amber-600', bg: 'bg-amber-50', dot: 'bg-amber-500' },
   ], [t]);
 
   return (
@@ -322,7 +322,7 @@ function ObjectivesShadcn({ currentObj, onEdit, onRefresh }: { currentObj: { jou
             </div>
             <div>
               <CardTitle className="text-base font-bold">{t('manager_dashboard.active_objectives', 'Objectifs')}</CardTitle>
-              <CardDescription>{t('manager_dashboard.objectives_subtitle', 'Cibles commerciales actives')}</CardDescription>
+              <CardDescription>{t('manager_dashboard.objectives_subtitle')}</CardDescription>
             </div>
           </div>
           <Button variant="ghost" size="icon" onClick={onRefresh} className="h-9 w-9 rounded-xl" aria-label={t('common:refresh')}>
@@ -346,16 +346,16 @@ function ObjectivesShadcn({ currentObj, onEdit, onRefresh }: { currentObj: { jou
                 <div>
                   <span className={`text-xs font-bold uppercase tracking-wider ${p.color}`}>{p.label}</span>
                   <div className="text-lg font-bold text-slate-900">
-                    {obj ? fmt(Number(obj.marge_objectif)) : t('manager_dashboard.not_defined', 'Non défini')}
+                    {obj ? fmt(Number(obj.marge_objectif)) : t('manager_dashboard.not_defined')}
                   </div>
                   {obj && Number(obj.ca_objectif) > 0 && (
                     <div className="text-caption text-slate-400 font-medium mt-0.5">
-                      {t('manager_dashboard.ca_target_display', 'CA cible : {{value}}', { value: fmt(Number(obj.ca_objectif)) })}
+                      {t('manager_dashboard.ca_target_display', { value: fmt(Number(obj.ca_objectif)) })}
                     </div>
                   )}
                   {obj && obj.date_debut && (
                     <div className="text-caption text-slate-400 font-medium mt-0.5">
-                      {t('manager_dashboard.since_date', 'Depuis le {{date}}', { date: formatDate(obj.date_debut) })}
+                      {t('manager_dashboard.since_date', { date: formatDate(obj.date_debut) })}
                     </div>
                   )}
                 </div>
@@ -366,7 +366,7 @@ function ObjectivesShadcn({ currentObj, onEdit, onRefresh }: { currentObj: { jou
                 className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity rounded-lg"
                 onClick={(e) => { e.stopPropagation(); onEdit(p.code, obj ?? undefined); }}
               >
-                {t('manager_dashboard.modify', 'Modifier')}
+                {t('manager_dashboard.modify')}
               </Button>
             </motion.div>
           );
@@ -381,9 +381,9 @@ function ObjectivesShadcn({ currentObj, onEdit, onRefresh }: { currentObj: { jou
 function ReportsShadcn({ onExport, exporting }: { onExport: (type: 'csv' | 'pdf' | 'dead_stock' | 'rapport_general') => void; exporting: boolean }) {
   const { t } = useTranslation(['dashboard', 'common']);
   const reports: { key: 'csv' | 'pdf' | 'dead_stock'; label: string; desc: string }[] = useMemo(() => [
-    { key: 'csv', label: t('manager_dashboard.report_daily_title', 'Rapport Journalier'), desc: t('manager_dashboard.report_daily_desc', 'Export CSV du jour') },
-    { key: 'pdf', label: t('manager_dashboard.report_weekly_title', 'Rapport Hebdo'), desc: t('manager_dashboard.report_weekly_desc', 'PDF de la semaine') },
-    { key: 'dead_stock', label: t('manager_dashboard.dead_stock_short_title', 'Stocks Dormants'), desc: t('manager_dashboard.dead_stock_short_desc', 'Excel stocks inactifs') },
+    { key: 'csv', label: t('manager_dashboard.report_daily_title'), desc: t('manager_dashboard.report_daily_desc') },
+    { key: 'pdf', label: t('manager_dashboard.report_weekly_title'), desc: t('manager_dashboard.report_weekly_desc') },
+    { key: 'dead_stock', label: t('manager_dashboard.dead_stock_short_title'), desc: t('manager_dashboard.dead_stock_short_desc') },
   ], [t]);
 
   return (
@@ -395,7 +395,7 @@ function ReportsShadcn({ onExport, exporting }: { onExport: (type: 'csv' | 'pdf'
           </div>
           <div>
             <CardTitle className="text-base font-bold">{t('manager_dashboard.exports_title', 'Exports & Rapports')}</CardTitle>
-            <CardDescription>{t('manager_dashboard.exports_subtitle', 'Téléchargez vos rapports et analyses')}</CardDescription>
+            <CardDescription>{t('manager_dashboard.exports_subtitle')}</CardDescription>
           </div>
         </div>
       </CardHeader>
@@ -412,9 +412,9 @@ function ReportsShadcn({ onExport, exporting }: { onExport: (type: 'csv' | 'pdf'
             : <FileSpreadsheet className="size-6 flex-shrink-0" />
           }
           <div className="text-left flex-1">
-            <p className="font-bold text-base leading-tight">{t('manager_dashboard.rapport_general_title', 'Rapport Général du Mois')}</p>
+            <p className="font-bold text-base leading-tight">{t('manager_dashboard.rapport_general_title')}</p>
             <p className="text-xs text-emerald-100 font-normal mt-0.5">
-              {t('manager_dashboard.rapport_general_desc', 'Excel 10 feuilles — CA, marges, caisses, dettes, dépenses…')}
+              {t('manager_dashboard.rapport_general_desc')}
             </p>
           </div>
           <Download className="size-4 flex-shrink-0 opacity-70" />
@@ -455,11 +455,11 @@ function HeaderShadcn({
       <div>
         <div className="flex items-center gap-3 mb-1">
           <h1 className="text-xl lg:text-2xl font-bold text-slate-900 tracking-tight">
-            {t('manager_dashboard.title', 'Tableau de Bord')}
+            {t('manager_dashboard.title')}
           </h1>
         </div>
         <p className="text-slate-500 text-sm">
-          {t('manager_dashboard.subtitle', 'Suivi des performances et objectifs commerciaux')}
+          {t('manager_dashboard.subtitle')}
         </p>
       </div>
 
@@ -467,9 +467,9 @@ function HeaderShadcn({
         <Button variant="ghost" size="icon" onClick={onOpenSettings} className="h-10 w-10 rounded-xl" aria-label={t('common:settings')}>
           <Settings className="size-5 text-slate-500" />
         </Button>
-        <Button onClick={onOpenObjective} className="gap-2 rounded-xl px-3 lg:px-4" aria-label={t('manager_dashboard.set_objective', 'Fixer un Objectif')}>
+        <Button onClick={onOpenObjective} className="gap-2 rounded-xl px-3 lg:px-4" aria-label={t('manager_dashboard.set_objective')}>
           <PlusCircle className="size-5" aria-hidden="true" />
-          <span className="hidden sm:inline">{t('manager_dashboard.set_objective', 'Fixer un Objectif')}</span>
+          <span className="hidden sm:inline">{t('manager_dashboard.set_objective')}</span>
         </Button>
       </div>
     </div>
@@ -495,7 +495,7 @@ export default function DashboardManagerShadcn() {
 
   if (statsLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 p-4 sm:p-6 space-y-6" aria-busy="true" aria-label={t('manager_dashboard.loading', 'Chargement du tableau de bord...')}>
+      <div className="min-h-screen bg-slate-50 p-4 sm:p-6 space-y-6" aria-busy="true" aria-label={t('manager_dashboard.loading')}>
         <div className="max-w-[1400px] mx-auto w-full space-y-6">
           <Skeleton className="h-10 w-72" />
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -570,32 +570,32 @@ export default function DashboardManagerShadcn() {
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="sm:max-w-lg rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold">{t('manager_dashboard.modal_title', 'Fixer un Objectif')}</DialogTitle>
+            <DialogTitle className="text-lg font-bold">{t('manager_dashboard.modal_title')}</DialogTitle>
             <DialogDescription className="text-slate-500">
-              {t('manager_dashboard.modal_define_subtitle', 'Définissez un nouvel objectif commercial pour la période sélectionnée.')}
+              {t('manager_dashboard.modal_define_subtitle')}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-5 py-4">
             <div className="space-y-2">
-              <span className="block text-sm font-semibold text-slate-700">{t('manager_dashboard.period_label', 'Période')}</span>
+              <span className="block text-sm font-semibold text-slate-700">{t('manager_dashboard.period_label')}</span>
               <Tabs value={editingObjectif.periode} onValueChange={(v) => setEditingObjectif({ ...editingObjectif, periode: v })}>
                 <TabsList className="grid w-full grid-cols-3 rounded-xl bg-slate-100 p-1">
                   <TabsTrigger value="JOUR" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
-                    {t('manager_dashboard.period_tab_daily', 'Journalier')}
+                    {t('manager_dashboard.period_tab_daily')}
                   </TabsTrigger>
                   <TabsTrigger value="SEMAINE" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
-                    {t('manager_dashboard.period_tab_weekly', 'Hebdo')}
+                    {t('manager_dashboard.period_tab_weekly')}
                   </TabsTrigger>
                   <TabsTrigger value="MOIS" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
-                    {t('manager_dashboard.period_tab_monthly', 'Mensuel')}
+                    {t('manager_dashboard.period_tab_monthly')}
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="objective-amount" className="text-sm font-semibold text-slate-700">{t('manager_dashboard.amount_label', 'Montant Objectif (F)')}</label>
+              <label htmlFor="objective-amount" className="text-sm font-semibold text-slate-700">{t('manager_dashboard.amount_label')}</label>
               <input
                 id="objective-amount"
                 type="number"
@@ -613,7 +613,7 @@ export default function DashboardManagerShadcn() {
               onClick={() => setIsModalOpen(false)}
               className="rounded-xl"
             >
-              {t('manager_dashboard.cancel', 'Annuler')}
+              {t('manager_dashboard.cancel')}
             </Button>
             <Button
               onClick={() => {
@@ -621,7 +621,7 @@ export default function DashboardManagerShadcn() {
               }}
               className="rounded-xl"
             >
-              {t('manager_dashboard.save', 'Enregistrer')}
+              {t('manager_dashboard.save')}
             </Button>
           </DialogFooter>
         </DialogContent>

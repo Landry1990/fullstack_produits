@@ -42,8 +42,8 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
           className={btnCls}
           onClick={() => onPageChange(1)}
           disabled={!canPrev}
-          title={t('common:first_page', { defaultValue: 'Première page' })}
-          aria-label={t('common:first_page', { defaultValue: 'Première page' })}
+          title={t('common:first_page')}
+          aria-label={t('common:first_page')}
         >
           <ChevronsLeft className={iconCls} />
         </Button>
@@ -53,8 +53,8 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
         className={btnCls}
         onClick={() => onPageChange(page - 1)}
         disabled={!canPrev}
-        title={t('common:previous', { defaultValue: 'Précédent' })}
-        aria-label={t('common:previous', { defaultValue: 'Précédent' })}
+        title={t('common:previous')}
+        aria-label={t('common:previous')}
       >
         <ChevronLeft className={iconCls} />
       </Button>
@@ -63,8 +63,8 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
         className={btnCls}
         onClick={() => onPageChange(page + 1)}
         disabled={!canNext}
-        title={t('common:next', { defaultValue: 'Suivant' })}
-        aria-label={t('common:next', { defaultValue: 'Suivant' })}
+        title={t('common:next')}
+        aria-label={t('common:next')}
       >
         <ChevronRight className={iconCls} />
       </Button>
@@ -74,8 +74,8 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
           className={btnCls}
           onClick={() => onPageChange(totalPages)}
           disabled={!canNext}
-          title={t('common:last_page', { defaultValue: 'Dernière page' })}
-          aria-label={t('common:last_page', { defaultValue: 'Dernière page' })}
+          title={t('common:last_page')}
+          aria-label={t('common:last_page')}
         >
           <ChevronsRight className={iconCls} />
         </Button>

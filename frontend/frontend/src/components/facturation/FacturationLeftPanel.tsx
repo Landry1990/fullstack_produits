@@ -84,8 +84,8 @@ export default function FacturationLeftPanel({ hook }: FacturationLeftPanelProps
                 },
                 {
                   permission: 'can_sell_negative_stock',
-                  title: hook.t('facturation:search.out_of_stock_sudo_title', { defaultValue: 'Vente hors stock' }),
-                  message: hook.t('facturation:search.out_of_stock_sudo_message', { name: p.name, stock: p.stock ?? 0, defaultValue: `Le produit "${p.name}" n'a pas de stock disponible (${p.stock ?? 0}). Confirmez votre identité pour forcer la vente.` })
+                  title: hook.t('facturation:search.out_of_stock_sudo_title'),
+                  message: hook.t('facturation:search.out_of_stock_sudo_message', { name: p.name, stock: p.stock ?? 0 })
                 }
               )
             }}

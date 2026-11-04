@@ -250,11 +250,10 @@ export function MessagingCenter({ currentUser, isOpen, onMessageRead }: Messagin
                   <div className="p-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between bg-white/50 dark:bg-slate-900/50 border-0 p-0 bg-transparent">
                     <div className="text-sm text-slate-500 dark:text-slate-400">
                       {t('common:pagination_info', {
-                        defaultValue: `Page ${page} sur ${totalPages} (${totalCount} ${t('messages_label') || t('common:items', { defaultValue: 'éléments' })})`,
                         page,
                         total: totalPages,
                         count: totalCount,
-                        label: t('messages_label') || t('common:items', { defaultValue: 'éléments', count: totalCount })
+                        label: t('messages_label') || t('common:items', { count: totalCount })
                       })}
                     </div>
                     <PaginationControls

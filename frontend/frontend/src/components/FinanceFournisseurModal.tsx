@@ -364,7 +364,7 @@ export default function FinanceFournisseurModal({
                 leftIcon={<Receipt className="h-4 w-4" />}
                 className="mt-auto shrink-0"
               >
-                {justPaid ? t('providers:finance.payment_saved', { defaultValue: 'Règlement enregistré' }) : t('providers:finance.save_payment')}
+                {justPaid ? t('providers:finance.payment_saved') : t('providers:finance.save_payment')}
               </Button>
             </form>
           </div>

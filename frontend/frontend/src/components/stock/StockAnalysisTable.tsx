@@ -229,7 +229,7 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                                         </TableCell>
                                         <TableCell className="px-3 py-2 text-center">
                                             <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 text-xs">
-                                                {item.days_since_sale ?? '-'} {t('stock:analyse.day_short', { defaultValue: 'j' })}
+                                                {item.days_since_sale ?? '-'} {t('stock:analyse.day_short')}
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="px-3 py-2 text-right font-mono text-xs text-slate-600">

@@ -39,6 +39,8 @@
     "loading": "Loading...",
     "retry": "Retry",
     "back": "Back",
+    "all_statuses": "All statuses",
+    "all_types": "All types",
     "today": "Today",
     "dashboard": "Dashboard",
     "name": "Name",
@@ -83,6 +85,8 @@
     "increase": "Increase",
     "clear": "Clear",
     "restore": "Restore",
+    "reset_default": "Default",
+    "validation_error": "Validation error",
     "merge": "Merge",
     "import": "Import",
     "no_address": "No address",
@@ -105,6 +109,7 @@
     },
     "no_number": "No number",
     "stock": "Stock",
+    "active": "Active",
     "actions": {
         "confirm": "Confirm",
         "cancel": "Cancel",
@@ -114,7 +119,9 @@
         "close": "Close",
         "processing": "Processing…",
         "add": "Add",
-        "edit": "Edit"
+        "edit": "Edit",
+        "show_less": "Show less",
+        "show_more": "Show {{count}} more"
     },
     "telegram": {
         "send_success": "Report sent to Telegram!",
@@ -136,6 +143,8 @@
     "validate": "Validate",
     "validate_all": "Validate All",
     "select_all": "Select all",
+    "select_row": "Select this invoice",
+    "no_phone": "No number",
     "export_csv_title": "Export to CSV",
     "delete_all": "Delete All",
     "single_selection": "Selection",
@@ -146,8 +155,11 @@
         "prev": "Previous",
         "next": "Next",
         "page_info": "Page {{page}} of {{total}}",
+        "showing": "{{start}}–{{end}} of {{total}}",
         "page_info_simple": "Page {{page}}",
-        "page_of": "of {{count}}"
+        "page_of": "of {{count}}",
+        "page": "Page",
+        "of": "of"
     },
     "auth_required": "Authentication required",
     "download": "Download",
@@ -172,6 +184,7 @@
         "datamatrix_lot_out_of_stock": "{{produit}}: batch stock exhausted",
         "datamatrix_added": "{{produit}} added (Batch {{lot}})",
         "error_loading": "Error loading",
+        "load_error": "Error loading data",
         "error_saving": "Error saving",
         "success_save": "Saved successfully",
         "datamatrix_detected": "DataMatrix scan detected: {{cip}}",
@@ -212,6 +225,8 @@
     "pagination_info": "Page {{page}} of {{total}} ({{count}} {{label}})",
     "previous": "Previous",
     "next": "Next",
+    "first_page": "First page",
+    "last_page": "Last page",
     "all_rayons": "All shelves",
     "no_rayon": "No Shelf",
     "rayon": "Shelf",
@@ -282,7 +297,8 @@
     "count_days_one": "{{count}} day",
     "buttons": {
         "done": "Done",
-        "excel": "Excel"
+        "excel": "Excel",
+        "actions": "Actions"
     },
     "total_general": "GRAND TOTAL",
     "no_cip": "No CIP",
@@ -397,6 +413,7 @@
         }
     },
     "omnisearch": {
+        "title": "Global search",
         "trigger": "Search products, clients, pages…",
         "placeholder": "Search (products, clients, navigation)...",
         "empty": "No results found.",
