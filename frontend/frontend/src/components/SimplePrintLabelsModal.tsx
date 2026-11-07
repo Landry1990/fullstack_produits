@@ -9,7 +9,7 @@ import PremiumModal from './common/PremiumModal'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { Button } from './shadcn/button'
-import { Badge } from './ui/Badge'
+import { Badge } from './shadcn/badge'
 import { EmptyState } from './ui/EmptyState'
 import { usePharmacySettings } from '../hooks/usePharmacySettings'
 import type { Commande, ProduitModel } from '../types'
@@ -1031,7 +1031,7 @@ ${labelsHTML}
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
               <span className="font-bold text-sm">{t('info_title')}</span>
-              <Badge variant="primary" size="sm" className="font-mono">{enabledFieldsCount}/{visibleFields.length}</Badge>
+              <Badge variant="default" className="px-2 py-0 text-[10px] font-mono">{enabledFieldsCount}/{visibleFields.length}</Badge>
             </div>
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -1198,7 +1198,7 @@ ${labelsHTML}
               <label className="text-xs font-bold uppercase tracking-wider text-base-content/40">
                 {t('preview')} ({labelsData.length})
               </label>
-              <Badge variant="outline" size="sm" className="text-caption text-base-content/50">Zoom 200%</Badge>
+              <Badge variant="outline" className="px-2 py-0 text-[10px] text-caption text-base-content/50">Zoom 200%</Badge>
             </div>
             
             <div className="bg-base-300/30 rounded-2xl p-6 max-h-[400px] overflow-y-auto custom-scrollbar border border-base-content/5">

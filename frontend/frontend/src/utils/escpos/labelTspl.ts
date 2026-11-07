@@ -7,6 +7,7 @@ export type LabelTsplItem = {
 };
 
 // TSPL quoted strings: backslash-escape quotes; remove command/control injection.
+// eslint-disable-next-line no-control-regex -- filtrage volontaire des caractères de contrôle
 const quote = (value: string): string => value.replace(/[\x00-\x1f\x7f]/g, ' ').replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 
 export function buildLabelsTspl(items: LabelTsplItem[], format: '40x20' | '30x15'): string {

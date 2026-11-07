@@ -8,9 +8,9 @@ import { useProductSearch } from '../hooks/useProductSearch';
 import { useSearchNavigation } from '../hooks/useSearchNavigation';
 import PremiumModal from './common/PremiumModal';
 import { ProductResultRow, type SearchResult } from './common/ProductSearch';
-import { Checkbox } from './ui/Checkbox';
+import { Checkbox } from './shadcn/checkbox';
 import { EmptyState } from './ui/EmptyState';
-import { Skeleton } from './ui/Skeleton';
+import { Skeleton } from './shadcn/skeleton';
 import type { ProduitModel } from '../types';
 import { 
   ChevronRight, Trash2, Plus, Undo2 
@@ -924,7 +924,7 @@ const Transformations: React.FC = () => {
                           <div key={lot.lot_id} className="flex items-center gap-2 bg-white rounded-lg px-3 py-2 border border-slate-100 text-xs">
                             <Checkbox
                               checked={currentQty > 0}
-                              onChange={() => toggleManualLot(lot.lot_id, lot.quantity_remaining, currentQty)}
+                              onCheckedChange={() => toggleManualLot(lot.lot_id, lot.quantity_remaining, currentQty)}
                               aria-label={t('stock:lot_selection.select_lot_aria', { lot: lot.lot })}
                             />
                             <div className="flex-1 min-w-0">

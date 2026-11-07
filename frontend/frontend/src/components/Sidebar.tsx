@@ -10,79 +10,17 @@ import { ChevronLeft, ChevronRight, ChevronDown, Menu, X } from 'lucide-react';
 import { formatVersion } from '../version';
 import { cn } from '../lib/utils';
 import { prefetchRoute } from '../utils/routePrefetch';
-import { NAV_ITEMS, filterNavItemsForUser, groupNavSubMenus } from '../config/navConfig';
-import { motion } from 'framer-motion';
+import { NAV_ITEMS, filterNavItemsForUser, getRouteLoader, groupNavSubMenus } from '../config/navConfig';
+import { motion, AnimatePresence } from 'framer-motion';
 import { fadeInUp, staggerContainer, staggerGrid } from '../lib/motion';
-
-const routePrefetchMap: Record<string, () => Promise<unknown>> = {
-  '/app/stock': () => import('./hubs/FeatureHub'),
-  '/app/rapports': () => import('./hubs/FeatureHub'),
-  '/app/fournisseurs': () => import('./Fournisseurs'),
-  '/app/clients': () => import('./Clients'),
-  '/app/outils/imc': () => import('./clinical/BMICalculator'),
-  '/app/caisse-centralisee': () => import('./CaisseCentralisee'),
-  '/app/inventaire': () => import('./Inventaire'),
-  '/app/etats-inventaire': () => import('./EtatsInventaire'),
-  '/app/organisation': () => import('./Organisation'),
-  '/app/vitrine': () => import('./Vitrine'),
-  '/app/statistiques-fournisseurs': () => import('./StatistiquesFournisseur'),
-  '/app/journal-caisse': () => import('./JournalCaisse'),
-  '/app/perimes': () => import('./Perimes'),
-  '/app/creances': () => import('./Creances'),
-  '/app/avoirs': () => import('./Avoirs'),
-  '/app/rapports-mensuels': () => import('./RapportMensuel'),
-  '/app/transformations': () => import('./Transformations'),
-  '/app/reappro-rayon': () => import('./stock/ReapproRayon'),
-  '/app/reappro-history': () => import('./stock/ReapproHistory'),
-  '/app/cadencier': () => import('./stock/Cadencier'),
-  '/app/journal-audit': () => import('./JournalAudit'),
-  '/app/journal-ajustements': () => import('./JournalAjustements'),
-  '/app/promis': () => import('./Promis'),
-  '/app/stock-analysis': () => import('./StockAnalysis'),
-  '/app/historique-clotures': () => import('./HistoriqueClotures'),
-  '/app/historique-ventes': () => import('./HistoriqueVentes'),
-  '/app/avoirs-clients': () => import('./avoirs-client/ClientCreditsPage'),
-  '/app/fidelite': () => import('./loyalty/LoyaltyPage'),
-  '/app/recap-client': () => import('./RecapClient'),
-  '/app/historique-achats': () => import('./HistoriqueAchats'),
-  '/app/telegram-history': () => import('./TelegramHistory'),
-  '/app/ordonnancier': () => import('./Ordonnancier'),
-  '/app/centre-rapports': () => import('./CentreRapports'),
-  '/app/analyse-abc': () => import('./AnalyseABC'),
-  '/app/analyse-marges-produit': () => import('./AnalyseMargesProduit'),
-  '/app/promotions': () => import('./Promotions/PromotionList'),
-  '/app/module-financier': () => import('./ModuleFinancier'),
-  '/app/divers/ca': () => import('./divers/GestionDivers'),
-  '/app/divers/stock': () => import('./divers/GestionDivers'),
-  '/app/classement-vendeurs': () => import('./ClassementVendeurs'),
-  '/app/challenges': () => import('./challenges/ChallengesPage'),
-  '/app/analyse-temporelle': () => import('./AnalyseTemporelle'),
-  '/app/rapport-ug': () => import('./StockUGReportShadcn'),
-  '/app/user-sessions': () => import('./UserSessionsShadcn'),
-  '/app/guide-financier': () => import('./GuideFinancier'),
-  '/app/aide-formation': () => import('./HelpTraining'),
-  '/app/utilisateurs': () => import('./users/GestionUtilisateurs'),
-  '/app/planning-operateurs': () => import('./PlanningOperateurs'),
-  '/app/pharmacy-settings': () => import('./settings/PharmacySettingsForm'),
-  '/app/maintenance': () => import('./Maintenance'),
-  '/app/corbeille': () => import('./Corbeille'),
-  '/app/import-dci': () => import('./ImportDCIPage'),
-  '/app/compta/dashboard': () => import('./compta/Comptabilite'),
-  '/app/compta/grand-livre': () => import('./compta/Comptabilite'),
-  '/app/compta/balance': () => import('./compta/Comptabilite'),
-  '/app/compta/resultat': () => import('./compta/Comptabilite'),
-  '/app/compta/charges': () => import('./compta/Comptabilite'),
-  '/app/compta/plan-comptable': () => import('./compta/Comptabilite'),
-  '/app/systeme': () => import('./SystemAdmin'),
-};
 
 const prefetchedRoutes = new Set<string>();
 function handleRoutePrefetch(path: string) {
   if (prefetchedRoutes.has(path)) return;
-  const factory = routePrefetchMap[path];
-  if (factory) {
+  const loader = getRouteLoader(path);
+  if (loader) {
     prefetchedRoutes.add(path);
-    prefetchRoute(factory);
+    prefetchRoute(loader);
   }
 }
 
@@ -259,10 +197,15 @@ export default function Sidebar() {
               </button>
 
               {/* Submenus with vertical connector */}
-              <div className={cn(
-                "overflow-hidden transition-all duration-300 ease-in-out",
-                isMenuOpen ? 'max-h-[600px] opacity-100 mt-1' : 'max-h-0 opacity-0'
-              )}>
+              <AnimatePresence initial={false}>
+                {isMenuOpen && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.25, ease: 'easeInOut' }}
+                  className="overflow-hidden mt-1"
+                >
                 <ul id={`sidebar-submenu-${item.key}`} className="relative ml-4 pl-3 border-l border-slate-700 flex flex-col gap-0.5 py-1">
                   {subGroups.map((grp, gi) => (
                     <Fragment key={grp.group ?? gi}>
@@ -298,7 +241,9 @@ export default function Sidebar() {
                     </Fragment>
                   ))}
                 </ul>
-              </div>
+                </motion.div>
+                )}
+              </AnimatePresence>
             </>
           )}
         </motion.li>
@@ -370,10 +315,10 @@ export default function Sidebar() {
           </div>
           {!effectiveCollapsed && (
             <div className="min-w-0 flex-1">
-              <h1 className="text-sm font-black text-white tracking-widest uppercase leading-none truncate">
+              <h1 className="text-sm font-bold text-white tracking-widest uppercase leading-none truncate">
                 {licence?.pharmacie_nom || 'Zenith'}
               </h1>
-              <p className="text-caption font-bold text-primary uppercase tracking-[0.15em] mt-0.5 truncate">
+              <p className="text-caption font-semibold text-primary uppercase tracking-[0.15em] mt-0.5 truncate">
                 {licence?.pharmacien_nom || t('app_subtitle')}
               </p>
             </div>
@@ -406,10 +351,10 @@ export default function Sidebar() {
             <motion.div className="px-3" variants={staggerContainer} initial="hidden" animate="show">
               {menuGroups.map((group) => (
                 <motion.div variants={fadeInUp} key={group.category}>
-                  <h3 className="text-caption font-bold uppercase tracking-wider text-slate-300 px-1 mt-3 mb-2 border-b border-slate-700/50 pb-1">
+                  <h3 className="text-caption font-semibold uppercase tracking-wider text-slate-400 px-1 mt-4 mb-1.5">
                     {t(`sidebar:categories.${group.category}`)}
                   </h3>
-                  <motion.ul variants={staggerGrid} className="bg-slate-800/50 rounded-xl p-1.5 flex flex-col gap-1">
+                  <motion.ul variants={staggerGrid} className="flex flex-col gap-0.5">
                     {group.items.map((item) => renderMenuItem(item))}
                   </motion.ul>
                 </motion.div>

@@ -40,7 +40,7 @@ import {
 import { cn } from '../../lib/utils';
 import { formatCurrency as formatCurrencyValue } from '../../utils/formatters';
 import { EmptyState } from '../ui/EmptyState';
-import { Skeleton } from '../ui/Skeleton';
+import { Skeleton } from '../shadcn/skeleton';
 import {
     useChallenges,
     useDeleteChallenge,

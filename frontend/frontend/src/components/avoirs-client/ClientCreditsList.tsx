@@ -17,7 +17,7 @@ import {
 } from '../shadcn/table';
 import { cn } from '../../lib/utils';
 import { EmptyState } from '../ui/EmptyState';
-import { Skeleton } from '../ui/Skeleton';
+import { Skeleton } from '../shadcn/skeleton';
 import PaginationControls from '../ui/PaginationControls';
 
 interface ClientCreditsListProps {

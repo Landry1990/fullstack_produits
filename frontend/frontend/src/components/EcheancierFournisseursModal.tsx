@@ -8,12 +8,12 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from './ui/Dialog';
-import { Input } from './ui/Input';
-import { Select } from './ui/Select';
-import { Button } from './ui/Button';
-import { Badge } from './ui/Badge';
-import { Card } from './ui/Card';
+} from './shadcn/dialog';
+import { Input } from './shadcn/input';
+import { Select } from './shadcn/select';
+import { Button } from './shadcn/button';
+import { Badge } from './shadcn/badge';
+import { Card } from './shadcn/card';
 import {
   Table,
   TableHeader,
@@ -53,9 +53,9 @@ interface Props {
   onPointer?: (fournisseurId: number, fournisseurNom: string) => void;
 }
 
-const statusBadgeVariant = (status: Echeance['status']) => {
+const statusBadgeVariant = (status: Echeance['status']): 'destructive' | 'warning' | 'success' | 'ghost' => {
   switch (status) {
-    case 'EN RETARD': return 'error';
+    case 'EN RETARD': return 'destructive';
     case "AUJOURD'HUI": return 'warning';
     case 'À VENIR': return 'success';
     default: return 'ghost';
@@ -154,7 +154,7 @@ export default function EcheancierFournisseursModal({ isOpen, onClose, onPointer
           {/* Summary cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
             {summaryCards.map((card) => (
-              <Card key={card.label} variant="bordered" padding="sm" className="flex items-center gap-3">
+              <Card key={card.label} className="p-4 bg-transparent border-2 shadow-none flex items-center gap-3">
                 <div className={`p-2 rounded-lg ${
                   card.variant === 'error' ? 'bg-red-50 text-red-600' :
                   card.variant === 'warning' ? 'bg-amber-50 text-amber-600' :
@@ -173,28 +173,32 @@ export default function EcheancierFournisseursModal({ isOpen, onClose, onPointer
 
           {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-3 shrink-0">
-            <Input
-              type="text"
-              placeholder={t('providers:schedule.search_placeholder')}
-              size="sm"
-              containerClassName="flex-1"
-              icon={<Search className="h-4 w-4" />}
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              aria-label={t('providers:schedule.search_placeholder')}
-            />
-            <Select
-              size="sm"
-              containerClassName="w-full sm:w-48"
-              value={statusFilter}
-              onChange={e => setStatusFilter(e.target.value)}
-              aria-label={t('providers:schedule.status_all')}
-            >
+            <div className="w-full flex-1">
+              <div className="relative group">
+                <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-emerald-500 transition-colors" />
+                <Input
+                  type="text"
+                  placeholder={t('providers:schedule.search_placeholder')}
+                  className="h-9 text-xs pl-10"
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  aria-label={t('providers:schedule.search_placeholder')}
+                />
+              </div>
+            </div>
+            <div className="w-full sm:w-48">
+              <Select
+                className="h-9 text-xs"
+                value={statusFilter}
+                onChange={e => setStatusFilter(e.target.value)}
+                aria-label={t('providers:schedule.status_all')}
+              >
               <option value="TOUS">{t('providers:schedule.status_all')}</option>
               <option value="EN RETARD">{t('providers:schedule.status_late')}</option>
               <option value="AUJOURD'HUI">{t('providers:schedule.status_today')}</option>
               <option value="À VENIR">{t('providers:schedule.status_upcoming')}</option>
-            </Select>
+              </Select>
+            </div>
           </div>
 
           {loading ? (
@@ -247,7 +251,7 @@ export default function EcheancierFournisseursModal({ isOpen, onClose, onPointer
                         </div>
                       </TableCell>
                       <TableCell className="text-center">
-                        <Badge variant={statusBadgeVariant(e.status)} size="sm">
+                        <Badge variant={statusBadgeVariant(e.status)} className="px-2 py-0 text-[10px]">
                           {statusLabel(e.status)}
                           {e.jours_restants < 0 ? ` ${t('providers:schedule.late_suffix', { count: Math.abs(e.jours_restants) })}` : e.jours_restants > 0 ? ` ${t('providers:schedule.in_days', { count: e.jours_restants })}` : ''}
                         </Badge>
@@ -255,11 +259,11 @@ export default function EcheancierFournisseursModal({ isOpen, onClose, onPointer
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center gap-2">
                           <Button
-                            variant="primary"
+                            variant="default"
                             size="sm"
-                            leftIcon={<CheckSquare className="h-3.5 w-3.5" />}
                             onClick={() => onPointer && onPointer(e.fournisseur_id, e.fournisseur_nom)}
                           >
+                            <CheckSquare className="h-3.5 w-3.5" />
                             {t('providers:schedule.table.pointage_btn')}
                           </Button>
                         </div>

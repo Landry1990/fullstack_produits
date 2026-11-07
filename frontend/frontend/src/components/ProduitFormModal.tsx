@@ -9,12 +9,13 @@ import {
 } from 'lucide-react';
 import { gooeyToast } from 'goey-toast';
 import { normalizeNumberInput } from '../utils/formatters';
+import { renderRayonOptions } from '../utils/rayon';
 
 import { productSchema } from '../schemas/productSchema';
-import { Button } from './ui/Button';
+import { Button } from './shadcn/button';
 import { Input } from './shadcn/input';
 import { LocalizedDateInput } from './LocalizedDateInput';
-import { Select } from './ui/Select';
+import { Select } from './shadcn/select';
 import { Checkbox } from './shadcn/checkbox';
 import { ErrorState } from './ui/ErrorState';
 
@@ -503,18 +504,7 @@ export default function ProduitFormModal({
                 <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.rayon')}</label>
                 <Select className={selectBase} aria-label={t('products:form.rayon')} value={form.rayon} onChange={(e) => setForm((f) => ({ ...f, rayon: e.target.value }))}>
                   <option value="">{t('products:form.select_rayon')}</option>
-                  {rayons.flatMap(parent => {
-                    if (parent.parent) return [];
-                    const children = rayons.filter(child => child.parent === parent.id);
-                    return [(
-                      <optgroup key={parent.id} label={parent.name}>
-                        <option value={parent.id}>{parent.name}</option>
-                        {children.map(child => (
-                          <option key={child.id} value={child.id}>↳ {child.name}</option>
-                        ))}
-                      </optgroup>
-                    )];
-                  })}
+                  {renderRayonOptions(rayons)}
                 </Select>
               </div>
               {!isService && (

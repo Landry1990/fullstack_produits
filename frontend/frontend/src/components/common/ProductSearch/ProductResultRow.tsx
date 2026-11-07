@@ -52,7 +52,7 @@ export const ProductResultContent: React.FC<ProductResultContentProps> = ({
             {product.cip1}
           </span>
         )}
-        {product.rayon_name && <span className="truncate">{product.rayon_name}</span>}
+        {(product.rayon_path || product.rayon_name) && <span className="truncate">{product.rayon_path || product.rayon_name}</span>}
         {extraMeta}
         <span className={cn(
           active ? 'text-blue-100 font-semibold' :

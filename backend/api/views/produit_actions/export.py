@@ -1,5 +1,6 @@
 import csv
 
+from django.db.models import Q
 from django.http import HttpResponse
 from rest_framework.decorators import action
 
@@ -19,8 +20,12 @@ class ProduitExportMixin:
         queryset = Produit.objects.all()
         parts = ["export"]
         
+        include_children = request.query_params.get('include_children', '').lower() in ('1', 'true', 'yes')
         if rayon_id:
-            queryset = queryset.filter(rayon_id=rayon_id)
+            queryset = queryset.filter(
+                Q(rayon_id=rayon_id) | Q(rayon__parent_id=rayon_id)
+                if include_children else Q(rayon_id=rayon_id)
+            )
             try:
                 rayon = Rayon.objects.get(id=rayon_id)
                 parts.append(f"rayon_{rayon.name.replace(' ', '_')}")
@@ -45,11 +50,19 @@ class ProduitExportMixin:
         response.write('\ufeff'.encode('utf8'))
         
         writer = csv.writer(response, delimiter=';')
-        writer.writerow(['ID', 'Nom', 'CIP1', 'Stock', 'Prix Achat', 'Prix Vente', 'TVA'])
+        writer.writerow(['ID', 'Nom', 'CIP1', 'Stock', 'Prix Achat', 'Prix Vente', 'TVA', 'Rayon', 'Code Rayon'])
         
-        products = list(queryset[:5000])
+        products = list(queryset.select_related('rayon__parent')[:5000])
         
         for p in products:
+            rayon_path = ''
+            rayon_code = ''
+            if p.rayon:
+                rayon_path = (
+                    f"{p.rayon.parent.name} › {p.rayon.name}"
+                    if p.rayon.parent_id and p.rayon.parent else p.rayon.name
+                )
+                rayon_code = p.rayon.code or ''
             writer.writerow([
                 p.id,
                 p.name,
@@ -57,7 +70,9 @@ class ProduitExportMixin:
                 str(p.stock).replace('.', ','),
                 str(p.cost_price).replace('.', ','),
                 str(p.selling_price).replace('.', ','),
-                str(p.tva).replace('.', ',')
+                str(p.tva).replace('.', ','),
+                rayon_path,
+                rayon_code,
             ])
 
         log_audit(

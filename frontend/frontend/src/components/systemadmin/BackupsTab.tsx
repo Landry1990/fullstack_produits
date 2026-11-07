@@ -8,7 +8,7 @@ import type { TFunction } from 'i18next';
 import type { BackupListData, BackupSettings, WalStatus } from './types';
 import { Button } from '../shadcn/button';
 import { EmptyState } from '../ui/EmptyState';
-import { Skeleton } from '../ui/Skeleton';
+import { Skeleton } from '../shadcn/skeleton';
 import { BackupPathBrowser } from './BackupPathBrowser';
 
 interface BackupsTabProps {

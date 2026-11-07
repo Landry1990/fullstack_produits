@@ -8,7 +8,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '../shadcn/dialog';
 import { EmptyState } from '../ui/EmptyState';
-import { Skeleton } from '../ui/Skeleton';
+import { Skeleton } from '../shadcn/skeleton';
 
 interface BrowseEntry {
   name: string;

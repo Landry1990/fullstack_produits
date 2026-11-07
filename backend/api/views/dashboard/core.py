@@ -206,8 +206,10 @@ class DashboardCoreMixin(viewsets.ViewSet):
                 exclude_is_divers=False
             )
             margin_today_val = float(margin_stats['marge_brute'])
+            margin_today_pct_val = float(margin_stats['marge_pct'])
         except Exception:
             margin_today_val = None
+            margin_today_pct_val = None
 
         # Base response
         response_data = {
@@ -231,6 +233,7 @@ class DashboardCoreMixin(viewsets.ViewSet):
                 'payment_mix': payment_mix_data,
                 'top_products': top_products_data,
                 'margin_today': margin_today_val,
+                'margin_today_pct': margin_today_pct_val,
             })
         
         # Mettre en cache (30s pour les stats temps réel)
@@ -262,6 +265,7 @@ class DashboardCoreMixin(viewsets.ViewSet):
             exclude_is_divers=False
         )
         margin_today = margin_stats['marge_brute']
+        margin_today_pct = margin_stats['marge_pct']
         
         # 2. Dormant Stock (6 months)
         dormant_threshold = today - timedelta(days=6 * 30)
@@ -297,6 +301,7 @@ class DashboardCoreMixin(viewsets.ViewSet):
         
         response_data = {
             'margin_today': float(margin_today),
+            'margin_today_pct': float(margin_today_pct),
             'dormant_stock': dormant_stock_data
         }
         

@@ -46,10 +46,38 @@ class MedicamentReferenceSerializer(serializers.ModelSerializer):
 class RayonSerializer(UppercaseSerializerMixin, serializers.ModelSerializer):
     parent_name = serializers.CharField(source='parent.name', read_only=True)
     produits_count = serializers.SerializerMethodField()
+    produits_count_total = serializers.SerializerMethodField()
 
     def get_produits_count(self, obj):
         val = getattr(obj, 'produits_count', None)
         return val if val is not None else obj.produit_set.count()
+
+    def get_produits_count_total(self, obj):
+        """Produits directs + produits des sous-rayons (hiérarchie à 2 niveaux)."""
+        val = getattr(obj, 'produits_count_total', None)
+        if val is not None:
+            return val
+        return Produit.objects.filter(Q(rayon=obj) | Q(rayon__parent=obj)).count()
+
+    def validate_parent(self, parent):
+        """Hiérarchie strictement limitée à 2 niveaux (rayon → sous-rayon)."""
+        if parent is None:
+            return parent
+        if parent.parent_id is not None:
+            raise serializers.ValidationError(
+                "Un sous-rayon ne peut pas devenir parent (2 niveaux maximum)."
+            )
+        instance = self.instance
+        if instance is not None:
+            if parent.pk == instance.pk:
+                raise serializers.ValidationError(
+                    "Un rayon ne peut pas être son propre parent."
+                )
+            if instance.sub_rayons.exists():
+                raise serializers.ValidationError(
+                    "Impossible : ce rayon a des sous-rayons, il doit rester à la racine."
+                )
+        return parent
 
     class Meta:
         model = Rayon
@@ -115,6 +143,7 @@ class StockLotUpdateSerializer(StockLotSerializer):
 class ProduitSerializer(UppercaseSerializerMixin, serializers.ModelSerializer):
     """Serializer optimisé pour Produit avec gestion N+1 des lots et promotions."""
     rayon_name = serializers.CharField(source='rayon.name', read_only=True)
+    rayon_path = serializers.SerializerMethodField()
     fournisseur_name = serializers.CharField(source='fournisseur.name', read_only=True)
     stock_lots = serializers.SerializerMethodField()
     total_stock = serializers.IntegerField(read_only=True)
@@ -131,6 +160,14 @@ class ProduitSerializer(UppercaseSerializerMixin, serializers.ModelSerializer):
     class Meta:
         model = Produit
         fields = '__all__'
+
+    def get_rayon_path(self, obj):
+        """Chemin complet du rayon : « PARENT › SOUS-RAYON » ou « RAYON »."""
+        if not obj.rayon:
+            return None
+        if obj.rayon.parent_id and obj.rayon.parent:
+            return f"{obj.rayon.parent.name} › {obj.rayon.name}"
+        return obj.rayon.name
 
     def get_stock_lots(self, obj):
         # Limiter à 5 lots les plus proches de la péremption pour la vue liste

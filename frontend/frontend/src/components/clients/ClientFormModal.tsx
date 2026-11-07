@@ -5,7 +5,7 @@ import {
   Phone, MapPin, ShieldCheck, CreditCard, Building2, FileText, Loader2
 } from 'lucide-react';
 import type { Client, AyantDroit } from '../../types';
-import { Switch } from '../ui/Switch';
+import { Switch } from '../shadcn/switch';
 
 interface ClientFormModalProps {
   isOpen: boolean;

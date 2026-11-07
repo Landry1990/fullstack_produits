@@ -27,7 +27,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from './shadcn/dialog';
 import { EmptyState } from './ui/EmptyState';
-import { Skeleton } from './ui/Skeleton';
+import { Skeleton } from './shadcn/skeleton';
 import {
   SHIFT_STYLES, LEAVE_STATUS_VARIANTS, LEAVE_TYPES,
   formatDateISO, getMonthName, getDaysInMonth, getWeekdayShort,

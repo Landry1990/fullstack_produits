@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { User, Save, X } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/Dialog';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/Tabs';
-import { Button } from '../ui/Button';
+import { User, Save, X, Loader2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../shadcn/dialog';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../shadcn/tabs';
+import { Button } from '../shadcn/button';
 import UserInfoTab from './tabs/UserInfoTab';
 import UserMenusTab from './tabs/UserMenusTab';
 import UserPermissionsTab from './tabs/UserPermissionsTab';
@@ -73,10 +73,12 @@ export default function UserFormDialog({ open, onOpenChange, editingUser, users,
           </div>
 
           <DialogFooter className="p-4 border-t border-base-200">
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} leftIcon={<X className="h-4 w-4" />}>
+            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+              <X className="h-4 w-4" />
               {t('common:cancel')}
             </Button>
-            <Button type="submit" isLoading={isSubmitting} leftIcon={<Save className="h-4 w-4" />}>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
               {t('common:save')}
             </Button>
           </DialogFooter>

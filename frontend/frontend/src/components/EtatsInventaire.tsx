@@ -4,7 +4,7 @@ import api from '../services/api';
 import { cn } from '../lib/utils';
 import { Button } from './shadcn/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './shadcn/card';
-import { Select } from './ui/Select';
+import { Select } from './shadcn/select';
 import {
   FileSpreadsheet, Printer, Layers,
   Package, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, BarChart3,
@@ -294,9 +294,12 @@ export default function EtatsInventaire() {
             <CardContent className="px-3 lg:px-4 pb-3 lg:pb-4 space-y-4">
 
               {/* Filtre entité */}
+              <label htmlFor="etats-entity" className="block text-caption font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                {t('stock:etats.filter_by_entity', { entity: entityLabel })}
+              </label>
               <Select
-                size="sm"
-                label={t('stock:etats.filter_by_entity', { entity: entityLabel })}
+                id="etats-entity"
+                className="h-9 text-xs"
                 aria-label={t('stock:etats.filter_by_entity', { entity: entityLabel })}
                 value={selectedEntity ?? ''}
                 onChange={(e) => setSelectedEntity(e.target.value ? Number(e.target.value) : null)}

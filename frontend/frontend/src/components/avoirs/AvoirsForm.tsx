@@ -11,10 +11,10 @@ import { formatCurrency } from '../../utils/formatters';
 import { Button } from '../shadcn/button';
 import { Badge } from '../shadcn/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../shadcn/card';
-import { Input } from '../ui/Input';
+import { Input } from '../shadcn/input';
 import { Select } from '../shadcn/select';
-import { Textarea } from '../ui/Textarea';
-import { Label } from '../ui/Label';
+import { Textarea } from '../shadcn/textarea';
+import { Label } from '../shadcn/label';
 import {
     Table, TableHeader, TableBody, TableRow, TableHead, TableCell
 } from '../shadcn/table';
@@ -308,8 +308,7 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                                                     <TableCell>
                                                         <Input
                                                             type="text"
-                                                            size="sm"
-                                                            className="text-xs"
+                                                            className="h-9 text-xs"
                                                             maxLength={200}
                                                             aria-label={t('stock:avoirs.form.table_motif')}
                                                             placeholder={t('stock:avoirs.form.motif_placeholder')}
@@ -321,8 +320,7 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                                                         <Input
                                                             type="number"
                                                             min="1"
-                                                            size="sm"
-                                                            className="text-center"
+                                                            className="h-9 text-center"
                                                             aria-label={t('stock:avoirs.form.table_qty')}
                                                             value={ligne.quantity}
                                                             onChange={(e) => updateLine(index, 'quantity', e.target.value)}

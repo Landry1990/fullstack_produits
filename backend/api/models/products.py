@@ -19,6 +19,16 @@ class Rayon(models.Model):
     """Model representing a product category."""
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100)
+    code = models.CharField(
+        max_length=20, blank=True, default='',
+        verbose_name="Code emplacement",
+        help_text="Code court de localisation physique du rayon (ex. A3).",
+    )
+    ordre = models.PositiveIntegerField(
+        default=0,
+        verbose_name="Ordre d'affichage",
+        help_text="Tri manuel — reflète l'ordre physique des rayons en officine.",
+    )
     parent = models.ForeignKey(
         'self', null=True, blank=True, 
         on_delete=models.SET_NULL, 

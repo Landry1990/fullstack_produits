@@ -6,6 +6,7 @@ import { Zap, Pencil, Loader2 } from 'lucide-react';
 import api from '../../services/api';
 import { useTVA } from '../../hooks/useTVA';
 import { normalizeNumberInput } from '../../utils/formatters';
+import { renderRayonOptions } from '../../utils/rayon';
 import { Button } from '../shadcn/button';
 import { Input } from '../shadcn/input';
 import { Select } from '../shadcn/select';
@@ -271,17 +272,7 @@ export default function QuickCreateProductModal({
                 className="h-11 text-sm"
               >
                 <option value="">{t('products:form.select_rayon')}</option>
-                {rayons.flatMap(parent => {
-                  if (parent.parent) return [];
-                  const children = rayons.filter(child => child.parent === parent.id);
-                  return [(
-                    <optgroup key={parent.id} label={parent.name}>
-                      {children.length > 0 ? children.map(child => (
-                        <option key={child.id} value={child.id}>{child.name}</option>
-                      )) : <option value={parent.id}>{parent.name}</option>}
-                    </optgroup>
-                  )];
-                })}
+                {renderRayonOptions(rayons)}
               </Select>
             </div>
           </div>

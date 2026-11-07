@@ -19,9 +19,9 @@ import {
   DollarSign,
   Store
 } from 'lucide-react'
-import { Button } from '../ui/Button'
-import { Skeleton } from '../ui/Skeleton'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs'
+import { Button } from '../shadcn/button'
+import { Skeleton } from '../shadcn/skeleton'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../shadcn/tabs'
 import type { TabId } from './types'
 import { GeneralTab } from './GeneralTab'
 import { PrintingTab } from './PrintingTab'

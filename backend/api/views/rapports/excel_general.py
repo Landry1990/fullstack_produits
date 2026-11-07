@@ -518,13 +518,14 @@ def _sheet_stock(wb, stock_rows: list, pharmacy: dict, mois_label: str, logo_pat
     ws = wb.create_sheet(T(lang, 'xs_sheet_stock'))
     start = _write_sheet_header(ws, pharmacy, T(lang, 'xs_t_stock', mois=mois_label), logo_path, lang=lang)
 
-    headers = [T(lang, 'col_rayon'), T(lang, 'col_nb_refs'), T(lang, 'col_qte_totale'), T(lang, 'col_valeur_pmp'), T(lang, 'col_stock_min'), T(lang, 'col_alertes_rupture'), T(lang, 'col_alertes_peremption')]
+    headers = [T(lang, 'col_rayon'), T(lang, 'col_code'), T(lang, 'col_nb_refs'), T(lang, 'col_qte_totale'), T(lang, 'col_valeur_pmp'), T(lang, 'col_stock_min'), T(lang, 'col_alertes_rupture'), T(lang, 'col_alertes_peremption')]
     _write_col_headers(ws, start, headers)
     r = start + 1
     totals = defaultdict(Decimal)
     for i, row in enumerate(stock_rows):
         vals = [
             row.get("rayon", ""),
+            row.get("code", ""),
             row.get("nb_refs", 0),
             row.get("qte_totale", 0),
             _fmt(row.get("valeur_pmp", 0)),
@@ -534,8 +535,8 @@ def _sheet_stock(wb, stock_rows: list, pharmacy: dict, mois_label: str, logo_pat
         ]
         for c, v in enumerate(vals, 1):
             cell = ws.cell(row=r, column=c, value=v)
-            cell.alignment = _align(h="right" if c > 1 else "left")
-            if c == 6 and int(row.get("alertes_rupture", 0) or 0) > 0:
+            cell.alignment = _align(h="right" if c > 2 else "left")
+            if c == 7 and int(row.get("alertes_rupture", 0) or 0) > 0:
                 cell.font = _font(color=PALETTE["neg"])
         _row_style(ws, r, len(headers), is_alt=(i % 2 == 0))
         totals["nb_refs"] += Decimal(str(row.get("nb_refs", 0) or 0))
@@ -543,7 +544,7 @@ def _sheet_stock(wb, stock_rows: list, pharmacy: dict, mois_label: str, logo_pat
         totals["valeur_pmp"] += Decimal(str(row.get("valeur_pmp", 0) or 0))
         totals["alertes_rupture"] += Decimal(str(row.get("alertes_rupture", 0) or 0))
         r += 1
-    for c, v in enumerate([T(lang, 'row_total'), int(totals["nb_refs"]), int(totals["qte_totale"]),
+    for c, v in enumerate([T(lang, 'row_total'), "", int(totals["nb_refs"]), int(totals["qte_totale"]),
                             _fmt(totals["valeur_pmp"]), "", int(totals["alertes_rupture"]), ""], 1):
         ws.cell(row=r, column=c, value=v)
     _row_style(ws, r, len(headers), is_total=True)
@@ -1103,7 +1104,7 @@ def _collect_data(date_debut, date_fin, lang: str | None = None):
     # ── Top Produits ─────────────────────────────────────────────────────────
     products = {
         p['id']: p for p in Produit.objects.filter(pk__in={r['produit_id'] for r in records}).values(
-            'id', 'cip1', 'cip2', 'cip3', 'rayon__name',
+            'id', 'cip1', 'cip2', 'cip3', 'rayon__name', 'rayon__parent__name',
         )
     }
     grouped_products = {}
@@ -1113,7 +1114,10 @@ def _collect_data(date_debut, date_fin, lang: str | None = None):
         row = grouped_products.setdefault(key, {
             'produit_nom': record['p_nom'],
             'cip': prod.get('cip1') or prod.get('cip2') or prod.get('cip3') or '—',
-            'rayon': prod.get('rayon__name') or '—', 'is_divers': record['is_divers'],
+            'rayon': (
+                f"{prod['rayon__parent__name']} › {prod['rayon__name']}"
+                if prod.get('rayon__parent__name') else prod.get('rayon__name') or '—'
+            ), 'is_divers': record['is_divers'],
             'quantite': 0, 'ca_ttc': Decimal(0), 'ca_ht': Decimal(0), 'cout_achat': Decimal(0),
         })
         row['quantite'] += record['qte']
@@ -1238,14 +1242,18 @@ def _collect_data(date_debut, date_fin, lang: str | None = None):
             date_expiration__gt=today,
         ).values("produit__rayon_id").annotate(n=Count("id"))
     }
-    rayons_list = list(Rayon.objects.all().order_by("name")) + [None]
+    rayons_list = list(Rayon.objects.select_related("parent").order_by("name")) + [None]
     for rayon in rayons_list:
         rid = rayon.id if rayon else None
         s = stats_rayons.get(rid)
         if not s:
             continue
         stock_rows.append({
-            "rayon":              rayon.name if rayon else T(lang, 'grp_sans_rayon_paren'),
+            "rayon":              (
+                f"{rayon.parent.name} › {rayon.name}"
+                if rayon.parent_id and rayon.parent else rayon.name
+            ) if rayon else T(lang, 'grp_sans_rayon_paren'),
+            "code":               rayon.code if rayon else "",
             "nb_refs":            s["nb_refs"],
             "qte_totale":         s["qte_totale"],
             "valeur_pmp":         float(s["valeur_pmp"]),

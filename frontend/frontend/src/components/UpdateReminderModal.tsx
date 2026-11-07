@@ -8,7 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from './ui/Dialog'
+} from './shadcn/dialog'
 import { DownloadCloud } from 'lucide-react'
 import api from '../services/api'
 

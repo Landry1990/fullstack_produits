@@ -27,6 +27,7 @@ class CadencierViewSet(viewsets.ViewSet):
         )
 
         rayon_id = parse_id(request.query_params.get('rayon'), field='rayon', required=False)
+        include_children = request.query_params.get('include_children', '').lower() in ('1', 'true', 'yes')
         fournisseur_id = parse_id(request.query_params.get('fournisseur'), field='fournisseur', required=False)
         search = (request.query_params.get('search') or '').strip()
         request.query_params.get('type', 'grossiste')  # grossiste | divers
@@ -51,7 +52,10 @@ class CadencierViewSet(viewsets.ViewSet):
             )
 
         if rayon_id:
-            queryset = queryset.filter(rayon_id=rayon_id)
+            queryset = queryset.filter(
+                Q(rayon_id=rayon_id) | Q(rayon__parent_id=rayon_id)
+                if include_children else Q(rayon_id=rayon_id)
+            )
 
         if fournisseur_id:
             queryset = queryset.filter(fournisseur_id=fournisseur_id)

@@ -4,9 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { gooeyToast } from 'goey-toast';
 import api from '../services/api';
 import { Button } from './shadcn/button';
-import { Badge } from './ui/Badge';
+import { Badge } from './shadcn/badge';
 import { EmptyState } from './ui/EmptyState';
-import { Skeleton } from './ui/Skeleton';
+import { Skeleton } from './shadcn/skeleton';
 import { logger } from '../utils/logger';
 import { useConfirm } from '../hooks/useConfirm';
 
@@ -138,7 +138,7 @@ export default function GenericsManager() {
             onSelect={(p) => setReference(p)}
           />
           {reference && (
-            <Badge variant="outline" size="sm" className="bg-primary/10 text-primary border-none">
+            <Badge variant="outline" className="px-2 py-0 text-[10px] bg-primary/10 text-primary border-none">
               {reference.name}
               <button
                 className="ml-1 hover:text-error"
@@ -170,7 +170,7 @@ export default function GenericsManager() {
           <div className="bg-base-100 rounded-3xl border border-base-200 overflow-hidden">
             <div className="p-6 border-b border-base-200 flex items-center gap-3">
               <h2 className="font-bold text-lg">{t('products:dci.generics.current_title')}</h2>
-              <Badge variant="secondary" size="sm" className="font-bold">{generics?.length ?? 0}</Badge>
+              <Badge variant="secondary" className="px-2 py-0 text-[10px] font-bold">{generics?.length ?? 0}</Badge>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">
@@ -208,12 +208,12 @@ export default function GenericsManager() {
                         <td className="px-4 py-3 text-xs">
                           <div className="flex flex-wrap gap-1">
                             {g.declared && (
-                              <Badge variant="outline" size="sm" className="border-success/40 text-success">
+                              <Badge variant="outline" className="px-2 py-0 text-[10px] border-success/40 text-success">
                                 {t('products:dci.generics.declared')}
                               </Badge>
                             )}
                             {g.shared.map(s => (
-                              <Badge key={s} variant="outline" size="sm" className="border-primary/30 text-primary">{s}</Badge>
+                              <Badge key={s} variant="outline" className="px-2 py-0 text-[10px] border-primary/30 text-primary">{s}</Badge>
                             ))}
                           </div>
                         </td>

@@ -8,10 +8,10 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from '../ui/Dialog';
-import { Button } from '../ui/Button';
-import { Checkbox } from '../ui/Checkbox';
-import { Input } from '../ui/Input';
+} from '../shadcn/dialog';
+import { Button } from '../shadcn/button';
+import { Checkbox } from '../shadcn/checkbox';
+import { Input } from '../shadcn/input';
 import { EmptyState } from '../ui/EmptyState';
 import api from '../../services/api';
 import { getApiErrorDetail } from '../../utils/errorHandling';
@@ -257,7 +257,7 @@ const ReconditionnementModal: React.FC<ReconditionnementModalProps> = ({
                       <div className="flex items-start gap-3">
                         <Checkbox
                           checked={state.selected}
-                          onChange={() => toggleSelected(tr.relation_id)}
+                          onCheckedChange={() => toggleSelected(tr.relation_id)}
                           className="mt-1 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
                           aria-label={`${tr.source_name} → ${tr.destination_name}`}
                         />

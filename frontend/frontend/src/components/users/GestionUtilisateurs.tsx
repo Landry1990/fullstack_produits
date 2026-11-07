@@ -8,8 +8,8 @@ import { useConfirm } from '../../hooks/useConfirm';
 import { useMenuHierarchy, getAllMenuKeysFromHierarchy, getMenuLabel as getMenuLabelFromHierarchy } from '../../hooks/useMenuHierarchy';
 import { useUserForm } from '../../hooks/useUserForm';
 import PasswordConfirmModal from '../PasswordConfirmModal';
-import { Button } from '../ui/Button';
-import { Badge } from '../ui/Badge';
+import { Button } from '../shadcn/button';
+import { Badge } from '../shadcn/badge';
 import { UserPlus } from 'lucide-react';
 import { logger } from '../../utils/logger'
 import { PERMISSIONS_META, ROLES, type ManagedUser } from './usersMeta';
@@ -201,11 +201,12 @@ export default function GestionUtilisateurs() {
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-4">
           <h1 className="text-2xl font-bold text-slate-800">{t('title')}</h1>
-          <Badge variant="ghost" size="md">
+          <Badge variant="ghost">
             {users.filter(u => u.is_active).length} {t('tabs.active', 'Actifs')}
           </Badge>
         </div>
-        <Button leftIcon={<UserPlus className="h-5 w-5" />} onClick={() => handleOpenModal()}>
+        <Button onClick={() => handleOpenModal()}>
+          <UserPlus className="h-5 w-5" />
           {t('new_user')}
         </Button>
       </div>

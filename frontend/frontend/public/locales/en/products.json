@@ -461,6 +461,7 @@
     "category": {
         "move_to_trash": "Move to trash",
         "col_product": "Product",
+        "col_rayon": "Section",
         "col_cip": "CIP",
         "col_stock": "Stock",
         "col_price": "Price",

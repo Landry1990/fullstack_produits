@@ -7,13 +7,11 @@ import { useInvoiceActions } from '../hooks/useInvoiceActions';
 // Components
 import { SalesFilters } from './sales/SalesFilters';
 import { SalesTable } from './sales/SalesTable';
-import { SalesQuickStats } from './sales/SalesQuickStats';
 import { ClientNameModal } from './sales/modals/ClientNameModal';
 import { ProductDetailsModal } from './sales/modals/ProductDetailsModal';
 import TicketPreviewModal from './facturation/TicketPreviewModal';
 import { usePharmacySettings } from '../hooks/usePharmacySettings';
 
-import { TrancheHoraireStats } from './sales/TrancheHoraireStats';
 import PaginationControls from './ui/PaginationControls';
 import { Receipt, Plus, ChevronUp, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -29,8 +27,7 @@ const Ventes: React.FC = () => {
     const { 
         setFactures,
         filteredFactures, 
-        loading, 
-        stats,
+        loading,
         users,
         filters, 
         refresh, 
@@ -47,8 +44,6 @@ const Ventes: React.FC = () => {
         setFacturesLocal: setFactures 
     });
 
-    const [showQuickStats, setShowQuickStats] = React.useState(false);
-    const [trancheStats, setTrancheStats] = React.useState<unknown>(null);
     const [headerCollapsed, setHeaderCollapsed] = React.useState(false);
 
     // Handle incoming redirect from Omnisearch
@@ -130,32 +125,11 @@ const Ventes: React.FC = () => {
                             onRefresh={() => { refresh(); }}
                             users={users}
                         />
-
-                        <TrancheHoraireStats
-                            startDate={filters.startDate}
-                            endDate={filters.endDate}
-                            onVerify={(data) => {
-                                setTrancheStats({
-                                    ...stats,
-                                    total_ttc: data.total_ttc,
-                                    total_regle: data.total_regle,
-                                    total_en_compte: data.total_en_compte,
-                                });
-                                setShowQuickStats(true);
-                            }}
-                        />
-
-                        {showQuickStats && (
-                            <SalesQuickStats
-                                stats={trancheStats || stats}
-                                onClose={() => setShowQuickStats(false)}
-                            />
-                        )}
                     </>
                 )}
 
                 {/* Main Content: Table */}
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-visible">
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-visible flex-1 min-h-0 flex flex-col">
                     <SalesTable
                         factures={filteredFactures}
                         loading={loading}
@@ -170,7 +144,7 @@ const Ventes: React.FC = () => {
                         onBulkDelete={bulkDeleteFactures}
                     />
 
-                    <div className="border-t border-slate-100">
+                    <div className="border-t border-slate-100 shrink-0">
                         <div className="p-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between bg-white/50 dark:bg-slate-900/50">
                             <div className="text-sm text-slate-500 dark:text-slate-400">
                                 {t('common:pagination_info', {

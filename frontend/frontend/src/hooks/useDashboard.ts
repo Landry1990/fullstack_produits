@@ -20,6 +20,7 @@ export interface DashboardStats {
     payment_mix?: Array<{ mode: string; label: string; value: number }>;
     top_products?: Array<{ id: number; name: string; qty: number; revenue: number }>;
     margin_today?: number;
+    margin_today_pct?: number;
     dormant_stock?: {
         total_value: number;
         top_products: Array<{
@@ -90,6 +91,7 @@ export const useDashboardStats = () => {
 
 interface HeavyStats {
     margin_today?: number;
+    margin_today_pct?: number;
     dormant_stock?: {
         total_value: number;
         top_products: Array<{

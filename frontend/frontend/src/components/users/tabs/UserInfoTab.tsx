@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { gooeyToast } from 'goey-toast';
 import { User, Mail, Lock, Copy } from 'lucide-react';
-import { Input } from '../../ui/Input';
-import { Label } from '../../ui/Label';
-import { Select } from '../../ui/Select';
-import { Button } from '../../ui/Button';
-import { Card } from '../../ui/Card';
+import { Input } from '../../shadcn/input';
+import { Label } from '../../shadcn/label';
+import { Select } from '../../shadcn/select';
+import { Button } from '../../shadcn/button';
+import { Card } from '../../shadcn/card';
 import { ROLES, type ManagedUser } from '../usersMeta';
 import type { UserForm } from '../../../hooks/useUserForm';
 
@@ -31,51 +31,76 @@ export default function UserInfoTab({ form, users, isEditing }: Props) {
 
   return (
     <div className="space-y-6">
-      <Card variant="bordered" padding="md">
+      <Card className="bg-transparent border-2 shadow-none p-6">
         <div className="flex items-center gap-2 mb-4 border-l-2 border-primary pl-3">
           <h4 className="font-bold text-xs uppercase tracking-widest text-primary">{t('modal.basic_info')}</h4>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input
-            label={t('form.username')}
-            icon={<User size={16} />}
-            value={formData.username}
-            onChange={e => setFormData({ ...formData, username: e.target.value })}
-            required
-          />
-          <Input
-            label={t('form.email')}
-            type="email"
-            icon={<Mail size={16} />}
-            value={formData.email}
-            onChange={e => setFormData({ ...formData, email: e.target.value })}
-          />
-          <Input
-            label={t('form.first_name')}
-            value={formData.first_name}
-            onChange={e => setFormData({ ...formData, first_name: e.target.value })}
-          />
-          <Input
-            label={t('form.last_name')}
-            value={formData.last_name}
-            onChange={e => setFormData({ ...formData, last_name: e.target.value })}
-          />
+          <div className="w-full">
+            <label htmlFor="user-username" className="block text-caption font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">{t('form.username')}</label>
+            <div className="relative group">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-emerald-500 transition-colors"><User size={16} /></div>
+              <Input
+                id="user-username"
+                className="pl-10"
+                disableUppercase
+                value={formData.username}
+                onChange={e => setFormData({ ...formData, username: e.target.value })}
+                required
+              />
+            </div>
+          </div>
+          <div className="w-full">
+            <label htmlFor="user-email" className="block text-caption font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">{t('form.email')}</label>
+            <div className="relative group">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-emerald-500 transition-colors"><Mail size={16} /></div>
+              <Input
+                id="user-email"
+                type="email"
+                className="pl-10"
+                value={formData.email}
+                onChange={e => setFormData({ ...formData, email: e.target.value })}
+              />
+            </div>
+          </div>
+          <div className="w-full">
+            <label htmlFor="user-first-name" className="block text-caption font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">{t('form.first_name')}</label>
+            <Input
+              id="user-first-name"
+              value={formData.first_name}
+              onChange={e => setFormData({ ...formData, first_name: e.target.value })}
+            />
+          </div>
+          <div className="w-full">
+            <label htmlFor="user-last-name" className="block text-caption font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">{t('form.last_name')}</label>
+            <Input
+              id="user-last-name"
+              value={formData.last_name}
+              onChange={e => setFormData({ ...formData, last_name: e.target.value })}
+            />
+          </div>
         </div>
       </Card>
 
-      <Card variant="bordered" padding="md">
+      <Card className="bg-transparent border-2 shadow-none p-6">
         <div className="flex items-center gap-2 mb-4 border-l-2 border-primary pl-3">
           <h4 className="font-bold text-xs uppercase tracking-widest text-primary">{t('form.role')}</h4>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input
-            label={t('form.password')}
-            type="password"
-            icon={<Lock size={16} />}
-            value={formData.password}
-            onChange={e => setFormData({ ...formData, password: e.target.value })}
-            placeholder={isEditing ? t('form.password_placeholder_edit') : ''}
-          />
+          <div className="w-full">
+            <label htmlFor="user-password" className="block text-caption font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">{t('form.password')}</label>
+            <div className="relative group">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-emerald-500 transition-colors"><Lock size={16} /></div>
+              <Input
+                id="user-password"
+                type="password"
+                className="pl-10"
+                value={formData.password}
+                onChange={e => setFormData({ ...formData, password: e.target.value })}
+                placeholder={isEditing ? t('form.password_placeholder_edit') : ''}
+              />
+            </div>
+          </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="user-role-select">{t('form.role')}</Label>
             <Select
@@ -92,7 +117,7 @@ export default function UserInfoTab({ form, users, isEditing }: Props) {
       </Card>
 
       {!isEditing && (
-        <Card variant="default" padding="md" className="bg-primary/5 border-primary/20">
+        <Card className="p-6 bg-primary/5 border-primary/20">
           <div className="flex items-center gap-2 mb-3">
             <Copy className="h-4 w-4 text-primary" />
             <h4 className="font-bold text-xs uppercase tracking-wider text-primary">{t('form.copy_permissions', 'Copier les droits d\'un utilisateur')}</h4>
@@ -102,7 +127,7 @@ export default function UserInfoTab({ form, users, isEditing }: Props) {
               aria-label={t('form.copy_permissions', 'Copier les droits d\'un utilisateur')}
               value={copyFromUserId}
               onChange={e => setCopyFromUserId(e.target.value ? Number(e.target.value) : '')}
-              containerClassName="flex-1"
+              className="flex-1"
             >
               <option value="">{t('form.select_user', 'Sélectionner un utilisateur...')}</option>
               {users.flatMap(user => user.is_active ? [(
@@ -115,8 +140,8 @@ export default function UserInfoTab({ form, users, isEditing }: Props) {
               type="button"
               onClick={() => handleCopy(copyFromUserId)}
               disabled={!copyFromUserId}
-              leftIcon={<Copy className="h-4 w-4" />}
             >
+              <Copy className="h-4 w-4" />
               {t('form.copy_btn', 'Copier')}
             </Button>
           </div>

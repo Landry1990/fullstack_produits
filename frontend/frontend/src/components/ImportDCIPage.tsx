@@ -10,9 +10,9 @@ import InteractionsManager from './InteractionsManager';
 import GenericsManager from './GenericsManager';
 import SubstancesManager from './SubstancesManager';
 import { Button } from './shadcn/button';
-import { Badge } from './ui/Badge';
+import { Badge } from './shadcn/badge';
 import { EmptyState } from './ui/EmptyState';
-import { Skeleton } from './ui/Skeleton';
+import { Skeleton } from './shadcn/skeleton';
 import PaginationControls from './ui/PaginationControls';
 import { pageCount } from '../utils/pagination';
 import { logger } from '../utils/logger'
@@ -373,7 +373,7 @@ export default function ImportDCIPage() {
           <h2 className="font-bold text-lg flex items-center gap-2">
             <BoxIcon />
             {t('products:actions.dci_admin.unlinked_products', 'Produits non liés')}
-            <Badge variant="secondary" size="sm" className="font-bold">{unlinkedData?.count ?? 0}</Badge>
+            <Badge variant="secondary" className="px-2 py-0 text-[10px] font-bold">{unlinkedData?.count ?? 0}</Badge>
           </h2>
           <div className="relative">
             <input
@@ -432,7 +432,7 @@ export default function ImportDCIPage() {
                     <td className="font-mono text-sm font-bold text-primary">{p.selling_price} F</td>
                     <td>
                       {p.suggestion ? (
-                        <Badge variant="outline" size="sm" className="bg-primary/10 text-primary border-none cursor-pointer hover:bg-primary/20 transition-colors"
+                        <Badge variant="outline" className="px-2 py-0 text-[10px] bg-primary/10 text-primary border-none cursor-pointer hover:bg-primary/20 transition-colors"
                           onClick={() => handleManualLink(p.id, p.suggestion!.id)}>
                           {p.suggestion.nom}
                         </Badge>

@@ -5,7 +5,7 @@ import {
 import type { TFunction } from 'i18next';
 import type { SystemStatus } from './types';
 import { backupStatusColor } from './types';
-import { Skeleton } from '../ui/Skeleton';
+import { Skeleton } from '../shadcn/skeleton';
 import { ErrorState } from '../ui/ErrorState';
 
 interface SystemHealthTabProps {

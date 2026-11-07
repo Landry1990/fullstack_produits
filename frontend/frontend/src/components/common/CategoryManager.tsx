@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import api from '../../services/api';
 import { 
   Sparkles, Pencil, Trash2, Plus, 
   Search, Package, LayoutGrid, Printer,
-  Download, Loader2, Merge, MoreHorizontal
+  Download, Loader2, Merge, MoreHorizontal, ChevronRight
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -21,7 +21,7 @@ import { formatCurrency, normalizeNumberInput } from '../../utils/formatters';
 import PremiumModal from './PremiumModal';
 import SmartOrganizerModal from './SmartOrganizerModal';
 import { EmptyState } from '../ui/EmptyState';
-import { Skeleton } from '../ui/Skeleton';
+import { Skeleton } from '../shadcn/skeleton';
 import SkeletonTable from '../ui/SkeletonTable';
 import { logger } from '../../utils/logger'
 import { generateUUID } from '../../utils/uuid'
@@ -32,9 +32,12 @@ interface Category {
   name?: string; // Rayon uses 'name'
   nom?: string;  // Forme/Groupe use 'nom'
   description?: string;
+  code?: string;
+  ordre?: number;
   parent?: number | null;
   parent_name?: string | null;
   produits_count?: number;
+  produits_count_total?: number;
   children?: Category[];
 }
 
@@ -48,6 +51,7 @@ interface Product {
   description?: string;
   rayon?: number | null;
   rayon_name?: string | null;
+  rayon_path?: string | null;
   forme?: number | null;
   forme_nom?: string | null;
   groupe?: number | null;
@@ -89,7 +93,7 @@ export default function CategoryManager({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [entries, setEntries] = useState<Array<{ id: string; name: string; description: string; parent: string }>>([{ id: generateUUID(), name: '', description: '', parent: '' }]);
+  const [entries, setEntries] = useState<Array<{ id: string; name: string; code: string; description: string; parent: string }>>([{ id: generateUUID(), name: '', code: '', description: '', parent: '' }]);
   
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
   const [productSearchTerm, setProductSearchTerm] = useState('');
@@ -137,7 +141,9 @@ export default function CategoryManager({
   const fetchProducts = async (catId: number) => {
     try {
       setProductsLoading(true);
-      const res = await api.get(`produits/?${type}=${catId}&page_size=9999`);
+      // Rayons : les produits des sous-rayons remontent aussi dans la vue du parent
+      const childrenParam = type === 'rayon' ? '&include_children=1' : '';
+      const res = await api.get(`produits/?${type}=${catId}${childrenParam}&page_size=9999`);
       
       const data = res.data.results || res.data;
       setProducts(Array.isArray(data) ? data : []);
@@ -172,14 +178,15 @@ export default function CategoryManager({
 
   useEffect(() => {
     if (isModalOpen && !editingCategory) {
-      setEntries([{ id: generateUUID(), name: '', description: '', parent: '' }]);
+      setEntries([{ id: generateUUID(), name: '', code: '', description: '', parent: '' }]);
     }
   }, [isModalOpen, editingCategory]);
 
   const handleExportExcel = async () => {
     if (!selectedCategory) return;
     try {
-      const response = await api.get(`produits/export_csv/?${type}=${selectedCategory.id}`, {
+      const childrenParam = type === 'rayon' ? '&include_children=1' : '';
+      const response = await api.get(`produits/export_csv/?${type}=${selectedCategory.id}${childrenParam}`, {
         responseType: 'blob'
       });
       
@@ -213,9 +220,11 @@ export default function CategoryManager({
       if (editingCategory) {
         // Single edit
         const entry = entries[0];
+        if (entry.parent) validEntriesForExpand.current = [parseInt(entry.parent)];
         const payload: Record<string, unknown> = {};
         if (type === 'rayon') {
           payload.name = entry.name;
+          payload.code = entry.code;
           payload.parent = entry.parent ? parseInt(entry.parent) : null;
         } else {
           payload.nom = entry.name;
@@ -229,12 +238,14 @@ export default function CategoryManager({
         // Bulk create: filter out empty names
         const validEntries = entries.filter(en => en.name.trim() !== '');
         if (validEntries.length === 0) return;
+        validEntriesForExpand.current = validEntries.filter(en => en.parent).map(en => parseInt(en.parent));
 
         const results = await Promise.all(
           validEntries.map(async (entry) => {
             const payload: Record<string, unknown> = {};
             if (type === 'rayon') {
               payload.name = entry.name;
+              payload.code = entry.code;
               payload.parent = entry.parent ? parseInt(entry.parent) : null;
             } else {
               payload.nom = entry.name;
@@ -266,8 +277,14 @@ export default function CategoryManager({
           gooeyToast.error(t('stock:organisation.category_manager.bulk_create_error', { count: errorCount }));
         }
       }
-      setEntries([{ id: generateUUID(), name: '', description: '', parent: '' }]);
+      setEntries([{ id: generateUUID(), name: '', code: '', description: '', parent: '' }]);
       setIsModalOpen(false);
+      // Déplie les parents concernés pour révéler les sous-rayons créés
+      const usedParents = validEntriesForExpand.current;
+      if (usedParents.length > 0) {
+        setExpandedIds(prev => new Set([...prev, ...usedParents]));
+        usedParents.length = 0;
+      }
     } catch {
       gooeyToast.error(t('common:messages.error_saving'));
     } finally {
@@ -276,9 +293,13 @@ export default function CategoryManager({
   };
 
   const handleDelete = async (id: number, name: string) => {
+    // Un parent supprimé : ses sous-rayons remontent à la racine (SET_NULL) — avertir.
+    const childCount = categories.filter(c => c.parent === id).length;
     const confirmed = await confirm({
       title: t('stock:organisation.category_manager.delete_confirm_title'),
-      message: t('stock:organisation.category_manager.trash_confirm_msg', { name }),
+      message: childCount > 0
+        ? t('stock:organisation.category_manager.trash_confirm_children_msg', { name, count: childCount })
+        : t('stock:organisation.category_manager.trash_confirm_msg', { name }),
       variant: 'danger',
       confirmText: t('products:category.move_to_trash')
     });
@@ -576,13 +597,71 @@ export default function CategoryManager({
     }
   };
 
+  // Drag & drop : réordonner les rayons (ordre physique en officine).
+  // Uniquement entre éléments de même fratrie (racines entre elles,
+  // sous-rayons d'un même parent entre eux).
+  const [dragId, setDragId] = useState<number | null>(null);
+  const [dropTargetId, setDropTargetId] = useState<number | null>(null);
+  const dragCounter = useRef(0);
+  const validEntriesForExpand = useRef<number[]>([]);
+
+  // Arbre repliable façon sidebar : les sous-rayons sont masqués tant que
+  // le parent n'est pas déplié (chevron). Replié par défaut.
+  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
+  const toggleExpand = (id: number) => setExpandedIds(prev => {
+    const s = new Set(prev);
+    if (s.has(id)) s.delete(id); else s.add(id);
+    return s;
+  });
+
+  const handleDrop = async (target: Category) => {
+    const sourceId = dragId;
+    setDragId(null);
+    setDropTargetId(null);
+    if (!hasHierarchy || sourceId == null || sourceId === target.id) return;
+    const source = categories.find(c => c.id === sourceId);
+    if (!source || (source.parent ?? null) !== (target.parent ?? null)) return;
+
+    const siblings = categories
+      .filter(c => (c.parent ?? null) === (target.parent ?? null))
+      .sort((a, b) => (a.ordre ?? 0) - (b.ordre ?? 0) || getCategoryName(a).localeCompare(getCategoryName(b)));
+    const ids = siblings.map(c => c.id).filter(i => i !== sourceId);
+    ids.splice(ids.indexOf(target.id), 0, sourceId);
+    const updates = ids.map((id, idx) => ({ id, ordre: idx + 1 }));
+
+    // Optimiste : applique les nouveaux ordres immédiatement
+    setCategories(prev => prev.map(c => {
+      const u = updates.find(u => u.id === c.id);
+      return u ? { ...c, ordre: u.ordre } : c;
+    }));
+    try {
+      await Promise.all(
+        updates.map(u => api.patch(`${apiPath.replace(/^\/api\//, '')}${u.id}/`, { ordre: u.ordre }))
+      );
+    } catch {
+      gooeyToast.error(t('common:messages.error_update'));
+      fetchCategories();
+    }
+  };
+
+  const dragProps = (cat: Category) => hasHierarchy ? {
+    draggable: true,
+    onDragStart: (e: React.DragEvent) => { setDragId(cat.id); e.dataTransfer.effectAllowed = 'move'; },
+    onDragOver: (e: React.DragEvent) => { e.preventDefault(); setDropTargetId(cat.id); },
+    onDragLeave: () => { dragCounter.current += 1; const n = dragCounter.current; setTimeout(() => { if (dragCounter.current === n) setDropTargetId(prev => prev === cat.id ? null : prev); }, 50); },
+    onDrop: () => handleDrop(cat),
+    onDragEnd: () => { setDragId(null); setDropTargetId(null); },
+  } : {};
+
   // Rayon Specific Hierarchy (+ filtre de recherche)
   const hierarchy = useMemo(() => {
     const q = categorySearch.trim().toLowerCase();
     const matches = (c: Category) => !q || getCategoryName(c).toLowerCase().includes(q);
     if (!hasHierarchy) return categories.filter(matches);
-    const parents = categories.filter(c => !c.parent);
-    const children = categories.filter(c => c.parent);
+    const byOrdre = (a: Category, b: Category) =>
+      (a.ordre ?? 0) - (b.ordre ?? 0) || getCategoryName(a).localeCompare(getCategoryName(b));
+    const parents = categories.filter(c => !c.parent).sort(byOrdre);
+    const children = categories.filter(c => c.parent).sort(byOrdre);
     return parents
       .map(p => ({
         ...p,
@@ -590,6 +669,12 @@ export default function CategoryManager({
       }))
       .filter(p => matches(p) || (p.children && p.children.length > 0));
   }, [categories, hasHierarchy, categorySearch]);
+
+  // La liste produits d'un rayon parent agrège aussi les sous-rayons :
+  // la colonne « Rayon » distingue alors la provenance de chaque produit.
+  const showRayonColumn = type === 'rayon'
+    && selectedCategory != null
+    && categories.some(c => c.parent === selectedCategory.id);
 
   return (
     <div className="flex flex-col lg:flex-row h-full min-h-0 gap-4">
@@ -633,7 +718,7 @@ export default function CategoryManager({
                    className="inline-flex items-center justify-center size-8 bg-emerald-600 text-white rounded-full text-sm font-bold hover:bg-emerald-700 transition-colors shadow-sm"
                    onClick={() => {
                      setEditingCategory(null);
-                     setEntries([{ id: generateUUID(), name: '', description: '', parent: '' }]);
+                     setEntries([{ id: generateUUID(), name: '', code: '', description: '', parent: '' }]);
                      setIsModalOpen(true);
                    }}
                    aria-label={t('stock:organisation.category_manager.new_title', { type })}
@@ -668,12 +753,24 @@ export default function CategoryManager({
               hierarchy.map((cat) => (
                 <div key={cat.id} className="space-y-1">
                   <div
+                    {...dragProps(cat)}
                     className={`w-full flex items-center justify-between rounded-xl transition-all group cursor-pointer ${
                       selectedCategory?.id === cat.id
                       ? 'bg-emerald-600 text-white shadow-sm'
                       : 'hover:bg-slate-100 text-slate-700'
-                    }`}
+                    } ${dropTargetId === cat.id && dragId !== cat.id ? 'ring-2 ring-emerald-400' : ''} ${dragId === cat.id ? 'opacity-40' : ''}`}
                   >
+                    {cat.children && cat.children.length > 0 ? (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); toggleExpand(cat.id); }}
+                        aria-expanded={expandedIds.has(cat.id)}
+                        aria-label={t('stock:organisation.category_manager.toggle_children')}
+                        className={`shrink-0 self-stretch flex items-center pl-2 pr-0.5 ${selectedCategory?.id === cat.id ? 'text-white/80' : 'text-slate-400 hover:text-slate-600'}`}
+                      >
+                        <ChevronRight size={14} className={`transition-transform ${expandedIds.has(cat.id) ? 'rotate-90' : ''}`} />
+                      </button>
+                    ) : hasHierarchy ? <span className="w-[22px] shrink-0" /> : null}
                     <button
                       type="button"
                       onClick={() => setSelectedCategory(cat)}
@@ -682,12 +779,19 @@ export default function CategoryManager({
                     >
                        <LayoutGrid size={16} className={selectedCategory?.id === cat.id ? 'text-white' : 'text-slate-400'} aria-hidden="true" />
                        <span className="font-medium truncate">{getCategoryName(cat)}</span>
+                       {cat.code && (
+                         <span className={`shrink-0 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-black tracking-wider ${
+                           selectedCategory?.id === cat.id ? 'bg-white/20 text-white' : 'bg-amber-50 text-amber-600 border border-amber-200'
+                         }`}>
+                           {cat.code}
+                         </span>
+                       )}
                     </button>
                     <div className={`flex gap-2 items-center pr-3 transition-opacity ${selectedCategory?.id === cat.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                        <span className={`inline-flex items-center justify-center min-w-6 h-5 px-1.5 rounded-md text-[10px] font-bold tabular-nums ${
                          selectedCategory?.id === cat.id ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
-                       }`}>
-                         {cat.produits_count ?? 0}
+                       }`} title={t('stock:organisation.category_manager.count_total_tooltip')}>
+                         {cat.produits_count_total ?? cat.produits_count ?? 0}
                        </span>
                        <DropdownMenu>
                          <DropdownMenuTrigger asChild>
@@ -699,6 +803,19 @@ export default function CategoryManager({
                            </button>
                          </DropdownMenuTrigger>
                          <DropdownMenuContent align="end" className="min-w-44">
+                           {type === 'rayon' && !cat.parent && (
+                             <DropdownMenuItem
+                               className="gap-2 cursor-pointer"
+                               onClick={() => {
+                                 setEditingCategory(null);
+                                 setEntries([{ id: generateUUID(), name: '', code: '', description: '', parent: cat.id.toString() }]);
+                                 setIsModalOpen(true);
+                               }}
+                             >
+                               <Plus size={14} className="text-emerald-500" />
+                               {t('stock:organisation.category_manager.add_child_btn')}
+                             </DropdownMenuItem>
+                           )}
                            {type === 'rayon' && (
                              <DropdownMenuItem onClick={() => openPrintModal(cat.id, getCategoryName(cat))} className="gap-2 cursor-pointer">
                                <Printer size={14} className="text-blue-500" />
@@ -720,6 +837,7 @@ export default function CategoryManager({
                                setEntries([{
                                  id: generateUUID(),
                                  name: getCategoryName(cat),
+                                 code: cat.code || '',
                                  description: cat.description || '',
                                  parent: cat.parent?.toString() || ''
                                }]);
@@ -739,16 +857,17 @@ export default function CategoryManager({
                     </div>
                   </div>
 
-                  {cat.children && cat.children.length > 0 && (
+                  {cat.children && cat.children.length > 0 && (expandedIds.has(cat.id) || categorySearch.trim() !== '') && (
                     <div className="pl-6 space-y-1 border-l-2 border-slate-100 ml-5 mt-1">
                       {cat.children.map((child) => (
                         <div
                           key={child.id}
+                          {...dragProps(child)}
                           className={`w-full flex items-center justify-between rounded-xl transition-all group text-sm cursor-pointer ${
                             selectedCategory?.id === child.id
                             ? 'bg-emerald-50 text-emerald-700 font-semibold'
                             : 'hover:bg-slate-100 text-slate-600'
-                          }`}
+                          } ${dropTargetId === child.id && dragId !== child.id ? 'ring-2 ring-emerald-400' : ''} ${dragId === child.id ? 'opacity-40' : ''}`}
                         >
                           <button
                             type="button"
@@ -757,10 +876,15 @@ export default function CategoryManager({
                             aria-pressed={selectedCategory?.id === child.id}
                           >
                             <span className="truncate">↳ {getCategoryName(child)}</span>
+                            {child.code && (
+                              <span className="shrink-0 inline-flex items-center px-1 py-0.5 rounded text-[10px] font-black tracking-wider bg-amber-50 text-amber-600 border border-amber-200">
+                                {child.code}
+                              </span>
+                            )}
                           </button>
                           <div className={`flex gap-2 items-center pr-2 ${selectedCategory?.id === child.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
-                             <span className="inline-flex items-center justify-center min-w-5 h-4.5 px-1 rounded text-[10px] font-bold tabular-nums bg-slate-100 text-slate-500">
-                               {child.produits_count ?? 0}
+                             <span className="inline-flex items-center justify-center min-w-5 h-4.5 px-1 rounded text-[10px] font-bold tabular-nums bg-slate-100 text-slate-500" title={t('stock:organisation.category_manager.count_total_tooltip')}>
+                               {child.produits_count_total ?? child.produits_count ?? 0}
                              </span>
                              <DropdownMenu>
                                <DropdownMenuTrigger asChild>
@@ -793,6 +917,7 @@ export default function CategoryManager({
                                      setEntries([{
                                        id: generateUUID(),
                                        name: getCategoryName(child),
+                                       code: child.code || '',
                                        description: child.description || '',
                                        parent: child.parent?.toString() || ''
                                      }]);
@@ -835,9 +960,14 @@ export default function CategoryManager({
                         {selectedCategory.description && (
                            <p className="mt-2 text-slate-500 max-w-2xl">{selectedCategory.description}</p>
                         )}
-                        {selectedCategory.parent_name && (
-                           <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold border border-slate-200 text-slate-500">{t('stock:organisation.category_manager.parent_label')}: {selectedCategory.parent_name}</div>
-                        )}
+                        <div className="mt-2 flex flex-wrap gap-2">
+                           {selectedCategory.parent_name && (
+                              <div className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold border border-slate-200 text-slate-500">{t('stock:organisation.category_manager.parent_label')}: {selectedCategory.parent_name}</div>
+                           )}
+                           {selectedCategory.code && (
+                              <div className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-black tracking-wider bg-amber-50 text-amber-600 border border-amber-200">{t('stock:organisation.category_manager.code_label')}: {selectedCategory.code}</div>
+                           )}
+                        </div>
                      </div>
                      <div className="flex gap-2">
                         <button
@@ -854,6 +984,14 @@ export default function CategoryManager({
                         >
                           <Plus size={18} />
                           {t('stock:organisation.category_manager.add_products_btn')}
+                        </button>
+                        <button
+                          onClick={() => { setOrganizerTarget({id: selectedCategory.id, name: getCategoryName(selectedCategory)}); setIsOrganizerOpen(true); }}
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-purple-200 bg-purple-50 text-purple-700 text-sm font-bold hover:bg-purple-100 transition-all"
+                          title={t('stock:organisation.smart_organizer.title')}
+                        >
+                          <Sparkles size={18} />
+                          {t('stock:organisation.smart_organizer.title')}
                         </button>
                         <button
                            onClick={() => openMergeModal(selectedCategory)}
@@ -891,6 +1029,9 @@ export default function CategoryManager({
                               <thead className="bg-slate-50 sticky top-0 z-10">
                                  <tr className="border-b border-slate-200 text-left">
                                     <th className="px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:category.col_product')}</th>
+                                    {showRayonColumn && (
+                                       <th className="px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500 w-36">{t('products:category.col_rayon')}</th>
+                                    )}
                                     <th className="px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500 w-28">{t('products:category.col_cip')}</th>
                                     <th className="px-3 py-2 whitespace-nowrap text-center text-xs font-semibold uppercase tracking-wide text-slate-500 w-20">{t('products:category.col_stock')}</th>
                                     <th className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-24">{t('products:category.col_price')}</th>
@@ -908,6 +1049,17 @@ export default function CategoryManager({
                                              <div className="font-semibold text-slate-800 truncate">{p.name}</div>
                                           </div>
                                        </td>
+                                       {showRayonColumn && (
+                                          <td className="px-3 py-2">
+                                             <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold truncate max-w-40 ${
+                                               p.rayon === selectedCategory?.id
+                                                 ? 'bg-emerald-50 text-emerald-600'
+                                                 : 'bg-sky-50 text-sky-600'
+                                             }`}>
+                                                {p.rayon_path || p.rayon_name || '—'}
+                                             </span>
+                                          </td>
+                                       )}
                                        <td className="px-3 py-2 font-mono text-slate-400">{p.cip1}</td>
                                        <td className="px-3 py-2 text-center">
                                           <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-md font-bold text-xs ${p.stock <= p.stock_alert ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-600'}`}>
@@ -1001,6 +1153,22 @@ export default function CategoryManager({
                     autoComplete="off"
                  />
 
+                 {type === 'rayon' && (
+                    <div>
+                       <label htmlFor={`cat-entry-code-${entry.id}`} className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('stock:organisation.category_manager.code_label')}</label>
+                       <Input
+                         id={`cat-entry-code-${entry.id}`}
+                         type="text"
+                         className="w-full rounded-xl border border-slate-200 bg-white px-3 h-10 text-sm font-medium text-slate-700 uppercase focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                         value={entry.code}
+                         onChange={e => setEntries(prev => prev.map((en, i) => i === idx ? { ...en, code: e.target.value } : en))}
+                         placeholder={t('stock:organisation.category_manager.code_placeholder')}
+                         maxLength={20}
+                         autoComplete="off"
+                       />
+                    </div>
+                 )}
+
                  {hasHierarchy && (
                     <div>
                        <label htmlFor={`cat-entry-parent-${entry.id}`} className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('stock:organisation.category_manager.parent_label')}</label>
@@ -1037,7 +1205,7 @@ export default function CategoryManager({
               <button
                 type="button"
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-dashed border-emerald-300 text-emerald-600 text-sm font-bold hover:bg-emerald-50 transition-colors w-full justify-center"
-                onClick={() => setEntries(prev => [...prev, { id: generateUUID(), name: '', description: '', parent: '' }])}
+                onClick={() => setEntries(prev => [...prev, { id: generateUUID(), name: '', code: '', description: '', parent: '' }])}
               >
                  <Plus size={16} />
                  {t('stock:organisation.category_manager.add_another_entry', { type })}

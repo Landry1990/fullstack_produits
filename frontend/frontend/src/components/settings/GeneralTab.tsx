@@ -1,5 +1,5 @@
 import { Info, MapPin, CreditCard, ChevronRight, Settings, Banknote } from 'lucide-react'
-import { Button } from '../ui/Button'
+import { Button } from '../shadcn/button'
 import { Input } from '../shadcn/input'
 import { Checkbox } from '../shadcn/checkbox'
 import { getConfigurablePaymentModes, getPaymentModeLabel } from '../../config/paymentModes'

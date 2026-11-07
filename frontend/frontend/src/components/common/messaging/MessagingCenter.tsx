@@ -17,8 +17,8 @@ import {
   useSupervisionMessageCount,
   useUnreadMessageCount,
 } from './useMessaging';
-import { Input } from '../../ui/Input';
-import { Checkbox } from '../../ui/Checkbox';
+import { Input } from '../../shadcn/input';
+import { Checkbox } from '../../shadcn/checkbox';
 import PaginationControls from '../../ui/PaginationControls';
 import {
   composerReducer,
@@ -206,29 +206,37 @@ export function MessagingCenter({ currentUser, isOpen, onMessageRead }: Messagin
 
               {filtersVisible && (
                 <div className="space-y-2 mb-3">
-                  <Input
-                    value={searchInput}
-                    onChange={(e) => handleSearchChange(e.target.value)}
-                    placeholder={t('search_placeholder')}
-                    icon={<Search size={16} aria-hidden />}
-                    size="sm"
-                  />
-                  <div className="flex flex-wrap items-center gap-3 px-1">
-                    <Checkbox
-                      checked={hasAttachment}
-                      onChange={handleHasAttachmentChange}
-                      label={t('filter_attachment')}
-                      size="sm"
-                      color="primary"
+                  <div className="relative group">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-emerald-500 transition-colors">
+                      <Search size={16} aria-hidden />
+                    </span>
+                    <Input
+                      value={searchInput}
+                      onChange={(e) => handleSearchChange(e.target.value)}
+                      placeholder={t('search_placeholder')}
+                      className="h-9 text-xs pl-10"
                     />
-                    {activeTab === 'received' && (
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3 px-1">
+                    <div className="flex items-center gap-2">
                       <Checkbox
-                        checked={unreadOnly}
-                        onChange={handleUnreadOnlyChange}
-                        label={t('filter_unread')}
-                        size="sm"
-                        color="error"
+                        checked={hasAttachment}
+                        onCheckedChange={(v) => handleHasAttachmentChange(v === true)}
                       />
+                      <label className="text-sm font-medium select-none text-slate-600 dark:text-slate-300">
+                        {t('filter_attachment')}
+                      </label>
+                    </div>
+                    {activeTab === 'received' && (
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          checked={unreadOnly}
+                          onCheckedChange={(v) => handleUnreadOnlyChange(v === true)}
+                        />
+                        <label className="text-sm font-medium select-none text-slate-600 dark:text-slate-300">
+                          {t('filter_unread')}
+                        </label>
+                      </div>
                     )}
                   </div>
                 </div>

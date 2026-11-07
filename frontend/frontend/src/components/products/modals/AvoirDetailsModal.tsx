@@ -17,7 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../shadcn/card';
 import { Button } from '../../shadcn/button';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../shadcn/table';
 import { EmptyState } from '../../ui/EmptyState';
-import { Skeleton } from '../../ui/Skeleton';
+import { Skeleton } from '../../shadcn/skeleton';
 
 interface AvoirDetailsModalProps {
   isOpen: boolean;

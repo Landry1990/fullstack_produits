@@ -5,11 +5,11 @@ import { BarChart3, Package } from 'lucide-react';
 import api from '../../../services/api';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter
-} from '../../ui/Dialog';
-import { Button } from '../../ui/Button';
-import { Input } from '../../ui/Input';
+} from '../../shadcn/dialog';
+import { Button } from '../../shadcn/button';
+import { Input } from '../../shadcn/input';
 import { LocalizedDateInput } from '../../LocalizedDateInput';
-import { Select } from '../../ui/Select';
+import { Select } from '../../shadcn/select';
 import { logger } from '../../../utils/logger'
 
 interface AdjustFormType {
@@ -180,8 +180,12 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
 
               {/* Existing lot selector */}
               {!form.new_lot_number && lots.length > 0 && (
+                <div className="w-full">
+                <label htmlFor="stock-adjust-lot" className="block text-caption font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                  {t('products:adjustment.lot_concerned')}
+                </label>
                 <Select
-                  label={t('products:adjustment.lot_concerned')}
+                  id="stock-adjust-lot"
                   aria-label={t('products:adjustment.lot_concerned')}
                   value={form.stock_lot_id || ''}
                   onChange={(e) => setForm((prev) => ({ ...prev, stock_lot_id: e.target.value }))}
@@ -194,20 +198,23 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
                     </option>
                   ))}
                 </Select>
+                </div>
               )}
 
               {/* New lot fields */}
               {form.new_lot_number && (
                 <div className="space-y-3 p-3 bg-emerald-50/50 border border-emerald-100 rounded-xl">
+                  <label htmlFor="stock-adjust-new-lot" className="block text-caption font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                    {t('products:adjustment.lot_number')}
+                  </label>
                   <Input
+                    id="stock-adjust-new-lot"
                     type="text"
-                    label={t('products:adjustment.lot_number')}
                     maxLength={20}
                     value={form.new_lot_number?.trim() === '' ? '' : form.new_lot_number}
                     onChange={(e) => setForm((prev) => ({ ...prev, new_lot_number: e.target.value }))}
                     placeholder={t('products:adjustment.lot_placeholder')}
                     required
-                    size="md"
                   />
                   <LocalizedDateInput
                     label={t('products:adjustment.expiry_date')}
@@ -258,15 +265,17 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
           {inputMode === 'absolute' ? (
             <>
               {/* New shelf quantity (absolute) */}
+              <label htmlFor="stock-adjust-new-qty" className="block text-caption font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                {selectedProduit?.has_reserve_storage ? t('products:adjustment.new_shelf_stock') : t('products:adjustment.new_quantity')}
+              </label>
               <Input
+                id="stock-adjust-new-qty"
                 type="number"
-                label={selectedProduit?.has_reserve_storage ? t('products:adjustment.new_shelf_stock') : t('products:adjustment.new_quantity')}
                 value={form.new_quantity}
                 onChange={(e) => setForm((prev) => ({ ...prev, new_quantity: e.target.value }))}
                 required
                 min={0}
-                size="lg"
-                className="text-center text-xl font-bold"
+                className="text-center text-xl font-bold h-12"
               />
               {form.new_quantity && selectedProduit && (
                 <div className="text-center -mt-2">
@@ -284,15 +293,17 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
               {/* New reserve quantity (absolute) */}
               {selectedProduit?.has_reserve_storage && (
                 <>
+                  <label htmlFor="stock-adjust-new-reserve-qty" className="block text-caption font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                    {t('products:adjustment.new_reserve_stock')}
+                  </label>
                   <Input
+                    id="stock-adjust-new-reserve-qty"
                     type="number"
-                    label={t('products:adjustment.new_reserve_stock')}
                     value={form.new_reserve_quantity}
                     onChange={(e) => setForm((prev) => ({ ...prev, new_reserve_quantity: e.target.value }))}
                     required
                     min={0}
-                    size="lg"
-                    className="text-center text-xl font-bold"
+                    className="text-center text-xl font-bold h-12"
                   />
                   {form.new_reserve_quantity && (
                     <div className="text-center -mt-2">
@@ -312,17 +323,19 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
           ) : (
             <>
               {/* Delta mode: shelf */}
+              <label htmlFor="stock-adjust-delta-shelf" className="block text-caption font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                {selectedProduit?.has_reserve_storage ? t('products:adjustment.delta_shelf') : t('products:adjustment.delta_quantity')}
+              </label>
               <Input
+                id="stock-adjust-delta-shelf"
                 type="number"
-                label={selectedProduit?.has_reserve_storage ? t('products:adjustment.delta_shelf') : t('products:adjustment.delta_quantity')}
                 value={shelfDelta}
                 onChange={(e) => {
                   setShelfDelta(e.target.value);
                   applyDelta(selectedProduit?.stock ?? 0, e.target.value, 'new_quantity');
                 }}
                 required
-                size="lg"
-                className="text-center text-xl font-bold"
+                className="text-center text-xl font-bold h-12"
                 placeholder={t('products:adjustment.delta_placeholder')}
               />
               <div className="text-center -mt-2">
@@ -344,17 +357,19 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
               {/* Delta mode: reserve */}
               {selectedProduit?.has_reserve_storage && (
                 <>
+                  <label htmlFor="stock-adjust-delta-reserve" className="block text-caption font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                    {t('products:adjustment.delta_reserve')}
+                  </label>
                   <Input
+                    id="stock-adjust-delta-reserve"
                     type="number"
-                    label={t('products:adjustment.delta_reserve')}
                     value={reserveDelta}
                     onChange={(e) => {
                       setReserveDelta(e.target.value);
                       applyDelta(selectedProduit?.stock_reserve ?? 0, e.target.value, 'new_reserve_quantity');
                     }}
                     required
-                    size="lg"
-                    className="text-center text-xl font-bold"
+                    className="text-center text-xl font-bold h-12"
                     placeholder={t('products:adjustment.delta_placeholder')}
                   />
                   <div className="text-center -mt-2">
@@ -378,8 +393,12 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
           )}
 
           {/* Reason selector */}
+          <div className="w-full">
+          <label htmlFor="stock-adjust-reason" className="block text-caption font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+            {t('products:adjustment.reason_type')}
+          </label>
           <Select
-            label={t('products:adjustment.reason_type')}
+            id="stock-adjust-reason"
             aria-label={t('products:adjustment.reason_type')}
             value={form.reason_type}
             onChange={(e) => setForm((prev) => ({ ...prev, reason_type: e.target.value }))}
@@ -391,12 +410,13 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
               </option>
             ))}
           </Select>
+          </div>
 
           <DialogFooter className="pt-4 border-t border-slate-200">
             <Button type="button" variant="outline" onClick={onClose}>
               {t('common:actions.cancel')}
             </Button>
-            <Button type="submit" variant="primary" disabled={!form.new_quantity || deltaInvalid || isSubmitting}>
+            <Button type="submit" variant="default" disabled={!form.new_quantity || deltaInvalid || isSubmitting}>
               {isSubmitting ? t('common:actions.processing') : t('common:actions.confirm')}
             </Button>
           </DialogFooter>

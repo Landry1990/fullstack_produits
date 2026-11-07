@@ -53,14 +53,6 @@
         "end_date": "Fin",
         "all_sellers": "Tous les vendeurs"
     },
-    "tranche_horaire": {
-        "title": "Vérification par Tranche Horaire",
-        "subtitle": "Comparez les montants vendus sur une période précise",
-        "start_time": "Heure de début",
-        "end_time": "Heure de fin",
-        "verify_btn": "Vérifier",
-        "error_loading": "Erreur lors de la récupération des données"
-    },
     "status": {
         "paid": "Payée",
         "validated": "Validée",

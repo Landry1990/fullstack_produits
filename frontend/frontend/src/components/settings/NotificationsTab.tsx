@@ -1,5 +1,5 @@
 import { Smartphone, Info, Bell, Loader2 } from 'lucide-react'
-import { Button } from '../ui/Button'
+import { Button } from '../shadcn/button'
 import { Input } from '../shadcn/input'
 import { Checkbox } from '../shadcn/checkbox'
 import type { NotificationsTabProps } from './types'
@@ -74,7 +74,6 @@ export function NotificationsTab({ formData, handleChange, t, testingWhatsapp, t
                 />
                 <Button
                   type="button"
-                  variant="primary"
                   onClick={handleTestWhatsapp}
                   disabled={testingWhatsapp || !formData.whatsapp_enabled}
                   className="h-12 px-6 rounded-xl shadow-lg shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-700"

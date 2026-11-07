@@ -10,6 +10,7 @@ export interface InvoiceSettings {
     centralized_cash_register: boolean;
     require_validator_password: boolean;
     auto_print_ticket: boolean;
+    sudo_session_minutes?: number;
     show_profit_on_invoice: boolean;
     default_invoice_type: string;
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { FileText, Loader2, Paperclip } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Dialog, DialogContent, DialogTitle } from '../../ui/Dialog';
+import { Dialog, DialogContent, DialogTitle } from '../../shadcn/dialog';
 import communicationService, { type InternalMessage } from '../../../services/communicationService';
 
 interface AttachmentThumbProps {

@@ -1,11 +1,11 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Store, Plus, Loader2, Trash2, AlertCircle, Power } from 'lucide-react'
-import { Button } from '../ui/Button'
+import { Button } from '../shadcn/button'
 import { Input } from '../shadcn/input'
 import { Badge } from '../shadcn/badge'
 import { EmptyState } from '../ui/EmptyState'
-import { Skeleton } from '../ui/Skeleton'
+import { Skeleton } from '../shadcn/skeleton'
 import { gooeyToast } from 'goey-toast'
 import {
   cashSessionService,

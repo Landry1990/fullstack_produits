@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Badge } from '../ui/Badge';
+import { Badge } from '../shadcn/badge';
 
 export interface ClinicalAlert {
   type: string
@@ -31,7 +31,7 @@ export default function ClinicalAlerts({ alerts }: ClinicalAlertsProps) {
           <div className="flex-1">
             <h3 className="font-bold uppercase tracking-wide flex items-center gap-2">
               {alert.title}
-              <Badge variant="outline" size="sm" className="text-error font-extrabold">{t(`clinical:alerts.gravities.${alert.gravity}`)}</Badge>
+              <Badge variant="outline" className="px-2 py-0 text-[10px] text-error font-extrabold">{t(`clinical:alerts.gravities.${alert.gravity}`)}</Badge>
             </h3>
             <div className="text-sm mt-1">{alert.description}</div>
             <div className="text-xs mt-1 opacity-90 font-mono">
@@ -48,7 +48,7 @@ export default function ClinicalAlerts({ alerts }: ClinicalAlertsProps) {
           <div className="flex-1">
             <h3 className="font-bold flex items-center gap-2">
               {alert.title}
-              {alert.gravity === 'A_PRENDRE_EN_COMPTE' && <Badge variant="ghost" size="sm">{t('clinical:alerts.to_watch')}</Badge>}
+              {alert.gravity === 'A_PRENDRE_EN_COMPTE' && <Badge variant="ghost" className="px-2 py-0 text-[10px]">{t('clinical:alerts.to_watch')}</Badge>}
             </h3>
             <div className="text-xs">{alert.description}</div>
             <div className="text-xs mt-1 font-mono opacity-80">

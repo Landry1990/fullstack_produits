@@ -6,8 +6,8 @@ import {
 } from 'lucide-react';
 import type { ProduitModel } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
-import { Button } from '../ui/Button';
-import { Badge } from '../ui/Badge';
+import { Button } from '../shadcn/button';
+import { Badge } from '../shadcn/badge';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger
@@ -55,8 +55,8 @@ export const ProductDetailHeader: React.FC<ProductDetailHeaderProps> = ({
             <h2 className="text-lg font-bold text-slate-900 uppercase leading-tight break-words min-w-0" title={produit.name}>
               {produit.name}
             </h2>
-            {produit.is_active === false && <Badge variant="ghost" size="sm">{t('products:table.inactive_badge')}</Badge>}
-            {produit.is_supplier_exclusive && <Badge variant="success" size="sm">{t('products:table.exclusive_badge_full')}</Badge>}
+            {produit.is_active === false && <Badge variant="ghost" className="px-2 py-0 text-[10px]">{t('products:table.inactive_badge')}</Badge>}
+            {produit.is_supplier_exclusive && <Badge variant="success" className="px-2 py-0 text-[10px]">{t('products:table.exclusive_badge_full')}</Badge>}
             {produit.is_service && (
               <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-violet-50 text-violet-600">
                 {t('products:form.service_badge')}
@@ -112,11 +112,13 @@ export const ProductDetailHeader: React.FC<ProductDetailHeaderProps> = ({
       {/* Actions */}
       <div className="flex flex-wrap items-center gap-2">
         {!produit.is_service && (
-          <Button variant="outline" size="sm" onClick={() => onOpenAdjust(produit)} leftIcon={<BarChart3 className="size-4" />} title={t('products:actions.adjust_stock', { defaultValue: 'Ajuster le stock' })}>
+          <Button variant="outline" size="sm" onClick={() => onOpenAdjust(produit)} title={t('products:actions.adjust_stock', { defaultValue: 'Ajuster le stock' })}>
+            <BarChart3 className="size-4" />
             {t('products:actions.adjust_stock', { defaultValue: 'Stock' })}
           </Button>
         )}
-        <Button variant="outline" size="sm" onClick={() => onOpenEdit(produit)} leftIcon={<Pencil className="size-4" />} title={t('common:actions.edit')}>
+        <Button variant="outline" size="sm" onClick={() => onOpenEdit(produit)} title={t('common:actions.edit')}>
+          <Pencil className="size-4" />
           {t('common:actions.edit')}
         </Button>
         <DropdownMenu>

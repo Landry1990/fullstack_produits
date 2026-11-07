@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Archive, Bell, Edit2, Plus, Send, Shield } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Badge } from '../../ui/Badge';
+import { Badge } from '../../shadcn/badge';
 import type { MessagingTab } from './types';
 
 interface MessagingNavProps {
@@ -53,7 +53,7 @@ export function MessagingNav({ activeTab, onTabChange, unreadCount, supervisionC
         label={t('tabs.received')}
         badge={
           unreadCount > 0 ? (
-            <Badge variant="error" size="sm" className="ml-auto" aria-label={t('list.unread_count', { count: unreadCount })}>
+            <Badge variant="destructive" className="ml-auto px-2 py-0 text-[10px]" aria-label={t('list.unread_count', { count: unreadCount })}>
               {unreadCount}
             </Badge>
           ) : undefined
@@ -87,8 +87,7 @@ export function MessagingNav({ activeTab, onTabChange, unreadCount, supervisionC
           badge={
             <Badge
               variant="warning"
-              size="sm"
-              className="ml-auto"
+              className="ml-auto px-2 py-0 text-[10px]"
               aria-label={t('supervision.message_count', { count: supervisionCount })}
             >
               {supervisionCount}

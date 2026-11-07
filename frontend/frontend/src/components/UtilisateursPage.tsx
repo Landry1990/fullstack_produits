@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { staggerContainer, fadeInUp } from '../lib/motion';
 import { useTranslation } from 'react-i18next';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/Tabs';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from './shadcn/tabs';
 import { Users, Clock } from 'lucide-react';
 import GestionUtilisateurs from './users/GestionUtilisateurs';
 import UserSessions from './UserSessionsShadcn';

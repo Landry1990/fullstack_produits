@@ -6,7 +6,7 @@ import type { useFournisseurs } from '../../hooks/useFournisseurs';
 import { Button } from '../shadcn/button';
 import { Badge } from '../shadcn/badge';
 import { EmptyState } from '../ui/EmptyState';
-import { Skeleton } from '../ui/Skeleton';
+import { Skeleton } from '../shadcn/skeleton';
 import { cn } from '../../lib/utils';
 
 interface Props {

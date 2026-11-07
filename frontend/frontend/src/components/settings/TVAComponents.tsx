@@ -1,6 +1,6 @@
 import type { TVA } from '../../types'
 import { Trash2, Loader2, Settings } from 'lucide-react'
-import { Button } from '../ui/Button'
+import { Button } from '../shadcn/button'
 import { Input } from '../shadcn/input'
 import { Badge } from '../shadcn/badge'
 import {
@@ -12,7 +12,7 @@ import {
   TableRow,
 } from '../shadcn/table'
 import { EmptyState } from '../ui/EmptyState'
-import { Skeleton } from '../ui/Skeleton'
+import { Skeleton } from '../shadcn/skeleton'
 import type { SettingsTabProps } from './types'
 
 type TFunc = SettingsTabProps['t']

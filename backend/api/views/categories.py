@@ -32,7 +32,12 @@ from .category_merge import merge_category
 
 class CategorieViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
     """API endpoint for categories (rayons) - Fresh implementation."""
-    queryset = Rayon.objects.annotate(produits_count=Count('produit')).order_by('name')
+    queryset = Rayon.objects.annotate(
+        produits_count=Count('produit', distinct=True),
+        produits_count_total=(
+            Count('produit', distinct=True) + Count('sub_rayons__produit', distinct=True)
+        ),
+    ).order_by('ordre', 'name')
     serializer_class = RayonSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = StandardResultsSetPagination
@@ -241,7 +246,12 @@ class CategoriesListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        rayons = Rayon.objects.annotate(produits_count=Count('produit')).order_by('name')
+        rayons = Rayon.objects.annotate(
+            produits_count=Count('produit', distinct=True),
+            produits_count_total=(
+                Count('produit', distinct=True) + Count('sub_rayons__produit', distinct=True)
+            ),
+        ).order_by('ordre', 'name')
         serializer = RayonSerializer(rayons, many=True)
         return Response(serializer.data)
 

@@ -1,12 +1,12 @@
 import { useState, type FormEvent } from 'react';
-import { Edit2, FileText, Plus, Send, Trash2 } from 'lucide-react';
+import { Edit2, FileText, Loader2, Plus, Send, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Badge } from '../../ui/Badge';
-import { Button } from '../../ui/Button';
+import { Badge } from '../../shadcn/badge';
+import { Button } from '../../shadcn/button';
 import { EmptyState } from '../../ui/EmptyState';
-import { Input } from '../../ui/Input';
-import { Skeleton } from '../../ui/Skeleton';
-import { Textarea } from '../../ui/Textarea';
+import { Input } from '../../shadcn/input';
+import { Skeleton } from '../../shadcn/skeleton';
+import { Textarea } from '../../shadcn/textarea';
 import type { MessageTemplate } from '../../../services/communicationService';
 import { useDeleteTemplateMutation, useSaveTemplateMutation } from './useMessaging';
 import { useConfirm } from '../../../hooks/useConfirm';
@@ -76,7 +76,8 @@ export function TemplatesPanel({ templates, loading, isAdmin, onApply }: Templat
       <div className="flex items-center justify-between mb-6 sticky top-0 bg-white z-10 pb-2 border-b border-slate-200">
         <h4 className="text-lg font-semibold text-slate-700">{t('templates.title')}</h4>
         {isAdmin && !formOpen && (
-          <Button type="button" size="sm" variant="outline" leftIcon={<Plus size={14} aria-hidden />} onClick={openCreate}>
+          <Button type="button" size="sm" variant="outline" onClick={openCreate}>
+            <Plus size={14} aria-hidden />
             {t('templates.add')}
           </Button>
         )}
@@ -115,7 +116,8 @@ export function TemplatesPanel({ templates, loading, isAdmin, onApply }: Templat
             >
               {t('common:cancel')}
             </Button>
-            <Button type="submit" size="sm" isLoading={saveTemplateMutation.isPending} className="flex-1">
+            <Button type="submit" size="sm" disabled={saveTemplateMutation.isPending} className="flex-1">
+              {saveTemplateMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
               {t('common:save')}
             </Button>
           </div>
@@ -136,7 +138,7 @@ export function TemplatesPanel({ templates, loading, isAdmin, onApply }: Templat
             <div key={temp.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50">
               <div className="flex justify-between items-start mb-2 min-w-0 gap-2">
                 <h5 className="font-semibold text-blue-600 truncate">{temp.title}</h5>
-                <Badge variant="ghost" size="sm" className="shrink-0 italic font-normal">
+                <Badge variant="ghost" className="shrink-0 italic font-normal px-2 py-0 text-[10px]">
                   {temp.created_by_name}
                 </Badge>
               </div>
@@ -145,10 +147,10 @@ export function TemplatesPanel({ templates, loading, isAdmin, onApply }: Templat
                 <Button
                   type="button"
                   size="sm"
-                  leftIcon={<Send size={13} aria-hidden />}
                   onClick={() => onApply(temp.content)}
                   className="flex-1"
                 >
+                  <Send size={13} aria-hidden />
                   {t('templates.use')}
                 </Button>
                 {isAdmin && (

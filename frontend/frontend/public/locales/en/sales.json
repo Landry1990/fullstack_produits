@@ -53,14 +53,6 @@
         "end_date": "End",
         "all_sellers": "All sellers"
     },
-    "tranche_horaire": {
-        "title": "Time Slot Verification",
-        "subtitle": "Compare amounts sold over a specific period",
-        "start_time": "Start time",
-        "end_time": "End time",
-        "verify_btn": "Verify",
-        "error_loading": "Error retrieving data"
-    },
     "status": {
         "paid": "Paid",
         "validated": "Validated",

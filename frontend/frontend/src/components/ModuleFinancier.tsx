@@ -18,11 +18,11 @@ import {
 } from '../hooks/useFinanceStats';
 
 import { formatCurrency, formatNumber } from '../utils/formatters';
-import { Button } from './ui/Button';
-import { Select } from './ui/Select';
+import { Button } from './shadcn/button';
+import { Select } from './shadcn/select';
 import { Badge } from './shadcn/badge';
 import { EmptyState } from './ui/EmptyState';
-import { Skeleton } from './ui/Skeleton';
+import { Skeleton } from './shadcn/skeleton';
 
 // Color palette
 const COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16'];
@@ -152,7 +152,7 @@ export default function ModuleFinancier() {
           </div>
           <div className="flex gap-2">
             <Select
-              size="sm"
+              className="h-9 text-xs w-auto"
               value={periode}
               onChange={(e) => setPeriode(e.target.value as 'mois' | 'trimestre' | 'annee')}
             >
@@ -531,7 +531,7 @@ export default function ModuleFinancier() {
                 {t('charts.repartition', 'Répartition CA')}
               </h3>
               <Select
-                size="sm"
+                className="h-9 text-xs w-auto"
                 value={repartitionBy}
                 onChange={(e) => setRepartitionBy(e.target.value as 'categorie' | 'fournisseur')}
               >
@@ -577,7 +577,7 @@ export default function ModuleFinancier() {
                 {t('top_products', 'Top Produits')}
               </h3>
               <Select
-                size="sm"
+                className="h-9 text-xs w-auto"
                 value={critereTop}
                 onChange={(e) => setCritereTop(e.target.value as 'ca' | 'marge')}
               >

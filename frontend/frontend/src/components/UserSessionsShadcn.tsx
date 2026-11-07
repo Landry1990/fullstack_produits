@@ -12,8 +12,8 @@ import { LocalizedDateInput } from './LocalizedDateInput';
 import { Badge } from './shadcn/badge';
 import { Tabs, TabsList, TabsTrigger } from './shadcn/tabs';
 
-import { Label } from './ui/Label';
-import { Select } from './ui/Select';
+import { Label } from './shadcn/label';
+import { Select } from './shadcn/select';
 import { useConfirm } from '../hooks/useConfirm';
 import { logger } from '../utils/logger'
 import {
@@ -218,7 +218,7 @@ const UserSessionsShadcn: React.FC = () => {
                   <Label htmlFor="session-operator">{t('sessions.operator')}</Label>
                   <Select
                     id="session-operator"
-                    containerClassName="w-full md:w-56"
+                    className="w-full md:w-56"
                     value={selectedUser}
                     onChange={(e) => setSelectedUser(e.target.value)}
                   >
@@ -243,7 +243,7 @@ const UserSessionsShadcn: React.FC = () => {
                 <Label htmlFor="recap-month">{t('sessions.recap.month')}</Label>
                 <Select
                   id="recap-month"
-                  containerClassName="w-full md:w-44"
+                  className="w-full md:w-44"
                   value={recapMonth}
                   onChange={(e) => setRecapMonth(e.target.value)}
                 >
@@ -261,7 +261,7 @@ const UserSessionsShadcn: React.FC = () => {
                 <Label htmlFor="recap-year">{t('sessions.recap.year')}</Label>
                 <Select
                   id="recap-year"
-                  containerClassName="w-full md:w-32"
+                  className="w-full md:w-32"
                   value={recapYear}
                   onChange={(e) => setRecapYear(e.target.value)}
                 >

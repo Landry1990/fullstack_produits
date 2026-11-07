@@ -14,7 +14,7 @@ import {
     DialogDescription,
 } from '../shadcn/dialog';
 import { Select } from '../shadcn/select';
-import { Skeleton } from '../ui/Skeleton';
+import { Skeleton } from '../shadcn/skeleton';
 import { Loader2 } from 'lucide-react';
 
 interface MergeCommandesModalProps {

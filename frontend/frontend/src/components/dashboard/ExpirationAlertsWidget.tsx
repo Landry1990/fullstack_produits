@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { AlertTriangle, Package, Clock, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
 import { useExpirationAlerts } from '../../hooks/useExpirationAlerts';
 import { formatCurrency } from '../../utils/formatters';
-import { Skeleton } from '../ui/Skeleton';
+import { Skeleton } from '../shadcn/skeleton';
 
 interface ExpirationAlertsWidgetProps {
   className?: string;

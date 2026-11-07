@@ -7,7 +7,7 @@ import { ProductSearch, type SearchResult } from '../../common/ProductSearch';
 import QuickCreateProductModal from '../../Commandes/QuickCreateProductModal';
 import type { ProduitModel } from '../../../types';
 import { EmptyState } from '../../ui/EmptyState';
-import { Skeleton } from '../../ui/Skeleton';
+import { Skeleton } from '../../shadcn/skeleton';
 
 interface InventaireProductSearchProps {
     searchLogic: ReturnType<typeof useProductSearch>;

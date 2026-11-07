@@ -461,6 +461,7 @@
     "category": {
         "move_to_trash": "Mettre en corbeille",
         "col_product": "Produit",
+        "col_rayon": "Rayon",
         "col_cip": "CIP",
         "col_stock": "Stock",
         "col_price": "Prix",

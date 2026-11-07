@@ -14,7 +14,7 @@ import { useRecharts } from '../../hooks/useRecharts';
 import { chartTooltipProps, chartPieProps } from '../../lib/chartTheme';
 import { formatCurrency } from '../../utils/formatters';
 import { useSupplierDashboard } from '../../hooks/useSupplierDashboard';
-import { Skeleton } from '../ui/Skeleton';
+import { Skeleton } from '../shadcn/skeleton';
 import { EmptyState } from '../ui/EmptyState';
 import { ErrorState } from '../ui/ErrorState';
 import { useTranslation } from 'react-i18next';
@@ -268,13 +268,13 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
               <Calendar className="size-5" />
             </div>
             <div>
-              <h2 className="text-sm font-black text-base-content tracking-tight uppercase">{t('providers:dashboard.deadlines.title')}</h2>
-              <p className="text-caption font-bold text-base-content/30 uppercase tracking-widest">{t('providers:dashboard.deadlines.subtitle')}</p>
+              <h2 className="text-sm font-bold text-base-content tracking-tight uppercase">{t('providers:dashboard.deadlines.title')}</h2>
+              <p className="text-caption font-semibold text-base-content/30 uppercase tracking-widest">{t('providers:dashboard.deadlines.subtitle')}</p>
             </div>
           </div>
           <button 
             onClick={onViewAllDeadlines}
-            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-base-content/60 hover:bg-base-200 text-caption font-black uppercase tracking-widest transition-colors"
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-base-content/60 hover:bg-base-200 text-caption font-semibold uppercase tracking-widest transition-colors"
           >
             {t('providers:dashboard.deadlines.view_all')} <ChevronRight className="size-3 ml-1" />
           </button>
@@ -283,7 +283,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
         <div className="overflow-auto flex-1">
           <table className="w-full">
             <thead>
-              <tr className="text-caption font-black uppercase text-base-content/40 bg-base-200/30 border-none">
+              <tr className="text-caption font-semibold uppercase text-base-content/40 bg-base-200/30 border-none">
                 <th className="pl-6">{t('providers:table.provider')}</th>
                 <th>{t('providers:finance.table.reference')}</th>
                 <th>{t('providers:schedule.table.due_date')}</th>
@@ -300,15 +300,15 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
               ) : (stats?.prochaines_echeances ?? []).map((ech, _i) => (
                 <tr key={ech.numero_facture} className="hover:bg-base-200/50 transition-colors group">
                   <td className="pl-6 py-4">
-                    <span className="font-black text-base-content text-sm">{ech.fournisseur_nom}</span>
+                    <span className="font-semibold text-base-content text-sm">{ech.fournisseur_nom}</span>
                   </td>
                   <td>
                     <span className="font-mono text-label text-base-content/50 uppercase">{ech.numero_facture}</span>
                   </td>
                   <td>
                     <div className="flex flex-col">
-                      <span className="font-bold text-xs">{new Date(ech.date_echeance).toLocaleDateString(currentLocale, { day: 'numeric', month: 'short' })}</span>
-                      <span className={`text-caption font-bold ${ech.jours_restants < 0 ? 'text-error' : 'text-base-content/40'}`}>
+                      <span className="font-medium text-xs">{new Date(ech.date_echeance).toLocaleDateString(currentLocale, { day: 'numeric', month: 'short' })}</span>
+                      <span className={`text-caption font-medium ${ech.jours_restants < 0 ? 'text-error' : 'text-base-content/40'}`}>
                         {ech.jours_restants < 0 
                           ? t('providers:dashboard.deadlines.days_late', { count: Math.abs(ech.jours_restants) }) 
                           : t('providers:dashboard.deadlines.in_days', { count: ech.jours_restants })}
@@ -316,10 +316,10 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
                     </div>
                   </td>
                   <td className="text-right">
-                    <span className="font-black text-base-content text-sm">{formatCurrency(ech.montant_du)}</span>
+                    <span className="font-bold text-base-content text-sm">{formatCurrency(ech.montant_du)}</span>
                   </td>
                   <td className="text-center">
-                    <span className={`inline-flex items-center rounded-full font-black text-micro uppercase py-2 px-3 ${
+                    <span className={`inline-flex items-center rounded-full font-bold text-micro uppercase py-1 px-2 ${
                       ech.status === 'EN RETARD' ? 'bg-error/10 text-error' : 
                       ech.status === "AUJOURD'HUI" ? 'bg-warning/10 text-warning' : 
                       'bg-success/10 text-success'

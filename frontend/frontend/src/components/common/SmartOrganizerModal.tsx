@@ -7,8 +7,8 @@ import { gooeyToast } from 'goey-toast';
 import { Search, Sparkles, AlertCircle, ArrowRight, X, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import PremiumModal from './PremiumModal';
-import { Switch } from '../ui/Switch';
-import { Skeleton } from '../ui/Skeleton';
+import { Switch } from '../shadcn/switch';
+import { Skeleton } from '../shadcn/skeleton';
 import {
     Dialog,
     DialogContent,
@@ -16,7 +16,7 @@ import {
     DialogTitle,
     DialogDescription,
     DialogFooter,
-} from '../ui/Dialog';
+} from '../shadcn/dialog';
 import { cn } from '../../lib/utils';
 import { logger } from '../../utils/logger';
 

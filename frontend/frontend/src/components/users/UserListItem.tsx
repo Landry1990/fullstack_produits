@@ -1,9 +1,9 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pencil, Trash2 } from 'lucide-react';
-import { Badge } from '../ui/Badge';
-import { Button } from '../ui/Button';
-import { Card } from '../ui/Card';
+import { Badge } from '../shadcn/badge';
+import { Button } from '../shadcn/button';
+import { Card } from '../shadcn/card';
 import type { ManagedUser } from './usersMeta';
 
 interface Props {
@@ -19,7 +19,7 @@ export default function UserListItem({ user, isSelf, onEdit, onDeactivate }: Pro
   const { t } = useTranslation(['users', 'sidebar', 'common']);
 
   const roleBadge = (
-    <Badge variant={user.is_superuser ? 'primary' : user.profile?.role === 'COMPTABLE' ? 'secondary' : user.profile?.role === 'CAISSIER' ? 'accent' : 'ghost'} size="sm">
+    <Badge variant={user.is_superuser ? 'default' : user.profile?.role === 'COMPTABLE' ? 'secondary' : user.profile?.role === 'CAISSIER' ? 'destructive' : 'ghost'} className="px-2 py-0 text-[10px]">
       {user.is_superuser
         ? t('badges.pharmacist')
         : user.profile?.role === 'COMPTABLE'
@@ -31,7 +31,7 @@ export default function UserListItem({ user, isSelf, onEdit, onDeactivate }: Pro
   );
 
   return (
-    <Card variant="default" padding="none" className="px-3 py-2">
+    <Card className="px-3 py-2">
       <div className="flex flex-col md:flex-row md:items-center gap-2">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <div className="text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm bg-slate-700 shrink-0">
@@ -49,11 +49,13 @@ export default function UserListItem({ user, isSelf, onEdit, onDeactivate }: Pro
         </div>
 
         <div className="flex items-center justify-end gap-2 md:ml-auto">
-          <Button variant="ghost" size="sm" leftIcon={<Pencil className="h-4 w-4" />} onClick={() => onEdit(user)}>
+          <Button variant="ghost" size="sm" onClick={() => onEdit(user)}>
+            <Pencil className="h-4 w-4" />
             {t('actions.edit')}
           </Button>
           {!isSelf && !user.is_superuser && (
-            <Button variant="ghost" size="sm" leftIcon={<Trash2 className="h-4 w-4" />} className="text-error hover:bg-error/10" onClick={() => onDeactivate(user)}>
+            <Button variant="ghost" size="sm" className="text-error hover:bg-error/10" onClick={() => onDeactivate(user)}>
+              <Trash2 className="h-4 w-4" />
               {t('actions.deactivate', 'Désactiver')}
             </Button>
           )}

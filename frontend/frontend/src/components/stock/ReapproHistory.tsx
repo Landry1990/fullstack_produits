@@ -16,11 +16,11 @@ import {
 import produitService from '../../services/produitService';
 import { formatDate } from '../../utils/dateUtils';
 import { usePharmacySettings } from '../../hooks/usePharmacySettings';
-import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
-import { Badge } from '../ui/Badge';
-import { Card } from '../ui/Card';
-import { Skeleton } from '../ui/Skeleton';
+import { Button } from '../shadcn/button';
+import { Input } from '../shadcn/input';
+import { Badge } from '../shadcn/badge';
+import { Card } from '../shadcn/card';
+import { Skeleton } from '../shadcn/skeleton';
 import { EmptyState } from '../ui/EmptyState';
 import {
   Table,
@@ -38,7 +38,7 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from '../ui/Dialog';
+} from '../shadcn/dialog';
 import { motion } from 'framer-motion';
 import { staggerContainer, fadeInUp } from '../../lib/motion';
 
@@ -143,20 +143,25 @@ export default function ReapproHistory() {
         </div>
 
         <div className="w-full max-w-md">
-          <Input
-            type="text"
-            placeholder={t('stock:reappro.search_placeholder')}
-            aria-label={t('stock:reappro.search_placeholder')}
-            icon={<Search className="size-4" />}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+          <div className="relative group">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-emerald-500 transition-colors">
+              <Search className="size-4" />
+            </div>
+            <Input
+              type="text"
+              placeholder={t('stock:reappro.search_placeholder')}
+              aria-label={t('stock:reappro.search_placeholder')}
+              className="pl-10"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
         </div>
       </motion.div>
 
       {/* Main Content */}
       <motion.div variants={fadeInUp}>
-      <Card variant="default" padding="none" className="rounded-2xl overflow-hidden">
+      <Card className="rounded-2xl overflow-hidden p-0">
         <div className="overflow-x-auto">
           <Table className="table-fixed">
             <TableHeader>
@@ -195,7 +200,7 @@ export default function ReapproHistory() {
                 filteredHistory.map((session) => (
                   <TableRow key={session.id}>
                     <TableCell className="px-3 py-2">
-                      <Badge variant="outline" size="sm">
+                      <Badge variant="outline" className="px-2 py-0 text-[10px]">
                         #{session.id}
                       </Badge>
                     </TableCell>
@@ -223,7 +228,7 @@ export default function ReapproHistory() {
                       </span>
                     </TableCell>
                     <TableCell className="px-3 py-2 text-center">
-                      <Badge variant="success" size="sm">
+                      <Badge variant="success" className="px-2 py-0 text-[10px]">
                         {session.total_units}
                       </Badge>
                     </TableCell>
@@ -232,24 +237,22 @@ export default function ReapproHistory() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          leftIcon={<Eye className="size-3.5" />}
                           onClick={() => setSelectedSession(session)}
                         >
+                          <Eye className="size-3.5" />
                           {t('common:view')}
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
-                          leftIcon={
-                            downloadingId === session.id ? (
-                              <Loader2 className="size-3.5 animate-spin" />
-                            ) : (
-                              <Download className="size-3.5" />
-                            )
-                          }
                           onClick={() => handleDownloadPdf(session)}
                           disabled={downloadingId === session.id}
                         >
+                          {downloadingId === session.id ? (
+                            <Loader2 className="size-3.5 animate-spin" />
+                          ) : (
+                            <Download className="size-3.5" />
+                          )}
                           PDF
                         </Button>
                       </div>
@@ -286,7 +289,7 @@ export default function ReapproHistory() {
 
           <div className="flex flex-col flex-1 min-h-0 p-6 gap-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 shrink-0">
-              <Card variant="bordered" padding="md" className="rounded-xl">
+              <Card className="rounded-xl bg-transparent border-2 shadow-none p-6">
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
                   {t('stock:reappro_history.summary')}
                 </p>
@@ -296,7 +299,7 @@ export default function ReapproHistory() {
                   {t('stock:reappro_history.units_total', { count: selectedSession?.total_units ?? 0 })}
                 </p>
               </Card>
-              <Card variant="bordered" padding="md" className="rounded-xl">
+              <Card className="rounded-xl bg-transparent border-2 shadow-none p-6">
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
                   {t('stock:reappro_history.performed_on')}
                 </p>
@@ -306,7 +309,7 @@ export default function ReapproHistory() {
               </Card>
             </div>
 
-            <Card variant="bordered" padding="none" className="rounded-xl overflow-hidden flex-1 min-h-0">
+            <Card className="rounded-xl overflow-hidden flex-1 min-h-0 bg-transparent border-2 shadow-none p-0">
               <div className="overflow-auto h-full">
                 <Table className="table-fixed">
                   <TableHeader>
@@ -331,7 +334,7 @@ export default function ReapproHistory() {
                           </div>
                         </TableCell>
                         <TableCell className="px-3 py-2 text-center">
-                          <Badge variant="success" size="sm">
+                          <Badge variant="success" className="px-2 py-0 text-[10px]">
                             +{adj.quantity_change}
                           </Badge>
                         </TableCell>
@@ -348,10 +351,10 @@ export default function ReapproHistory() {
               </Button>
               {selectedSession && (
                 <Button
-                  leftIcon={<Download className="size-4" />}
                   onClick={() => handleDownloadPdf(selectedSession)}
                   disabled={downloadingId === selectedSession.id}
                 >
+                  <Download className="size-4" />
                   {t('stock:reappro_history.download_confirmation')}
                 </Button>
               )}

@@ -7,7 +7,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '../shadcn/dropdown-menu';
-import { Badge } from './Badge';
+import { Badge } from '../shadcn/badge';
 
 interface SelectionHeaderProps {
   selectedCount: number;
@@ -41,7 +41,7 @@ const SelectionHeader: React.FC<SelectionHeaderProps> = ({
                 <Button variant="default" size="sm" className="gap-2">
                   <MoreVertical className="size-4" />
                   {t('common:actions_title')}
-                  <Badge variant="primary" size="sm">{selectedCount}</Badge>
+                  <Badge className="bg-white/20 text-white">{selectedCount}</Badge>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-60 rounded-xl p-1.5">

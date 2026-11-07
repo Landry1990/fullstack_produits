@@ -23,7 +23,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Checkbox } from '../ui/Checkbox';
+import { Checkbox } from '../shadcn/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -31,12 +31,13 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from '../ui/Dialog';
-import { Button } from '../ui/Button';
-import { Skeleton } from '../ui/Skeleton';
+} from '../shadcn/dialog';
+import { Button } from '../shadcn/button';
+import { Skeleton } from '../shadcn/skeleton';
 import { EmptyState } from '../ui/EmptyState';
 import PaginationControls from '../ui/PaginationControls';
 import { logger } from '../../utils/logger'
+import { renderRayonOptions } from '../../utils/rayon'
 import { motion } from 'framer-motion';
 import { staggerContainer, staggerGrid, fadeInUp } from '../../lib/motion';
 
@@ -76,7 +77,8 @@ export default function ReapproRayon() {
             needs_reappro: onlyAlerts ? true : undefined,
             page_size: 1000,
             search: searchQuery || undefined,
-            rayon: selectedRayon || undefined
+            rayon: selectedRayon || undefined,
+            include_children: true
         });
         setProducts(response.results || []);
         setSelectedIds(new Set());
@@ -326,9 +328,7 @@ export default function ReapproRayon() {
               onChange={(e) => { setSelectedRayon(e.target.value); setPage(1); }}
             >
               <option value="">{t('common:all_rayons')}</option>
-              {rayons.map(r => (
-                <option key={r.id} value={r.id}>{r.name}</option>
-              ))}
+              {renderRayonOptions(rayons)}
             </select>
           </div>
 
@@ -382,10 +382,8 @@ export default function ReapproRayon() {
               <tr className="bg-slate-50 border-b border-slate-100">
                 <th className="w-12 px-4 py-3 no-print">
                     <Checkbox
-                        checked={selectedIds.size === products.length && products.length > 0}
-                        indeterminate={selectedIds.size > 0 && selectedIds.size < products.length}
-                        onChange={toggleSelectAll}
-                        size="sm"
+                        checked={selectedIds.size > 0 && selectedIds.size < products.length ? 'indeterminate' : (selectedIds.size === products.length && products.length > 0)}
+                        onCheckedChange={toggleSelectAll}
                         aria-label={t('stock:cadencier.select_all')}
                     />
                 </th>
@@ -434,8 +432,7 @@ export default function ReapproRayon() {
                       <td className="no-print px-4 py-3">
                         <Checkbox
                             checked={isSelected}
-                            onChange={() => toggleSelect(p.id)}
-                            size="sm"
+                            onCheckedChange={() => toggleSelect(p.id)}
                             aria-label={t('stock:reappro.select_product_aria', { name: p.name ?? p.id })}
                         />
                       </td>

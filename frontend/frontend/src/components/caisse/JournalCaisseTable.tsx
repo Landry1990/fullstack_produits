@@ -132,17 +132,17 @@ export default function JournalCaisseTable({ state }: Props) {
             </div>
 
             {/* Vue Desktop */}
-            <Table containerClassName="hidden md:block overflow-visible rounded-none border-0" className="min-w-[920px] table-fixed border-separate border-spacing-0">
+            <Table containerClassName="hidden md:block overflow-x-visible overflow-y-visible rounded-none border-0" className="min-w-[920px] table-fixed border-separate border-spacing-0">
               <TableHeader className="sticky top-0 z-30 bg-slate-100 opacity-100">
                 <tr className="border-b border-slate-200">
-                  <th scope="col" className="w-36 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2">{t('table.date_time')}</th>
-                  <th scope="col" className="w-28 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2">{t('table.cashier')}</th>
-                  <th scope="col" className="w-28 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2">{t('table.entered_by')}</th>
-                  <th scope="col" className="w-[20%] border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2">{t('table.client_label')}</th>
-                  <th scope="col" className="w-28 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2">{t('table.piece_num')}</th>
-                  <th scope="col" className="w-28 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2 text-right">{t('table.amount')}</th>
-                  <th scope="col" className="w-24 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2">{t('table.mode')}</th>
-                  <th scope="col" className="w-24 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2 text-right">{t('table.status')}</th>
+                  <th scope="col" className="w-36 sticky top-0 bg-slate-100 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2">{t('table.date_time')}</th>
+                  <th scope="col" className="w-28 sticky top-0 bg-slate-100 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2">{t('table.cashier')}</th>
+                  <th scope="col" className="w-28 sticky top-0 bg-slate-100 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2">{t('table.entered_by')}</th>
+                  <th scope="col" className="w-[20%] sticky top-0 bg-slate-100 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2">{t('table.client_label')}</th>
+                  <th scope="col" className="w-28 sticky top-0 bg-slate-100 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2">{t('table.piece_num')}</th>
+                  <th scope="col" className="w-28 sticky top-0 bg-slate-100 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2 text-right">{t('table.amount')}</th>
+                  <th scope="col" className="w-24 sticky top-0 bg-slate-100 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2">{t('table.mode')}</th>
+                  <th scope="col" className="w-24 sticky top-0 bg-slate-100 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2 text-right">{t('table.status')}</th>
                 </tr>
               </TableHeader>
               <TableBody className="divide-y divide-slate-100 bg-white">

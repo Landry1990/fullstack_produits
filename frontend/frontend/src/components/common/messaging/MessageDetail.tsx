@@ -1,7 +1,7 @@
 import { Archive, ArrowLeft, Clock, MessageSquare, Reply } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Badge } from '../../ui/Badge';
-import { Button } from '../../ui/Button';
+import { Badge } from '../../shadcn/badge';
+import { Button } from '../../shadcn/button';
 import { EmptyState } from '../../ui/EmptyState';
 import { formatDateTime } from '../../../utils/dateUtils';
 import type { InternalMessage } from '../../../services/communicationService';
@@ -85,12 +85,12 @@ export function MessageDetail({
             </p>
             <div className="flex items-center gap-1 mt-1">
               {m.recipient === null && (
-                <Badge variant="primary" size="sm">
+                <Badge variant="default" className="px-2 py-0 text-[10px]">
                   {t('received.broadcast')}
                 </Badge>
               )}
               {variant === 'received' && !m.is_read && (
-                <Badge variant="error" size="sm">
+                <Badge variant="destructive" className="px-2 py-0 text-[10px]">
                   {t('new_badge')}
                 </Badge>
               )}
@@ -113,12 +113,12 @@ export function MessageDetail({
             <Button
               type="button"
               size="sm"
-              variant="primary"
-              leftIcon={<Reply size={14} aria-hidden />}
+              variant="default"
               onClick={() => onReply(m)}
               disabled={actionBusy}
               className="flex-1"
             >
+              <Reply size={14} aria-hidden />
               {t('actions.reply')}
             </Button>
           )}
@@ -127,11 +127,11 @@ export function MessageDetail({
               type="button"
               size="sm"
               variant="outline"
-              leftIcon={<Archive size={14} aria-hidden />}
               onClick={() => onArchive(m)}
               disabled={actionBusy}
               className="flex-1"
             >
+              <Archive size={14} aria-hidden />
               {t('actions.archive')}
             </Button>
           )}

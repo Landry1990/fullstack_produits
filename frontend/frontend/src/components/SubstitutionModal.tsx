@@ -3,14 +3,14 @@ import { Loader2 } from 'lucide-react';
 import { useProduitSubstituts } from '../hooks/useProduitSubstituts';
 import type { ProduitModel } from '../types/catalog';
 import { Button } from './shadcn/button';
-import { Badge } from './ui/Badge';
+import { Badge } from './shadcn/badge';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from './ui/Dialog';
+} from './shadcn/dialog';
 
 interface SubstitutionModalProps {
   produitId: number | null;
@@ -68,7 +68,7 @@ export function SubstitutionModal({ produitId, produitName, onSelect, onClose }:
                       {sub.cip1 && <div className="text-xs opacity-60">CIP: {sub.cip1}</div>}
                     </td>
                     <td className="py-2 px-3">
-                      <Badge variant={sub.stock > 10 ? 'success' : sub.stock > 0 ? 'warning' : 'error'} size="sm">
+                      <Badge variant={sub.stock > 10 ? 'success' : sub.stock > 0 ? 'warning' : 'destructive'} className="px-2 py-0 text-[10px]">
                         {sub.stock}
                       </Badge>
                     </td>

@@ -5,11 +5,11 @@ import { fr } from 'date-fns/locale';
 import 'react-datepicker/dist/react-datepicker.css';
 import type { QueryDefinition, Client, Supplier, User, Famille } from '../../../hooks/useCentreRapports';
 import { Search, User as UserIcon, Truck, Users, Tag, Save, History, Trash2, LayoutPanelTop, Filter, Plus, X } from 'lucide-react';
-import { Button } from '../../ui/Button';
+import { Button } from '../../shadcn/button';
 import { Input } from '../../shadcn/input';
 import { Button as DialogButton } from '../../shadcn/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../../shadcn/dialog';
-import { Select } from '../../ui/Select';
+import { Select } from '../../shadcn/select';
 import { Checkbox } from '../../shadcn/checkbox';
 import { Badge } from '../../shadcn/badge';
 import { logger } from '../../../utils/logger'

@@ -4,7 +4,7 @@ import api from '../services/api';
 import { useTranslation } from 'react-i18next';
 import PremiumModal from './common/PremiumModal';
 import { Button } from './shadcn/button';
-import { Badge } from './ui/Badge';
+import { Badge } from './shadcn/badge';
 import { formatCurrency } from '../utils/formatters';
 import { getLocale, formatDateLong } from '../utils/dateUtils';
 import { LocalizedDateInput } from './LocalizedDateInput';
@@ -284,7 +284,7 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
               {/* Pointage En Tête */}
               <div className="flex items-center justify-between p-3 border-b bg-base-200/50">
                 <div className="flex items-center gap-3">
-                   <Badge variant="primary" size="sm" className="font-bold">{t('providers:pointage_modal.pointed_count', { count: pointedIds.size, total: data.factures.length })}</Badge>
+                   <Badge variant="default" className="px-2 py-0 text-[10px] font-bold">{t('providers:pointage_modal.pointed_count', { count: pointedIds.size, total: data.factures.length })}</Badge>
                    <Button variant="outline" size="sm" className="h-6 px-3 text-xs rounded-full" onClick={toggleAll}>
                      {pointedIds.size === data.factures.length ? t('providers:pointage_modal.uncheck_all') : t('providers:pointage_modal.check_all')}
                    </Button>

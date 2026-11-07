@@ -6,7 +6,7 @@ import type { MonthlyStat } from '../../services/produitService';
 import type { StockMovement } from '../../hooks/useProduits';
 import { ProductTabsContent } from './ProductTabsContent';
 import { EmptyState } from '../ui/EmptyState';
-import { Skeleton } from '../ui/Skeleton';
+import { Skeleton } from '../shadcn/skeleton';
 
 interface ProductDetailPanelProps {
   selectedProduit: ProduitModel | null;

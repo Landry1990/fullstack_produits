@@ -17,7 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import { useRecharts } from '../../hooks/useRecharts';
 import { Link } from 'react-router-dom';
 import { formatCurrency } from '../../utils/formatters';
-import { Skeleton } from '../ui/Skeleton';
+import { Skeleton } from '../shadcn/skeleton';
 import { motion } from 'framer-motion';
 import { fadeInUp, staggerContainer, staggerFadeContainer } from '../../lib/motion';
 import type { TFunction } from 'i18next';
@@ -98,7 +98,7 @@ export default function PerformanceOverview({
     ...(stats.margin_today !== undefined ? [{
       title: t('stats.margin_today'),
       value: formatCurrencyLocal(stats.margin_today),
-      sub: `${((stats.margin_today / (stats.revenue?.value || 1)) * 100).toFixed(1)}% ${t('stats.margin_rate')}`,
+      sub: `${((stats.margin_today_pct ?? (stats.margin_today / (stats.revenue?.value || 1)) * 100)).toFixed(1)}% ${t('stats.margin_rate')}`,
       icon: Target, accent: '#10b981', isPositive: true,
     }] : []),
     {

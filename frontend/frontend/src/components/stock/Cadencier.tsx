@@ -9,6 +9,7 @@ import api from '../../services/api';
 import { gooeyToast } from 'goey-toast';
 import { cn } from '../../lib/utils';
 import { formatCurrency } from '../../utils/formatters';
+import { renderRayonOptions } from '../../utils/rayon';
 
 import { Button } from '../shadcn/button';
 import { Badge } from '../shadcn/badge';
@@ -104,6 +105,7 @@ const Cadencier: React.FC = () => {
           type: filters.type,
           coverage_days: filters.coverage_days,
           rayon: filters.rayon || undefined,
+          include_children: filters.rayon ? '1' : undefined,
           fournisseur: filters.fournisseur || undefined,
           search: filters.search || undefined,
           only_below_target: filters.only_below_target,
@@ -312,7 +314,7 @@ const Cadencier: React.FC = () => {
                       className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                     >
                       <option value="">{t('common:all', 'Tous')}</option>
-                      {rayons.map(r => <option key={r.id} value={String(r.id)}>{r.name}</option>)}
+                      {renderRayonOptions(rayons)}
                     </select>
                   </div>
 

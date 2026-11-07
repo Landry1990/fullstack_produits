@@ -42,7 +42,7 @@ import SelectionHeader from './ui/SelectionHeader';
 import { DropdownMenuItem } from './shadcn/dropdown-menu';
 import PaginationControls from './ui/PaginationControls';
 import { EmptyState } from './ui/EmptyState';
-import { Skeleton } from './ui/Skeleton';
+import { Skeleton } from './shadcn/skeleton';
 import { logger } from '../utils/logger'
 
 const emptyForm: Partial<Client> = {

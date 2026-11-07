@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Folder, Factory, Trash2, X, Check, ChevronDown } from 'lucide-react';
 import type { Rayon, Fournisseur } from '../../types';
+import { orderedRayons } from '../../utils/rayon';
 
 interface BulkActionsBarProps {
   selectedCount: number;
@@ -68,14 +69,14 @@ export const BulkActionsBar: React.FC<BulkActionsBarProps> = ({
             <ChevronDown className="size-3.5" />
           </button>
           {openMenu === 'rayon' && (
-            <ul className="absolute bottom-full right-0 z-50 p-1 shadow-xl bg-base-100 rounded-lg w-40 max-h-48 overflow-auto border border-base-200 mb-1">
-              {rayons.map(r => (
+            <ul className="absolute bottom-full right-0 z-50 p-1 shadow-xl bg-base-100 rounded-lg w-48 max-h-48 overflow-auto border border-base-200 mb-1">
+              {orderedRayons(rayons).map(r => (
                 <li key={r.id}>
                   <button
                     onClick={() => { onBulkChangeRayon(r.id); setOpenMenu(null); }}
-                    className="w-full text-left text-xs py-2 px-2 hover:bg-base-200 text-base-content block"
+                    className={`w-full text-left text-xs py-2 px-2 hover:bg-base-200 text-base-content block truncate ${r.parent ? 'pl-5 text-base-content/70' : 'font-semibold'}`}
                   >
-                    {r.name}
+                    {r.parent ? `↳ ${r.name}` : r.name}
                   </button>
                 </li>
               ))}

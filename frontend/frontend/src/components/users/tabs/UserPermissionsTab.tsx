@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Info, Users } from 'lucide-react';
-import { Checkbox } from '../../ui/Checkbox';
-import { Input } from '../../ui/Input';
-import { Label } from '../../ui/Label';
-import { Card } from '../../ui/Card';
-import { Button } from '../../ui/Button';
-import { PERMISSIONS_META, permissionClass, checkboxColor } from '../usersMeta';
+import { Info, Users, Loader2 } from 'lucide-react';
+import { Checkbox } from '../../shadcn/checkbox';
+import { Input } from '../../shadcn/input';
+import { Label } from '../../shadcn/label';
+import { Card } from '../../shadcn/card';
+import { Button } from '../../shadcn/button';
+import { PERMISSIONS_META, permissionClass } from '../usersMeta';
 import type { UserForm } from '../../../hooks/useUserForm';
 
 interface Props {
@@ -35,10 +35,8 @@ export default function UserPermissionsTab({ form, onApplyToRole }: Props) {
         <div key={p.key} className="flex cursor-pointer justify-start gap-4 p-2 bg-base-100 rounded-lg border border-base-300 hover:border-success/50 transition-all shadow-sm group">
           <Checkbox
             checked={formData[p.key]}
-            onChange={checked => setFormData({ ...formData, [p.key]: checked })}
+            onCheckedChange={checked => setFormData({ ...formData, [p.key]: checked === true })}
             disabled={formData.is_superuser || formData.role === 'VENDEUR'}
-            color="success"
-            size="sm"
           />
           <div className="flex flex-col">
             <span className="font-bold text-xs group-hover:text-success transition-colors">{t(p.labelKey)}</span>
@@ -48,16 +46,14 @@ export default function UserPermissionsTab({ form, onApplyToRole }: Props) {
       );
     }
     return (
-      <Checkbox
-        key={p.key}
-        size="xs"
-        color={checkboxColor(p.color)}
-        checked={formData[p.key]}
-        onChange={checked => setFormData({ ...formData, [p.key]: checked })}
-        label={t(p.labelKey)}
-        className={permissionClass(p.color)}
-        disabled={formData.is_superuser}
-      />
+      <div key={p.key} className={`flex items-center gap-2 ${permissionClass(p.color)}`}>
+        <Checkbox
+          checked={formData[p.key]}
+          onCheckedChange={checked => setFormData({ ...formData, [p.key]: checked === true })}
+          disabled={formData.is_superuser}
+        />
+        <label className="text-sm font-medium select-none text-slate-600 dark:text-slate-300">{t(p.labelKey)}</label>
+      </div>
     );
   };
 
@@ -70,7 +66,7 @@ export default function UserPermissionsTab({ form, onApplyToRole }: Props) {
         </div>
       )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card variant="default" padding="md">
+        <Card className="p-6">
           <div className="flex items-center gap-2 mb-4 border-l-2 border-success pl-3 bg-success/10 py-1 rounded-r-lg">
             <h4 className="font-bold text-xs uppercase tracking-widest text-success">{t('modal.special_permissions')}</h4>
           </div>
@@ -84,14 +80,14 @@ export default function UserPermissionsTab({ form, onApplyToRole }: Props) {
                 type="number"
                 value={formData.max_discount_rate}
                 onChange={e => setFormData({ ...formData, max_discount_rate: parseInt(e.target.value) || 0 })}
-                size="sm"
+                className="h-9 text-xs"
                 disabled={formData.is_superuser}
               />
             </div>
           </div>
         </Card>
 
-        <Card variant="default" padding="md">
+        <Card className="p-6">
           <div className="flex items-center gap-2 mb-4 border-l-2 border-error pl-3 bg-error/10 py-1 rounded-r-lg">
             <h4 className="font-bold text-xs uppercase tracking-widest text-error">{t('modal.security_sudo')}</h4>
           </div>
@@ -102,7 +98,7 @@ export default function UserPermissionsTab({ form, onApplyToRole }: Props) {
       </div>
 
       {onApplyToRole && !formData.is_superuser && (
-        <Card variant="default" padding="md" className="bg-warning/5 border-warning/20">
+        <Card className="p-6 bg-warning/5 border-warning/20">
           <div className="flex items-center justify-between gap-4">
             <div>
               <h4 className="font-bold text-xs uppercase tracking-wider text-warning flex items-center gap-2">
@@ -115,12 +111,13 @@ export default function UserPermissionsTab({ form, onApplyToRole }: Props) {
             </div>
             <Button
               type="button"
-              variant="warning"
+              variant="secondary"
               size="sm"
               onClick={handleApplyToRole}
-              isLoading={isApplying}
-              leftIcon={<Users className="h-4 w-4" />}
+              disabled={isApplying}
+              className="bg-amber-500 shadow-amber-500/20 before:bg-amber-600 hover:shadow-amber-500/30"
             >
+              {isApplying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Users className="h-4 w-4" />}
               {t('form.apply_to_role_btn')}
             </Button>
           </div>

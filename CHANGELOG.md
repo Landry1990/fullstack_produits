@@ -2,6 +2,126 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-11-06 — 🎨 Migration `ui/*` → `shadcn/*` : 12 composants, 91 fichiers
+
+- **12 composants legacy supprimés** de `components/ui/` : Button, Badge, Card,
+  Checkbox, Dialog, Input, Select, Tabs, Textarea, Switch, Label, Skeleton —
+  leurs ~250 imports dans 91 fichiers pointent désormais vers `components/shadcn/`.
+- **Nouvelles primitives shadcn** : `skeleton.tsx`, `switch.tsx`, `label.tsx`
+  (reprises des implémentations legacy, déjà conformes). `shadcn/badge.tsx`
+  étendu des variantes `success`, `warning`, `ghost` (existantes côté legacy).
+- **Conversions d'API** appliquées aux call sites : Button `primary/danger/glass`
+  → `default/destructive/outline` + `isLoading`→`disabled`+`Loader2`,
+  `leftIcon`/`rightIcon`→icônes inline, `fullWidth`→`w-full` ; Input/Select
+  `label`/`error`/`icon`/`size`/`containerClassName`→markup explicite (label
+  htmlFor, `<p>` d'erreur, wrapper `relative group` + `pl-10`, `h-9`/`h-12`) ;
+  Checkbox `onChange`→`onCheckedChange`, `indeterminate`→`checked="indeterminate"`,
+  `label`→`<label>` adjacent ; Card `variant`/`padding`→className ;
+  Badge `accent/error`→`destructive`, `size`→classes.
+- **Conservés dans `ui/`** (composants métier sans équivalent) : EmptyState,
+  ErrorState, PaginationControls, PageContainer, SkeletonTable, SelectionHeader,
+  ActionIcon. `SelectionHeader` repointé sur `shadcn/badge`.
+- Détails notables : `disableUppercase` sur l'input username (`UserInfoTab`) ;
+  `onClick stopPropagation` sur checkboxes dans lignes cliquables
+  (Corbeille/Vitrine) ; `variant="warning"` invalide préexistant corrigé en
+  ambre explicite (`UserPermissionsTab`) ; indeterminate des menus
+  parent/enfant désormais réellement passé (`UserMenusTab`).
+- Vérifié (agent de contrôle) : `tsc --noEmit` 0 erreur, `eslint --quiet`
+  0 erreur, `vite build` OK (21,9 s), aucun import résiduel des fichiers
+  supprimés. Migration exécutée par 4 sous-agents parallèles sur zones
+  disjointes (`docs/agent/parallelisation.md`).
+
+## 2026-11-06 — 🧹 CSS : purge des reliquats DaisyUI dans `index.css`
+
+- DaisyUI est totalement sorti (absent de `package.json`, aucune classe DaisyUI
+  dans les composants) — il ne restait que du CSS mort dans `src/index.css`.
+- **Sélecteurs `.theme-midnight` morts supprimés** : `.card`, `.modal-box`,
+  `.dropdown-content`, `.menu`, `.popover-content`, `.tooltip-content`,
+  `.toast`, `.alert`, `.notification`, `.card-header`, `.modal-header`,
+  `.dropdown-header`, `.table` (+ thead/tbody zebra/hover) — 0 usage dans `src/`.
+  `.pharma-card` conservé (utilisé par `BMICalculator`).
+- **Utilitaires morts supprimés** : `.page-header-compact` (bloc dupliqué ×2),
+  `.table-container-optimized`, `.table-scrollable`, `.table-compact`,
+  `.scrollbar-hide`, `.sticky-header`, `.pos-glass-input-container` (+ ses
+  overrides midnight), `.pharma-sidebar`, `.pharma-sidebar-header`,
+  `.pharma-menu-item`, `.zl-page` (exception uppercase — plus utilisée),
+  `.animate-fade-in-up`, `.animate-float` et les `@keyframes` orphelins
+  `fade-in-up`, `float`, `shimmer`, `border-glow`. ~230 lignes retirées.
+- Vérifié : `vite build` OK (25,9 s).
+
+## 2026-11-05 — 🗂️ Sous-rayons : hiérarchie consolidée + ordre physique + code emplacement
+
+- **Backend** : `Rayon` gagne `code` (emplacement physique, ex. « A3 ») et
+  `ordre` (tri manuel) — migration `0287`. `RayonSerializer` verrouille la
+  hiérarchie à **2 niveaux** : refuse un parent qui a lui-même un parent,
+  l'auto-parentage, et le rattachement d'un rayon ayant des sous-rayons
+  (boucles orphelines invisibles en UI désormais impossibles).
+  `produits_count_total` = produits directs + sous-rayons (annotation).
+  Nouveau param `include_children=1` sur `produits/?rayon=`, `analyse_abc`,
+  `cadencier` et `export_csv` — même sémantique que `imprimer_etat_stock` /
+  `etat_inventaire` partout.
+- **Frontend** : helper `utils/rayon.tsx` (`renderRayonOptions` optgroup,
+  `orderedRayons`, `rayonLabel`) — appliqué à tous les sélecteurs plats
+  (liste produits, réappro, cadencier, ABC, bulk, fiches produit). Les
+  filtres par rayon parent incluent désormais les sous-rayons ; la fiche
+  produit et les lignes de recherche affichent `rayon_path`
+  (« PARENT › SOUS-RAYON »).
+- **Organisation > Rayons** : arbre repliable façon sidebar (chevron ▸/▾,
+  sous-rayons masqués par défaut, dépliage auto après création et pendant
+  la recherche) ; bouton « Rangement Intelligent » dans le panneau détail ;
+  entrée « Ajouter un sous-rayon » dans le
+  menu ⋯ de chaque rayon racine (modale pré-remplie avec le parent) ;
+  la liste d'un parent agrège les produits de
+  ses sous-rayons (colonne « Rayon » de provenance), le badge compte le
+  total récursif, suppression d'un parent = avertissement explicite,
+  **drag & drop** entre éléments de même niveau persisté via `ordre`,
+  champ `code` (chip ambre) dans la liste et le modal création/édition.
+- **Exports Excel/CSV** : `export_csv` produits gagne les colonnes `Rayon`
+  (chemin « PARENT › SOUS-RAYON ») et `Code Rayon` ; le rapport Excel
+  général affiche le chemin rayon dans « Top Produits » et une colonne
+  `Code` dans la feuille « Stock par rayon » (`col_code` fr/en).
+- **Détail rayon (tableau produits)** : la colonne « Rayon » affiche
+  `rayon_path` (« PARENT › SOUS-RAYON ») — chip bleu ciel pour les produits
+  rangés dans un sous-rayon, vert pour les produits directs du rayon.
+
+## 2026-11-05 — ✨ Boutons : effet « slide de couleur » au survol
+
+- `components/shadcn/button.tsx` et `components/ui/Button.tsx` (legacy) : la
+  couleur de hover ne fond plus, elle **glisse de gauche à droite** via un
+  `::before` animé en `translate-x` (`-101%` → `0`, 300 ms ease-out), placé
+  derrière le contenu (`isolate` + `before:-z-10`). Couleur finale identique
+  à l'ancien hover par variante (default→emerald-700, destructive→red-600,
+  outline→emerald-50, ghost→slate-100, primary→emerald-500…). La variante
+  `link` est exclue (pas de fond). `motion-reduce` désactive l'animation.
+  Impact visuel uniquement, aucun changement d'API.
+
+## 2026-11-04 — 🛡️ Journal de caisse : totaux masqués aux profils non autorisés
+
+- `Profile.can_view_cash_totals` passé à `False` pour les rôles CAISSIER et
+  VENDEUR (4 profils) — la migration `0252` l'avait activé partout par défaut.
+  Le garde existant (`canViewCashTotals` → `JournalCaisseStats` → `null`) masque
+  désormais les cartes Ventes nettes / Espèces à justifier / Paiements mobiles /
+  Banque pour ces comptes. Effet à la prochaine connexion (flag lu au login).
+
+## 2026-11-04 — 🧾 Journal de caisse : colonnes décalées corrigées
+
+- `JournalCaisseTable` : le wrapper `overflow-x-auto overflow-y-clip` du `Table`
+  shadcn créait un second conteneur scrollable imbriqué — Chrome mettait alors
+  en page le `<thead>` sticky dans un contexte de largeur différent du `<tbody>`
+  (titres décalés à droite des cellules). Wrapper neutralisé
+  (`overflow-x/y-visible`, scroll sur le conteneur parent comme avant la
+  standardisation) + `sticky top-0 bg-slate-100` sur chaque `<th>` (pattern
+  `SalesTable`).
+
+## 2026-11-04 — 🧹 Consultation ventes : section tranche horaire supprimée
+
+- Bloc « Vérification par Tranche Horaire » retiré de la page Ventes, avec le
+  `SalesQuickStats` qu'il alimentait (composants supprimés, clés i18n fr/en
+  retirées). La carte du tableau passe en `flex-1 min-h-0 flex-col` : le tableau
+  remplit la hauteur, défile en interne (en-tête sticky) et la pagination reste
+  épinglée en bas. L'endpoint `caisse_par_tranche_horaire/` est conservé — il
+  sert au rapport « CA par Période » du Centre de Rapports.
+
 ## 2026-11-04 — Étiquettes produits : impression native TSPL via QZ Tray
 
 - Frontend uniquement : `qzPrinter.ts` conserve une imprimante étiquettes dédiée
@@ -18,6 +138,60 @@
   pour préserver la chaîne historique `print`). Aucun changement backend/caisse.
 - Validation automatisée à lancer par l'agent principal : commande TypeScript
   refusée par les permissions du sous-agent. Test matériel Hoin restant nécessaire.
+
+## 2026-11-04 — 🔒 Sudo : session désactivée sur la facturation
+
+- `useSudo` ignore la session silencieuse sur `/app/facturation*` : le compte
+  y est parfois partagé entre vendeurs — le 2e vendeur aurait hérité de la
+  validation du 1er (fausse attribution). La modale revient donc à chaque
+  action protégée au comptoir (hash filtré ~300ms conservé) ; les autres
+  modules (caisse, stock, avoirs…) gardent la fenêtre silencieuse.
+
+## 2026-11-04 — 🔒 Sudo : session liée à l'opérateur (fix attribution)
+
+- La clé de cache devient `sudo_ok:{opérateur}:{validateur}:{perms}` — sur un
+  poste partagé, les validations d'un opérateur ne profitent plus au suivant
+  après changement de compte (fini l'attribution croisée d'audit). La map
+  frontend est pareillement scopée par `user.id`. Le mot de passe n'est
+  toujours jamais stocké.
+
+## 2026-11-04 — ⚙️ Sudo : TTL de session configurable
+
+- `InvoiceSettings.sudo_session_minutes` (IntegerField, défaut 10, `0` =
+  session désactivée) — migration `0286`. Le backend lit le réglage à chaque
+  appel ; `useSudo` applique le même TTL côté client (marge 30 s). Réglage
+  dans Paramètres → Impression → bloc Multi-POS, sous « Mot de passe
+  validateur ». i18n fr/en.
+
+## 2026-11-04 — ⚡ Sudo : « session validateur » de 10 minutes
+
+- `sudo_utils.py` : après une validation réussie, `sudo_ok:{user}:{perms}` est
+  posé en cache Redis (TTL 10 min). Un nouvel appel portant le même
+  `validated_by_id` **sans mot de passe** passe sur hit de cache — la
+  vérification granulaire de permission reste appliquée à chaque fois.
+- `useSudo.ts` : mémorise le `validatorId` par permission (9 min côté client,
+  jamais le mot de passe) → `requireSudo` tente l'action directement ; si le
+  backend répond « Mot de passe requis » (session expirée), la modale s'ouvre
+  en repli transparent. Effet : 1 mot de passe par fenêtre de 10 min au lieu
+  d'un par action protégée.
+
+## 2026-11-04 — ⚡ Sudo : fin du « moulinage » à la validation
+
+- `sudo_utils.py` : la validation par mot de passe seul testait `check_password`
+  (~300ms) sur **chaque utilisateur actif** avant de trouver le validateur —
+  plusieurs secondes sur les postes à beaucoup d'utilisateurs. Les candidats
+  sont désormais pré-filtrés côté ORM : superusers + utilisateurs dont le
+  profil porte la permission requise (`profile__<perm>`). Identique au
+  comportement (un validateur sans la perm échouait ensuite de toute façon),
+  mais une seule requête SQL + ~1 hash au lieu de N.
+
+## 2026-11-04 — 📊 Dashboard : taux de marge incohérent corrigé
+
+- La carte « Marge brute (jour) » affichait `marge(HT) / CA(TTC)` = 29,8%
+  pendant que le tableau P&L affichait `marge / CA(HT)` = 33,7% pour la même
+  journée. Le backend expose désormais `margin_today_pct` (convention HT, comme
+  `marges_pct` du chart) dans `stats` et `stats_heavy` ; la carte l'utilise
+  (repli sur l'ancien calcul si absent). `useDashboard.ts` : champ typé.
 
 ## 2026-11-04 — 🖨️ Caisse : impression ticket sans modale
 

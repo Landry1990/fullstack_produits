@@ -39,7 +39,7 @@ import { Button } from './shadcn/button';
 import { Card, CardContent } from './shadcn/card';
 import { Badge } from './shadcn/badge';
 import { Tabs, TabsList, TabsTrigger } from './shadcn/tabs';
-import { Skeleton } from './ui/Skeleton';
+import { Skeleton } from './shadcn/skeleton';
 import { cn } from '../lib/utils';
 
 // Sub-components (réutilisés)

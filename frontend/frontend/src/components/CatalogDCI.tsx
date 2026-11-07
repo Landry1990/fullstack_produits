@@ -11,7 +11,7 @@ import type { ProduitModel } from '../types';
 import CatalogDCIAddModal from './CatalogDCIAddModal';
 import { Loader2 } from 'lucide-react';
 import { Button } from './shadcn/button';
-import { Badge } from './ui/Badge';
+import { Badge } from './shadcn/badge';
 import PaginationControls from './ui/PaginationControls';
 import { pageCount } from '../utils/pagination';
 import { logger } from '../utils/logger'
@@ -177,7 +177,7 @@ export default function CatalogDCI() {
                     <Icons.Box />
                     {t('products:dci.pharmacy_products')}
                   </h3>
-                  <Badge variant="primary" className="font-medium">{(produitsData as { count?: number })?.count || 0}</Badge>
+                  <Badge variant="default" className="font-medium">{(produitsData as { count?: number })?.count || 0}</Badge>
                 </div>
                 <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
                   {loadingProduits ? (
@@ -190,7 +190,7 @@ export default function CatalogDCI() {
                         <h4 className="font-semibold text-sm group-hover:text-primary transition-colors">{p.name}</h4>
                         <div className="flex items-center gap-2">
                           {p.stock > 0 && (
-                            <Badge variant="success" size="sm" className="font-medium">
+                            <Badge variant="success" className="px-2 py-0 text-[10px] font-medium">
                               {t('products:dci.in_stock', { count: p.stock })}
                             </Badge>
                           )}

@@ -21,14 +21,14 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { formatCurrency, normalizeNumberInput, formatNumber } from '../utils/formatters';
-import { Button } from './ui/Button';
-import { Input } from './ui/Input';
-import { Card } from './ui/Card';
-import { Badge } from './ui/Badge';
-import { Checkbox } from './ui/Checkbox';
-import { Tabs, TabsList, TabsTrigger } from './ui/Tabs';
+import { Button } from './shadcn/button';
+import { Input } from './shadcn/input';
+import { Card } from './shadcn/card';
+import { Badge } from './shadcn/badge';
+import { Checkbox } from './shadcn/checkbox';
+import { Tabs, TabsList, TabsTrigger } from './shadcn/tabs';
 import { EmptyState } from './ui/EmptyState';
-import { Skeleton } from './ui/Skeleton';
+import { Skeleton } from './shadcn/skeleton';
 import {
   Table,
   TableBody,
@@ -111,7 +111,7 @@ function GestionVitrine({
     >
       {/* Filters */}
       <motion.div variants={fadeInUp}>
-      <Card variant="elevated" padding="md" className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center">
+      <Card className="p-6 shadow-lg hover:-translate-y-1 transition-transform flex flex-col lg:flex-row gap-4 items-stretch lg:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-base-content/40" />
           <Input
@@ -124,11 +124,13 @@ function GestionVitrine({
           />
         </div>
         <div className="flex items-center gap-3 bg-base-200/50 rounded-lg px-4 py-2">
-          <Checkbox
-            checked={showPublicOnly}
-            onChange={(checked) => setShowPublicOnly(checked)}
-            label={t('gestion.show_public_only')}
-          />
+          <div className="flex items-center gap-2">
+            <Checkbox
+              checked={showPublicOnly}
+              onCheckedChange={(v) => setShowPublicOnly(v === true)}
+            />
+            <label className="text-sm font-medium select-none text-slate-600 dark:text-slate-300">{t('gestion.show_public_only')}</label>
+          </div>
         </div>
       </Card>
       </motion.div>
@@ -137,9 +139,7 @@ function GestionVitrine({
       {selectedIds.size > 0 && (
         <motion.div variants={fadeInUp} initial="hidden" animate="show">
         <Card
-          variant="bordered"
-          padding="sm"
-          className="flex flex-col sm:flex-row justify-between items-center gap-4 animate-in slide-in-from-top-2"
+          className="p-4 bg-transparent border-2 shadow-none flex flex-col sm:flex-row justify-between items-center gap-4 animate-in slide-in-from-top-2"
         >
           <div className="flex items-center gap-2">
             <CheckCircle className="size-5 text-primary" />
@@ -149,25 +149,25 @@ function GestionVitrine({
           </div>
           <div className="flex gap-2">
             <Button
-              variant="primary"
+              variant="default"
               size="sm"
-              leftIcon={<Eye className="size-3.5" />}
               onClick={() => {
                 bulkToggle.mutate({ ids: Array.from(selectedIds), target_status: true });
                 setSelectedIds(new Set());
               }}
             >
+              <Eye className="size-3.5" />
               {t('gestion.publish')}
             </Button>
             <Button
-              variant="danger"
+              variant="destructive"
               size="sm"
-              leftIcon={<EyeOff className="size-3.5" />}
               onClick={() => {
                 bulkToggle.mutate({ ids: Array.from(selectedIds), target_status: false });
                 setSelectedIds(new Set());
               }}
             >
+              <EyeOff className="size-3.5" />
               {t('gestion.unpublish')}
             </Button>
             <Button
@@ -184,7 +184,7 @@ function GestionVitrine({
 
       {/* Table */}
       <motion.div variants={fadeInUp}>
-      <Card variant="default" padding="none" className="overflow-hidden">
+      <Card className="p-0 overflow-hidden">
         <div className="overflow-x-auto">
           <Table className="table-fixed">
             <TableHeader>
@@ -192,7 +192,7 @@ function GestionVitrine({
                 <TableHead className="w-12 px-3 py-2 text-center">
                   <Checkbox
                     checked={isAllSelected}
-                    onChange={handleSelectAll}
+                    onCheckedChange={(v) => handleSelectAll(v === true)}
                     disabled={isLoading || products.length === 0}
                     aria-label={t('common:maintenance.select_all')}
                   />
@@ -238,7 +238,7 @@ function GestionVitrine({
                     <TableCell className="px-3 py-2 text-center">
                       <Checkbox
                         checked={selectedIds.has(product.id)}
-                        onChange={() => toggleSelection(product.id)}
+                        onCheckedChange={() => toggleSelection(product.id)}
                         aria-label={t('gestion.select_product', { name: product.name })}
                       />
                     </TableCell>
@@ -247,7 +247,7 @@ function GestionVitrine({
                       <div className="text-xs text-base-content/40">{product.cip1}</div>
                     </TableCell>
                     <TableCell className="px-3 py-2">
-                      <Badge variant="ghost" size="sm">
+                      <Badge variant="ghost" className="px-2 py-0 text-[10px]">
                         {product.rayon_name || t('gestion.table.uncategorized')}
                       </Badge>
                     </TableCell>
@@ -418,22 +418,24 @@ function SimulateurClient() {
     >
       {/* Colonne Recherche */}
       <motion.div variants={fadeInUp} className="lg:col-span-2 space-y-4 order-1 lg:order-none">
-        <Card variant="elevated" padding="lg">
+        <Card className="p-8 shadow-lg hover:-translate-y-1 transition-transform">
           <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
             <Search className="size-6 text-primary" />
             {t('simulateur.search_title')}
           </h2>
-          <Input
-            type="text"
-            placeholder={t('simulateur.search_placeholder')}
-            aria-label={t('simulateur.search_placeholder')}
-            className="text-lg"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            onKeyDown={handleKeyDown}
-            autoFocus
-            icon={<Search className="size-5" />}
-          />
+          <div className="relative group">
+            <Search className="size-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-emerald-500 transition-colors" />
+            <Input
+              type="text"
+              placeholder={t('simulateur.search_placeholder')}
+              aria-label={t('simulateur.search_placeholder')}
+              className="text-lg pl-10"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={handleKeyDown}
+              autoFocus
+            />
+          </div>
 
           {/* Résultats de recherche */}
           <div className="mt-4 space-y-2">
@@ -466,12 +468,12 @@ function SimulateurClient() {
                           {p.cip1}
                         </div>
                         {p.stock > 0 ? (
-                          <Badge variant="success" size="sm">
+                          <Badge variant="success" className="px-2 py-0 text-[10px]">
                             <CheckCircle className="size-3 mr-1" />
                             {t('simulateur.available')}
                           </Badge>
                         ) : (
-                          <Badge variant="error" size="sm">
+                          <Badge variant="destructive" className="px-2 py-0 text-[10px]">
                             <XCircle className="size-3 mr-1" />
                             {t('simulateur.out_of_stock')}
                           </Badge>
@@ -494,7 +496,7 @@ function SimulateurClient() {
               </div>
             )}
             {debouncedSearch && results.length === 0 && !isLoading && (
-              <Card variant="bordered" padding="md">
+              <Card className="p-6 bg-transparent border-2 shadow-none">
                 <EmptyState compact variant="base" title={t('simulateur.no_results')} className="p-2" />
               </Card>
             )}
@@ -504,7 +506,7 @@ function SimulateurClient() {
 
       {/* Colonne "Panier" */}
       <motion.div variants={fadeInUp} className="lg:col-span-1 order-2 lg:order-none">
-        <Card variant="elevated" className="h-full sticky top-4 overflow-hidden flex flex-col" padding="none">
+        <Card className="p-0 shadow-lg hover:-translate-y-1 transition-transform h-full sticky top-4 overflow-hidden flex flex-col">
           <div className="bg-primary/5 p-5 border-b border-primary/10">
             <div className="flex justify-between items-center">
               <div>
@@ -547,12 +549,12 @@ function SimulateurClient() {
                       <div className="font-medium truncate text-sm">{item.name}</div>
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
                         {item.stock > 0 ? (
-                          <Badge variant="success" size="sm">
+                          <Badge variant="success" className="px-2 py-0 text-[10px]">
                             <CheckCircle className="size-2.5 mr-1" />
                             {t('simulateur.available_full')}
                           </Badge>
                         ) : (
-                          <Badge variant="error" size="sm">
+                          <Badge variant="destructive" className="px-2 py-0 text-[10px]">
                             <XCircle className="size-2.5 mr-1" />
                             {t('simulateur.out_of_stock')}
                           </Badge>
@@ -607,18 +609,18 @@ function SimulateurClient() {
                   <Button
                     variant="secondary"
                     size="sm"
-                    leftIcon={<Printer className="size-4" />}
                     onClick={handlePrint}
                   >
+                    <Printer className="size-4" />
                     {t('simulateur.print')}
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
-                    leftIcon={<RotateCcw className="size-4" />}
                     onClick={clearCart}
                     className="text-error hover:bg-red-50"
                   >
+                    <RotateCcw className="size-4" />
                     {t('simulateur.clear')}
                   </Button>
                 </div>
@@ -745,7 +747,7 @@ export default function Vitrine() {
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch lg:items-center gap-4 lg:gap-6">
-          <Card variant="elevated" padding="sm" className="flex items-center gap-3">
+          <Card className="p-4 shadow-lg hover:-translate-y-1 transition-transform flex items-center gap-3">
             <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl text-emerald-600">
               <Package className="size-5" />
             </div>

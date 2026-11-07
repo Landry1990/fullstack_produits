@@ -1,4 +1,14 @@
 import { useState, useCallback, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
+import { useInvoiceSettings } from './useInvoiceSettings';
+import { useAuth } from '../context/AuthContext';
+
+// « Session sudo » : après une validation réussie, on ré-essaie l'action avec
+// le même validateur sans mot de passe — le backend l'accepte tant que le
+// cache sudo_ok:{user}:{perms} est valide (TTL = réglage, marge 30 s ici).
+// Ne stocke JAMAIS le mot de passe. sudo_session_minutes = 0 → pas de réutilisation.
+const SUDO_SESSION_TTL_MS = 9 * 60 * 1000; // repli si le réglage est illisible
+const sudoSession = new Map<string, { validatorId: number; expiresAt: number }>();
 
 interface SudoOptions {
     title?: string;
@@ -21,6 +31,17 @@ interface SudoState {
 
 export const useSudo = () => {
     const validatingRef = useRef(false);
+    const { user } = useAuth();
+    const { pathname } = useLocation();
+    const { settings: invSettings } = useInvoiceSettings();
+    // Facturation : compte parfois partagé entre vendeurs sur le même poste —
+    // la session silencieuse attribuerait leurs validations au validateur
+    // précédent → toujours la modale ici (le backend garde le hash filtré).
+    const sessionEnabled = !pathname.startsWith('/app/facturation');
+    // Marge de 30 s sous le TTL serveur ; 0 côté réglage → session désactivée.
+    const clientTtlMs = invSettings?.sudo_session_minutes != null
+        ? Math.max(0, invSettings.sudo_session_minutes * 60_000 - 30_000)
+        : SUDO_SESSION_TTL_MS;
     const [sudoState, setSudoState] = useState<SudoState>({
         isOpen: false,
         onValidate: async () => { },
@@ -31,7 +52,10 @@ export const useSudo = () => {
         onSuccess: (validatorId: number, password: string) => void | Promise<void>,
         options?: SudoOptions
     ) => {
-        setSudoState({
+        const permKey = `${user?.id ?? 0}:${options?.permission || 'any'}`;
+
+        const openModal = () => {
+            setSudoState({
             isOpen: true,
             isValidating: false,
             onValidate: async (validatorId: number, password: string) => {
@@ -42,6 +66,7 @@ export const useSudo = () => {
                 setSudoState(prev => ({ ...prev, isValidating: true }));
                 try {
                     await onSuccess(validatorId, password);
+                    if (sessionEnabled && clientTtlMs > 0) sudoSession.set(permKey, { validatorId, expiresAt: Date.now() + clientTtlMs });
                     // Fermer le modal uniquement si la validation réussit
                     setSudoState(prev => ({ ...prev, isOpen: false, onCancel: undefined, isValidating: false }));
                 } catch (error) {
@@ -59,7 +84,30 @@ export const useSudo = () => {
             permission: options?.permission,
             forceCurrentUser: options?.forceCurrentUser,
         });
-    }, []);
+        };
+
+        const cached = sessionEnabled && clientTtlMs > 0 ? sudoSession.get(permKey) : undefined;
+        if (cached && cached.expiresAt > Date.now()) {
+            // Tentative silencieuse — modale si la session côté serveur est morte.
+            void (async () => {
+                try {
+                    await onSuccess(cached.validatorId, '');
+                } catch (err) {
+                    const httpStatus = (err as { response?: { status?: number } })?.response?.status ?? 0;
+                    if (httpStatus >= 400 && httpStatus < 500) {
+                        // Session expirée OU validateur mort (désactivé,
+                        // supprimé, perm perdue) → purge + repli sur la modale.
+                        sudoSession.delete(permKey);
+                        openModal();
+                    }
+                    // 5xx / réseau : déjà toastées dans onSuccess — on garde
+                    // l'entrée pour le prochain essai.
+                }
+            })();
+            return;
+        }
+        openModal();
+    }, [clientTtlMs, user?.id, sessionEnabled]);
 
     const closeSudo = useCallback(() => {
         if (sudoState.onCancel) {

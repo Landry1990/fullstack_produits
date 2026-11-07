@@ -11,8 +11,8 @@ import { fadeInUp, pageFade, staggerContainer, staggerGrid } from '../lib/motion
 import { useProduitPage } from '../hooks/useProduitPage'
 import type { ActiveTab } from '../hooks/useProduitPage'
 
-import { Card } from './ui/Card'
-import { Button } from './ui/Button'
+import { Card } from './shadcn/card'
+import { Button } from './shadcn/button'
 import { ErrorState } from './ui/ErrorState'
 import { ProductListPanel } from './products/ProductListPanel'
 import { ProductDetailHeader } from './products/ProductDetailHeader'
@@ -79,16 +79,20 @@ export default function ProduitShadcn() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={() => refetch()} disabled={isLoading} leftIcon={isLoading ? <RefreshCw className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}>
+          <Button variant="ghost" size="sm" onClick={() => refetch()} disabled={isLoading}>
+            {isLoading ? <RefreshCw className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
             {t('common:actions.refresh', { defaultValue: 'Rafraîchir' })}
           </Button>
-          <Button variant="primary" size="sm" leftIcon={<Package className="size-4" />} onClick={() => handleOpenCreate()}>
+          <Button variant="default" size="sm" onClick={() => handleOpenCreate()}>
+            <Package className="size-4" />
             {t('products:actions.new')}
           </Button>
-          <Button variant="outline" size="sm" leftIcon={<Upload className="size-4" />} onClick={() => setIsImportOpen(true)}>
+          <Button variant="outline" size="sm" onClick={() => setIsImportOpen(true)}>
+            <Upload className="size-4" />
             {t('products:import.title', { defaultValue: 'Importer' })}
           </Button>
-          <Button variant="danger" size="sm" leftIcon={<Eraser className="size-4" />} onClick={handleResetAllStock}>
+          <Button variant="destructive" size="sm" onClick={handleResetAllStock}>
+            <Eraser className="size-4" />
             {t('products:reset_stock.button')}
           </Button>
         </div>
@@ -136,7 +140,7 @@ export default function ProduitShadcn() {
 
           {/* ═════ Right Panel : Details ═════ */}
           <motion.section variants={fadeInUp} className={cn('lg:col-span-7 h-full min-h-0 min-w-0', !selectedProduit && 'max-lg:hidden')}>
-            <Card variant="default" padding="none" className="h-full flex flex-col overflow-hidden">
+            <Card className="h-full flex flex-col overflow-hidden p-0">
               <motion.div
                 key={selectedProduit?.id ?? 'empty'}
                 variants={pageFade}

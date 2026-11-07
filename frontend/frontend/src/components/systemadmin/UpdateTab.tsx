@@ -3,7 +3,7 @@ import {
 } from 'lucide-react';
 import type { TFunction } from 'i18next';
 import type { UpdateStatus } from './types';
-import { Skeleton } from '../ui/Skeleton';
+import { Skeleton } from '../shadcn/skeleton';
 
 interface UpdateTabProps {
   updateStatus: UpdateStatus | null;

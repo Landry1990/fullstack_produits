@@ -1,10 +1,10 @@
 import { useRef, type ChangeEvent, type Dispatch, type FormEvent, type MouseEvent } from 'react';
-import { Paperclip, Reply, Send, X } from 'lucide-react';
+import { Loader2, Paperclip, Reply, Send, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { gooeyToast } from 'goey-toast';
-import { Button } from '../../ui/Button';
-import { Select } from '../../ui/Select';
-import { Textarea } from '../../ui/Textarea';
+import { Button } from '../../shadcn/button';
+import { Select } from '../../shadcn/select';
+import { Textarea } from '../../shadcn/textarea';
 import type { SimpleUser } from '../../../services/userService';
 import { useSendMessageMutation } from './useMessaging';
 import type { ComposerAction, ComposerState } from './types';
@@ -72,9 +72,14 @@ export function MessageComposer({ users, isAdmin, state, dispatch, onCancel, onS
       </h4>
       <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6 flex flex-col flex-1 min-h-0">
         <div className="w-full shrink-0">
+          <label
+            htmlFor="messaging-recipient"
+            className="block text-caption font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5"
+          >
+            {t('new.recipient')}
+          </label>
           <Select
             id="messaging-recipient"
-            label={t('new.recipient')}
             value={recipientId}
             onChange={(e) =>
               dispatch({ type: 'SET_RECIPIENT', payload: e.target.value === '' ? '' : Number(e.target.value) })
@@ -160,12 +165,11 @@ export function MessageComposer({ users, isAdmin, state, dispatch, onCancel, onS
           </Button>
           <Button
             type="submit"
-            variant="primary"
-            isLoading={sendMessageMutation.isPending}
-            disabled={!canSubmit}
-            leftIcon={<Send size={16} aria-hidden />}
+            variant="default"
+            disabled={sendMessageMutation.isPending || !canSubmit}
             className="flex-1"
           >
+            {sendMessageMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send size={16} aria-hidden />}
             {sendMessageMutation.isPending ? t('new.sending') : t('new.send')}
           </Button>
         </div>

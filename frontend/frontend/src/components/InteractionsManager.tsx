@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { gooeyToast } from 'goey-toast';
 import api from '../services/api';
 import { Button } from './shadcn/button';
-import { Badge } from './ui/Badge';
+import { Badge } from './shadcn/badge';
 import PaginationControls from './ui/PaginationControls';
 import { useConfirm } from '../hooks/useConfirm';
 import { getApiErrorDetail } from '../utils/errorHandling';
@@ -29,10 +29,10 @@ interface InteractionStats {
   total_substances: number;
 }
 
-const GRAVITY_COLORS: Record<string, 'error' | 'warning' | 'primary' | 'ghost'> = {
-  CONTRE_INDIQUE: 'error',
+const GRAVITY_COLORS: Record<string, 'destructive' | 'warning' | 'default' | 'ghost'> = {
+  CONTRE_INDIQUE: 'destructive',
   DECONSEILLE: 'warning',
-  A_PRENDRE_EN_COMPTE: 'primary',
+  A_PRENDRE_EN_COMPTE: 'default',
   PRECAUTION: 'ghost',
 };
 
@@ -302,7 +302,7 @@ export default function InteractionsManager() {
                     <td className="px-3 py-2 font-bold text-sm">{inter.substance_a_nom}</td>
                     <td className="px-3 py-2 font-bold text-sm">{inter.substance_b_nom}</td>
                     <td className="px-3 py-2">
-                      <Badge variant={GRAVITY_COLORS[inter.gravity] || 'ghost'} size="sm">
+                      <Badge variant={GRAVITY_COLORS[inter.gravity] || 'ghost'} className="px-2 py-0 text-[10px]">
                         {GRAVITY_KEYS[inter.gravity] ? t(GRAVITY_KEYS[inter.gravity]) : inter.gravity}
                       </Badge>
                     </td>

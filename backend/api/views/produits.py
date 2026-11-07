@@ -71,7 +71,7 @@ class ProduitViewSet(
     # Explicitement autoriser toutes les méthodes CRUD
     http_method_names = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options']
     
-    queryset = Produit.objects.select_related('rayon', 'fournisseur', 'forme', 'groupe').order_by('name')
+    queryset = Produit.objects.select_related('rayon', 'rayon__parent', 'fournisseur', 'forme', 'groupe').order_by('name')
     serializer_class = ProduitSerializer
     list_serializer_class = ProduitListSerializer
     detail_serializer_class = ProduitDetailSerializer
@@ -209,7 +209,13 @@ class ProduitViewSet(
 
         rayon_id = self.request.query_params.get('rayon')
         if rayon_id is not None:
-             queryset = queryset.filter(rayon_id=parse_id(rayon_id, field='rayon'))
+            rid = parse_id(rayon_id, field='rayon')
+            # include_children=1 → inclut les produits des sous-rayons (parent uniquement),
+            # cohérent avec imprimer_etat_stock et etat_inventaire.
+            if self.request.query_params.get('include_children', '').lower() in ('1', 'true', 'yes'):
+                queryset = queryset.filter(Q(rayon_id=rid) | Q(rayon__parent_id=rid))
+            else:
+                queryset = queryset.filter(rayon_id=rid)
 
         forme_id = self.request.query_params.get('forme')
         if forme_id is not None:

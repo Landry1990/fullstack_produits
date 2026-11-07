@@ -6,6 +6,7 @@ import { gooeyToast } from 'goey-toast'
 import { useTranslation } from 'react-i18next'
 import { formatNumber as utilsFormatNumber } from '../utils/formatters'
 import { logger } from '../utils/logger'
+import { renderRayonOptions } from '../utils/rayon'
 
 interface ProduitABC {
   id: number
@@ -93,9 +94,7 @@ function AbcFilterBar({
         aria-label={t('common:rayon')}
       >
         <option value="">{t('stock:abc.filters.all_rayons')}</option>
-        {rayons.map(r => (
-          <option key={r.id} value={r.id}>{r.name}</option>
-        ))}
+        {renderRayonOptions(rayons)}
       </select>
 
       <select
@@ -225,7 +224,10 @@ export default function AnalyseABC() {
       setError(null)
       try {
         const params = new URLSearchParams({ periode: periode.toString() })
-        if (rayonId) params.append('rayon_id', rayonId)
+        if (rayonId) {
+          params.append('rayon_id', rayonId)
+          params.append('include_children', '1')
+        }
         if (fournisseurId) params.append('fournisseur_id', fournisseurId)
 
         const response = await api.get(`produits/analyse_abc/?${params}`)

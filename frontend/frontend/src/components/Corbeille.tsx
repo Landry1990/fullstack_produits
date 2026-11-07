@@ -5,12 +5,12 @@ import api from '../services/api';
 import { gooeyToast } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
 import { useConfirm } from '../hooks/useConfirm';
-import { Button } from './ui/Button';
-import { Input } from './ui/Input';
-import { Badge } from './ui/Badge';
-import { Checkbox } from './ui/Checkbox';
-import { Select } from './ui/Select';
-import { Card } from './ui/Card';
+import { Button } from './shadcn/button';
+import { Input } from './shadcn/input';
+import { Badge } from './shadcn/badge';
+import { Checkbox } from './shadcn/checkbox';
+import { Select } from './shadcn/select';
+import { Card } from './shadcn/card';
 import {
   Trash2, RotateCcw, Package, Users, Truck, Search, X,
   ShoppingCart, CreditCard, Clock, ClipboardList, Receipt, ChevronDown,
@@ -270,7 +270,7 @@ export default function Corbeille() {
               {loading ? <span className="inline-block size-4 border-2 border-base-300 border-t-primary rounded-full animate-spin" aria-hidden="true" /> : <RotateCcw className="size-4" aria-hidden="true" />}
             </Button>
             {(data?.total ?? 0) > 0 && (
-              <Button variant="danger" size="sm" onClick={handleEmptyTrash} disabled={actionLoading} aria-label={t('actions.empty_all')}>
+              <Button variant="destructive" size="sm" onClick={handleEmptyTrash} disabled={actionLoading} aria-label={t('actions.empty_all')}>
                 <Trash2 className="size-3.5 mr-1.5" aria-hidden="true" />
                 <span className="hidden sm:inline">{t('actions.empty_all')}</span>
               </Button>
@@ -301,7 +301,7 @@ export default function Corbeille() {
 
         {/* Type filter */}
         <div className="w-40 shrink-0">
-          <Select size="sm" value={typeFilter} onChange={e => setTypeFilter(e.target.value as TypeKey)} aria-label={t('common:filter')}>
+          <Select className="h-9 text-xs" value={typeFilter} onChange={e => setTypeFilter(e.target.value as TypeKey)} aria-label={t('common:filter')}>
             {TYPE_CONFIG.map(c => (
               <option key={c.key} value={c.key}>{t(c.labelKey)}</option>
             ))}
@@ -312,10 +312,9 @@ export default function Corbeille() {
         {allItems.length > 0 && (
           <div className="flex items-center gap-1.5 cursor-pointer select-none" onClick={selectAll}>
             <Checkbox
-              checked={selectedIds.size === allItems.length && allItems.length > 0}
-              indeterminate={selectedIds.size > 0 && selectedIds.size < allItems.length}
-              onChange={selectAll}
-              size="sm"
+              checked={selectedIds.size === allItems.length && allItems.length > 0 ? true : (selectedIds.size > 0 ? 'indeterminate' : false)}
+              onCheckedChange={selectAll}
+              onClick={(e) => e.stopPropagation()}
               aria-label={selectedIds.size > 0 ? t('actions.selected', { count: selectedIds.size }) : t('common:select_all')}
             />
             <span className="text-xs font-medium text-base-content/70" aria-hidden="true">
@@ -357,11 +356,11 @@ export default function Corbeille() {
                 const isExp = expandedId === key;
                 const cfg = TYPE_CONFIG.find(c => c.key === item.type) || TYPE_CONFIG[0];
                 return (
-                  <Card key={key} padding="sm" variant={isSel ? 'elevated' : 'default'}
-                    className={`group transition-all ${isSel ? 'ring-1 ring-primary/20 border-primary/30' : 'hover:border-base-300 hover:shadow-md'}`}>
+                  <Card key={key}
+                    className={`p-4 group transition-all ${isSel ? 'shadow-lg hover:-translate-y-1 transition-transform ring-1 ring-primary/20 border-primary/30' : 'hover:border-base-300 hover:shadow-md'}`}>
                     <div className="flex items-start gap-3">
                       <div className="pt-0.5" onClick={(e) => { e.stopPropagation(); toggleSelect(key); }}>
-                        <Checkbox checked={isSel} onChange={() => toggleSelect(key)} />
+                        <Checkbox checked={isSel} onCheckedChange={() => toggleSelect(key)} onClick={(e) => e.stopPropagation()} />
                       </div>
                       <div className={`shrink-0 w-9 h-9 rounded-lg flex items-center justify-center ${cfg.bg}`}>
                         <span className={cfg.color}>{cfg.icon}</span>
@@ -369,7 +368,7 @@ export default function Corbeille() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-sm text-base-content truncate">{item.name}</span>
-                          <Badge variant="outline" size="sm" className={cfg.color}>{t(`badges.${item.type}`)}</Badge>
+                          <Badge variant="outline" className={`px-2 py-0 text-[10px] ${cfg.color}`}>{t(`badges.${item.type}`)}</Badge>
                         </div>
                         <div className="flex items-center gap-3 mt-1">
                           <span className="text-caption text-muted-foreground flex items-center gap-1" title={formatDateTime(item.deleted_at, i18n.language)}>
@@ -439,7 +438,7 @@ export default function Corbeille() {
                           {Object.entries(item.details).map(([k, v]) => {
                             if (v === null || v === undefined || v === '') return null;
                             return (
-                              <Card key={k} padding="sm" variant="bordered" className="bg-base-200/50">
+                              <Card key={k} className="p-4 bg-transparent border-2 shadow-none bg-base-200/50">
                                 <p className="text-caption font-bold uppercase tracking-wider text-base-content/40">{k.replace(/_/g, ' ')}</p>
                                 <p className="text-xs text-base-content font-medium truncate">{String(v)}</p>
                               </Card>
@@ -474,7 +473,7 @@ export default function Corbeille() {
             </Button>
             <Button
               size="sm"
-              variant="danger"
+              variant="destructive"
               onClick={() => handlePurge(selectedItems)}
               disabled={actionLoading}
             >

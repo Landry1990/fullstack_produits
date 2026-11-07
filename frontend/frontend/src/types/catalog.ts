@@ -13,8 +13,12 @@ export interface Groupe {
 export interface Rayon {
     id: number
     name: string
+    code?: string
+    ordre?: number
     parent?: number | null
     parent_name?: string | null
+    produits_count?: number
+    produits_count_total?: number
 }
 
 export interface StockLot {
@@ -67,6 +71,8 @@ export interface ProduitModel {
     groupe_name?: string | null
     rayon?: number | null
     rayon_name?: string | null
+    /** Chemin complet « PARENT › SOUS-RAYON » (serializer). */
+    rayon_path?: string | null
     lot_management?: boolean
     is_supplier_exclusive?: boolean
     is_active?: boolean

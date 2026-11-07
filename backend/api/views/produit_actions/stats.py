@@ -171,6 +171,11 @@ class ProduitStatsMixin:
 
         rayon_id = parse_id(request.query_params.get('rayon_id'), field='rayon_id', required=False)
         fournisseur_id = parse_id(request.query_params.get('fournisseur_id'), field='fournisseur_id', required=False)
+        include_children = request.query_params.get('include_children', '').lower() in ('1', 'true', 'yes')
+        rayon_q = (
+            Q(produit__rayon_id=rayon_id) | Q(produit__rayon__parent_id=rayon_id)
+            if include_children else Q(produit__rayon_id=rayon_id)
+        )
 
         date_debut = timezone.now() - relativedelta(months=periode)
 
@@ -180,7 +185,7 @@ class ProduitStatsMixin:
         )
 
         if rayon_id:
-            produit_filter &= Q(produit__rayon_id=rayon_id)
+            produit_filter &= rayon_q
         if fournisseur_id:
             produit_filter &= Q(produit__fournisseur_id=fournisseur_id)
 
@@ -199,7 +204,7 @@ class ProduitStatsMixin:
             avoir_client__date__gte=date_debut
         )
         if rayon_id:
-            avoirs_filter &= Q(produit__rayon_id=rayon_id)
+            avoirs_filter &= rayon_q
         if fournisseur_id:
             avoirs_filter &= Q(produit__fournisseur_id=fournisseur_id)
 
@@ -303,7 +308,10 @@ class ProduitStatsMixin:
         produits_avec_ventes = [p['id'] for p in produits_classes]
         produits_sans_ventes_filter = ~Q(id__in=produits_avec_ventes)
         if rayon_id:
-            produits_sans_ventes_filter &= Q(rayon_id=rayon_id)
+            produits_sans_ventes_filter &= (
+                Q(rayon_id=rayon_id) | Q(rayon__parent_id=rayon_id)
+                if include_children else Q(rayon_id=rayon_id)
+            )
         if fournisseur_id:
             produits_sans_ventes_filter &= Q(fournisseur_id=fournisseur_id)
 

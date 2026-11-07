@@ -5,7 +5,7 @@ import {
     Target, Clock, Star, BarChart2, Zap,
     RefreshCw, Award
 } from 'lucide-react';
-import { Skeleton } from '../ui/Skeleton';
+import { Skeleton } from '../shadcn/skeleton';
 import { motion } from 'framer-motion';
 import { fadeInUp, staggerContainer, staggerFadeContainer } from '../../lib/motion';
 import { useRecharts } from '../../hooks/useRecharts';

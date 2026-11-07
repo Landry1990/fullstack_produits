@@ -2,7 +2,7 @@
 import api from '../services/api';
 import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
-import { Badge } from './ui/Badge';
+import { Badge } from './shadcn/badge';
 import { formatCurrency } from '../utils/formatters';
 import { cn } from '../lib/utils';
 import { logger } from '../utils/logger'
@@ -76,9 +76,9 @@ const BestCashierMetric: React.FC<BestCashierMetricProps> = ({ month, year, user
     }
 
     const getRankBadge = (index: number) => {
-        if (index === 0) return <Badge variant="primary" size="sm" className="bg-yellow-400 border-none text-yellow-900 font-black italic px-1.5">{t('performance.badges.1st')}</Badge>;
-        if (index === 1) return <Badge variant="primary" size="sm" className="bg-slate-300 border-none text-base-content/90 font-black italic px-1.5">{t('performance.badges.2nd')}</Badge>;
-        if (index === 2) return <Badge variant="warning" size="sm" className="border-none text-amber-50 font-black italic px-1.5">{t('performance.badges.3rd')}</Badge>;
+        if (index === 0) return <Badge variant="default" className="px-2 py-0 text-[10px] bg-yellow-400 border-none text-yellow-900 font-black italic px-1.5">{t('performance.badges.1st')}</Badge>;
+        if (index === 1) return <Badge variant="default" className="px-2 py-0 text-[10px] bg-slate-300 border-none text-base-content/90 font-black italic px-1.5">{t('performance.badges.2nd')}</Badge>;
+        if (index === 2) return <Badge variant="warning" className="px-2 py-0 text-[10px] border-none text-amber-50 font-black italic px-1.5">{t('performance.badges.3rd')}</Badge>;
         return <span className="text-base-content/30 font-black text-xs pl-1 font-mono w-6 text-center inline-block">{index + 1}</span>;
     };
 

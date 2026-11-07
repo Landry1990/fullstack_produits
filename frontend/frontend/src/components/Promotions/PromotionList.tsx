@@ -13,7 +13,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '.
 import { cn } from '../../lib/utils';
 import { Plus, Pencil, Trash2, Tag, CalendarDays } from 'lucide-react';
 import { EmptyState } from '../ui/EmptyState';
-import { Skeleton } from '../ui/Skeleton';
+import { Skeleton } from '../shadcn/skeleton';
 import { useConfirm } from '../../hooks/useConfirm';
 import { getApiErrorDetail } from '../../utils/errorHandling';
 import { logger } from '../../utils/logger'

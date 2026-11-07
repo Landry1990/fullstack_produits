@@ -60,7 +60,7 @@ import {
 } from './shadcn/dropdown-menu'
 import { cn } from '../lib/utils'
 import { EmptyState } from './ui/EmptyState'
-import { Skeleton } from './ui/Skeleton'
+import { Skeleton } from './shadcn/skeleton'
 import SkeletonTable from './ui/SkeletonTable'
 import { logger } from '../utils/logger'
 

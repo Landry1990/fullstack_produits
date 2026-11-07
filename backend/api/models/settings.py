@@ -541,6 +541,11 @@ class InvoiceSettings(models.Model):
         default=True,
         help_text="Exiger la saisie d'un mot de passe validateur pour envoyer une vente en caisse"
     )
+    sudo_session_minutes = models.IntegerField(
+        default=10,
+        validators=[MinValueValidator(0), MaxValueValidator(480)],
+        help_text="Durée de la « session sudo » en minutes (0 = désactivée, mot de passe à chaque action)"
+    )
 
     def save(self, *args, **kwargs):
         if not self.pk and InvoiceSettings.objects.exists():

@@ -105,6 +105,7 @@ export function useProduitPage() {
     page,
     page_size: 50,
     rayon: filterRayon,
+    include_children: true,
     forme: filterForme,
     include_inactive: showInactive,
     only_in_stock: showInStockOnly,

@@ -14,7 +14,7 @@ import {
     DialogDescription,
 } from '../shadcn/dialog';
 import { Select } from '../shadcn/select';
-import { Skeleton } from '../ui/Skeleton';
+import { Skeleton } from '../shadcn/skeleton';
 
 interface TransferCommandeModalProps {
     isOpen: boolean;

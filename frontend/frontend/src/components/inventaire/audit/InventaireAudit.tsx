@@ -10,7 +10,7 @@ import { chartTooltipProps, chartBarCursor } from '../../../lib/chartTheme';
 import { useInventaireAudit } from '../../../hooks/inventaire/useInventaireAudit';
 import { LocalizedDateInput } from '../../LocalizedDateInput';
 import { EmptyState } from '../../ui/EmptyState';
-import { Skeleton } from '../../ui/Skeleton';
+import { Skeleton } from '../../shadcn/skeleton';
 import { Button } from '../../shadcn/button';
 import { Badge } from '../../shadcn/badge';
 import { Card, CardHeader, CardTitle, CardContent } from '../../shadcn/card';

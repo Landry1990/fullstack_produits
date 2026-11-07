@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { TrendingUp, TrendingDown, AlertTriangle, Percent, DollarSign, Tag } from 'lucide-react';
 import { useMargeParProduit, useImpactPromotions } from '../hooks/useFinanceStats';
 import { formatCurrency } from '../utils/formatters';
-import { Select } from './ui/Select';
+import { Select } from './shadcn/select';
 import { Badge } from './shadcn/badge';
 import { Loader2 } from 'lucide-react';
 
@@ -44,7 +44,7 @@ export default function AnalyseMargesProduit() {
           </p>
         </div>
         <Select
-          size="sm"
+          className="h-9 text-xs w-auto"
           value={periode}
           onChange={(e) => setPeriode(e.target.value as Periode)}
           aria-label={t('common:period', 'Période')}

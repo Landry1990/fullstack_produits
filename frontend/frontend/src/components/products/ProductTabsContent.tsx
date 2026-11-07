@@ -14,12 +14,12 @@ import { Badge } from '../shadcn/badge';
 import { Tabs, TabsList, TabsTrigger } from '../shadcn/tabs';
 import { Input } from '../shadcn/input';
 import { LocalizedDateInput } from '../LocalizedDateInput';
-import { Select } from '../ui/Select';
+import { Select } from '../shadcn/select';
 import { Card, CardContent } from '../shadcn/card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../shadcn/table';
 import { Check, X, Pencil, Download, TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
 import { EmptyState } from '../ui/EmptyState';
-import { Skeleton } from '../ui/Skeleton';
+import { Skeleton } from '../shadcn/skeleton';
 import SkeletonTable from '../ui/SkeletonTable';
 import ProductPharmaPanel from './ProductPharmaPanel';
 import { useProductPharmaData } from '../../hooks/useProductPharmaData';
@@ -99,7 +99,7 @@ const PriceEvolutionChart = ({ achats, t }: { achats: AchatProduit[]; t: TFuncti
                     </div>
                     {fournisseurs.length > 1 && (
                         <Select
-                            size="sm"
+                            className="h-9 text-xs"
                             value={selectedFournisseur}
                             onChange={(e) => setSelectedFournisseur(e.target.value)}
                         >
@@ -640,7 +640,7 @@ export const ProductTabsContent: React.FC<ProductTabsContentProps> = ({
               </TableRow>
               <TableRow>
                 <TableCell className="w-1/3 font-bold text-sm text-slate-400 uppercase tracking-wider">{t('products:detail.general.rayon')}</TableCell>
-                <TableCell><Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">{selectedProduit.rayon_name || '-'}</Badge></TableCell>
+                <TableCell><Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">{selectedProduit.rayon_path || selectedProduit.rayon_name || '-'}</Badge></TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className="w-1/3 font-bold text-sm text-slate-400 uppercase tracking-wider">{t('products:detail.general.provider')}</TableCell>

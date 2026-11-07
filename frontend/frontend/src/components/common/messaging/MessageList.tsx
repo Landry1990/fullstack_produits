@@ -1,9 +1,9 @@
 import { Archive, Check, CheckCheck, Clock, MessageSquare, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Badge } from '../../ui/Badge';
-import { Button } from '../../ui/Button';
+import { Badge } from '../../shadcn/badge';
+import { Button } from '../../shadcn/button';
 import { EmptyState } from '../../ui/EmptyState';
-import { Skeleton } from '../../ui/Skeleton';
+import { Skeleton } from '../../shadcn/skeleton';
 import { formatDateTime } from '../../../utils/dateUtils';
 import type { InternalMessage } from '../../../services/communicationService';
 
@@ -62,12 +62,12 @@ export function MessageRow({ message: m, variant, selected, onSelect }: MessageR
               {m.content}
             </p>
             {m.recipient === null && (
-              <Badge variant="outline" size="sm" className="shrink-0">
+              <Badge variant="outline" className="shrink-0 px-2 py-0 text-[10px]">
                 {t('received.broadcast')}
               </Badge>
             )}
             {unread && (
-              <Badge variant="error" size="sm" className="shrink-0">
+              <Badge variant="destructive" className="shrink-0 px-2 py-0 text-[10px]">
                 {t('new_badge')}
               </Badge>
             )}
@@ -142,7 +142,8 @@ export function MessageList({
         title={t('common:error')}
         description={t('load_error')}
         action={
-          <Button type="button" size="sm" variant="outline" leftIcon={<RefreshCw size={14} aria-hidden />} onClick={onRetry}>
+          <Button type="button" size="sm" variant="outline" onClick={onRetry}>
+            <RefreshCw size={14} aria-hidden />
             {t('retry')}
           </Button>
         }

@@ -1,6 +1,6 @@
 import { DollarSign, Info } from 'lucide-react'
 import { Input } from '../shadcn/input'
-import { Select } from '../ui/Select'
+import { Select } from '../shadcn/select'
 import type { FiscalTabProps } from './types'
 
 export function FiscalTab({ formData, handleChange, t, isMargeAdministree, isReel }: FiscalTabProps) {

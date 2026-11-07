@@ -2,12 +2,13 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Package, Search, X } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { renderRayonOptions } from '../../utils/rayon';
 import type { ProduitModel, Rayon, Forme } from '../../types';
-import { Card } from '../ui/Card';
-import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
-import { Badge } from '../ui/Badge';
-import { Checkbox } from '../ui/Checkbox';
+import { Card } from '../shadcn/card';
+import { Button } from '../shadcn/button';
+import { Input } from '../shadcn/input';
+import { Badge } from '../shadcn/badge';
+import { Checkbox } from '../shadcn/checkbox';
 import SkeletonTable from '../ui/SkeletonTable';
 import { EmptyState } from '../ui/EmptyState';
 import PaginationControls from '../ui/PaginationControls';
@@ -70,7 +71,7 @@ export const ProductListPanel: React.FC<ProductListPanelProps> = ({
   return (
     <>
       {/* Search & Filters */}
-      <Card variant="default" padding="md" className="shrink-0">
+      <Card className="shrink-0 p-6">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
           <Input
@@ -91,7 +92,7 @@ export const ProductListPanel: React.FC<ProductListPanelProps> = ({
             className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700"
           >
             <option value="">{t('products:filters.all_rayons')}</option>
-            {rayons.map(rayon => <option key={rayon.id} value={rayon.id}>{rayon.name}</option>)}
+            {renderRayonOptions(rayons)}
           </select>
           <select
             value={filterForme}
@@ -106,15 +107,16 @@ export const ProductListPanel: React.FC<ProductListPanelProps> = ({
 
         <div className="flex flex-wrap items-center gap-3 mt-3">
           <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-600">
-            <Checkbox size="sm" checked={showInStockOnly} onChange={v => onShowInStockOnlyChange(v)} aria-label={t('products:filters.in_stock_only')} />
+            <Checkbox checked={showInStockOnly} onCheckedChange={v => onShowInStockOnlyChange(v === true)} aria-label={t('products:filters.in_stock_only')} />
             {t('products:filters.in_stock_only')}
           </label>
           <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-600">
-            <Checkbox size="sm" checked={showInactive} onChange={v => onShowInactiveChange(v)} aria-label={t('products:filters.show_inactive')} />
+            <Checkbox checked={showInactive} onCheckedChange={v => onShowInactiveChange(v === true)} aria-label={t('products:filters.show_inactive')} />
             {t('products:filters.show_inactive')}
           </label>
           {hasActiveFilters && (
-            <Button variant="ghost" size="sm" onClick={onResetFilters} leftIcon={<X className="size-3" />}>
+            <Button variant="ghost" size="sm" onClick={onResetFilters}>
+              <X className="size-3" />
               {t('products:filters.reset', { defaultValue: 'Réinitialiser' })}
             </Button>
           )}
@@ -123,16 +125,16 @@ export const ProductListPanel: React.FC<ProductListPanelProps> = ({
         {/* Active filter chips */}
         {hasActiveFilters && (
           <div className="flex flex-wrap gap-1.5 mt-2">
-            {hasFilterRayon && <Badge variant="secondary" size="sm">{t('products:filters.rayon_active')}</Badge>}
-            {hasFilterForme && <Badge variant="warning" size="sm">{t('products:filters.forme_active')}</Badge>}
-            {showInactive && <Badge variant="ghost" size="sm">{t('products:filters.inactive_only')}</Badge>}
-            {showInStockOnly && <Badge variant="success" size="sm">{t('products:filters.in_stock_only', { defaultValue: 'En stock' })}</Badge>}
+            {hasFilterRayon && <Badge variant="secondary" className="px-2 py-0 text-[10px]">{t('products:filters.rayon_active')}</Badge>}
+            {hasFilterForme && <Badge variant="warning" className="px-2 py-0 text-[10px]">{t('products:filters.forme_active')}</Badge>}
+            {showInactive && <Badge variant="ghost" className="px-2 py-0 text-[10px]">{t('products:filters.inactive_only')}</Badge>}
+            {showInStockOnly && <Badge variant="success" className="px-2 py-0 text-[10px]">{t('products:filters.in_stock_only', { defaultValue: 'En stock' })}</Badge>}
           </div>
         )}
       </Card>
 
       {/* Table */}
-      <Card variant="default" padding="none" className="flex-1 min-h-0 flex flex-col overflow-hidden">
+      <Card className="flex-1 min-h-0 flex flex-col overflow-hidden p-0">
         {/* Table Header */}
         <div className="shrink-0 px-4 py-3 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
@@ -152,7 +154,7 @@ export const ProductListPanel: React.FC<ProductListPanelProps> = ({
               title={t('products:table.empty_title')}
               description={t('products:table.empty_subtitle')}
               action={
-                <Button variant="primary" size="sm" onClick={onNewProduct}>
+                <Button variant="default" size="sm" onClick={onNewProduct}>
                   + {t('products:actions.create', { defaultValue: 'Créer un produit' })}
                 </Button>
               }
@@ -192,13 +194,13 @@ export const ProductListPanel: React.FC<ProductListPanelProps> = ({
                             {produit.name}
                           </span>
                           {produit.is_service && (
-                            <Badge variant="secondary" size="sm">{t('products:form.service_badge')}</Badge>
+                            <Badge variant="secondary" className="px-2 py-0 text-[10px]">{t('products:form.service_badge')}</Badge>
                           )}
                           {produit.is_supplier_exclusive && (
-                            <Badge variant="success" size="sm">{t('products:table.exclusive_badge')}</Badge>
+                            <Badge variant="success" className="px-2 py-0 text-[10px]">{t('products:table.exclusive_badge')}</Badge>
                           )}
                           {produit.is_active === false && (
-                            <Badge variant="ghost" size="sm">{t('products:table.inactive_badge')}</Badge>
+                            <Badge variant="ghost" className="px-2 py-0 text-[10px]">{t('products:table.inactive_badge')}</Badge>
                           )}
                         </div>
                       </td>
@@ -214,7 +216,7 @@ export const ProductListPanel: React.FC<ProductListPanelProps> = ({
         <div className="shrink-0 px-4 py-2 border-t border-slate-100 bg-slate-50 flex items-center justify-between text-sm">
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t('products:footer.global')}</span>
-            <Badge variant="primary" size="sm">{totalCount}</Badge>
+            <Badge variant="default" className="px-2 py-0 text-[10px]">{totalCount}</Badge>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1.5" title={t('products:footer.low_stock_title')}>

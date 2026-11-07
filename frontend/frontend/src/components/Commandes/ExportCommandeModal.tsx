@@ -32,7 +32,7 @@ import {
   TableCell,
 } from '../shadcn/table';
 import { cn } from '../../lib/utils';
-import { Skeleton } from '../ui/Skeleton';
+import { Skeleton } from '../shadcn/skeleton';
 
 interface ExportCommandeModalProps {
   isOpen: boolean;

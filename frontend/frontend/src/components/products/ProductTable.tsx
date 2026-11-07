@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { ProduitModel } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 import { Package, Plus } from 'lucide-react';
-import { Checkbox } from '../ui/Checkbox';
+import { Checkbox } from '../shadcn/checkbox';
 import { EmptyState } from '../ui/EmptyState';
 import SkeletonTable from '../ui/SkeletonTable';
 import { Table, TableBody, TableHeader } from '../shadcn/table';
@@ -71,10 +71,8 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
                 <tr>
                   <th scope="col" className="py-2.5 px-4 w-10">
                     <Checkbox
-                      checked={isAllSelected}
-                      indeterminate={isPartiallySelected}
-                      onChange={onSelectAll}
-                      size="sm"
+                      checked={isPartiallySelected ? 'indeterminate' : isAllSelected}
+                      onCheckedChange={onSelectAll}
                       aria-label={t('common:maintenance.select_all')}
                     />
                   </th>
@@ -117,8 +115,7 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
                       <td className="py-3 px-4 w-10" onClick={(e) => e.stopPropagation()}>
                         <Checkbox
                           checked={isChecked}
-                          onChange={() => onSelectProduct(produit.id)}
-                          size="md"
+                          onCheckedChange={() => onSelectProduct(produit.id)}
                           aria-label={produit.name}
                         />
                       </td>
@@ -185,8 +182,7 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
                     <div className="pt-0.5" onClick={e => e.stopPropagation()}>
                        <Checkbox
                           checked={isChecked}
-                          onChange={() => onSelectProduct(produit.id)}
-                          size="sm"
+                          onCheckedChange={() => onSelectProduct(produit.id)}
                           aria-label={produit.name}
                         />
                     </div>

@@ -12,14 +12,14 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from './ui/Dialog';
-import { Card } from './ui/Card';
-import { Button } from './ui/Button';
-import { Input } from './ui/Input';
-import { Label } from './ui/Label';
-import { Select } from './ui/Select';
-import { Textarea } from './ui/Textarea';
-import { Badge } from './ui/Badge';
+} from './shadcn/dialog';
+import { Card } from './shadcn/card';
+import { Button } from './shadcn/button';
+import { Input } from './shadcn/input';
+import { Label } from './shadcn/label';
+import { Select } from './shadcn/select';
+import { Textarea } from './shadcn/textarea';
+import { Badge } from './shadcn/badge';
 import {
   Table,
   TableBody,
@@ -65,9 +65,9 @@ const modeBadgeVariant = (mode: string) => {
     case 'CHQ':
       return 'secondary' as const;
     case 'VIR':
-      return 'primary' as const;
+      return 'default' as const;
     case 'AVOIR':
-      return 'accent' as const;
+      return 'destructive' as const;
     default:
       return 'ghost' as const;
   }
@@ -248,9 +248,7 @@ export default function FinanceFournisseurModal({
         {/* Debt Banner */}
         <div className="px-6">
           <Card
-            variant="bordered"
-            padding="sm"
-            className="flex items-center justify-between py-3"
+            className="p-4 bg-transparent border-2 shadow-none flex items-center justify-between py-3"
           >
             <div className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4 text-base-content/40" />
@@ -295,11 +293,10 @@ export default function FinanceFournisseurModal({
                     type="number"
                     min="0"
                     step="0.01"
-                    size="sm"
                     value={montant}
                     onChange={(e) => { dispatchPaymentForm({ type: 'SET_FIELD', field: 'montant', value: e.target.value }); setJustPaid(false); }}
                     placeholder="0.00"
-                    className={`pl-8 font-mono font-bold text-base ${
+                    className={`h-9 pl-8 font-mono font-bold text-base ${
                       prefilledMontant
                         ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800'
                         : ''
@@ -315,7 +312,7 @@ export default function FinanceFournisseurModal({
                 </Label>
                 <Select
                   id="mode"
-                  size="sm"
+                  className="h-9 text-xs"
                   value={modePaiement}
                   onChange={(e) => dispatchPaymentForm({ type: 'SET_FIELD', field: 'modePaiement', value: e.target.value })}
                 >
@@ -334,7 +331,7 @@ export default function FinanceFournisseurModal({
                 <Input
                   id="reference"
                   type="text"
-                  size="sm"
+                  className="h-9 text-xs"
                   placeholder={t('providers:finance.reference_placeholder')}
                   value={reference}
                   onChange={(e) => dispatchPaymentForm({ type: 'SET_FIELD', field: 'reference', value: e.target.value })}
@@ -356,14 +353,12 @@ export default function FinanceFournisseurModal({
 
               <Button
                 type="submit"
-                variant="primary"
+                variant="default"
                 size="sm"
-                fullWidth
-                isLoading={isSubmitting}
                 disabled={isSubmitting || justPaid || !montant || normalizeNumberInput(montant) <= 0}
-                leftIcon={<Receipt className="h-4 w-4" />}
-                className="mt-auto shrink-0"
+                className="w-full mt-auto shrink-0"
               >
+                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Receipt className="h-4 w-4" />}
                 {justPaid ? t('providers:finance.payment_saved') : t('providers:finance.save_payment')}
               </Button>
             </form>
@@ -379,7 +374,7 @@ export default function FinanceFournisseurModal({
                   {t('suppliers:finance.echeancier_title', { count: echeances.length })}
                 </h4>
                 {normalizeNumberInput(montant) > 0 && (
-                  <Badge variant="success" size="sm" className="ml-auto">
+                  <Badge variant="success" className="px-2 py-0 text-[10px] ml-auto">
                     {t('suppliers:finance.allocation_preview')}
                   </Badge>
                 )}
@@ -485,7 +480,7 @@ export default function FinanceFournisseurModal({
                           <TableCell className="py-2">
                             <Badge
                               variant={modeBadgeVariant(paiement.mode_paiement)}
-                              size="sm"
+                              className="px-2 py-0 text-[10px]"
                             >
                               {modeLabel(paiement.mode_paiement)}
                             </Badge>
@@ -509,8 +504,7 @@ export default function FinanceFournisseurModal({
                                     <Badge
                                       key={cmd}
                                       variant="ghost"
-                                      size="sm"
-                                      className="font-mono text-caption"
+                                      className="px-2 py-0 text-[10px] font-mono text-caption"
                                     >
                                       #{cmd}
                                     </Badge>

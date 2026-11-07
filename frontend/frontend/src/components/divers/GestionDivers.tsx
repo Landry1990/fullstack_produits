@@ -28,7 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../shadcn/tabs';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '../shadcn/table';
-import { Skeleton } from '../ui/Skeleton';
+import { Skeleton } from '../shadcn/skeleton';
 import PaginationControls from '../ui/PaginationControls';
 import { logger } from '../../utils/logger'
 import { usePharmacySettings } from '../../hooks/usePharmacySettings';

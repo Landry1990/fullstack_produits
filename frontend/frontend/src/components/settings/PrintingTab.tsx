@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { MessageSquare, ChevronRight, Printer, RefreshCw, Smartphone } from 'lucide-react'
 import { Checkbox } from '../shadcn/checkbox'
-import { Select } from '../ui/Select'
+import { Select } from '../shadcn/select'
 import { gooeyToast } from 'goey-toast'
 import {
   getSavedPrinterName,
@@ -167,10 +167,9 @@ export function PrintingTab({ formData, handleChange, t, invSettings, updateInvS
                 <span className="text-sm font-bold text-slate-500">{t('labels.paper_width')}</span>
               </label>
               <Select
-                size="lg"
                 value={formData.ticket_paper_width || 80}
                 onChange={(e) => handleChange('ticket_paper_width', parseInt(e.target.value))}
-                className="rounded-xl"
+                className="h-12 text-base rounded-xl"
               >
                 <option value={80}>{t('labels.paper_standard')}</option>
                 <option value={58}>{t('labels.paper_small')}</option>
@@ -181,10 +180,9 @@ export function PrintingTab({ formData, handleChange, t, invSettings, updateInvS
                 <span className="text-sm font-bold text-slate-500">{t('labels.document_language')}</span>
               </label>
               <Select
-                size="lg"
                 value={formData.locale || 'fr-FR'}
                 onChange={(e) => handleChange('locale', e.target.value)}
-                className="rounded-xl"
+                className="h-12 text-base rounded-xl"
               >
                 <option value="fr-FR">{t('labels.document_language_fr')}</option>
                 <option value="en-US">{t('labels.document_language_en')}</option>
@@ -234,6 +232,27 @@ export function PrintingTab({ formData, handleChange, t, invSettings, updateInvS
                     <p className="text-xs text-slate-500">
                       {t('hints.require_validator_password')}
                     </p>
+                    <div className="flex items-center justify-between border-t border-indigo-100 pt-4">
+                      <span className="text-sm font-bold">{t('labels.sudo_session_minutes')}</span>
+                      <input
+                        type="number"
+                        min={0}
+                        max={480}
+                        className="w-24 h-8 px-2 text-sm border rounded-lg text-right"
+                        key={invSettings?.sudo_session_minutes ?? 10}
+                        defaultValue={invSettings?.sudo_session_minutes ?? 10}
+                        onBlur={(e) => {
+                          const val = Math.min(480, Math.max(0, Number(e.target.value) || 0));
+                          e.target.value = String(val);
+                          if (val !== (invSettings?.sudo_session_minutes ?? 10)) {
+                            updateInvSettings({ sudo_session_minutes: val });
+                          }
+                        }}
+                      />
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      {t('hints.sudo_session_minutes')}
+                    </p>
                   </>
                 )}
               </div>
@@ -259,10 +278,9 @@ export function PrintingTab({ formData, handleChange, t, invSettings, updateInvS
             </label>
             <div className="flex gap-2">
               <Select
-                size="lg"
                 value={printerName}
                 onChange={(e) => handlePrinterChange(e.target.value)}
-                className="flex-1 rounded-xl"
+                className="flex-1 h-12 text-base rounded-xl"
               >
                 {/* Vide = imprimante par défaut du système (fallback QZ Tray) */}
                 <option value="">{t('labels.qz_printer_auto')}</option>
@@ -292,13 +310,12 @@ export function PrintingTab({ formData, handleChange, t, invSettings, updateInvS
             </label>
             <Select
               id="qz-label-printer"
-              size="lg"
               value={labelPrinterName}
               onChange={(e) => {
                 setLabelPrinterName(e.target.value)
                 setSavedLabelPrinterName(e.target.value)
               }}
-              className="rounded-xl"
+              className="h-12 text-base rounded-xl"
             >
               <option value="">{t('labels.label_printer_browser')}</option>
               {labelPrinterName && !printers.includes(labelPrinterName) && (

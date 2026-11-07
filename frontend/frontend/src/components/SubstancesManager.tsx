@@ -4,9 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { gooeyToast } from 'goey-toast';
 import api from '../services/api';
 import { Button } from './shadcn/button';
-import { Badge } from './ui/Badge';
+import { Badge } from './shadcn/badge';
 import { EmptyState } from './ui/EmptyState';
-import { Skeleton } from './ui/Skeleton';
+import { Skeleton } from './shadcn/skeleton';
 import { logger } from '../utils/logger';
 
 interface Substance {
@@ -142,7 +142,7 @@ export default function SubstancesManager() {
             {t('products:dci.substances.unresolved_only')}
           </label>
           {data && (
-            <Badge variant="secondary" size="sm" className="font-bold">
+            <Badge variant="secondary" className="px-2 py-0 text-[10px] font-bold">
               {t('products:dci.substances.count', { count: data.count })}
             </Badge>
           )}

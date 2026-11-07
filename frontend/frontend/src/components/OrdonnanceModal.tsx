@@ -4,7 +4,7 @@ import type { Facture, ProduitModel } from '../types';
 import { useTranslation } from 'react-i18next';
 import PremiumModal from './common/PremiumModal';
 import { Button } from './shadcn/button';
-import { Badge } from './ui/Badge';
+import { Badge } from './shadcn/badge';
 import { logger } from '../utils/logger'
 import { LocalizedDateInput } from './LocalizedDateInput';
 
@@ -187,9 +187,9 @@ const OrdonnanceModal: React.FC<OrdonnanceModalProps> = ({ isOpen, onClose, onSa
                           <td className="font-medium">{ligne.produit_nom}</td>
                           <td className="text-right">{ligne.quantite}</td>
                           <td>
-                              {ligne.surveillance_category === 'RENFORCEE' && <Badge variant="error" size="sm" className="h-4 px-1 text-micro">{t('modal.surveillance_renforcee')}</Badge>}
-                              {ligne.surveillance_category === 'STANDARD' && <Badge variant="warning" size="sm" className="h-4 px-1 text-micro">{t('modal.surveillance_standard')}</Badge>}
-                              {(!ligne.surveillance_category || ligne.surveillance_category === 'NONE') && <Badge variant="ghost" size="sm" className="h-4 px-1 text-micro">{t('modal.surveillance_ordonnance')}</Badge>}
+                              {ligne.surveillance_category === 'RENFORCEE' && <Badge variant="destructive" className="h-4 px-1 text-micro">{t('modal.surveillance_renforcee')}</Badge>}
+                              {ligne.surveillance_category === 'STANDARD' && <Badge variant="warning" className="h-4 px-1 text-micro">{t('modal.surveillance_standard')}</Badge>}
+                              {(!ligne.surveillance_category || ligne.surveillance_category === 'NONE') && <Badge variant="ghost" className="h-4 px-1 text-micro">{t('modal.surveillance_ordonnance')}</Badge>}
                           </td>
                       </tr>
                   ))}

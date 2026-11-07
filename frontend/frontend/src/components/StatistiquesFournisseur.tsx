@@ -19,12 +19,12 @@ import { Card, CardContent, CardTitle } from './shadcn/card';
 import { Progress } from './shadcn/progress';
 import { Badge } from './shadcn/badge';
 import { Tabs, TabsList, TabsTrigger } from './shadcn/tabs';
-import { Input } from './ui/Input';
+import { Input } from './shadcn/input';
 import { LocalizedDateInput } from './LocalizedDateInput';
-import { Select } from './ui/Select';
+import { Select } from './shadcn/select';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './shadcn/table';
 import { EmptyState } from './ui/EmptyState';
-import { Skeleton } from './ui/Skeleton';
+import { Skeleton } from './shadcn/skeleton';
 import SkeletonTable from './ui/SkeletonTable';
 import { PageContainer } from './ui/PageContainer';
 import PaginationControls from './ui/PaginationControls';
@@ -735,32 +735,42 @@ export default function StatistiquesFournisseur() {
           <Card className="shadow-sm border border-slate-200">
             <CardContent className="p-4">
               <form onSubmit={handlePaiementSearchSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 items-end">
-                <Select
-                  label={t('payments_tab.filters.supplier')}
-                  aria-label={t('payments_tab.filters.supplier')}
-                  size="sm"
-                  value={paiementFournisseurFilter}
-                  onChange={(e) => { setPaiementFournisseurFilter(e.target.value); setPaiementPage(1); }}
-                >
-                  <option value="">{t('payments_tab.filters.all_suppliers')}</option>
-                  {fournisseursList.map((f) => (
-                    <option key={f.id} value={f.id}>{f.name}</option>
-                  ))}
-                </Select>
-                <Select
-                  label={t('payments_tab.filters.mode')}
-                  aria-label={t('payments_tab.filters.mode')}
-                  size="sm"
-                  value={paiementModeFilter}
-                  onChange={(e) => { setPaiementModeFilter(e.target.value); setPaiementPage(1); }}
-                >
-                  <option value="">{t('payments_tab.filters.all_modes')}</option>
-                  <option value="ESP">{t('payments_tab.modes.ESP')}</option>
-                  <option value="CHQ">{t('payments_tab.modes.CHQ')}</option>
-                  <option value="VIR">{t('payments_tab.modes.VIR')}</option>
-                  <option value="AVOIR">{t('payments_tab.modes.AVOIR')}</option>
-                  <option value="AUTRE">{t('payments_tab.modes.AUTRE')}</option>
-                </Select>
+                <div className="w-full">
+                  <label htmlFor="paiement-fournisseur-filter" className="block text-caption font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                    {t('payments_tab.filters.supplier')}
+                  </label>
+                  <Select
+                    id="paiement-fournisseur-filter"
+                    aria-label={t('payments_tab.filters.supplier')}
+                    className="h-9 text-xs"
+                    value={paiementFournisseurFilter}
+                    onChange={(e) => { setPaiementFournisseurFilter(e.target.value); setPaiementPage(1); }}
+                  >
+                    <option value="">{t('payments_tab.filters.all_suppliers')}</option>
+                    {fournisseursList.map((f) => (
+                      <option key={f.id} value={f.id}>{f.name}</option>
+                    ))}
+                  </Select>
+                </div>
+                <div className="w-full">
+                  <label htmlFor="paiement-mode-filter" className="block text-caption font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                    {t('payments_tab.filters.mode')}
+                  </label>
+                  <Select
+                    id="paiement-mode-filter"
+                    aria-label={t('payments_tab.filters.mode')}
+                    className="h-9 text-xs"
+                    value={paiementModeFilter}
+                    onChange={(e) => { setPaiementModeFilter(e.target.value); setPaiementPage(1); }}
+                  >
+                    <option value="">{t('payments_tab.filters.all_modes')}</option>
+                    <option value="ESP">{t('payments_tab.modes.ESP')}</option>
+                    <option value="CHQ">{t('payments_tab.modes.CHQ')}</option>
+                    <option value="VIR">{t('payments_tab.modes.VIR')}</option>
+                    <option value="AVOIR">{t('payments_tab.modes.AVOIR')}</option>
+                    <option value="AUTRE">{t('payments_tab.modes.AUTRE')}</option>
+                  </Select>
+                </div>
                 <div className="w-full">
                   <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
                     {t('payments_tab.filters.from')}
@@ -783,15 +793,20 @@ export default function StatistiquesFournisseur() {
                     onChange={(e) => { setPaiementDateFin(e.target.value); setPaiementPage(1); }}
                   />
                 </div>
-                <Input
-                  label={t('payments_tab.filters.search')}
-                  aria-label={t('payments_tab.filters.search')}
-                  type="search"
-                  size="sm"
-                  value={paiementSearch}
-                  onChange={(e) => setPaiementSearch(e.target.value)}
-                  placeholder={t('payments_tab.filters.search')}
-                />
+                <div className="w-full">
+                  <label htmlFor="paiement-search" className="block text-caption font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                    {t('payments_tab.filters.search')}
+                  </label>
+                  <Input
+                    id="paiement-search"
+                    aria-label={t('payments_tab.filters.search')}
+                    type="search"
+                    className="h-9 text-xs"
+                    value={paiementSearch}
+                    onChange={(e) => setPaiementSearch(e.target.value)}
+                    placeholder={t('payments_tab.filters.search')}
+                  />
+                </div>
                 <div className="flex gap-2">
                   <Button type="submit" variant="default" size="sm" className="h-9 flex-1" disabled={loadingPaiements || exportingPaiements}>
                     {loadingPaiements ? <Loader2 className="size-3 animate-spin" /> : t('filters.refresh')}

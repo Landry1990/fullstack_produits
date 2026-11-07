@@ -10,12 +10,12 @@ import { formatCurrency, formatNumber } from '../utils/formatters';
 import { writePrintDocument, escHtml } from '../utils/print/printHelpers';
 import { useDocumentLocale } from '../hooks/usePharmacySettings';
 
-import { Card } from './ui/Card';
-import { Button } from './ui/Button';
-import { Badge } from './ui/Badge';
-import { Input } from './ui/Input';
+import { Card } from './shadcn/card';
+import { Button } from './shadcn/button';
+import { Badge } from './shadcn/badge';
+import { Input } from './shadcn/input';
 import { LocalizedDateInput } from './LocalizedDateInput';
-import { Skeleton } from './ui/Skeleton';
+import { Skeleton } from './shadcn/skeleton';
 import { EmptyState } from './ui/EmptyState';
 import {
   Table,
@@ -33,7 +33,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogClose,
-} from './ui/Dialog';
+} from './shadcn/dialog';
 import type { UGReportData, FournisseurUGStat } from '../types/ug';
 import { logger } from '../utils/logger'
 
@@ -266,28 +266,28 @@ export default function StockUGReportShadcn() {
             <Button
               variant="outline"
               size="sm"
-              leftIcon={<Printer className="size-4" />}
               onClick={handlePrint}
               disabled={loading || !data?.fournisseurs.length}
             >
+              <Printer className="size-4" />
               {t('stock:rapport_ug.print')}
             </Button>
             <Button
               variant="outline"
               size="sm"
-              leftIcon={<Download className="size-4" />}
               onClick={exportCSV}
               disabled={loading || !data?.fournisseurs.length}
             >
+              <Download className="size-4" />
               {t('stock:rapport_ug.export')}
             </Button>
             <Button
-              variant="primary"
+              variant="default"
               size="sm"
-              leftIcon={<RefreshCw className={`size-4 ${loading ? 'animate-spin' : ''}`} />}
               onClick={fetchData}
               disabled={loading}
             >
+              <RefreshCw className={`size-4 ${loading ? 'animate-spin' : ''}`} />
               {t('stock:rapport_ug.refresh')}
             </Button>
           </div>
@@ -296,7 +296,7 @@ export default function StockUGReportShadcn() {
         {/* Global KPIs */}
         <motion.div variants={fadeInUp} className="grid grid-cols-2 lg:grid-cols-4 gap-2">
           {kpiCards.map((kpi) => (
-            <Card key={kpi.title} variant="default" className="flex items-center gap-2 px-3 py-2">
+            <Card key={kpi.title} className="flex items-center gap-2 px-3 py-2">
               <div className={`size-10 rounded-xl ${kpi.bg} ${kpi.color} flex items-center justify-center shrink-0`}>
                 <kpi.icon className="size-5" />
               </div>
@@ -312,12 +312,12 @@ export default function StockUGReportShadcn() {
 
         {/* List Card */}
         <motion.div variants={fadeInUp}>
-        <Card variant="default" className="overflow-hidden flex flex-col">
+        <Card className="overflow-hidden flex flex-col">
           {/* Toolbar */}
           <div className="px-4 py-2.5 border-b border-base-200 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-2 bg-base-200/50">
             <h2 className="text-lg font-bold text-base-content flex items-center gap-2">
               {t('stock:rapport_ug.filters.supplier_split')}
-              {data && <Badge variant="primary" size="sm">{filteredSuppliers.length}</Badge>}
+              {data && <Badge variant="default" className="px-2 py-0 text-[10px]">{filteredSuppliers.length}</Badge>}
             </h2>
 
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
@@ -419,7 +419,7 @@ export default function StockUGReportShadcn() {
                           <span className="font-semibold text-base-content/90">{stat.fournisseur_nom}</span>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Badge variant="ghost" size="sm">{t('stock:rapport_ug.table.lots_badge', { count: stat.lots_count })}</Badge>
+                          <Badge variant="ghost" className="px-2 py-0 text-[10px]">{t('stock:rapport_ug.table.lots_badge', { count: stat.lots_count })}</Badge>
                         </TableCell>
                         <TableCell className="text-right text-base-content/40">
                           {formatNumber(stat.total_ug)}
@@ -470,19 +470,19 @@ export default function StockUGReportShadcn() {
           {selectedSupplier && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <Card variant="default" className="p-3">
+                <Card className="p-3">
                   <p className="text-caption font-black text-base-content/40 uppercase">{t('stock:rapport_ug.table.received_ug')}</p>
                   <p className="text-xl font-black text-base-content">{formatNumber(selectedSupplier.total_ug)}</p>
                 </Card>
-                <Card variant="default" className="p-3">
+                <Card className="p-3">
                   <p className="text-caption font-black text-base-content/40 uppercase">{t('stock:rapport_ug.table.remaining_stock')}</p>
                   <p className="text-xl font-black text-emerald-600">{formatNumber(selectedSupplier.total_ug_restantes)}</p>
                 </Card>
-                <Card variant="default" className="p-3">
+                <Card className="p-3">
                   <p className="text-caption font-black text-base-content/40 uppercase">{t('stock:rapport_ug.stats.estimated_value')}</p>
                   <p className="text-xl font-black text-base-content">{formatCurrency(selectedSupplier.total_valeur)}</p>
                 </Card>
-                <Card variant="default" className="p-3">
+                <Card className="p-3">
                   <p className="text-caption font-black text-base-content/40 uppercase">{t('stock:rapport_ug.table.remaining_value')}</p>
                   <p className="text-xl font-black text-blue-600">{formatCurrency(selectedSupplier.total_valeur_restante)}</p>
                 </Card>

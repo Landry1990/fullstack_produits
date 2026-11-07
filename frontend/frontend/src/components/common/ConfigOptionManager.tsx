@@ -10,7 +10,7 @@ import { gooeyToast } from 'goey-toast';
 import { useConfirm } from '../../hooks/useConfirm';
 import PremiumModal from './PremiumModal';
 import { EmptyState } from '../ui/EmptyState';
-import { Skeleton } from '../ui/Skeleton';
+import { Skeleton } from '../shadcn/skeleton';
 import { logger } from '../../utils/logger'
 
 interface ConfigOption {

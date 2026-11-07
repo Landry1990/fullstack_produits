@@ -12,7 +12,7 @@ import api from '../../services/api';
 import { useProductSearch } from '../../hooks/useProductSearch';
 import { formatCurrency as formatCurrencyValue } from '../../utils/formatters';
 import { EmptyState } from '../ui/EmptyState';
-import { Skeleton } from '../ui/Skeleton';
+import { Skeleton } from '../shadcn/skeleton';
 import { ProductResultRow, type SearchResult } from '../common/ProductSearch';
 import { gooeyToast } from 'goey-toast';
 

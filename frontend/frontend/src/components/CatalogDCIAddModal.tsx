@@ -5,7 +5,7 @@ import api from '../services/api';
 import PremiumModal from './common/PremiumModal';
 import { Loader2 } from 'lucide-react';
 import { Button } from './shadcn/button';
-import { Badge } from './ui/Badge';
+import { Badge } from './shadcn/badge';
 import { useProductSearch } from '../hooks/useProductSearch';
 import { ProductResultContent, type SearchResult } from './common/ProductSearch';
 import type { ProduitModel } from '../types';
@@ -184,7 +184,7 @@ export default function CatalogDCIAddModal({
                     product={prod as unknown as SearchResult}
                     extraMeta={prod.forme_name ? <span className="truncate">{prod.forme_name}</span> : undefined}
                     badges={alreadyLinked && (
-                      <Badge variant="success" size="sm" className="font-bold shrink-0">{t('products:dci.already_linked')}</Badge>
+                      <Badge variant="success" className="px-2 py-0 text-[10px] font-bold shrink-0">{t('products:dci.already_linked')}</Badge>
                     )}
                   />
                 </label>

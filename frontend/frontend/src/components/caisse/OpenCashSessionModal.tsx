@@ -16,7 +16,7 @@ import { Card } from '../shadcn/card'
 import { Badge } from '../shadcn/badge'
 import { Button } from '../shadcn/button'
 import { EmptyState } from '../ui/EmptyState'
-import { Skeleton } from '../ui/Skeleton'
+import { Skeleton } from '../shadcn/skeleton'
 
 interface OpenCashSessionModalProps {
   isOpen: boolean
