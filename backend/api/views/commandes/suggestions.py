@@ -1,4 +1,5 @@
 from datetime import timedelta
+from math import ceil
 
 from django.conf import settings
 from django.core.cache import cache
@@ -9,6 +10,11 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from ...models import Facture, FactureProduit, Produit
+from ...services.replenishment_service import (
+    compute_jours_dispo,
+    compute_vmd_tendance,
+    get_jours_donnees,
+)
 from ...utils.validation import parse_decimal, parse_id, parse_int
 
 
@@ -368,7 +374,11 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=
         )
     
     suggestions = []
-    
+
+    # Âge réel des données de vente : avant 90 j d'utilisation, la VMD est
+    # proratisée — même formule que statistiques/stock_pilotage.
+    jours_donnees = get_jours_donnees()
+
     for produit in produits.iterator(chunk_size=200):
         # ── 1. Données brutes ──
         ventes_total = produit.ventes_total_annotation or 0
@@ -384,23 +394,18 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=
         marge_retard = getattr(fournisseur, 'marge_retard_jours', 2) or 2
         # delai_couverture vient du paramètre de la commande/schedule, pas du fournisseur
 
-        # ── 3. VMD ajustée ──
-        vmd_historique = float(ventes_90j) / 90.0
-
-        # Tendance court terme (4 dernières semaines vs 4 semaines précédentes)
-        if ventes_8s_4s > 0:
-            tendance_court_terme = ventes_4s / ventes_8s_4s
-        else:
-            tendance_court_terme = 1.0 if ventes_4s > 0 else 0.0
+        # ── 3. VMD ajustée (proratisée sur l'âge réel des données) ──
+        jours_dispo = compute_jours_dispo(
+            produit.created_at, jours_donnees=jours_donnees
+        )
+        vmd_historique, vmd_ajustee, tendance_court_terme = compute_vmd_tendance(
+            ventes_90j, ventes_4s, ventes_8s_4s, jours_dispo
+        )
 
         # Saisonnalité : placeholder (à enrichir quand on aura assez d'historique N-1/N-2)
         indice_saisonnalite = 1.0
-
-        k_ajustement = tendance_court_terme * indice_saisonnalite
-        # Plafonner K pour éviter les excès
-        k_ajustement = max(0.5, min(k_ajustement, 2.0))
-
-        vmd_ajustee = vmd_historique * k_ajustement
+        vmd_ajustee *= indice_saisonnalite
+        k_ajustement = tendance_court_terme
 
         # ── 4. Seuils dynamiques ──
         stock_securite = vmd_ajustee * marge_retard
@@ -417,7 +422,9 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=
         if en_rupture or en_alerte:
             stock_objectif = stock_maximum
             besoin_net = max(0, stock_objectif - stock_actuel)
-            qte_finale = round(besoin_net)
+            # ceil (et non round) : un besoin < 0,5 u doit tout de même
+            # être proposé (cohérent avec statistiques/stock_pilotage)
+            qte_finale = int(ceil(besoin_net))
 
             urgence = 'urgent'
             score_urgence = 90 if en_rupture else 70

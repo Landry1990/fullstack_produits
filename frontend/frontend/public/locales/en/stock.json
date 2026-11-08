@@ -1732,5 +1732,51 @@
         "units_total": "{{count}} units total",
         "performed_on": "Performed on",
         "download_confirmation": "Download confirmation"
+    },
+    "pilotage": {
+        "title": "Expert order plan",
+        "subtitle": "What to order, when, how much — {{days}}-day horizon",
+        "data_age": "estimate on {{days}} d of data",
+        "tabs": {
+            "commander": "Order now",
+            "bientot": "Order by",
+            "ne_pas_commander": "Do not reorder"
+        },
+        "columns": {
+            "select": "Select",
+            "product": "Product",
+            "supplier": "Supplier",
+            "cip": "CIP",
+            "rotation_mois": "Rotation/mo",
+            "stock_min": "Min stock",
+            "stock_max": "Max stock",
+            "stock": "Stock",
+            "coverage": "Coverage",
+            "urgency": "Urgency",
+            "qty": "Qty to order",
+            "amount": "Amount excl. tax",
+            "stockout_date": "Stockout on",
+            "order_by": "Order before",
+            "value": "Stock value",
+            "no_sale_since": "No sale for",
+            "reason": "Reason"
+        },
+        "urgence": {
+            "rupture": "Stockout",
+            "critique": "Critical",
+            "alerte": "Warning"
+        },
+        "coverage_days": "{{count}} d",
+        "no_sale_days": "{{count}} d",
+        "create_order": "Create order ({{count}})",
+        "select_all": "Select all",
+        "see_all": "View all {{count}} products",
+        "see_less": "Collapse",
+        "export_excel": "Excel",
+        "empty_commander": "No urgent orders. Your stock is covered.",
+        "empty_bientot": "No orders planned within the next {{days}} days.",
+        "empty_no_order": "No dormant products detected.",
+        "dormant_reason_stock": "Dormant stock — do not reorder",
+        "dormant_reason_rupture": "Stockout with no sales — do not restock"
     }
 }

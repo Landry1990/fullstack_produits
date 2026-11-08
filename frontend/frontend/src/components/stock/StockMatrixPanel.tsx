@@ -207,12 +207,15 @@ interface MatrixStats {
 
 const MatrixGrid: React.FC<{ data: StockHealthData; stats: MatrixStats }> = ({ data: _data, stats }) => {
     const { t } = useTranslation('stock');
-    const quadrants = useMemo<{ key: Quadrant; count: number; value?: number; valueLabel?: string }[]>(() => [
-        { key: 'MOTEUR', count: 0 },
-        { key: 'HEMORRAGIE', count: stats.hemorragieCount, value: stats.manqueAGagner7j, valueLabel: t('matrix.grid.value_labels.missed_sales') },
-        { key: 'SOMNIFERE', count: stats.somifreCount, value: stats.tresorerieBloqueé, valueLabel: t('matrix.grid.value_labels.blocked_cash') },
-        { key: 'NEUTRE', count: 0 },
-    ], [stats, t]);
+    const quadrants = useMemo<{ key: Quadrant; count: number; value?: number; valueLabel?: string }[]>(() => {
+        const counts = _data.matrix_counts;
+        return [
+            { key: 'MOTEUR', count: counts?.moteur ?? 0 },
+            { key: 'HEMORRAGIE', count: counts?.hemorragie ?? stats.hemorragieCount, value: stats.manqueAGagner7j, valueLabel: t('matrix.grid.value_labels.missed_sales') },
+            { key: 'SOMNIFERE', count: counts?.somnifere ?? stats.somifreCount, value: stats.tresorerieBloqueé, valueLabel: t('matrix.grid.value_labels.blocked_cash') },
+            { key: 'NEUTRE', count: counts?.neutre ?? 0 },
+        ];
+    }, [_data.matrix_counts, stats, t]);
 
     return (
         <div className="bg-white rounded-2xl border border-slate-200 p-3">

@@ -1732,5 +1732,51 @@
         "units_total": "{{count}} unités au total",
         "performed_on": "Effectué le",
         "download_confirmation": "Télécharger la confirmation"
+    },
+    "pilotage": {
+        "title": "Plan de commande expert",
+        "subtitle": "Quoi commander, quand, combien — horizon {{days}} jours",
+        "data_age": "estimation sur {{days}} j de données",
+        "tabs": {
+            "commander": "À commander",
+            "bientot": "Commander d'ici",
+            "ne_pas_commander": "Ne plus commander"
+        },
+        "columns": {
+            "select": "Sélection",
+            "product": "Produit",
+            "supplier": "Fournisseur",
+            "cip": "CIP",
+            "rotation_mois": "Rotation/mois",
+            "stock_min": "Stock min",
+            "stock_max": "Stock max",
+            "stock": "Stock",
+            "coverage": "Couverture",
+            "urgency": "Urgence",
+            "qty": "Qté à cder",
+            "amount": "Montant HT",
+            "stockout_date": "Rupture le",
+            "order_by": "Cder avant le",
+            "value": "Valeur stock",
+            "no_sale_since": "Sans vente",
+            "reason": "Motif"
+        },
+        "urgence": {
+            "rupture": "Rupture",
+            "critique": "Critique",
+            "alerte": "Alerte"
+        },
+        "coverage_days": "{{count}} j",
+        "no_sale_days": "{{count}} j",
+        "create_order": "Créer la commande ({{count}})",
+        "select_all": "Tout sélectionner",
+        "see_all": "Voir les {{count}} produits",
+        "see_less": "Réduire",
+        "export_excel": "Excel",
+        "empty_commander": "Aucune commande urgente. Votre stock est couvert.",
+        "empty_bientot": "Aucune commande à prévoir dans les {{days}} prochains jours.",
+        "empty_no_order": "Aucun produit dormant détecté.",
+        "dormant_reason_stock": "Stock dormant — ne plus commander",
+        "dormant_reason_rupture": "En rupture sans vente — ne pas réappro."
     }
 }

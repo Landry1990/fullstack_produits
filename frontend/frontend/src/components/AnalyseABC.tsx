@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next'
 import { formatNumber as utilsFormatNumber } from '../utils/formatters'
 import { logger } from '../utils/logger'
 import { renderRayonOptions } from '../utils/rayon'
+import { SubRayonsBadge } from './common/SubRayonsBadge'
 
 interface ProduitABC {
   id: number
@@ -96,6 +97,7 @@ function AbcFilterBar({
         <option value="">{t('stock:abc.filters.all_rayons')}</option>
         {renderRayonOptions(rayons)}
       </select>
+      <SubRayonsBadge rayons={rayons} rayonId={rayonId} className="self-center px-2 py-0.5 text-[10px] gap-1" />
 
       <select
         className="h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"

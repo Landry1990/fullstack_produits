@@ -37,6 +37,12 @@ export interface StockHealthData {
         rupture_count?: number;
     };
     top_penalties?: MatrixProduct[];
+    matrix_counts?: {
+        moteur: number;
+        hemorragie: number;
+        somnifere: number;
+        neutre: number;
+    };
     total_stock_value: number;
 }
 

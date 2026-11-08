@@ -502,3 +502,72 @@ class DashboardRevenueChartTestCase(APITestCase):
         self.assertEqual(data['marges'][idx], 500.0)
         self.assertEqual(data['marges_pct'][idx], 50.0)
         self.assertEqual(data['nb_ventes'][idx], 1)
+
+
+class StockPilotageTestCase(APITestCase):
+    """Tests pour l'endpoint /api/statistiques/stock_pilotage/ (plan de commande expert)."""
+
+    def setUp(self):
+        from django.core.cache import cache
+        cache.clear()
+        self.user = TestDataFactory.create_superuser()
+        self.client.force_authenticate(user=self.user)
+        self.url = '/api/statistiques/stock_pilotage/'
+
+    def test_unauthenticated(self):
+        """L'accès non authentifié est refusé."""
+        self.client.force_authenticate(user=None)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_classifies_rupture_and_dormant(self):
+        """Un produit vendu en rupture doit être à commander ; un dormant ne doit pas l'être."""
+        today = timezone.localtime(timezone.now()).date()
+        fournisseur = TestDataFactory.create_fournisseur(name='PilotageFournisseur')
+
+        p_rupture = TestDataFactory.create_produit(
+            name='Produit Rupture', stock=0, fournisseur=fournisseur,
+        )
+        p_dormant = TestDataFactory.create_produit(
+            name='Produit Dormant', stock=10, fournisseur=fournisseur,
+            dernier_vente=today - timedelta(days=120),
+        )
+        # Produit catalogue sans aucun mouvement (jamais vendu ni acheté),
+        # créé il y a 120 j → ne doit PAS apparaître dans ne_pas_commander
+        p_sans_mouvement = TestDataFactory.create_produit(
+            name='Produit Jamais Touché', stock=5, fournisseur=fournisseur,
+        )
+        Produit.objects.filter(pk=p_sans_mouvement.pk).update(
+            created_at=timezone.now() - timedelta(days=120)
+        )
+
+        facture = TestDataFactory.create_facture(status='VAL')
+        from ..models import Facture
+        Facture.objects.filter(pk=facture.pk).update(
+            date=timezone.now() - timedelta(days=5)
+        )
+        TestDataFactory.create_facture_produit(facture=facture, produit=p_rupture, quantity=30)
+
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        commander_ids = [i['produit_id'] for i in response.data['commander']]
+        self.assertIn(p_rupture.id, commander_ids)
+        ligne = next(i for i in response.data['commander'] if i['produit_id'] == p_rupture.id)
+        self.assertEqual(ligne['urgence'], 'rupture')
+        self.assertGreater(ligne['quantite_suggeree'], 0)
+
+        # VMD proratisée : 30 ventes sur 7 j d'observation (plancher) → ~4,29 u/j
+        # (et non 30/90 = 0,33 qui sous-estimerait les quantités)
+        self.assertEqual(ligne['jours_base'], 7)
+        self.assertAlmostEqual(ligne['vmd'], 30 / 7, places=2)
+
+        no_order_ids = [i['produit_id'] for i in response.data['ne_pas_commander']]
+        self.assertIn(p_dormant.id, no_order_ids)
+        self.assertNotIn(p_sans_mouvement.id, no_order_ids)
+        self.assertNotIn(p_dormant.id, commander_ids)
+        self.assertNotIn(p_dormant.id, [i['produit_id'] for i in response.data['bientot']])
+
+        self.assertEqual(
+            response.data['summary']['commander_count'], len(response.data['commander'])
+        )

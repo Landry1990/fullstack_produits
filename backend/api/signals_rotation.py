@@ -34,7 +34,7 @@ def calculate_rotation_for_product(produit_id):
             produit=produit,
             facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
         ).order_by('facture__date').values_list('facture__date', flat=True).first()
-        metrics = get_replenishment_metrics(produit.id)
+        metrics = get_replenishment_metrics(produit.id, produit=produit)
         rotation = metrics['consommation_mensuelle']
         update_fields = []
 

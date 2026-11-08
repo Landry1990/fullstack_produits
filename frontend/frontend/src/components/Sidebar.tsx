@@ -9,8 +9,8 @@ import { useReapproStats } from '../hooks/useDashboard';
 import { ChevronLeft, ChevronRight, ChevronDown, Menu, X } from 'lucide-react';
 import { formatVersion } from '../version';
 import { cn } from '../lib/utils';
-import { prefetchRoute } from '../utils/routePrefetch';
-import { NAV_ITEMS, filterNavItemsForUser, getRouteLoader, groupNavSubMenus } from '../config/navConfig';
+import { prefetchRoute, warmupRoutes } from '../utils/routePrefetch';
+import { NAV_ITEMS, filterNavItemsForUser, getRouteLoader, getAllRouteLoaders, groupNavSubMenus } from '../config/navConfig';
 import { motion, AnimatePresence } from 'framer-motion';
 import { fadeInUp, staggerContainer, staggerGrid } from '../lib/motion';
 
@@ -46,6 +46,12 @@ export default function Sidebar() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
   const effectiveCollapsed = isMobile ? false : isCollapsed;
+
+  // Warm-up : précharge tous les chunks de routes en arrière-plan pour
+  // que la 1re navigation soit instantanée (fin du "double clic")
+  useEffect(() => {
+    warmupRoutes(getAllRouteLoaders());
+  }, []);
   
   const allMenuItems = useMemo(() => NAV_ITEMS.map(item => ({
     ...item,
@@ -126,16 +132,16 @@ export default function Sidebar() {
               <button
                 type="button"
                 className={cn(
-                  "flex items-center justify-center w-full h-10 rounded-xl cursor-pointer transition-all",
+                  "flex items-center justify-center w-full h-10 rounded-xl cursor-pointer transition-all border-l-4",
                   isParentOfActive
-                    ? 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                    ? 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30 border-l-emerald-300'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800 border-l-transparent'
                 )}
                 title={item.label}
                 aria-label={item.label}
                 aria-haspopup="menu"
               >
-                <span className="size-4">{item.icon}</span>
+                <span className="size-5">{item.icon}</span>
               </button>
               <ul className="absolute left-full top-0 z-[100] p-2 shadow-2xl shadow-black/20 bg-slate-900 border border-slate-700 rounded-2xl w-52 ml-3 invisible group-hover:visible group-focus-within:visible opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all duration-200">
                 <li className="px-3 py-2 border-b border-slate-800 mb-1">
@@ -177,10 +183,10 @@ export default function Sidebar() {
                 aria-expanded={isMenuOpen}
                 aria-controls={`sidebar-submenu-${item.key}`}
                 className={cn(
-                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 group",
+                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 group border-l-4",
                   isMenuOpen || isParentOfActive
-                    ? 'bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/20'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                    ? 'bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/20 border-l-emerald-300'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800 border-l-transparent'
                 )}
               >
                 <span className={cn(
@@ -257,6 +263,7 @@ export default function Sidebar() {
           end={item.path === '/app'}
           onClick={closeSidebar}
           onMouseEnter={() => item.path && handleRoutePrefetch(item.path)}
+          onPointerDown={() => item.path && handleRoutePrefetch(item.path)}
           title={effectiveCollapsed ? item.label : undefined}
           className={({ isActive }) => cn(
             "flex items-center rounded-xl transition-all duration-200",
@@ -268,7 +275,7 @@ export default function Sidebar() {
               : 'text-slate-400 hover:text-white hover:bg-slate-800 border-l-4 border-l-transparent'
           )}
         >
-          <span className={cn("shrink-0", effectiveCollapsed ? 'size-5' : 'size-5')}>{item.icon}</span>
+          <span className="size-5 shrink-0">{item.icon}</span>
           {!effectiveCollapsed && <span className="text-sm font-medium tracking-tight truncate">{item.label}</span>}
         </NavLink>
       </motion.li>
@@ -298,7 +305,7 @@ export default function Sidebar() {
 
       <aside
         className={cn(
-          "flex flex-col fixed lg:sticky top-0 z-50 transition-all duration-300 ease-in-out",
+          "flex flex-col shrink-0 fixed lg:sticky top-0 z-50 transition-all duration-300 ease-in-out",
           "bg-slate-900 border-r border-slate-800",
           effectiveCollapsed ? 'w-[70px]' : 'w-[min(280px,85vw)] lg:w-[260px]',
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'

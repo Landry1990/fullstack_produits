@@ -38,6 +38,7 @@ import { EmptyState } from '../ui/EmptyState';
 import PaginationControls from '../ui/PaginationControls';
 import { logger } from '../../utils/logger'
 import { renderRayonOptions } from '../../utils/rayon'
+import { SubRayonsBadge } from '../common/SubRayonsBadge'
 import { motion } from 'framer-motion';
 import { staggerContainer, staggerGrid, fadeInUp } from '../../lib/motion';
 
@@ -330,6 +331,7 @@ export default function ReapproRayon() {
               <option value="">{t('common:all_rayons')}</option>
               {renderRayonOptions(rayons)}
             </select>
+            <SubRayonsBadge rayons={rayons} rayonId={selectedRayon} className="self-center px-2 py-0.5 text-[10px] gap-1" />
           </div>
 
           <div className="flex items-center gap-4">

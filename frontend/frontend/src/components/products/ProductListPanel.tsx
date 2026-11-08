@@ -10,6 +10,7 @@ import { Input } from '../shadcn/input';
 import { Badge } from '../shadcn/badge';
 import { Checkbox } from '../shadcn/checkbox';
 import SkeletonTable from '../ui/SkeletonTable';
+import { SubRayonsBadge } from '../common/SubRayonsBadge';
 import { EmptyState } from '../ui/EmptyState';
 import PaginationControls from '../ui/PaginationControls';
 
@@ -126,6 +127,7 @@ export const ProductListPanel: React.FC<ProductListPanelProps> = ({
         {hasActiveFilters && (
           <div className="flex flex-wrap gap-1.5 mt-2">
             {hasFilterRayon && <Badge variant="secondary" className="px-2 py-0 text-[10px]">{t('products:filters.rayon_active')}</Badge>}
+            {hasFilterRayon && <SubRayonsBadge rayons={rayons} rayonId={filterRayon} />}
             {hasFilterForme && <Badge variant="warning" className="px-2 py-0 text-[10px]">{t('products:filters.forme_active')}</Badge>}
             {showInactive && <Badge variant="ghost" className="px-2 py-0 text-[10px]">{t('products:filters.inactive_only')}</Badge>}
             {showInStockOnly && <Badge variant="success" className="px-2 py-0 text-[10px]">{t('products:filters.in_stock_only', { defaultValue: 'En stock' })}</Badge>}

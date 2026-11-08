@@ -20,15 +20,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from ...models import (
-    Commande,
-    CommandeProduit,
     Facture,
     FactureProduit,
     ObjectifCommercial,
     Produit,
 )
 from ...utils.dates import day_bounds, day_start
-from ...utils.validation import parse_int
+from ...utils.validation import parse_id, parse_int
 from ..rapports.tz_utils import parse_api_datetime
 
 
@@ -193,23 +191,6 @@ class StatistiquesViewSet(viewsets.ViewSet):
         )
         map_anciennes = {v['produit_id']: v['total_vendu'] for v in ventes_anciennes}
 
-        commandes_en_cours = (
-            CommandeProduit.objects
-            .filter(
-                commande__status__in=[Commande.Status.EN_PREPARATION, Commande.Status.EN_ATTENTE],
-                produit__isnull=False
-            )
-            .values('produit_id')
-            .annotate(
-                qte_commandee=Sum('quantity'),
-                ug_commandees=Sum('unites_gratuites')
-            )
-        )
-        {
-            c['produit_id']: (c['qte_commandee'] or 0) + (c['ug_commandees'] or 0)
-            for c in commandes_en_cours
-        }
-
         critical_soon_count = 0
         critical_soon_value = Decimal(0)
         produits_actifs = Produit.objects.filter(stock__gt=0, is_active=True).select_related('fournisseur')
@@ -302,6 +283,17 @@ class StatistiquesViewSet(viewsets.ViewSet):
         immo_score = max(0.0, (1 - immo_ratio)) * 100
         score_e = immo_score * 0.10  # max 10 pts
     
+        # ── Compteurs réels de la matrice 4 quadrants ───────────────────────
+        # Hémorragie : pertinent, demandé (rotation > 0) mais en rupture
+        hemorragie_count = relevant_qs.filter(stock__lte=0, rotation_moyenne__gt=0).count()
+        # Moteur : pertinent, en stock, demandé, non dormant
+        moteur_count = relevant_qs.filter(
+            stock__gt=0, rotation_moyenne__gt=0
+        ).exclude(id__in=dormant_qs.values('id')).count()
+        # Somnifère : dormant avec stock (dead_stock_count)
+        # Neutre : reliquat des produits pertinents
+        neutre_count = max(0, relevant_count - moteur_count - hemorragie_count - dead_stock_count)
+
         # ── Top 5 Pénalités ──────────────────────────────────────────────────────
         # Réutilise rupture_qs et dormant_qs déjà calculés pour éviter un appel API supplémentaire
         penalties = []
@@ -386,8 +378,34 @@ class StatistiquesViewSet(viewsets.ViewSet):
                 'rupture_count': len([p for p in penalties if p['quadrant'] == 'HEMORRAGIE']),
             },
             'top_penalties': top_penalties,
+            'matrix_counts': {
+                'moteur': moteur_count,
+                'hemorragie': hemorragie_count,
+                'somnifere': dead_stock_count,
+                'neutre': neutre_count,
+            },
             'total_stock_value': float(total_stock_value)
         })
+
+    @action(detail=False, methods=['get'])
+    def stock_pilotage(self, request):
+        """
+        Plan de pilotage expert : quoi commander, quand, combien —
+        et quoi ne plus commander (produits dormants).
+        """
+        from ...services.stock_pilotage import compute_stock_pilotage
+
+        periode = parse_int(
+            request.query_params.get('periode', 30),
+            field='periode', min_value=1, max_value=3650,
+        )
+        fournisseur_id = parse_id(
+            request.query_params.get('fournisseur_id'),
+            field='fournisseur_id', required=False,
+        )
+        return Response(compute_stock_pilotage(
+            periode=periode, fournisseur_id=fournisseur_id,
+        ))
 
     @action(detail=False, methods=['get'])
     def vendeur_stats(self, request):

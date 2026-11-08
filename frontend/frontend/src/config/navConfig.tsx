@@ -185,6 +185,11 @@ export function getRouteLoader(path: string): (() => Promise<unknown>) | undefin
     return ROUTE_LOADERS[path];
 }
 
+/** Tous les loaders de routes lazy (warm-up en arrière-plan). */
+export function getAllRouteLoaders(): (() => Promise<unknown>)[] {
+    return Object.values(ROUTE_LOADERS);
+}
+
 export interface NavUser {
     is_superuser?: boolean;
     allowed_menus?: string[];

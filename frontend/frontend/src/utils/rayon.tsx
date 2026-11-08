@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type { Rayon } from '../types';
 
-type RayonLike = Pick<Rayon, 'id' | 'name'> & Partial<Rayon>;
+export type RayonLike = Pick<Rayon, 'id' | 'name'> & Partial<Rayon>;
 
 /**
  * Libellé complet d'un rayon : "PARENT › SOUS-RAYON" ou "RAYON".

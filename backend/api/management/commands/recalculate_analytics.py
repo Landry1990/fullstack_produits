@@ -40,7 +40,7 @@ class Command(BaseCommand):
                     pass
 
             # 2. Recalculate monthly consumption used by replenishment
-            p.rotation_moyenne = Decimal(str(get_replenishment_metrics(p.id)['consommation_mensuelle']))
+            p.rotation_moyenne = Decimal(str(get_replenishment_metrics(p.id, produit=p)['consommation_mensuelle']))
             
             updated_produits.append(p)
             count += 1

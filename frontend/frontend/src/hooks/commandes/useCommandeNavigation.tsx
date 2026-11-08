@@ -167,7 +167,7 @@ export function useCommandeNavigation({
           const fullProduct = productById.get(p.id);
           let suggestedQty: number;
 
-          if (isCadencier && p.quantity !== undefined && p.quantity > 0) {
+          if (p.quantity !== undefined && p.quantity > 0) {
             suggestedQty = p.quantity;
           } else {
             const avgSales = p.avg_daily_sales;

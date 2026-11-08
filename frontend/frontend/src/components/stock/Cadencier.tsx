@@ -19,6 +19,7 @@ import {
 } from '../shadcn/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../shadcn/table';
 import { EmptyState } from '../ui/EmptyState';
+import { SubRayonsBadge } from '../common/SubRayonsBadge';
 import PaginationControls from '../ui/PaginationControls';
 import { logger } from '../../utils/logger'
 import { motion } from 'framer-motion';
@@ -306,7 +307,7 @@ const Cadencier: React.FC = () => {
                     </select>
                   </div>
 
-                  <div className="md:col-span-2">
+                  <div className="md:col-span-2 flex items-center gap-2">
                     <select
                       aria-label={t('stock:cadencier.rayon')}
                       value={filters.rayon}
@@ -316,6 +317,7 @@ const Cadencier: React.FC = () => {
                       <option value="">{t('common:all', 'Tous')}</option>
                       {renderRayonOptions(rayons)}
                     </select>
+                    <SubRayonsBadge rayons={rayons} rayonId={filters.rayon} />
                   </div>
 
                   <div className="md:col-span-2">

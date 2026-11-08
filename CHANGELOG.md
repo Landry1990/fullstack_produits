@@ -2,6 +2,114 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-11-08 — 🧭 Sidebar : `shrink-0` anti-compression
+
+- L'`aside` (`lg:sticky`, `w-[260px]`) n'avait pas `shrink-0` : le conteneur
+  flex la compressait sous sa largeur quand le contenu principal était large
+  → libellés tronqués, alignement « faux ». Fix : `shrink-0` sur l'aside.
+
+## 2026-11-08 — 🛡️ Stabilité : healthcheck backend en dev + audit config
+
+- `docker-compose.yml` : healthcheck sur le service `backend`
+  (`/api/health/`, 30 s/10 s/3 retries/40 s start_period) — dev aligné sur
+  prod qui en avait déjà un.
+- Audit : `CONN_HEALTH_CHECKS=True`, `CONN_MAX_AGE=600`, `statement_timeout`,
+  `lock_timeout` et `restart` (always prod / unless-stopped dev) déjà en
+  place — rien à corriger côté settings.
+
+## 2026-11-08 — ⚡ Navigation : fin du « double clic » sur la sidebar
+
+- `routePrefetch` différait l'import via `requestIdleCallback` — le chunk lazy
+  partait souvent **après** le clic (écran de chargement perçu comme un clic
+  mort). Désormais immédiat. `warmupRoutes()` précharge toutes les routes par
+  lots de 4 à idle au montage de la sidebar → 1re navigation instantanée.
+  `onPointerDown` ajouté sur les liens (tactile/clics rapides).
+- `navConfig` : `getAllRouteLoaders()` exposé.
+
+## 2026-11-07 — 🧭 Sidebar : alignement des icônes corrigé
+
+- Parents de menus : icône `size-4` → `size-5` en mode réduit (comme les
+  liens directs) et `border-l-4 border-l-transparent` ajoutée dans les deux
+  modes — les `NavLink` portaient déjà cette bordure (état actif), ce qui
+  décalait les icônes des liens de 4 px vs les parents (2 px en centré).
+  Les parents actifs héritent du liseré `border-l-emerald-300`.
+
+## 2026-11-07 — 📦 Analyse Stock : plan de commande expert (quoi / quand / combien / ne plus commander)
+
+- **Backend** : nouvel endpoint `GET statistiques/stock_pilotage/` (service
+  `services/stock_pilotage.py`, cache 5 min) qui reprend les formules du moteur
+  « optimise » (VMD 90 j ajustée par tendance 4 s/8 s, seuils min/max via délais
+  fournisseur) et retourne 3 listes : `commander` (couverture ≤ délai + marge →
+  urgence rupture/critique/alerte, quantité = stock max − stock, date de rupture),
+  `bientot` (date limite de commande = rupture − délais, dans l'horizon
+  `periode` = 30 j) et `ne_pas_commander` (dormants quel que soit le stock —
+  un dormant en rupture n'est plus jamais suggéré à la commande, contrairement
+  au moteur de suggestions qui le proposait). Paramètres `periode`,
+  `fournisseur_id`. Choix validé : quantités brutes, sans déduire les
+  commandes en cours.
+- **VMD proratisée sur l'âge réel des données** : la VMD n'est plus divisée
+  par 90 d'office mais par `min(90, âge des ventes du système, âge du produit)`
+  avec plancher 7 j d'observation — fiable dès les premières semaines
+  d'utilisation au lieu de sous-estimer les quantités pendant 3 mois. La
+  tendance 4 s/8 s compare des taux/j proratisés (identique à l'ancien calcul
+  à fenêtre pleine). Champ `jours_donnees` en réponse + badge ambre
+  « estimation sur X j de données » dans le panneau quand < 90 j,
+  `jours_base` par ligne.
+- **Formule proratisée généralisée à tout le système** : helpers partagés
+  `get_jours_donnees` (cache 1 h), `compute_jours_dispo`, `compute_vmd_tendance`
+  dans `services/replenishment_service.py` — utilisés par `stock_pilotage`,
+  le **Mode Intelligent** de la modale de suggestions (`generer-suggestions`,
+  y compris les commandes auto-planifiées) et `get_replenishment_metrics`
+  qui alimente `rotation_moyenne` en temps réel (signaux vente) et les seuils
+  `stock_minimum`/`stock_maximum` produits. Le score santé, l'onglet ruptures
+  et la réappro rayon bénéficient ainsi de la même VMD corrigée.
+- **Colonnes justifiant la quantité** : les tableaux « À commander » et
+  « Commander d'ici » remplacent Fournisseur et VMD par **CIP, Rotation/mois,
+  Stock min, Stock max** (nouveaux champs `rotation_mois`, `stock_minimum`,
+  `stock_maximum` exposés par l'endpoint) — le pharmacien voit directement
+  pourquoi la quantité est proposée. Export Excel aligné.
+  `stock_minimum`/`stock_maximum` renvoyés en **entiers arrondis au
+  supérieur** (`math.ceil`).
+- **Cohérence listes modale ↔ pilotage** : le Mode Intelligent faisait
+  `round(besoin_net)` → tout besoin < 0,5 u était écarté (produits à très
+  faible rotation invisibles dans la modale mais présents en « À commander »).
+  Passage à `ceil` comme le pilotage — les deux listes convergent.
+- **Case « Tout sélectionner »** dans les onglets commande du panneau
+  pilotage (état indéterminé si sélection partielle, clé `select_all`).
+- **Onglets du panneau à largeur fixe** : les 3 boutons passent en
+  `grid-cols-3` (largeur égale constante, contenu tronqué, montant masqué
+  sous 1280 px) — plus de redimensionnement lors du changement d'onglet.
+- **`ne_pas_commander` restreint aux produits actifs** : le queryset dormant
+  exige désormais `dernier_vente` OU `dernier_achat` OU un `MouvementStock`
+  existant — les fiches catalogue jamais utilisées (importées, jamais vendues
+  ni achetées) n'apparaissent plus dans l'onglet « Ne plus commander ».
+- **`stock_health`** : bloc mort `commandes_en_cours` supprimé (requête
+  exécutée puis jetée) ; nouveau champ `matrix_counts` avec les compteurs
+  réels des 4 quadrants — MOTEUR et NEUTRE n'affichent plus « 0 ».
+- **Frontend** : `StockPilotagePanel` sous la matrice du tab Pilotage —
+  3 onglets compteur + montant, top 10 + « voir tout » en ligne, cases à
+  cocher → « Créer la commande » (`createFromStockAlert` honore désormais
+  `quantity` fournie, avant réservé au cadencier), export Excel par onglet,
+  hook `useStockPilotage`, types `matrix_counts` dans `useStockHealth`.
+- i18n `stock:pilotage.*` fr/en. Tests : `StockPilotageTestCase` (rupture →
+  commander, dormant → ne_pas_commander, 401) — `cache.clear()` en setUp car
+  le cache Redis persiste entre tests.
+- Vérifié : `tsc --noEmit` 0 erreur, `eslint --quiet` ciblé 0 erreur,
+  `vite build` OK (25,5 s), `test_dashboard` 17/17.
+
+## 2026-11-07 — 🏷️ Badge « +N sous-rayons » sur les filtres rayon
+
+- Les filtres rayon passant `include_children=1` au backend affichaient des
+  produits d'autres rayons sans l'indiquer — nouveau composant
+  `components/common/SubRayonsBadge.tsx` (icône `Layers`, variante `secondary`,
+  tooltip explicatif) rendu quand le rayon sélectionné a des enfants, sinon null.
+- Intégré dans : `ProductListPanel` (chip des filtres actifs), `Cadencier`,
+  `ReapproRayon`, `AnalyseABC` (à côté du `<select>` rayon).
+- `utils/rayon.tsx` : type `RayonLike` exporté (props du badge tolèrent les
+  listes partielles type `AnalyseABC`).
+- i18n `common` fr/en : `sub_rayons_included_{one,other}` + `..._title`.
+- Vérifié : `tsc --noEmit` 0 erreur, `eslint --quiet` 0 erreur.
+
 ## 2026-11-06 — 🎨 Migration `ui/*` → `shadcn/*` : 12 composants, 91 fichiers
 
 - **12 composants legacy supprimés** de `components/ui/` : Button, Badge, Card,
