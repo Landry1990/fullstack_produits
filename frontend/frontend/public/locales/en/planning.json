@@ -28,7 +28,20 @@
         "send_to_operators": "Send to operators",
         "month_view": "Month",
         "week_view": "Week",
-        "print": "Print"
+        "print": "Print",
+        "export_pdf": "Export PDF",
+        "copy_day": "Duplicate this day",
+        "copy_day_title": "Duplicate {{date}}",
+        "copy_day_desc": "Copies this day's assignments to the target days. Approved leave is preserved.",
+        "copy_preset_rest_month": "Rest of the month",
+        "copy_preset_whole_month": "Whole month",
+        "copy_preset_next7": "Next 7 days",
+        "copy_preset_same_weekday": "Same weekday",
+        "copy_preset_custom": "Custom range",
+        "copy_from": "From",
+        "copy_to": "To",
+        "copy_targets_count": "{{count}} day(s) targeted",
+        "copy_confirm": "Duplicate"
     },
     "config": {
         "title": "Rotation rules",
@@ -107,7 +120,7 @@
         }
     },
     "sidebar": "Staff Scheduling",
-    "toast": {
+    "gooeyToast": {
         "config_saved": "Configuration saved",
         "config_error": "Error saving configuration",
         "schedule_created": "Schedule created",
@@ -128,6 +141,8 @@
         "team_created": "Team created",
         "team_updated": "Team updated",
         "team_deleted": "Team deleted",
-        "team_error": "Error during team operation"
+        "team_error": "Error during team operation",
+        "day_copied": "Day duplicated to {{days}} day(s)",
+        "copy_error": "Error while duplicating"
     }
 }

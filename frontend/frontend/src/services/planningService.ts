@@ -156,6 +156,13 @@ const planningService = {
     );
     return res.data;
   },
+  copyDay: async (
+    scheduleId: number,
+    data: { source_date: string; target_dates: string[] }
+  ): Promise<{ copied_days: number; created: number; updated: number; leave_marked: number }> => {
+    const res = await api.post(`shift-schedules/${scheduleId}/copy_day/`, data);
+    return res.data;
+  },
   getStats: async (scheduleId: number): Promise<OperatorStats[]> => {
     const res = await api.get<OperatorStats[]>(`shift-schedules/${scheduleId}/stats/`);
     return res.data;

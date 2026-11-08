@@ -283,6 +283,13 @@
     "justification": "Ce document est un justificatif de règlement.",
     "generated_on": "Généré le {{date}}"
   },
+  "planning": {
+    "title": "PLANNING DES OPÉRATEURS",
+    "operator": "OPÉRATEUR",
+    "legend_title": "Légende",
+    "legend_codes": "M = Matin • N = Nuit • G = Garde • R = Repos • C = Congé",
+    "generated_on": "généré le {{date}}"
+  },
   "reappro": {
     "title": "Confirmation de réapprovisionnement",
     "session_details": "Détails de la session",

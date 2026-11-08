@@ -28,7 +28,20 @@
         "send_to_operators": "Envoyer aux opérateurs",
         "month_view": "Mois",
         "week_view": "Semaine",
-        "print": "Imprimer"
+        "print": "Imprimer",
+        "export_pdf": "Exporter PDF",
+        "copy_day": "Dupliquer ce jour",
+        "copy_day_title": "Dupliquer le {{date}}",
+        "copy_day_desc": "Réplique les affectations de ce jour vers les jours cibles. Les congés approuvés sont préservés.",
+        "copy_preset_rest_month": "Jours restants du mois",
+        "copy_preset_whole_month": "Tout le mois",
+        "copy_preset_next7": "7 jours suivants",
+        "copy_preset_same_weekday": "Même jour de semaine",
+        "copy_preset_custom": "Plage personnalisée",
+        "copy_from": "Du",
+        "copy_to": "Au",
+        "copy_targets_count": "{{count}} jour(s) ciblé(s)",
+        "copy_confirm": "Dupliquer"
     },
     "config": {
         "title": "Règles de rotation",
@@ -107,7 +120,7 @@
         }
     },
     "sidebar": "Planning Opérateurs",
-    "toast": {
+    "gooeyToast": {
         "config_saved": "Configuration enregistrée",
         "config_error": "Erreur lors de l'enregistrement",
         "schedule_created": "Planning créé",
@@ -128,6 +141,8 @@
         "team_created": "Équipe créée",
         "team_updated": "Équipe mise à jour",
         "team_deleted": "Équipe supprimée",
-        "team_error": "Erreur lors de l'opération sur l'équipe"
+        "team_error": "Erreur lors de l'opération sur l'équipe",
+        "day_copied": "Journée dupliquée sur {{days}} jour(s)",
+        "copy_error": "Erreur lors de la duplication"
     }
 }

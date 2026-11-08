@@ -2,6 +2,35 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-11-08 — 🖨️ Planning : export PDF généré côté front (N&B)
+
+- Le bouton « Imprimer » devient **« Exporter PDF »** : `utils/print/planningPdfDraft.ts`
+  (jsPDF + autoTable, même convention que les autres `*PdfDraft`) produit un
+  document A4 **paysage** avec : nom/adresse/tél de la pharmacie, **titre +
+  mois en clair** (le manque n°1 de l'impression navigateur), date de
+  génération, **légende** `M = Matin • N = Nuit • G = Garde • R = Repos •
+  C = Congé`, tableau grille avec lettres code par cellule (pensé imprimante
+  noir & blanc), week-ends grisés légers, 2 lignes d'en-tête (jour de
+  semaine + numéro). Fonctionne en vue mois et semaine.
+- Suppression du hack CSS `@media print` (`window.print()` n'est plus utilisé).
+
+## 2026-11-08 — 📅 Planning : duplication d'une journée type + fix toasts
+
+- **`copy_day`** (`POST shift-schedules/{id}/copy_day/`, admin) : duplique les
+  affectations d'un jour source vers des dates cibles du même mois — plus
+  besoin de saisir opérateur par opérateur, jour par jour. Les utilisateurs
+  en **congé approuvé** sur une date cible y restent `CONGE` (le shift copié
+  n'écrase pas l'absence). Retourne `copied_days/created/updated/leave_marked`
+  + audit log.
+- **UI** : icône « dupliquer » sous chaque en-tête de jour (admin) → dialog
+  avec presets : *jours restants du mois / tout le mois / 7 jours suivants /
+  même jour de semaine / plage personnalisée* + compteur de cibles.
+  Retouche cellule par cellule ensuite inchangée.
+- **Fix** : bloc `"toast"` → `"gooeyToast"` renommé dans `planning.json`
+  fr/en — les 26 toasts du module affichaient leurs clés brutes au lieu du
+  message traduit.
+- Tests : 7 cas `copy_day` (82/82 test_planning verts).
+
 ## 2026-11-08 — 🧭 Sidebar : `shrink-0` anti-compression
 
 - L'`aside` (`lg:sticky`, `w-[260px]`) n'avait pas `shrink-0` : le conteneur

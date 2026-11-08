@@ -680,6 +680,107 @@ class ShiftScheduleActionsTests(PlanningBase):
         )
         self.assertEqual(resp.status_code, 403)
 
+    # ── copy_day ──
+
+    def _copy_day(self, data):
+        return self.api.post(
+            reverse('shift-schedule-copy-day', args=[self.schedule.pk]),
+            data, format='json',
+        )
+
+    def test_copy_day_duplique_les_affectations(self):
+        ShiftAssignment.objects.create(
+            schedule=self.schedule, user=self.op1,
+            date=datetime.date(2020, 6, 10), shift_type='MATIN', notes='n1',
+        )
+        ShiftAssignment.objects.create(
+            schedule=self.schedule, user=self.op2,
+            date=datetime.date(2020, 6, 10), shift_type='NUIT',
+        )
+        resp = self._copy_day({
+            'source_date': '2020-06-10',
+            'target_dates': ['2020-06-11', '2020-06-12'],
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data['copied_days'], 2)
+        self.assertEqual(resp.data['created'], 4)
+        a1 = ShiftAssignment.objects.get(user=self.op1, date='2020-06-11')
+        self.assertEqual((a1.shift_type, a1.notes), ('MATIN', 'n1'))
+        a2 = ShiftAssignment.objects.get(user=self.op2, date='2020-06-12')
+        self.assertEqual(a2.shift_type, 'NUIT')
+
+    def test_copy_day_ecrase_les_affectations_existantes(self):
+        ShiftAssignment.objects.create(
+            schedule=self.schedule, user=self.op1,
+            date=datetime.date(2020, 6, 10), shift_type='MATIN',
+        )
+        ShiftAssignment.objects.create(
+            schedule=self.schedule, user=self.op1,
+            date=datetime.date(2020, 6, 11), shift_type='REPOS',
+        )
+        resp = self._copy_day({
+            'source_date': '2020-06-10',
+            'target_dates': ['2020-06-11'],
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data['updated'], 1)
+        self.assertEqual(ShiftAssignment.objects.filter(date='2020-06-11').count(), 1)
+        self.assertEqual(
+            ShiftAssignment.objects.get(user=self.op1, date='2020-06-11').shift_type, 'MATIN')
+
+    def test_copy_day_ne_crase_pas_conge_approuve(self):
+        LeaveRequest.objects.create(
+            user=self.op1, start_date=datetime.date(2020, 6, 11),
+            end_date=datetime.date(2020, 6, 12),
+            leave_type='CONGE', status='APPROVED',
+        )
+        ShiftAssignment.objects.create(
+            schedule=self.schedule, user=self.op1,
+            date=datetime.date(2020, 6, 10), shift_type='MATIN',
+        )
+        resp = self._copy_day({
+            'source_date': '2020-06-10',
+            'target_dates': ['2020-06-11', '2020-06-13'],
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data['leave_marked'], 1)
+        self.assertEqual(
+            ShiftAssignment.objects.get(user=self.op1, date='2020-06-11').shift_type, 'CONGE')
+        self.assertEqual(
+            ShiftAssignment.objects.get(user=self.op1, date='2020-06-13').shift_type, 'MATIN')
+
+    def test_copy_day_source_sans_affectation_400(self):
+        resp = self._copy_day({
+            'source_date': '2020-06-10',
+            'target_dates': ['2020-06-11'],
+        })
+        self.assertEqual(resp.status_code, 400)
+
+    def test_copy_day_hors_mois_rejete_400(self):
+        ShiftAssignment.objects.create(
+            schedule=self.schedule, user=self.op1,
+            date=datetime.date(2020, 6, 10), shift_type='MATIN',
+        )
+        resp = self._copy_day({
+            'source_date': '2020-06-10',
+            'target_dates': ['2020-07-01'],
+        })
+        self.assertEqual(resp.status_code, 400)
+
+    def test_copy_day_champs_manquants_400(self):
+        for data in ({}, {'source_date': '2020-06-10'}, {'target_dates': ['2020-06-11']}):
+            resp = self._copy_day(data)
+            self.assertEqual(resp.status_code, 400, data)
+
+    def test_copy_day_non_admin_403(self):
+        user = F.create_user()
+        resp = self.as_user(user).post(
+            reverse('shift-schedule-copy-day', args=[self.schedule.pk]),
+            {'source_date': '2020-06-10', 'target_dates': ['2020-06-11']},
+            format='json',
+        )
+        self.assertEqual(resp.status_code, 403)
+
     # ── stats ──
 
     def test_stats_par_operateur(self):

@@ -524,6 +524,99 @@ class ShiftScheduleViewSet(AuditedViewSetMixin, BaseViewSetConfig, viewsets.Mode
         serializer = ShiftAssignmentSerializer(obj)
         return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
+    @action(detail=True, methods=['post'], permission_classes=[IsAdminUser])
+    def copy_day(self, request, pk=None):
+        """Duplique les affectations d'un jour source vers des jours cibles
+        du même mois. Un utilisateur en congé approuvé sur une date cible
+        y reste en congé (le shift copié n'écrase pas son absence)."""
+        schedule = self.get_object()
+        source_str = request.data.get('source_date')
+        targets = request.data.get('target_dates') or []
+        if not source_str or not isinstance(targets, list):
+            return Response(
+                {'error': 'source_date et target_dates sont requis'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            source_date = datetime.date.fromisoformat(source_str)
+            target_dates = sorted({datetime.date.fromisoformat(str(d)) for d in targets})
+        except (ValueError, TypeError):
+            return Response(
+                {'error': 'Format de date invalide'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        month_start = schedule.month.replace(day=1)
+        _, last_day = calendar.monthrange(month_start.year, month_start.month)
+        month_end = month_start.replace(day=last_day)
+        target_dates = [
+            d for d in target_dates
+            if d != source_date and month_start <= d <= month_end
+        ]
+        if not target_dates:
+            return Response(
+                {'error': 'Aucune date cible valide (même mois requis)'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        source_assignments = ShiftAssignment.objects.filter(
+            schedule=schedule, date=source_date
+        ).select_related('user')
+        if not source_assignments.exists():
+            return Response(
+                {'error': 'Aucune affectation sur la date source'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        leave_ranges = list(
+            LeaveRequest.objects.filter(status='APPROVED')
+            .values_list('user_id', 'start_date', 'end_date')
+        )
+
+        def on_leave(user_id, day):
+            return any(u == user_id and s <= day <= e for u, s, e in leave_ranges)
+
+        created = updated = leave_marked = 0
+        for day in target_dates:
+            for a in source_assignments:
+                is_leave = on_leave(a.user_id, day)
+                if is_leave:
+                    leave_marked += 1
+                _, was_created = ShiftAssignment.objects.update_or_create(
+                    schedule=schedule, user=a.user, date=day,
+                    defaults={
+                        'shift_type': 'CONGE' if is_leave else a.shift_type,
+                        'notes': '' if is_leave else a.notes,
+                    },
+                )
+                if was_created:
+                    created += 1
+                else:
+                    updated += 1
+
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='ShiftAssignment',
+            object_id=schedule.pk,
+            description=f"Duplication du {source_str} vers {len(target_dates)} jour(s) (planning {month_start.strftime('%m/%Y')})",
+            details={
+                'source_date': source_str,
+                'target_dates': [d.isoformat() for d in target_dates],
+                'created': created,
+                'updated': updated,
+                'leave_marked': leave_marked,
+            },
+            request=request,
+        )
+        return Response({
+            'copied_days': len(target_dates),
+            'created': created,
+            'updated': updated,
+            'leave_marked': leave_marked,
+        })
+
     @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated])
     def stats(self, request, pk=None):
         """Statistiques par opérateur pour ce planning (compteurs par shift_type)."""

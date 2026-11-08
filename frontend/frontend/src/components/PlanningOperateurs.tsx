@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import {
   CalendarDays, Settings, FileText, Sparkles, Send, ChevronLeft, ChevronRight,
   Plane, Check, X, Clock, User, Loader2, RefreshCw, MessageSquare, Printer, Calendar,
-  Users, Plus, Trash2, BarChart3, Sun, Moon, Shield, Coffee,
+  Users, Plus, Trash2, BarChart3, Sun, Moon, Shield, Coffee, Copy,
 } from 'lucide-react';
 import planningService, {
   type ShiftConfig, type ShiftSchedule, type ShiftAssignment, type ShiftType,
@@ -14,6 +14,7 @@ import planningService, {
 } from '../services/planningService';
 import userService, { type SimpleUser } from '../services/userService';
 import { useAuth } from '../context/AuthContext';
+import { usePharmacySettings } from '../hooks/usePharmacySettings';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './shadcn/tabs';
 import { Badge } from './shadcn/badge';
 import { Button } from './shadcn/button';
@@ -47,44 +48,6 @@ const shiftColors: Record<string, string> = {
 const shiftIcons: Record<string, typeof Sun> = {
   MATIN: Sun, NUIT: Moon, GARDE: Shield, REPOS: Coffee, CONGE: Plane,
 };
-
-function handlePrint() {
-  window.print();
-}
-
-const planningPrintStyles = `
-  @media print {
-    body * {
-      visibility: hidden !important;
-    }
-    #planning-print-area,
-    #planning-print-area * {
-      visibility: visible !important;
-    }
-    #planning-print-area {
-      position: absolute !important;
-      left: 0 !important;
-      top: 0 !important;
-      width: 100% !important;
-      margin: 0 !important;
-      padding: 0 !important;
-      background: #fff !important;
-      color: #000 !important;
-      overflow: visible !important;
-    }
-    #planning-print-area table {
-      width: 100% !important;
-      border-collapse: collapse !important;
-    }
-    #planning-print-area th,
-    #planning-print-area td {
-      border: 1px solid #000 !important;
-      padding: 4px !important;
-      color: #000 !important;
-      background: #fff !important;
-    }
-  }
-`;
 
 // ── Config Tab ──
 
@@ -522,6 +485,7 @@ function StatsPanel({ scheduleId }: { scheduleId: number }) {
 function PlanningTab({ isAdmin }: { isAdmin: boolean }) {
   const { t, i18n } = useTranslation('planning');
   const qc = useQueryClient();
+  const { settings } = usePharmacySettings();
   const locale = i18n.language === 'en' ? 'en-US' : 'fr-FR';
   const [currentMonth, setCurrentMonth] = useState(() => {
     const now = new Date();
@@ -535,6 +499,10 @@ function PlanningTab({ isAdmin }: { isAdmin: boolean }) {
   [viewMode, currentWeek, currentMonth]);
   const effectiveMonthISO = formatDateISO(effectiveMonth);
   const [editingCell, setEditingCell] = useState<{ userId: number; date: string } | null>(null);
+  const [copySource, setCopySource] = useState<string | null>(null);
+  const [copyMode, setCopyMode] = useState<'rest_month' | 'whole_month' | 'next7' | 'same_weekday' | 'custom'>('rest_month');
+  const [copyFrom, setCopyFrom] = useState('');
+  const [copyTo, setCopyTo] = useState('');
 
   const { data: operators } = useQuery<SimpleUser[]>({
     queryKey: ['operators'],
@@ -605,6 +573,42 @@ function PlanningTab({ isAdmin }: { isAdmin: boolean }) {
     ? getDaysInMonth(currentMonth.getFullYear(), currentMonth.getMonth())
     : getWeekDays(currentWeek),
   [viewMode, currentMonth, currentWeek]);
+
+  const allMonthDays = useMemo(
+    () => getDaysInMonth(effectiveMonth.getFullYear(), effectiveMonth.getMonth()),
+    [effectiveMonth],
+  );
+
+  const copyTargets = useMemo(() => {
+    if (!copySource) return [];
+    const all = allMonthDays.map(formatDateISO);
+    const after = all.filter(iso => iso > copySource);
+    switch (copyMode) {
+      case 'rest_month': return after;
+      case 'whole_month': return all.filter(iso => iso !== copySource);
+      case 'next7': return after.slice(0, 7);
+      case 'same_weekday': {
+        const wd = new Date(`${copySource}T00:00:00`).getDay();
+        return allMonthDays.filter(d => d.getDay() === wd).map(formatDateISO)
+          .filter(iso => iso !== copySource);
+      }
+      case 'custom':
+        if (!copyFrom || !copyTo) return [];
+        return all.filter(iso => iso >= copyFrom && iso <= copyTo && iso !== copySource);
+      default: return [];
+    }
+  }, [copySource, copyMode, copyFrom, copyTo, allMonthDays]);
+
+  const copyDayMutation = useMutation({
+    mutationFn: (data: { source_date: string; target_dates: string[] }) =>
+      planningService.copyDay(schedule!.id, data),
+    onSuccess: (res) => {
+      gooeyToast.success(t('gooeyToast.day_copied', { days: res.copied_days }));
+      qc.invalidateQueries({ queryKey: ['shift-schedule', effectiveMonthISO] });
+      setCopySource(null);
+    },
+    onError: () => gooeyToast.error(t('gooeyToast.copy_error')),
+  });
 
   const assignmentMap = useMemo(() => {
     const map: Record<string, ShiftAssignment> = {};
@@ -732,9 +736,22 @@ function PlanningTab({ isAdmin }: { isAdmin: boolean }) {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handlePrint}
+                onClick={async () => {
+                  const { generatePlanningPdfDraft } = await import('../utils/print/planningPdfDraft');
+                  generatePlanningPdfDraft({
+                    month: effectiveMonth,
+                    days,
+                    operators: (operators || []).map(op => ({
+                      id: op.id,
+                      name: op.first_name || op.last_name
+                        ? `${op.first_name} ${op.last_name}`.trim()
+                        : op.username,
+                    })),
+                    assignments: schedule?.assignments ?? [],
+                  }, settings).save(`planning_${effectiveMonthISO.slice(0, 7)}.pdf`);
+                }}
               >
-                <Printer size={16} /> {t('planning.print')}
+                <Printer size={16} /> {t('planning.export_pdf')}
               </Button>
             </>
           )}
@@ -790,6 +807,17 @@ function PlanningTab({ isAdmin }: { isAdmin: boolean }) {
                     >
                       <div className="text-caption uppercase">{getWeekdayShort(day, locale)}</div>
                       <div className="text-sm">{day.getDate()}</div>
+                      {isAdmin && schedule && (
+                        <button
+                          type="button"
+                          onClick={() => setCopySource(formatDateISO(day))}
+                          title={t('planning.copy_day')}
+                          aria-label={`${t('planning.copy_day')} — ${formatDateISO(day)}`}
+                          className="mt-0.5 inline-flex items-center justify-center size-4 rounded text-slate-300 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors cursor-pointer print:hidden"
+                        >
+                          <Copy size={11} aria-hidden="true" />
+                        </button>
+                      )}
                     </th>
                   );
                 })}
@@ -872,6 +900,56 @@ function PlanningTab({ isAdmin }: { isAdmin: boolean }) {
               </button>
               );
             })}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Copy Day Dialog */}
+      <Dialog open={!!copySource} onOpenChange={(open) => !open && setCopySource(null)}>
+        <DialogContent className="max-w-full sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('planning.copy_day_title', { date: copySource })}</DialogTitle>
+            <DialogDescription>{t('planning.copy_day_desc')}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="flex flex-wrap gap-2">
+              {(['rest_month', 'whole_month', 'next7', 'same_weekday', 'custom'] as const).map(mode => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setCopyMode(mode)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors cursor-pointer ${
+                    copyMode === mode
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400'
+                  }`}
+                  aria-pressed={copyMode === mode}
+                >
+                  {t(`planning.copy_preset_${mode}`)}
+                </button>
+              ))}
+            </div>
+            {copyMode === 'custom' && (
+              <div className="flex items-center gap-2">
+                <LocalizedDateInput value={copyFrom} onChange={e => setCopyFrom(e.target.value)} aria-label={t('planning.copy_from')} />
+                <LocalizedDateInput value={copyTo} onChange={e => setCopyTo(e.target.value)} aria-label={t('planning.copy_to')} />
+              </div>
+            )}
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              {t('planning.copy_targets_count', { count: copyTargets.length })}
+            </p>
+            <DialogFooter>
+              <Button
+                disabled={copyTargets.length === 0 || copyDayMutation.isPending}
+                onClick={() => copySource && copyDayMutation.mutate({
+                  source_date: copySource,
+                  target_dates: copyTargets,
+                })}
+              >
+                {copyDayMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <Copy size={16} />}
+                {t('planning.copy_confirm')}
+              </Button>
+            </DialogFooter>
           </div>
         </DialogContent>
       </Dialog>
@@ -1080,7 +1158,7 @@ export default function PlanningOperateurs() {
       animate="show"
       className="h-full flex flex-col bg-slate-50 dark:bg-slate-950 p-4 sm:p-6 gap-4 font-sans"
     >
-      <style dangerouslySetInnerHTML={{ __html: planningPrintStyles }} />
+      
       <motion.div variants={fadeInUp} className="flex-1 min-h-0 flex flex-col">
       <Card className="flex flex-col flex-1 min-h-0">
         {/* Header */}

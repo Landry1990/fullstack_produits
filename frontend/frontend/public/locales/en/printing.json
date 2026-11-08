@@ -283,6 +283,13 @@
     "justification": "This document is proof of payment.",
     "generated_on": "Generated on {{date}}"
   },
+  "planning": {
+    "title": "OPERATOR SCHEDULE",
+    "operator": "OPERATOR",
+    "legend_title": "Legend",
+    "legend_codes": "M = Morning • N = Night • G = On-call • R = Rest • C = Leave",
+    "generated_on": "generated on {{date}}"
+  },
   "reappro": {
     "title": "Restock Confirmation",
     "session_details": "Session details",
