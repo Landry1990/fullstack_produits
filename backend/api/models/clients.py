@@ -180,7 +180,7 @@ class Client(models.Model):
         help_text="Remise en % acquise pour la prochaine vente"
     )
     is_loyalty_member = models.BooleanField(
-        default=True, 
+        default=False,
         help_text="Si activé, ce client participe au programme de fidélité"
     )
     

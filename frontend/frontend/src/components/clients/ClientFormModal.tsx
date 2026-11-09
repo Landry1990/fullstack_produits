@@ -235,18 +235,18 @@ export default function ClientFormModal({
               {/* Fidélité */}
               <label className="flex items-center justify-between p-3 rounded-lg border border-base-200 bg-base-200 cursor-pointer hover:border-base-300 transition-colors">
                 <div className="flex items-center gap-3">
-                  <div className={`p-1.5 rounded-md ${data.is_loyalty_member ?? true ? 'bg-warning/20 text-warning' : 'bg-base-300 text-base-content/50'}`}>
+                  <div className={`p-1.5 rounded-md ${data.is_loyalty_member ?? false ? 'bg-warning/20 text-warning' : 'bg-base-300 text-base-content/50'}`}>
                     <Award className="size-4" />
                   </div>
                   <div>
                     <span className="text-sm font-medium text-base-content block">{t('clients:fields.loyalty_member')}</span>
-                    {(data.is_loyalty_member ?? true) && (
+                    {(data.is_loyalty_member ?? false) && (
                       <span className="text-caption text-warning font-medium">{data.points_fidelite || 0} pts</span>
                     )}
                   </div>
                 </div>
                 <Switch
-                  checked={data.is_loyalty_member ?? true}
+                  checked={data.is_loyalty_member ?? false}
                   onCheckedChange={(checked) => setData({ ...data, is_loyalty_member: checked })}
                   className="data-[state=checked]:bg-amber-500"
                 />

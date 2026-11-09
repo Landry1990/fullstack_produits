@@ -42,7 +42,7 @@ export function useFacturationClients({ onClientCreated }: UseFacturationClients
         taux_couverture: '0',
         remise_automatique: '0',
         majoration_pro_pourcentage: '0',
-        is_loyalty_member: true
+        is_loyalty_member: false
     })
 
     // Ayants Droit State
@@ -283,7 +283,7 @@ export function useFacturationClients({ onClientCreated }: UseFacturationClients
                 taux_couverture: '0',
                 remise_automatique: '0',
                 majoration_pro_pourcentage: '0',
-                is_loyalty_member: true
+                is_loyalty_member: false
             })
 
             gooeyToast.success(t('messages.client_created_selected', { name: createdClient.name }))

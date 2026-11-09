@@ -188,7 +188,7 @@ export const createClient = async ({ name, phone }: { name: string; phone?: stri
     taux_couverture: 0,
     remise_automatique: 0,
     majoration_pro_pourcentage: 0,
-    is_loyalty_member: true,
+    is_loyalty_member: false,
   });
   return res.data as Client;
 };

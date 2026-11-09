@@ -10,6 +10,12 @@
 
 ## ✅ Déjà en place
 
+- [x] **Fidélité désactivée par défaut** (2026-11-09) : la création rapide de
+  client envoie `is_loyalty_member: false` — aligné sur le nouveau défaut
+  backend (`Client.is_loyalty_member` passe à `False`, migration `0288`).
+  Un particulier créé au comptoir n'est plus membre du programme tant que
+  l'adhésion n'est pas activée explicitement sur la fiche client.
+
 - [x] **Correctifs audit react-doctor** (2026-10-25) : `key={index}` → clés
   stables (`PendingSalesModal`, `HistoriqueScreen`) ; `.get()!` → accès sûr
   (`PeremptionScreen`) ; JSX dupliqué factorisé en composants locaux

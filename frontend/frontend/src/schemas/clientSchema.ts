@@ -38,7 +38,7 @@ export const facturationClientCreateSchema = z.object({
   taux_couverture: z.coerce.number().min(0).max(100, { error: () => i18n.t('clients:validation.taux_couverture_range') }).default(0),
   remise_automatique: z.coerce.number().min(0).max(100, { error: () => i18n.t('clients:validation.remise_auto_range') }).default(0),
   majoration_pro_pourcentage: z.coerce.number().min(0).max(100, { error: () => i18n.t('clients:validation.majoration_range') }).default(0),
-  is_loyalty_member: z.boolean().default(true),
+  is_loyalty_member: z.boolean().default(false),
 });
 
 export type ClientSchemaType = z.infer<typeof clientSchema>;

@@ -2,6 +2,23 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-11-09 — 🏅 Fidélité : nouveaux clients non membres par défaut
+
+- `Client.is_loyalty_member` passe de `default=True` à `default=False`
+  (migration `0288`) — un client créé au comptoir n'accumule plus de points
+  tant que l'adhésion n'est pas activée explicitement sur sa fiche.
+- Frontend aligné : `ClientFormModal` (switch + badge pts, `?? false`),
+  création rapide en facturation (`useFacturationClients` ×2,
+  `clientSchema.default(false)`). `emptyForm` de la page Clients était déjà
+  à `false`.
+- Mobile : la création rapide de `mobile-facturation` envoie désormais
+  `is_loyalty_member: false` (elle forçait `true`, contraire au nouveau
+  défaut).
+- Les clients existants conservent leur statut (`AlterField` ne touche pas
+  les lignes). Vérifié : `makemigrations --check` « No changes »,
+  `tsc --noEmit` 0 erreur, eslint ciblé 0 erreur. Tests backend non lancés
+  (Docker arrêté).
+
 ## 2026-11-08 — 🖨️ Planning : export PDF généré côté front (N&B)
 
 - Le bouton « Imprimer » devient **« Exporter PDF »** : `utils/print/planningPdfDraft.ts`
