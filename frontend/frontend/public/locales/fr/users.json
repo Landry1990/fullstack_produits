@@ -188,6 +188,28 @@
             "december": "Décembre"
         }
     },
+    "groupes": {
+        "title": "Groupes de permissions",
+        "manage": "Groupes",
+        "new": "Nouveau groupe",
+        "select_hint": "Sélectionnez ou créez un groupe.",
+        "name": "Nom",
+        "name_required": "Le nom du groupe est requis.",
+        "max_discount": "Remise max (%)",
+        "description": "Description",
+        "menus": "Pages accessibles (menus)",
+        "menus_hint": "Ces pages s'appliquent à tous les membres du groupe. Les écarts par utilisateur restent possibles via les dérogations.",
+        "members": "membre(s)",
+        "system": "Groupe de base (non supprimable)",
+        "saved": "Groupe enregistré — les droits des membres ont été recalculés.",
+        "delete_title": "Supprimer le groupe ?",
+        "delete_confirm": "Supprimer le groupe « {{name}} » ? Ses membres garderont leurs droits actuels mais passeront en gestion individuelle.",
+        "delete_error": "Suppression impossible.",
+        "groupe": "Groupe de permissions",
+        "none": "— Aucun (droits personnalisés) —",
+        "hint": "les écarts au groupe sont marqués « dérogation »",
+        "derogation": "dérogation"
+    },
     "password_confirm": {
         "title": "Confirmation de sécurité",
         "message": "Veuillez confirmer votre mot de passe pour continuer.",

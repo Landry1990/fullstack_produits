@@ -7,6 +7,7 @@ import { Input } from '../../shadcn/input';
 import { Label } from '../../shadcn/label';
 import { Card } from '../../shadcn/card';
 import { Button } from '../../shadcn/button';
+import { Select } from '../../shadcn/select';
 import { PERMISSIONS_META, permissionClass, type GroupePerm } from '../usersMeta';
 import type { UserForm } from '../../../hooks/useUserForm';
 import { logger } from '../../../utils/logger';
@@ -32,6 +33,28 @@ export default function UserPermissionsTab({ form, onApplyToRole }: Props) {
   const isDerogation = (key: string) =>
     groupeCourant !== null &&
     Boolean((formData as Record<string, unknown>)[key]) !== Boolean((groupeCourant as unknown as Record<string, unknown>)[key]);
+  const isRateDerogation =
+    groupeCourant !== null &&
+    Number(formData.max_discount_rate || 0) !== Number(groupeCourant.max_discount_rate || 0);
+
+  // Choisir un groupe applique ses droits au formulaire ; les écarts
+  // ensuite retouchés à la main deviennent des dérogations.
+  const handleGroupeChange = (value: string) => {
+    const g = groupes.find(gr => gr.id === Number(value)) ?? null;
+    const next = { ...formData, groupe: g ? g.id : null };
+    if (g) {
+      PERMISSIONS_META.forEach(p => {
+        (next as Record<string, unknown>)[p.key] = Boolean(
+          (g as unknown as Record<string, unknown>)[p.key]
+        );
+      });
+      next.max_discount_rate = Number(g.max_discount_rate) || 0;
+      if (g.allowed_menus != null) {
+        next.allowed_menus = [...g.allowed_menus];
+      }
+    }
+    setFormData(next);
+  };
 
   const handleApplyToRole = async () => {
     if (!onApplyToRole) return;
@@ -83,16 +106,16 @@ export default function UserPermissionsTab({ form, onApplyToRole }: Props) {
           <Label htmlFor="groupe-select" className="whitespace-nowrap font-bold text-xs uppercase tracking-wider">
             {t('groupes.groupe', { defaultValue: 'Groupe de permissions' })}
           </Label>
-          <select
+          <Select
             id="groupe-select"
-            className="select select-bordered h-9 text-sm flex-1 max-w-xs"
-            value={formData.groupe ?? ''}
-            onChange={e => setFormData({ ...formData, groupe: e.target.value ? Number(e.target.value) : null })}
+            className="h-9 text-sm flex-1 max-w-xs"
+            value={formData.groupe == null ? '' : String(formData.groupe)}
+            onChange={e => handleGroupeChange(e.target.value)}
             disabled={formData.is_superuser}
           >
             <option value="">{t('groupes.none', { defaultValue: '— Aucun (droits personnalisés) —' })}</option>
             {groupes.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-          </select>
+          </Select>
           {groupeCourant && (
             <span className="text-xs text-slate-500 italic">
               {t('groupes.hint', { defaultValue: 'les écarts au groupe sont marqués « dérogation »' })}
@@ -115,7 +138,14 @@ export default function UserPermissionsTab({ form, onApplyToRole }: Props) {
             {PERMISSIONS_META.filter(p => p.group === 'operations').map(renderPermission)}
 
             <div className="flex flex-col gap-1 px-2 mt-1">
-              <Label htmlFor="max-discount-rate">{t('form.max_discount')}</Label>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="max-discount-rate">{t('form.max_discount')}</Label>
+                {isRateDerogation && (
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 border border-amber-200 rounded px-1 py-0.5">
+                    {t('groupes.derogation', { defaultValue: 'dérogation' })}
+                  </span>
+                )}
+              </div>
               <Input
                 id="max-discount-rate"
                 type="number"

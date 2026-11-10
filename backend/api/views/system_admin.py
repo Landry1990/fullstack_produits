@@ -177,20 +177,23 @@ class SystemAdminViewSet(ViewSet):
                 description="Backup manuel de la base de données lancé",
                 request=request,
             )
-            call_command('backup_database', stdout=out, stderr=err)
-            output = out.getvalue()
-            error_output = err.getvalue()
-
-            # La commande backup_database retourne une erreur si pg_dump est introuvable
-            if 'pg_dump not found' in output:
+            from django.core.management.base import CommandError
+            try:
+                call_command('backup_database', stdout=out, stderr=err)
+            except CommandError as e:
+                # La commande lève CommandError sur tout échec (pg_dump absent,
+                # dump raté/vide, destination configurée injoignable).
+                output = out.getvalue()
                 return Response({
                     'success': False,
                     'output': output[-2000:],
-                    'error': 'pg_dump non trouvé. Installez postgresql-client dans le conteneur.',
-                    'message': 'Erreur: pg_dump introuvable',
+                    'error': str(e),
+                    'message': 'Erreur: pg_dump introuvable' if 'pg_dump' in output else 'Erreur lors du backup',
                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            output = out.getvalue()
+            error_output = err.getvalue()
 
-            if error_output.strip() or 'Backup failed' in output or 'Error during backup:' in output or 'Backup created' not in output:
+            if error_output.strip() or 'Backup created' not in output:
                 return Response({
                     'success': False,
                     'output': output[-2000:],

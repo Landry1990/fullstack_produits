@@ -2,6 +2,36 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-11-10 — Revue du commit précédent : corrections groupes, backups, suggestions
+
+- **Affectation de groupe applique les droits** : changer le sélecteur de
+  groupe dans `UserPermissionsTab` recopie désormais les `can_*`,
+  `max_discount_rate` et `allowed_menus` (si défini) du groupe dans le
+  formulaire — avant, les anciens droits étaient envoyés tels quels et se
+  transformaient tous en dérogations (l'affectation était un no-op sur les
+  droits effectifs). Badge « dérogation » ajouté aussi sur le taux de remise.
+- **Piège `allowed_menus` corrigé** : tableau vide → `null` (« le groupe ne
+  gère pas les menus ») au toggle et à la sauvegarde dans
+  `GroupePermissionsModal` — un `[]` persisté vidait les menus de tous les
+  membres à la save sans moyen de revenir à `null`.
+- **i18n** : clés `groupes.*` ajoutées dans `locales/{fr,en}/users.json`
+  (elles ne vivaient que dans les `defaultValue`).
+- **Backups** : `cleanup_old_backups` déplacé avant le `raise CommandError`
+  sur destination en échec — une destination configurée injoignable en
+  permanence ne bloque plus la rétention. `system-admin/run_backup`
+  intercepte `CommandError` explicitement (les anciens contrôles textuels
+  étaient du code mort depuis que la commande lève).
+- **Suggestions** : détection de rush sur **factures distinctes**
+  (`Count(facture, distinct=True)`) au lieu de lignes — un pic d'un jour
+  éclaté en 3+ lignes d'une même facture est désormais bien amorti.
+- **Divers** : pk `groupe` invalide → `ValidationError` (au lieu d'un
+  détachement silencieux) ; imports de `GroupePermissionsViewSet` remontés
+  au niveau module ; `<select>` DaisyUI remplacé par le composant `Select`
+  shadcn.
+- Vérifié : `test_user_management` + `test_backup_views` + `test_dashboard`
+  + `test_commande_produits` = 137/137 verts dans Docker, `tsc --noEmit`
+  et eslint ciblés 0 erreur.
+
 ## 2026-11-09 — Bon de réception : colonne CIP remplacée par l'ID produit
 
 - Les CIP1 à 13 chiffres débordaient de la colonne CIP (`nowrap`,
@@ -23,7 +53,8 @@
 - **Migration 0289** : chaque profil affecté au groupe de son rôle ; ses
   droits actuels qui diffèrent du groupe deviennent des **dérogations**
   (option 1 — préservation). Menus intouchés (`allowed_menus` groupe =
-  `null` = pas de contribution).
+  `null` = pas de contribution). **Superusers → groupe Pharmacien**
+  quel que soit leur rôle stocké.
 - **API** : `groupe-permissions/` (admin, `is_system` non supprimable) +
   `ProfileSerializer` expose `groupe`/`groupe_detail`/`derogations`. Le
   sérializer convertit un `can_*` envoyé différent du groupe en dérogation.

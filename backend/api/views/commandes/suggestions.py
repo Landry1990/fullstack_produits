@@ -363,7 +363,7 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=
             factureproduit__facture__date__gte=date_2s,
             factureproduit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         )),
-        lignes_vente_4s_annotation=Count('factureproduit', filter=Q(
+        sorties_vente_4s_annotation=Count('factureproduit__facture', distinct=True, filter=Q(
             factureproduit__facture__date__gte=date_4s,
             factureproduit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         ))
@@ -417,10 +417,10 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=
         # 2) retombée (rythme des 2 dernières sem. < 60 % des 4 sem.) → amortie ;
         # 3) hausse plafonnée à ×1,5 même si le signal est réel.
         ventes_2s = produit.ventes_2s_annotation or 0
-        lignes_vente_4s = produit.lignes_vente_4s_annotation or 0
+        sorties_vente_4s = produit.sorties_vente_4s_annotation or 0
         pic_detecte = False
         if tendance_court_terme > 1.0 and ventes_4s > 0:
-            if lignes_vente_4s < 3:
+            if sorties_vente_4s < 3:
                 tendance_court_terme = 1.0
                 pic_detecte = True
             else:

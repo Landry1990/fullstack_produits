@@ -55,7 +55,12 @@ def _apply_groupe_and_derogations(profile, profile_data):
         if groupe_val is None or isinstance(groupe_val, GroupePermissions):
             profile.groupe = groupe_val
         else:
-            profile.groupe = GroupePermissions.objects.filter(pk=groupe_val).first()
+            groupe_obj = GroupePermissions.objects.filter(pk=groupe_val).first()
+            if groupe_obj is None:
+                raise serializers.ValidationError(
+                    {'profile': {'groupe': 'Groupe de permissions introuvable.'}}
+                )
+            profile.groupe = groupe_obj
     if 'derogations' in profile_data:
         profile.derogations = profile_data['derogations'] or {}
     if not profile.groupe_id:

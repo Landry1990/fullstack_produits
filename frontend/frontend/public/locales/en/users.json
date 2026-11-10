@@ -188,6 +188,28 @@
             "december": "December"
         }
     },
+    "groupes": {
+        "title": "Permission Groups",
+        "manage": "Groups",
+        "new": "New group",
+        "select_hint": "Select or create a group.",
+        "name": "Name",
+        "name_required": "The group name is required.",
+        "max_discount": "Max discount (%)",
+        "description": "Description",
+        "menus": "Accessible pages (menus)",
+        "menus_hint": "These pages apply to all group members. Per-user overrides remain possible via derogations.",
+        "members": "member(s)",
+        "system": "Base group (cannot be deleted)",
+        "saved": "Group saved — member permissions have been recalculated.",
+        "delete_title": "Delete the group?",
+        "delete_confirm": "Delete the group \"{{name}}\"? Its members will keep their current rights but switch to individual management.",
+        "delete_error": "Unable to delete.",
+        "groupe": "Permission group",
+        "none": "— None (custom rights) —",
+        "hint": "differences from the group are marked 'derogation'",
+        "derogation": "override"
+    },
     "password_confirm": {
         "title": "Security Confirmation",
         "message": "Please confirm your password to continue.",

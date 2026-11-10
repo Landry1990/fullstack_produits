@@ -49,11 +49,12 @@ from django_filters.rest_framework import DjangoFilterBackend
 from ..audit_helpers import log_audit
 from ..audit_mixins import AuditedViewSetMixin
 from ..centralized_configs import BaseViewSetConfig, StandardResultsSetPagination
-from ..models import AuditLog, Facture, FactureProduit, Profile, Team, UserDailySession
+from ..models import AuditLog, Facture, FactureProduit, GroupePermissions, Profile, Team, UserDailySession
 from ..utils.dates import day_start
 from ..utils.validation import parse_date_param, parse_int
 from ..serializers import ProfileSerializer as UserProfileSerializer
 from ..serializers import TeamSerializer, UserSerializer
+from ..serializers.users import GroupePermissionsSerializer
 
 
 def auto_close_old_sessions(user=None):
@@ -778,9 +779,6 @@ class GroupePermissionsViewSet(AuditedViewSetMixin, BaseViewSetConfig, viewsets.
     Modifier un groupe réécrit les droits effectifs de tous ses membres
     (GroupePermissions.save → Profile.recompute_permissions).
     """
-    from ..serializers.users import GroupePermissionsSerializer
-    from ..models import GroupePermissions
-
     queryset = GroupePermissions.objects.prefetch_related('membres')
     serializer_class = GroupePermissionsSerializer
     permission_classes = [IsAdminUser]

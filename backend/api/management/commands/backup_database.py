@@ -157,14 +157,16 @@ class Command(BaseCommand):
             if self.copy_to_google_drive(str(backup_file)) is False:
                 failed_destinations.append('dossier Google Drive')
 
-            if failed_destinations:
-                raise CommandError('Sauvegarde locale créée, mais échec de copie : ' + ', '.join(failed_destinations))
-
-            # Clean old backups (keep last N backups based on settings)
+            # Clean old backups (keep last N backups based on settings) —
+            # avant le raise ci-dessous : une destination configurée en échec
+            # permanent ne doit pas empêcher la purge des vieux backups.
             from api.models.settings import PharmacySettings
             conf, _ = PharmacySettings.objects.get_or_create(pk=1)
             retention = conf.backup_retention_count or 30
             self.cleanup_old_backups(str(backup_dir), retention_count=retention)
+
+            if failed_destinations:
+                raise CommandError('Sauvegarde locale créée, mais échec de copie : ' + ', '.join(failed_destinations))
 
         except CommandError:
             raise

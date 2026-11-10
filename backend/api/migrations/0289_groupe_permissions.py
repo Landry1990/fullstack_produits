@@ -55,8 +55,10 @@ def seed_groupes(apps, schema_editor):
     # Affecter chaque profil au groupe de son rôle ; les droits actuels qui
     # diffèrent du groupe deviennent des dérogations (option 1 : préservation).
     fields = PERM_FIELDS + ['max_discount_rate']
-    for profile in Profile.objects.select_related('groupe').iterator():
-        groupe = by_role.get(profile.role)
+    for profile in Profile.objects.select_related('groupe', 'user').iterator():
+        # Un superuser a tous les droits → groupe Pharmacien, jamais son rôle.
+        role = 'PHARMACIEN' if profile.user.is_superuser else profile.role
+        groupe = by_role.get(role)
         if groupe is None or profile.groupe_id == groupe.id:
             continue
         derog = {}

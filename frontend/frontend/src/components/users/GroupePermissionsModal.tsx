@@ -43,7 +43,9 @@ export default function GroupePermissionsModal({ open, onOpenChange, onSaved }: 
     const next = current.includes(key)
       ? current.filter(k => k !== key)
       : [...current, key];
-    setSelected({ ...selected, allowed_menus: next });
+    // Tableau vide → null : « le groupe ne gère pas les menus ». Un []
+    // transmis viderait les allowed_menus de tous les membres à la save.
+    setSelected({ ...selected, allowed_menus: next.length ? next : null });
   };
 
   const fetchGroupes = useCallback(async () => {
@@ -79,10 +81,14 @@ export default function GroupePermissionsModal({ open, onOpenChange, onSaved }: 
     }
     setSaving(true);
     try {
+      const payload = {
+        ...selected,
+        allowed_menus: selected.allowed_menus?.length ? selected.allowed_menus : null,
+      };
       if (selected.id) {
-        await api.patch(`groupe-permissions/${selected.id}/`, selected);
+        await api.patch(`groupe-permissions/${selected.id}/`, payload);
       } else {
-        await api.post('groupe-permissions/', selected);
+        await api.post('groupe-permissions/', payload);
       }
       gooeyToast.success(t('groupes.saved', { defaultValue: 'Groupe enregistré — les droits des membres ont été recalculés.' }));
       await fetchGroupes();
