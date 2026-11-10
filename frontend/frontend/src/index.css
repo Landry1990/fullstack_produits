@@ -251,6 +251,13 @@ body {
   min-width: 0;
 }
 
+/* react-datepicker : le popper de la lib est en z-index 1, il passait sous
+   les en-têtes sticky des tableaux (z-30). On le hisse au-dessus, tout en
+   restant sous les modales shadcn (z-50). */
+.react-datepicker-popper {
+  z-index: 40 !important;
+}
+
 body {
   margin: 0;
   padding: 0;

@@ -101,7 +101,7 @@ export default function JournalCaisseTable({ state }: Props) {
                   subtitle: transaction.user_details?.full_name,
                   amount: normalizeNumberInput(transaction.montant),
                   type: transaction.statut === 'completee' ? 'primary' : 'warning',
-                  badge: transaction.mode_paiement_display,
+                  badge: getPaymentModeLabel(transaction.mode_paiement, t, settings?.custom_payment_modes),
                   date: formatDate(transaction.date_paiement)
                 };
 
@@ -280,7 +280,7 @@ export default function JournalCaisseTable({ state }: Props) {
                             return (
                               <div className="flex flex-col">
                                 <span className={cn("inline-flex items-center rounded-md font-bold text-caption gap-1.5 py-1 px-2", isRecouvrement ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-700')}>
-                                  {isRecouvrement ? <Banknote className="size-3.5" /> : getModeIcon(transaction.mode_paiement)} {isRecouvrement ? t('common:payment_modes.recouvrement_caps') || 'RECOUVREMENT' : transaction.mode_paiement_display?.toUpperCase()}
+                                  {isRecouvrement ? <Banknote className="size-3.5" /> : getModeIcon(transaction.mode_paiement)} {isRecouvrement ? t('common:payment_modes.recouvrement_caps') || 'RECOUVREMENT' : getPaymentModeLabel(transaction.mode_paiement, t, settings?.custom_payment_modes).toUpperCase()}
                                 </span>
                                 {transaction.reference && (
                                   <span className="text-caption text-slate-500 mt-1 max-w-[120px] truncate" title={transaction.reference}>

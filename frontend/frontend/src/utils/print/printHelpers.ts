@@ -579,6 +579,10 @@ export function buildReceptionPrintHtml(commande: Commande, companyInfo: { name?
     @media print {
       html, body { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       .no-print { display: none !important; }
+      thead { display: table-header-group; }
+      tr, td { break-inside: avoid; page-break-inside: avoid; }
+      tr.group-row { break-after: avoid; page-break-after: avoid; }
+      .summary, .footer-note, .print-footer { break-inside: avoid; page-break-inside: avoid; }
     }
   </style>
 </head>

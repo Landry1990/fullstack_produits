@@ -180,7 +180,7 @@ export interface CaisseTransaction {
     facture: number
     facture_numero: string
     mode_paiement: string
-    mode_paiement_display: string
+    mode_paiement_display?: string
     montant: string
     reference: string | null
     statut: 'en_attente' | 'completee' | 'annulee'

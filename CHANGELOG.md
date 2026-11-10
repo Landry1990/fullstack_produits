@@ -2,6 +2,37 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-11-10 — Bon de réception PDF : ligne produit coupée sous l'en-tête en page 2+
+
+- Une ligne produit (`<tr>` à deux lignes : nom + `LOT/EXP`) pouvait être
+  scindée au saut de page → la ligne `LOT: … | EXP: …` se retrouvait orpheline
+  juste sous l'en-tête `<thead>` répété, donnant l'impression d'un
+  chevauchement. Ajout dans `@media print` de `buildReceptionPrintHtml` :
+  `tr/td { break-inside: avoid; page-break-inside: avoid }`,
+  `thead { display: table-header-group }`, `tr.group-row { break-after: avoid }`
+  (un en-tête de groupe rayon/forme ne reste plus seul en bas de page), et
+  `break-inside: avoid` sur `.summary`/`.footer-note`/`.print-footer`.
+- Vérifié : `tsc --noEmit` + eslint ciblés 0 erreur.
+
+## 2026-11-10 — Journal de caisse : calendrier sous le tableau + badges MODE vides
+
+- **Chevauchement du DatePicker** : `.react-datepicker-popper` est en
+  `z-index: 1` dans la CSS de la lib → le calendrier passait *sous* l'en-tête
+  sticky du tableau (`z-30`). Override global dans `index.css` : `z-index: 40
+  !important` (au-dessus des sticky, sous les modales shadcn `z-50`). Corrige
+  tous les DatePicker de l'app (journal, clôtures, rapports).
+- **Colonne MODE n'affichait que l'icône** : `CaisseSerializer` utilise
+  `fields='__all__'` mais `Caisse.mode_paiement` est un `CharField` **sans**
+  `choices` (modes custom possibles) → DRF ne génère jamais
+  `mode_paiement_display` et le badge restait vide. Le tableau utilise
+  désormais `getPaymentModeLabel(mode, t, custom_payment_modes)` — comme les
+  lignes mouvements — : labels traduits fr/en + modes personnalisés, en vue
+  desktop et mobile. `CaisseTransaction.mode_paiement_display` passé en
+  optionnel (jamais renvoyé par l'API).
+- Vérifié : `tsc --noEmit` + eslint ciblés 0 erreur ; vitest JournalCaisse
+  4/5 (le test « totals » échouait déjà avant — formatage montants en env de
+  test, hors sujet).
+
 ## 2026-11-10 — Revue du commit précédent : corrections groupes, backups, suggestions
 
 - **Affectation de groupe applique les droits** : changer le sélecteur de
