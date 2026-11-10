@@ -66,8 +66,8 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
                     # NOTE : les changements de prix sont tracés en masse par
                     # bulk_sync pour éviter d'inonder le journal d'audit.
             # NOTE : on ne trace plus chaque ligne CommandeProduit créée ;
-            # bulk_sync produit un résumé et les actions commande (create/update/
-            # cloture) restent tracées au niveau Commande.
+            # seules la création, la clôture/annulation de réception et la
+            # suppression de la commande restent tracées au niveau Commande.
 
     def _check_commande_not_closed(self, instance):
         """Lève une erreur si la commande associée est clôturée."""
@@ -93,8 +93,8 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
         return super().destroy(request, *args, **kwargs)
 
     def perform_update(self, serializer):
-        # NOTE : pas de log par ligne ici ; bulk_sync gère le résumé et les
-        # actions sur la commande restent tracées au niveau Commande.
+        # NOTE : pas de log par ligne ici ; les actions sur la commande
+        # (création, clôture, suppression) restent tracées au niveau Commande.
         serializer.save()
 
     def perform_destroy(self, instance):
@@ -389,9 +389,9 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
                 return Response({'error': error_msg}, status=status.HTTP_400_BAD_REQUEST)
 
         # NOTE : on ne trace plus la synchronisation groupée comme un UPDATE
-        # Commande distinct. Le journal d'audit garde la création, la modification
-        # d'en-tête (CommandeViewSet.perform_update) et la clôture ; bulk_sync n'est
-        # qu'une sous-étape de persistance des lignes.
+        # Commande distinct. Le journal d'audit garde la création, la clôture/
+        # annulation de réception et la suppression ; bulk_sync n'est qu'une
+        # sous-étape de persistance des lignes.
 
         # La synchronisation des lignes modifie le total de la commande ;
         # invalider le cache liste pour refléter immédiatement les changements.

@@ -52,7 +52,7 @@ export default function QuickCreateProductModal({
   const [name, setName] = useState('');
   const [costPrice, setCostPrice] = useState('');
   const [sellingPrice, setSellingPrice] = useState('');
-  const [tva, setTva] = useState('19.25');
+  const [tva, setTva] = useState('0');
   const [rayon, setRayon] = useState('');
   const [cip1, setCip1] = useState('');
   const [cip2, setCip2] = useState('');
@@ -67,7 +67,7 @@ export default function QuickCreateProductModal({
         setName(editProduct.name || '');
         setCostPrice(editProduct.cost_price || '');
         setSellingPrice(editProduct.selling_price || '');
-        setTva(String(editProduct.tva ?? '19.25'));
+        setTva(String(editProduct.tva ?? '0'));
         setRayon(editProduct.rayon ? String(editProduct.rayon) : '');
         setCip1(editProduct.cip1 || '');
         setCip2(editProduct.cip2 || '');
@@ -77,7 +77,7 @@ export default function QuickCreateProductModal({
         setName('');
         setCostPrice('');
         setSellingPrice('');
-        setTva(tvaList.find(t => t.taux === '19.25')?.taux || '19.25');
+        setTva(tvaList.find(t => t.taux === '0')?.taux || '0');
         setRayon('');
         setCip1('');
         setCip2('');
@@ -122,7 +122,7 @@ export default function QuickCreateProductModal({
         // Envoyer les valeurs normalisées (virgule → point), pas les strings brutes ('1,5' → 400 backend)
         cost_price: String(cost),
         selling_price: String(sell),
-        tva: tva || '19.25',
+        tva: tva || '0',
         rayon: rayon ? parseInt(rayon, 10) : null,
         cip1: cip1.trim() || null,
         cip2: cip2.trim() || null,

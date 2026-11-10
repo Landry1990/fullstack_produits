@@ -571,3 +571,86 @@ class StockPilotageTestCase(APITestCase):
         self.assertEqual(
             response.data['summary']['commander_count'], len(response.data['commander'])
         )
+
+
+class StockHealthEmptyBaseTestCase(APITestCase):
+    """Base vide (fraîche installation) : le score ne doit pas offrir de points."""
+
+    def setUp(self):
+        self.user = TestDataFactory.create_superuser()
+        self.client.force_authenticate(user=self.user)
+        self.url = '/api/statistiques/stock_health/'
+
+    def test_empty_base_scores_zero_not_35(self):
+        """Aucune vente, aucun stock : fluidité et immobilisation = 0 pt, pas le maximum."""
+        # Produit à stock nul importé, jamais vendu ni acheté
+        Produit.objects.create(name='Importé', stock=0, is_active=True)
+
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['health_score'], 0.0)
+        details = response.data['score_details']
+        self.assertEqual(details['fluidite']['score'], 0.0)
+        self.assertEqual(details['immobilisation']['score'], 0.0)
+
+
+class SuggestionPicAmortiTestCase(APITestCase):
+    """Pics de ventes ponctuels/effondrés : la tendance doit être amortie."""
+
+    def setUp(self):
+        from django.core.cache import cache
+        cache.clear()
+        self.user = TestDataFactory.create_superuser()
+        self.client.force_authenticate(user=self.user)
+        self.url = '/api/generer-suggestions/'
+        self.fournisseur = TestDataFactory.create_fournisseur()
+
+    def _vente(self, produit, quantity, days_ago):
+        from ..models import Facture
+        facture = TestDataFactory.create_facture(status='VAL')
+        Facture.objects.filter(pk=facture.pk).update(
+            date=timezone.now() - timedelta(days=days_ago)
+        )
+        TestDataFactory.create_facture_produit(facture=facture, produit=produit, quantity=quantity)
+
+    def _vieux_produit(self, **kwargs):
+        """Produit assez vieux pour que les fenêtres 4/8 semaines existent."""
+        p = TestDataFactory.create_produit(**kwargs)
+        Produit.objects.filter(pk=p.pk).update(
+            created_at=timezone.now() - timedelta(days=120)
+        )
+        return p
+
+    def _suggestion(self, produit):
+        resp = self.client.post(self.url, {'mode': 'intelligent', 'periode': 30}, format='json')
+        self.assertEqual(resp.status_code, 200)
+        return next(i for i in resp.data['suggestions'] if i['produit_id'] == produit.id)
+
+    def test_rush_isole_amorti(self):
+        """Une seule grosse sortie récente (<3 lignes) : tendance ignorée."""
+        p = self._vieux_produit(name='Rush', stock=0, fournisseur=self.fournisseur)
+        self._vente(p, 4, 40)
+        self._vente(p, 60, 5)
+        ligne = self._suggestion(p)
+        self.assertTrue(ligne['pic_detecte'])
+        self.assertEqual(ligne['tendance'], 1.0)
+
+    def test_pic_mois_retombe_amorti(self):
+        """Pic d'un mois retombé (rythme 2 sem. <60%) : tendance amortie."""
+        p = self._vieux_produit(name='Retombee', stock=0, fournisseur=self.fournisseur)
+        self._vente(p, 2, 50)
+        for d in (16, 19, 22, 25):
+            self._vente(p, 10, d)
+        ligne = self._suggestion(p)
+        self.assertTrue(ligne['pic_detecte'])
+        self.assertLessEqual(ligne['tendance'], 1.0)
+
+    def test_tendance_reelle_plafonnee(self):
+        """Hausse persistante : tendance plafonnée à 1.5 et pic signalé."""
+        p = self._vieux_produit(name='Decollage', stock=0, fournisseur=self.fournisseur)
+        self._vente(p, 2, 50)
+        for d in (3, 7, 10, 14, 18, 22):
+            self._vente(p, 10, d)
+        ligne = self._suggestion(p)
+        self.assertEqual(ligne['tendance'], 1.5)
+        self.assertTrue(ligne['pic_detecte'])

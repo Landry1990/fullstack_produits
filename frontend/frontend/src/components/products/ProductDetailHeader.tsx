@@ -105,7 +105,7 @@ export const ProductDetailHeader: React.FC<ProductDetailHeaderProps> = ({
         )}
         <div className="flex-1 min-w-[110px] rounded-xl border bg-indigo-50 border-indigo-200 text-indigo-700 px-3 py-2">
           <div className="text-caption font-bold uppercase tracking-wider opacity-75">{t('products:detail.price.selling')}</div>
-          <div className="text-2xl font-black tabular-nums leading-tight">{formatCurrency(Math.round(Number(produit.selling_price || 0)))}</div>
+          <div className="text-2xl font-black tabular-nums leading-tight">{formatCurrency(Math.round(Number(produit.selling_price || 0) * (1 + Math.max(0, Number(produit.tva) || 0) / 100)))}</div>
         </div>
       </div>
 

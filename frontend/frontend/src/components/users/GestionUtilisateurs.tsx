@@ -10,7 +10,8 @@ import { useUserForm } from '../../hooks/useUserForm';
 import PasswordConfirmModal from '../PasswordConfirmModal';
 import { Button } from '../shadcn/button';
 import { Badge } from '../shadcn/badge';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, Users } from 'lucide-react';
+import GroupePermissionsModal from './GroupePermissionsModal';
 import { logger } from '../../utils/logger'
 import { PERMISSIONS_META, ROLES, type ManagedUser } from './usersMeta';
 import { MENU_HIERARCHY_FALLBACK } from './menuHierarchyFallback';
@@ -27,6 +28,7 @@ export default function GestionUtilisateurs() {
   const confirm = useConfirm();
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
+  const [groupesOpen, setGroupesOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<ManagedUser | null>(null);
   const { user: currentUser, login } = useAuth();
   const form = useUserForm(MENU_HIERARCHY, menuData?.adminOnlyKeys);
@@ -109,6 +111,7 @@ export default function GestionUtilisateurs() {
   const buildProfilePayload = (): Record<string, unknown> => {
     const profilePayload: Record<string, unknown> = {
       role: formData.role,
+      groupe: formData.groupe,
       allowed_menus: formData.allowed_menus,
       max_discount_rate: formData.max_discount_rate,
     };
@@ -205,10 +208,16 @@ export default function GestionUtilisateurs() {
             {users.filter(u => u.is_active).length} {t('tabs.active', 'Actifs')}
           </Badge>
         </div>
-        <Button onClick={() => handleOpenModal()}>
-          <UserPlus className="h-5 w-5" />
-          {t('new_user')}
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setGroupesOpen(true)}>
+            <Users className="h-5 w-5" />
+            {t('groupes.manage', { defaultValue: 'Groupes' })}
+          </Button>
+          <Button onClick={() => handleOpenModal()}>
+            <UserPlus className="h-5 w-5" />
+            {t('new_user')}
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4">
@@ -225,6 +234,7 @@ export default function GestionUtilisateurs() {
         ))}
       </div>
 
+      <GroupePermissionsModal open={groupesOpen} onOpenChange={setGroupesOpen} onSaved={fetchUsers} />
       <UserFormDialog
         open={modalOpen}
         onOpenChange={setModalOpen}

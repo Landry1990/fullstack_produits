@@ -186,7 +186,8 @@ export const PharmacySettingsProvider = ({ children }: { children: ReactNode }) 
     } catch (err) {
       logger.error('Error fetching pharmacy settings:', err);
       setError(i18n.t('common:errors.settings_load'));
-      setSettings(DEFAULT_SETTINGS);
+      // On conserve les derniers settings connus : un échec réseau ou un
+      // redémarrage backend ne doit pas vider l'en-tête des tickets.
     } finally {
       setLoading(false);
     }
@@ -244,6 +245,14 @@ export const PharmacySettingsProvider = ({ children }: { children: ReactNode }) 
       setLoading(false);
     }
   }, [fetchSettings, isAuthenticated]);
+
+  // Retry automatique tant que le dernier chargement a échoué (backend
+  // redémarré, coupure réseau) : l'en-tête ticket revient sans déconnexion.
+  useEffect(() => {
+    if (!error || !isAuthenticated) return;
+    const id = setInterval(fetchSettings, 20000);
+    return () => clearInterval(id);
+  }, [error, isAuthenticated, fetchSettings]);
 
   // On fusionne les paramètres avec le nom de la pharmacie provenant de la licence
   // eslint-disable-next-line react-hooks/exhaustive-deps

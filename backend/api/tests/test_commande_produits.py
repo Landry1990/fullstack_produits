@@ -591,3 +591,37 @@ class CorrectLotTest(CommandeProduitBase):
         self.assertEqual(resp.status_code, 200)
         ligne.refresh_from_db()
         self.assertEqual(ligne.lot, 'LOT-INCONNU')
+
+
+class CommandeAuditNoiseTest(CommandeProduitBase):
+    """Le journal ne doit pas être noyé par les mises à jour courantes d'une commande."""
+
+    def test_patch_commande_sans_ligne_update_audit(self):
+        """Ajouter un produit (sauvegarde du brouillon) ne crée plus de ligne UPDATE."""
+        from api.models import AuditLog
+        url = reverse('commande-detail', kwargs={'pk': self.commande.pk})
+        resp = self.client_api.patch(url, {
+            'numero_facture': 'NO-TEST-1',
+        }, format='json')
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(
+            AuditLog.objects.filter(
+                model_name='Commande', action=AuditLog.Action.UPDATE,
+                object_id=self.commande.pk,
+            ).exists()
+        )
+
+    def test_create_commande_tracee(self):
+        """La création reste tracée."""
+        from api.models import AuditLog
+        url = reverse('commande-list')
+        resp = self.client_api.post(url, {
+            'fournisseur': self.fournisseur.id,
+            'type': 'LOC',
+        }, format='json')
+        self.assertIn(resp.status_code, (200, 201))
+        self.assertTrue(
+            AuditLog.objects.filter(
+                model_name='Commande', action=AuditLog.Action.CREATE,
+            ).exists()
+        )

@@ -55,7 +55,7 @@ export default function ProduitFormModal({
 
   const [form, setForm] = useState<ProduitForm>({
     name: '', type_produit: 'PRODUIT', stock: '0', cost_price: '', selling_price: '', cip1: '', cip2: '', cip3: '', cip4: '',
-    expire_date: '', stock_alert: '', stock_minimum: '', stock_maximum: '', tva: '19.25',
+    expire_date: '', stock_alert: '', stock_minimum: '', stock_maximum: '', tva: '0',
     rayon: '', fournisseur: '', description: '', unite_mesure: '', is_perissable: false,
     forme: '', groupe: '',
     use_lot_management: true, requires_prescription: false,
@@ -69,7 +69,7 @@ export default function ProduitFormModal({
 
   useEffect(() => {
     if (!initialData?.tva && tvaList.length > 0) {
-       const defaultTva = tvaList.find(t => t.taux === '19.25') || tvaList.find(t => t.is_active);
+       const defaultTva = tvaList.find(t => t.taux === '0') || tvaList.find(t => t.is_active);
        if (defaultTva) {
          setForm(prev => ({ ...prev, tva: defaultTva.taux }));
        }
@@ -92,14 +92,14 @@ export default function ProduitFormModal({
       setError(null);
       setCipErrors({});
       // Convertir le selling_price HT du backend en TTC pour l'affichage
-      const initialTva = parseFloat((initialData?.tva as string) || '19.25') || 0;
+      const initialTva = parseFloat((initialData?.tva as string) || '0') || 0;
       const htPrice = normalizeNumberInput(String(initialData?.selling_price ?? ''));
       const ttcPrice = htPrice > 0 && initialTva > 0
         ? Math.round(htPrice * (1 + initialTva / 100)).toString()
         : initialData?.selling_price ?? '';
       setForm({
         name: '', type_produit: 'PRODUIT', stock: '0', cost_price: '', cip1: '', cip2: '', cip3: '', cip4: '',
-        expire_date: '', stock_alert: '', stock_minimum: '', stock_maximum: '', tva: '19.25',
+        expire_date: '', stock_alert: '', stock_minimum: '', stock_maximum: '', tva: '0',
         rayon: '', fournisseur: '', description: '', unite_mesure: '', is_perissable: false,
         forme: '', groupe: '',
         use_lot_management: true, requires_prescription: false,
@@ -325,7 +325,7 @@ export default function ProduitFormModal({
         fournisseur: form.fournisseur ? parseInt(form.fournisseur, 10) : null,
         forme: form.forme ? parseInt(form.forme, 10) : null,
         groupe: form.groupe ? parseInt(form.groupe, 10) : null,
-        tva: form.tva || '19.25',
+        tva: form.tva || '0',
         requires_prescription: form.requires_prescription || false,
         surveillance_category: form.surveillance_category || 'NONE',
         is_supplier_exclusive: form.is_supplier_exclusive || false,

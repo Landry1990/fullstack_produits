@@ -126,7 +126,7 @@ from .stock import (
     get_next_ticket_session,
 )
 from .user_sessions import UserDailySession
-from .users import Profile, Team, create_user_profile, save_user_profile
+from .users import GroupePermissions, Profile, Team, create_user_profile, save_user_profile
 
 __all__ = [
     # Audit
@@ -198,6 +198,7 @@ __all__ = [
     'PosteVente',
     'Produit',
     # Users
+    'GroupePermissions',
     'Profile',
     'Promis',
     # Promotions

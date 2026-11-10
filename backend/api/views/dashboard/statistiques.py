@@ -219,7 +219,7 @@ class StatistiquesViewSet(viewsets.ViewSet):
         # 4. Score de Santé Global — 5 composantes dynamiques
         total_stock_value = Produit.objects.filter(is_active=True, stock__gt=0).aggregate(
             total=Coalesce(Sum(ExpressionWrapper(F('stock') * F('pmp'), output_field=DecimalField())), Decimal(0))
-        )['total'] or Decimal(1)
+        )['total'] or Decimal(0)
 
         # ── Définition des produits pertinents ─────────────────────────────────
         # Un produit est pertinent s'il est en stock OU a eu de l'activité récente (vente/achat < 90j)
@@ -243,11 +243,17 @@ class StatistiquesViewSet(viewsets.ViewSet):
         score_a = availability_rate * 0.30  # max 30 pts
     
         # ── Composante B : Fluidité du stock (peu de stock dormant) — 25 pts ────
-        produits_avec_rotation = Produit.objects.filter(is_active=True, rotation_moyenne__gt=0).count() or 1
+        nb_produits_avec_rotation = Produit.objects.filter(is_active=True, rotation_moyenne__gt=0).count()
         dormant_avec_rotation = dormant_qs.filter(rotation_moyenne__gt=0).count()
-        fluidity_rate = (1 - float(dormant_avec_rotation) / float(produits_avec_rotation)) * 100
-        fluidity_rate = max(0.0, min(100.0, fluidity_rate))
-        score_b = fluidity_rate * 0.25  # max 25 pts
+        if nb_produits_avec_rotation == 0:
+            # Aucune donnée de vente : pas de fluidité à évaluer → 0 pt (base vide = 35 pts offerts sinon)
+            fluidity_rate = 0.0
+            score_b = 0.0
+        else:
+            fluidity_rate = (1 - float(dormant_avec_rotation) / float(nb_produits_avec_rotation)) * 100
+            fluidity_rate = max(0.0, min(100.0, fluidity_rate))
+            score_b = fluidity_rate * 0.25  # max 25 pts
+        produits_avec_rotation = nb_produits_avec_rotation or 1
     
         # ── Composante C : Couverture de stock (ni sur-stock ni sous-stock) — 20 pts
         min_coverage = ps.good_coverage_min_days if (ps and ps.good_coverage_min_days) else 15
@@ -279,9 +285,14 @@ class StatistiquesViewSet(viewsets.ViewSet):
         dead_stock_value_rot = dormant_qs.filter(rotation_moyenne__gt=0).aggregate(
             total=Coalesce(Sum(ExpressionWrapper(F('stock') * F('pmp'), output_field=DecimalField())), Decimal(0))
         )['total'] or Decimal(0)
-        immo_ratio = float(dead_stock_value_rot) / float(total_stock_value)
-        immo_score = max(0.0, (1 - immo_ratio)) * 100
-        score_e = immo_score * 0.10  # max 10 pts
+        if float(total_stock_value) <= 0:
+            # Stock nul : pas d'immobilisation à évaluer → 0 pt au lieu de 10 offerts
+            immo_score = 0.0
+            score_e = 0.0
+        else:
+            immo_ratio = float(dead_stock_value_rot) / float(total_stock_value)
+            immo_score = max(0.0, (1 - immo_ratio)) * 100
+            score_e = immo_score * 0.10  # max 10 pts
     
         # ── Compteurs réels de la matrice 4 quadrants ───────────────────────
         # Hémorragie : pertinent, demandé (rotation > 0) mais en rupture

@@ -38,6 +38,16 @@ export const PERMISSIONS_META = [
 export type PermissionKey = typeof PERMISSIONS_META[number]['key'];
 export type Role = 'PHARMACIEN' | 'CAISSIER' | 'VENDEUR' | 'COMPTABLE';
 
+export interface GroupePerm {
+  id: number;
+  name: string;
+  description: string;
+  is_system: boolean;
+  allowed_menus: string[] | null;
+  membres_count?: number;
+  max_discount_rate: string | number;
+}
+
 export interface ManagedUser {
   id: number;
   username: string;
@@ -50,6 +60,9 @@ export interface ManagedUser {
     role: string;
     allowed_menus: string[];
     max_discount_rate?: string | number;
+    groupe?: number | null;
+    groupe_detail?: GroupePerm | null;
+    derogations?: Record<string, unknown>;
   } & Partial<Record<PermissionKey, boolean>>;
 }
 
@@ -64,6 +77,7 @@ export type UserFormData = {
   is_active: boolean;
   allowed_menus: string[];
   max_discount_rate: number;
+  groupe: number | null;
 } & Record<PermissionKey, boolean>;
 
 export const ROLES = [
@@ -101,6 +115,7 @@ export const buildInitialFormData = (): UserFormData => ({
   // Preserve the legacy default: new sellers can see cash journal totals.
   can_view_cash_totals: true,
   max_discount_rate: 0,
+  groupe: null,
 });
 
 export const permissionClass = (color?: 'emerald' | 'warning' | 'error') => {

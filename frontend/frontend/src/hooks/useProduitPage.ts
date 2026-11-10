@@ -328,7 +328,7 @@ export function useProduitPage() {
       stock_alert: String(produit.stock_alert ?? '0'),
       stock_minimum: String(produit.stock_minimum ?? '0'),
       stock_maximum: String(produit.stock_maximum ?? '0'),
-      tva: produit.tva || '19.25',
+      tva: produit.tva || '0',
       rayon: produit.rayon ? String(produit.rayon) : '',
       fournisseur: produit.fournisseur ? String(produit.fournisseur) : '',
       forme: produit.forme ? String(produit.forme) : '',

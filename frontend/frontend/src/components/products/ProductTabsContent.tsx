@@ -694,7 +694,7 @@ export const ProductTabsContent: React.FC<ProductTabsContentProps> = ({
               </TableRow>
               <TableRow>
                 <TableCell className="w-1/3 font-bold text-sm text-slate-400 uppercase tracking-wider">{t('products:detail.price.vat')}</TableCell>
-                <TableCell className="font-black text-xl text-slate-800">{selectedProduit.tva || '19.25'}%</TableCell>
+                <TableCell className="font-black text-xl text-slate-800">{selectedProduit.tva || '0'}%</TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className="w-1/3 font-bold text-sm text-slate-400 uppercase tracking-wider">{t('products:detail.price.margin_percent')}</TableCell>

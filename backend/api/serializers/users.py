@@ -8,12 +8,28 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db.models import Sum
 from rest_framework import serializers
+from rest_framework.authtoken.models import Token
 
-from ..models import PosteCaisse, PosteVente, Profile, Team
+from ..models import GroupePermissions, PosteCaisse, PosteVente, Profile, Team
+from ..models.users import PERMISSION_FIELDS
 from .mixins import UppercaseSerializerMixin
 
 
+class GroupePermissionsSerializer(serializers.ModelSerializer):
+    membres_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = GroupePermissions
+        fields = '__all__'
+        read_only_fields = ['is_system', 'created_at', 'updated_at']
+
+    def get_membres_count(self, obj):
+        return obj.membres.count()
+
+
 class ProfileSerializer(serializers.ModelSerializer):
+    groupe_detail = GroupePermissionsSerializer(source='groupe', read_only=True)
+
     class Meta:
         model = Profile
         fields = [
@@ -21,8 +37,51 @@ class ProfileSerializer(serializers.ModelSerializer):
             'can_delete_product', 'can_adjust_stock', 'can_delete_fournisseur', 'can_delete_commande', 'can_close_commande',
             'can_generate_coupon', 'can_modify_price', 'can_do_remise', 'max_discount_rate', 'can_cancel_invoice', 'can_modify_invoice',
             'can_cancel_promis', 'can_manage_perimes', 'can_manage_avoirs', 'can_create_client_credit', 'can_validate_zero_amount', 'can_validate_sales', 'can_view_cash_sessions', 'can_view_cash_totals',
-            'is_terminal_account', 'can_manage_challenges'
+            'is_terminal_account', 'can_manage_challenges',
+            'groupe', 'groupe_detail', 'derogations',
         ]
+
+
+def _apply_groupe_and_derogations(profile, profile_data):
+    """Affecte le groupe et convertit les can_* envoyés en dérogations.
+
+    Un champ perm reçu différent de la valeur du groupe → dérogation ;
+    identique → dérogation retirée. Les valeurs effectives sont ensuite
+    réécrites par recompute_permissions().
+    """
+    if 'groupe' in profile_data:
+        # PrimaryKeyRelatedField désérialise en instance ; accepter aussi un pk.
+        groupe_val = profile_data.get('groupe')
+        if groupe_val is None or isinstance(groupe_val, GroupePermissions):
+            profile.groupe = groupe_val
+        else:
+            profile.groupe = GroupePermissions.objects.filter(pk=groupe_val).first()
+    if 'derogations' in profile_data:
+        profile.derogations = profile_data['derogations'] or {}
+    if not profile.groupe_id:
+        profile.save()
+        return
+    groupe = profile.groupe
+    derog = dict(profile.derogations or {})
+    for f in PERMISSION_FIELDS:
+        if f in profile_data:
+            if bool(profile_data[f]) != bool(getattr(groupe, f)):
+                derog[f] = bool(profile_data[f])
+            else:
+                derog.pop(f, None)
+    if 'max_discount_rate' in profile_data:
+        if Decimal(str(profile_data['max_discount_rate'])) != Decimal(str(groupe.max_discount_rate)):
+            derog['max_discount_rate'] = float(profile_data['max_discount_rate'])
+        else:
+            derog.pop('max_discount_rate', None)
+    if 'allowed_menus' in profile_data:
+        if profile_data['allowed_menus'] != (groupe.allowed_menus or []):
+            derog['allowed_menus'] = profile_data['allowed_menus']
+        else:
+            derog.pop('allowed_menus', None)
+    profile.derogations = derog
+    profile.save()
+    profile.recompute_permissions()
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -105,6 +164,7 @@ class UserSerializer(serializers.ModelSerializer):
             profile.max_discount_rate = profile_data.get('max_discount_rate', 0)
             profile.role = profile_data.get('role', 'VENDEUR')
             profile.save()
+            _apply_groupe_and_derogations(profile, profile_data)
 
         # Mot de passe attribué par un tiers (création admin) : l'utilisateur
         # devra le changer à sa première connexion.
@@ -134,6 +194,8 @@ class UserSerializer(serializers.ModelSerializer):
             instance.set_password(password)
 
         instance.save()
+        if password:
+            Token.objects.filter(user=instance).delete()
 
         if profile_data:
             profile = instance.profile  # type: ignore[attr-defined]
@@ -164,6 +226,7 @@ class UserSerializer(serializers.ModelSerializer):
             profile.max_discount_rate = profile_data.get('max_discount_rate', profile.max_discount_rate)
             profile.role = profile_data.get('role', profile.role)
             profile.save()
+            _apply_groupe_and_derogations(profile, profile_data)
 
         # Un mot de passe attribué par un tiers (admin) doit être changé à la
         # prochaine connexion. Le self-service change-my-password ne passe pas

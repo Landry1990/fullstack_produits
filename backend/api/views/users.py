@@ -1,3 +1,10 @@
+import hashlib
+import math
+import time
+
+from django.core.cache import caches
+from django.core.cache.backends.dummy import DummyCache
+from rest_framework.exceptions import APIException, Throttled
 from rest_framework import filters, status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
@@ -71,6 +78,45 @@ def auto_close_old_sessions(user=None):
         session.last_logout = end_of_day
         session.save()
 
+class LoginProtectionUnavailable(APIException):
+    status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    default_detail = 'Connexion temporairement indisponible. Veuillez réessayer plus tard.'
+    default_code = 'login_protection_unavailable'
+
+
+def login_failure_guard(request, *, failed=False, reset=False):
+    ident = LoginRateThrottle().get_ident(request)
+    key = 'login_failures:' + hashlib.sha256(ident.encode()).hexdigest()
+    try:
+        backend = caches['default']
+        if isinstance(backend, DummyCache):
+            raise LoginProtectionUnavailable()
+        if reset:
+            backend.delete_many([key, key + ':until'])
+            return
+        if failed:
+            if backend.add(key, 1, timeout=3600):
+                failures = 1
+            else:
+                try:
+                    failures = backend.incr(key)
+                except ValueError:
+                    if not backend.add(key, 1, timeout=3600):
+                        raise LoginProtectionUnavailable()
+                    failures = 1
+            if failures >= 10:
+                delay = min(900, 30 * 2 ** min(failures - 10, 5))
+                backend.set(key + ':until', time.time() + delay, timeout=delay)
+        until = backend.get(key + ':until', 0)
+    except APIException:
+        raise
+    except Exception:
+        raise LoginProtectionUnavailable() from None
+    wait = math.ceil(until - time.time())
+    if wait > 0:
+        raise Throttled(wait=wait, detail='Trop de tentatives. Veuillez patienter avant de réessayer.')
+
+
 class CustomAuthToken(ObtainAuthToken):
     """
     Custom auth token view that returns user details along with the token.
@@ -81,8 +127,12 @@ class CustomAuthToken(ObtainAuthToken):
     throttle_classes = [LoginRateThrottle]
 
     def post(self, request, *args, **kwargs):
+        login_failure_guard(request)
         username = request.data.get('username')
         password = request.data.get('password')
+        if not isinstance(password, str) or (username is not None and not isinstance(username, str)):
+            login_failure_guard(request, failed=True)
+            return Response({'non_field_errors': ['Identifiants invalides.']}, status=status.HTTP_400_BAD_REQUEST)
 
         user = None
         if username and password:
@@ -115,7 +165,10 @@ class CustomAuthToken(ObtainAuthToken):
                 )
             except Exception:
                 pass
+            login_failure_guard(request, failed=True)
             return Response({'non_field_errors': ['Impossible de se connecter avec les identifiants fournis.']}, status=status.HTTP_400_BAD_REQUEST)
+
+        login_failure_guard(request, reset=True)
 
         # Method A: Delete existing tokens to ensure single session
         Token.objects.filter(user=user).delete()
@@ -717,6 +770,29 @@ class UserDailySessionViewSet(viewsets.ReadOnlyModelViewSet):
                 })
 
         return Response(users_stats)
+
+
+class GroupePermissionsViewSet(AuditedViewSetMixin, BaseViewSetConfig, viewsets.ModelViewSet):
+    """CRUD des groupes de permissions — réservé aux administrateurs.
+
+    Modifier un groupe réécrit les droits effectifs de tous ses membres
+    (GroupePermissions.save → Profile.recompute_permissions).
+    """
+    from ..serializers.users import GroupePermissionsSerializer
+    from ..models import GroupePermissions
+
+    queryset = GroupePermissions.objects.prefetch_related('membres')
+    serializer_class = GroupePermissionsSerializer
+    permission_classes = [IsAdminUser]
+
+    def destroy(self, request, *args, **kwargs):
+        groupe = self.get_object()
+        if groupe.is_system:
+            return Response(
+                {'detail': 'Les groupes de base ne peuvent pas être supprimés.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return super().destroy(request, *args, **kwargs)
 
 
 class TeamViewSet(AuditedViewSetMixin, BaseViewSetConfig, viewsets.ModelViewSet):

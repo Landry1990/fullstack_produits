@@ -6,7 +6,7 @@ from datetime import datetime
 from pathlib import Path
 
 from django.conf import settings
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 
 
 class Command(BaseCommand):
@@ -71,7 +71,7 @@ class Command(BaseCommand):
                 '  - Docker:  apt-get install -y postgresql-client\n'
                 '\nOr set PG_DUMP_PATH environment variable.'
             ))
-            return
+            raise CommandError('pg_dump introuvable : sauvegarde non effectuée.')
 
         self.stdout.write(self.style.SUCCESS(f'Using pg_dump: {pg_dump_cmd}'))
 
@@ -122,7 +122,9 @@ class Command(BaseCommand):
 
             if result.returncode != 0:
                 self.stdout.write(self.style.ERROR(f'Backup failed: {result.stderr}'))
-                return
+                raise CommandError('Échec de pg_dump : sauvegarde non effectuée.')
+            if not backup_file.is_file() or backup_file.stat().st_size == 0:
+                raise CommandError('Sauvegarde absente ou vide après pg_dump.')
 
             # Generate MD5 checksum
             import hashlib
@@ -141,14 +143,22 @@ class Command(BaseCommand):
             ))
             self.stdout.write(f'   MD5: {hasher.hexdigest()}')
 
-            self.copy_to_secondary(str(backup_file), str(checksum_file))
-            self.copy_to_external(str(backup_file), str(checksum_file))
+            failed_destinations = []
+            if self.copy_to_secondary(str(backup_file), str(checksum_file)) is False:
+                failed_destinations.append('support secondaire')
+            if self.copy_to_external(str(backup_file), str(checksum_file)) is False:
+                failed_destinations.append('destinations externes')
 
             # Upload to cloud (S3-compatible)
-            self.upload_to_cloud(str(backup_file))
+            if self.upload_to_cloud(str(backup_file)) is False:
+                failed_destinations.append('cloud S3')
 
             # Copy to Google Drive (local mounted path)
-            self.copy_to_google_drive(str(backup_file))
+            if self.copy_to_google_drive(str(backup_file)) is False:
+                failed_destinations.append('dossier Google Drive')
+
+            if failed_destinations:
+                raise CommandError('Sauvegarde locale créée, mais échec de copie : ' + ', '.join(failed_destinations))
 
             # Clean old backups (keep last N backups based on settings)
             from api.models.settings import PharmacySettings
@@ -156,8 +166,11 @@ class Command(BaseCommand):
             retention = conf.backup_retention_count or 30
             self.cleanup_old_backups(str(backup_dir), retention_count=retention)
 
+        except CommandError:
+            raise
         except Exception as e:
             self.stdout.write(self.style.ERROR(f'Error during backup: {e!s}'))
+            raise CommandError('Erreur pendant la sauvegarde de la base de données.') from e
 
     def cleanup_old_backups(self, backup_dir, retention_count=30):
         """Keep only the N most recent backups (.sql + .sql.md5)"""
@@ -194,13 +207,15 @@ class Command(BaseCommand):
                 return
             if not os.path.isdir(destination):
                 self.stdout.write(self.style.WARNING(f'[SUPPORT] Destination secondaire inaccessible: {destination}'))
-                return
+                return False
 
             shutil.copy2(backup_file_path, os.path.join(destination, os.path.basename(backup_file_path)))
             shutil.copy2(checksum_file_path, os.path.join(destination, os.path.basename(checksum_file_path)))
             self.stdout.write(self.style.SUCCESS(f'[SUPPORT] Copie secondaire OK: {destination}'))
+            return True
         except Exception as e:
             self.stdout.write(self.style.ERROR(f'[SUPPORT] Erreur copie: {e!s}'))
+            return False
 
     def copy_to_external(self, backup_file_path, checksum_file_path):
         """Copie le backup vers toutes les destinations externes configurées (USB, disque dur, réseau)."""
@@ -214,6 +229,7 @@ class Command(BaseCommand):
                 ('EXT3', (conf.external_backup_path_3 or '').strip()),
             ]
 
+            failed = False
             for label, dest in external_paths:
                 if not dest:
                     continue
@@ -221,6 +237,7 @@ class Command(BaseCommand):
                     self.stdout.write(self.style.WARNING(
                         f'[{label}] Destination inaccessible: {dest}'
                     ))
+                    failed = True
                     continue
 
                 try:
@@ -233,9 +250,12 @@ class Command(BaseCommand):
                     self.stdout.write(self.style.ERROR(
                         f'[{label}] Erreur copie vers {dest}: {e!s}'
                     ))
+                    failed = True
+            return not failed
 
         except Exception as e:
             self.stdout.write(self.style.ERROR(f'[EXT] Erreur générale: {e!s}'))
+            return False
 
     def copy_to_google_drive(self, backup_file_path):
         """Copy backup file to a locally mounted Google Drive folder"""
@@ -251,7 +271,7 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.WARNING(
                     f'[GDRIVE] Chemin Google Drive configuré mais introuvable: {gdrive_path}'
                 ))
-                return
+                return False
 
             import shutil
             gdrive_backup_dir = os.path.join(gdrive_path, 'pharmacie-backups')
@@ -261,11 +281,13 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS(
                 f'[GDRIVE] Copie Google Drive OK: {dest_path}'
             ))
+            return True
 
         except Exception as e:
             self.stdout.write(self.style.ERROR(
                 f'[GDRIVE] Erreur copie: {e!s}'
             ))
+            return False
 
     def upload_to_cloud(self, backup_file_path):
         """Upload backup file to S3-compatible cloud storage"""
@@ -285,7 +307,7 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.WARNING(
                     '[CLOUD] Cloud backup activé mais paramètres incomplets — skipping'
                 ))
-                return
+                return False
 
             import boto3
             from botocore.config import Config
@@ -320,9 +342,11 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS(
                 f'[CLOUD] Upload OK: {s3_key}'
             ))
+            return True
 
         except Exception as e:
             self.stdout.write(self.style.ERROR(
                 f'[CLOUD] Erreur upload: {e!s}'
             ))
+            return False
 

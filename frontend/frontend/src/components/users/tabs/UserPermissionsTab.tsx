@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Info, Users, Loader2 } from 'lucide-react';
+import api from '../../../services/api';
 import { Checkbox } from '../../shadcn/checkbox';
 import { Input } from '../../shadcn/input';
 import { Label } from '../../shadcn/label';
 import { Card } from '../../shadcn/card';
 import { Button } from '../../shadcn/button';
-import { PERMISSIONS_META, permissionClass } from '../usersMeta';
+import { PERMISSIONS_META, permissionClass, type GroupePerm } from '../usersMeta';
 import type { UserForm } from '../../../hooks/useUserForm';
+import { logger } from '../../../utils/logger';
 
 interface Props {
   form: UserForm;
@@ -18,6 +20,18 @@ export default function UserPermissionsTab({ form, onApplyToRole }: Props) {
   const { t } = useTranslation(['users', 'sidebar', 'common']);
   const { formData, setFormData } = form;
   const [isApplying, setIsApplying] = useState(false);
+  const [groupes, setGroupes] = useState<GroupePerm[]>([]);
+
+  useEffect(() => {
+    api.get('groupe-permissions/')
+      .then(({ data }) => setGroupes(Array.isArray(data) ? data : data?.results ?? []))
+      .catch(err => logger.error('Error loading groupes:', err));
+  }, []);
+
+  const groupeCourant = groupes.find(g => g.id === formData.groupe) ?? null;
+  const isDerogation = (key: string) =>
+    groupeCourant !== null &&
+    Boolean((formData as Record<string, unknown>)[key]) !== Boolean((groupeCourant as unknown as Record<string, unknown>)[key]);
 
   const handleApplyToRole = async () => {
     if (!onApplyToRole) return;
@@ -53,12 +67,39 @@ export default function UserPermissionsTab({ form, onApplyToRole }: Props) {
           disabled={formData.is_superuser}
         />
         <label className="text-sm font-medium select-none text-slate-600 dark:text-slate-300">{t(p.labelKey)}</label>
+        {isDerogation(p.key) && (
+          <span className="ml-auto text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 border border-amber-200 rounded px-1 py-0.5">
+            {t('groupes.derogation', { defaultValue: 'dérogation' })}
+          </span>
+        )}
       </div>
     );
   };
 
   return (
     <div className="space-y-4">
+      <Card className="p-4">
+        <div className="flex items-center gap-3">
+          <Label htmlFor="groupe-select" className="whitespace-nowrap font-bold text-xs uppercase tracking-wider">
+            {t('groupes.groupe', { defaultValue: 'Groupe de permissions' })}
+          </Label>
+          <select
+            id="groupe-select"
+            className="select select-bordered h-9 text-sm flex-1 max-w-xs"
+            value={formData.groupe ?? ''}
+            onChange={e => setFormData({ ...formData, groupe: e.target.value ? Number(e.target.value) : null })}
+            disabled={formData.is_superuser}
+          >
+            <option value="">{t('groupes.none', { defaultValue: '— Aucun (droits personnalisés) —' })}</option>
+            {groupes.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+          </select>
+          {groupeCourant && (
+            <span className="text-xs text-slate-500 italic">
+              {t('groupes.hint', { defaultValue: 'les écarts au groupe sont marqués « dérogation »' })}
+            </span>
+          )}
+        </div>
+      </Card>
       {formData.is_superuser && (
         <div className="p-3 rounded-xl bg-primary/10 border border-primary/20 text-primary text-sm italic flex items-center gap-2">
           <Info className="h-4 w-4 shrink-0" />

@@ -3,6 +3,7 @@ import { RouterProvider } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useLicenceShortcut } from './hooks/useLicenceShortcut'
+import { useLogoutShortcut } from './hooks/useLogoutShortcut'
 import { useVersionCheck } from './hooks/useVersionCheck'
 import { useStockRealtime } from './hooks/useStockRealtime'
 import { AuthProvider } from './context/AuthContext'
@@ -135,6 +136,12 @@ function GlobalAlerts() {
   return <StockRealtime />;
 }
 
+function LogoutShortcut() {
+  const { isAuthenticated, logout } = useAuth();
+  useLogoutShortcut(logout, isAuthenticated);
+  return null;
+}
+
 /**
  * App Component
  * 
@@ -160,6 +167,7 @@ export default function App() {
               <LicenceNotifications />
               <ClockSyncAlert />
               <GlobalAlerts />
+              <LogoutShortcut />
               <ForcePasswordChangeGuard />
               <BackendHealthCheck>
                 <Suspense fallback={<LoadingScreen size="lg" overlay />}>

@@ -61,7 +61,7 @@ from .stocks import (
 )
 from .system_admin import SystemAdminViewSet
 from .temporal_analysis import TemporalAnalysisViewSet
-from .users import CustomAuthToken, TeamViewSet, UserDailySessionViewSet, UserViewSet
+from .users import CustomAuthToken, GroupePermissionsViewSet, TeamViewSet, UserDailySessionViewSet, UserViewSet
 from .ventes import (
     AvoirClientViewSet,
     CaisseViewSet,
@@ -136,6 +136,7 @@ __all__ = [
     'StockLotViewSet',
     'SystemAdminViewSet',
     'TVAViewSet',
+    'GroupePermissionsViewSet',
     'TeamViewSet',
     'TelegramGetChatIdView',
     'TelegramRapportFlashDateView',

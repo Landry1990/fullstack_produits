@@ -3,7 +3,11 @@ Tests d'intégration pour la gestion des utilisateurs.
 Couvre : création, mise à jour, mot de passe, validation, permissions, login_options.
 """
 from django.contrib.auth.models import User
-from django.test import TestCase
+from unittest.mock import patch
+
+from django.core.cache import cache
+from django.test import TestCase, override_settings
+from rest_framework.authtoken.models import Token
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
@@ -12,8 +16,14 @@ from api.models import Profile
 from api.tests.factories import TestDataFactory
 
 
+@override_settings(CACHES={'default': {
+    'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    'LOCATION': 'user-management-tests',
+}})
 class UserManagementTest(TestCase):
     def setUp(self):
+        cache.clear()
+        self.addCleanup(cache.clear)
         self.client = APIClient()
         self.factory = TestDataFactory()
         self.admin = self.factory.create_superuser(
@@ -325,3 +335,107 @@ class UserManagementTest(TestCase):
         response = client.get(url)
         usernames = [u['username'] for u in response.data]
         self.assertNotIn('willdeactivate', usernames)
+
+    def test_admin_password_reset_revokes_existing_token(self):
+        user = User.objects.create_user(username='reset_target', password='OldPass99')
+        token = Token.objects.create(user=user)
+        response = self.client.patch(reverse('user-detail', args=[user.pk]),
+                                     {'password': 'NewPass99'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(Token.objects.filter(key=token.key).exists())
+        previous_session = APIClient()
+        previous_session.credentials(HTTP_AUTHORIZATION=f'Token {token.key}')
+        self.assertEqual(previous_session.get(reverse('user-me')).status_code, 401)
+        user.refresh_from_db()
+        self.assertTrue(user.profile.must_change_password)
+
+    def test_profile_update_preserves_existing_token(self):
+        user = User.objects.create_user(username='profile_target', password='OldPass99')
+        token = Token.objects.create(user=user)
+        response = self.client.patch(reverse('user-detail', args=[user.pk]),
+                                     {'first_name': 'Marie'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(Token.objects.filter(key=token.key).exists())
+
+
+@override_settings(CACHES={'default': {
+    'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    'LOCATION': 'login-security-tests',
+}})
+class LoginSecurityTest(TestCase):
+    def setUp(self):
+        cache.clear()
+        self.addCleanup(cache.clear)
+        self.client = APIClient()
+        self.url = reverse('token-auth')
+        self.user = User.objects.create_user(username='operator', password='4729')
+        self.throttle = patch('api.views.users.CustomAuthToken.get_throttles', return_value=[])
+        self.throttle.start()
+        self.addCleanup(self.throttle.stop)
+
+    def login(self, password='wrong', ip='192.0.2.10', **data):
+        return self.client.post(self.url, {'password': password, **data}, format='json',
+                                REMOTE_ADDR=ip, HTTP_X_FORWARDED_FOR=ip)
+
+    def test_progressive_lockout_and_expiry(self):
+        with patch('api.views.users.time.time', return_value=1000):
+            for _ in range(9):
+                self.assertEqual(self.login().status_code, 400)
+            response = self.login()
+            self.assertEqual(response.status_code, 429)
+            self.assertEqual(int(response['Retry-After']), 30)
+            with patch.object(User, 'check_password') as check:
+                self.assertEqual(self.login('4729').status_code, 429)
+                check.assert_not_called()
+        with patch('api.views.users.time.time', return_value=1031):
+            response = self.login()
+            self.assertEqual(response.status_code, 429)
+            self.assertEqual(int(response['Retry-After']), 60)
+        with patch('api.views.users.time.time', return_value=1092):
+            self.assertEqual(self.login('4729').status_code, 200)
+            self.assertEqual(self.login().status_code, 400)
+
+    def test_lockout_is_capped_at_fifteen_minutes(self):
+        now = 1000
+        with patch('api.views.users.time.time', side_effect=lambda: now):
+            for _ in range(9):
+                self.login()
+            for delay in (30, 60, 120, 240, 480, 900, 900):
+                response = self.login()
+                self.assertEqual(response.status_code, 429)
+                self.assertEqual(int(response['Retry-After']), delay)
+                now += delay + 1
+
+    def test_cache_outage_does_not_check_password(self):
+        with patch('api.views.users.caches') as backends:
+            backends.__getitem__.return_value.get.side_effect = ConnectionError()
+            with patch.object(User, 'check_password') as check:
+                self.assertEqual(self.login('4729').status_code, 503)
+                check.assert_not_called()
+
+    def test_existing_rate_limit_still_applies(self):
+        self.throttle.stop()
+        for _ in range(5):
+            self.assertEqual(self.login().status_code, 400)
+        self.assertEqual(self.login().status_code, 429)
+
+    def test_other_ip_is_not_locked(self):
+        for _ in range(10):
+            self.login()
+        self.assertEqual(self.login('4729', ip='192.0.2.11').status_code, 200)
+
+    def test_workstation_and_username_changes_do_not_bypass_lockout(self):
+        for _ in range(10):
+            self.login()
+        response = self.login('4729', username='operator', workstation='new-device')
+        self.assertEqual(response.status_code, 429)
+
+    def test_non_string_credentials_are_rejected(self):
+        self.assertEqual(self.login(password=['4729']).status_code, 400)
+        self.assertEqual(self.login(password='4729', username=['operator']).status_code, 400)
+
+    @override_settings(CACHES={'default': {
+        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+    }})
+    def test_missing_security_cache_fails_closed(self):
+        self.assertEqual(self.login('4729').status_code, 503)

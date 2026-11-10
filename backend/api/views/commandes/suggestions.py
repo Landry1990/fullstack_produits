@@ -310,7 +310,7 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=
     periode_analyse = max(periode, 30)
     date_debut = timezone.now() - timedelta(days=periode_analyse)
     date_mi_periode = timezone.now() - timedelta(days=periode_analyse // 2)
-    from django.db.models import Q, Sum
+    from django.db.models import Count, Q, Sum
 
     # Produits actifs uniquement, filtrer par fournisseur si spécifié
     produits_qs = Produit.objects.filter(is_active=True, type_produit='PRODUIT')
@@ -334,6 +334,7 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=
     date_90j = timezone.now() - timedelta(days=90)
     date_4s = timezone.now() - timedelta(days=28)
     date_8s = timezone.now() - timedelta(days=56)
+    date_2s = timezone.now() - timedelta(days=14)
 
     # Annoter puis limiter pour éviter les timeouts (intelligent est 5x plus lourd)
     produits = produits_qs.select_related('fournisseur').annotate(
@@ -356,6 +357,14 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=
         ventes_8s_4s_annotation=Sum('factureproduit__quantity', filter=Q(
             factureproduit__facture__date__gte=date_8s,
             factureproduit__facture__date__lt=date_4s,
+            factureproduit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        )),
+        ventes_2s_annotation=Sum('factureproduit__quantity', filter=Q(
+            factureproduit__facture__date__gte=date_2s,
+            factureproduit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        )),
+        lignes_vente_4s_annotation=Count('factureproduit', filter=Q(
+            factureproduit__facture__date__gte=date_4s,
             factureproduit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         ))
     )
@@ -402,6 +411,29 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=
             ventes_90j, ventes_4s, ventes_8s_4s, jours_dispo
         )
 
+        # ── Amortissement des pics fictifs (actions délégués, rush isolé) ──
+        # Un pic de ventes ne doit pas gonfler durablement la VMD suggérée :
+        # 1) rush concentré (<3 sorties distinctes sur 4 sem.) → tendance ignorée ;
+        # 2) retombée (rythme des 2 dernières sem. < 60 % des 4 sem.) → amortie ;
+        # 3) hausse plafonnée à ×1,5 même si le signal est réel.
+        ventes_2s = produit.ventes_2s_annotation or 0
+        lignes_vente_4s = produit.lignes_vente_4s_annotation or 0
+        pic_detecte = False
+        if tendance_court_terme > 1.0 and ventes_4s > 0:
+            if lignes_vente_4s < 3:
+                tendance_court_terme = 1.0
+                pic_detecte = True
+            else:
+                jours_4s = min(28, max(1, jours_dispo))
+                jours_2s = min(14, max(1, jours_dispo))
+                if ventes_2s / jours_2s < 0.6 * (ventes_4s / jours_4s):
+                    tendance_court_terme = max(0.7, min(1.0, tendance_court_terme * 0.5))
+                    pic_detecte = True
+        if tendance_court_terme > 1.5:
+            tendance_court_terme = 1.5
+            pic_detecte = True
+        vmd_ajustee = vmd_historique * tendance_court_terme
+
         # Saisonnalité : placeholder (à enrichir quand on aura assez d'historique N-1/N-2)
         indice_saisonnalite = 1.0
         vmd_ajustee *= indice_saisonnalite
@@ -438,6 +470,8 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=
                 raison += "RUPTURE."
             else:
                 raison += "ALERTE STOCK."
+            if pic_detecte:
+                raison += " ⚠ PIC RÉCENT (tendance amortie)."
         else:
             qte_finale = 0
             urgence = 'normal'
@@ -481,6 +515,7 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=
                 'taux_marge': str(produit.taux_marge or '1.3'),
                 'rotation': niveau_rotation,
                 'tendance': round(tendance_court_terme, 2),
+                'pic_detecte': pic_detecte,
                 'urgence': urgence,
                 'score_urgence': score_urgence,
                 'couverture_jours': int(couverture_jours),

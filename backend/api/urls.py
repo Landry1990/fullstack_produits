@@ -92,6 +92,7 @@ from .views import (
     FactureProduitViewSet,
     FactureViewSet,
     FournisseurViewSet,
+    GroupePermissionsViewSet,
     HistoriqueAchatsViewSet,
     HistoriqueTransformationViewSet,
     HistoriqueVentesViewSet,
@@ -231,6 +232,7 @@ router.register(r'loyalty-settings', LoyaltySettingViewSet, basename='loyaltyset
 router.register(r'loyalty-history', LoyaltyHistoryViewSet, basename='loyalty-history')
 router.register(r'formes', FormeViewSet, basename='forme')
 router.register(r'groupes', GroupeViewSet, basename='groupe')
+router.register(r'groupe-permissions', GroupePermissionsViewSet, basename='groupepermissions')
 router.register(r'substances', SubstanceViewSet, basename='substance')
 router.register(r'coupons', CouponMonnaieViewSet, basename='coupon')
 router.register(r'sms', SmsViewSet, basename='sms')

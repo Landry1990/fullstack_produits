@@ -7,11 +7,13 @@ import gzip
 import logging
 import os
 import subprocess
+import tempfile
 from datetime import datetime
 
 from django.conf import settings
 from rest_framework import status
 
+from .. import models
 from ..audit_helpers import log_audit
 from ..models import AuditLog
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
@@ -159,43 +161,60 @@ class CreateBackupView(APIView):
             tables_backed_up = 0
             
             # Tables critiques à sauvegarder
-            tables = [
-                'api_facture', 'api_lignefacture', 'api_sessionticket',
-                'api_mouvementstock', 'api_inventaire', 'api_ligneinventaire',
-                'api_ecriture', 'api_operation', 'api_journalcaisse',
-                'api_commande', 'api_lignecommande', 'api_couponmonnaie',
-                'api_postecaisse', 'api_postevente', 'api_client', 'api_paiement'
-            ]
+            tables = [model._meta.db_table for model in (
+                models.Facture, models.FactureProduit, models.SessionCaisse,
+                models.MouvementStock, models.Inventaire, models.LigneInventaire,
+                models.EcritureComptable, models.LigneEcriture, models.MouvementCaisse,
+                models.Commande, models.CommandeProduit, models.CouponMonnaie,
+                models.PosteCaisse, models.PosteVente, models.Client, models.Caisse,
+            )]
             
             os.makedirs(BACKUP_DIR, exist_ok=True)
             
-            for table in tables:
-                try:
-                    output_file = f"{BACKUP_DIR}/{timestamp}_{table}.sql"
-                    
-                    # Exporter la table
-                    result = subprocess.run([
-                        'docker', 'exec', CONTAINER,
-                        'pg_dump', '-U', DB_USER, '-d', DB_NAME,
-                        '--data-only', '--inserts', '--no-owner', '--no-privileges',
-                        '--table', table
-                    ], capture_output=True, text=True, timeout=30)
-                    
-                    if result.returncode == 0 and result.stdout:
-                        with open(output_file, 'w') as f:
+            failed_tables = []
+            with tempfile.TemporaryDirectory(dir=BACKUP_DIR) as staging:
+                for table in tables:
+                    try:
+                        output_file = f"{staging}/{timestamp}_{table}.sql"
+
+                        # Exporter la table
+                        result = subprocess.run([
+                            'docker', 'exec', CONTAINER,
+                            'pg_dump', '-U', DB_USER, '-d', DB_NAME,
+                            '--data-only', '--inserts', '--no-owner', '--no-privileges',
+                            '--table', table
+                        ], capture_output=True, text=True, timeout=30)
+
+                        if result.returncode != 0 or not result.stdout.strip():
+                            failed_tables.append(table)
+                            logger.warning("Échec export de la table %s", table)
+                            continue
+                        with open(output_file, 'w', encoding='utf-8') as f:
                             f.write(result.stdout)
-                        
+
                         # Compresser
                         with open(output_file, 'rb') as f_in, gzip.open(f"{output_file}.gz", 'wb') as f_out:
                             f_out.write(f_in.read())
-                        
+
                         os.remove(output_file)
                         tables_backed_up += 1
-                        
-                except Exception as e:
-                    logger.warning(f"Erreur backup table {table}: {e!s}")
-                    continue
-            
+                    except Exception as e:
+                        logger.warning(f"Erreur backup table {table}: {e!s}")
+                        failed_tables.append(table)
+                        continue
+
+                if failed_tables:
+                    return Response({
+                        'success': False,
+                        'tables_backed_up': 0,
+                        'failed_tables': failed_tables,
+                        'timestamp': timestamp,
+                        'error': 'Sauvegarde incomplète : aucun groupe de sauvegarde publié.',
+                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                for table in tables:
+                    filename = f"{timestamp}_{table}.sql.gz"
+                    os.replace(os.path.join(staging, filename), os.path.join(BACKUP_DIR, filename))
+
             logger.info(f"Backup manuel créé: {tables_backed_up} tables")
 
             try:

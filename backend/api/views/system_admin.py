@@ -179,7 +179,7 @@ class SystemAdminViewSet(ViewSet):
             )
             call_command('backup_database', stdout=out, stderr=err)
             output = out.getvalue()
-            err.getvalue()
+            error_output = err.getvalue()
 
             # La commande backup_database retourne une erreur si pg_dump est introuvable
             if 'pg_dump not found' in output:
@@ -190,11 +190,11 @@ class SystemAdminViewSet(ViewSet):
                     'message': 'Erreur: pg_dump introuvable',
                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-            if 'Backup failed' in output:
+            if error_output.strip() or 'Backup failed' in output or 'Error during backup:' in output or 'Backup created' not in output:
                 return Response({
                     'success': False,
                     'output': output[-2000:],
-                    'error': output[-500:],
+                    'error': (error_output or output or 'Aucune sauvegarde confirmée.')[-500:],
                     'message': 'Erreur lors du backup',
                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

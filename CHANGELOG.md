@@ -2,6 +2,204 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-11-09 — Bon de réception : colonne CIP remplacée par l'ID produit
+
+- Les CIP1 à 13 chiffres débordaient de la colonne CIP (`nowrap`,
+  `table-layout: fixed`) et se collaient visuellement à « Stock avant » —
+  illisible. La colonne affiche désormais l'**ID produit** (court), en-tête
+  « ID », colonne réduite à 9,5 % au profit du nom produit (42,5 %).
+- `tsc` + eslint ciblés : 0 erreur.
+
+## 2026-11-10 — Gestion des droits par groupes de permissions + dérogations
+
+- **Nouveau modèle `GroupePermissions`** : mêmes droits `can_*` +
+  `max_discount_rate` + `allowed_menus` que `Profile`. 5 groupes seedés :
+  Pharmacien, Vendeur, Caissier, Comptable, **Commandes** (nouveau).
+- **`Profile.groupe` + `derogations` (JSON)** : les champs `can_*` du profil
+  restent les valeurs **effectives** lues par tout le code existant — aucun
+  contrôle de permission à modifier. `recompute_permissions()` réécrit
+  effectif = groupe + dérogations ; `GroupePermissions.save()` le propage à
+  tous les membres.
+- **Migration 0289** : chaque profil affecté au groupe de son rôle ; ses
+  droits actuels qui diffèrent du groupe deviennent des **dérogations**
+  (option 1 — préservation). Menus intouchés (`allowed_menus` groupe =
+  `null` = pas de contribution).
+- **API** : `groupe-permissions/` (admin, `is_system` non supprimable) +
+  `ProfileSerializer` expose `groupe`/`groupe_detail`/`derogations`. Le
+  sérializer convertit un `can_*` envoyé différent du groupe en dérogation.
+- **Frontend** : onglet Permissions → sélecteur de groupe + badge
+  « dérogation » sur les écarts ; bouton **Groupes** dans Utilisateurs →
+  modal CRUD (`GroupePermissionsModal`, ratio 16:9) : modifier un groupe
+  recalcule tous ses membres — y compris les **pages accessibles**
+  (`allowed_menus` du groupe appliqué aux membres, dérogations par
+  utilisateur toujours possibles).
+- Vérifié : migration appliquée (5/5 profils affectés, dérogations
+  préservées), propagation groupe→membres testée, PATCH utilisateur avec
+  groupe+dérogation OK, `test_user_management` 35/35 verts, `tsc` 0 erreur.
+
+## 2026-11-10 — Suggestions de commande : amortissement des pics de ventes fictifs
+
+- Contexte : actions de délégués médicaux / rush isolés gonflaient la VMD via
+  la tendance 4 sem./8 sem. (jusqu'à ×2) → commandes surdimensionnées pour un
+  produit qui retourne dormir.
+- `generer-suggestions` (mode intelligent) applique désormais 3 protections :
+  1. **Rush isolé** : hausse sur < 3 sorties distinctes en 4 semaines →
+     tendance ramenée à 1,0 ;
+  2. **Retombée** : rythme des 2 dernières semaines < 60 % du rythme des 4
+     semaines (pic d'un mois qui s'effondre) → tendance amortie (≤1,0) ;
+  3. **Plafond haussier** : tendance limitée à ×1,5 même si réelle.
+- La suggestion expose `pic_detecte: true` et ajoute « ⚠ PIC RÉCENT (tendance
+  amortie) » à `raison` — le pharmacien voit la suspicion avant de valider.
+- `compute_vmd_tendance` (service partagé) inchangé : l'amortissement est
+  propre aux suggestions de commande.
+- Tests `SuggestionPicAmortiTestCase` : rush isolé → 1,0 ; pic retombé → ≤1,0 ;
+  hausse répartie → plafond 1,5. `test_dashboard` 21/21 verts.
+
+## 2026-11-09 — Tickets sans en-tête pharmacie : fallback settings supprimé + retry
+
+- Cause : tout échec de `GET pharmacy-settings/` (redémarrage backend,
+  coupure réseau) remplaçait les settings par `DEFAULT_SETTINGS` (nom
+  « ZENITH », adresse/NIU vides) sans retry → tickets imprimés sans
+  informations pharmacie jusqu'à la prochaine connexion.
+- `PharmacySettingsContext` : ne remet plus les valeurs par défaut en cas
+  d'échec — les derniers settings connus sont conservés.
+- Retry automatique toutes les 20 s tant que le chargement est en erreur et
+  que l'utilisateur est authentifié : l'en-tête revient seul, sans
+  déconnexion/reconnexion.
+- `tsc` + eslint ciblés : 0 erreur.
+
+## 2026-11-09 — Raccourci clavier de déconnexion : Ctrl+D
+
+- `useLogoutShortcut` + `<LogoutShortcut />` dans `App.tsx` (sous `AuthProvider`)
+  : **Ctrl+D déconnecte** l'utilisateur authentifié (appelle `logout()` qui
+  révoque le token serveur). Ignoré quand le focus est dans un champ de saisie
+  (input/textarea/select/contentEditable).
+- Ctrl+D = « Ajouter aux favoris » du navigateur, neutralisé par
+  `preventDefault`. Ctrl+Q écarté : quitte le navigateur, non interceptable.
+- `tsc` + eslint ciblés : 0 erreur.
+
+## 2026-11-09 — Création produit : TVA à 0 % par défaut
+
+- `ProduitFormModal` (création + réinitialisation du formulaire + fallback de
+  soumission), `QuickCreateProductModal` (création rapide depuis une commande)
+  et `useProduitPage` passent le défaut de `19.25` à `0` — les produits sont
+  créés non soumis à la TVA sauf choix explicite.
+- Fallback d'affichage du taux dans `ProductTabsContent` aligné à `0` %.
+- Produits existants et leurs taux inchangés ; `tsc` + eslint ciblés : 0 erreur.
+
+## 2026-11-09 — Fiche produit : prix affiché en TTC pour les produits avec TVA
+
+- `ProductDetailHeader` affichait `selling_price` brut (stocké en HT en base,
+  le formulaire convertit la saisie TTC → HT). La carte « Prix de Vente »
+  applique désormais `selling_price × (1 + tva/100)` quand `tva > 0`, sinon le
+  prix brut — cohérent avec ce que le pharmacien saisit dans le formulaire.
+- Vérifié : `tsc --noEmit` 0 erreur, eslint ciblé 0 erreur.
+
+## 2026-11-09 — Audit : fin des lignes « Modification de la commande »
+
+- `CommandeViewSet.perform_update` ne loggue plus d'entrée UPDATE à chaque
+  PATCH : chaque ajout de produit ou sauvegarde automatique du brouillon
+  créait une ligne « Modification de la commande #N » qui noyait le journal
+  (plusieurs dizaines par commande en usage réel).
+- Restent tracés : **création**, **clôture / annulation de réception**
+  (`ORDER_RECEIVE`/`ORDER_CANCEL`), **suppression** et fusion de commandes.
+  La correction de lot (`correct_lot`, même sur commande clôturée) garde son
+  tracé — modification d'une commande validée.
+- Commentaires `NOTE` de `commande_produits.py` alignés sur le nouveau
+  périmètre (les logs par ligne étaient déjà retirés).
+- Tests : `CommandeAuditNoiseTest` — un PATCH ne crée plus de ligne UPDATE,
+  un POST crée bien une ligne CREATE. `test_commande_produits` 43/43 verts,
+  `test_commande_cloture_status` inclus dans le lot précédent (45 verts).
+
+## 2026-11-09 — Score santé stock : 35 pts offerts sur base vide corrigés
+
+- `statistiques/stock_health` : sur une installation fraîche (aucun produit avec
+  rotation, aucun stock), les composantes **fluidité** (25 pts) et
+  **immobilisation** (10 pts) renvoyaient leur score maximal via les fallbacks
+  `or 1` anti-division-par-zéro → score de **35/100 sur base vide**.
+  Désormais : 0 produit avec rotation → fluidité 0 pt ; valeur de stock nulle →
+  immobilisation 0 pt. `total_stock_value` ne tombe plus à `Decimal(1)`.
+- Les 4 509 produits à stock 0 sans activité < 90 j restent exclus du calcul
+  (comportement inchangé — ce n'est pas eux qui faussaient le score).
+- Test : `StockHealthEmptyBaseTestCase` (produit à stock 0, jamais vendu →
+  `health_score == 0`, fluidité et immobilisation à 0). `test_dashboard`
+  18/18 verts dans Docker.
+
+## 2026-11-09 — Sauvegarde : faux succès corrigés + tables réelles des modèles
+
+- `CreateBackupView` (`/api/backups/create/`) : la liste des tables est dérivée
+  des modèles Django (`_meta.db_table`) — les 7 noms obsolètes (ex. `api_lignefacture`,
+  `api_journalcaisse`, `api_paiement`) remplacés par les tables réelles
+  (`api_factureproduit`, `api_sessioncaisse`, `api_mouvementcaisse`,
+  `api_ecriturecomptable`, `api_ligneecriture`, `api_commandeproduit`,
+  `api_caisse`). Export réel : **16/16 tables** au lieu de 9.
+- Export en zone de staging (`tempfile` dans `BACKUP_DIR`) puis publication
+  atomique : si une seule table échoue, **aucun groupe de sauvegarde n'est
+  publié** et la réponse est `500` avec `failed_tables` — fin du faux succès
+  « 0 tables sauvegardées ».
+- `backup_database` : `CommandError` désormais levée si pg_dump absent, si le
+  dump échoue ou produit un fichier vide, et si une destination **configurée**
+  échoue (secondaire, externes, Drive, S3) — message explicite « sauvegarde
+  locale créée, mais échec de copie : … ». Les helpers retournent
+  `True`/`False`/`None` (non configuré = pas d'échec).
+- `system-admin/run_backup` : le succès exige désormais la présence du marqueur
+  « Backup created » dans la sortie **et** l'absence d'erreur — plus de succès
+  sur exception `CommandError`, erreur interne ou sortie vide.
+- `test_backup_views.py` : 46 tests verts dans Docker — régressions sur export
+  partiel non publié, exception commande, sortie vide, erreurs de copie,
+  checksum, rétention, planification automatique, S3 simulé et dump réel.
+
+## 2026-11-09 — Tests des options de sauvegarde : deux faux succès détectés
+
+- Extension de `backend/api/tests/test_backup_views.py` : copies réelles de
+  fichiers synthétiques dans des répertoires temporaires (secondaire, trois
+  destinations externes, dossier Google Drive), checksum, rétention isolée,
+  erreurs de permissions et destination absente. S3 testé avec client simulé,
+  sans appel réseau ni utilisation des paramètres cloud réels.
+- Tests de planification automatique : désactivation, intervalle atteint ou
+  récent, fenêtre quotidienne et absence de répétition le même jour.
+- Dump PostgreSQL complet réel de la base de test avec vérification du
+  checksum ; commande de base backup et création d'archive testées avec
+  pg_basebackup simulé. Aucune restauration réelle ni purge de sauvegardes
+  existantes. La synchronisation Drive, les supports physiques et PITR de
+  bout en bout restent à valider sur une installation dédiée.
+- Exécution Docker : 43 tests, 41 réussis, 2 échecs de régression conservés :
+  ancienne API `backup-create` renvoyant un succès même avec zéro table,
+  et `system-admin/run_backup` annonçant un succès pour certaines erreurs
+  internes remontées en texte par la commande. Logique métier non modifiée.
+- L'export réel par table ne produit que 9 fichiers sur 16 tables demandées.
+  Vérification SQL en lecture seule : 7 noms de tables de cette liste sont
+  absents du schéma courant. Ce parcours ne doit pas être considéré comme
+  une sauvegarde complète validée.
+- Syntaxe Bash de `backup-db.sh` et `setup-backup-cron.sh` vérifiée ; exécution
+  complète de ces scripts et de leur rétention non effectuée. `git diff --check` OK.
+
+## 2026-11-09 — Sécurité : connexion et réinitialisation des mots de passe
+
+- `backend/api/views/users.py` : protection progressive indépendante de django-axes,
+  compatible avec le login par mot de passe seul. Compteur d'échecs par IP dans
+  le cache partagé (expiration 1 h), blocage dès le 10e échec : 30 s, 60 s,
+  120 s, puis doublement jusqu'à 15 min. Réponse 429 avec `Retry-After` ;
+  aucun mot de passe vérifié pendant le blocage. Succès : remise à zéro.
+  Le nom du poste et le username ne permettent pas de changer la clé du blocage.
+  La limite existante de 5 requêtes/min/IP reste active.
+- Protection fermée si le cache est désactivé (`DummyCache`) ou échoue dans
+  le garde de connexion : réponse 503. Redis, déjà prévu dans le Compose
+  production, est nécessaire ; hors Docker, configurer `REDIS_URL`.
+  Les postes partageant une IP partagent les limites. Aucune modification
+  de configuration, de politique de mots de passe ou de durée des sessions.
+- `backend/api/serializers/users.py` : une réinitialisation administrative du
+  mot de passe révoque immédiatement le jeton existant. Une modification
+  du profil sans changement de mot de passe conserve le jeton.
+- `frontend/frontend/src/components/LoginShadcn.tsx` : le journal d'échec ne
+  reçoit plus l'objet Axios susceptible de contenir le mot de passe ; seul
+  le statut HTTP ou un marqueur réseau est journalisé. Écran inchangé.
+- `backend/api/tests/test_user_management.py` : régressions verrouillage,
+  expiration, plafond, isolation IP, absence de contournement via poste/username,
+  panne de cache, identifiants mal typés, révocation et conservation des jetons.
+  Vérifié : 35 tests réussis via le venv local (`--noinput --keepdb`),
+  `tsc --noEmit`, ESLint ciblé et `git diff --check` sans erreur.
+
 ## 2026-11-09 — 🏅 Fidélité : nouveaux clients non membres par défaut
 
 - `Client.is_loyalty_member` passe de `default=True` à `default=False`

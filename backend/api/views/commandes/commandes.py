@@ -220,16 +220,10 @@ class CommandeViewSet(
             # ne réécrive pas une version obsolète en mémoire.
             serializer.instance = commande
             commande = serializer.save()
-            fields = sorted(serializer.validated_data.keys())
-            log_audit(
-                user=self.request.user,
-                action=AuditLog.Action.UPDATE,
-                model_name='Commande',
-                object_id=commande.id,
-                description=f"Modification de la commande #{commande.id} ({commande.numero_facture or 'sans n°'})",
-                details={'fields': fields, 'status': commande.status},
-                request=self.request,
-            )
+            # Pas de log « Modification » ici : chaque ajout de produit ou
+            # sauvegarde automatique du brouillon déclenchait une ligne UPDATE
+            # qui noyait le journal. Restent tracés : création, clôture/
+            # annulation de réception et suppression de la commande.
         # Invalider le cache liste des commandes pour que le changement de statut/
         # montant soit visible immédiatement dans la liste.
         self._invalidate_cache()

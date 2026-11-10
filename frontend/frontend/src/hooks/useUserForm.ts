@@ -77,6 +77,7 @@ export function useUserForm(menuHierarchy: MenuItem[], adminOnlyKeys?: string[])
       is_active: user.is_active,
       allowed_menus: cleanedMenus,
       max_discount_rate: Number(user.profile?.max_discount_rate || 0),
+      groupe: user.profile?.groupe ?? null,
       ...buildInitialPermissions('VENDEUR'),
     };
     if (user.is_superuser) {

@@ -466,7 +466,10 @@ export function buildReceptionPrintHtml(commande: Commande, companyInfo: { name?
     const nom = escHtml(nomOf(p) || docT('reception.product_fallback', { id: p.produit }));
     const lot = escHtml(p.lot || '');
     const exp = p.date_expiration ? new Date(p.date_expiration).toLocaleDateString(docLocale, { month: '2-digit', year: 'numeric' }).replace('/', '/') : '';
-    const cip = escHtml(p.produit_cip || (typeof p.produit === 'object' ? p.produit.cip1 : '') || '');
+    // On affiche l'ID produit (court) plutôt que le CIP1 (13 chiffres)
+    // qui débordait sur la colonne « Stock avant ».
+    const productId = typeof p.produit === 'object' && p.produit !== null ? p.produit.id : p.produit;
+    const cip = escHtml(String(productId ?? ''));
     const qty = p.quantity || 0;
     const free = p.unites_gratuites || 0;
     // Stock après (référence) = snapshot enregistré à la clôture ;
@@ -488,7 +491,7 @@ export function buildReceptionPrintHtml(commande: Commande, companyInfo: { name?
           <div class="product-name" title="${nom}">${nom}</div>
           ${lotInfo ? `<div class="product-lot" title="${lotInfo}">${lotInfo}</div>` : ''}
         </td>
-        <td class="text-center">${cip}</td>
+        <td class="text-center" style="letter-spacing: 0; padding-left: 2px; padding-right: 2px;">${cip}</td>
         <td class="text-center">${stockAvant}</td>
         <td class="text-center">${qty}</td>
         <td class="text-center">${free}</td>
@@ -606,8 +609,8 @@ export function buildReceptionPrintHtml(commande: Commande, companyInfo: { name?
 
     <table>
       <colgroup>
-        <col style="width: 41%">
-        <col style="width: 11%">
+        <col style="width: 42.5%">
+        <col style="width: 9.5%">
         <col style="width: 6.5%">
         <col style="width: 6%">
         <col style="width: 6%">
@@ -618,7 +621,7 @@ export function buildReceptionPrintHtml(commande: Commande, companyInfo: { name?
       <thead>
         <tr>
           <th>${docT('reception.col_product')}</th>
-          <th class="text-center">${docT('reception.col_cip')}</th>
+          <th class="text-center">ID</th>
           <th class="text-center">${docT('reception.col_stock_before')}</th>
           <th class="text-center">${docT('reception.col_qty')}</th>
           <th class="text-center">${docT('reception.col_free')}</th>

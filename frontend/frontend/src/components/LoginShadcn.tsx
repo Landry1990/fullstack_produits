@@ -97,8 +97,8 @@ export default function LoginShadcn() {
       // Revient sur la page où l'utilisateur était avant la déconnexion, si mémorisée
       navigate(consumePostLoginRedirect() || '/app');
     } catch (err) {
-      logger.error('Login error:', err);
       const e = err as { response?: { status: number } };
+      logger.error('Échec de connexion', { status: e.response?.status ?? 'network_error' });
       let msg = '';
       if (!e.response) {
         msg = t('common:messages.server_unreachable', { defaultValue: 'Impossible de joindre le serveur.' });
