@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Archive, Bell, Edit2, Plus, Send, Shield } from 'lucide-react';
+import { Archive, Bell, Edit2, MessageSquare, Plus, Send, Shield } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '../../shadcn/badge';
 import type { MessagingTab } from './types';
@@ -46,6 +46,12 @@ export function MessagingNav({ activeTab, onTabChange, unreadCount, supervisionC
       aria-label={t('nav_label')}
       className="w-full md:w-56 border-b md:border-b-0 md:border-r border-slate-200 bg-slate-100 p-2 flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-y-auto no-scrollbar shrink-0"
     >
+      <NavItem
+        active={activeTab === 'conversations'}
+        onClick={() => onTabChange('conversations')}
+        icon={<MessageSquare size={18} aria-hidden />}
+        label={t('conversations.title')}
+      />
       <NavItem
         active={activeTab === 'received'}
         onClick={() => onTabChange('received')}

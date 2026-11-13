@@ -1,9 +1,14 @@
 import { useMemo, useReducer, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDebounce } from 'use-debounce';
-import { Search } from 'lucide-react';
-import type { InternalMessage } from '../../../services/communicationService';
+import { Archive, Search, Trash2 } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { gooeyToast } from 'goey-toast';
+import communicationService, { type ConversationSummary, type InternalMessage } from '../../../services/communicationService';
+import { useConfirm } from '../../../hooks/useConfirm';
+import { Button } from '../../shadcn/button';
 import { AttachmentLightbox } from './AttachmentLightbox';
+import { ConversationsPanel } from './ConversationsPanel';
 import { MessageComposer } from './MessageComposer';
 import { MessageDetail } from './MessageDetail';
 import { MessageList, type MessageListVariant } from './MessageList';
@@ -54,8 +59,9 @@ export function MessagingCenter({ currentUser, isOpen, onMessageRead }: Messagin
   const { t } = useTranslation(['messaging', 'common']);
   const isAdmin = Boolean(currentUser?.is_staff || currentUser?.is_superuser);
 
-  const [activeTab, setActiveTab] = useState<MessagingTab>('received');
+  const [activeTab, setActiveTab] = useState<MessagingTab>('conversations');
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [conversationPeer, setConversationPeer] = useState<ConversationSummary | null>(null);
   const [composerState, dispatchComposer] = useReducer(composerReducer, initialComposerState);
 
   const [searchInput, setSearchInput] = useState('');
@@ -91,8 +97,49 @@ export function MessagingCenter({ currentUser, isOpen, onMessageRead }: Messagin
   const archiveMutation = useArchiveMessageMutation();
   const [actionBusy, setActionBusy] = useState(false);
   const [zoomImage, setZoomImage] = useState<string | null>(null);
+  const confirm = useConfirm();
+  const queryClient = useQueryClient();
+  const [selection, setSelection] = useState<{ scope: string; ids: number[] }>({ scope: '', ids: [] });
+  const selectionScope = JSON.stringify([filters, searchInput, isOpen, currentUser.id]);
+  const checkedIds = selection.scope === selectionScope
+    ? selection.ids.filter((id) => messages.some((message) => message.id === id))
+    : [];
+  const toggleChecked = (id: number) => {
+    setSelection({ scope: selectionScope, ids: checkedIds.includes(id) ? checkedIds.filter((value) => value !== id) : [...checkedIds, id] });
+  };
 
-  const listVariant: MessageListVariant = activeTab === 'supervision' ? 'supervision' : activeTab;
+  const handleBulkAction = async (operation: 'archive' | 'delete') => {
+    if (actionBusy || checkedIds.length === 0 || (operation === 'delete' && !isAdmin)) return;
+    const ids = [...checkedIds];
+    setActionBusy(true);
+    try {
+      if (operation === 'delete' && !await confirm({
+        title: t('bulk.delete'),
+        message: t('bulk.delete_confirm', { count: ids.length }),
+        confirmText: t('bulk.delete'),
+        variant: 'danger',
+      })) return;
+      const failed: number[] = [];
+      for (const id of ids) {
+        try {
+          if (operation === 'delete') await communicationService.deleteMessage(id);
+          else await communicationService.archiveMessage(id);
+        } catch {
+          failed.push(id);
+        }
+      }
+      setSelection({ scope: selectionScope, ids: failed });
+      setSelectedId(null);
+      if (failed.length) gooeyToast.error(t('bulk.partial_error', { count: failed.length }));
+      if (failed.length < ids.length) gooeyToast.success(t(operation === 'delete' ? 'bulk.deleted' : 'bulk.archived', { count: ids.length - failed.length }));
+      await queryClient.invalidateQueries({ queryKey: ['internalMessages'] });
+      onMessageRead?.();
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
+  const listVariant: MessageListVariant = activeTab === 'sent' || activeTab === 'archived' || activeTab === 'supervision' ? activeTab : 'received';
 
   const selectedMessage = useMemo(() => {
     if (selectedId === null) return null;
@@ -163,7 +210,13 @@ export function MessagingCenter({ currentUser, isOpen, onMessageRead }: Messagin
   };
 
   const handleSent = () => {
-    setActiveTab('sent');
+    const recipient = users.find((user) => user.id === composerState.recipientId);
+    if (!recipient) {
+      setActiveTab('sent');
+      return;
+    }
+    setConversationPeer({ peer_id: recipient.id, peer_name: recipient.username, last_content: '', last_created_at: new Date().toISOString(), unread_count: 0 });
+    setActiveTab('conversations');
   };
 
   const handleApplyTemplate = (content: string) => {
@@ -190,6 +243,7 @@ export function MessagingCenter({ currentUser, isOpen, onMessageRead }: Messagin
       />
 
       <div className="flex-1 flex min-h-0 overflow-hidden">
+        {activeTab === 'conversations' && isOpen && <ConversationsPanel currentUser={currentUser} onZoomAttachment={setZoomImage} initialPeer={conversationPeer} />}
         {showDetailPane && (
           <>
             <div
@@ -242,8 +296,37 @@ export function MessagingCenter({ currentUser, isOpen, onMessageRead }: Messagin
                 </div>
               )}
 
+              {(activeTab === 'received' || isAdmin) && messages.length > 0 && (
+                <div className="mb-3 space-y-2 rounded-lg border border-slate-200 p-2">
+                  <label className="flex items-center gap-2 text-xs cursor-pointer">
+                    <Checkbox
+                      checked={checkedIds.length === messages.length ? true : checkedIds.length > 0 ? 'indeterminate' : false}
+                      disabled={actionBusy}
+                      onCheckedChange={(checked) => setSelection({ scope: selectionScope, ids: checked === true ? messages.map((message) => message.id) : [] })}
+                    />
+                    {t('bulk.select_page')}
+                  </label>
+                  <p className="text-xs text-slate-600" aria-live="polite">{t('bulk.selected', { count: checkedIds.length })}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {activeTab === 'received' && (
+                      <Button size="sm" variant="outline" disabled={actionBusy || checkedIds.length === 0} onClick={() => void handleBulkAction('archive')}>
+                        <Archive size={14} aria-hidden />{t('actions.archive')}
+                      </Button>
+                    )}
+                    {isAdmin && (
+                      <Button size="sm" variant="destructive" disabled={actionBusy || checkedIds.length === 0} onClick={() => void handleBulkAction('delete')}>
+                        <Trash2 size={14} aria-hidden />{t('bulk.delete')}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <MessageList
                 messages={messages}
+                checkedIds={checkedIds}
+                onToggleChecked={activeTab === 'received' || isAdmin ? toggleChecked : undefined}
+                selectionDisabled={actionBusy}
                 variant={listVariant}
                 loading={isLoading}
                 isFetching={isFetching}

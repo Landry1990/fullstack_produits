@@ -3,6 +3,7 @@ import io
 import mimetypes
 from pathlib import Path
 
+from django.contrib.auth import get_user_model
 from django.db import models
 from django.http import FileResponse, HttpResponse
 from rest_framework import permissions, status, viewsets
@@ -304,6 +305,62 @@ class InternalMessageViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
             models.Q(recipient__isnull=True) |
             models.Q(sender=user)
         ).distinct()
+
+    def _conversation_messages(self, peer_id):
+        user = self.request.user
+        return InternalMessage.objects.filter(
+            models.Q(sender=user, recipient_id=peer_id) |
+            models.Q(sender_id=peer_id, recipient=user)
+        ).exclude(archived_by=user)
+
+    @action(detail=False, methods=['get'])
+    def conversations(self, request):
+        latest = self._conversation_messages(models.OuterRef('pk')).order_by('-id')
+        unread = latest.filter(recipient=request.user).exclude(read_by=request.user).order_by().values('sender').annotate(total=models.Count('pk')).values('total')
+        peers = get_user_model().objects.exclude(pk=request.user.pk).annotate(
+            last_message_id=models.Subquery(latest.values('id')[:1]),
+            last_content=models.Subquery(latest.values('content')[:1]),
+            last_created_at=models.Subquery(latest.values('created_at')[:1]),
+            unread_count=models.Subquery(unread[:1]),
+        ).filter(last_message_id__isnull=False).order_by('-last_message_id')
+        search = request.query_params.get('search', '').strip()
+        if search:
+            peers = peers.filter(username__icontains=search)
+        page = self.paginate_queryset(peers)
+        return self.get_paginated_response([
+            {'peer_id': peer.pk, 'peer_name': peer.username, 'last_content': peer.last_content,
+             'last_created_at': peer.last_created_at, 'unread_count': peer.unread_count or 0}
+            for peer in page
+        ])
+
+    @action(detail=False, methods=['get'])
+    def conversation(self, request):
+        peer_id = parse_id(request.query_params.get('peer'), field='peer')
+        qs = self._conversation_messages(peer_id).select_related('sender', 'recipient', 'parent', 'parent__sender').prefetch_related('read_by', 'archived_by').order_by('-id')
+        before = request.query_params.get('before')
+        if before is not None:
+            qs = qs.filter(id__lt=parse_id(before, field='before'))
+        messages = list(qs[:31])
+        has_more = len(messages) > 30
+        messages = messages[:30]
+        return Response({'results': self.get_serializer(messages, many=True).data,
+                         'next_before': messages[-1].id if has_more else None})
+
+    @action(detail=False, methods=['post'])
+    def conversation_read(self, request):
+        from rest_framework.exceptions import ValidationError
+        peer_id = parse_id(request.data.get('peer'), field='peer')
+        ids = request.data.get('ids')
+        if not isinstance(ids, list) or len(ids) > 30:
+            raise ValidationError({'ids': 'Sélectionnez au maximum 30 messages.'})
+        ids = [parse_id(value, field='ids') for value in ids]
+        messages = self._conversation_messages(peer_id).filter(id__in=ids, recipient=request.user).exclude(read_by=request.user)
+        through = InternalMessage.read_by.through
+        through.objects.bulk_create([
+            through(internalmessage_id=message_id, user_id=request.user.pk)
+            for message_id in messages.values_list('id', flat=True)
+        ], ignore_conflicts=True)
+        return Response({'status': 'messages marked as read'})
 
     def perform_create(self, serializer):
         message = serializer.save(sender=self.request.user)

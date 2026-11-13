@@ -130,7 +130,8 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
                 lot_id: ligne.lotId ? Number(ligne.lotId) : null,
                 is_promis: !!ligne.isPromis,
                 promis_quantity: ligne.isPromis ? (ligne.promisQuantity || 0) : 0,
-                promis_phone: ligne.isPromis ? (ligne.promisPhone || params.promisPhone || '') : ''
+                promis_phone: ligne.isPromis ? (ligne.promisPhone || params.promisPhone || '') : '',
+                promis_client_name: ligne.isPromis ? (params.promisClientName || '') : ''
             };
         });
 
@@ -287,7 +288,8 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
                         : undefined,
                     is_promis: !!ligne.isPromis,
                     promis_quantity: ligne.isPromis ? ligne.promisQuantity : 0,
-                    promis_phone: ligne.isPromis ? (ligne.promisPhone || '') : ''
+                    promis_phone: ligne.isPromis ? (ligne.promisPhone || params.promisPhone || '') : '',
+                    promis_client_name: ligne.isPromis ? (params.promisClientName || '') : ''
                 };
             });
 
@@ -571,7 +573,7 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
                         
                         const { printPromisTicketSmart } = await import('../utils/print/promisPdfDraft');
                         await printPromisTicketSmart({
-                            client_name: updatedFacture.client_name || params.manualClientName || t('common:passerby_client'),
+                            client_name: params.promisClientName || updatedFacture.client_name || params.manualClientName || t('common:passerby_client'),
                             client_phone: params.promisPhone || params.lignesFacture.find(l => l.promisPhone)?.promisPhone,
                             items: promisLines.map(l => ({
                                 id: 0,

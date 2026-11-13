@@ -2,7 +2,27 @@
   "title": "Messagerie Interne",
   "subtitle": "Communiquez avec vos collègues",
   "nav_label": "Navigation de la messagerie",
+  "conversations": {
+    "title": "Conversations",
+    "thread": "Conversation avec {{name}}",
+    "select": "Choisissez un collègue pour afficher la conversation.",
+    "empty": "Aucune conversation. Utilisez Nouveau pour écrire à un collègue.",
+    "load_older": "Charger les messages précédents",
+    "broadcast_help": "Les annonces à tous restent dans Reçus. Le nettoyage est accessible dans Reçus, Envoyés et Archivés selon vos droits.",
+    "previous": "Précédent",
+    "next": "Suivant"
+  },
   "zoom_image": "Image agrandie",
+  "bulk": {
+    "select_page": "Tout sélectionner sur cette page",
+    "select_message": "Sélectionner le message de {{name}}",
+    "selected": "{{count}} message(s) sélectionné(s)",
+    "delete": "Supprimer définitivement",
+    "delete_confirm": "Supprimer définitivement ces {{count}} message(s) pour tous les participants ? Cette action est irréversible.",
+    "deleted": "{{count}} message(s) supprimé(s)",
+    "archived": "{{count}} message(s) archivé(s)",
+    "partial_error": "Échec du nettoyage de {{count}} message(s). Ils restent sélectionnés pour réessayer."
+  },
   "tabs": {
     "received": "Reçus",
     "sent": "Envoyés",

@@ -270,7 +270,7 @@ class SaleModifier:
                 promis = Promis.objects.create(
                     facture=facture,
                     client=facture.client,
-                    client_name=facture.client_name_override or '',
+                    client_name=prod_data.get('promis_client_name') or facture.client_name_override or '',
                     client_phone=prod_data.get('promis_phone', '') or '',
                     produit=produit,
                     produit_nom=produit.name,

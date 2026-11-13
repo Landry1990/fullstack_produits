@@ -1,6 +1,7 @@
 import { Archive, Check, CheckCheck, Clock, MessageSquare, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '../../shadcn/badge';
+import { Checkbox } from '../../shadcn/checkbox';
 import { Button } from '../../shadcn/button';
 import { EmptyState } from '../../ui/EmptyState';
 import { Skeleton } from '../../shadcn/skeleton';
@@ -120,6 +121,9 @@ interface MessageListProps {
   onSelect: (message: InternalMessage) => void;
   error?: Error | null;
   onRetry?: () => void;
+  checkedIds?: number[];
+  onToggleChecked?: (id: number) => void;
+  selectionDisabled?: boolean;
 }
 
 export function MessageList({
@@ -131,6 +135,9 @@ export function MessageList({
   onSelect,
   error,
   onRetry,
+  checkedIds = [],
+  onToggleChecked,
+  selectionDisabled = false,
 }: MessageListProps) {
   const { t } = useTranslation(['messaging', 'common']);
 
@@ -183,7 +190,20 @@ export function MessageList({
         </div>
       )}
       {messages.map((m) => (
-        <MessageRow key={m.id} message={m} variant={variant} selected={selectedId === m.id} onSelect={onSelect} />
+        <div key={m.id} className="flex items-center gap-2 min-w-0">
+          {onToggleChecked && (
+            <Checkbox
+              checked={checkedIds.includes(m.id)}
+              onCheckedChange={() => onToggleChecked(m.id)}
+              disabled={selectionDisabled}
+              aria-label={t('bulk.select_message', { name: m.sender_name })}
+              className="shrink-0"
+            />
+          )}
+          <div className="flex-1 min-w-0">
+            <MessageRow message={m} variant={variant} selected={selectedId === m.id} onSelect={onSelect} />
+          </div>
+        </div>
       ))}
     </div>
   );

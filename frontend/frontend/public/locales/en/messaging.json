@@ -2,7 +2,27 @@
   "title": "Internal Messaging",
   "subtitle": "Communicate with your colleagues",
   "nav_label": "Messaging navigation",
+  "conversations": {
+    "title": "Conversations",
+    "thread": "Conversation with {{name}}",
+    "select": "Choose a colleague to view the conversation.",
+    "empty": "No conversations yet. Use Compose to write to a colleague.",
+    "load_older": "Load older messages",
+    "broadcast_help": "Announcements to everyone remain in Inbox. Cleanup is available in Inbox, Sent and Archived according to your permissions.",
+    "previous": "Previous",
+    "next": "Next"
+  },
   "zoom_image": "Enlarged image",
+  "bulk": {
+    "select_page": "Select all on this page",
+    "select_message": "Select message from {{name}}",
+    "selected": "{{count}} message(s) selected",
+    "delete": "Delete permanently",
+    "delete_confirm": "Permanently delete these {{count}} message(s) for all participants? This action cannot be undone.",
+    "deleted": "{{count}} message(s) deleted",
+    "archived": "{{count}} message(s) archived",
+    "partial_error": "Could not process {{count}} message(s). They remain selected so you can retry."
+  },
   "tabs": {
     "received": "Inbox",
     "sent": "Sent",

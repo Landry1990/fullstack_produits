@@ -823,15 +823,11 @@ class Promis(models.Model):
 
     @property
     def client_display(self):
-        if self.client:
-            return self.client.name
-        return self.client_name or 'Client de passage'
+        return self.client_name or (self.client.name if self.client else 'Client de passage')
 
     @property
     def client_phone_display(self):
-        if self.client:
-            return self.client.phone
-        return self.client_phone or ''
+        return self.client_phone or (self.client.phone if self.client else '') or ''
 
     @property
     def produit_name(self):

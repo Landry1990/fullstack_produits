@@ -87,6 +87,16 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
             is_active=True,
         ).first()
         if existing:
+            # Backfill idempotent : le promis a déjà été créé par le
+            # SaleFinalizer — compléter les infos client si elles manquent.
+            update_fields = []
+            for field in ('client_name', 'client_phone', 'client'):
+                incoming = validated_data.get(field)
+                if incoming and not getattr(existing, field if field != 'client' else 'client_id'):
+                    setattr(existing, field, incoming)
+                    update_fields.append(field)
+            if update_fields:
+                existing.save(update_fields=update_fields)
             return existing, False
 
         promis = Promis.objects.create(**validated_data)

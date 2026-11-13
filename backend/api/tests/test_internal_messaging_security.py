@@ -25,6 +25,62 @@ class InternalMessagingSecurityTests(APITestCase):
         self.outsider = User.objects.create_user(username='message_outsider', password='password')
         self.staff = User.objects.create_user(username='message_staff', password='password', is_staff=True)
 
+    def test_conversations_group_both_directions_and_exclude_broadcasts(self):
+        InternalMessage.objects.create(sender=self.sender, recipient=self.recipient, content='Bonjour')
+        latest = InternalMessage.objects.create(sender=self.recipient, recipient=self.sender, content='Réponse')
+        InternalMessage.objects.create(sender=self.outsider, recipient=self.staff, content='Secret')
+        InternalMessage.objects.create(sender=self.staff, content='Annonce')
+        self.authenticate(self.sender)
+        response = self.client.get('/api/internal-messages/conversations/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['count'], 1)
+        conversation = response.data['results'][0]
+        self.assertEqual(conversation['peer_id'], self.recipient.pk)
+        self.assertEqual(conversation['last_content'], latest.content)
+        self.assertEqual(conversation['unread_count'], 1)
+
+    def test_thread_cursor_does_not_duplicate_messages_after_new_arrival(self):
+        for index in range(32):
+            InternalMessage.objects.create(sender=self.sender, recipient=self.recipient, content=str(index))
+        self.authenticate(self.recipient)
+        first = self.client.get('/api/internal-messages/conversation/', {'peer': self.sender.pk}).data
+        self.assertEqual(len(first['results']), 30)
+        InternalMessage.objects.create(sender=self.sender, recipient=self.recipient, content='Nouveau')
+        older = self.client.get('/api/internal-messages/conversation/', {'peer': self.sender.pk, 'before': first['next_before']}).data
+        self.assertEqual(len(older['results']), 2)
+        self.assertIsNone(older['next_before'])
+        self.assertFalse({m['id'] for m in first['results']} & {m['id'] for m in older['results']})
+
+    def test_thread_is_private_even_for_staff_and_hides_own_archives(self):
+        message = InternalMessage.objects.create(sender=self.sender, recipient=self.recipient, content='Secret')
+        self.authenticate(self.staff)
+        response = self.client.get('/api/internal-messages/conversation/', {'peer': self.sender.pk})
+        self.assertEqual(response.data['results'], [])
+        self.authenticate(self.recipient)
+        message.archived_by.add(self.recipient)
+        response = self.client.get('/api/internal-messages/conversation/', {'peer': self.sender.pk})
+        self.assertEqual(response.data['results'], [])
+        self.assertEqual(self.client.get('/api/internal-messages/conversations/').data['count'], 0)
+
+    def test_conversation_read_only_marks_explicit_incoming_messages(self):
+        incoming = InternalMessage.objects.create(sender=self.sender, recipient=self.recipient, content='Reçu')
+        outgoing = InternalMessage.objects.create(sender=self.recipient, recipient=self.sender, content='Envoyé')
+        foreign = InternalMessage.objects.create(sender=self.outsider, recipient=self.recipient, content='Autre')
+        self.authenticate(self.recipient)
+        response = self.client.post('/api/internal-messages/conversation_read/', {
+            'peer': self.sender.pk, 'ids': [incoming.pk, outgoing.pk, foreign.pk],
+        }, format='json')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(incoming.read_by.filter(pk=self.recipient.pk).exists())
+        self.assertFalse(outgoing.read_by.exists())
+        self.assertFalse(foreign.read_by.exists())
+
+    def test_conversation_rejects_invalid_cursor_and_peer(self):
+        self.authenticate(self.recipient)
+        self.assertEqual(self.client.get('/api/internal-messages/conversation/', {'peer': 'abc'}).status_code, 400)
+        self.assertEqual(self.client.get('/api/internal-messages/conversation/', {'peer': self.sender.pk, 'before': '-1'}).status_code, 400)
+        self.assertEqual(self.client.post('/api/internal-messages/conversation_read/', {'peer': self.sender.pk, 'ids': 'all'}, format='json').status_code, 400)
+
     def image_attachment(self, name='image.png', image_format='PNG', content_type='image/png'):
         content = BytesIO()
         Image.new('RGB', (2, 2), color='red').save(content, format=image_format)

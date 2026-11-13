@@ -1,6 +1,6 @@
 import type { InternalMessage } from '../../../services/communicationService';
 
-export type MessagingTab = 'received' | 'sent' | 'archived' | 'templates' | 'new' | 'supervision';
+export type MessagingTab = 'conversations' | 'received' | 'sent' | 'archived' | 'templates' | 'new' | 'supervision';
 
 export interface MessagingUser {
   id?: number;

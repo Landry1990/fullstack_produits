@@ -2,6 +2,60 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-11-13 — Fix : nom client du promis perdu à l'enregistrement
+
+- Le nom saisi dans la modale de résolution de stock n'arrivait jamais jusqu'au
+  `Promis` : le `SaleFinalizer` créait le promis avec seulement
+  `client_name_override`, et le `bulk_create` suivant (idempotent) retrouvait le
+  promis existant sans le mettre à jour → ticket et liste affichaient
+  « Client divers ». `promis_phone` perdait aussi le fallback `params.promisPhone`.
+- Le payload de vente envoie désormais `promis_client_name` par ligne +
+  fallback `promis_phone` ; `_handle_promis` et `SaleModifier` l'utilisent en
+  priorité. `_get_or_create_for_facture` backfill `client_name`/`client_phone`/
+  `client` sur le promis existant si vide (couvre retry/mobile). Ticket promis :
+  `promisClientName` prioritaire.
+- `Promis.client_display` / `client_phone_display` préfèrent désormais les champs
+  saisis pour le promis (`client_name`/`client_phone`) avec repli sur la fiche
+  client — le numéro saisi à la modale s'affiche même si un client enregistré
+  est lié.
+- Fichiers : `useSaleCompletion.ts`, `sale_finalizer.py`, `sale_modifier.py`,
+  `views/commandes/promis.py`, `models/billing.py`. Tests `test_sale_finalizer` +
+  `test_sale_modification_stock` : 32 OK, ESLint propre.
+
+## 2026-11-13 — Messagerie : conversations individuelles paginées
+
+- Nouvel onglet Conversations par défaut : collègues triés par dernier message,
+  aperçu/date et compteur non lu ; fil chronologique en bulles, réponse intégrée
+  et pièces jointes via le composeur existant. Un nouvel envoi individuel ouvre
+  la conversation. Reçus/Envoyés/Archivés/Supervision et nettoyage restent présents.
+- `InternalMessageViewSet` : actions `conversations` (20 collègues par page),
+  `conversation` (30 messages, curseur `before` stable) et `conversation_read`
+  (30 identifiants explicites maximum). Fil limité aux deux participants même
+  pour le staff ; annonces collectives et archives personnelles exclues du fil.
+- Aucun modèle ni migration : l'historique existant est regroupé directement.
+  Rafraîchissement des messages récents à 3 secondes ; anciens chargés sur demande,
+  dédupliqués et non repollés. Marquage lu suspendu quand l'onglet navigateur est caché.
+- Fichiers : `views/communication.py`, `test_internal_messaging_security.py`,
+  `ConversationsPanel.tsx`, `MessageComposer.tsx`, `MessagingCenter.tsx`,
+  `MessagingNav.tsx`, `types.ts`, `communicationService.ts`, locales fr/en,
+  tests frontend `conversations.test.tsx` et `messagingBulk.test.tsx`.
+- Vérification : 38 tests backend et 10 tests frontend passants, ESLint ciblé propre,
+  build Vite réussi. TypeScript global toujours bloqué par des erreurs dans le
+  reste du projet ; aucune erreur signalée dans les fichiers de cette évolution.
+
+## 2026-11-13 — Messagerie : sélection et nettoyage groupés
+
+- Cases de sélection indépendantes de la lecture et sélection de la page courante.
+  Archivage groupé des messages reçus pour tous ; suppression définitive pour
+  les administrateurs avec confirmation précisant l'effet pour tous les participants.
+- Réutilisation des endpoints et permissions existants, sans modification backend.
+  Requêtes séquentielles, notification récapitulative et conservation des seuls
+  échecs dans la sélection pour réessayer ; sélection liée aux filtres et à la page.
+- Fichiers : `MessagingCenter.tsx`, `MessageList.tsx`, locales `messaging.json`
+  fr/en, `hooks/__tests__/messagingBulk.test.tsx`.
+- Vérification : 8 tests messagerie passants, ESLint ciblé propre, build Vite réussi
+  (avertissement de taille de chunks uniquement).
+
 ## 2026-11-13 — Popup « objectif atteint » (CA jour/semaine/mois) pour les admins
 
 - Nouveau `SalesGoalNotifications` : cartes trophée en bas à droite quand le CA

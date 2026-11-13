@@ -24,6 +24,19 @@ export interface InternalMessage {
   created_at: string;
 }
 
+export interface ConversationSummary {
+  peer_id: number;
+  peer_name: string;
+  last_content: string;
+  last_created_at: string;
+  unread_count: number;
+}
+
+export interface ConversationPage {
+  results: InternalMessage[];
+  next_before: number | null;
+}
+
 export interface MessageTemplate {
   id: number;
   title: string;
@@ -95,6 +108,11 @@ const communicationService = {
     }
     return api.post('/internal-messages/', data);
   },
+  getConversations: (page: number, search: string) =>
+    api.get<PaginatedResponse<ConversationSummary>>('/internal-messages/conversations/', { params: { page, page_size: 20, search } }),
+  getConversation: (peer: number, before?: number) =>
+    api.get<ConversationPage>('/internal-messages/conversation/', { params: { peer, before } }),
+  markConversationRead: (peer: number, ids: number[]) => api.post('/internal-messages/conversation_read/', { peer, ids }),
   markAsRead: (id: number) => api.post(`/internal-messages/${id}/mark_as_read/`),
   archiveMessage: (id: number) => api.post(`/internal-messages/${id}/archive/`),
   getAttachment: (id: number) => api.get<Blob>(`/internal-messages/${id}/attachment/`, { responseType: 'blob' }),

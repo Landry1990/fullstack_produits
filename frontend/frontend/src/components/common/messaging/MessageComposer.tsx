@@ -19,12 +19,14 @@ interface MessageComposerProps {
   dispatch: Dispatch<ComposerAction>;
   onCancel: () => void;
   onSent: () => void;
+  fixedRecipient?: number;
 }
 
-export function MessageComposer({ users, isAdmin, state, dispatch, onCancel, onSent }: MessageComposerProps) {
+export function MessageComposer({ users, isAdmin, state, dispatch, onCancel, onSent, fixedRecipient }: MessageComposerProps) {
   const { t } = useTranslation(['messaging', 'common']);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { recipientId, msgContent, replyingTo, attachmentFile } = state;
+  const { msgContent, replyingTo, attachmentFile } = state;
+  const recipientId = fixedRecipient ?? state.recipientId;
   const sendMessageMutation = useSendMessageMutation();
 
   const canSubmit = (isAdmin || recipientId !== '') && (msgContent.trim() !== '' || attachmentFile !== null);
@@ -66,12 +68,12 @@ export function MessageComposer({ users, isAdmin, state, dispatch, onCancel, onS
   };
 
   return (
-    <div className="h-full flex flex-col p-4 md:p-6 overflow-y-auto">
-      <h4 className="text-lg font-semibold text-slate-700 mb-6 border-b border-slate-200 pb-2">
+    <div className={fixedRecipient ? 'shrink-0 border-t border-slate-200 p-3 max-h-[45%] overflow-y-auto' : 'h-full flex flex-col p-4 md:p-6 overflow-y-auto'}>
+      {!fixedRecipient && <h4 className="text-lg font-semibold text-slate-700 mb-6 border-b border-slate-200 pb-2">
         {t('new.title')}
-      </h4>
-      <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6 flex flex-col flex-1 min-h-0">
-        <div className="w-full shrink-0">
+      </h4>}
+      <form onSubmit={handleSubmit} className={fixedRecipient ? 'space-y-2' : 'space-y-4 md:space-y-6 flex flex-col flex-1 min-h-0'}>
+        {!fixedRecipient && <div className="w-full shrink-0">
           <label
             htmlFor="messaging-recipient"
             className="block text-caption font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5"
@@ -95,9 +97,9 @@ export function MessageComposer({ users, isAdmin, state, dispatch, onCancel, onS
               </option>
             ))}
           </Select>
-        </div>
+        </div>}
 
-        <div className="flex-1 min-h-[120px] flex flex-col">
+        <div className={fixedRecipient ? 'flex flex-col' : 'flex-1 min-h-[120px] flex flex-col'}>
           {replyingTo && (
             <div className="mb-3 p-3 bg-blue-50 rounded-lg border border-indigo-200 flex flex-col gap-1 relative pr-10">
               <button

@@ -547,7 +547,7 @@ class SaleFinalizer:
             promis_to_create.append(Promis(
                 facture=facture,
                 client_id=client_id,
-                client_name=client_name_override or '',
+                client_name=p.get('promis_client_name') or client_name_override or '',
                 client_phone=p.get('promis_phone', ''),
                 produit_id=produit_id,
                 quantite=promis_qty,
