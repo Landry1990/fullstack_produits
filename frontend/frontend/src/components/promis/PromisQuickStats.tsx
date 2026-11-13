@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { PackageOpen, Clock, CheckCircle2, XCircle } from 'lucide-react';
+import { PackageOpen, Clock, CheckCircle2, XCircle, PackageCheck } from 'lucide-react';
 import type { UsePromisDataReturn } from '../../hooks/usePromisData';
 import { Card, CardContent } from '../shadcn/card';
 import { cn } from '../../lib/utils';
@@ -28,6 +28,13 @@ export const PromisQuickStats: React.FC<PromisQuickStatsProps> = ({ stats }) => 
             bgClass: "bg-amber-50",
         },
         {
+            title: t('stock:promis.stats.pret_title'),
+            value: stats.prets,
+            icon: <PackageCheck className="size-4" />,
+            colorClass: "text-blue-600",
+            bgClass: "bg-blue-50",
+        },
+        {
             title: t('stock:promis.stats.del_title'),
             value: stats.delivres,
             icon: <CheckCircle2 className="size-4" />,
@@ -44,7 +51,7 @@ export const PromisQuickStats: React.FC<PromisQuickStatsProps> = ({ stats }) => 
     ];
 
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             {statItems.map((item) => (
                 <Card key={item.title}>
                     <CardContent className="p-3 flex items-center gap-3">

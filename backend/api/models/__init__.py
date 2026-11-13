@@ -44,6 +44,7 @@ from .communication import (
     SmsLog,
     SmsTemplate,
     TelegramLog,
+    TreatmentReminder,
     WhatsAppLog,
 )
 
@@ -227,6 +228,7 @@ __all__ = [
     'Substance',
     'Team',
     'TicketSessionSequence',
+    'TreatmentReminder',
     # Sessions
     'UserDailySession',
     'WhatsAppLog',

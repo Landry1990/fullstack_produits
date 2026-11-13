@@ -356,6 +356,9 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         if promis.status == Promis.Status.ANNULE:
             return Response({'detail': 'Ce promis est déjà annulé.'}, status=status.HTTP_400_BAD_REQUEST)
 
+        if promis.status == Promis.Status.PRET:
+            return Response({'detail': 'Impossible d\'annuler un promis prêt à retirer — le stock de couverture est déjà consommé. Utilisez le flux avoir/remboursement.'}, status=status.HTTP_400_BAD_REQUEST)
+
         if promis.status == Promis.Status.DELIVRE:
             return Response({'detail': 'Impossible d\'annuler un promis déjà délivré.'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -419,7 +422,7 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         
         promis_list = list(Promis.objects.select_for_update().filter(
             id__in=ids,
-            status=Promis.Status.EN_ATTENTE,
+            status__in=(Promis.Status.EN_ATTENTE, Promis.Status.PRET),
         ).order_by('id'))
         count = len(promis_list)
 
@@ -446,6 +449,32 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
             'detail': f'{count} promis marqué(s) comme délivré(s).',
             'count': count
         })
+
+    @action(detail=True, methods=['post'])
+    def client_informe(self, request, pk=None):
+        """
+        Marque que le client a été informé que son produit est arrivé.
+        Traçabilité uniquement — le promis reste PRET jusqu'au retrait.
+        """
+        promis = self.get_object()
+        if promis.status != Promis.Status.PRET:
+            return Response(
+                {'detail': "Ce promis n'est pas prêt à retirer."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        promis.client_informe_par = request.user
+        promis.client_informe_le = timezone.now()
+        promis.save(update_fields=['client_informe_par', 'client_informe_le'])
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='Promis',
+            object_id=promis.id,
+            description=f"Client informé pour le promis #{promis.id} — {promis.client_display}",
+            details={'produit_id': promis.produit_id},
+            request=request,
+        )
+        return Response({'promis': PromisSerializer(promis).data})
 
     @action(detail=False, methods=['post'])
     @transaction.atomic

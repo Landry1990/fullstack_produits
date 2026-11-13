@@ -148,6 +148,7 @@ from .views.communication import (
     SmsTemplateViewSet,
     SmsViewSet,
     TelegramLogViewSet,
+    TreatmentReminderViewSet,
     WhatsAppLogViewSet,
 )
 from .views.comptabilite import (
@@ -235,6 +236,7 @@ router.register(r'groupes', GroupeViewSet, basename='groupe')
 router.register(r'groupe-permissions', GroupePermissionsViewSet, basename='groupepermissions')
 router.register(r'substances', SubstanceViewSet, basename='substance')
 router.register(r'coupons', CouponMonnaieViewSet, basename='coupon')
+router.register(r'rappels-traitement', TreatmentReminderViewSet, basename='treatmentreminder')
 router.register(r'sms', SmsViewSet, basename='sms')
 router.register(r'sms-templates', SmsTemplateViewSet, basename='smstemplate')
 router.register(r'whatsapp-logs', WhatsAppLogViewSet, basename='whatsapplog')

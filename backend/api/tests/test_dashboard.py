@@ -323,6 +323,57 @@ class DashboardSupplierDebtsTestCase(APITestCase):
         self.assertEqual(dashboard_total, 1000.0)
         self.assertEqual(fournisseurs_total, 1000.0)
 
+    def test_supplier_debts_releve_tranche_end_of_month(self):
+        """RELEVE : tranches calendaires identiques à l'échéancier
+        (statement_periods, décade stricte), déterminées par date_cloture
+        (pas order.date).
+
+        Régressions couvertes :
+        - commande créée le 19/10 (tranche 11-20) mais clôturée le 25/10 →
+          tranche 21-fin de la clôture, échéance = 31/10 + 10 j = 10/11 ;
+          l'ancien code la ratait dans la tranche 11-20 (échéance 30/10).
+        - commande clôturée le 25/02 → tranche 21-28 (fin de mois, pas le
+          02/03 du calcul start+P-1) → échéance = 28/02 + 10 j = 10/03 ;
+          l'ancien code donnait 12/03.
+        """
+        from datetime import datetime
+
+        fournisseur = TestDataFactory.create_fournisseur(
+            name='Grossiste Relevé',
+            type_reglement='RELEVE',
+            periode_releve_jours=10,
+            delai_paiement_jours=10,
+        )
+        produit = TestDataFactory.create_produit(fournisseur=fournisseur)
+
+        for cloture in (
+            timezone.make_aware(datetime(2026, 10, 25, 10, 0)),
+            timezone.make_aware(datetime(2026, 2, 25, 10, 0)),
+        ):
+            commande = TestDataFactory.create_commande(
+                fournisseur=fournisseur,
+                status='CLOT',
+                date=timezone.make_aware(datetime(2026, 10, 19, 10, 0)),
+                date_cloture=cloture,
+            )
+            TestDataFactory.create_commande_produit(
+                commande=commande, produit=produit,
+                quantity=10, price=Decimal('100.00'), price_cost=Decimal('100.00')
+            )
+
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        supplier_data = next(
+            s for s in response.data['suppliers'] if s['name'] == 'Grossiste Relevé'
+        )
+        releve_items = {
+            i['label']: i['due_date']
+            for i in supplier_data['items'] if i['type'] == 'RELEVE'
+        }
+        self.assertEqual(releve_items['21-31/10'], '2026-11-10')
+        self.assertEqual(releve_items['21-28/02'], '2026-03-10')
+
 class DashboardManagerStatsTestCase(APITestCase):
     """Test suite pour l'endpoint /api/dashboard/manager_stats/."""
 

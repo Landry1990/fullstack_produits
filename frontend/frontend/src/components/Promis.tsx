@@ -35,6 +35,7 @@ const Promis: React.FC = () => {
         setSearchQuery,
         refresh,
         handleDelivrer,
+        handleClientInforme,
         handleAnnuler,
         handlePrintTicket,
         handleWhatsAppReminder,
@@ -127,6 +128,7 @@ const Promis: React.FC = () => {
                             onToggleSelection={toggleSelection}
                             onToggleSelectAll={toggleSelectAll}
                             onDeliver={handleDelivrer}
+                            onInform={handleClientInforme}
                             onCancel={handleAnnuler}
                             onPrint={handlePrintTicket}
                             onSms={(promis) => setSmsModalState({ isOpen: true, promis })}

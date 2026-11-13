@@ -21,7 +21,7 @@ from rest_framework.response import Response
 
 from ...audit_helpers import log_audit
 from ...idempotency import idempotent_action
-from ...models import AuditLog, Caisse, Facture, FactureProduit, InvoiceSettings, RelevePaiement
+from ...models import AuditLog, Caisse, Client, Facture, FactureProduit, InvoiceSettings, RelevePaiement, SmsLog, WhatsAppLog
 from ...pagination import StandardResultsSetPagination
 from ...security_utils import build_safe_content_disposition
 from ...serializers import CreanceSerializer
@@ -109,10 +109,43 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             'total_reste': result['total_reste'] or Decimal(0),
             'count': result['count'] or 0
         })
-    
+
+    @action(detail=False, methods=['get'])
+    def aging(self, request):
+        """
+        Répartition des créances impayées par tranche d'ancienneté
+        (jours depuis la facture) : 0-30 / 30-60 / 60-90 / 90+.
+        Respecte les mêmes filtres client/date que la liste.
+        """
+        now = timezone.now()
+        queryset = self.get_queryset().filter(remainder__gt=0)
+
+        result = {}
+        for key, min_days, max_days in [
+            ('b_0_30', 0, 30),
+            ('b_30_60', 30, 60),
+            ('b_60_90', 60, 90),
+            ('b_90_plus', 90, None),
+        ]:
+            qs = queryset.filter(date__lte=now - timedelta(days=min_days))
+            if max_days is not None:
+                qs = qs.filter(date__gt=now - timedelta(days=max_days))
+            agg = qs.aggregate(montant=Sum('remainder'), nb=Count('id'))
+            result[key] = {
+                'montant': agg['montant'] or Decimal(0),
+                'nb': agg['nb'] or 0
+            }
+
+        total = queryset.aggregate(montant=Sum('remainder'), nb=Count('id'))
+        result['total'] = {
+            'montant': total['montant'] or Decimal(0),
+            'nb': total['nb'] or 0
+        }
+        return Response(result)
+
     @action(detail=False, methods=['get'])
     def synthese_clients(self, request):
-        from django.db.models import Count, OuterRef, Subquery, Sum
+        from django.db.models import Count, Min, OuterRef, Subquery, Sum
         from django.db.models.functions import Coalesce
 
         # 1. Subquery to sum payments for an invoice without join duplication
@@ -153,14 +186,39 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(date__lt=end_date)
 
         # 4. Final aggregation by Client
-        # Since we aggregate an already annotated 'remainder_val', 
+        # Since we aggregate an already annotated 'remainder_val',
         # Django will correctly sum the individual remainders.
-        summary = queryset.values('client__id', 'client__name').annotate(
+        summary = queryset.values('client__id', 'client__name', 'client__plafond', 'client__delai_paiement_jours', 'client__phone').annotate(
             nb_factures=Count('id'),
             solde_du=Sum('remainder_val'),
             total_facture=Sum('total_ttc'),  # Summing pre-annotated rows is safe
-            montant_paye=Sum('paid_amount')
+            montant_paye=Sum('paid_amount'),
+            plus_ancienne=Min('date')
         ).order_by('-solde_du')
+
+        # Dernier règlement par client (hors ventes en compte) : requête séparée
+        # volontaire — un Max() joint à 'paiements' dans l'agrégat ci-dessus
+        # dupliquerait les lignes de facture et fausserait les sommes.
+        from django.db.models import Max
+        client_ids = [item['client__id'] for item in summary if item['client__id']]
+        last_payments = {
+            row['facture__client_id']: row['last']
+            for row in Caisse.objects.filter(
+                facture__client_id__in=client_ids,
+                statut='completee'
+            ).exclude(
+                mode_paiement='en_compte'
+            ).values('facture__client_id').annotate(last=Max('date_paiement'))
+        }
+
+        # Dernière relance par client (tous canaux confondus, type RELANCE)
+        last_relances = {
+            row['client_id']: row['last']
+            for row in SmsLog.objects.filter(
+                client_id__in=client_ids,
+                type='RELANCE'
+            ).values('client_id').annotate(last=Max('created_at'))
+        }
 
         results = []
         for item in summary:
@@ -168,13 +226,190 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             results.append({
                 'id': item['client__id'],
                 'client': item['client__name'],
+                'phone': item['client__phone'],
+                'plafond': item['client__plafond'],
+                'delai_paiement_jours': item['client__delai_paiement_jours'],
                 'nb_factures': item['nb_factures'],
                 'total_facture': item['total_facture'],
                 'montant_paye': item['montant_paye'],
-                'solde_du': item['solde_du']
+                'solde_du': item['solde_du'],
+                'plus_ancienne': item['plus_ancienne'],
+                'dernier_paiement': last_payments.get(item['client__id']),
+                'derniere_relance': last_relances.get(item['client__id'])
             })
 
         return Response(results)
+
+    def _client_solde(self, client):
+        """Solde impayé d'un client (même logique que synthese_clients)."""
+        from django.db.models import OuterRef, Subquery, Sum
+        from django.db.models.functions import Coalesce
+
+        paid_subquery = Caisse.objects.filter(
+            facture=OuterRef('pk'), statut='completee'
+        ).exclude(mode_paiement='en_compte').values('facture').annotate(
+            total=Sum('montant')
+        ).values('total')[:1]
+
+        return Facture.objects.filter(
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+            client=client
+        ).annotate(
+            paid_amount=Coalesce(Subquery(paid_subquery), Value(0, output_field=DecimalField())),
+            remainder_val=F('total_ttc') - F('paid_amount')
+        ).filter(remainder_val__gt=1).aggregate(
+            solde=Sum('remainder_val'), nb=Count('id')
+        )
+
+    def _send_relance_email(self, client, message):
+        """Envoie la relance par email via la config SMTP Django."""
+        from django.conf import settings
+        from django.core.mail import send_mail
+
+        if not getattr(settings, 'EMAIL_HOST_USER', ''):
+            return False, "Serveur email non configuré (EMAIL_HOST_USER manquant)."
+
+        from ...utils.currency import get_pharmacy_name
+        pharma = get_pharmacy_name()
+        try:
+            send_mail(
+                subject=f"Rappel de règlement — {pharma}",
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[client.email],
+                fail_silently=False,
+            )
+            return True, 'Email de relance envoyé.'
+        except Exception as e:
+            logger.error(f"Échec envoi email relance ({client.email}): {e!s}")
+            return False, f"Échec de l'envoi email : {e!s}"
+
+    @action(detail=False, methods=['get'])
+    def relance_preview(self, request):
+        """Données de relance d'un client : solde, téléphone, message type."""
+        client_id = parse_id(request.query_params.get('client_id'), field='client_id')
+        try:
+            client = Client.objects.get(pk=client_id)
+        except Client.DoesNotExist:
+            return Response({'detail': 'Client introuvable.'}, status=404)
+
+        agg = self._client_solde(client)
+        solde = agg['solde'] or Decimal(0)
+
+        from ...utils.currency import get_pharmacy_name
+        pharma = get_pharmacy_name()
+        montant = f"{int(solde):,}".replace(',', ' ')
+        message = (
+            f"Bonjour {client.name}, vous avez {agg['nb']} facture(s) en attente "
+            f"chez {pharma} pour un total de {montant} F. Merci de bien vouloir "
+            f"procéder au règlement. — {pharma}"
+        )
+
+        # Numéro wa.me : préfixe indicatif 237 pour les numéros locaux à 9 chiffres
+        digits = ''.join(filter(str.isdigit, client.phone or ''))
+        phone_wa = f"237{digits}" if len(digits) == 9 and digits.startswith('6') else digits
+
+        from django.conf import settings as dj_settings
+
+        from ...models import PharmacySettings
+        ps = PharmacySettings.objects.first()
+        whatsapp_configured = bool(
+            ps and (ps.whatsapp_phone_id or '').strip() and (ps.whatsapp_access_token or '').strip()
+        )
+
+        return Response({
+            'client_id': client.id,
+            'client_name': client.name,
+            'phone': client.phone or '',
+            'phone_wa': phone_wa,
+            'email': client.email or '',
+            'email_configured': bool(getattr(dj_settings, 'EMAIL_HOST_USER', '')),
+            'solde_du': solde,
+            'nb_factures': agg['nb'],
+            'message': message,
+            'whatsapp_configured': whatsapp_configured,
+        })
+
+    @action(detail=False, methods=['post'])
+    @idempotent_action
+    def relancer(self, request):
+        """
+        Envoie une relance de créance au client.
+        Canaux : 'sms' (SmsService), 'whatsapp' (Meta API),
+        'whatsapp_link' (envoyé par l'utilisateur — log de traçabilité seul).
+        """
+        client_id = parse_id(request.data.get('client_id'), field='client_id')
+        channel = request.data.get('channel')
+        message = (request.data.get('message') or '').strip()
+        if channel not in ('email', 'sms', 'whatsapp', 'whatsapp_link'):
+            raise ValidationError({'detail': "Canal invalide (email, sms, whatsapp, whatsapp_link)."})
+        if not message:
+            raise ValidationError({'detail': 'Le message est requis.'})
+        try:
+            client = Client.objects.get(pk=client_id)
+        except Client.DoesNotExist:
+            return Response({'detail': 'Client introuvable.'}, status=404)
+        if channel == 'email':
+            if not (client.email or '').strip():
+                return Response(
+                    {'detail': 'Aucune adresse email pour ce client.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        elif not (client.phone or '').strip():
+            return Response(
+                {'detail': 'Aucun numéro de téléphone pour ce client.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if channel == 'sms':
+            from ...services.sms import SmsService
+            success, detail = SmsService().send_sms(
+                recipient=client.phone,
+                message=message,
+                sms_type='RELANCE',
+                user=request.user,
+                context={'client': client}
+            )
+        else:
+            if channel == 'email':
+                success, detail = self._send_relance_email(client, message)
+            elif channel == 'whatsapp':
+                from ...whatsapp_service import WhatsAppService
+                success = WhatsAppService.send_text_message(
+                    recipient_number=client.phone,
+                    message=message,
+                    recipient_name=client.name,
+                    msg_type=WhatsAppLog.Type.RAPPEL
+                )
+                detail = 'Message WhatsApp envoyé.' if success else "Échec de l'envoi WhatsApp."
+            else:  # whatsapp_link — le message part du téléphone de l'utilisateur
+                success = True
+                detail = 'Relance enregistrée (lien WhatsApp ouvert).'
+            # Marqueur unifié : 'derniere_relance' se lit dans SmsLog quel que
+            # soit le canal (le canal réel est dans provider_response).
+            SmsLog.objects.create(
+                recipient_number=client.email if channel == 'email' else (client.phone or ''),
+                recipient_name=client.name,
+                message=message,
+                type=SmsLog.Type.RELANCE,
+                status=SmsLog.Status.SENT if success else SmsLog.Status.FAILED,
+                sent_by=request.user,
+                client=client,
+                provider_response=f'CANAL: {channel}',
+                sent_at=timezone.now()
+            )
+
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.OTHER,
+            model_name='Client',
+            object_id=client.id,
+            description=f'Relance créance ({channel})',
+            details={'channel': channel, 'success': success},
+            request=request
+        )
+
+        return Response({'success': success, 'detail': detail})
 
     @action(detail=False, methods=['get'])
     def export_excel(self, request):

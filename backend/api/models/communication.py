@@ -12,6 +12,7 @@ class SmsLog(models.Model):
         RAPPEL = 'RAPPEL', 'Rappel Prise'
         MANUEL = 'MANUEL', 'Envoi Manuel'
         MARKETING = 'MARKETING', 'Marketing'
+        RELANCE = 'RELANCE', 'Relance Créance'
 
     class Status(models.TextChoices):
         PENDING = 'PENDING', 'En attente'
@@ -186,3 +187,53 @@ class MessageTemplate(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class TreatmentReminder(models.Model):
+    """Rappel interne de traitement client.
+
+    Créé manuellement par un admin quand un client prend un médicament
+    spécifique : la durée est saisie à la création (jours directement, ou
+    doses/jour × quantité → durée calculée). Quand la fin de traitement
+    approche, l'équipe est alertée en popup pour anticiper la commande.
+    """
+    class Statut(models.TextChoices):
+        EN_ATTENTE = 'EN_ATTENTE', 'En attente'
+        TRAITE = 'TRAITE', 'Médicament arrivé — patient à informer'
+        PATIENT_INFORME = 'PATIENT_INFORME', 'Patient informé'
+        IGNORE = 'IGNORE', 'Ignoré'
+
+    client = models.ForeignKey('Client', on_delete=models.CASCADE, related_name='rappels_traitement')
+    produit = models.ForeignKey('Produit', on_delete=models.SET_NULL, null=True, blank=True, related_name='rappels_traitement')
+    produit_nom = models.CharField(max_length=200, help_text="Nom du produit au moment de la création (sauvegarde)")
+
+    date_debut = models.DateField(help_text="Début du traitement (souvent la date d'achat)")
+    quantite = models.PositiveIntegerField(null=True, blank=True, help_text="Quantité remise (ex: 60 comprimés)")
+    doses_par_jour = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True, help_text="Prises par jour (ex: 2.0)")
+    duree_jours = models.PositiveIntegerField(help_text="Durée du traitement en jours")
+    date_fin_prevue = models.DateField(db_index=True, help_text="Date de fin calculée : date_debut + duree_jours")
+
+    statut = models.CharField(max_length=20, choices=Statut.choices, default=Statut.EN_ATTENTE)
+    notes = models.TextField(blank=True, default="")
+
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='rappels_crees')
+    created_at = models.DateTimeField(auto_now_add=True)
+    traite_par = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='rappels_traites')
+    traite_le = models.DateTimeField(null=True, blank=True)
+    informe_par = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='rappels_informes')
+    informe_le = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['date_fin_prevue']
+        verbose_name = "Rappel de traitement"
+        verbose_name_plural = "Rappels de traitement"
+
+    def save(self, *args, **kwargs):
+        from datetime import timedelta
+        self.date_fin_prevue = self.date_debut + timedelta(days=self.duree_jours)
+        if self.produit_id and not self.produit_nom:
+            self.produit_nom = self.produit.name
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Rappel {self.produit_nom} → {self.client.name} (fin {self.date_fin_prevue})"

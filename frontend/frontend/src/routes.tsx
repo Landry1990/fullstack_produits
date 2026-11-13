@@ -68,6 +68,7 @@ const StatistiquesFournisseur = lazyWithRetry(() => import('./components/Statist
 const JournalCaisse = lazyWithRetry(() => import('./components/JournalCaisse'));
 const Perimes = lazyWithRetry(() => import('./components/Perimes'));
 const Creances = lazyWithRetry(() => import('./components/Creances'));
+const RappelsTraitement = lazyWithRetry(() => import('./components/RappelsTraitement'));
 const Avoirs = lazyWithRetry(() => import('./components/Avoirs'));
 const ClientCredits = lazyWithRetry(() => import('./components/avoirs-client/ClientCreditsPage'));
 const RapportMensuel = lazyWithRetry(() => import('./components/RapportMensuel'));
@@ -182,6 +183,7 @@ export const router = createBrowserRouter([
           { path: 'fidelite', ...perm('clients', LoyaltyPage) },
           { path: 'outils/imc', ...perm(['clients', 'clients_imc'], BMICalculator) },
           { path: 'creances', ...perm('creances', Creances) },
+          { path: 'rappels-traitement', ...perm(['clients', 'clients_rappels'], RappelsTraitement) },
           { path: 'statistiques-fournisseurs', ...perm('statistiques_fournisseurs', StatistiquesFournisseur) },
 
           // ── Inventaire ──

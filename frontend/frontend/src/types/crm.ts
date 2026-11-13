@@ -17,6 +17,7 @@ export interface Client {
     email: string
     client_type?: 'PARTICULIER' | 'PROFESSIONNEL'
     plafond?: string
+    delai_paiement_jours?: number
     taux_couverture?: string
     remise_automatique?: string
     majoration_pro_pourcentage?: string

@@ -370,6 +370,14 @@
             "action_stock": "View stock",
             "action_clients": "View clients"
         },
+        "goal_popup": {
+            "count": "{{count}} goals reached",
+            "title_jour": "Daily goal reached!",
+            "title_semaine": "Weekly goal reached!",
+            "title_mois": "Monthly goal reached!",
+            "body": "Revenue {{actual}} — {{rate}}% of the target ({{target}}). Well done!",
+            "open": "Dashboard"
+        },
         "challenges_title": "Active challenges",
         "challenges_subtitle": "Tracking active commercial challenges",
         "challenges_empty": "No active challenge",

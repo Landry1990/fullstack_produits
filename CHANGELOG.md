@@ -2,6 +2,247 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-11-13 — Popup « objectif atteint » (CA jour/semaine/mois) pour les admins
+
+- Nouveau `SalesGoalNotifications` : cartes trophée en bas à droite quand le CA
+  atteint un objectif du tableau de bord manager (jour, semaine, mois — `rate ≥ 100`).
+  Réutilise `useManagerStats` (React Query 5 min, cache backend 60 s) — aucun
+  calcul ni endpoint supplémentaire ; `enabled` ajouté au hook pour ne pas
+  fetcher chez les non-admins (superuser/PHARMACIEN uniquement).
+- Clé de masquage = période + date de début → la carte réapparaît au nouveau
+  jour/lundi/1er du mois, jamais deux fois pour la même période dans la session.
+- Le conteneur `fixed bottom-4 right-4` de `TreatmentReminderNotifications` est
+  sorti du composant et mutualisé dans `Layout` — les deux panneaux s'empilent
+  proprement au lieu de se superposer. Bouton « Dashboard » → `/app/manager-dashboard`.
+- i18n : `dashboard:manager_dashboard.goal_popup.*` fr/en. `tsc` + ESLint propres.
+
+## 2026-11-13 — Revue : relance créance rendue idempotente
+
+- `@idempotent_action` ajouté sur `POST /api/creances/relancer/` : le frontend
+  envoyait déjà `Idempotency-Key` (UUID par envoi) mais sans le décorateur la clé
+  était ignorée → double-clic/retry réseau = SMS/email en double. Désormais le
+  résultat est dédupliqué comme `ajouter_paiement`.
+
+## 2026-11-13 — Messagerie interne : réduction du délai de notification
+
+- Le compteur des messages non lus était interrogé toutes les 30 secondes,
+  ce qui retardait le badge, le son et la notification chez le destinataire.
+- `frontend/frontend/src/components/common/messaging/useMessaging.ts` :
+  vérification toutes les 3 secondes pour le compteur et la liste ouverte ;
+  compteur maintenu en arrière-plan lorsque le navigateur le permet.
+  Aucun changement backend ni migration ; il s'agit de polling, pas de push.
+- `frontend/frontend/src/hooks/__tests__/useMessaging.test.tsx` : 3 tests
+  passants (réception à 3 secondes, fenêtre sans focus, utilisateur absent).
+  ESLint ciblé propre. Vérification TypeScript globale bloquée par des erreurs
+  dans du code non modifié (dont le typage de la mutation d'envoi).
+
+## 2026-11-13 — Rappels de traitement : alertes internes pour médicaments spécifiques
+
+- **Besoin** : prévenir l'équipe quand le traitement d'un client (médicament
+  spécifique) se termine bientôt, pour **anticiper la commande fournisseur**
+  avant le passage du patient.
+- **`TreatmentReminder`** (migration `0292`, `models/communication.py`) :
+  client + produit (+ `produit_nom` sauvegardé), `date_debut`, `duree_jours`
+  — saisie directe **ou dérivée** de `quantite` × `doses_par_jour` (ex :
+  60 cpr à 2/j → 30 j) — `date_fin_prevue` calculée au save, statut
+  EN_ATTENTE/TRAITE/IGNORE + traçabilité `traite_par`/`traite_le`.
+- **Réglages** (`PharmacySettings`, mêmes migration) :
+  `rappel_traitement_actif` (on/off popups) +
+  `rappel_traitement_jours_avant` (défaut 7 j — anticipation commande).
+- **`/api/rappels-traitement/`** : CRUD + `due` (rappels dans la fenêtre)
+  + `traiter`/`ignorer`. Écritures réservées aux admins
+  (superuser/staff/rôle PHARMACIEN via `_is_reminder_admin`).
+- **Frontend** : page `/app/rappels-traitement` (menu Clients → « Rappels
+  traitement », clé `clients_rappels`) — liste filtrable par statut,
+  posologie, J restants, **stock actuel** ; modale de création (recherche
+  client/produit, durée directe ou quantité × doses, fin prévue live) ;
+  carte paramètres inline (actif + jours). Composant
+  `TreatmentReminderNotifications` dans `Layout` : popups persistants
+  (orange à J-N, rouge infini si dépassé) avec actions Traité/Ignorer —
+  anti-spam par session.
+- Tests : `test_rappels_traitement` — **11/11 verts** (+ régression
+  créances 25/25). `tsc` + ESLint propres.
+- **Correctif UX (même jour)** : les popups de rappel sont sortis de
+  `gooeyToast` (ils se mélangeaient aux alertes péremption et le style
+  custom rognait le contenu) → **panneau de cartes dédié en bas à droite**
+  : titre + produit/client + stock + boutons Traité/Ignorer/Ouvrir tout
+  visibles, croix = masquage de session, réduction « N rappels » quand
+  plusieurs. Édition d'un rappel (PATCH, recalcul `date_fin_prevue`,
+  synchro `produit_nom`, purge de la posologie obsolète) + navigation
+  clavier ↑↓/Entrée/Échap dans les recherches client/produit de la
+  modale — déjà livrés dans la foulée.
+- **Promis `PRET` + déclencheur stock (même jour, migration `0294`)** :
+  le statut `DELIVRE` n'est plus posé automatiquement à la couverture
+  du stock — nouveau statut **`PRET` (« Prêt à retirer »)** ; `DELIVRE`
+  = retrait physique (`delivrer`/`resolve_for_promis`, `date_livraison`
+  posée à ce moment). `client_informe_par/le` trace l'appel au client
+  (action `promis/{id}/client_informe/`). `annuler_et_reintegrer` et
+  l'annulation de facture traitent PRET comme DELIVRE (couverture déjà
+  consommée — pas de remise stock ; remboursement via flux avoir).
+  `bulk_delivrer` accepte PRET. Endpoint `due` renvoie aussi les promis
+  PRET non informés → cartes bleues « ×N arrivé (promis) » dans le
+  panneau de rappels. **Auto-flip** : `notify_stock_changed` fait passer
+  les `TreatmentReminder` EN_ATTENTE → TRAITE dès que le produit a du
+  stock (toutes les entrées : réception, ajustement, transformation,
+  inventaire, avoir). Frontend : filtre/badge « Prêts à retirer »,
+  bouton « Client informé » (Phone) + « informé le … », stat QuickStats.
+  Tests : 51/51 (rappels 22 + stock_management + invariants).
+- **Workflow « informer le patient » (même jour, migration `0293`)** :
+  « Traité » signifie désormais *médicament arrivé* — le rappel reste
+  dans `due` sous forme de carte verte « X est arrivé → informer le
+  patient » (téléphone cliquable `tel:`) jusqu'à l'action **Patient
+  informé** (statut `PATIENT_INFORME`, traçabilité `informe_par`/`le`).
+  `ignorer` accepte aussi l'étape TRAITE (patient injoignable).
+  Onglets liste : En attente / Patients à informer / informés / ignorés.
+  Tests : 16/16 verts.
+
+## 2026-11-13 — Créances : impression du relevé par période
+
+- Le relevé client ne contient **que les factures non réglées** (règle
+  déjà garantie par `remainder > 0` côté endpoint `releve`) — c'est le
+  document envoyé au débiteur (assurance, entreprise) pour règlement.
+- **Nouvelle modale `RelevePeriodeModal`** : le clic sur « Imprimer le
+  relevé » n'hérite plus des filtres de la page — l'utilisateur choisit
+  explicitement la période : presets **Mois en cours / Mois précédent /
+  Tranches 1–10, 11–20, 21–fin** (mêmes tranches que l'échéancier
+  fournisseurs RELEVE), **Toutes périodes**, ou dates libres.
+- Choix du format (simple / détaillé produits) déplacé dans la modale.
+- Fichiers : `creances/modals/RelevePeriodeModal.tsx` (nouveau),
+  `CreancesFilters.tsx` (dropdown → bouton unique), `Creances.tsx`,
+  locales fr/en. `tsc` + ESLint propres.
+
+## 2026-11-13 — Créances : relance client SMS / WhatsApp avec traçabilité
+
+- **`SmsLog.Type.RELANCE`** (migration `0291`, choices seuls) — marqueur
+  unifié de relance quel que soit le canal.
+- **`GET /api/creances/relance_preview/`** : solde + nb factures du client,
+  numéro `phone_wa` (préfixe 237 auto pour numéros 6XXXXXXXX), flag
+  `whatsapp_configured`, message pré-rempli serveur (nom pharmacie réel).
+- **`POST /api/creances/relancer/`** : canaux `email` (`send_mail` SMTP —
+  canal principal), `sms` (SmsService, loggé), `whatsapp` (Meta Cloud API
+  si credentials), `whatsapp_link` (wa.me — ouvre le WhatsApp de
+  l'utilisateur, log de traçabilité seul). 400 si contact manquant selon
+  le canal (email/phone). Audit `OTHER` systématique.
+  `relance_preview` renvoie aussi `email` + `email_configured`.
+- **`synthese_clients`** : + `phone`, `derniere_relance` (Max SmsLog
+  RELANCE par client) → caption « Rel. le JJ/MM » sous le dernier
+  paiement.
+- Frontend : bouton 💬 « Relancer » sur chaque ligne débiteur →
+  `RelanceModal` (solde, nb factures, téléphone, message éditable,
+  3 canaux — WhatsApp Auto masqué si non configuré). Toasts + refresh.
+- Tests : preview + envoi SMS + `derniere_relance` + refus sans téléphone
+  → **23/23 verts**.
+
+## 2026-11-13 — Créances : échéances, badges « En retard », barre d'aging (lot P1)
+
+- **`Client.delai_paiement_jours`** (migration `0290`, AddField défaut 0 —
+  0 = pas d'échéance définie → rétro-compatible, aucun badge parasite sur
+  l'existant). Échéance = date facture + délai. Champ exposé via
+  `ClientSerializer` + saisi dans `ClientFormModal` (bloc client pro).
+- **`GET /api/creances/aging/`** : répartition des impayés en tranches
+  0-30/30-60/60-90/90+ j (montant + nb), mêmes filtres client/date que la
+  liste. Barre d'aging segmentée sous les QuickStats.
+- **Badges « EN RETARD »** : ligne débiteur (dette la + ancienne > délai)
+  et statut facture (âge > délai du client sélectionné) — remplace le
+  badge « EN ATTENTE » ; le badge âge passe rouge. Badge « Plafond
+  dépassé » recoloré orange pour distinguer les deux alertes.
+- **Filtre « En retard »** sur la liste des débiteurs (toggle dédié).
+- `synthese_clients` renvoie aussi `delai_paiement_jours`.
+- Tests : `test_aging_buckets` (tranches, facture soldée exclue) +
+  assertion `delai` dans le test pilotage → **21/21 verts**.
+- i18n fr+en (`creances:` + `clients:finance.payment_delay`).
+
+## 2026-11-13 — Créances : ancienneté, plafond, dernier règlement + fix troncature (lot P0)
+
+Premier lot des améliorations de pilotage des créances (analyse demandée
+pour usage « pharmacie sérieuse ») :
+
+- **Bug troncature** : `creanceService.getAll` ne lisait que la page 1
+  (20 factures) — les clients à >20 impayées avaient des factures
+  invisibles/non payables. Désormais boucle sur toutes les pages
+  (`page_size=1000`, garde-fou 50 pages).
+- **`synthese_clients`** (backend) : + `plafond` (values), `plus_ancienne`
+  (`Min(date)`), `dernier_paiement` (`Max(date_paiement)` hors `en_compte`,
+  requête séparée pour ne pas dupliquer les lignes dans les sommes).
+- **Table débiteurs** : colonnes « Ancienneté » (badge jours, coloré
+  <30/30-60/>60) et « Dernier paiement » ; badge rouge « Plafond dépassé »
+  sous le nom quand reste > plafond (sentinelle -1 = illimité respectée).
+- **Table factures** : colonne « Âge » triable (tri = date inversée via
+  clé de tri pseudo `'age'`).
+- **Recherche** débiteurs instantanée (client-side) + select client enfin
+  peuplé par la synthèse (avant : seulement les clients déjà visités).
+- Fix type `Paiement` : `date_paiement`/`created_at` ajoutés (les vrais
+  champs API — `date` était fictif).
+- Test backend `test_synthese_clients_champs_pilotage` (plafond,
+  ancienneté 90 j, `en_compte` exclu du dernier règlement). 20/20 verts.
+- i18n fr+en (8 nouvelles clés `creances:`).
+
+## 2026-11-12 — Erreurs : timeout axios traduit au lieu du message brut anglais
+
+- Audit UX des erreurs (couverture globale bonne : retry + toasts
+  online/offline persistants, 401 → login avec retour à la page, 403 licence,
+  chunk reload auto, `BackendHealthCheck`, `maintenance.html`, handler
+  `ProtectedError` en FR). Seul trou : un **timeout axios (15 s,
+  `ECONNABORTED`)** affichait le message brut `timeout of 15000ms exceeded`.
+- `utils/errorHandling.ts` : cas `ECONNABORTED` → nouvelle clé
+  `common:errors.timeout` traduite fr (« Délai dépassé : le serveur met trop
+  de temps à répondre… ») / en.
+- `__tests__/errorHandling.test.ts` : initialisation d'i18next avec les
+  ressources FR en ligne — l'instance `i18n` (hors `useTranslation` mockée)
+  n'était jamais chargée en test → les 7 tests existants sur les messages
+  traduits échouaient depuis toujours. Désormais **23/23 verts** (dont le
+  nouveau test timeout).
+
+## 2026-11-12 — Perf : warm-up imports backend + cache immutable des locales
+
+- **`backend/backend/asgi.py`** : `get_resolver().url_patterns` au démarrage
+  du worker — les ~2 s d'import paresseux du URLconf (toutes les
+  vues/serializers) sont désormais payés au boot, avant d'accepter du trafic.
+  Avant, le premier hit de chaque worker Uvicorn (boot + recycle
+  `--limit-max-requests 10000`) infligeait ~2 s à un utilisateur réel
+  (`/api/produits/` 2,67 s, `dashboard/init` 2,2 s, `commandes` 2,1 s mesurés).
+  Après fix, premier hit sur worker neuf : 60–270 ms.
+- **`src/i18n.ts`** : `loadPath` des traductions suffixé par
+  `?v=${BUILD_VERSION.number}` — chaque build produit une URL nouvelle.
+- **`nginx.conf`** : `location /locales/` en `Cache-Control: public,
+  max-age=31536000, immutable`. Avant, les ~40 namespaces i18next chargés au
+  boot étaient revalidés par ETag à chaque rechargement (40 round-trips HTTP
+  de 304). Désormais zéro requête locale au reload ; les traductions restent
+  fraîches à chaque déploiement grâce au `?v=`.
+- Diagnostic complet mené : endpoints récurrents tous < 160 ms, SQL propre
+  (pas de N+1), bundle déjà optimisé (lazy routes, vendor chunks, SW
+  precache, gzip précompressé) — les deux seuls vrais goulots corrigés.
+- Vérifié : `nginx -t` OK, `tsc --noEmit` 0 erreur, build déployé (dist
+  bind-mounté), premier hit post-restart 149 ms sur `/api/produits/`.
+
+## 2026-11-10 — Échéancier fournisseurs : décade stricte (21-fin) + tranches dashboard corrigées
+
+- **`statement_periods` en décade stricte** (`supplier_finance.py`) : la
+  dernière tranche absorbe désormais le reste du mois — 10j → 1-10, 11-20,
+  **21-fin** ; 15j → 1-15, 16-fin. Avant, un mois de 31 jours produisait une
+  mini-tranche `31-31` et les factures du 21-30 étaient échues le 9 au lieu
+  du 10. Nombre de tranches = blocs complets d'un mois de référence 30 j
+  (10j → 3 tranches, 15j → 2, ≥30j → mensuel). Impacte échéancier,
+  échéances détaillées et dashboard de façon cohérente.
+- **`supplier_debts` (widget dettes fournisseurs)** calculait ses tranches
+  RELEVE différemment de l'échéancier :
+  - regroupement par `order.date` (création) au lieu de `date_cloture` → une
+    commande créée et clôturée dans des tranches différentes était rangée
+    dans la mauvaise ;
+  - `period_end = start + periode - 1` jamais capé au dernier jour du mois
+    (le `min(... + 32 j)` au-dessus était écrasé plus bas) → tranche 21-28
+    de février finissait le 02/03.
+  - Fix : réutilisation de `statement_periods()` (source de vérité unique)
+    + `date_cloture`, comme `supplier_finance`. Dashboard et échéancier
+    affichent désormais exactement les mêmes échéances.
+- Test de régression `test_supplier_debts_releve_tranche_end_of_month`
+  (tranche `date_cloture` ≠ `date`, 21-31 en octobre, cap fin de mois en
+  février).
+- Note : l'échec `test_supplier_debt_uses_price_cost` observé en cours de
+  route venait du cache Redis dev partagé (`supplier_dashboard_stats` TTL
+  120 s) — purger la clé avant les tests.
+- Vérifié : `test_dashboard` + `test_mise_en_place` = 35/35 dans Docker.
+
 ## 2026-11-10 — Bon de réception PDF : ligne produit coupée sous l'en-tête en page 2+
 
 - Une ligne produit (`<tr>` à deux lignes : nom + `LOT/EXP`) pouvait être

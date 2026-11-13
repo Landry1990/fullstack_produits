@@ -633,6 +633,7 @@
         "connection": "Erreur de connexion : Impossible de joindre le serveur.",
         "unexpected": "Une erreur inattendue est survenue.",
         "module_timeout": "Timeout : Le chargement du module a pris trop de temps",
+        "timeout": "Délai dépassé : le serveur met trop de temps à répondre. Veuillez réessayer.",
         "settings_load": "Erreur lors du chargement des paramètres"
     },
     "no_section": "Aucun rayon",

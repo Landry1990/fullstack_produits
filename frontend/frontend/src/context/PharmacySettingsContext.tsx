@@ -36,6 +36,8 @@ export interface PharmacySettings {
   currency_symbol?: string;
   locale?: string;
   auto_logout_timeout?: number;
+  rappel_traitement_actif?: boolean;
+  rappel_traitement_jours_avant?: number;
   availability_weight?: number;
   rotation_weight?: number;
   // WhatsApp Business API (Meta Cloud)
@@ -117,6 +119,8 @@ const DEFAULT_SETTINGS: PharmacySettings = {
   currency_symbol: 'FCFA',
   locale: 'fr-FR',
   auto_logout_timeout: 15,
+  rappel_traitement_actif: true,
+  rappel_traitement_jours_avant: 7,
   hide_cash_totals: false,
   billetage_obligatoire: true,
   availability_weight: 60,

@@ -2,8 +2,9 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency, normalizeNumberInput } from '../../utils/formatters';
 import { formatDate, formatTime } from '../../utils/dateUtils';
-import { Eye, DollarSign, ArrowUpRight, ChevronRight, Hash, Calendar, Users } from 'lucide-react';
-import type { Creance, Client } from '../../types';
+import { Eye, DollarSign, ArrowUpRight, ChevronRight, Hash, Calendar, Users, Clock, MessageCircle } from 'lucide-react';
+import type { Creance } from '../../types';
+import type { GroupedClient } from '../../hooks/useCreancesData';
 import { EmptyState } from '../ui/EmptyState';
 import SkeletonTable from '../ui/SkeletonTable';
 
@@ -17,9 +18,20 @@ const SortIcon: React.FC<SortIconProps> = ({ column, sortConfig }) => {
     return <ArrowUpRight className={`size-3 transition-transform ${sortConfig.direction === 'desc' ? 'rotate-180' : ''}`} />;
 };
 
+const ageInDays = (dateStr?: string | null): number | null => {
+    if (!dateStr) return null;
+    return Math.max(0, Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000));
+};
+
+const ageBadgeClass = (days: number | null) =>
+    days === null ? 'bg-slate-50 text-slate-300 border-slate-200'
+    : days >= 60 ? 'bg-red-50 text-red-600 border-red-200'
+    : days >= 30 ? 'bg-amber-50 text-amber-600 border-amber-200'
+    : 'bg-slate-100 text-slate-500 border-slate-200';
+
 interface CreancesTableProps {
     mode: 'clients' | 'invoices';
-    groupedClients: { client: Client, total: number, paye: number, reste: number, count: number }[];
+    groupedClients: GroupedClient[];
     filteredCreances: Creance[];
     loading: boolean;
     showHistory: boolean;
@@ -27,10 +39,13 @@ interface CreancesTableProps {
     onSelectAll: (e: React.ChangeEvent<HTMLInputElement>) => void;
     onSelectOne: (id: number) => void;
     onViewClient: (id: string) => void;
+    onRelance: (clientId: number) => void;
     onViewDetails: (creance: Creance) => void;
     onPay: (creance: Creance) => void;
     sortConfig: { key: string, direction: 'asc' | 'desc' };
     onSort: (key: unknown) => void;
+    /** Délai de règlement (jours) du client sélectionné — 0 = pas d'échéance */
+    clientDelai?: number;
 }
 
 export const CreancesTable: React.FC<CreancesTableProps> = ({
@@ -43,10 +58,12 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
     onSelectAll,
     onSelectOne,
     onViewClient,
+    onRelance,
     onViewDetails,
     onPay,
     sortConfig,
-    onSort
+    onSort,
+    clientDelai = 0
 }) => {
     const { t } = useTranslation(['creances', 'common']);
 
@@ -76,6 +93,8 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                         <tr className="bg-slate-50">
                             <th className="text-caption font-bold uppercase tracking-widest text-slate-400 py-2 px-3">{t('creances:client_list.client')}</th>
                             <th className="text-caption font-bold uppercase tracking-widest text-slate-400 text-right py-2 px-3">{t('creances:client_list.nb_invoices')}</th>
+                            <th className="text-caption font-bold uppercase tracking-widest text-slate-400 text-center py-2 px-3">{t('creances:client_list.oldest_debt')}</th>
+                            <th className="text-caption font-bold uppercase tracking-widest text-slate-400 text-center py-2 px-3">{t('creances:client_list.last_payment')}</th>
                             <th className="text-caption font-bold uppercase tracking-widest text-slate-400 text-right py-2 px-3">{t('creances:client_list.total_amount')}</th>
                             <th className="text-caption font-bold uppercase tracking-widest text-slate-400 text-right py-2 px-3">{t('creances:client_list.already_paid')}</th>
                             <th className="text-caption font-bold uppercase tracking-widest text-slate-400 text-right py-2 px-3">{t('creances:client_list.remaining_due')}</th>
@@ -103,12 +122,56 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                                         </div>
                                         <div className="flex flex-col">
                                             <span className="font-bold text-sm text-slate-800 group-hover:text-emerald-600 transition-colors">{groupe.client.name}</span>
-                                            <span className="text-caption font-bold text-slate-400 uppercase tracking-widest">{t('creances:client_type_label')}</span>
+                                            {(() => {
+                                                const oldestAge = ageInDays(groupe.plusAncienne);
+                                                const isOverdue = groupe.delaiPaiementJours > 0 && oldestAge !== null && oldestAge > groupe.delaiPaiementJours;
+                                                const overLimit = groupe.plafond !== null && groupe.plafond >= 0 && groupe.reste > groupe.plafond;
+                                                if (!isOverdue && !overLimit) {
+                                                    return <span className="text-caption font-bold text-slate-400 uppercase tracking-widest">{t('creances:client_type_label')}</span>;
+                                                }
+                                                return (
+                                                    <div className="flex flex-wrap gap-1 mt-0.5">
+                                                        {isOverdue && (
+                                                            <span
+                                                                className="w-fit px-1.5 py-0.5 bg-red-50 text-red-600 border border-red-200 rounded text-[9px] font-bold uppercase tracking-widest"
+                                                                title={`${t('creances:client_list.due_in')} : ${groupe.delaiPaiementJours} j`}
+                                                            >
+                                                                {t('creances:client_list.overdue_badge')}
+                                                            </span>
+                                                        )}
+                                                        {overLimit && (
+                                                            <span
+                                                                className="w-fit px-1.5 py-0.5 bg-orange-50 text-orange-600 border border-orange-200 rounded text-[9px] font-bold uppercase tracking-widest"
+                                                                title={`${t('creances:client_list.credit_limit')} : ${formatCurrency(groupe.plafond)}`}
+                                                            >
+                                                                {t('creances:client_list.over_limit')}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })()}
                                         </div>
                                     </div>
                                 </td>
                                 <td className="text-right py-2 px-3">
                                     <span className="px-2 py-1 bg-slate-100 rounded-lg font-mono text-xs font-bold text-slate-500">{groupe.count}</span>
+                                </td>
+                                <td className="text-center py-2 px-3">
+                                    <span className={`inline-flex px-2 py-0.5 rounded-lg border text-xs font-bold ${ageBadgeClass(ageInDays(groupe.plusAncienne))}`}>
+                                        {t('creances:age_days', { count: ageInDays(groupe.plusAncienne) ?? 0 })}
+                                    </span>
+                                </td>
+                                <td className="text-center py-2 px-3">
+                                    <div className="flex flex-col items-center">
+                                        <span className={`text-xs font-bold ${groupe.dernierPaiement ? 'text-slate-600' : 'text-slate-300'}`}>
+                                            {groupe.dernierPaiement ? formatDate(groupe.dernierPaiement) : t('creances:client_list.never')}
+                                        </span>
+                                        {groupe.derniereRelance && (
+                                            <span className="text-micro font-bold text-slate-400 uppercase tracking-widest">
+                                                {t('creances:client_list.last_relance', { date: formatDate(groupe.derniereRelance) })}
+                                            </span>
+                                        )}
+                                    </div>
                                 </td>
                                 <td className="text-right py-2 px-3">
                                     <span className="font-bold text-sm text-slate-800">{formatCurrency(groupe.total)}</span>
@@ -122,16 +185,29 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                                     </span>
                                 </td>
                                 <td className="text-center py-2 px-3">
-                                    <button
-                                        className="inline-flex items-center justify-center size-8 rounded-full text-slate-400 opacity-0 group-hover:opacity-100 transition-all hover:bg-emerald-50 hover:text-emerald-600"
-                                        aria-label={t('common:details', { defaultValue: 'Voir le détail' })}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onViewClient(groupe.client.id.toString());
-                                        }}
-                                    >
-                                        <ChevronRight className="size-5" />
-                                    </button>
+                                    <div className="flex justify-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                                        <button
+                                            className="inline-flex items-center justify-center size-8 rounded-full text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition-all"
+                                            aria-label={t('creances:client_list.relance')}
+                                            title={t('creances:client_list.relance')}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onRelance(groupe.client.id);
+                                            }}
+                                        >
+                                            <MessageCircle className="size-4" />
+                                        </button>
+                                        <button
+                                            className="inline-flex items-center justify-center size-8 rounded-full text-slate-400 transition-all hover:bg-emerald-50 hover:text-emerald-600"
+                                            aria-label={t('common:details', { defaultValue: 'Voir le détail' })}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onViewClient(groupe.client.id.toString());
+                                            }}
+                                        >
+                                            <ChevronRight className="size-5" />
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         ))}
@@ -170,6 +246,7 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                         )}
                         {([
                             { key: 'date', label: t('creances:invoice_list.date'), icon: <Calendar className="size-3.5" />, align: 'left' },
+                            { key: 'age', label: t('creances:invoice_list.age'), icon: <Clock className="size-3.5" />, align: 'left' },
                             { key: 'numero_facture', label: t('creances:invoice_list.invoice_number'), icon: <Hash className="size-3.5" />, align: 'left' },
                             { key: 'ayant_droit', label: t('creances:invoice_list.beneficiary'), icon: <Users className="size-3.5" />, align: 'left' },
                             { key: 'total_ttc', label: t('creances:invoice_list.total'), icon: null, align: 'right' },
@@ -204,6 +281,8 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                         const isSelected = selectedSet.has(creance.id);
                         const remaining = normalizeNumberInput(creance.reste_a_payer);
                         const isPaid = remaining <= 0;
+                        const invoiceAge = ageInDays(creance.date);
+                        const isOverdue = !isPaid && clientDelai > 0 && invoiceAge !== null && invoiceAge > clientDelai;
 
                         return (
                             <tr key={creance.id} className={`hover:bg-slate-50/50 transition-all group ${isSelected ? 'bg-emerald-50/30' : ''}`}>
@@ -230,6 +309,11 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                                     </div>
                                 </td>
                                 <td className="py-2 px-3">
+                                    <span className={`inline-flex px-2 py-0.5 rounded-lg border text-xs font-bold ${isOverdue ? 'bg-red-50 text-red-600 border-red-200' : ageBadgeClass(invoiceAge)}`}>
+                                        {t('creances:age_days', { count: invoiceAge ?? 0 })}
+                                    </span>
+                                </td>
+                                <td className="py-2 px-3">
                                     <span className="font-bold text-sm text-emerald-600 tracking-tight">{creance.numero_facture || '-'}</span>
                                 </td>
                                 <td className="py-2 px-3 font-bold text-sm text-slate-500">{creance.ayant_droit_details?.nom || '-'}</td>
@@ -242,9 +326,13 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                                 </td>
                                 <td className="py-2 px-3 text-center">
                                     <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold transition-all ${
-                                        isPaid ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600 animate-pulse'
+                                        isPaid ? 'bg-emerald-50 text-emerald-600'
+                                        : isOverdue ? 'bg-red-50 text-red-600 animate-pulse'
+                                        : 'bg-amber-50 text-amber-600 animate-pulse'
                                     }`}>
-                                        {isPaid ? t('creances:invoice_list.paid_badge') : t('creances:invoice_list.pending_badge')}
+                                        {isPaid ? t('creances:invoice_list.paid_badge')
+                                        : isOverdue ? t('creances:invoice_list.overdue_badge')
+                                        : t('creances:invoice_list.pending_badge')}
                                     </div>
                                 </td>
                                 <td className="py-2 px-3">

@@ -77,6 +77,8 @@ export interface Paiement {
     mode_paiement_display?: string
     montant: string
     date?: string
+    date_paiement?: string
+    created_at?: string
     user_details?: PaiementUserDetails
     created_by_name?: string
 }
@@ -326,10 +328,13 @@ export interface Promis {
     quantite: number
     quantite_livree?: number
     quantite_restante?: number
-    status: 'ATT' | 'DEL' | 'ANN'
+    status: 'ATT' | 'PRET' | 'DEL' | 'ANN'
     status_display?: string
     date_promis: string
     date_livraison?: string
+    client_informe_par?: number
+    client_informe_par_name?: string
+    client_informe_le?: string
     notes?: string
 }
 

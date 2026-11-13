@@ -22,19 +22,21 @@ export interface UsePromisDataReturn {
     stats: {
         total: number;
         enAttente: number;
+        prets: number;
         delivres: number;
         annules: number;
     };
 
     // Filters & Search
-    filterStatus: 'ALL' | 'ATT' | 'DEL' | 'ANN';
-    setFilterStatus: (status: 'ALL' | 'ATT' | 'DEL' | 'ANN') => void;
+    filterStatus: 'ALL' | 'ATT' | 'PRET' | 'DEL' | 'ANN';
+    setFilterStatus: (status: 'ALL' | 'ATT' | 'PRET' | 'DEL' | 'ANN') => void;
     searchQuery: string;
     setSearchQuery: (query: string) => void;
 
     // Actions
     refresh: () => Promise<void>;
     handleDelivrer: (id: number) => Promise<void>;
+    handleClientInforme: (id: number) => Promise<void>;
     handleAnnuler: (id: number) => Promise<void>; // opens Sudo Modal
     handlePrintTicket: (id: number) => Promise<void>;
     handleWhatsAppReminder: (id: number) => Promise<void>;
@@ -65,7 +67,7 @@ export function usePromisData(): UsePromisDataReturn {
     const [error, setError] = useState<string | null>(null);
 
     // Filters
-    const [filterStatus, setFilterStatus] = useState<'ALL' | 'ATT' | 'DEL' | 'ANN'>('ALL');
+    const [filterStatus, setFilterStatus] = useState<'ALL' | 'ATT' | 'PRET' | 'DEL' | 'ANN'>('ALL');
     const [searchQuery, setSearchQuery] = useState('');
 
     // Form Data (Clients & Products)
@@ -138,6 +140,7 @@ export function usePromisData(): UsePromisDataReturn {
     const stats = useMemo(() => ({
         total: promisList.length,
         enAttente: promisList.filter(p => p.status === 'ATT').length,
+        prets: promisList.filter(p => p.status === 'PRET').length,
         delivres: promisList.filter(p => p.status === 'DEL').length,
         annules: promisList.filter(p => p.status === 'ANN').length
     }), [promisList]);
@@ -161,6 +164,21 @@ export function usePromisData(): UsePromisDataReturn {
             await promisService.delivrer(id);
         } catch (err) {
             gooeyToast.error(t('stock:promis.messages.deliver_error'));
+            logger.error(err);
+            fetchPromis();
+        }
+    };
+
+    const handleClientInforme = async (id: number) => {
+        // Marque « client informé » (traçabilité) — le promis reste PRET
+        // jusqu'au retrait physique (handleDelivrer).
+        const now = new Date().toISOString();
+        setPromisList(prev => prev.map(p => p.id === id ? { ...p, client_informe_le: now } : p));
+        try {
+            await promisService.clientInforme(id);
+            gooeyToast.success(t('stock:promis.messages.inform_success', 'Client marqué comme informé'));
+        } catch (err) {
+            gooeyToast.error(t('stock:promis.messages.inform_error', "Erreur lors du marquage"));
             logger.error(err);
             fetchPromis();
         }
@@ -349,6 +367,7 @@ export function usePromisData(): UsePromisDataReturn {
         setSearchQuery,
         refresh: fetchPromis,
         handleDelivrer,
+        handleClientInforme,
         handleAnnuler,
         handlePrintTicket,
         handleWhatsAppReminder,

@@ -97,6 +97,11 @@ export function extractErrorMessage(err: unknown): string {
     }
 
     // 2. Gestion des erreurs réseau ou sans réponse
+    // Timeout axios : code ECONNABORTED ("timeout of 15000ms exceeded") →
+    // message traduit plutôt que le message brut anglais de la lib.
+    if (errObj.code === 'ECONNABORTED') {
+        return i18n.t('common:errors.timeout');
+    }
     if (errObj.message) {
         const msg = String(errObj.message);
         if (msg === 'Network Error') {

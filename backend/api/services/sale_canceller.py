@@ -190,7 +190,7 @@ class SaleCanceller:
         """Annule les promis liés à cette facture."""
         linked_promis = Promis.objects.filter(facture=facture, is_active=True)
         for promis in linked_promis:
-            if promis.status in (Promis.Status.EN_ATTENTE, Promis.Status.DELIVRE):
+            if promis.status in (Promis.Status.EN_ATTENTE, Promis.Status.PRET, Promis.Status.DELIVRE):
                 if promis.status == Promis.Status.EN_ATTENTE:
                     StockObligationService.cancel_for_promis(promis, user=user)
                 promis.status = Promis.Status.ANNULE

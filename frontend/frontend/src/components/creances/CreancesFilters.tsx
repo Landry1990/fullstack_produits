@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, RotateCcw, Printer, History, Users, Calendar, FileSpreadsheet, ChevronDown, FileText, List } from 'lucide-react';
+import { Search, RotateCcw, Printer, History, Users, Calendar, FileSpreadsheet, AlarmClock } from 'lucide-react';
 import type { Client } from '../../types';
 import { LocalizedDateInput } from '../LocalizedDateInput';
 
@@ -8,6 +8,10 @@ interface CreancesFiltersProps {
     clients: Client[];
     selectedClient: string;
     onClientChange: (id: string) => void;
+    debtorSearch: string;
+    onDebtorSearchChange: (search: string) => void;
+    showOverdueOnly: boolean;
+    onOverdueToggle: (show: boolean) => void;
     dateDebut: string;
     onDateDebutChange: (date: string) => void;
     dateFin: string;
@@ -15,7 +19,7 @@ interface CreancesFiltersProps {
     showHistory: boolean;
     onHistoryToggle: (show: boolean) => void;
     onRefresh: () => void;
-    onPrintStatement: (includeProducts: boolean) => void;
+    onPrintStatement: () => void;
     onExportExcel: () => void;
     loading: boolean;
 }
@@ -24,6 +28,10 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
     clients,
     selectedClient,
     onClientChange,
+    debtorSearch,
+    onDebtorSearchChange,
+    showOverdueOnly,
+    onOverdueToggle,
     dateDebut,
     onDateDebutChange,
     dateFin,
@@ -36,24 +44,12 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
     loading
 }) => {
     const { t } = useTranslation(['creances', 'common']);
-    const [showPrintMenu, setShowPrintMenu] = useState(false);
-    const printMenuRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        const handleClickOutside = (e: MouseEvent) => {
-            if (printMenuRef.current && !printMenuRef.current.contains(e.target as Node)) {
-                setShowPrintMenu(false);
-            }
-        };
-        if (showPrintMenu) document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [showPrintMenu]);
 
     return (
         <div className="p-3 bg-white">
             <div className="flex flex-col xl:flex-row gap-3">
                 {/* Main Filters Section */}
-                <div className="flex-1 grid grid-cols-2 lg:grid-cols-4 gap-2">
+                <div className="flex-1 grid grid-cols-2 lg:grid-cols-6 gap-2">
                     {/* Client Selector */}
                     <div className="space-y-2">
                         <label htmlFor="creances-client-filter" className="text-caption font-bold uppercase tracking-widest text-slate-400 flex items-center gap-2 ml-1">
@@ -112,6 +108,46 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
                         />
                     </div>
 
+                    {/* Debtor Search — filtre instantané de la liste */}
+                    {!selectedClient && (
+                        <div className="space-y-2">
+                            <label htmlFor="creances-debtor-search" className="text-caption font-bold uppercase tracking-widest text-slate-400 flex items-center gap-2 ml-1">
+                                <Search className="size-3.5" /> {t('creances:filters.search_label')}
+                            </label>
+                            <div className="relative group">
+                                <input
+                                    id="creances-debtor-search"
+                                    type="text"
+                                    value={debtorSearch}
+                                    onChange={(e) => onDebtorSearchChange(e.target.value)}
+                                    placeholder={t('creances:filters.search_placeholder')}
+                                    className="w-full pl-10 h-10 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 placeholder:font-normal focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
+                                />
+                                <Search className="size-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-600 transition-colors" />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Overdue Toggle — débiteurs dont la dette la + ancienne dépasse l'échéance */}
+                    {!selectedClient && (
+                        <div className="space-y-2">
+                            <label className="text-caption font-bold uppercase tracking-widest text-slate-400 flex items-center gap-2 ml-1">
+                                <AlarmClock className="size-3.5" /> {t('creances:filters.overdue_label')}
+                            </label>
+                            <button
+                                onClick={() => onOverdueToggle(!showOverdueOnly)}
+                                aria-pressed={showOverdueOnly}
+                                className={`w-full h-10 rounded-xl border text-caption font-bold uppercase tracking-widest transition-all ${
+                                    showOverdueOnly
+                                        ? 'bg-red-50 border-red-300 text-red-600 shadow-sm'
+                                        : 'bg-white border-slate-200 text-slate-400 hover:text-slate-500'
+                                }`}
+                            >
+                                {t('creances:filters.overdue_only')}
+                            </button>
+                        </div>
+                    )}
+
                     {/* Status Toggle */}
                     <div className="space-y-2">
                         <label className="text-caption font-bold uppercase tracking-widest text-slate-400 flex items-center gap-2 ml-1">
@@ -157,43 +193,13 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
                         Export Excel
                     </button>
                     {selectedClient && (
-                        <div ref={printMenuRef} className="relative">
-                            <button
-                                onClick={() => setShowPrintMenu(!showPrintMenu)}
-                                aria-expanded={showPrintMenu}
-                                aria-haspopup="true"
-                                className="inline-flex items-center justify-center h-10 px-6 rounded-xl bg-slate-700 text-white gap-2 shadow-md shadow-slate-200 transition-all hover:scale-105 active:scale-95 font-bold uppercase tracking-widest text-caption hover:bg-slate-800"
-                            >
-                                <Printer className="size-4" />
-                                {t('creances:print_statement')}
-                                <ChevronDown className={`size-3 transition-transform ${showPrintMenu ? 'rotate-180' : ''}`} />
-                            </button>
-                            {showPrintMenu && (
-                                <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-2xl border border-slate-200 z-50 overflow-hidden">
-                                    <button
-                                        onClick={() => { setShowPrintMenu(false); onPrintStatement(false); }}
-                                        className="w-full flex items-start gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left"
-                                    >
-                                        <FileText className="size-5 text-slate-600 mt-0.5 shrink-0" />
-                                        <div>
-                                            <div className="font-bold text-sm text-slate-800">{t('creances:print_statement_simple')}</div>
-                                            <div className="text-caption text-slate-500 mt-0.5">{t('creances:print_statement_simple_desc')}</div>
-                                        </div>
-                                    </button>
-                                    <div className="border-t border-slate-100" />
-                                    <button
-                                        onClick={() => { setShowPrintMenu(false); onPrintStatement(true); }}
-                                        className="w-full flex items-start gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left"
-                                    >
-                                        <List className="size-5 text-emerald-600 mt-0.5 shrink-0" />
-                                        <div>
-                                            <div className="font-bold text-sm text-slate-800">{t('creances:print_statement_detailed')}</div>
-                                            <div className="text-caption text-slate-500 mt-0.5">{t('creances:print_statement_detailed_desc')}</div>
-                                        </div>
-                                    </button>
-                                </div>
-                            )}
-                        </div>
+                        <button
+                            onClick={onPrintStatement}
+                            className="inline-flex items-center justify-center h-10 px-6 rounded-xl bg-slate-700 text-white gap-2 shadow-md shadow-slate-200 transition-all hover:scale-105 active:scale-95 font-bold uppercase tracking-widest text-caption hover:bg-slate-800"
+                        >
+                            <Printer className="size-4" />
+                            {t('creances:print_statement')}
+                        </button>
                     )}
                 </div>
             </div>

@@ -15,13 +15,22 @@
         "end_date": "End Date",
         "search": "Search",
         "reset": "Reset",
-        "back_to_list": "Back to list"
+        "back_to_list": "Back to list",
+        "search_label": "Search",
+        "search_placeholder": "Search a client…",
+        "overdue_label": "Due dates",
+        "overdue_only": "Overdue"
     },
     "stats": {
         "total_invoices": "Total Invoices",
         "total_paid": "Total Paid",
         "remaining": "Remaining to Pay",
-        "debtors": "Debtors"
+        "debtors": "Debtors",
+        "aging_title": "Receivables aging",
+        "aging_0_30": "0-30 d",
+        "aging_30_60": "30-60 d",
+        "aging_60_90": "60-90 d",
+        "aging_90_plus": "90+ d"
     },
     "client_list": {
         "client": "Client",
@@ -30,7 +39,16 @@
         "already_paid": "Already Paid",
         "remaining_due": "Remaining Due",
         "actions": "Actions",
-        "empty": "No clients with debts in this period"
+        "empty": "No clients with debts in this period",
+        "oldest_debt": "Aging",
+        "last_payment": "Last payment",
+        "over_limit": "Over limit",
+        "credit_limit": "Credit limit",
+        "never": "Never",
+        "overdue_badge": "OVERDUE",
+        "due_in": "Due in",
+        "relance": "Remind",
+        "last_relance": "Reminded {{date}}"
     },
     "invoice_list": {
         "selected_count": "{{count}} invoice(s) selected",
@@ -47,13 +65,28 @@
         "paid_badge": "PAID",
         "pending_badge": "PENDING",
         "view_payments": "View payments",
-        "add_payment": "Add payment"
+        "add_payment": "Add payment",
+        "age": "Age",
+        "overdue_badge": "OVERDUE"
     },
     "print_statement": "Print Statement",
     "print_statement_simple": "Simple Statement",
     "print_statement_simple_desc": "Invoice list with amounts",
     "print_statement_detailed": "Detailed Statement",
     "print_statement_detailed_desc": "Invoices with product details",
+    "releve_modal": {
+        "title": "Print Statement",
+        "subtitle": "Unpaid invoices — choose the period",
+        "preset_month_current": "Current month",
+        "preset_month_previous": "Previous month",
+        "preset_tranche_1": "1–10 this month",
+        "preset_tranche_2": "11–20 this month",
+        "preset_tranche_3": "21–end this month",
+        "preset_all": "All periods",
+        "format_simple": "Simple statement",
+        "format_detailed": "Detailed (products)",
+        "generate": "Generate PDF"
+    },
     "client_label": "Client: {{name}}",
     "payment_modal": {
         "title": "💰 New Settlement",
@@ -135,7 +168,9 @@
         "excel_loading": "Generating Excel file...",
         "excel_export_success": "Excel export generated successfully.",
         "excel_export_error": "Error during Excel export.",
-        "invalid_date_range": "Start date must be before end date"
+        "invalid_date_range": "Start date must be before end date",
+        "relance_sent": "Reminder sent to {{client}}",
+        "relance_failed": "Reminder failed"
     },
     "print_view": {
         "title": "ACCOUNTS RECEIVABLE STATEMENT",
@@ -158,5 +193,23 @@
         "pharmacy_signature": "Pharmacy Signature",
         "generated_on": "Document generated on"
     },
-    "client_type_label": "Client"
+    "client_type_label": "Client",
+    "age_days": "{{count}} d",
+    "relance_modal": {
+        "title": "Send payment reminder",
+        "balance_due": "Balance due",
+        "invoices": "{{count}} invoice(s)",
+        "no_phone": "No phone number registered for this client.",
+        "channel": "Channel",
+        "channels": {
+            "whatsapp_link": "WhatsApp",
+            "whatsapp": "WhatsApp Auto",
+            "sms": "SMS",
+            "email": "Email"
+        },
+        "whatsapp_link_hint": "Opens your WhatsApp with the pre-filled message",
+        "message": "Message",
+        "send": "Send",
+        "no_email": "No email address registered for this client."
+    }
 }

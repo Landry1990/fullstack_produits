@@ -912,11 +912,13 @@
         "filter_status": "Filtrer par statut",
         "status_all": "Tous",
         "status_att": "En attente",
+        "status_pret": "Prêts à retirer",
         "status_del": "Délivrés",
         "status_ann": "Annulés",
         "stats": {
             "all_title": "Tous les Promis",
             "att_title": "En Attente",
+            "pret_title": "Prêts à retirer",
             "del_title": "Délivrés",
             "ann_title": "Annulés"
         },
@@ -936,6 +938,8 @@
             "sms": "Envoyer SMS",
             "whatsapp": "Rappel WhatsApp",
             "sms_send": "Envoyer 📨",
+            "inform": "Client informé",
+            "cant_cancel_ready": "Stock consommé",
             "already_delivered": "Déjà délivré",
             "already_cancelled": "Déjà annulé"
         },
@@ -971,6 +975,9 @@
             "loading": "Chargement des promis...",
             "empty": "Aucun promis trouvé",
             "delivered_on": "Livré le {{date}}",
+            "informed_on": "Informé le {{date}}",
+            "inform_success": "Client marqué comme informé",
+            "inform_error": "Erreur lors du marquage",
             "cancelled": "Annulé",
             "print_ticket_error": "Erreur lors de l'impression du ticket",
             "bulk_delivery_error": "Erreur lors de la livraison en masse",

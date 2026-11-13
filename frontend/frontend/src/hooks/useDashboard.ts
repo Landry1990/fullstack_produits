@@ -269,13 +269,14 @@ export interface ManagerStats {
     }>;
 }
 
-export const useManagerStats = () => {
+export const useManagerStats = (enabled: boolean = true) => {
     return useQuery({
         queryKey: ['dashboard', 'managerStats'],
         queryFn: async () => {
             const response = await api.get<ManagerStats>('dashboard/manager_stats/');
             return response.data;
         },
+        enabled,
         staleTime: 1000 * 60 * 5, // 5 minutes
         refetchInterval: 1000 * 60 * 5, // Auto-update every 5 minutes
     });

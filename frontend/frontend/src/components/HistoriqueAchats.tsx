@@ -222,7 +222,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
           variants={staggerContainer}
           initial="hidden"
           animate="show"
-          className="w-full max-w-4xl mx-auto flex flex-col h-full min-h-0 overflow-hidden"
+          className="w-full max-w-[1600px] mx-auto flex flex-col h-full min-h-0 overflow-hidden"
         >
           {/* Header */}
           <motion.div variants={fadeInUp} className="flex flex-col gap-3 mb-4 sm:mb-5 shrink-0">

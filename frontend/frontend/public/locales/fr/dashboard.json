@@ -370,6 +370,14 @@
             "action_stock": "Voir le stock",
             "action_clients": "Voir les clients"
         },
+        "goal_popup": {
+            "count": "{{count}} objectifs atteints",
+            "title_jour": "Objectif du jour atteint !",
+            "title_semaine": "Objectif de la semaine atteint !",
+            "title_mois": "Objectif du mois atteint !",
+            "body": "CA {{actual}} — {{rate}}% de l'objectif ({{target}}). Bravo !",
+            "open": "Dashboard"
+        },
         "challenges_title": "Challenges en cours",
         "challenges_subtitle": "Suivi des défis commerciaux actifs",
         "challenges_empty": "Aucun challenge en cours",

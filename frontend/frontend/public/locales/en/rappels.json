@@ -1,0 +1,86 @@
+{
+    "title": "Treatment Reminders",
+    "subtitle": "Specific medications — anticipate client orders",
+    "new": "New reminder",
+    "empty": "No reminder in this status.",
+    "tabs": {
+        "pending": "Pending",
+        "to_inform": "Patients to notify",
+        "informed": "Patients notified",
+        "ignored": "Ignored",
+        "all": "All"
+    },
+    "table": {
+        "client": "Client",
+        "produit": "Product",
+        "posologie": "Posology",
+        "debut": "Start",
+        "fin": "Expected end",
+        "reste": "Left",
+        "statut": "Status",
+        "stock": "Stock: {{count}}",
+        "per_day": "/day",
+        "days_left": "D-{{count}}",
+        "overdue": "+{{count}}d overdue"
+    },
+    "settings": {
+        "title": "Settings",
+        "enabled": "Reminder popups enabled",
+        "days_before": "Alert",
+        "days_unit": "days before end",
+        "save": "Save"
+    },
+    "modal": {
+        "title": "New treatment reminder",
+        "client": "Client",
+        "client_ph": "Search a client…",
+        "produit": "Product",
+        "produit_ph": "Search a product…",
+        "date_debut": "Treatment start",
+        "mode_duree": "Duration in days",
+        "mode_posologie": "Quantity × doses",
+        "duree": "Duration (days)",
+        "quantite": "Quantity given",
+        "doses": "Doses per day",
+        "notes": "Notes",
+        "fin_prevue": "Expected end on {{date}} ({{jours}} days)",
+        "create": "Create reminder",
+        "title_edit": "Edit reminder",
+        "save": "Save"
+    },
+    "actions": {
+        "edit": "Edit",
+        "done": "Medication arrived",
+        "informed": "Patient notified",
+        "ignore": "Ignore",
+        "delete": "Delete"
+    },
+    "popup": {
+        "count": "{{count}} reminders",
+        "title": "Treatment ends in {{jours}} d",
+        "title_overdue": "Treatment ended {{jours}} d ago",
+        "body": "{{produit}} — {{client}}: prepare the order",
+        "stock": "Current stock: {{count}}",
+        "done": "Arrived",
+        "title_inform": "{{produit}} has arrived",
+        "title_promis": "{{produit}} ×{{count}} has arrived (promise)",
+        "body_inform": "Notify the patient: {{client}}",
+        "informed": "Patient notified",
+        "ignore": "Ignore",
+        "open": "Open"
+    },
+    "toasts": {
+        "created": "Reminder created",
+        "updated": "Reminder updated",
+        "traiter": "Medication marked as arrived — patient to notify",
+        "informer": "Patient marked as notified",
+        "ignorer": "Reminder ignored",
+        "settings_saved": "Settings saved"
+    },
+    "errors": {
+        "load": "Error loading reminders",
+        "action": "Action failed",
+        "client_required": "Select a client",
+        "duree_required": "Enter a valid duration (days or quantity × doses)"
+    }
+}

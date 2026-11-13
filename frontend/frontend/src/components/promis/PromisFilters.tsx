@@ -60,6 +60,7 @@ export const PromisFilters: React.FC<PromisFiltersProps> = ({
                     >
                         <option value="ALL">{t('stock:promis.status_all')}</option>
                         <option value="ATT">{t('stock:promis.status_att')}</option>
+                        <option value="PRET">{t('stock:promis.status_pret')}</option>
                         <option value="DEL">{t('stock:promis.status_del')}</option>
                         <option value="ANN">{t('stock:promis.status_ann')}</option>
                     </select>

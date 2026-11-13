@@ -448,12 +448,11 @@ class StockObligationService:
                     status=StockObligation.Status.EN_ATTENTE,
                 ).aggregate(total=Sum('quantity_remaining'))['total'] or 0
                 if remaining <= 0 and promis.status == Promis.Status.EN_ATTENTE:
-                    promis.status = Promis.Status.DELIVRE
-                    promis.date_livraison = timezone.now()
+                    promis.status = Promis.Status.PRET
                     resolved_promis.append(promis)
             if resolved_promis:
                 Promis.objects.bulk_update(
-                    resolved_promis, ['status', 'date_livraison'], batch_size=100
+                    resolved_promis, ['status'], batch_size=100
                 )
 
         if movements:
@@ -526,7 +525,11 @@ class StockObligationService:
                 promis=promis,
             )
 
+        # Le retrait physique = DELIVRE (la résolution auto n'a posé que PRET)
         promis.refresh_from_db()
+        promis.status = Promis.Status.DELIVRE
+        promis.date_livraison = timezone.now()
+        promis.save(update_fields=['status', 'date_livraison'])
         return resolved
 
     @staticmethod

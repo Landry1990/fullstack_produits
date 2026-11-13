@@ -14,6 +14,8 @@ import { Button } from './shadcn/button'
 import { Badge } from './shadcn/badge'
 import TransformationAlertListener from './common/TransformationAlertListener'
 import { ExpirationAlertToasts } from './ExpirationAlertToast'
+import { TreatmentReminderNotifications } from './TreatmentReminderNotifications'
+import { SalesGoalNotifications } from './SalesGoalNotifications'
 import { SidebarProvider } from '../context/SidebarContext'
 import { OmnisearchProvider } from '../context/OmnisearchContext'
 import { useSidebar } from '../hooks/useSidebar'
@@ -132,6 +134,12 @@ export default function Layout() {
     <SidebarProvider>
       <TransformationAlertListener />
       <ExpirationAlertToasts />
+      {/* Panneau d'alertes admin (bas-droite) : rappels traitement/promis +
+          objectifs de vente atteints. Conteneur fixed mutualisé. */}
+      <div className="fixed bottom-4 right-4 z-[90] w-[380px] max-w-[calc(100vw-2rem)] flex flex-col gap-2 pointer-events-none">
+        <TreatmentReminderNotifications />
+        <SalesGoalNotifications />
+      </div>
       <UpdateReminderModal />
       <LayoutContent />
     </SidebarProvider>

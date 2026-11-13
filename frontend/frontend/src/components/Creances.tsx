@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { staggerContainer, fadeInUp } from '../lib/motion';
@@ -11,6 +11,8 @@ import { CreancesTable } from './creances/CreancesTable';
 import { CreancePaiementModal } from './creances/modals/CreancePaiementModal';
 import { CreanceDetailsModal } from './creances/modals/CreanceDetailsModal';
 import { BulkPaiementModal } from './creances/modals/BulkPaiementModal';
+import { RelanceModal } from './creances/modals/RelanceModal';
+import { RelevePeriodeModal } from './creances/modals/RelevePeriodeModal';
 import SudoValidationModal from './common/SudoValidationModal';
 import { ErrorState } from './ui/ErrorState';
 
@@ -20,6 +22,8 @@ import { normalizeNumberInput, formatCurrency } from '../utils/formatters';
 export default function Creances() {
     const { t } = useTranslation(['creances', 'common']);
     const data = useCreancesData();
+    const [relanceClientId, setRelanceClientId] = useState<number | null>(null);
+    const [releveModalOpen, setReleveModalOpen] = useState(false);
     const actions = useCreanceActions({
         refresh: data.refresh,
         selectedIds: data.selectedIds,
@@ -88,8 +92,12 @@ export default function Creances() {
                     </div>
 
                     <CreancesFilters
-                        clients={data.clients}
+                        clients={data.selectableClients}
                         selectedClient={data.filters.selectedClient}
+                        debtorSearch={data.filters.debtorSearch}
+                        onDebtorSearchChange={data.setFilters.setDebtorSearch}
+                        showOverdueOnly={data.filters.showOverdueOnly}
+                        onOverdueToggle={data.setFilters.setShowOverdueOnly}
                         onClientChange={data.setFilters.setSelectedClient}
                         dateDebut={data.filters.dateDebut}
                         onDateDebutChange={data.setFilters.setDateDebut}
@@ -98,12 +106,7 @@ export default function Creances() {
                         showHistory={data.filters.showHistory}
                         onHistoryToggle={data.setFilters.setShowHistory}
                         onRefresh={data.refresh}
-                        onPrintStatement={(includeProducts: boolean) => actions.actions.handleImprimerReleve(
-                            data.filters.selectedClient,
-                            data.filters.dateDebut,
-                            data.filters.dateFin,
-                            includeProducts
-                        )}
+                        onPrintStatement={() => setReleveModalOpen(true)}
                         onExportExcel={() => actions.actions.handleExportExcel({
                             client_id: data.filters.selectedClient || undefined,
                             date_debut: data.filters.dateDebut || undefined,
@@ -120,14 +123,15 @@ export default function Creances() {
                 totalDue={data.totals.total}
                 totalPaid={data.totals.paye}
                 totalRemaining={data.totals.reste}
-                debtorsCount={data.groupedClients.length}
+                debtorsCount={data.visibleClients.length}
+                aging={data.aging}
             />
 
             {/* Main Content Table Card */}
             <motion.div variants={fadeInUp} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex-1 relative min-h-0">
                 <CreancesTable
                     mode={data.filters.selectedClient ? 'invoices' : 'clients'}
-                    groupedClients={data.groupedClients}
+                    groupedClients={data.visibleClients}
                     filteredCreances={data.filteredCreances}
                     loading={data.loading}
                     showHistory={data.filters.showHistory}
@@ -146,6 +150,7 @@ export default function Creances() {
                         );
                     }}
                     onViewClient={data.setFilters.setSelectedClient}
+                    onRelance={setRelanceClientId}
                     onViewDetails={actions.actions.handleOpenDetailsModal}
                     onPay={actions.actions.handleOpenPaiementModal}
                     sortConfig={{
@@ -153,6 +158,7 @@ export default function Creances() {
                         direction: data.filters.sortConfig.direction
                     }}
                     onSort={data.setFilters.handleSort}
+                    clientDelai={data.selectedClientDelai}
                 />
             </motion.div>
             {/* Error handling */}
@@ -176,6 +182,24 @@ export default function Creances() {
                 onClose={() => actions.modals.setIsDetailsModalOpen(false)}
                 creance={actions.selectedCreance}
                 onPrintReceipt={actions.actions.handlePrintDirectReceipt}
+            />
+
+            <RelanceModal
+                isOpen={relanceClientId !== null}
+                onClose={() => setRelanceClientId(null)}
+                clientId={relanceClientId}
+                onSent={data.refresh}
+            />
+
+            <RelevePeriodeModal
+                isOpen={releveModalOpen}
+                onClose={() => setReleveModalOpen(false)}
+                onGenerate={(dateDebut, dateFin, includeProducts) => actions.actions.handleImprimerReleve(
+                    data.filters.selectedClient,
+                    dateDebut,
+                    dateFin,
+                    includeProducts
+                )}
             />
 
             <BulkPaiementModal 

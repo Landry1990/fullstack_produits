@@ -30,14 +30,30 @@ def notify_stock_changed(produit_ids):
 
     def _send():
         try:
-            channel_layer = get_channel_layer()
-            if channel_layer is None:
-                return
             produits = list(
                 Produit.objects.filter(id__in=ids).values(
                     'id', 'stock', 'stock_reserve'
                 )
             )
+            # Rappels de traitement : le produit est de nouveau disponible →
+            # passage automatique « à informer » (popup vert côté admins).
+            try:
+                from ..models import TreatmentReminder
+                en_stock_ids = [
+                    p['id'] for p in produits
+                    if (p['stock'] or 0) + (p['stock_reserve'] or 0) > 0
+                ]
+                if en_stock_ids:
+                    TreatmentReminder.objects.filter(
+                        produit_id__in=en_stock_ids,
+                        statut=TreatmentReminder.Statut.EN_ATTENTE,
+                    ).update(statut=TreatmentReminder.Statut.TRAITE)
+            except Exception as rappel_err:
+                logger.warning(f"Auto-flip rappels traitement échoué: {rappel_err}")
+
+            channel_layer = get_channel_layer()
+            if channel_layer is None:
+                return
             async_to_sync(channel_layer.group_send)(
                 'stock_updates',
                 {'type': 'stock_update', 'produits': produits},

@@ -19,6 +19,10 @@ const promisService = {
         await api.post(`promis/${id}/delivrer/`);
     },
 
+    clientInforme: async (id: number): Promise<void> => {
+        await api.post(`promis/${id}/client_informe/`);
+    },
+
     annulerEtReintegrer: async (id: number, sudoCreds?: { validated_by_id: number; sudo_password: string }): Promise<{ message: string }> => {
         const response = await api.post<{ message: string }>(`promis/${id}/annuler_et_reintegrer/`, sudoCreds || {});
         return response.data;

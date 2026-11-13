@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 import {
     Check, X, Printer, MessageCircle, MoreVertical, Eye,
-    Clock, CheckCircle2, XCircle
+    Clock, CheckCircle2, XCircle, PackageCheck, Phone
 } from 'lucide-react';
 import type { Promis } from '../../types';
 import { Checkbox } from '../shadcn/checkbox';
@@ -166,6 +166,7 @@ interface PromisTableProps {
     onPrint: (id: number) => void;
     onSms: (promis: Promis) => void;
     onWhatsApp: (id: number) => void;
+    onInform?: (id: number) => void;
     onBulkDeliver: () => void;
     onBulkCancel: () => void;
     onClearSelection: () => void;
@@ -176,6 +177,7 @@ interface PromisTableProps {
 const statusBadgeClass = (status: Promis['status']) => {
     switch (status) {
         case 'ATT': return 'bg-amber-100 text-amber-700 border-amber-200';
+        case 'PRET': return 'bg-blue-100 text-blue-700 border-blue-200';
         case 'DEL': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
         case 'ANN': return 'bg-red-100 text-red-700 border-red-200';
         default: return 'bg-slate-100 text-slate-600 border-slate-200';
@@ -185,6 +187,7 @@ const statusBadgeClass = (status: Promis['status']) => {
 const statusIcon = (status: Promis['status']) => {
     switch (status) {
         case 'ATT': return <Clock className="size-3" />;
+        case 'PRET': return <PackageCheck className="size-3" />;
         case 'DEL': return <CheckCircle2 className="size-3" />;
         case 'ANN': return <XCircle className="size-3" />;
         default: return null;
@@ -208,6 +211,7 @@ export const PromisTable: React.FC<PromisTableProps> = ({
     onToggleSelection,
     onToggleSelectAll,
     onDeliver,
+    onInform,
     onCancel,
     onPrint,
     onSms,
@@ -395,6 +399,11 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                                             {t('stock:promis.messages.delivered_on', { date: format(new Date(p.date_livraison), 'dd/MM/yyyy', { locale: currentLocale }) })}
                                         </div>
                                     )}
+                                    {p.status === 'PRET' && p.client_informe_le && (
+                                        <div className="text-caption text-blue-600 mt-1">
+                                            {t('stock:promis.messages.informed_on', { date: format(new Date(p.client_informe_le), 'dd/MM/yyyy', { locale: currentLocale }) })}
+                                        </div>
+                                    )}
                                 </TableCell>
                                 <TableCell className="px-3 py-2 text-right" onClick={(e) => e.stopPropagation()}>
                                     <div className="flex items-center justify-end gap-1">
@@ -417,6 +426,30 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                                                     title={t('stock:promis.actions.cancel')}
                                                 >
                                                     <X className="size-4" />
+                                                </Button>
+                                            </>
+                                        )}
+                                        {p.status === 'PRET' && (
+                                            <>
+                                                {!p.client_informe_le && onInform && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="size-7 text-blue-600 hover:bg-blue-50"
+                                                        onClick={() => onInform(p.id)}
+                                                        title={t('stock:promis.actions.inform')}
+                                                    >
+                                                        <Phone className="size-4" />
+                                                    </Button>
+                                                )}
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="size-7 text-emerald-600 hover:bg-emerald-50"
+                                                    onClick={() => onDeliver(p.id)}
+                                                    title={t('stock:promis.actions.deliver')}
+                                                >
+                                                    <Check className="size-4" />
                                                 </Button>
                                             </>
                                         )}
@@ -464,7 +497,29 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                                                         </DropdownMenuItem>
                                                     </>
                                                 )}
-                                                {p.status !== 'ATT' && (
+                                                {p.status === 'PRET' && (
+                                                    <>
+                                                        <DropdownMenuSeparator />
+                                                        {!p.client_informe_le && onInform && (
+                                                            <DropdownMenuItem onClick={() => onInform(p.id)} className="gap-2 cursor-pointer text-blue-600 focus:text-blue-700 font-semibold">
+                                                                <Phone className="size-4" />
+                                                                {t('stock:promis.actions.inform')}
+                                                            </DropdownMenuItem>
+                                                        )}
+                                                        <DropdownMenuItem onClick={() => onDeliver(p.id)} className="gap-2 cursor-pointer text-emerald-600 focus:text-emerald-700 font-semibold">
+                                                            <Check className="size-4" />
+                                                            {t('stock:promis.actions.deliver')}
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem disabled className="gap-2 text-slate-400">
+                                                            <X className="size-4" />
+                                                            {t('stock:promis.actions.cancel')}
+                                                            <span className="ml-auto text-caption text-slate-400">
+                                                                {t('stock:promis.actions.cant_cancel_ready')}
+                                                            </span>
+                                                        </DropdownMenuItem>
+                                                    </>
+                                                )}
+                                                {p.status !== 'ATT' && p.status !== 'PRET' && (
                                                     <>
                                                         <DropdownMenuSeparator />
                                                         <DropdownMenuItem disabled className="gap-2 text-slate-400">

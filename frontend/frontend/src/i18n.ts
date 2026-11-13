@@ -2,6 +2,7 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import Backend from 'i18next-http-backend';
+import { BUILD_VERSION } from './version';
 
 i18n
     // load translation using http -> see /public/locales (i.e. https://github.com/i18next/react-i18next/tree/master/example/react/public/locales)
@@ -57,6 +58,7 @@ i18n
             'recap',
             'loyalty',
             'challenges',
+            'rappels',
             'telegram'
         ],
         defaultNS: 'common',
@@ -66,7 +68,10 @@ i18n
 
         // Options common to all backends
         backend: {
-            loadPath: '/locales/{{lng}}/{{ns}}.json',
+            // ?v=<timestamp du build> : chaque déploiement produit une URL
+            // nouvelle → nginx sert /locales/ en cache immutable et les ~40
+            // namespaces ne sont plus revalidés (ETag) à chaque chargement.
+            loadPath: `/locales/{{lng}}/{{ns}}.json?v=${BUILD_VERSION.number}`,
         },
         load: 'languageOnly', // Avoid fr-FR if we only have fr
 

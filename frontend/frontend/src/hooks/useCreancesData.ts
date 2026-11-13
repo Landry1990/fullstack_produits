@@ -2,22 +2,42 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import type { Creance, Client } from '../types';
 import { useTranslation } from 'react-i18next';
 import { gooeyToast } from 'goey-toast';
-import creanceService from '../services/creanceService';
+import creanceService, { type CreanceAging } from '../services/creanceService';
 import clientService from '../services/clientService';
 import { logger } from '../utils/logger'
 
 interface SyntheseClient {
     id: number;
     client: string;
+    plafond?: string | null;
+    delai_paiement_jours?: number | null;
+    phone?: string | null;
     total_facture: string;
     montant_paye: string;
     solde_du: string;
     nb_factures: number;
+    plus_ancienne?: string | null;
+    dernier_paiement?: string | null;
+    derniere_relance?: string | null;
+}
+
+export interface GroupedClient {
+    client: Client;
+    total: number;
+    paye: number;
+    reste: number;
+    count: number;
+    plafond: number | null;
+    delaiPaiementJours: number;
+    dernierPaiement: string | null;
+    derniereRelance: string | null;
+    plusAncienne: string | null;
 }
 
 export interface UseCreancesDataReturn {
     creances: Creance[];
     clients: Client[];
+    selectableClients: Client[];
     loading: boolean;
     error: string | null;
     filters: {
@@ -25,28 +45,29 @@ export interface UseCreancesDataReturn {
         dateDebut: string;
         dateFin: string;
         showHistory: boolean;
-        sortConfig: { key: keyof Creance | 'client_name', direction: 'asc' | 'desc' };
+        debtorSearch: string;
+        showOverdueOnly: boolean;
+        sortConfig: { key: keyof Creance | 'client_name' | 'age', direction: 'asc' | 'desc' };
     };
     setFilters: {
         setSelectedClient: (id: string) => void;
         setDateDebut: (date: string) => void;
         setDateFin: (date: string) => void;
         setShowHistory: (show: boolean) => void;
-        handleSort: (key: keyof Creance | 'client_name') => void;
+        setDebtorSearch: (search: string) => void;
+        setShowOverdueOnly: (show: boolean) => void;
+        handleSort: (key: keyof Creance | 'client_name' | 'age') => void;
     };
-    groupedClients: {
-        client: Client;
-        total: number;
-        paye: number;
-        reste: number;
-        count: number;
-    }[];
+    groupedClients: GroupedClient[];
+    visibleClients: GroupedClient[];
     filteredCreances: Creance[];
     totals: {
         total: number;
         paye: number;
         reste: number;
     };
+    aging: CreanceAging | null;
+    selectedClientDelai: number;
     refresh: () => void;
     selectedIds: number[];
     setSelectedIds: (ids: number[] | ((prev: number[]) => number[])) => void;
@@ -70,7 +91,10 @@ export const useCreancesData = (): UseCreancesDataReturn => {
     const [dateDebut, setDateDebut] = useState('');
     const [dateFin, setDateFin] = useState('');
     const [showHistory, setShowHistory] = useState(false);
-    const [sortConfig, setSortConfig] = useState<{ key: keyof Creance | 'client_name', direction: 'asc' | 'desc' }>({
+    const [debtorSearch, setDebtorSearch] = useState('');
+    const [showOverdueOnly, setShowOverdueOnly] = useState(false);
+    const [aging, setAging] = useState<CreanceAging | null>(null);
+    const [sortConfig, setSortConfig] = useState<{ key: keyof Creance | 'client_name' | 'age', direction: 'asc' | 'desc' }>({
         key: 'date',
         direction: 'desc'
     });
@@ -104,11 +128,18 @@ export const useCreancesData = (): UseCreancesDataReturn => {
         try {
             // Mode: Debtor List (Synthesis) - Only when not in history mode
             if (!selectedClient && !showHistory) {
-                const synData = await creanceService.getSynthese({
-                    date_debut: dateDebut || undefined,
-                    date_fin: dateFin || undefined
-                });
+                const [synData, agingData] = await Promise.all([
+                    creanceService.getSynthese({
+                        date_debut: dateDebut || undefined,
+                        date_fin: dateFin || undefined
+                    }),
+                    creanceService.getAging({
+                        date_debut: dateDebut || undefined,
+                        date_fin: dateFin || undefined
+                    })
+                ]);
                 setSynthese(synData as SyntheseClient[]);
+                setAging(agingData);
                 setCreances([]);
             } 
             // Mode: Invoice List (History or Specific Client)
@@ -143,7 +174,7 @@ export const useCreancesData = (): UseCreancesDataReturn => {
         fetchCreances();
     }, [fetchCreances]);
 
-    const handleSort = (key: keyof Creance | 'client_name') => {
+    const handleSort = (key: keyof Creance | 'client_name' | 'age') => {
         let direction: 'asc' | 'desc' = 'asc';
         if (sortConfig.key === key && sortConfig.direction === 'asc') {
             direction = 'desc';
@@ -163,17 +194,23 @@ export const useCreancesData = (): UseCreancesDataReturn => {
                     phone: '',
                     address: ''
                 };
+                const plafondRaw = s?.plafond ?? (clientObj as Client).plafond;
                 return {
                     client: clientObj as Client,
                     total: parseFloat(s?.total_facture || '0'),
                     paye: parseFloat(s?.montant_paye || '0'),
                     reste: parseFloat(s?.solde_du || '0'),
-                    count: s?.nb_factures || 0
+                    count: s?.nb_factures || 0,
+                    plafond: plafondRaw != null ? parseFloat(plafondRaw) : null,
+                    delaiPaiementJours: s?.delai_paiement_jours ?? (clientObj as Client).delai_paiement_jours ?? 0,
+                    dernierPaiement: s?.dernier_paiement ?? null,
+                    derniereRelance: s?.derniere_relance ?? null,
+                    plusAncienne: s?.plus_ancienne ?? null
                 };
             });
         }
 
-        const groupes: { [key: number]: { client: Client, total: number, paye: number, reste: number, count: number } } = {};
+        const groupes: { [key: number]: GroupedClient } = {};
 
         if (Array.isArray(creances)) {
             creances.forEach(creance => {
@@ -200,19 +237,69 @@ export const useCreancesData = (): UseCreancesDataReturn => {
                         total: 0,
                         paye: 0,
                         reste: 0,
-                        count: 0
+                        count: 0,
+                        plafond: (clientObj as Client).plafond != null ? parseFloat((clientObj as Client).plafond!) : null,
+                        delaiPaiementJours: (clientObj as Client).delai_paiement_jours ?? 0,
+                        dernierPaiement: null,
+                        derniereRelance: null,
+                        plusAncienne: null
                     };
                 }
 
-                groupes[creance.client].total += parseFloat(creance.total_ttc || '0');
-                groupes[creance.client].paye += parseFloat(creance.montant_paye || '0');
-                groupes[creance.client].reste += parseFloat(creance.reste_a_payer || '0');
-                groupes[creance.client].count += 1;
+                const groupe = groupes[creance.client];
+                groupe.total += parseFloat(creance.total_ttc || '0');
+                groupe.paye += parseFloat(creance.montant_paye || '0');
+                groupe.reste += parseFloat(creance.reste_a_payer || '0');
+                groupe.count += 1;
+                if (creance.date && (!groupe.plusAncienne || creance.date < groupe.plusAncienne)) {
+                    groupe.plusAncienne = creance.date;
+                }
+                (creance.paiements || []).forEach(p => {
+                    if (p.mode_paiement === 'en_compte') return;
+                    const d = p.date_paiement || p.created_at || p.date;
+                    if (d && (!groupe.dernierPaiement || d > groupe.dernierPaiement)) {
+                        groupe.dernierPaiement = d;
+                    }
+                });
             });
         }
 
         return Object.values(groupes).sort((a, b) => b.reste - a.reste);
     }, [creances, clients, showHistory, synthese, selectedClient]);
+
+    // Recherche texte + filtre « en retard » sur la liste des débiteurs
+    const visibleClients = useMemo(() => {
+        const q = debtorSearch.trim().toLowerCase();
+        const now = Date.now();
+        return groupedClients.filter(g => {
+            if (q && !g.client.name?.toLowerCase().includes(q)) return false;
+            if (showOverdueOnly) {
+                // En retard = échéance définie (>0) et dette la + ancienne au-delà
+                if (!g.delaiPaiementJours || !g.plusAncienne) return false;
+                const age = Math.floor((now - new Date(g.plusAncienne).getTime()) / 86400000);
+                if (age <= g.delaiPaiementJours) return false;
+            }
+            return true;
+        });
+    }, [groupedClients, debtorSearch, showOverdueOnly]);
+
+    // Délai de règlement du client sélectionné (badge « En retard » par facture)
+    const selectedClientDelai = useMemo(() => {
+        if (!selectedClient) return 0;
+        const id = parseInt(selectedClient);
+        const fromClients = clients.find(c => c.id === id)?.delai_paiement_jours;
+        if (fromClients != null) return fromClients;
+        const fromSynthese = synthese.find(s => s.id === id)?.delai_paiement_jours;
+        return fromSynthese ?? 0;
+    }, [selectedClient, clients, synthese]);
+
+    // Options du sélecteur : les débiteurs déjà connus + clients chargés
+    const selectableClients = useMemo(() => {
+        const map = new Map<number, Client>();
+        groupedClients.forEach(g => map.set(g.client.id, g.client));
+        clients.forEach(c => map.set(c.id, c));
+        return [...map.values()].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    }, [groupedClients, clients]);
 
     const filteredCreances = useMemo(() => {
         if (!selectedClient || !Array.isArray(creances)) return [];
@@ -224,7 +311,13 @@ export const useCreancesData = (): UseCreancesDataReturn => {
             result = result.filter(c => parseFloat(c.reste_a_payer || '0') > 0);
         }
 
-        if (sortConfig.key) {
+        if (sortConfig.key === 'age') {
+            // Âge croissant = facture la plus récente d'abord (tri date inversé)
+            result.sort((a, b) => {
+                const cmp = (a.date || '').localeCompare(b.date || '');
+                return sortConfig.direction === 'asc' ? -cmp : cmp;
+            });
+        } else if (sortConfig.key) {
             result.sort((a, b) => {
                 let aValue: string | number = (a[sortConfig.key as keyof Creance] as string | number) || '';
                 let bValue: string | number = (b[sortConfig.key as keyof Creance] as string | number) || '';
@@ -267,6 +360,7 @@ export const useCreancesData = (): UseCreancesDataReturn => {
     return {
         creances,
         clients,
+        selectableClients,
         loading,
         error,
         filters: {
@@ -274,6 +368,8 @@ export const useCreancesData = (): UseCreancesDataReturn => {
             dateDebut,
             dateFin,
             showHistory,
+            debtorSearch,
+            showOverdueOnly,
             sortConfig
         },
         setFilters: {
@@ -287,9 +383,14 @@ export const useCreancesData = (): UseCreancesDataReturn => {
                 setShowHistory(show);
                 setSelectedIds([]);
             },
+            setDebtorSearch,
+            setShowOverdueOnly,
             handleSort
         },
         groupedClients,
+        visibleClients,
+        aging,
+        selectedClientDelai,
         filteredCreances,
         totals,
         refresh: fetchCreances,

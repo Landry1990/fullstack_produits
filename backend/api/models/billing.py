@@ -761,6 +761,7 @@ class Promis(models.Model):
     id: int
     class Status(models.TextChoices):
         EN_ATTENTE = 'ATT', 'En attente'
+        PRET = 'PRET', 'Prêt à retirer'
         DELIVRE = 'DEL', 'Délivré'
         ANNULE = 'ANN', 'Annulé'
 
@@ -789,6 +790,11 @@ class Promis(models.Model):
     date_livraison = models.DateTimeField(null=True, blank=True, help_text="Date de livraison effective")
     notes = models.TextField(blank=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    client_informe_par = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='promis_informes', help_text="Qui a informé le client de la disponibilité"
+    )
+    client_informe_le = models.DateTimeField(null=True, blank=True, help_text="Date/heure d'information du client")
     is_active = models.BooleanField(default=True, help_text="Promis actif (non supprimé dans la corbeille)")
     deleted_by = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, blank=True,

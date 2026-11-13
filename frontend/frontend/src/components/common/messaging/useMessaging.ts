@@ -41,6 +41,7 @@ interface UseMessagingOptions {
   filters: MessageFilters;
 }
 
+const MESSAGE_POLL_INTERVAL = 3000;
 const MESSAGES_QUERY_KEY = 'internalMessages';
 const TEMPLATES_QUERY_KEY = 'messageTemplates';
 const USERS_QUERY_KEY = 'messagingUsers';
@@ -58,8 +59,8 @@ export function useMessaging({ enabled, currentUser, filters }: UseMessagingOpti
       return response.data;
     },
     enabled: enabled && filters.box !== null,
-    refetchInterval: enabled ? 5000 : false,
-    staleTime: 5000,
+    refetchInterval: enabled ? MESSAGE_POLL_INTERVAL : false,
+    staleTime: MESSAGE_POLL_INTERVAL,
   });
 
   const templatesQuery = useQuery({
@@ -210,8 +211,9 @@ export function useUnreadMessageCount(enabled: boolean) {
       return response.data.count ?? 0;
     },
     enabled,
-    refetchInterval: 30000,
-    staleTime: 15000,
+    refetchInterval: enabled ? MESSAGE_POLL_INTERVAL : false,
+    refetchIntervalInBackground: true,
+    staleTime: MESSAGE_POLL_INTERVAL,
   });
 }
 

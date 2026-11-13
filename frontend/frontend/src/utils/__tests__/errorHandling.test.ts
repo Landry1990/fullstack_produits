@@ -1,5 +1,21 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
+import i18n from '../../i18n';
+import frCommon from '../../../public/locales/fr/common.json';
 import { getApiErrorDetail, extractErrorMessage } from '../errorHandling';
+
+// errorHandling utilise l'instance i18n directe (pas useTranslation, mockée
+// par le setup global). On la ré-initialise avec les ressources FR en ligne
+// pour que t() renvoie les vraies traductions — sinon il rend la clé brute.
+beforeAll(async () => {
+    await i18n.init({
+        resources: { fr: { common: frCommon } },
+        lng: 'fr',
+        fallbackLng: 'fr',
+        defaultNS: 'common',
+        ns: ['common'],
+        interpolation: { escapeValue: false },
+    });
+});
 
 describe('errorHandling utilities', () => {
     describe('getApiErrorDetail', () => {
@@ -97,6 +113,11 @@ describe('errorHandling utilities', () => {
         it('should handle Network Error', () => {
             const err = { message: 'Network Error' };
             expect(extractErrorMessage(err)).toContain('Erreur de connexion');
+        });
+
+        it('should translate axios timeout errors', () => {
+            const err = { code: 'ECONNABORTED', message: 'timeout of 15000ms exceeded' };
+            expect(extractErrorMessage(err)).toContain('Délai dépassé');
         });
 
         it('should return generic message for other errors', () => {

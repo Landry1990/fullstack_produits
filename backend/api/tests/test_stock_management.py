@@ -473,7 +473,8 @@ class StockObligationReceptionTestCase(APITestCase):
         self.assertEqual(lot.quantity_remaining, 0)
         self.assertEqual(promis_obligation.status, StockObligation.Status.RESOLUE)
         self.assertEqual(force_obligation.status, StockObligation.Status.RESOLUE)
-        self.assertEqual(promis.status, Promis.Status.DELIVRE)
+        # Stock arrivé → prêt à retirer ; DELIVRE seulement au retrait physique
+        self.assertEqual(promis.status, Promis.Status.PRET)
 
     def test_reception_resolves_debt_without_lot_management(self):
         self.produit.use_lot_management = False
@@ -498,7 +499,7 @@ class StockObligationReceptionTestCase(APITestCase):
         promis.refresh_from_db()
         self.assertEqual(self.produit.stock, 1)
         self.assertEqual(obligation.status, StockObligation.Status.RESOLUE)
-        self.assertEqual(promis.status, Promis.Status.DELIVRE)
+        self.assertEqual(promis.status, Promis.Status.PRET)
 
     def test_reception_applied_debt_creates_no_noise_movement(self):
         """Dette déjà comptée en négatif : la réception la résout sans

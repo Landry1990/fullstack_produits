@@ -91,6 +91,7 @@ export const NAV_ITEMS: NavItem[] = [
         submenus: [
             { path: '/app/clients', labelKey: 'clients_consultation', labelFallback: 'Consultation', key: 'clients_consultation', loader: () => import('../components/Clients') },
             { path: '/app/fidelite', labelKey: 'fidelite', labelFallback: 'Fidélité', key: 'clients', loader: () => import('../components/loyalty/LoyaltyPage') },
+            { path: '/app/rappels-traitement', labelKey: 'clients_rappels', labelFallback: 'Rappels traitement', key: 'clients_rappels', loader: () => import('../components/RappelsTraitement') },
             { path: '/app/outils/imc', labelKey: 'clients_imc', labelFallback: 'Calculateur IMC', key: 'clients_imc', loader: () => import('../components/clinical/BMICalculator') },
         ],
     },

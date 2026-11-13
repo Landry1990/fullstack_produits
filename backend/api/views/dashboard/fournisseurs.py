@@ -18,6 +18,7 @@ from rest_framework.response import Response
 from ...models import (
     Commande,
 )
+from ...services.supplier_finance import statement_periods
 from ...utils.validation import parse_int
 
 
@@ -188,55 +189,51 @@ class DashboardFournisseursMixin(viewsets.ViewSet):
                         })
     
             else:  # RELEVE
-                # Group by releve periods
+                # Group by releve periods — mêmes tranches calendaires que
+                # l'échéancier (statement_periods) : périodes de `period_days`
+                # jours depuis le 1er du mois, bornées au dernier jour du
+                # mois, et rattachées à date_cloture (pas order.date).
                 period_days = supplier.periode_releve_jours or 10
                 from typing import Any
                 periods: dict[str, dict[str, Any]] = {}
-    
+
                 for order in releve_orders:
                     remaining = remainings.get(order.id, order.total_annotated) or 0
 
                     if remaining > 0:
-                        # Determine period based on order date
-                        order_date = order.date.date()
-                        # Calculate period start (e.g., for 10-day periods: 1-10, 11-20, 21-31)
-                        day = order_date.day
-                        period_index = (day - 1) // period_days
-                        period_start = order_date.replace(day=period_index * period_days + 1)
-                        period_end = min(
-                            period_start + timedelta(days=period_days - 1),
-                            order_date.replace(day=1) + timedelta(days=32)
-                        )
+                        order_date = order.date_cloture.date() if order.date_cloture else today
+                        for period_start, period_end in statement_periods(order_date.year, order_date.month, period_days):
+                            if period_start <= order_date <= period_end:
+                                break
                         period_key = period_start.isoformat()
-    
+
                         if period_key not in periods:
-                            periods[period_key] = {'orders': [], 'total': Decimal('0.00')}
+                            periods[period_key] = {'orders': [], 'total': Decimal('0.00'), 'end': period_end}
                         periods[period_key]['orders'].append(order)
                         periods[period_key]['total'] += remaining
-    
+
                 # Create items for each period
                 for period_key in sorted(periods.keys(), reverse=True):
                     period_data = periods[period_key]
                     period_total: Decimal = period_data['total']
-                    period_data['orders']
-    
+                    period_end = period_data['end']
+
                     if period_total > 0:
                         period_start = date.fromisoformat(period_key)
-                        period_end = period_start + timedelta(days=period_days - 1)
-    
+
                         # Due date = period end + payment delay
                         due_date = period_end + timedelta(days=supplier.delai_paiement_jours)
-    
+
                         is_overdue = due_date < today
                         days_diff = (today - due_date).days
-    
+
                         # Get order IDs for this period
                         order_ids = [o.id for o in period_data['orders']]
-    
+
                         supplier_items.append({
                             'id': f'{supplier.id}_{period_key}',
                             'type': 'RELEVE',
-                            'label': f'{period_start.day}-{min(period_end.day, 31)}/{period_start.month:02d}',
+                            'label': f'{period_start.day}-{period_end.day}/{period_start.month:02d}',
                             'amount': float(period_total),
                             'due_date': due_date.isoformat(),
                             'is_overdue': is_overdue,

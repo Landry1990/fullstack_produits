@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   X, Plus, Trash2, Save, User, Award, Activity, Mail,
-  Phone, MapPin, ShieldCheck, CreditCard, Building2, FileText, Loader2
+  Phone, MapPin, ShieldCheck, CreditCard, Building2, FileText, Loader2, Clock
 } from 'lucide-react';
 import type { Client, AyantDroit } from '../../types';
 import { Switch } from '../shadcn/switch';
@@ -304,6 +304,16 @@ export default function ClientFormModal({
                       min={0} max={100}
                       value={data.taux_couverture || '0'}
                       onChange={(e) => setData({ ...data, taux_couverture: e.target.value })}
+                      className="w-full h-10 rounded-lg border border-base-300 bg-base-100 px-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
+                    />
+                  </Field>
+                  <Field label={t('clients:finance.payment_delay')} icon={Clock} id="cfm-delai">
+                    <input
+                      id="cfm-delai"
+                      type="number"
+                      min={0}
+                      value={data.delai_paiement_jours ?? 0}
+                      onChange={(e) => setData({ ...data, delai_paiement_jours: parseInt(e.target.value) || 0 })}
                       className="w-full h-10 rounded-lg border border-base-300 bg-base-100 px-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
                     />
                   </Field>

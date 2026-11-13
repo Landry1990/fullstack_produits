@@ -137,6 +137,17 @@ class PharmacySettings(models.Model):
         validators=[MinValueValidator(0)],
         help_text="Délai d'inactivité avant déconnexion automatique (en minutes, 0 pour désactiver)"
     )
+
+    # --- Rappels de traitement (médicaments chroniques) ---
+    rappel_traitement_actif = models.BooleanField(
+        default=True,
+        help_text="Afficher les popups de rappel de traitement aux admins quand une fin de traitement approche"
+    )
+    rappel_traitement_jours_avant = models.IntegerField(
+        default=7,
+        validators=[MinValueValidator(0)],
+        help_text="Nombre de jours avant la fin de traitement pour déclencher le rappel interne (anticiper la commande)"
+    )
     
     # --- Paramètres Caisse (Sécurité) ---
     hide_cash_totals = models.BooleanField(

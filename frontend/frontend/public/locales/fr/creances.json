@@ -15,13 +15,22 @@
         "end_date": "Date Fin",
         "search": "Rechercher",
         "reset": "Réinitialiser",
-        "back_to_list": "Retour à la liste"
+        "back_to_list": "Retour à la liste",
+        "search_label": "Recherche",
+        "search_placeholder": "Rechercher un client…",
+        "overdue_label": "Échéances",
+        "overdue_only": "En retard"
     },
     "stats": {
         "total_invoices": "Total Factures",
         "total_paid": "Total Payé",
         "remaining": "Reste à Payer",
-        "debtors": "Clients Débiteurs"
+        "debtors": "Clients Débiteurs",
+        "aging_title": "Ancienneté des créances",
+        "aging_0_30": "0-30 j",
+        "aging_30_60": "30-60 j",
+        "aging_60_90": "60-90 j",
+        "aging_90_plus": "90+ j"
     },
     "client_list": {
         "client": "Client",
@@ -30,7 +39,16 @@
         "already_paid": "Déjà Payé",
         "remaining_due": "Reste à Payer",
         "actions": "Actions",
-        "empty": "Aucun client avec des créances sur cette période"
+        "empty": "Aucun client avec des créances sur cette période",
+        "oldest_debt": "Ancienneté",
+        "last_payment": "Dernier paiement",
+        "over_limit": "Plafond dépassé",
+        "credit_limit": "Plafond",
+        "never": "Jamais",
+        "overdue_badge": "EN RETARD",
+        "due_in": "Échéance",
+        "relance": "Relancer",
+        "last_relance": "Rel. le {{date}}"
     },
     "invoice_list": {
         "selected_count": "{{count}} facture(s) sélectionnée(s)",
@@ -47,13 +65,28 @@
         "paid_badge": "PAYÉE",
         "pending_badge": "EN ATTENTE",
         "view_payments": "Voir les paiements",
-        "add_payment": "Ajouter un paiement"
+        "add_payment": "Ajouter un paiement",
+        "age": "Âge",
+        "overdue_badge": "EN RETARD"
     },
     "print_statement": "Imprimer le Relevé",
     "print_statement_simple": "Relevé simple",
     "print_statement_simple_desc": "Liste des factures avec montants",
     "print_statement_detailed": "Relevé détaillé",
     "print_statement_detailed_desc": "Factures avec détail des produits",
+    "releve_modal": {
+        "title": "Imprimer le Relevé",
+        "subtitle": "Factures impayées — choisir la période",
+        "preset_month_current": "Mois en cours",
+        "preset_month_previous": "Mois précédent",
+        "preset_tranche_1": "1–10 ce mois",
+        "preset_tranche_2": "11–20 ce mois",
+        "preset_tranche_3": "21–fin ce mois",
+        "preset_all": "Toutes périodes",
+        "format_simple": "Relevé simple",
+        "format_detailed": "Détaillé (produits)",
+        "generate": "Générer le PDF"
+    },
     "client_label": "Client : {{name}}",
     "payment_modal": {
         "title": "💰 Nouveau Règlement",
@@ -135,7 +168,9 @@
         "excel_loading": "Génération du fichier Excel...",
         "excel_export_success": "Export Excel généré avec succès.",
         "excel_export_error": "Erreur lors de l'export Excel.",
-        "invalid_date_range": "La date de début doit être antérieure à la date de fin"
+        "invalid_date_range": "La date de début doit être antérieure à la date de fin",
+        "relance_sent": "Relance envoyée à {{client}}",
+        "relance_failed": "Échec de la relance"
     },
     "print_view": {
         "title": "RELEVÉ DE CRÉANCES",
@@ -158,5 +193,23 @@
         "pharmacy_signature": "Signature Pharmacie",
         "generated_on": "Document généré le"
     },
-    "client_type_label": "Client"
+    "client_type_label": "Client",
+    "age_days": "{{count}} j",
+    "relance_modal": {
+        "title": "Relancer le client",
+        "balance_due": "Solde dû",
+        "invoices": "{{count}} facture(s)",
+        "no_phone": "Aucun numéro de téléphone enregistré pour ce client.",
+        "channel": "Canal",
+        "channels": {
+            "whatsapp_link": "WhatsApp",
+            "whatsapp": "WhatsApp Auto",
+            "sms": "SMS",
+            "email": "Email"
+        },
+        "whatsapp_link_hint": "Ouvre votre WhatsApp avec le message pré-rempli",
+        "message": "Message",
+        "send": "Envoyer",
+        "no_email": "Aucune adresse email enregistrée pour ce client."
+    }
 }

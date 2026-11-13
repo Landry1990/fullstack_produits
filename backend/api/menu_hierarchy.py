@@ -56,6 +56,7 @@ MENU_HIERARCHY = [
         'submenus': [
             {'key': 'clients_consultation', 'labelKey': 'sidebar:clients_consultation'},
             {'key': 'clients_imc', 'labelKey': 'sidebar:clients_imc'},
+            {'key': 'clients_rappels', 'labelKey': 'sidebar:clients_rappels'},
         ],
     },
     {'key': 'creances', 'labelKey': 'sidebar:creances'},

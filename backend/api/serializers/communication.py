@@ -16,6 +16,7 @@ from ..models import (
     SmsLog,
     SmsTemplate,
     TelegramLog,
+    TreatmentReminder,
     WhatsAppLog,
 )
 
@@ -207,3 +208,38 @@ class MessageTemplateSerializer(serializers.ModelSerializer):
         model = MessageTemplate
         fields = '__all__'
         read_only_fields = ['created_by', 'created_at']
+
+
+class TreatmentReminderSerializer(serializers.ModelSerializer):
+    # Saisie libre : durée directe OU dérivée de quantité/doses_par_jour.
+    duree_jours = serializers.IntegerField(required=False, allow_null=True, min_value=1)
+    client_name = serializers.CharField(source='client.name', read_only=True)
+    client_phone = serializers.CharField(source='client.phone', read_only=True)
+    produit_stock = serializers.IntegerField(source='produit.total_stock', read_only=True)
+    created_by_name = serializers.CharField(source='created_by.username', read_only=True)
+    statut_display = serializers.CharField(source='get_statut_display', read_only=True)
+    jours_restants = serializers.SerializerMethodField()
+
+    class Meta:
+        model = TreatmentReminder
+        fields = '__all__'
+        read_only_fields = ['date_fin_prevue', 'statut', 'created_by', 'created_at', 'traite_par', 'traite_le', 'informe_par', 'informe_le', 'produit_nom']
+
+    def get_jours_restants(self, obj):
+        from django.utils import timezone
+        return (obj.date_fin_prevue - timezone.now().date()).days
+
+    def validate(self, attrs):
+        # Durée obligatoire : soit saisie directement, soit dérivée de
+        # quantité / doses_par_jour.
+        if not attrs.get('duree_jours'):
+            quantite = attrs.get('quantite')
+            doses = attrs.get('doses_par_jour')
+            if quantite and doses:
+                import math
+                attrs['duree_jours'] = math.ceil(quantite / doses)
+            else:
+                raise serializers.ValidationError({
+                    'duree_jours': "Indiquez la durée en jours, ou la quantité et les doses par jour."
+                })
+        return attrs

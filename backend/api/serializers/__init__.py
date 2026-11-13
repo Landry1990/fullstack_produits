@@ -52,6 +52,7 @@ from .communication import (
     SmsLogSerializer,
     SmsTemplateSerializer,
     TelegramLogSerializer,
+    TreatmentReminderSerializer,
     WhatsAppLogSerializer,
 )
 from .config import (
@@ -234,6 +235,7 @@ __all__ = [
     # Config
     'TVASerializer',
     'TelegramLogSerializer',
+    'TreatmentReminderSerializer',
     'UserSerializer',
     'WhatsAppLogSerializer',
 ]

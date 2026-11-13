@@ -154,7 +154,14 @@ class Client(models.Model):
         validators=[MinValueValidator(Decimal('0')), MaxValueValidator(Decimal('100'))],
         help_text="Taux de couverture assurance en % (0-100) pour tiers payant"
     )
-    
+
+    delai_paiement_jours = models.IntegerField(
+        default=0,
+        validators=[MinValueValidator(0)],
+        help_text="Délai de règlement accordé au client en jours après facture (ex: 30 pour une assurance). 0 = pas d'échéance définie.",
+        verbose_name="Délai de paiement (jours)"
+    )
+
     remise_automatique = models.DecimalField(
         max_digits=5,
         decimal_places=2,

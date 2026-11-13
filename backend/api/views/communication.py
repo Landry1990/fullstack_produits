@@ -21,6 +21,7 @@ from ..models import (
     SmsLog,
     SmsTemplate,
     TelegramLog,
+    TreatmentReminder,
     WhatsAppLog,
 )
 from ..pagination import StandardResultsSetPagination
@@ -30,6 +31,7 @@ from ..serializers import (
     SmsLogSerializer,
     SmsTemplateSerializer,
     TelegramLogSerializer,
+    TreatmentReminderSerializer,
     WhatsAppLogSerializer,
 )
 from ..services.sms import SmsService
@@ -391,3 +393,147 @@ class MessageTemplateViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
             description=f"Création modèle de message « {template.title} » (#{template.pk})",
             request=self.request,
         )
+
+
+def _is_reminder_admin(user) -> bool:
+    """Admins des rappels : superuser, staff Django, ou rôle PHARMACIEN."""
+    if not user or not user.is_authenticated:
+        return False
+    if user.is_superuser or user.is_staff:
+        return True
+    profile = getattr(user, 'profile', None)
+    return getattr(profile, 'role', None) == 'PHARMACIEN'
+
+
+class TreatmentReminderViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
+    """
+    Rappels internes de traitement (médicaments spécifiques clients).
+    Créés manuellement par les admins ; la liste `due` alimente les popups.
+    """
+    queryset = TreatmentReminder.objects.select_related('client', 'produit', 'created_by', 'traite_par').all()
+    serializer_class = TreatmentReminderSerializer
+    pagination_class = StandardResultsSetPagination
+    permission_classes = [permissions.IsAuthenticated]
+
+    def _require_admin(self):
+        """Écritures + endpoint `due` réservés aux admins (pharmacien/staff)."""
+        if not _is_reminder_admin(self.request.user):
+            raise PermissionDenied("Réservé aux administrateurs.")
+
+    def perform_update(self, serializer):
+        self._require_admin()
+        instance = serializer.save()
+        if instance.produit and instance.produit_nom != instance.produit.name:
+            instance.produit_nom = instance.produit.name
+            instance.save(update_fields=['produit_nom'])
+
+    def perform_destroy(self, instance):
+        self._require_admin()
+        instance.delete()
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        statut = self.request.query_params.get('statut')
+        if statut:
+            qs = qs.filter(statut=statut)
+        client_id = self.request.query_params.get('client')
+        if client_id:
+            qs = qs.filter(client_id=client_id)
+        produit_id = self.request.query_params.get('produit')
+        if produit_id:
+            qs = qs.filter(produit_id=produit_id)
+        return qs
+
+    def perform_create(self, serializer):
+        self._require_admin()
+        produit = serializer.validated_data.get('produit')
+        serializer.save(
+            created_by=self.request.user,
+            produit_nom=produit.name if produit else serializer.validated_data.get('produit_nom', ''),
+        )
+
+    @action(detail=False, methods=['get'])
+    def due(self, request):
+        """
+        Rappels à afficher en popup :
+        - EN_ATTENTE dont la fin de traitement tombe dans les
+          `rappel_traitement_jours_avant` prochains jours (ou passée) ;
+        - TRAITE (médicament arrivé) → le patient reste à informer.
+        Désactivable via les réglages.
+        """
+        self._require_admin()
+
+        from django.db.models import Q
+        from django.utils import timezone
+        from ..models import PharmacySettings
+
+        settings_obj, _ = PharmacySettings.objects.get_or_create(pk=1)
+        if not settings_obj.rappel_traitement_actif:
+            return Response({'actif': False, 'rappels': []})
+
+        Statut = self.queryset.model.Statut
+        jours = settings_obj.rappel_traitement_jours_avant
+        seuil = timezone.now().date() + timezone.timedelta(days=jours)
+        qs = self.get_queryset().filter(
+            Q(statut=Statut.EN_ATTENTE, date_fin_prevue__lte=seuil)
+            | Q(statut=Statut.TRAITE)
+        )[:50]
+
+        # Promis dont le produit est arrivé (PRET) et client pas encore informé
+        from ..models import Promis
+        promis_qs = Promis.objects.filter(
+            status=Promis.Status.PRET,
+            is_active=True,
+            client_informe_le__isnull=True,
+        ).select_related('client', 'produit').order_by('date_promis')[:50]
+
+        return Response({
+            'actif': True,
+            'jours_avant': jours,
+            'rappels': self.get_serializer(qs, many=True).data,
+            'promis': [{
+                'id': p.id,
+                'type': 'promis',
+                'client': p.client_display,
+                'client_phone': p.client_phone_display,
+                'produit_nom': p.produit.name if p.produit else p.produit_nom or '',
+                'quantite': p.quantite,
+            } for p in promis_qs],
+        })
+
+    @action(detail=True, methods=['post'])
+    def traiter(self, request, pk=None):
+        self._require_admin()
+        rappel = self.get_object()
+        if rappel.statut != self.queryset.model.Statut.EN_ATTENTE:
+            return Response({'detail': "Ce rappel n'est plus en attente."}, status=status.HTTP_400_BAD_REQUEST)
+        from django.utils import timezone
+        rappel.statut = self.queryset.model.Statut.TRAITE
+        rappel.traite_par = request.user
+        rappel.traite_le = timezone.now()
+        rappel.save(update_fields=['statut', 'traite_par', 'traite_le'])
+        return Response(self.get_serializer(rappel).data)
+
+    @action(detail=True, methods=['post'])
+    def patient_informe(self, request, pk=None):
+        """Marque le patient comme informé que son médicament est arrivé."""
+        self._require_admin()
+        rappel = self.get_object()
+        if rappel.statut != self.queryset.model.Statut.TRAITE:
+            return Response({'detail': "Ce rappel n'est pas en attente d'information patient."}, status=status.HTTP_400_BAD_REQUEST)
+        from django.utils import timezone
+        rappel.statut = self.queryset.model.Statut.PATIENT_INFORME
+        rappel.informe_par = request.user
+        rappel.informe_le = timezone.now()
+        rappel.save(update_fields=['statut', 'informe_par', 'informe_le'])
+        return Response(self.get_serializer(rappel).data)
+
+    @action(detail=True, methods=['post'])
+    def ignorer(self, request, pk=None):
+        self._require_admin()
+        rappel = self.get_object()
+        if rappel.statut not in (self.queryset.model.Statut.EN_ATTENTE, self.queryset.model.Statut.TRAITE):
+            return Response({'detail': "Ce rappel n'est plus actif."}, status=status.HTTP_400_BAD_REQUEST)
+        rappel.statut = self.queryset.model.Statut.IGNORE
+        rappel.save(update_fields=['statut'])
+        return Response(self.get_serializer(rappel).data)

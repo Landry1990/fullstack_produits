@@ -830,11 +830,13 @@
         "filter_status": "Filter by status",
         "status_all": "All",
         "status_att": "Waiting",
+        "status_pret": "Ready for pickup",
         "status_del": "Delivered",
         "status_ann": "Cancelled",
         "stats": {
             "all_title": "All Promised",
             "att_title": "Waiting",
+            "pret_title": "Ready",
             "del_title": "Delivered",
             "ann_title": "Cancelled"
         },
@@ -854,6 +856,8 @@
             "sms": "Send SMS",
             "whatsapp": "WhatsApp Reminder",
             "sms_send": "Send 📨",
+            "inform": "Client notified",
+            "cant_cancel_ready": "Stock consumed",
             "already_delivered": "Already delivered",
             "already_cancelled": "Already cancelled"
         },
@@ -889,6 +893,9 @@
             "loading": "Loading promised products...",
             "empty": "No promised product found",
             "delivered_on": "Delivered on {{date}}",
+            "informed_on": "Notified on {{date}}",
+            "inform_success": "Client marked as notified",
+            "inform_error": "Error while marking",
             "cancelled": "Cancelled",
             "print_ticket_error": "Error printing ticket",
             "bulk_delivery_error": "Error during bulk delivery",

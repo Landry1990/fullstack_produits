@@ -1,0 +1,86 @@
+{
+    "title": "Rappels Traitement",
+    "subtitle": "Médicaments spécifiques — anticiper les commandes clients",
+    "new": "Nouveau rappel",
+    "empty": "Aucun rappel dans ce statut.",
+    "tabs": {
+        "pending": "En attente",
+        "to_inform": "Patients à informer",
+        "informed": "Patients informés",
+        "ignored": "Ignorés",
+        "all": "Tous"
+    },
+    "table": {
+        "client": "Client",
+        "produit": "Produit",
+        "posologie": "Posologie",
+        "debut": "Début",
+        "fin": "Fin prévue",
+        "reste": "Reste",
+        "statut": "Statut",
+        "stock": "Stock : {{count}}",
+        "per_day": "/j",
+        "days_left": "J-{{count}}",
+        "overdue": "+{{count}}j dépassé"
+    },
+    "settings": {
+        "title": "Paramètres",
+        "enabled": "Popups de rappel actifs",
+        "days_before": "Alerter",
+        "days_unit": "jours avant la fin",
+        "save": "Enregistrer"
+    },
+    "modal": {
+        "title": "Nouveau rappel de traitement",
+        "client": "Client",
+        "client_ph": "Rechercher un client…",
+        "produit": "Produit",
+        "produit_ph": "Rechercher un produit…",
+        "date_debut": "Début du traitement",
+        "mode_duree": "Durée en jours",
+        "mode_posologie": "Quantité × doses",
+        "duree": "Durée (jours)",
+        "quantite": "Quantité remise",
+        "doses": "Prises par jour",
+        "notes": "Notes",
+        "fin_prevue": "Fin prévue le {{date}} ({{jours}} jours)",
+        "create": "Créer le rappel",
+        "title_edit": "Modifier le rappel",
+        "save": "Enregistrer"
+    },
+    "actions": {
+        "edit": "Modifier",
+        "done": "Médicament arrivé",
+        "informed": "Patient informé",
+        "ignore": "Ignorer",
+        "delete": "Supprimer"
+    },
+    "popup": {
+        "count": "{{count}} rappels",
+        "title": "Traitement se termine dans {{jours}} j",
+        "title_overdue": "Traitement terminé depuis {{jours}} j",
+        "body": "{{produit}} — {{client}} : anticiper la commande",
+        "stock": "Stock actuel : {{count}}",
+        "done": "Arrivé",
+        "title_inform": "{{produit}} est arrivé",
+        "title_promis": "{{produit}} ×{{count}} est arrivé (promis)",
+        "body_inform": "Informer le patient : {{client}}",
+        "informed": "Patient informé",
+        "ignore": "Ignorer",
+        "open": "Ouvrir"
+    },
+    "toasts": {
+        "created": "Rappel créé",
+        "updated": "Rappel mis à jour",
+        "traiter": "Médicament marqué comme arrivé — patient à informer",
+        "informer": "Patient marqué comme informé",
+        "ignorer": "Rappel ignoré",
+        "settings_saved": "Paramètres enregistrés"
+    },
+    "errors": {
+        "load": "Erreur lors du chargement des rappels",
+        "action": "Action impossible",
+        "client_required": "Sélectionnez un client",
+        "duree_required": "Indiquez une durée valide (jours ou quantité × doses)"
+    }
+}

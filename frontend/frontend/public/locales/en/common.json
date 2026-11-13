@@ -620,6 +620,7 @@
         "connection": "Connection error: Unable to reach the server.",
         "unexpected": "An unexpected error occurred.",
         "module_timeout": "Timeout: Module loading took too long",
+        "timeout": "Timeout: the server is taking too long to respond. Please try again.",
         "settings_load": "Error loading settings"
     },
     "no_section": "No shelf",

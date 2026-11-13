@@ -30,3 +30,10 @@ application = ProtocolTypeRouter({
         )
     ),
 })
+
+# Warm-up : forcer la résolution de l'URLconf au démarrage du worker pour
+# importer maintenant (~2 s) tous les modules de vues/serializers, plutôt que
+# sur la première requête d'un utilisateur. Sans ça, chaque worker neuf (boot
+# ou recycle via --limit-max-requests) inflige ce coût à un utilisateur réel.
+from django.urls import get_resolver
+get_resolver().url_patterns

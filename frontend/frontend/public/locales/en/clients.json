@@ -65,7 +65,8 @@
         "current_debt": "Current Debt",
         "solde_depot": "Deposit Balance",
         "manage_deposit": "Manage Deposit",
-        "debt_usage": "Current Debt / Limit"
+        "debt_usage": "Current Debt / Limit",
+        "payment_delay": "Payment delay (days)"
     },
     "beneficiaries": {
         "title": "Beneficiaries",

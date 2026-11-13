@@ -44,13 +44,21 @@ def payment_status(days_remaining):
 
 
 def statement_periods(year, month, period_days):
+    """
+    Tranches calendaires ancrées au 1er du mois — décade stricte.
+    La dernière tranche absorbe le reste du mois :
+    - periode 10j → 1-10, 11-20, 21-fin (le 31 n'est pas une tranche à part)
+    - periode 15j → 1-15, 16-fin (quinzaine)
+    Nombre de tranches = blocs complets d'un mois de référence de 30 jours.
+    """
     _, last_day = calendar.monthrange(year, month)
+    period_days = max(period_days, 1)
+    n_periods = max(1, 30 // period_days)
     periods = []
-    day = 1
-    while day <= last_day:
-        end_day = min(day + period_days - 1, last_day)
-        periods.append((date(year, month, day), date(year, month, end_day)))
-        day = end_day + 1
+    for i in range(n_periods):
+        start_day = i * period_days + 1
+        end_day = last_day if i == n_periods - 1 else start_day + period_days - 1
+        periods.append((date(year, month, start_day), date(year, month, min(end_day, last_day))))
     return periods
 
 

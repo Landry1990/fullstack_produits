@@ -36,7 +36,7 @@ class ClientSerializer(UppercaseSerializerMixin, serializers.ModelSerializer):
         model = Client
         fields = [
             'id', 'name', 'phone', 'email', 'address', 'niu', 'registre_commerce',
-            'client_type', 'plafond', 'taux_couverture',
+            'client_type', 'plafond', 'taux_couverture', 'delai_paiement_jours',
             'remise_automatique', 'majoration_pro_pourcentage',
             'points_fidelite', 'pending_discount', 'is_loyalty_member',
             'solde_depot', 'is_deposit_enabled',

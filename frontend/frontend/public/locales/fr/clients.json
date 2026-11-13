@@ -70,7 +70,8 @@
         "current_debt": "Dette Actuelle",
         "solde_depot": "Solde Dépôt",
         "manage_deposit": "Gérer le dépôt",
-        "debt_usage": "Dette Actuelle / Plafond"
+        "debt_usage": "Dette Actuelle / Plafond",
+        "payment_delay": "Délai de paiement (jours)"
     },
     "beneficiaries": {
         "title": "Bénéficiaires (Ayants Droit)",
