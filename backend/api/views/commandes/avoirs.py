@@ -1,6 +1,7 @@
 import logging
 
 from django.db import transaction
+from django.db.models import Sum
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
@@ -17,6 +18,65 @@ from ...serializers import AvoirSerializer, LigneAvoirSerializer, LigneAvoirUpda
 from ...sudo_utils import validate_sudo_mode
 
 logger = logging.getLogger(__name__)
+
+
+def _promis_discharge_conflicts(avoir):
+    """
+    Unités qu'une décharge prendrait sur des promis en attente.
+
+    Les promis réservent des unités qui restent physiquement dans les lots :
+    Produit.stock (vendable) les exclut déjà. Si la quantité déchargée dépasse
+    le vendable, l'excédent est prélevé sur des unités promises — le client qui
+    a payé ne pourra plus être délivré avant un réapprovisionnement.
+
+    Retourne une liste de conflits par produit (vide si tout est couvert par
+    le stock vendable).
+    """
+    required = {}
+    for ligne in avoir.produits.select_related('produit').all():
+        produit = ligne.produit
+        if not produit or produit.is_service or not ligne.quantity or ligne.quantity <= 0:
+            continue
+        required[produit.id] = required.get(produit.id, 0) + ligne.quantity
+    if not required:
+        return []
+
+    pending_map = {
+        row['produit_id']: row['total'] or 0
+        for row in StockObligation.objects.filter(
+            produit_id__in=required.keys(),
+            type=StockObligation.TypeObligation.PROMIS,
+            status=StockObligation.Status.EN_ATTENTE,
+            stock_applied=True,
+        ).values('produit_id').annotate(total=Sum('quantity_remaining'))
+    }
+    if not pending_map:
+        return []
+
+    stocks = {
+        p.id: p.stock or 0
+        for p in Produit.objects.filter(id__in=required.keys())
+    }
+    noms = {l.produit_id: l.produit.name for l in avoir.produits.select_related('produit') if l.produit_id in required}
+
+    conflicts = []
+    for produit_id, qty in required.items():
+        pending = pending_map.get(produit_id, 0)
+        if pending <= 0:
+            continue
+        vendable = stocks.get(produit_id, 0)
+        at_risk = min(pending, max(0, qty - vendable))
+        if at_risk <= 0:
+            continue
+        conflicts.append({
+            'produit_id': produit_id,
+            'produit_nom': noms.get(produit_id, ''),
+            'quantite_demandee': qty,
+            'stock_vendable': vendable,
+            'promis_en_attente': pending,
+            'unites_promises_consommees': at_risk,
+        })
+    return conflicts
 
 
 class AvoirViewSet(viewsets.ModelViewSet):
@@ -154,6 +214,14 @@ class AvoirViewSet(viewsets.ModelViewSet):
             }
         })
 
+    @action(detail=True, methods=['get'])
+    def promis_conflicts(self, request, pk=None):
+        """
+        Pré-contrôle avant décharge : liste les produits dont la décharge
+        consommerait des unités réservées par des promis en attente.
+        """
+        return Response({'conflicts': _promis_discharge_conflicts(self.get_object())})
+
     @action(detail=True, methods=['post'])
     @idempotent_action
     def decharger_stock(self, request, pk=None):
@@ -190,6 +258,23 @@ class AvoirViewSet(viewsets.ModelViewSet):
                 locked_products = {p.id: p for p in Produit.objects.filter(id__in=product_ids).select_for_update().order_by('id')} if product_ids else {}
                 locked_lots = {l.id: l for l in StockLot.objects.filter(id__in=lot_ids).select_for_update().order_by('id')} if lot_ids else {}
                 StockObligationService.reapply_pending_obligations(product_ids)
+
+                # La décharge ne doit pas consommer silencieusement des unités
+                # promises à des clients : blocage sauf confirmation explicite.
+                promis_conflicts = _promis_discharge_conflicts(avoir)
+                if promis_conflicts and not request.data.get('force_discharge'):
+                    noms = ', '.join(
+                        f"{c['produit_nom']} ({c['unites_promises_consommees']} u.)"
+                        for c in promis_conflicts
+                    )
+                    return Response({
+                        'error': (
+                            f"La décharge consommerait des unités réservées par des "
+                            f"promis en attente : {noms}."
+                        ),
+                        'promis_conflicts': promis_conflicts,
+                        'requires_confirmation': True,
+                    }, status=status.HTTP_409_CONFLICT)
 
                 for ligne in lignes:
                     # Garde-fou : une quantité <= 0 inverse l'opération (créerait du stock)
@@ -273,6 +358,7 @@ class AvoirViewSet(viewsets.ModelViewSet):
                             'motif': ligne.motif,
                             'lot': ligne.lot,
                             'decharge_by': decharge_user.username,
+                            'force_discharge': bool(promis_conflicts),
                         },
                         request=request
                     )

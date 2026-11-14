@@ -764,6 +764,7 @@
             "sudo_bulk_validate_message": "Confirm validation of <strong>{{count}} supplier returns</strong>?<br/>Stock will be reinstated for all.",
             "sudo_decharge_title": "Unload stock — {{numero}}",
             "sudo_decharge_message": "This action will physically remove {{count}} product(s) from stock and record the movements. Irreversible action.",
+            "sudo_decharge_promis_warning": "⚠️ Warning: this discharge will consume units already promised to customers — they will remain undeliverable until the next restock: {{details}}.",
             "sudo_annule_title": "Cancel unload — {{numero}}",
             "sudo_annule_message": "This action will restore {{count}} product(s) to stock and cancel the unload movements."
         },

@@ -408,12 +408,30 @@ export function useAvoirsData(): UseAvoirsDataReturn {
     };
 
     const handleDechargerStock = async (avoir: Avoir) => {
+        // Pré-contrôle : la décharge ne doit pas vider silencieusement des
+        // unités promises à des clients (elles resteraient indélivrables).
+        let promisWarning = '';
+        let forceDischarge = false;
+        try {
+            const conflicts = await avoirService.getPromisConflicts(avoir.id);
+            if (conflicts.length > 0) {
+                forceDischarge = true;
+                const details = conflicts
+                    .map(c => `${c.produit_nom} (${c.unites_promises_consommees} u.)`)
+                    .join(', ');
+                promisWarning = ' ' + t('avoirs.modals.sudo_decharge_promis_warning', { details });
+            }
+        } catch {
+            // Pré-contrôle indisponible : le backend fera lui-même le blocage.
+        }
+
         requireSudo(async (validatorId, password) => {
             try {
                 setLoading(true);
                 const updated = await avoirService.dechargerStock(avoir.id, {
                     validated_by_id: validatorId,
-                    password: password
+                    password: password,
+                    force_discharge: forceDischarge
                 });
                 gooeyToast.success(t('sales:messages.stock_unloaded'));
                 setAvoirs(avoirs.map(a => a.id === avoir.id ? updated : a));
@@ -428,7 +446,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
             }
         }, {
             title: t('avoirs.modals.sudo_decharge_title', { numero: avoir.numero }),
-            message: t('avoirs.modals.sudo_decharge_message', { count: avoir.produits?.length || 0 }),
+            message: t('avoirs.modals.sudo_decharge_message', { count: avoir.produits?.length || 0 }) + promisWarning,
             permission: 'can_manage_avoirs'
         });
     };

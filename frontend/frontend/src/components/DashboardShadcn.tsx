@@ -100,7 +100,10 @@ export default function DashboardShadcn() {
   } : stats;
 
   const loading = initLoading;
-  const error = initError ? t('messages.error_loading') : null;
+  // Réponse résolue mais sans stats (corps vide / backend en redémarrage) :
+  // traiter comme une erreur pour éviter le crash des sous-composants.
+  const missingStats = !initLoading && !initError && initData !== undefined && !stats;
+  const error = (initError || missingStats) ? t('messages.error_loading') : null;
 
   const handleRefreshAll = async () => {
     await Promise.all([
@@ -206,8 +209,12 @@ export default function DashboardShadcn() {
     return (
       <div className="h-full min-h-0 bg-slate-50 p-3">
         <Card className="border-red-200 bg-red-50">
-          <CardContent className="p-6 flex items-center gap-3 text-red-700">
+          <CardContent className="p-6 flex items-center justify-between gap-3 text-red-700">
             <span className="font-semibold">{error}</span>
+            <Button variant="outline" size="sm" onClick={() => refetchInit()} className="shrink-0">
+              <RefreshCw className="size-4" />
+              {t('common:refresh')}
+            </Button>
           </CardContent>
         </Card>
       </div>

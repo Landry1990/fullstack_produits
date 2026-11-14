@@ -1281,6 +1281,7 @@
             "sudo_bulk_validate_message": "Confirmer la validation de <strong>{{count}} avoirs</strong> fournisseurs ?<br/>Le stock sera réintégré pour tous.",
             "sudo_decharge_title": "Décharger stock — {{numero}}",
             "sudo_decharge_message": "Cette action va retirer physiquement {{count}} produit(s) du stock et enregistrer les mouvements. Action irréversible.",
+            "sudo_decharge_promis_warning": "⚠️ Attention : cette décharge consommera des unités déjà promises à des clients — elles resteront indélivrables jusqu'au prochain réapprovisionnement : {{details}}.",
             "sudo_annule_title": "Annuler déchargement — {{numero}}",
             "sudo_annule_message": "Cette action va réintégrer {{count}} produit(s) dans le stock et annuler les mouvements de déchargement."
         },

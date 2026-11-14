@@ -65,10 +65,10 @@ function BackendHealthCheck({ children }: { children: React.ReactNode }) {
   if (licenceError) {
     window.location.href = '/licence';
     return (
-      <div className="h-screen flex items-center justify-center bg-base-100">
+      <div className="h-screen flex items-center justify-center bg-slate-50">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="size-8 animate-spin text-primary" />
-          <p className="text-caption font-black uppercase tracking-[0.2em] text-base-content/40">
+          <Loader2 className="size-8 animate-spin text-emerald-600" />
+          <p className="text-caption font-black uppercase tracking-[0.2em] text-slate-400">
             {t('common:startup.redirect_licence')}
           </p>
         </div>
@@ -81,20 +81,20 @@ function BackendHealthCheck({ children }: { children: React.ReactNode }) {
   // Afficher message d'erreur après épuisement des tentatives
   if (failed) {
     return (
-      <div className="h-screen flex items-center justify-center bg-base-100">
+      <div className="h-screen flex items-center justify-center bg-slate-50">
         <div className="flex flex-col items-center gap-4 max-w-md px-4">
           <span className="text-4xl text-red-500">⚠️</span>
           <p className="text-caption font-black uppercase tracking-[0.2em] text-red-500 animate-pulse">
             {t('common:startup.title')}
           </p>
-          <p className="text-caption text-base-content/50 text-center">
+          <p className="text-caption text-slate-500 text-center">
             {t('common:startup.subtitle', { max: MAX_ATTEMPTS })}
           </p>
           <div className="flex flex-col gap-2 text-center">
-            <p className="text-caption text-base-content/30">
+            <p className="text-caption text-slate-400">
               {t('common:startup.checklist.intro')}
             </p>
-            <ul className="text-caption text-base-content/40 list-disc list-inside text-left">
+            <ul className="text-caption text-slate-400 list-disc list-inside text-left">
               <li>{t('common:startup.checklist.backend')}</li>
               <li>{t('common:startup.checklist.licence')}</li>
               <li>{t('common:startup.checklist.db')}</li>
@@ -103,7 +103,7 @@ function BackendHealthCheck({ children }: { children: React.ReactNode }) {
           <button 
             type="button"
             onClick={() => window.location.reload()}
-            className="mt-4 h-9 px-4 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors"
+            className="mt-4 h-9 px-4 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition-colors"
           >
             {t('common:startup.retry')}
           </button>

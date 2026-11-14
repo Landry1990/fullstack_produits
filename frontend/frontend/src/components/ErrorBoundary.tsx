@@ -47,9 +47,9 @@ class ErrorBoundary extends Component<Props, State> {
 
       if (isChunkError) {
         return (
-          <div className="min-h-screen flex items-center justify-center bg-base-200 p-4">
-            <div className="w-96 bg-base-100 shadow-xl rounded-2xl border border-base-200 p-6 items-center text-center">
-                <Loader2 className="size-8 animate-spin text-primary" />
+          <div className="min-h-screen flex items-center justify-center bg-slate-100 p-4">
+            <div className="w-96 bg-white shadow-xl rounded-2xl border border-slate-200 p-6 items-center text-center">
+                <Loader2 className="size-8 animate-spin text-emerald-600" />
                 <h2 className="text-lg font-bold mt-4">{t('error_boundary.update_detected')}</h2>
                 <p className="py-2 text-sm text-base-content/60">{t('error_boundary.reloading')}</p>
             </div>
@@ -58,10 +58,10 @@ class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="min-h-screen flex items-center justify-center bg-base-200 p-4">
-          <div className="w-96 bg-base-100 shadow-xl rounded-2xl border border-base-200 p-6 items-center text-center">
+        <div className="min-h-screen flex items-center justify-center bg-slate-100 p-4">
+          <div className="w-96 bg-white shadow-xl rounded-2xl border border-slate-200 p-6 items-center text-center">
               <h2 className="text-lg font-bold text-red-500">{t('error_boundary.oops')}</h2>
-              <p className="py-4 text-sm text-base-content/60">
+              <p className="py-4 text-sm text-slate-500">
                 {t('error_boundary.unexpected')}
               </p>
               {this.state.error && (

@@ -7,7 +7,7 @@ import i18n from './i18n';
 
 // ── Lazy loading robuste avec timeout et retry ──
 const MAX_RETRIES = 3;
-const LOAD_TIMEOUT = 10000; // 10 secondes
+const LOAD_TIMEOUT = 20000; // 20 secondes (réseaux lents / post-déploiement)
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function lazyWithRetry<T extends ComponentType<any>>(
@@ -17,7 +17,11 @@ function lazyWithRetry<T extends ComponentType<any>>(
   return lazy(() => 
     new Promise<{ default: T }>((resolve, reject) => {
       const timeoutId = setTimeout(() => {
-        reject(new Error(i18n.t('common:errors.module_timeout')));
+        // name = 'ChunkLoadError' → reconnu par ErrorBoundary/RouteErrorBoundary
+        // qui déclenchent le rechargement automatique de la page.
+        const err = new Error(i18n.t('common:errors.module_timeout'));
+        err.name = 'ChunkLoadError';
+        reject(err);
       }, LOAD_TIMEOUT);
 
       const attempt = (attemptsLeft: number) => {

@@ -36,11 +36,11 @@ export default function RouteErrorBoundary() {
 
   if (showLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-base-200 p-4">
-        <div className="w-96 bg-base-100 shadow-xl rounded-2xl border border-base-200 p-6 items-center text-center">
-            <Loader2 className="size-8 animate-spin text-primary" />
-            <h2 className="text-lg font-bold mt-4">{t('error_boundary.update_detected')}</h2>
-            <p className="py-2 text-sm text-base-content/60">{t('error_boundary.reloading_app')}</p>
+      <div className="min-h-screen flex items-center justify-center bg-slate-100 p-4">
+        <div className="w-96 bg-white shadow-xl rounded-2xl border border-slate-200 p-6 items-center text-center">
+            <Loader2 className="size-8 animate-spin text-emerald-600" />
+            <h2 className="text-lg font-bold mt-4 text-slate-900">{t('error_boundary.update_detected')}</h2>
+            <p className="py-2 text-sm text-slate-500">{t('error_boundary.reloading_app')}</p>
         </div>
       </div>
     );
@@ -58,18 +58,18 @@ export default function RouteErrorBoundary() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-base-200 p-4">
-      <div className="w-full max-w-md bg-base-100 shadow-xl rounded-2xl border border-red-200 p-6 items-center text-center">
+    <div className="min-h-screen flex items-center justify-center bg-slate-100 p-4">
+      <div className="w-full max-w-md bg-white shadow-xl rounded-2xl border border-red-200 p-6 items-center text-center">
           <div className="size-16 rounded-full bg-red-50 flex items-center justify-center mb-2 text-red-500">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
           <h2 className="text-lg font-bold text-red-500 mb-2">{t('error_boundary.oops')}</h2>
-          <p className="text-sm text-base-content/70 mb-4">
+          <p className="text-sm text-slate-600 mb-4">
             {t('error_boundary.unexpected_page')}
           </p>
-          <div className="bg-base-200 p-3 rounded-lg w-full text-left overflow-x-auto mb-6">
+          <div className="bg-slate-100 p-3 rounded-lg w-full text-left overflow-x-auto mb-6">
             <code className="text-xs text-red-500 font-mono whitespace-pre-wrap">{displayError}</code>
           </div>
           <div className="flex w-full gap-3">

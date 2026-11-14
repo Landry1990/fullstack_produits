@@ -1,6 +1,15 @@
 import api from './api';
 import type { Avoir, LigneAvoir, PaginatedResponse } from '../types';
 
+export interface PromisDischargeConflict {
+    produit_id: number;
+    produit_nom: string;
+    quantite_demandee: number;
+    stock_vendable: number;
+    promis_en_attente: number;
+    unites_promises_consommees: number;
+}
+
 const avoirService = {
     getAll: async (search: string = ''): Promise<Avoir[]> => {
         const url = search ? `avoirs/?search=${encodeURIComponent(search)}` : 'avoirs/';
@@ -32,9 +41,14 @@ const avoirService = {
         return response.data.avoir;
     },
 
-    dechargerStock: async (id: number, data: { validated_by_id: number; password: string }): Promise<Avoir> => {
+    dechargerStock: async (id: number, data: { validated_by_id: number; password: string; force_discharge?: boolean }): Promise<Avoir> => {
         const response = await api.post(`avoirs/${id}/decharger_stock/`, data);
         return response.data.avoir;
+    },
+
+    getPromisConflicts: async (id: number): Promise<PromisDischargeConflict[]> => {
+        const response = await api.get(`avoirs/${id}/promis_conflicts/`);
+        return response.data.conflicts || [];
     },
 
     annulerDechargement: async (id: number, data: { validated_by_id: number; password: string }): Promise<Avoir> => {

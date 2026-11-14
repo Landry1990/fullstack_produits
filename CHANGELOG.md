@@ -2,6 +2,41 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-11-14 — Avoirs : garde-fou promis sur la décharge de stock
+
+- Un promis réserve des unités qui restent physiquement dans les lots (le
+  vendable `Produit.stock` les exclut déjà). Une décharge d'avoir fournisseur
+  supérieure au vendable prélevait silencieusement des unités promises → le
+  client payé restait indélivrable jusqu'au réappro.
+- Nouveau `GET /api/avoirs/{id}/promis_conflicts/` : par produit, quantité
+  demandée vs vendable vs promis en attente vs unités promises qui seraient
+  consommées (`min(promis, demandé − vendable)`).
+- `decharger_stock` bloque désormais en **409** (`requires_confirmation` +
+  détail des conflits) sauf `force_discharge: true` — tracé dans l'audit.
+- Frontend : pré-contrôle avant la modale sudo ; en cas de conflit,
+  avertissement ⚠️ injecté dans le message (produits + unités) et
+  `force_discharge` envoyé — un seul mot de passe. i18n `stock:` fr/en.
+- Fichiers : `views/commandes/avoirs.py`, `avoirService.ts`,
+  `useAvoirsData.ts`, locales `stock.json` fr/en, tests
+  `test_avoir_promis_conflicts.py` (5 tests : conflit, pas de conflit, blocage
+  409, force OK, décharge normale OK — tous verts).
+
+## 2026-11-13 — Fix : dashboard parfois tout blanc, F5 obligatoire
+
+- Cause principale : l'erreur `module_timeout` de `lazyWithRetry` n'était pas
+  reconnue comme erreur de chunk par les error boundaries → pas de reload auto ;
+  et `RouteErrorBoundary`/`ErrorBoundary`/`BackendHealthCheck` utilisaient encore
+  des classes DaisyUI mortes (`bg-base-200`, `text-base-content`…) → carte
+  d'erreur invisible sur fond blanc = "page blanche".
+- `lazyWithRetry` : timeout porté à 20 s et l'erreur de timeout est nommée
+  `ChunkLoadError` → rechargement automatique de la page (jusqu'à 3×).
+- Boundaries et écrans de démarrage migrés vers des classes Tailwind réelles
+  (slate/emerald) — la carte d'erreur redevient visible au lieu d'un écran blanc.
+- `DashboardShadcn` : réponse `dashboard/init/` résolue sans `stats` → état
+  d'erreur avec bouton « Rafraîchir » au lieu d'un crash du sous-composant.
+- Fichiers : `routes.tsx`, `RouteErrorBoundary.tsx`, `ErrorBoundary.tsx`,
+  `App.tsx`, `DashboardShadcn.tsx`. ESLint ciblé propre (2 warnings préexistants).
+
 ## 2026-11-13 — Fix : nom client du promis perdu à l'enregistrement
 
 - Le nom saisi dans la modale de résolution de stock n'arrivait jamais jusqu'au
