@@ -29,6 +29,7 @@ import {
   DropdownMenuTrigger,
 } from '../shadcn/dropdown-menu';
 import { cn } from '../../lib/utils';
+import { usePharmacySettings } from '../../context/PharmacySettingsContext';
 import { EmptyState } from '../ui/EmptyState';
 import api from '../../services/api';
 import { gooeyToast } from 'goey-toast';
@@ -140,6 +141,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
 }) => {
 
   const { t } = useTranslation(['orders', 'products', 'common']);
+  const showSaleMargin = usePharmacySettings().settings.show_order_sale_margin !== false;
 
   const [searchDetailQuery, setSearchDetailQuery] = useState('');
   // Barre de synthèse (prix/marge) : préférence persistée entre les sessions.
@@ -437,16 +439,20 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
             <span className="text-xs uppercase font-bold text-slate-400 -mb-1">{t('orders:details.recap.buy_ttc')}</span>
             <span className="text-lg font-black leading-none text-slate-800">{formatCurrency(orderTotals?.totalBuyTTC || 0)}</span>
           </div>
-          {/* PRIX V TTC */}
-          <div className="flex flex-col items-end border-l pl-3 border-slate-200">
-            <span className="text-xs uppercase font-bold text-emerald-600 -mb-1">{t('orders:details.recap.sell_ttc')}</span>
-            <span className={cn("text-lg font-black leading-none", Number(orderTotals?.globalMargin || 0) >= 1.34 ? 'text-emerald-600' : 'text-amber-600')}>{formatCurrency(orderTotals?.totalTTC || 0)}</span>
-          </div>
-          {/* MARGE */}
-          <div className="flex flex-col items-end border-l pl-3 border-slate-200">
-            <span className="text-xs uppercase font-bold text-slate-400 -mb-1">{t('orders:details.recap.margin')}</span>
-            <span className={cn("text-sm font-bold", Number(orderTotals?.globalMargin || 0) >= 1.34 ? 'text-emerald-600' : 'text-amber-600')}>{formatCurrency(orderTotals?.totalMarginValue || 0)}</span>
-          </div>
+          {showSaleMargin && (
+            <>
+              {/* PRIX V TTC */}
+              <div className="flex flex-col items-end border-l pl-3 border-slate-200">
+                <span className="text-xs uppercase font-bold text-emerald-600 -mb-1">{t('orders:details.recap.sell_ttc')}</span>
+                <span className={cn("text-lg font-black leading-none", Number(orderTotals?.globalMargin || 0) >= 1.34 ? 'text-emerald-600' : 'text-amber-600')}>{formatCurrency(orderTotals?.totalTTC || 0)}</span>
+              </div>
+              {/* MARGE */}
+              <div className="flex flex-col items-end border-l pl-3 border-slate-200">
+                <span className="text-xs uppercase font-bold text-slate-400 -mb-1">{t('orders:details.recap.margin')}</span>
+                <span className={cn("text-sm font-bold", Number(orderTotals?.globalMargin || 0) >= 1.34 ? 'text-emerald-600' : 'text-amber-600')}>{formatCurrency(orderTotals?.totalMarginValue || 0)}</span>
+              </div>
+            </>
+          )}
           {/* COEFF */}
           <div className="flex flex-col items-end border-l pl-3 border-slate-200">
             <span className="text-xs uppercase font-bold text-slate-400 -mb-1">{t('orders:details.recap.coeff')}</span>

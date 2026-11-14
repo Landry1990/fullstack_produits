@@ -23,6 +23,7 @@ from ...models import (
     StockObligation,
 )
 from ...services.realtime import notify_stock_changed
+from ...utils.expiry import expired_before
 from ...services.stock_obligation_service import StockObligationService
 
 from ...pagination import StandardResultsSetPagination
@@ -94,9 +95,9 @@ class RelationTransformationViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
             consumed_lots_info = []
             
             if source.use_lot_management:
-                today = timezone.now().date()
+                expiry_cut = expired_before(timezone.localdate())
                 valid_lot_filter = Q(quantity_remaining__gt=0) & (
-                    Q(date_expiration__gte=today) | Q(date_expiration__isnull=True)
+                    Q(date_expiration__gte=expiry_cut) | Q(date_expiration__isnull=True)
                 )
 
                 # Vérification de cohérence (uniquement sur lots non périmés)
@@ -106,7 +107,7 @@ class RelationTransformationViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
                 if total_lots < quantite:
                     # Vérifier s'il y a des lots périmés pour un message plus précis
                     expired_total = source.stock_lots.filter(
-                        quantity_remaining__gt=0, date_expiration__lt=today
+                        quantity_remaining__gt=0, date_expiration__lt=expiry_cut
                     ).aggregate(total=Sum('quantity_remaining'))['total'] or 0
                     if expired_total > 0:
                         return Response(
@@ -443,11 +444,11 @@ class RelationTransformationViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
 
         lots_preview = []
         if source.use_lot_management:
-            today = timezone.now().date()
+            expiry_cut = expired_before(timezone.localdate())
             all_lots = source.stock_lots.filter(
                 quantity_remaining__gt=0
             ).filter(
-                Q(date_expiration__gte=today) | Q(date_expiration__isnull=True)
+                Q(date_expiration__gte=expiry_cut) | Q(date_expiration__isnull=True)
             ).order_by('date_expiration', 'created_at')
             qty_remaining_to_consume = quantite
             for lot in all_lots:

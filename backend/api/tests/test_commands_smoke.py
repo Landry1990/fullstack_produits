@@ -64,6 +64,10 @@ SAFE_RUN = {
     'normalize_dci': ['--dry-run'],
     'link_dci_produits': ['--dry-run'],
     'import_interactions': ['--dry-run'],
+    'import_mq_data': ['--dry-run'],
+    'match_mq_by_name': ['--dry-run'],
+    'resolve_mq_stubs': ['--dry-run'],
+    'check_stock_boundaries': [],        # lecture seule (scan de fichiers)
     # ── Mutations inoffensives sur DB jetable ──
     'cleanup_silk': [],                  # aucune donnée silk → no-op
     'clean_draft_invoices': ['--older-than', '3650'],  # queryset vide → pas de prompt

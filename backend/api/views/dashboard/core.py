@@ -22,6 +22,7 @@ from rest_framework.response import Response
 
 from ...dashboard_cache import DashboardCache
 from ...utils.dates import day_bounds, day_start
+from ...utils.expiry import expired_before
 from ...models import (
     Caisse,
     Client,
@@ -955,7 +956,7 @@ class DashboardCoreMixin(viewsets.ViewSet):
         # 2. Lots périmés encore en rayon : date dépassée, quantité restante,
         #    jamais retirés de l'étagère (deplace_peremption_le nul).
         expired_qs = StockLot.objects.filter(
-            date_expiration__lt=today,
+            date_expiration__lt=expired_before(today),
             quantity_remaining__gt=0,
             deplace_peremption_le__isnull=True,
         )

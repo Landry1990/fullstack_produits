@@ -2,6 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
 import type { StockLot } from '../types';
 import { getLocalDateString } from '../utils/dateUtils';
+import { expiredBeforeDate } from '../utils/expiry';
+import { usePharmacySettings } from '../context/PharmacySettingsContext';
 
 export interface DashboardStats {
     role?: 'PHARMACIEN' | 'VENDEUR' | 'CAISSIER';
@@ -193,10 +195,13 @@ export const usePromisDisponibles = (enabled: boolean = true) => {
 };
 
 export const useExpiringLots = (months: number, enabled: boolean = true) => {
+    const { settings } = usePharmacySettings();
+    const expiryCutoff = settings.expiry_cutoff;
     return useQuery<StockLot[]>({
-        queryKey: ['dashboard', 'expiringLots', months],
+        queryKey: ['dashboard', 'expiringLots', months, expiryCutoff],
         queryFn: async () => {
             const today = new Date();
+            const expiryCut = expiredBeforeDate(expiryCutoff, today);
             const futureDate = new Date();
             futureDate.setMonth(today.getMonth() + months);
 
@@ -213,7 +218,7 @@ export const useExpiringLots = (months: number, enabled: boolean = true) => {
             const validLots = lots.filter(lot => {
                 if (!lot.date_expiration) return false;
                 const expDate = new Date(lot.date_expiration);
-                return expDate > today;
+                return expDate >= expiryCut;
             }).slice(0, 10);
 
             return validLots;

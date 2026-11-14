@@ -28,6 +28,9 @@ export interface PharmacySettings {
   logo?: string;
   coefficient_direct_commande?: string;
   taux_change_actif?: string;
+  show_order_sale_margin?: boolean;
+  /** Convention de péremption : 'LAST_DAY' (défaut) | 'FIRST_DAY'. */
+  expiry_cutoff?: string;
   min_margin_threshold?: number;
   low_stock_threshold_days?: number;
   dormant_stock_days?: number;
@@ -111,6 +114,8 @@ const DEFAULT_SETTINGS: PharmacySettings = {
   logo: undefined,
   coefficient_direct_commande: '1.35',
   taux_change_actif: '655.957',
+  show_order_sale_margin: true,
+  expiry_cutoff: 'LAST_DAY',
   min_margin_threshold: 1.34,
   low_stock_threshold_days: 15,
   dormant_stock_days: 90,

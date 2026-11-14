@@ -3,6 +3,7 @@ Commande d'envoi du rapport mensuel automatisé
 Respecte la configuration des cases à cocher dans PharmacySettings
 """
 import logging
+import re
 from datetime import datetime, timedelta
 from decimal import Decimal
 
@@ -19,9 +20,14 @@ from api.models import (
     FactureProduit,
     PharmacySettings,
     Produit,
+    StockLot,
+    TelegramLog,
+    WhatsAppLog,
 )
 from api.services.finance_marges import calculate_margin_for_invoices
+from api.utils.expiry import expired_before
 from api.telegram_service import TelegramService
+from api.whatsapp_service import WhatsAppService
 
 logger = logging.getLogger(__name__)
 
@@ -71,8 +77,16 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING("Rapport mensuel désactivé"))
             return
 
-        # Vérifier si c'est le bon jour (sauf si --force)
-        if not force and now.day != ps.monthly_report_day:
+        # Anti-doublon : le rapport est déjà parti ce mois-ci (sauf --force).
+        if not force and ps.last_monthly_report_sent and \
+                (ps.last_monthly_report_sent.year, ps.last_monthly_report_sent.month) == (now.year, now.month):
+            self.stdout.write(self.style.WARNING("Rapport déjà envoyé ce mois-ci."))
+            return
+
+        # Vérifier si c'est le bon jour (sauf si --force). Les jours APRÈS le
+        # jour configuré sont acceptés : le planificateur rattrape un envoi
+        # raté ou un serveur éteint le jour J.
+        if not force and now.day < ps.monthly_report_day:
             self.stdout.write(self.style.WARNING(
                 f"Aujourd'hui est le {now.day}, le rapport est configuré pour le {ps.monthly_report_day}. "
                 f"Utilisez --force pour forcer l'envoi."
@@ -83,29 +97,110 @@ class Command(BaseCommand):
 
         # Générer le rapport selon les options cochées
         report_data = self.generate_report_data(ps, start_date, end_date, month, year)
-        
+
         # Formater le message
         message = self.format_telegram_message(report_data, ps)
 
-        # Envoyer via Telegram si activé
+        channels_ok = True
+        any_attempted = False
+
+        # Envoyer via Telegram si activé (sans doublon si déjà parti ce mois)
+        telegram_already_sent = TelegramLog.objects.filter(
+            type=TelegramLog.Type.RAPPORT,
+            status=TelegramLog.Status.SENT,
+            sent_at__year=now.year,
+            sent_at__month=now.month,
+        ).exists()
         if ps.report_send_telegram and ps.telegram_enabled and ps.telegram_chat_id:
-            self.stdout.write("Envoi via Telegram...")
-            success, msg = TelegramService.send_message(
-                text=message,
-                chat_id=ps.telegram_chat_id,
-                parse_mode='HTML'
-            )
-            if success:
-                self.stdout.write(self.style.SUCCESS("✅ Rapport Telegram envoyé !"))
+            any_attempted = True
+            if telegram_already_sent:
+                self.stdout.write("Rapport Telegram déjà envoyé ce mois-ci, ignoré.")
             else:
-                self.stdout.write(self.style.ERROR(f"❌ Échec Telegram: {msg}"))
+                self.stdout.write("Envoi via Telegram...")
+                success, msg = TelegramService.send_message(
+                    text=message,
+                    chat_id=ps.telegram_chat_id,
+                    parse_mode='HTML'
+                )
+                if success:
+                    self.stdout.write(self.style.SUCCESS("✅ Rapport Telegram envoyé !"))
+                else:
+                    channels_ok = False
+                    self.stdout.write(self.style.ERROR(f"❌ Échec Telegram: {msg}"))
         else:
             self.stdout.write(self.style.WARNING("Envoi Telegram désactivé ou non configuré"))
 
-        # TODO: Envoi Email si activé
-        if ps.report_recipients_email:
-            self.stdout.write("Envoi Email (à implémenter)...")
-            # TODO: Implémenter l'envoi d'email
+        # Envoyer via WhatsApp au titulaire si activé (anti-doublon mensuel)
+        whatsapp_already_sent = WhatsAppLog.objects.filter(
+            type=WhatsAppLog.Type.RAPPORT,
+            status=WhatsAppLog.Status.SENT,
+            sent_at__year=now.year,
+            sent_at__month=now.month,
+        ).exists()
+        if ps.report_send_whatsapp and ps.whatsapp_enabled and ps.pharmacist_whatsapp_number:
+            any_attempted = True
+            if whatsapp_already_sent:
+                self.stdout.write("Rapport WhatsApp déjà envoyé ce mois-ci, ignoré.")
+            else:
+                self.stdout.write("Envoi via WhatsApp...")
+                wa_message = self.format_whatsapp_message(message)
+                success = WhatsAppService.send_text_message(
+                    recipient_number=ps.pharmacist_whatsapp_number,
+                    message=wa_message,
+                    recipient_name=report_data['pharmacy_name'],
+                    msg_type=WhatsAppLog.Type.RAPPORT,
+                )
+                if success:
+                    self.stdout.write(self.style.SUCCESS("✅ Rapport WhatsApp envoyé !"))
+                else:
+                    channels_ok = False
+                    self.stdout.write(self.style.ERROR("❌ Échec WhatsApp"))
+        elif ps.report_send_whatsapp:
+            self.stdout.write(self.style.WARNING(
+                "Envoi WhatsApp demandé mais désactivé ou numéro titulaire manquant"
+            ))
+
+        # Envoi Email aux destinataires configurés
+        recipients = [
+            addr.strip()
+            for addr in re.split(r'[,;\n]+', ps.report_recipients_email or '')
+            if addr.strip()
+        ]
+        if recipients:
+            any_attempted = True
+            self.stdout.write(f"Envoi Email à {len(recipients)} destinataire(s)...")
+            try:
+                from django.conf import settings as dj_settings
+                from django.core.mail import send_mail
+
+                subject = f"Rapport Mensuel — {report_data['pharmacy_name']} ({report_data['period']})"
+                body = self.format_email_message(report_data)
+                send_mail(
+                    subject=subject,
+                    message=body,
+                    from_email=dj_settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=recipients,
+                    fail_silently=False,
+                )
+                self.stdout.write(self.style.SUCCESS("✅ Rapport Email envoyé !"))
+            except Exception as e:
+                channels_ok = False
+                logger.error(f"Échec envoi rapport mensuel par email : {e}")
+                self.stdout.write(self.style.ERROR(f"❌ Échec Email: {e}"))
+
+        # Marqueur persistant : on ne marque le mois comme envoyé que si au
+        # moins un canal configuré a émis ET que tous ont réussi — sinon le
+        # planificateur retentera. Si aucun canal n'est configuré, on
+        # avertit sans marquer (la case « rapport activé » reste sans effet
+        # tant qu'aucun destinataire n'est renseigné).
+        if not any_attempted:
+            self.stdout.write(self.style.WARNING(
+                "Aucun canal d'envoi configuré (Telegram, WhatsApp, email) — "
+                "rapport généré mais non distribué, non marqué comme envoyé."
+            ))
+        elif channels_ok:
+            ps.last_monthly_report_sent = now
+            ps.save(update_fields=['last_monthly_report_sent'])
 
     def generate_report_data(self, ps, start_date, end_date, month, year):
         """Génère les données du rapport selon les options cochées"""
@@ -154,15 +249,50 @@ class Command(BaseCommand):
                 'taux': (marge_brute / ca_ht * 100) if ca_ht > 0 else 0
             }
 
-        # 3. Santé du stock
+        # 3. Santé du stock — même calcul que le dashboard
+        # (StatistiquesViewSet.stock_health) pour que le score du mail
+        # soit celui affiché dans l'application.
         if ps.report_include_stock_health:
-            total = Produit.objects.filter(is_active=True).count() or 1
-            ruptures = Produit.objects.filter(is_active=True, stock__lte=0).count()
-            score = (1 - (ruptures / total)) * 100
-            data['stock_health'] = {
-                'score': round(score, 1),
-                'ruptures': ruptures,
-                'total': total
+            try:
+                from rest_framework.test import APIRequestFactory
+
+                from api.views.dashboard.statistiques import StatistiquesViewSet
+
+                response = StatistiquesViewSet().stock_health(APIRequestFactory().get('/'))
+                health = response.data
+                data['stock_health'] = {
+                    'score': health['health_score'],
+                    'ruptures': health['matrix_counts']['hemorragie'],
+                    'total': health['matrix_counts']['moteur']
+                             + health['matrix_counts']['hemorragie']
+                             + health['matrix_counts']['somnifere']
+                             + health['matrix_counts']['neutre'],
+                }
+            except Exception as e:
+                logger.error(f"Score santé stock indisponible pour le rapport : {e}")
+
+        # 3bis. Périmés en rayon : lots dont l'expiration est dépassée et
+        # qui portent encore du stock (valeur au prix d'achat du lot).
+        # Même filtre que le dashboard (deplace_peremption_le nul) pour que
+        # le mail reflète les périmés « encore en rayon » de l'application.
+        if ps.report_include_expiration:
+            expired_qs = StockLot.objects.filter(
+                date_expiration__lt=expired_before(),
+                quantity_remaining__gt=0,
+                deplace_peremption_le__isnull=True,
+                produit__is_active=True,
+            )
+            expired = expired_qs.aggregate(
+                total=Coalesce(
+                    Sum(F('quantity_remaining') * F('price_cost')),
+                    Decimal(0),
+                    output_field=DecimalField()
+                )
+            )['total']
+            data['expired_stock'] = {
+                'lots': expired_qs.count(),
+                'products': expired_qs.values('produit_id').distinct().count(),
+                'value': float(expired),
             }
 
         # 4. Ruptures détaillées
@@ -324,6 +454,13 @@ class Command(BaseCommand):
             msg += f"• Produits: <code>{r['count']}</code>\n"
             msg += f"• Perte estimée: <code>{r['perte_estimee']:,.0f} F/mois</code>\n\n"
 
+        # Périmés en stock
+        if 'expired_stock' in data and data['expired_stock']['lots'] > 0:
+            e = data['expired_stock']
+            msg += "🗑️ <b>PÉRIMÉS EN STOCK</b>\n"
+            msg += f"• Lots: <code>{e['lots']} ({e['products']} produits)</code>\n"
+            msg += f"• Valeur (PA): <code>{e['value']:,.0f} FCFA</code>\n\n"
+
         # Top produits
         if data.get('top_products'):
             msg += "🏆 <b>TOP 5 PRODUITS</b>\n"
@@ -361,3 +498,110 @@ class Command(BaseCommand):
 
         msg += "<i>Généré automatiquement 🤖</i>"
         return msg
+
+    @staticmethod
+    def format_whatsapp_message(telegram_html):
+        """Convertit le message Telegram (HTML) en markup WhatsApp.
+
+        WhatsApp supporte *gras*, _italique_ et `chasse fixe` — même jeu
+        de balises que la version Telegram, remplacées une à une. Les
+        émojis sont conservés (natifs WhatsApp).
+        """
+        msg = telegram_html
+        for tag, rep in (('b', '*'), ('i', '_'), ('code', '`')):
+            msg = msg.replace(f'<{tag}>', rep).replace(f'</{tag}>', rep)
+        return msg
+
+    def format_email_message(self, data):
+        """Version texte brut du rapport pour l'email : aucune balise ni emoji."""
+        period = data['period']
+        lines = [
+            f"RAPPORT MENSUEL — {data['pharmacy_name'].upper()}",
+            f"Période : {period}",
+            "-" * 50,
+            "",
+        ]
+
+        if 'sales' in data:
+            s = data['sales']
+            lines += [
+                "VENTES",
+                f"  CA TTC        : {s['ca_ttc']:,} FCFA",
+                f"  Transactions  : {s['nb_ventes']}",
+                f"  Panier moyen  : {s['panier_moyen']:,} F",
+                "",
+            ]
+
+        if 'margin' in data:
+            m = data['margin']
+            lines += [
+                "MARGES",
+                f"  Marge brute   : {m['marge_brute']:,} FCFA",
+                f"  Taux          : {m['taux']:.1f}%",
+                "",
+            ]
+
+        if 'stock_health' in data:
+            h = data['stock_health']
+            lines += [
+                "SANTE STOCK",
+                f"  Score         : {h['score']}%",
+                f"  Ruptures      : {h['ruptures']}/{h['total']}",
+                "",
+            ]
+
+        if 'expired_stock' in data and data['expired_stock']['lots'] > 0:
+            e = data['expired_stock']
+            lines += [
+                "PERIMES EN STOCK",
+                f"  Lots périmés  : {e['lots']} ({e['products']} produits)",
+                f"  Valeur (PA)   : {e['value']:,.0f} FCFA",
+                "",
+            ]
+
+        if 'ruptures' in data and data['ruptures']['count'] > 0:
+            r = data['ruptures']
+            lines += [
+                "RUPTURES",
+                f"  Produits      : {r['count']}",
+                f"  Perte estimée : {r['perte_estimee']:,.0f} F/mois",
+                "",
+            ]
+
+        if 'slow_moving' in data and data['slow_moving']['count'] > 0:
+            s = data['slow_moving']
+            lines += [
+                "ROTATION LENTE",
+                f"  Produits      : {s['count']}",
+                f"  Valeur bloquée: {s['value']:,.0f} FCFA",
+                "",
+            ]
+
+        if 'debt' in data:
+            d = data['debt']
+            lines += [
+                "FINANCES",
+                f"  Créances      : {d['creances']:,.0f} FCFA",
+                f"  Dettes FS     : {d['dettes_fournisseurs']:,.0f} FCFA",
+                "",
+            ]
+
+        if 'financial' in data:
+            f = data['financial']
+            lines += [
+                "TRESORERIE",
+                f"  Encaissements : {f['encaissements']:,.0f} FCFA",
+                f"  En compte     : {f['en_compte']:,.0f} FCFA",
+                "",
+            ]
+
+        if 'comparison' in data:
+            c = data['comparison']
+            lines += [
+                "VS MOIS PRECEDENT",
+                f"  Évolution     : {c['evolution']:+.1f}%",
+                "",
+            ]
+
+        lines += ["--", "Généré automatiquement par Zenith Pharma"]
+        return "\n".join(lines)

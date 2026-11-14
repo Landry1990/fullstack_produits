@@ -139,6 +139,18 @@ const creanceService = {
             responseType: 'blob'
         });
         return response.data;
+    },
+
+    exportRelevesExcel: async (params: { client_ids: number[]; date_debut?: string; date_fin?: string }): Promise<Blob> => {
+        const response = await api.get('creances/releves_excel/', {
+            params: {
+                client_ids: params.client_ids.join(','),
+                date_debut: params.date_debut,
+                date_fin: params.date_fin,
+            },
+            responseType: 'blob'
+        });
+        return response.data;
     }
 };
 

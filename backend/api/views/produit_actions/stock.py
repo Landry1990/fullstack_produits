@@ -24,6 +24,7 @@ from ...models import (
 from ...services.realtime import notify_stock_changed
 from ...services.stock_obligation_service import StockObligationService
 from ...sudo_utils import validate_sudo_mode
+from ...utils.expiry import expired_before
 
 
 class ProduitStockMixin:
@@ -358,13 +359,13 @@ class ProduitStockMixin:
         elif produit.use_lot_management:
             # Aucun lot spécifique fourni : distribuer le delta physique sur
             # les lots existants pour atteindre la quantité comptée.
-            today = timezone.now().date()
+            expiry_cut = expired_before(timezone.localdate())
 
             if rayon_lot_change > 0:
                 # Ajouter au lot le plus ancien non périmé (FEFO)
                 target_lot = (
                     produit.stock_lots
-                    .filter(Q(date_expiration__gte=today) | Q(date_expiration__isnull=True))
+                    .filter(Q(date_expiration__gte=expiry_cut) | Q(date_expiration__isnull=True))
                     .order_by('date_expiration', 'date_reception')
                     .first()
                 )

@@ -87,6 +87,19 @@
         "format_detailed": "Detailed (products)",
         "generate": "Generate PDF"
     },
+    "releves_excel": {
+        "button": "Excel Statements",
+        "title": "Creditor Statements (Excel)",
+        "subtitle": "One sheet per client — choose the period then the clients",
+        "load": "Load creditors",
+        "clients_found": "{{count}} creditor(s) found",
+        "no_clients": "No creditors in this period.",
+        "select_all": "Select all",
+        "deselect_all": "Deselect all",
+        "generate": "Generate ({{count}} sheets)",
+        "generating": "Generating Excel statements...",
+        "success": "Statements generated for {{count}} client(s)."
+    },
     "client_label": "Client: {{name}}",
     "payment_modal": {
         "title": "💰 New Settlement",

@@ -13,6 +13,7 @@ import { CreanceDetailsModal } from './creances/modals/CreanceDetailsModal';
 import { BulkPaiementModal } from './creances/modals/BulkPaiementModal';
 import { RelanceModal } from './creances/modals/RelanceModal';
 import { RelevePeriodeModal } from './creances/modals/RelevePeriodeModal';
+import { RelevesExcelModal } from './creances/modals/RelevesExcelModal';
 import SudoValidationModal from './common/SudoValidationModal';
 import { ErrorState } from './ui/ErrorState';
 
@@ -24,6 +25,7 @@ export default function Creances() {
     const data = useCreancesData();
     const [relanceClientId, setRelanceClientId] = useState<number | null>(null);
     const [releveModalOpen, setReleveModalOpen] = useState(false);
+    const [relevesExcelOpen, setRelevesExcelOpen] = useState(false);
     const actions = useCreanceActions({
         refresh: data.refresh,
         selectedIds: data.selectedIds,
@@ -113,6 +115,7 @@ export default function Creances() {
                             date_fin: data.filters.dateFin || undefined,
                             history: data.filters.showHistory
                         })}
+                        onRelevesExcel={() => setRelevesExcelOpen(true)}
                         loading={data.loading}
                     />
                 </div>
@@ -202,7 +205,12 @@ export default function Creances() {
                 )}
             />
 
-            <BulkPaiementModal 
+            <RelevesExcelModal
+                isOpen={relevesExcelOpen}
+                onClose={() => setRelevesExcelOpen(false)}
+            />
+
+            <BulkPaiementModal
                 isOpen={actions.modals.isBulkModalOpen}
                 onClose={() => actions.modals.setIsBulkModalOpen(false)}
                 count={data.selectedIds.length}

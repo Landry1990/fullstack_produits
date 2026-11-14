@@ -29,6 +29,7 @@ from ...services.lot_allocation_service import LotAllocationService
 from ...services.realtime import notify_stock_changed
 from ...services.stock_obligation_service import StockObligationService
 from ...sudo_utils import validate_sudo_mode
+from ...utils.expiry import is_expired
 from ...utils.validation import parse_date_param, parse_id
 
 logger = logging.getLogger(__name__)
@@ -205,7 +206,7 @@ class AvoirClientViewSet(viewsets.ModelViewSet):
                         {'detail': f'Le lot de la ligne {ligne.id} ne correspond pas au produit.'},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
-                if stock_lot.date_expiration and stock_lot.date_expiration < timezone.now().date():
+                if is_expired(stock_lot.date_expiration):
                     return Response(
                         {'detail': (
                             f'Le lot {stock_lot.lot} est périmé '

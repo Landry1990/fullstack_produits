@@ -87,6 +87,19 @@
         "format_detailed": "Détaillé (produits)",
         "generate": "Générer le PDF"
     },
+    "releves_excel": {
+        "button": "Relevés Excel",
+        "title": "Relevés des créanciers (Excel)",
+        "subtitle": "Une feuille par client — choisir la période puis les clients",
+        "load": "Charger les créanciers",
+        "clients_found": "{{count}} créancier(s) trouvé(s)",
+        "no_clients": "Aucun créancier sur cette période.",
+        "select_all": "Tout sélectionner",
+        "deselect_all": "Tout désélectionner",
+        "generate": "Générer ({{count}} feuilles)",
+        "generating": "Génération des relevés Excel...",
+        "success": "Relevés générés pour {{count}} client(s)."
+    },
     "client_label": "Client : {{name}}",
     "payment_modal": {
         "title": "💰 Nouveau Règlement",

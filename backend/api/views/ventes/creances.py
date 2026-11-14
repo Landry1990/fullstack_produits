@@ -652,6 +652,253 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         response['Content-Disposition'] = build_safe_content_disposition(filename)
         return response
 
+    @action(detail=False, methods=['get'])
+    def releves_excel(self, request):
+        """Export Excel « relevés créanciers » : une feuille par client.
+
+        Paramètres : client_ids=1,2,3 (obligatoire), date_debut, date_fin.
+        Chaque feuille reprend la structure du relevé client (en-tête
+        pharmacie, infos client, lignes de créances + total).
+        """
+        import re
+
+        import openpyxl
+        from openpyxl.styles import Alignment, Border, Font, Side
+        from openpyxl.utils import get_column_letter
+
+        from django.db.models import OuterRef, Subquery
+        from django.db.models.functions import Coalesce
+
+        raw_ids = request.query_params.get('client_ids', '')
+        try:
+            client_ids = [int(x) for x in raw_ids.split(',') if x.strip()]
+        except ValueError:
+            raise ValidationError({'detail': "Le paramètre client_ids doit être une liste d'identifiants séparés par des virgules."})
+        if not client_ids:
+            raise ValidationError({'detail': "Le paramètre client_ids est requis."})
+        # Garde-fou : un classeur par client, pas de rapport géant par erreur.
+        if len(client_ids) > 200:
+            raise ValidationError({'detail': "Trop de clients demandés (200 maximum)."})
+
+        date_debut = request.query_params.get('date_debut')
+        date_fin = request.query_params.get('date_fin')
+
+        paid_subquery = Caisse.objects.filter(
+            facture=OuterRef('pk'), statut='completee'
+        ).exclude(mode_paiement='en_compte').values('facture').annotate(
+            total=Sum('montant')
+        ).values('total')[:1]
+
+        queryset = Facture.objects.filter(
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+            client_id__in=client_ids,
+        ).annotate(
+            paid_amount=Coalesce(Subquery(paid_subquery), Value(0, output_field=DecimalField())),
+            remainder=F('total_ttc') - F('paid_amount')
+        ).filter(remainder__gt=0)
+
+        if date_debut:
+            try:
+                start_date = timezone.make_aware(datetime.strptime(date_debut, '%Y-%m-%d'))
+            except ValueError:
+                raise ValidationError({'detail': "Le paramètre date_debut est invalide (format attendu : AAAA-MM-JJ)."})
+            queryset = queryset.filter(date__gte=start_date)
+        if date_fin:
+            try:
+                end_date = timezone.make_aware(datetime.strptime(date_fin, '%Y-%m-%d') + timedelta(days=1))
+            except ValueError:
+                raise ValidationError({'detail': "Le paramètre date_fin est invalide (format attendu : AAAA-MM-JJ)."})
+            queryset = queryset.filter(date__lt=end_date)
+
+        queryset = queryset.distinct().select_related('client', 'ayant_droit').order_by('client__name', 'date')
+
+        factures_par_client = {}
+        for facture in queryset:
+            factures_par_client.setdefault(facture.client_id, []).append(facture)
+
+        clients = {
+            c.id: c for c in Client.objects.filter(id__in=client_ids)
+        }
+
+        # ── En-tête pharmacie ──
+        from ...models import PharmacySettings
+        try:
+            pharmacy = PharmacySettings.objects.get(pk=1)
+            from ...utils.currency import get_pharmacy_name
+            pharma_name = get_pharmacy_name()
+            pharma_address = f"{pharmacy.address or ''} {pharmacy.city or ''}".strip()
+            pharma_phone = pharmacy.phone or ''
+        except Exception:
+            pharma_name = 'PHARMACIE'
+            pharma_address = ''
+            pharma_phone = ''
+
+        from ...utils_doclang import T, format_doc_date, get_document_language
+        lang = get_document_language()
+        now_str = format_doc_date(timezone.localtime(timezone.now()), lang, with_time=True)
+
+        period_label = ''
+        if date_debut and date_fin:
+            period_label = T(lang, 'cre_period_between', d=date_debut, f=date_fin)
+        elif date_debut:
+            period_label = T(lang, 'cre_period_from', d=date_debut)
+        elif date_fin:
+            period_label = T(lang, 'cre_period_until', f=date_fin)
+
+        thin = Side(style='thin', color='BFBFBF')
+        thin_border = Border(left=thin, right=thin, top=thin, bottom=thin)
+
+        columns = [
+            (T(lang, 'col_date'), 12),
+            (T(lang, 'col_num_facture'), 18),
+            (T(lang, 'cre_col_beneficiaire'), 25),
+            (T(lang, 'col_total_ttc'), 14),
+            (T(lang, 'cre_col_paye'), 14),
+            (T(lang, 'cre_col_reste'), 14),
+        ]
+        nb_cols = len(columns)
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        assert ws is not None
+        used_titles = set()
+
+        def sheet_title_for(client_name, client_id):
+            # Excel : max 31 chars, pas de []:*?/\ — dédoublonné par suffixe.
+            base = re.sub(r'[\[\]\*\?/\\:]', '', client_name or '').strip() or f'Client {client_id}'
+            base = base[:31]
+            title = base
+            suffix = 2
+            while title.lower() in used_titles:
+                tail = f' ({suffix})'
+                title = base[:31 - len(tail)] + tail
+                suffix += 1
+            used_titles.add(title.lower())
+            return title
+
+        def write_releve_sheet(ws, client, factures):
+            for i, (_, width) in enumerate(columns, start=1):
+                ws.column_dimensions[get_column_letter(i)].width = width
+
+            ws.append([pharma_name])
+            ws.append([pharma_address])
+            if pharma_phone:
+                ws.append([T(lang, 'doc_tel', v=pharma_phone)])
+            ws.append([T(lang, 'doc_edited', d=now_str)])
+            ws.append([])
+
+            # Bloc client
+            client_lines = [client.name if client else '']
+            if client and client.address:
+                client_lines.append(client.address)
+            if client and client.phone:
+                client_lines.append(T(lang, 'doc_tel', v=client.phone))
+            for line in client_lines:
+                c = ws.cell(row=ws.max_row + 1, column=1, value=line)
+                c.font = Font(name='Calibri', bold=(line == client_lines[0]), size=11)
+
+            ws.append([])
+            title = T(lang, 'cre_releve_title') + period_label
+            c = ws.cell(row=ws.max_row + 1, column=1, value=title)
+            c.font = Font(name='Calibri', bold=True, size=12)
+            ws.append([])
+
+            header_row = ws.max_row + 1
+            for col_idx, (col_name, _) in enumerate(columns, start=1):
+                cell = ws.cell(row=header_row, column=col_idx, value=col_name)
+                cell.font = Font(name='Calibri', bold=True, size=10)
+                cell.alignment = Alignment(horizontal='center', vertical='center')
+                cell.border = thin_border
+            ws.row_dimensions[header_row].height = 18
+
+            row = header_row + 1
+            total_ttc = Decimal(0)
+            total_paye = Decimal(0)
+            total_reste = Decimal(0)
+            for facture in factures:
+                montant_paye = facture.paid_amount
+                reste = facture.total_ttc - montant_paye
+                ayant_droit = facture.ayant_droit.nom if getattr(facture, 'ayant_droit', None) else ''
+                vals = [
+                    format_doc_date(facture.date, lang) if facture.date else '',
+                    facture.numero_facture or str(facture.id),
+                    ayant_droit,
+                    float(facture.total_ttc),
+                    float(montant_paye),
+                    float(reste),
+                ]
+                for col_idx, val in enumerate(vals, start=1):
+                    cell = ws.cell(row=row, column=col_idx, value=val)
+                    cell.font = Font(name='Calibri', size=10)
+                    cell.border = thin_border
+                    if isinstance(val, (int, float)):
+                        cell.alignment = Alignment(horizontal='right')
+                        cell.number_format = '#,##0'
+                    else:
+                        cell.alignment = Alignment(horizontal='left')
+                total_ttc += facture.total_ttc
+                total_paye += montant_paye
+                total_reste += reste
+                row += 1
+
+            row += 1
+            ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=3)
+            cell = ws.cell(row=row, column=1, value=T(lang, 'cre_total_line', n=len(factures)))
+            cell.font = Font(name='Calibri', bold=True, size=10)
+            cell.alignment = Alignment(horizontal='right')
+            for col_idx in range(1, nb_cols + 1):
+                ws.cell(row=row, column=col_idx).border = thin_border
+            for col_idx, val in [(4, float(total_ttc)), (5, float(total_paye)), (6, float(total_reste))]:
+                c = ws.cell(row=row, column=col_idx, value=val)
+                c.number_format = '#,##0'
+                c.font = Font(name='Calibri', bold=True, size=10)
+                c.alignment = Alignment(horizontal='right')
+                c.border = thin_border
+
+        first = True
+        for cid in client_ids:
+            factures = factures_par_client.get(cid)
+            if not factures:
+                continue  # client sans créance sur la période → pas de feuille
+            client = clients.get(cid)
+            if first:
+                first = False
+            else:
+                ws = wb.create_sheet()
+            ws.title = sheet_title_for(client.name if client else '', cid)
+            write_releve_sheet(ws, client, factures)
+
+        if first:
+            # Aucun client n'avait de créance sur la période.
+            ws.title = T(lang, 'cre_sheet')
+            ws.append([T(lang, 'cre_no_data_period')])
+
+        output = io.BytesIO()
+        wb.save(output)
+        output.seek(0)
+
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.EXPORT,
+            model_name='Creance',
+            object_id=0,
+            description="Export Excel des relevés créanciers (multi-clients)",
+            details={
+                'client_ids': client_ids,
+                'date_debut': date_debut,
+                'date_fin': date_fin,
+            },
+            request=request
+        )
+
+        response = HttpResponse(
+            output.read(),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        filename = f"releves_creanciers_{date_debut or 'all'}_{date_fin or 'now'}.xlsx"
+        response['Content-Disposition'] = build_safe_content_disposition(filename)
+        return response
+
     @action(detail=True, methods=['get'])
     def imprimer_recu(self, request, pk=None):
         facture = self.get_object()

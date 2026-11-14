@@ -34,6 +34,7 @@ import { useConfirm } from '../hooks/useConfirm'
 import usePrint from '../hooks/usePrint'
 import { useDocumentLocale, usePharmacySettings } from '../hooks/usePharmacySettings'
 import { exportToExcel } from '../utils/excelExport'
+import { isLotExpired } from '../utils/expiry'
 import type { StockAdjustment } from '../types'
 import { Button } from './shadcn/button'
 import { Card, CardContent, CardHeader, CardTitle } from './shadcn/card'
@@ -126,12 +127,11 @@ const getUrgencyClass = (valeur: number) => {
   return 'border-emerald-400 bg-emerald-50'
 }
 
-const isExpiredByEndOfMonth = (dateString: string) => {
+const isExpiredByEndOfMonth = (dateString: string, expiryCutoff?: string) => {
   if (!dateString) return false
   const expiryEom = getExpiryEndOfMonthISO(dateString)
   if (!expiryEom) return false
-  const todayStr = toLocalISODate(new Date())
-  return expiryEom < todayStr
+  return isLotExpired(expiryEom, expiryCutoff)
 }
 
 export default function Perimes() {
@@ -267,7 +267,7 @@ export default function Perimes() {
       let fetchedLots: StockLot[] = Array.isArray(data) ? data : (data.results || [])
       
       if (showExpiredOnly) {
-         fetchedLots = fetchedLots.filter(l => !!l.date_expiration && isExpiredByEndOfMonth(l.date_expiration))
+         fetchedLots = fetchedLots.filter(l => !!l.date_expiration && isExpiredByEndOfMonth(l.date_expiration, pharmacySettings.expiry_cutoff))
       }
       
       setLots(fetchedLots)
@@ -974,7 +974,7 @@ export default function Perimes() {
                           {row.lot.lot || '-'}
                         </TableCell>
                         <TableCell className="py-2.5 px-4 text-center">
-                          <Badge variant="outline" className={cn("gap-1.5", row.lot.date_expiration && isExpiredByEndOfMonth(row.lot.date_expiration) ? 'bg-red-50 text-red-500 border-red-200' : 'bg-amber-50 text-amber-600 border-amber-200')}>
+                          <Badge variant="outline" className={cn("gap-1.5", row.lot.date_expiration && isExpiredByEndOfMonth(row.lot.date_expiration, pharmacySettings.expiry_cutoff) ? 'bg-red-50 text-red-500 border-red-200' : 'bg-amber-50 text-amber-600 border-amber-200')}>
                             <Calendar className="size-3" />
                             {formatDate(row.lot.date_expiration || '')}
                           </Badge>
@@ -1146,7 +1146,7 @@ export default function Perimes() {
                           {lot.lot || '-'}
                         </TableCell>
                         <TableCell className="py-2.5 px-4 text-center">
-                          <Badge variant="outline" className={cn("gap-1.5", lot.date_expiration && isExpiredByEndOfMonth(lot.date_expiration) ? 'bg-red-50 text-red-500 border-red-200' : 'bg-amber-50 text-amber-600 border-amber-200')}>
+                          <Badge variant="outline" className={cn("gap-1.5", lot.date_expiration && isExpiredByEndOfMonth(lot.date_expiration, pharmacySettings.expiry_cutoff) ? 'bg-red-50 text-red-500 border-red-200' : 'bg-amber-50 text-amber-600 border-amber-200')}>
                             <Calendar className="size-3" />
                             {formatDate(lot.date_expiration || '')}
                           </Badge>

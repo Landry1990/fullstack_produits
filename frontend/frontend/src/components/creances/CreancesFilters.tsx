@@ -21,6 +21,7 @@ interface CreancesFiltersProps {
     onRefresh: () => void;
     onPrintStatement: () => void;
     onExportExcel: () => void;
+    onRelevesExcel: () => void;
     loading: boolean;
 }
 
@@ -41,6 +42,7 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
     onRefresh,
     onPrintStatement,
     onExportExcel,
+    onRelevesExcel,
     loading
 }) => {
     const { t } = useTranslation(['creances', 'common']);
@@ -191,6 +193,13 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
                     >
                         <FileSpreadsheet className="size-4" />
                         Export Excel
+                    </button>
+                    <button
+                        onClick={onRelevesExcel}
+                        className="inline-flex items-center justify-center h-10 px-6 rounded-xl bg-indigo-100 text-indigo-700 gap-2 shadow-sm transition-all hover:scale-105 active:scale-95 font-bold uppercase tracking-widest text-caption hover:bg-indigo-200"
+                    >
+                        <FileSpreadsheet className="size-4" />
+                        {t('creances:releves_excel.button')}
                     </button>
                     {selectedClient && (
                         <button

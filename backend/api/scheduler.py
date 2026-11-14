@@ -15,18 +15,18 @@ logger = logging.getLogger(__name__)
 
 # Verrous en mémoire pour éviter les doublons dans la même instance
 _stock_levels_done_month = None
-_telegram_report_done_month = None
+_monthly_report_attempted_day = None
 _scheduler_lock_handle = None
 
 
 def _run_monthly_tasks(now):
     """
-    Tâches du 1er du mois :
-    1. Recalcul des seuils stock min/max
-    2. Envoi du rapport mensuel Telegram
-    Exécutées entre 00h00 et 06h00, une seule fois par mois.
+    Tâches mensuelles :
+    1. Recalcul des seuils stock min/max (une fois par mois, rattrapage inclus)
+    2. Envoi du rapport mensuel (jour configuré via monthly_report_day, avec
+       rattrapage les jours suivants tant qu'il n'a pas réussi)
     """
-    global _stock_levels_done_month, _telegram_report_done_month
+    global _stock_levels_done_month, _monthly_report_attempted_day
 
     current_month_key = (now.year, now.month)
 
@@ -51,24 +51,26 @@ def _run_monthly_tasks(now):
         except Exception as e:
             logger.error(f"Scheduler - Stock Levels Error: {e}")
 
-    # ── 2. Rapport mensuel Telegram ──────────────────────────────────────
-    if now.day == 1 and now.hour < 6 and _telegram_report_done_month != current_month_key:
+    # ── 2. Rapport mensuel (email, Telegram) ─────────────────────────────
+    # send_monthly_report honore monthly_report_day, les destinataires email
+    # et les canaux Telegram/WhatsApp ; elle gère l'anti-doublon persistant
+    # (last_monthly_report_sent). Un envoi qui se termine sans exception est
+    # retenté le lendemain s'il a échoué ; une exception ici laisse le flag
+    # non positionné → nouvelle tentative au prochain passage de la boucle.
+    today_key = (now.year, now.month, now.day)
+    if _monthly_report_attempted_day != today_key:
         try:
-            from .models import TelegramLog
-            already_sent = TelegramLog.objects.filter(
-                type=TelegramLog.Type.RAPPORT,
-                status=TelegramLog.Status.SENT,
-                sent_at__year=now.year,
-                sent_at__month=now.month
-            ).exists()
-            if not already_sent:
-                logger.info("Scheduler: 1er du mois — Envoi rapport mensuel Telegram...")
-                call_command('send_monthly_telegram_report')
-            else:
-                logger.info("Scheduler: Rapport Telegram déjà envoyé ce mois.")
-            _telegram_report_done_month = current_month_key
+            from .models import PharmacySettings
+
+            ps, _ = PharmacySettings.objects.get_or_create(pk=1)
+            sent = ps.last_monthly_report_sent
+            already_sent = sent and (sent.year, sent.month) == current_month_key
+            if ps.monthly_report_enabled and now.day >= ps.monthly_report_day and not already_sent:
+                logger.info("Scheduler: envoi du rapport mensuel (send_monthly_report).")
+                call_command('send_monthly_report')
+            _monthly_report_attempted_day = today_key
         except Exception as e:
-            logger.error(f"Scheduler - Telegram Report Error: {e}")
+            logger.error(f"Scheduler - Monthly Report Error: {e}")
 
 
 def _run_retention_tasks(now):

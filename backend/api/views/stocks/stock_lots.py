@@ -19,6 +19,7 @@ from ...serializers_optimized import StockLotDetailSerializer, StockLotListSeria
 from ...services.realtime import notify_stock_changed
 from ...services.stock_obligation_service import StockObligationService
 from ...sudo_utils import validate_sudo_mode
+from ...utils.expiry import expired_before
 from ...utils.validation import MAX_INT32, parse_date_param, parse_id, parse_int
 
 
@@ -472,12 +473,13 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
         include_critical_only = request.query_params.get('critical_only', 'false').lower() == 'true'
 
         today = timezone.localtime(timezone.now()).date()
+        expiry_cut = expired_before(today)
         future_date = today + timedelta(days=days_ahead)
         critical_date = today + timedelta(days=7)
 
         # Requête de base : lots expirants avec stock restant
         qs = StockLot.objects.filter(
-            date_expiration__gt=today,
+            date_expiration__gte=expiry_cut,
             date_expiration__lte=future_date,
             quantity_remaining__gte=min_quantity
         ).select_related('produit', 'fournisseur').order_by('date_expiration')
@@ -559,8 +561,9 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
         date_debut_ca = today - timedelta(days=periode_jours)
         
         # === LOTS DÉJÀ PÉRIMÉS ===
+        expiry_cut = expired_before(today)
         lots_perimes = StockLot.objects.filter(
-            date_expiration__lt=today,
+            date_expiration__lt=expiry_cut,
             quantity_remaining__gt=0
         ).select_related('produit')
         
@@ -591,7 +594,7 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
         def calculer_prevision(jours):
             date_limite = today + timedelta(days=jours)
             lots = StockLot.objects.filter(
-                date_expiration__gte=today,
+                date_expiration__gte=expiry_cut,
                 date_expiration__lt=date_limite,
                 quantity_remaining__gt=0
             )

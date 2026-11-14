@@ -105,6 +105,22 @@ class PharmacySettings(models.Model):
         help_text="Taux de change actif pour les commandes directes (Euro -> FCFA). Source de vérité unique."
     )
 
+    show_order_sale_margin = models.BooleanField(
+        default=True,
+        help_text="Afficher le prix de vente TTC et la marge dans la synthèse des commandes (saisie et détail)"
+    )
+
+    class ExpiryCutoff(models.TextChoices):
+        LAST_DAY = 'LAST_DAY', 'Périmé le dernier jour du mois'
+        FIRST_DAY = 'FIRST_DAY', 'Périmé dès le 1er jour du mois'
+
+    expiry_cutoff = models.CharField(
+        max_length=10,
+        choices=ExpiryCutoff.choices,
+        default=ExpiryCutoff.LAST_DAY,
+        help_text="Convention de péremption : dernier jour du mois (défaut) ou 1er jour du mois"
+    )
+
     # --- Paramètres Avancés (Règles Métier) ---
     min_margin_threshold = models.DecimalField(
         max_digits=5,
@@ -443,6 +459,10 @@ class PharmacySettings(models.Model):
     report_send_telegram = models.BooleanField(
         default=False,
         help_text="Envoyer aussi via Telegram"
+    )
+    last_monthly_report_sent = models.DateTimeField(
+        null=True, blank=True,
+        help_text="Date/heure du dernier envoi réussi du rapport mensuel (anti-doublon et rattrapage)"
     )
 
     # --- Modes de paiement ---

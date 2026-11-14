@@ -2,6 +2,128 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-11-14 — Relevés créanciers Excel multi-clients (une feuille par client)
+
+- Nouvelle modale « Relevés Excel » dans la page Créances : choix de la
+  période (mêmes presets que le relevé PDF : mois courant/précédent, tranches,
+  libre) → chargement des créanciers de la période avec cases à cocher
+  (tous cochés par défaut, tout sélectionner/désélectionner) → génération
+  d'un classeur `.xlsx` avec **une feuille par client**.
+- Backend : `GET creances/releves_excel/?date_debut=&date_fin=&client_ids=1,2,3`
+  génère le classeur : en-tête pharmacie, infos client, lignes
+  (date, n° facture, ayant droit, TTC, payé, reste) + total. Noms d'onglets
+  nettoyés (≤31 car., caractères Excel interdits), audit `EXPORT`, nom de
+  fichier `releves_creanciers_*.xlsx`. `client_ids` invalide/vide → 400.
+- Frontend : bouton dans `CreancesFilters`, modale
+  `RelevesExcelModal.tsx` (shadcn, gooeyToast, traductions fr/en dans
+  `creances.json`) ; liste des créanciers via `getSynthese()`
+  (`creances/synthese_clients/`), export via `exportRelevesExcel()` (blob).
+- L'export Excel existant (une seule feuille mélangée) et le relevé PDF
+  individuel sont inchangés.
+- Tests `test_creances.py` : +4 (feuille par client, client sans créance
+  ignoré, filtre période, paramètres invalides) — 29/29 verts. ESLint
+  propre ; erreurs `tsc` signalées dans les fichiers créances sont
+  pré-existantes (hors zones modifiées).
+
+
+## 2026-11-14 — Rapport mensuel : canal WhatsApp implémenté
+
+- La case « Envoyer via WhatsApp » (`report_send_whatsapp`) et le numéro
+  titulaire existaient dans les paramètres mais `send_monthly_report` ne
+  faisait rien avec. Le rapport part désormais via `WhatsAppService` vers
+  `pharmacist_whatsapp_number` quand WhatsApp est activé.
+- Message : le contenu Telegram (HTML) est converti en markup WhatsApp
+  (`<b>`→`*`, `<i>`→`_`, `<code>`→`` ` ``) via `format_whatsapp_message()` —
+  mêmes sections, émojis conservés (natifs WhatsApp).
+- Le message Telegram/WhatsApp gagne la section **PÉRIMÉS EN STOCK** (lots +
+  valeur PA) qui n'existait que dans l'email.
+- Nouveau type `WhatsAppLog.Type.RAPPORT` (migration `0298`, choices-only)
+  pour l'anti-doublon mensuel, identique à celui de Telegram ; un échec
+  WhatsApp laisse `last_monthly_report_sent` vide → retry le lendemain.
+- Si la case est cochée mais l'API désactivée ou le numéro absent, la
+  commande l'indique sans bloquer les autres canaux.
+- Tests `test_monthly_report.py` : +4 (envoi, échec non marqué, anti-doublon,
+  flag sans config) — 10/10 verts.
+
+
+## 2026-11-14 — Option : convention de péremption des lots (1er vs dernier jour du mois)
+
+- **Nouveau réglage** `PharmacySettings.expiry_cutoff` (`LAST_DAY` par défaut,
+  `FIRST_DAY` en alternative) — migration `0297`. La saisie reste toujours
+  MM/AA (stockée au dernier jour du mois, inchangé).
+  - `LAST_DAY` : le lot est vendable jusqu'à la fin de son mois d'expiration
+    (comportement historique, aucun changement pour les clients existants).
+  - `FIRST_DAY` : le lot est considéré périmé dès le 1er jour de son mois
+    d'expiration — certains titulaires excluent un produit « 11/26 » dès le 01/11.
+- **Source unique** : nouveau helper `api/utils/expiry.py`
+  (`expired_before()` / `is_expired()`). Un lot est périmé ⇔
+  `date_expiration < expired_before()` ; miroir frontend
+  `src/utils/expiry.ts` (`isLotExpired`, `expiredBeforeDate`) alimenté par
+  `expiry_cutoff` du contexte paramètres.
+- **Appliqué partout** (demande explicite) : allocation FEFO de vente
+  (`sale_validator`, `lot_allocation_service`), lot cible d'ajustement rayon
+  (`produit_actions/stock`), transformations de stock, alertes péremption et
+  stats périmés (`stock_lots`), récap matinal dashboard, fenêtres « expire
+  bientôt » (challenges, `check_expiring_products`, export Excel mensuel),
+  rapport mensuel email (section périmés), réintégration avoirs clients.
+- **Frontend** : badge/calcul « périmé » alignés sur le réglage dans
+  `ProductTabsContent` (onglet lots), `ClientCreditForm`, `Perimes`
+  (filtre « périmés seulement » + badges), `useExpiringLots` (dashboard).
+- **UI** : Paramètres → Stocks → section Alertes, liste déroulante
+  « Péremption des lots (MM/AA) » (fr/en traduits).
+- Tests `test_expiry_cutoff.py` (7 verts) : helper, FEFO dans les deux modes,
+  stats périmés ; `test_expired_lot_handling` + `test_monthly_report`
+  (16 verts) sans régression.
+
+
+## 2026-11-14 — Fix : le rapport mensuel par email n'était jamais envoyé
+
+- **Cause** : `send_monthly_report` contenait un `# TODO: Implémenter l'envoi
+  d'email` et n'était appelée par **aucune** tâche planifiée — le scheduler
+  n'appelait que `send_monthly_telegram_report`, en dur le 1er avant 6h, en
+  ignorant `monthly_report_day` et les destinataires email.
+- `send_monthly_report` envoie désormais l'email (`report_recipients_email`,
+  séparateurs `, ; retour ligne`), message texte brut (balises HTML du format
+  Telegram retirées) via `send_mail` / `DEFAULT_FROM_EMAIL`.
+- Anti-doublon Telegram : si un `TelegramLog` RAPPORT/SENT existe déjà pour le
+  mois, pas de second envoi. Nouveau champ persistant
+  `PharmacySettings.last_monthly_report_sent` (migration `0296`) : marque le
+  mois envoyé uniquement si tous les canaux configurés ont réussi, sinon le
+  scheduler retente le lendemain (rattrapage serveur éteint / SMTP en panne).
+- `scheduler.py` : le déclencheur « 1er du mois, Telegram » est remplacé par
+  un appel quotidien à `send_monthly_report` dès `jour >= monthly_report_day`
+  (commande `send_monthly_telegram_report` conservée, non planifiée).
+- Config email requise en prod : `EMAIL_HOST_USER`/`EMAIL_HOST_PASSWORD`
+  (Gmail = mot de passe d'application), sinon échec journalisé et retry.
+- Email en **texte brut sans emoji ni balise** : `format_email_message()`
+  dédié (colonnes alignées), le message HTML/emoji de Telegram n'est pas
+  recyclé pour le mail.
+- Contenu email : **Top 5 produits retiré** ; nouvelle section **PÉRIMÉS EN
+  STOCK** (lots expirés portant encore du stock, valeur au PA — sous la case
+  `report_include_expiration`, qui existait mais n'était pas utilisée) ;
+  **score santé réel** réutilisé depuis `StatistiquesViewSet.stock_health`
+  via `APIRequestFactory` au lieu du pseudo-score « % non en rupture ».
+- Fichiers : `management/commands/send_monthly_report.py`, `scheduler.py`,
+  `models/settings.py`, migration `0296`. Tests `test_monthly_report.py`
+  (6 verts, backend locmem). Smoke commands : +4 commandes classées
+  (`check_stock_boundaries`, `import_mq_data`, `match_mq_by_name`,
+  `resolve_mq_stubs`) ; baseline stock régénérée (écritures justifiées
+  produits sans lots dans `produit_import.py`).
+
+
+## 2026-11-14 — Options : masquer PV TTC et marge dans la synthèse des commandes
+
+- Début du chantier « paramétrage par pharmacie » (options ajoutées une par une).
+- Nouveau paramètre `PharmacySettings.show_order_sale_margin` (défaut `True` =
+  comportement inchangé) : décoché, masque les cases **Prix V TTC** et **Marge**
+  de la barre de synthèse en saisie de commande et dans le détail commande.
+  La case **Coeff** reste toujours visible (contrôle de cohérence des PV).
+- Réglage : Paramètres → onglet Stocks → section Commandes.
+- Fichiers : `models/settings.py`, migration `0295_pharmacysettings_show_order_sale_margin`
+  (AddField sur table singleton, sans risque), `CommandeForm.tsx`,
+  `CommandeDetails.tsx`, `StocksTab.tsx`, `PharmacySettingsContext.tsx`,
+  locales `pharmacy_settings` fr/en. ESLint propre ; Vitest commandes 9/9.
+
 ## 2026-11-14 — Déploiement : dry-run des migrations + check migrations oubliées en CI
 
 - `deploy.ps1` (cibles `*-full`) affiche désormais `migrate --plan` **avant**

@@ -14,6 +14,8 @@ import { formatCurrency as formatCurrencyValue } from '../../utils/formatters';
 import { EmptyState } from '../ui/EmptyState';
 import { Skeleton } from '../shadcn/skeleton';
 import { ProductResultRow, type SearchResult } from '../common/ProductSearch';
+import { usePharmacySettings } from '../../hooks/usePharmacySettings';
+import { isLotExpired } from '../../utils/expiry';
 import { gooeyToast } from 'goey-toast';
 
 interface FormLine {
@@ -51,6 +53,7 @@ export const ClientCreditForm: React.FC<ClientCreditFormProps> = ({
 }) => {
     const { t } = useTranslation(['avoirs_client', 'common']);
     const locale = t('common:locale');
+    const { settings } = usePharmacySettings();
 
     const [invoiceSearch, setInvoiceSearch] = useState('');
     const [debouncedInvoiceSearch] = useDebounce(invoiceSearch, 300);
@@ -478,7 +481,7 @@ export const ClientCreditForm: React.FC<ClientCreditFormProps> = ({
                                     </span>
                                     {line.date_expiration && (
                                         <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md border font-medium ${
-                                            new Date(line.date_expiration) < new Date()
+                                            isLotExpired(line.date_expiration, settings.expiry_cutoff)
                                                 ? 'bg-red-50 text-red-700 border-red-200'
                                                 : 'bg-amber-50 text-amber-700 border-amber-200'
                                         }`}>

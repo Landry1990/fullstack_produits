@@ -25,6 +25,7 @@ from ..models import (
     StockObligation,
     next_document_number,
 )
+from ..utils.expiry import expired_before
 from .lot_allocation_service import LotAllocationService
 from .promotion_service import PromotionService
 from .realtime import notify_stock_changed
@@ -284,11 +285,11 @@ class SaleValidator:
         ]
         fifo_lots_queue = {}
         if fifo_prods:
-            today = timezone.now().date()
+            expiry_cut = expired_before(timezone.localdate())
             fifo_lots = StockLot.objects.filter(
                 produit_id__in=fifo_prods, quantity_remaining__gt=0
             ).filter(
-                Q(date_expiration__gte=today) | Q(date_expiration__isnull=True)
+                Q(date_expiration__gte=expiry_cut) | Q(date_expiration__isnull=True)
             ).order_by(F('date_expiration').asc(nulls_last=True), 'date_reception')
             for lot in fifo_lots:
                 fifo_lots_queue.setdefault(lot.produit_id, []).append(lot)

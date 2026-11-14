@@ -25,6 +25,7 @@ import ProductPharmaPanel from './ProductPharmaPanel';
 import { useProductPharmaData } from '../../hooks/useProductPharmaData';
 import type { TFunction } from 'i18next';
 import { usePharmacySettings } from '../../hooks/usePharmacySettings';
+import { isLotExpired } from '../../utils/expiry';
 import { exportToExcel } from '../../utils/excelExport';
 import { logger } from '../../utils/logger';
 import { motion } from 'framer-motion';
@@ -203,6 +204,7 @@ const PurchasesTabContent = ({ achats, t }: { achats: AchatProduit[]; t: TFuncti
 
 const LotsTabContent = ({ lots, produitId, t }: { lots: StockLot[]; produitId: number; t: TFunction }) => {
     const queryClient = useQueryClient();
+    const { settings } = usePharmacySettings();
     const [editingId, setEditingId] = useState<number | null>(null);
     const [editValues, setEditValues] = useState<{ lot: string; date_expiration: string; price_cost: string; selling_price: string }>({ lot: '', date_expiration: '', price_cost: '', selling_price: '' });
     const [saving, setSaving] = useState(false);
@@ -282,7 +284,7 @@ const LotsTabContent = ({ lots, produitId, t }: { lots: StockLot[]; produitId: n
             </TableHeader>
             <TableBody>
                 {visibleLots.map((lot) => {
-                    const isExpired = lot.date_expiration ? new Date(lot.date_expiration) < new Date() : false;
+                    const isExpired = isLotExpired(lot.date_expiration, settings.expiry_cutoff);
                     const isEditing = editingId === lot.id;
                     return (
                         <TableRow key={lot.id}>

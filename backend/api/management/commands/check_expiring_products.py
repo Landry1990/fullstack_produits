@@ -8,6 +8,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from api.models import StockLot
+from api.utils.expiry import expired_before
 
 
 class Command(BaseCommand):
@@ -31,12 +32,12 @@ class Command(BaseCommand):
         days_ahead = options['days']
         min_quantity = options['min_quantity']
         
-        today = timezone.now().date()
+        today = timezone.localdate()
         future_date = today + timedelta(days=days_ahead)
         
         # Find lots expiring soon with remaining stock
         expiring_lots = StockLot.objects.filter(
-            date_expiration__gt=today,
+            date_expiration__gte=expired_before(today),
             date_expiration__lte=future_date,
             quantity_remaining__gte=min_quantity
         ).select_related('produit', 'fournisseur').order_by('date_expiration')

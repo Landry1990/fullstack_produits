@@ -19,6 +19,7 @@ from ..models import AuditLog, Challenge, ChallengeEquipe, ChallengePointTier, F
 from ..serializers.challenges import ChallengeSerializer
 from ..pagination import StandardResultsSetPagination
 from ..utils.dates import day_start
+from ..utils.expiry import expired_before
 from ..utils.validation import parse_int
 
 logger = logging.getLogger(__name__)
@@ -403,12 +404,12 @@ class ChallengeViewSet(viewsets.ModelViewSet):
         - MANUEL : produits sélectionnés via le M2M produits.
         """
         if source_produits == Challenge.SourceProduits.AUTO_PEREMPTION and challenge.peremption_mois:
-            today = timezone.now().date()
+            today = timezone.localdate()
             future = today + timedelta(days=challenge.peremption_mois * 30)
             return list(
                 StockLot.objects.filter(
                     date_expiration__isnull=False,
-                    date_expiration__gt=today,
+                    date_expiration__gte=expired_before(today),
                     date_expiration__lte=future,
                     quantity_remaining__gt=0,
                 )
@@ -550,13 +551,13 @@ class ChallengeViewSet(viewsets.ModelViewSet):
         Déduplique par produit en gardant le lot le plus urgent.
         """
         mois = parse_int(request.query_params.get('mois', 6), field='mois', min_value=1, max_value=120)
-        today = timezone.now().date()
+        today = timezone.localdate()
         future = today + timedelta(days=mois * 30)
 
         lots = (
             StockLot.objects.filter(
                 date_expiration__isnull=False,
-                date_expiration__gt=today,
+                date_expiration__gte=expired_before(today),
                 date_expiration__lte=future,
                 quantity_remaining__gt=0,
             )

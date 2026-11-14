@@ -1217,7 +1217,7 @@ def _collect_data(date_debut, date_fin, lang: str | None = None):
     # ── Stock par rayon ──────────────────────────────────────────────────────
     from django.utils import timezone as tz
     stock_rows = []
-    today = tz.now().date()
+    today = tz.localdate()
 
     # Rayons nommés + rayon None (produits sans rayon)
     stats_rayons = {
@@ -1234,12 +1234,13 @@ def _collect_data(date_debut, date_fin, lang: str | None = None):
             ),
         )
     }
+    from api.utils.expiry import expired_before
     peremptions = {
         row["produit__rayon_id"]: row["n"]
         for row in StockLot.objects.filter(
             quantity_remaining__gt=0,
             date_expiration__lte=today + timedelta(days=30),
-            date_expiration__gt=today,
+            date_expiration__gte=expired_before(today),
         ).values("produit__rayon_id").annotate(n=Count("id"))
     }
     rayons_list = list(Rayon.objects.select_related("parent").order_by("name")) + [None]

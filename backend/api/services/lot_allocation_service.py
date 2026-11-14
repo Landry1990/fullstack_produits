@@ -18,6 +18,7 @@ from ..models import (
     StockObligation,
     StockObligationResolution,
 )
+from ..utils.expiry import expired_before
 from .realtime import notify_stock_changed
 from .stock_obligation_service import StockObligationService
 
@@ -266,13 +267,13 @@ class LotAllocationService:
         produit_id = facture_produit.produit_id
         sp = selling_price or facture_produit.selling_price
 
-        today = timezone.now().date()
+        expiry_cut = expired_before(timezone.localdate())
         available_lots = list(
             StockLot.objects.filter(
                 produit_id=produit_id,
                 quantity_remaining__gt=0
             ).filter(
-                Q(date_expiration__gte=today) | Q(date_expiration__isnull=True)
+                Q(date_expiration__gte=expiry_cut) | Q(date_expiration__isnull=True)
             ).order_by(F('date_expiration').asc(nulls_last=True), 'date_reception')
         )
 

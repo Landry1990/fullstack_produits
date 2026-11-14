@@ -1,5 +1,6 @@
 import { Package, ChevronRight, Lock, Settings } from 'lucide-react'
 import { Input } from '../shadcn/input'
+import { Select } from '../shadcn/select'
 import { Checkbox } from '../shadcn/checkbox'
 import type { SettingsTabProps } from './types'
 
@@ -53,6 +54,24 @@ export function StocksTab({ formData, handleChange, t }: SettingsTabProps) {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="flex flex-col gap-1">
+                <label>
+                  <span className="text-sm font-bold text-slate-500">{t('labels.expiry_cutoff')}</span>
+                </label>
+                <Select
+                  value={formData.expiry_cutoff || 'LAST_DAY'}
+                  onChange={(e) => handleChange('expiry_cutoff', e.target.value)}
+                  className="w-full h-12 rounded-xl"
+                >
+                  <option value="LAST_DAY">{t('labels.expiry_cutoff_last_day')}</option>
+                  <option value="FIRST_DAY">{t('labels.expiry_cutoff_first_day')}</option>
+                </Select>
+                <label>
+                  <span className="text-xs text-slate-400 flex items-center gap-1">
+                      <ChevronRight className="size-3" /> {t('hints.expiry_cutoff')}
+                  </span>
+                </label>
+              </div>
               <div className="flex flex-col gap-1">
                 <label>
                   <span className="text-sm font-bold text-slate-500">{t('labels.debt_threshold')}</span>
@@ -174,6 +193,23 @@ export function StocksTab({ formData, handleChange, t }: SettingsTabProps) {
                     <ChevronRight className="size-3" /> {t('hints.taux_change')}
                   </span>
                 </label>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-4 mt-8">
+              <Checkbox
+                id="show_order_sale_margin"
+                checked={formData.show_order_sale_margin !== false}
+                onCheckedChange={(checked) => handleChange('show_order_sale_margin', !!checked)}
+                className="mt-1"
+              />
+              <div className="flex-1">
+                <label htmlFor="show_order_sale_margin" className="font-medium text-slate-800 cursor-pointer">
+                  {t('labels.show_order_sale_margin')}
+                </label>
+                <p className="text-sm text-slate-500 mt-1">
+                  {t('hints.show_order_sale_margin')}
+                </p>
               </div>
             </div>
           </div>

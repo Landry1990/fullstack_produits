@@ -70,6 +70,7 @@ class WhatsAppLog(models.Model):
         MANUEL = 'MANUEL', 'Envoi Manuel'
         RAPPEL = 'RAPPEL', 'Rappel Paiement'
         RENOUVELLEMENT = 'RENOUVELLEMENT', 'Renouvellement Traitement'
+        RAPPORT = 'RAPPORT', 'Rapport'
 
     class Status(models.TextChoices):
         PENDING = 'PENDING', 'En attente'

@@ -11,6 +11,7 @@ import { Input } from '../shadcn/input';
 import { Checkbox } from '../shadcn/checkbox';
 import { ProductSearch, type SearchResult } from '../common/ProductSearch';
 import { cn } from '../../lib/utils';
+import { usePharmacySettings } from '../../context/PharmacySettingsContext';
 import { useDataMatrixScanner } from '../../hooks/useDataMatrixScanner';
 import DataMatrixScanBar from './DataMatrixScanBar';
 import { LoadingScreen } from '../common/LoadingScreen';
@@ -293,6 +294,7 @@ export default function CommandeForm({
     handleDuplicateIncrementExisting,
 }: CommandeFormProps) {
     const { t } = useTranslation(['orders', 'common']);
+    const showSaleMargin = usePharmacySettings().settings.show_order_sale_margin !== false;
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const [datamatrixEnabled, setDatamatrixEnabled] = useState(true);
     const [sendingOrder, setSendingOrder] = useState(false);
@@ -606,17 +608,21 @@ export default function CommandeForm({
                         <span className="text-base font-black leading-none text-slate-800">{formatCurrency(orderTotals?.totalBuyTTC || 0)}</span>
                     </div>
 
-                    {/* PRIX V TTC */}
-                    <div className="flex flex-col items-end border-l pl-2 border-slate-200">
-                        <span className="text-caption uppercase font-bold text-emerald-600 -mb-1">{t('orders:price_selling_ttc')}</span>
-                        <span className="text-base font-black leading-none text-emerald-600">{formatCurrency(orderTotals?.totalTTC || 0)}</span>
-                    </div>
+                    {showSaleMargin && (
+                        <>
+                            {/* PRIX V TTC */}
+                            <div className="flex flex-col items-end border-l pl-2 border-slate-200">
+                                <span className="text-caption uppercase font-bold text-emerald-600 -mb-1">{t('orders:price_selling_ttc')}</span>
+                                <span className="text-base font-black leading-none text-emerald-600">{formatCurrency(orderTotals?.totalTTC || 0)}</span>
+                            </div>
 
-                    {/* MARGE */}
-                    <div className="hidden sm:flex flex-col items-end border-l pl-2 border-slate-200">
-                        <span className="text-caption uppercase font-bold text-slate-500 -mb-1">{t('orders:margin')}</span>
-                        <span className={cn("text-sm font-bold", (Number(orderTotals?.globalMargin || 0)) >= 1.34 ? 'text-emerald-600' : 'text-amber-600')}>{formatCurrency(orderTotals?.totalMarginValue || 0)}</span>
-                    </div>
+                            {/* MARGE */}
+                            <div className="hidden sm:flex flex-col items-end border-l pl-2 border-slate-200">
+                                <span className="text-caption uppercase font-bold text-slate-500 -mb-1">{t('orders:margin')}</span>
+                                <span className={cn("text-sm font-bold", (Number(orderTotals?.globalMargin || 0)) >= 1.34 ? 'text-emerald-600' : 'text-amber-600')}>{formatCurrency(orderTotals?.totalMarginValue || 0)}</span>
+                            </div>
+                        </>
+                    )}
 
                     {/* COEFF */}
                     <div className="hidden lg:flex flex-col items-end border-l pl-2 border-slate-200">

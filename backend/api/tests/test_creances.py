@@ -306,6 +306,56 @@ class CreancesTestCase(TestCase):
         self.assertIn('creances_', response['Content-Disposition'])
         self.assertTrue(response.content[:2] == b'PK')  # xlsx = zip
 
+    # ------------------------------------------------------------------
+    # Relevés Excel multi-clients (une feuille par client)
+    # ------------------------------------------------------------------
+
+    def _sheet_names(self, content):
+        import io
+
+        import openpyxl
+        return openpyxl.load_workbook(io.BytesIO(content)).sheetnames
+
+    def test_releves_excel_une_feuille_par_client(self):
+        self._creance(client=self.client_a, total=10000)
+        self._creance(client=self.client_b, total=5000)
+        response = self.api.get(
+            f'/api/creances/releves_excel/?client_ids={self.client_a.id},{self.client_b.id}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        names = self._sheet_names(response.content)
+        self.assertEqual(names, ['Assurance A', 'Client B'])
+
+    def test_releves_excel_client_sans_creance_pas_de_feuille(self):
+        """Un client coché mais sans créance sur la période → pas de feuille."""
+        self._creance(client=self.client_a, total=10000)
+        response = self.api.get(
+            f'/api/creances/releves_excel/?client_ids={self.client_a.id},{self.client_b.id}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(self._sheet_names(response.content), ['Assurance A'])
+
+    def test_releves_excel_filtre_periode(self):
+        vieille = self._creance(client=self.client_a, total=10000)
+        Facture.objects.filter(pk=vieille.pk).update(
+            date=timezone.now() - timedelta(days=60)
+        )
+        debut = (timezone.now() - timedelta(days=7)).strftime('%Y-%m-%d')
+        response = self.api.get(
+            f'/api/creances/releves_excel/?client_ids={self.client_a.id}&date_debut={debut}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Plus de créance dans la période → feuille placeholder
+        names = self._sheet_names(response.content)
+        self.assertEqual(len(names), 1)
+        self.assertNotEqual(names[0], 'Assurance A')
+
+    def test_releves_excel_client_ids_requis_et_valides(self):
+        response = self.api.get('/api/creances/releves_excel/')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        response = self.api.get('/api/creances/releves_excel/?client_ids=abc')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_imprimer_recu(self):
         f = self._creance(client=self.client_a, total=10000)
         self._pay(f, 4000)
