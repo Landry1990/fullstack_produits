@@ -6,7 +6,8 @@ import { useTranslation } from 'react-i18next';
 import MessagingModal from './MessagingModal';
 import FeedbackModal from './FeedbackModal';
 import { useUnreadMessageCount } from './messaging/useMessaging';
-import { ChevronDown, LogOut, Moon, Sun, MessageSquare, User as UserIcon, MessageCircle, Key } from 'lucide-react';
+import { ChevronDown, LogOut, Moon, Sun, MessageSquare, User as UserIcon, MessageCircle, Key, Bell, BellOff } from 'lucide-react';
+import { usePopupAlertsEnabled, setPopupAlertsEnabled } from '../../utils/popupPrefs';
 import { playNotificationSound } from '../../utils/audio';
 import { AnimatePresence, motion } from 'framer-motion';
 import { popover } from '../../lib/motion';
@@ -15,6 +16,7 @@ export default function UserHeader() {
   const { t, i18n } = useTranslation(['messaging', 'sidebar', 'common']);
   const { user, logout } = useAuth();
   const { isMidnightTheme, toggleMidnightTheme } = useSidebar();
+  const popupAlertsEnabled = usePopupAlertsEnabled();
   const [isMessagingOpen, setIsMessagingOpen] = useState(false);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -132,6 +134,20 @@ export default function UserHeader() {
                   >
                     {isMidnightTheme ? <Sun size={18} className="text-amber-500" /> : <Moon size={18} className="text-emerald-600" />}
                     <span>{isMidnightTheme ? t('common:light_mode') : t('common:dark_mode')}</span>
+                  </button>
+
+                  <button
+                    onClick={() => setPopupAlertsEnabled(!popupAlertsEnabled)}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm hover:bg-slate-100 hover:text-slate-700 transition-colors text-left"
+                    aria-pressed={popupAlertsEnabled}
+                  >
+                    {popupAlertsEnabled
+                      ? <Bell size={18} className="text-emerald-600" />
+                      : <BellOff size={18} className="text-slate-400" />}
+                    <span className="flex-1">{t('common:popup_alerts')}</span>
+                    <span className={`text-xs font-bold ${popupAlertsEnabled ? 'text-emerald-600' : 'text-slate-400'}`}>
+                      {popupAlertsEnabled ? t('common:enabled') : t('common:disabled')}
+                    </span>
                   </button>
 
                   {/* Feedback — réservé aux admins */}

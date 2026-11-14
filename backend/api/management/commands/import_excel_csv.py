@@ -17,6 +17,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from api.models import Forme, Fournisseur, Groupe, Produit
+from api.services.lot_allocation_service import LotAllocationService
 
 try:
     import pandas as pd
@@ -220,11 +221,13 @@ class Command(BaseCommand):
             return 'created'
         
         # Créer ou mettre à jour le produit
+        # NB : 'stock' est volontairement HORS de defaults — pour un produit
+        # géré par lots, le compteur est dérivé des StockLot ; il est appliqué
+        # via LotAllocationService.apply_imported_stock() ci-dessous.
         defaults = {
             'name': nom or code,
             'cost_price': cost_price or 0,
             'selling_price': selling_price or 0,
-            'stock': stock or 0,
         }
         
         if fournisseur:
@@ -317,6 +320,7 @@ class Command(BaseCommand):
             produit = Produit.objects.filter(name__iexact=nom).first()
         
         if produit:
+            result = 'updated'
             # Mise à jour — ne pas écraser cip3 si déjà pris par un AUTRE produit
             for key, value in defaults.items():
                 if key == 'cip3' and value:
@@ -326,12 +330,26 @@ class Command(BaseCommand):
                         continue  # Skip: cip3 déjà pris par un autre produit
                 setattr(produit, key, value)
             produit.save()
-            return 'updated'
         else:
+            result = 'created'
             # Création — cip1 = None (pas '') si absent pour éviter violation unique
             defaults['cip1'] = code or None
-            Produit.objects.create(**defaults)
-            return 'created'
+            produit = Produit.objects.create(**defaults)
+
+        # Stock issu du fichier : pour un produit géré par lots, on crée/ajuste
+        # un StockLot (sinon le stock serait du « stock fantôme » écrasé au
+        # prochain recalcul depuis les lots). Sans colonne stock → inchangé.
+        if stock is not None:
+            if produit.use_lot_management:
+                LotAllocationService.apply_imported_stock(
+                    produit, stock, absolute=True,
+                    cost_price=cost_price, selling_price=selling_price,
+                )
+            else:
+                produit.stock = stock
+                produit.save(update_fields=['stock'])
+
+        return result
 
     def generate_report(self, stats, source_filepath):
         """Génère un rapport texte + Excel (si pandas dispo) avec succès et échecs"""

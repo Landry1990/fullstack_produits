@@ -11,6 +11,7 @@ from rest_framework.views import APIView
 
 from ..audit_helpers import log_audit
 from ..models import AuditLog, Produit
+from ..services.lot_allocation_service import LotAllocationService
 
 logger = logging.getLogger(__name__)
 business_logger = logging.getLogger('api.business')
@@ -185,7 +186,6 @@ class ProductImportView(APIView):
                         'name': name,
                         'selling_price': selling_price,
                         'cost_price': cost_price,
-                        'stock': stock_val,
                         'cip1': cip1 if cip1 else None,
                         'cip2': cip2 if cip2 else None,
                         'cip3': cip3 if cip3 else None,
@@ -224,13 +224,30 @@ class ProductImportView(APIView):
                         
                         # Only update stock if explicitly provided in file
                         if 'stock' in df.columns:
-                            product.stock = stock_val
-                            
+                            if product.use_lot_management:
+                                # Le compteur est dérivé des lots : on crée/ajuste
+                                # un StockLot plutôt que d'écrire du stock fantôme.
+                                LotAllocationService.apply_imported_stock(
+                                    product, stock_val, absolute=True,
+                                    cost_price=cost_price, selling_price=selling_price,
+                                )
+                            else:
+                                product.stock = stock_val
+
                         product.save()
                         updated_count += 1
                     else:
                         # Create Logic
-                        Produit.objects.create(**product_data)
+                        product = Produit.objects.create(**product_data)
+                        if 'stock' in df.columns:
+                            if product.use_lot_management:
+                                LotAllocationService.apply_imported_stock(
+                                    product, stock_val, absolute=True,
+                                    cost_price=cost_price, selling_price=selling_price,
+                                )
+                            else:
+                                product.stock = stock_val
+                                product.save(update_fields=['stock'])
                         created_count += 1
                     
                     transaction.savepoint_commit(sid)

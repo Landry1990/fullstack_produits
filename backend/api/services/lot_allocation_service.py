@@ -172,6 +172,82 @@ class LotAllocationService:
             produit.calculate_stock_from_lots()
 
     # ──────────────────────────────────────────────
+    #  Stock issu d'un import fichier (catalogue/quantités)
+    # ──────────────────────────────────────────────
+
+    @staticmethod
+    def apply_imported_stock(produit, quantity, *, absolute=True, cost_price=None, selling_price=None):
+        """
+        Applique une quantité de stock issue d'un import Excel/CSV.
+
+        Pour un produit géré par lots, ``Produit.stock`` est **dérivé** des
+        ``StockLot`` (recalculé par signal à chaque lot.save()) : écrire le
+        compteur directement créerait du « stock fantôme » — vendable à
+        l'écran, sans lot physique derrière, et écrasé silencieusement à la
+        prochaine opération touchant un lot. On ajuste donc les lots :
+
+        - delta positif → création d'un lot d'import (numéro ``IMP…``),
+        - delta négatif (``absolute=True`` seulement) → déduction FIFO des
+          lots existants (rayon puis réserve).
+
+        ``absolute=True`` : ``quantity`` est le stock physique total visé.
+        ``absolute=False`` : ``quantity`` est ajoutée au stock physique — une
+        valeur négative est ignorée (écrêtée à 0, jamais déduite des lots).
+
+        Pour un produit sans gestion de lots, le compteur est mis à jour
+        directement (comportement historique inchangé).
+        """
+        quantity = int(quantity or 0)
+        if quantity < 0 and not absolute:
+            quantity = 0
+
+        physical = produit.stock_lots.aggregate(
+            rem=Coalesce(Sum('quantity_remaining'), 0),
+            res=Coalesce(Sum('quantity_reserved'), 0),
+        )
+        physical_total = int(physical['rem']) + int(physical['res'])
+
+        if not produit.use_lot_management:
+            produit.stock = max(0, quantity) if absolute else (produit.stock or 0) + max(0, quantity)
+            return
+
+        target = max(0, quantity) if absolute else physical_total + max(0, quantity)
+        delta = target - physical_total
+
+        if delta > 0:
+            base = f"IMP{timezone.now():%y%m%d%H%M%S}"
+            lot_number, suffix = base[:20], 1
+            while StockLot.objects.filter(produit=produit, lot=lot_number).exists():
+                tag = f"-{suffix}"
+                lot_number = base[:20 - len(tag)] + tag
+                suffix += 1
+            StockLot.objects.create(
+                produit=produit,
+                lot=lot_number,
+                quantity_initial=delta,
+                quantity_paid=delta,
+                quantity_remaining=delta,
+                price_cost=cost_price if cost_price is not None else (produit.cost_price or 0),
+                selling_price=selling_price if selling_price is not None else (produit.selling_price or 0),
+                date_reception=timezone.now(),
+            )
+        elif delta < 0:
+            to_remove = -delta
+            for lot in produit.stock_lots.filter(
+                Q(quantity_remaining__gt=0) | Q(quantity_reserved__gt=0)
+            ).order_by('date_reception', 'id'):
+                if to_remove <= 0:
+                    break
+                taken = min(lot.quantity_remaining, to_remove)
+                lot.quantity_remaining -= taken
+                to_remove -= taken
+                if to_remove > 0:
+                    taken = min(lot.quantity_reserved, to_remove)
+                    lot.quantity_reserved -= taken
+                    to_remove -= taken
+                lot.save(update_fields=['quantity_remaining', 'quantity_reserved'])
+
+    # ──────────────────────────────────────────────
     #  Allocation FIFO/FEFO pour un item unique
     # ──────────────────────────────────────────────
 

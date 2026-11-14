@@ -2,6 +2,77 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-11-14 — Déploiement : dry-run des migrations + check migrations oubliées en CI
+
+- `deploy.ps1` (cibles `*-full`) affiche désormais `migrate --plan` **avant**
+  d'appliquer, et **bloque** toute migration contenant `RemoveField`,
+  `RenameField` ou `DeleteModel` — ces opérations "contract" cassent le code
+  encore en cours pendant `migrate` ; elles doivent partir dans une release
+  dédiée (expand/contract). Bypass explicite via nouveau paramètre `-Force`.
+  `AlterField`/`RenameModel`/`RemoveConstraint`/`RemoveIndex` = warning seul.
+- CI `backend-lint` : `makemigrations --check --noinput` échoue si les modèles
+  ont dérivé des migrations versionnées (migration oubliée → découverte avant
+  prod, plus jamais de `makemigrations` sur la cible).
+- Fichiers : `deploy.ps1`, `.github/workflows/ci.yml`.
+
+## 2026-11-14 — CI : check_stock_boundaries (compteurs de stock = services only)
+
+- Nouvelle commande `manage.py check_stock_boundaries` : scanne `api/` et
+  échoue (exit 1) si un fichier **hors `services/`, `models/`, `tests/` et
+  `migrations/`** écrit directement `Produit.stock`, `Produit.stock_reserve`
+  ou `StockLot.quantity_*` (assignation, `update()`, `bulk_update()` — ce
+  dernier bypass le signal de recalcul). Commandes one-shot `generate_*`,
+  `fix_*`, `debug_*`, `check_*` tolérées (rôle = réparer des données).
+- Les 81 écritures existantes auditées sont consignées dans
+  `api/checks/stock_writes_baseline.txt` — le check ne bloque que les
+  **nouvelles** violations ; `--write-baseline` régénère après revue.
+  Avertit aussi quand une entrée de baseline devient obsolète (code corrigé).
+- Branché dans `.github/workflows/ci.yml` (job `backend-lint`) — une PR qui
+  écrit un compteur hors services échoue en CI.
+- Objectif : empêcher la réapparition du « stock fantôme » corrigé sur les
+  imports (voir entrée ci-dessous).
+
+## 2026-11-14 — Fix : imports produits et recalculate_stocks créaient du stock incohérent
+
+- **Trou #1 — « stock fantôme » à l'import** : les trois chemins d'import
+  (`maintenance/import_produits` → commande `import_excel_csv`,
+  `ProductImportView`, `ProduitImportViewSet`) écrivaient `Produit.stock`
+  directement **sans créer de StockLot**. Pour un produit géré par lots
+  (défaut), la quantité était vendable à l'écran mais sans lot physique —
+  puis **évaporée** au prochain `lot.save()` qui recalcule le compteur
+  depuis les lots.
+- Fix : nouveau `LotAllocationService.apply_imported_stock()` — pour un
+  produit à lots, la valeur du fichier est appliquée aux lots (création
+  d'un lot `IMP…` si delta positif, déduction FIFO sinon) ; le signal
+  recalcule le compteur, déduction faite des promis en attente. Produits
+  sans gestion de lots : comportement inchangé (compteur direct).
+- **Trou #2 — `recalculate_stocks`** : la commande faisait `stock = Σlots`
+  brut, ignorant les dettes promis (`stock_applied`) et `stock_reserve` →
+  un promis en attente aurait re-rendu ses unités vendables. Elle appelle
+  désormais `calculate_stock_from_lots()` (uniquement produits à lots).
+- Fichiers : `services/lot_allocation_service.py`,
+  `management/commands/import_excel_csv.py` + `recalculate_stocks.py`,
+  `views/import_views.py`, `views/produit_import.py`. Tests
+  `test_import_stock.py` (5 verts) + non-régression lots/avoirs : 31 verts.
+
+## 2026-11-14 — Récap du matin + interrupteur global des popups bas-droite
+
+- Nouveau `GET /api/dashboard/morning_recap/` : une seule requête pour trois
+  alertes quotidiennes — **promis dormants** (>3 j, argent encaissé non
+  délivré), **lots périmés encore en rayon** (quantité > 0, jamais retirés de
+  l'étagère), **ruptures critiques** (produits actifs à rotation, stock ≤ 0).
+- `MorningRecapPanel` : carte dans le conteneur bas-droite mutualisé, affichée
+  **une fois par jour** (clé localStorage datée), réservée aux admins ; chaque
+  ligne cliquable ouvre la page concernée (promis / périmés / analyse stock).
+- **Désactivation des popups bas-droite** : préférence par poste
+  `popup_alerts_enabled` (`utils/popupPrefs.ts`, `useSyncExternalStore` +
+  événement custom) — interrupteur Bell/BellOff dans le menu utilisateur.
+  Coupe tout le conteneur (récap, rappels traitement, objectifs) sans toucher
+  aux toasts système. Activé par défaut.
+- Fichiers : `views/dashboard/core.py`, `MorningRecapPanel.tsx`,
+  `popupPrefs.ts`, `Layout.tsx`, `UserHeader.tsx`, locales `dashboard`/`common`
+  fr/en. Tests `test_dashboard.MorningRecapTestCase` : 4 verts ; ESLint propre.
+
 ## 2026-11-14 — Avoirs : garde-fou promis sur la décharge de stock
 
 - Un promis réserve des unités qui restent physiquement dans les lots (le

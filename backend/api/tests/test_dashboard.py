@@ -705,3 +705,80 @@ class SuggestionPicAmortiTestCase(APITestCase):
         ligne = self._suggestion(p)
         self.assertEqual(ligne['tendance'], 1.5)
         self.assertTrue(ligne['pic_detecte'])
+
+
+class MorningRecapTestCase(APITestCase):
+    """Test suite pour l'endpoint /api/dashboard/morning_recap/."""
+
+    def setUp(self):
+        self.user = TestDataFactory.create_superuser()
+        self.client.force_authenticate(user=self.user)
+        self.url = reverse('dashboard-morning-recap')
+
+    def test_empty_recap(self):
+        """Aucune alerte → compteurs à zéro."""
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['promis_dormants']['count'], 0)
+        self.assertEqual(response.data['lots_perimes_rayon']['lots'], 0)
+        self.assertEqual(response.data['ruptures_critiques']['count'], 0)
+
+    def test_recap_reports_all_three_alerts(self):
+        """Promis dormant + lot périmé en rayon + rupture à rotation."""
+        from ..models import Promis, StockLot
+        produit = TestDataFactory.create_produit(
+            name='Produit Rupture', stock=0, rotation_moyenne=12,
+        )
+        # Promis de 10 jours (dormant)
+        p = Promis.objects.create(
+            produit=produit, quantite=2, status=Promis.Status.EN_ATTENTE,
+        )
+        Promis.objects.filter(pk=p.pk).update(
+            date_promis=timezone.now() - timedelta(days=10),
+        )
+        # Lot périmé encore en rayon
+        StockLot.objects.create(
+            produit=produit, lot='EXP-1',
+            quantity_initial=5, quantity_paid=5, quantity_free=0,
+            quantity_free_remaining=0, quantity_remaining=5,
+            quantity_reserved=0, price_cost=10, selling_price=20,
+            date_reception=timezone.now(),
+            date_expiration=timezone.localdate() - timedelta(days=2),
+        )
+        # Le signal post_save du lot a recalculé stock=5 — on force la rupture.
+        Produit.objects.filter(pk=produit.pk).update(stock=0)
+
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['promis_dormants']['count'], 1)
+        self.assertEqual(response.data['promis_dormants']['oldest_days'], 10)
+        self.assertEqual(response.data['lots_perimes_rayon']['lots'], 1)
+        self.assertEqual(response.data['lots_perimes_rayon']['unites'], 5)
+        self.assertEqual(response.data['ruptures_critiques']['count'], 1)
+        self.assertIn('Produit Rupture', response.data['ruptures_critiques']['top_produits'])
+
+    def test_recent_promis_not_dormant(self):
+        """Un promis récent (<3 jours) n'est pas compté comme dormant."""
+        from ..models import Promis
+        produit = TestDataFactory.create_produit(name='Prod', stock=5)
+        Promis.objects.create(produit=produit, quantite=1)
+
+        response = self.client.get(self.url)
+        self.assertEqual(response.data['promis_dormants']['count'], 0)
+
+    def test_expired_lot_off_shelf_ignored(self):
+        """Un lot périmé retiré de l'étagère n'est plus signalé."""
+        from ..models import StockLot
+        produit = TestDataFactory.create_produit(name='Prod2', stock=5)
+        StockLot.objects.create(
+            produit=produit, lot='EXP-2',
+            quantity_initial=3, quantity_paid=3, quantity_free=0,
+            quantity_free_remaining=0, quantity_remaining=3,
+            quantity_reserved=0, price_cost=10, selling_price=20,
+            date_reception=timezone.now(),
+            date_expiration=timezone.localdate() - timedelta(days=1),
+            deplace_peremption_le=timezone.now(),
+        )
+
+        response = self.client.get(self.url)
+        self.assertEqual(response.data['lots_perimes_rayon']['lots'], 0)

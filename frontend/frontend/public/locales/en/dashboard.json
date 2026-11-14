@@ -1,4 +1,10 @@
 {
+    "morning_recap": {
+        "title": "Morning recap",
+        "promis_dormants": "{{count}} pending promis for over {{days}} d",
+        "lots_perimes": "{{lots}} expired lot(s) still on the shelf — {{unites}} u. on {{produits}} product(s)",
+        "ruptures": "{{count}} stockout(s) on fast-moving products"
+    },
     "refresh_tooltip": "Refresh all",
     "hourly_traffic_title": "Hourly Traffic",
     "hourly_traffic_desc": "Number of sales by time slot",

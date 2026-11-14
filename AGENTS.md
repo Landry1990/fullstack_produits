@@ -65,6 +65,9 @@ docker exec fullstack_produits-backend-1 python manage.py test api.tests.test_<m
 pwsh -File .\deploy.ps1 -Target all        # -BackupDB, -Rebuild disponibles
 # Code keyday du jour (dev)
 docker exec fullstack_produits-backend-1 python manage.py shell -c "from api.keyday import get_today_keyday; print(get_today_keyday())"
+# Garde-fou stock : échoue si un fichier HORS api/services/ (et models/, tests/)
+# écrit Produit.stock / StockLot.quantity_* — baseline api/checks/stock_writes_baseline.txt
+docker exec fullstack_produits-backend-1 python manage.py check_stock_boundaries
 ```
 
 ## Conteneurs Docker

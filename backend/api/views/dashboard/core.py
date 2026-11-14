@@ -30,6 +30,8 @@ from ...models import (
     FactureProduitAllocation,
     ObjectifCommercial,
     Produit,
+    Promis,
+    StockLot,
 )
 
 
@@ -929,4 +931,66 @@ class DashboardCoreMixin(viewsets.ViewSet):
             })
 
         return Response(data)
+
+    @action(detail=False, methods=['get'])
+    def morning_recap(self, request):
+        """
+        Récapitulatif quotidien affiché une fois par jour au pharmacien :
+        - promis dormants (payés/en attente ou prêts depuis plus de 3 jours) ;
+        - lots périmés encore en rayon (quantité > 0, jamais sortis de l'étagère) ;
+        - ruptures critiques (produits actifs à rotation, stock <= 0).
+        """
+        today = timezone.localdate()
+        dormant_threshold = timezone.now() - timedelta(days=3)
+
+        # 1. Promis dormants : promis vivant depuis plus de 3 jours.
+        promis_qs = Promis.objects.filter(
+            is_active=True,
+            status__in=[Promis.Status.EN_ATTENTE, Promis.Status.PRET],
+            date_promis__lt=dormant_threshold,
+        )
+        promis_dormants = promis_qs.count()
+        oldest = promis_qs.order_by('date_promis').values_list('date_promis', flat=True).first()
+
+        # 2. Lots périmés encore en rayon : date dépassée, quantité restante,
+        #    jamais retirés de l'étagère (deplace_peremption_le nul).
+        expired_qs = StockLot.objects.filter(
+            date_expiration__lt=today,
+            quantity_remaining__gt=0,
+            deplace_peremption_le__isnull=True,
+        )
+        expired_agg = expired_qs.aggregate(
+            lots=Count('id'),
+            unites=Coalesce(Sum('quantity_remaining'), Value(0)),
+            produits=Count('produit', distinct=True),
+        )
+
+        # 3. Ruptures critiques : produits actifs à rotation en rupture.
+        rupture_qs = Produit.objects.filter(
+            stock__lte=0,
+            rotation_moyenne__gt=0,
+            is_active=True,
+            type_produit='PRODUIT',
+        )
+        rupture_top = list(
+            rupture_qs.order_by('-rotation_moyenne').values_list('name', flat=True)[:5]
+        )
+
+        return Response({
+            'promis_dormants': {
+                'count': promis_dormants,
+                'oldest_days': (
+                    (today - timezone.localtime(oldest).date()).days if oldest else 0
+                ),
+            },
+            'lots_perimes_rayon': {
+                'lots': expired_agg['lots'],
+                'unites': int(expired_agg['unites'] or 0),
+                'produits': expired_agg['produits'],
+            },
+            'ruptures_critiques': {
+                'count': rupture_qs.count(),
+                'top_produits': rupture_top,
+            },
+        })
     

@@ -2,6 +2,15 @@
 
 > Référence détaillée — l'essentiel est dans AGENTS.md à la racine.
 
+### Garde-fous de déploiement (2026-11-14)
+
+- `deploy.ps1` affiche `migrate --plan` avant d'appliquer et **bloque** les
+  migrations contenant `RemoveField`/`RenameField`/`DeleteModel` (pattern
+  expand/contract : ces ops partent dans une release dédiée). Bypass : `-Force`.
+  `AlterField`/`RenameModel`/`RemoveConstraint`/`RemoveIndex` → warning seul.
+- CI `backend-lint` : `makemigrations --check --noinput` — échoue si les
+  modèles ont dérivé des fichiers de migration versionnés.
+
 ### Migrations Django en production
 
 - **Timeouts adaptatifs** : `docker-compose.prod.yml` utilise `DB_STATEMENT_TIMEOUT=300000`

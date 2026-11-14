@@ -25,6 +25,18 @@ jobs:
           python-version: "3.12"
       - run: pip install ruff
       - run: ruff check .
+      # Bloque toute NOUVELLE écriture directe de Produit.stock /
+      # StockLot.quantity_* hors api/services/ (baseline dans api/checks/).
+      - run: pip install -r requirements.txt
+      - run: |
+          # Échoue si le code des modèles a dérivé des migrations versionnées
+          # (migration oubliée → découverte en prod au lieu d'ici).
+          python manage.py makemigrations --check --noinput
+          # Bloque toute NOUVELLE écriture directe de compteurs hors services/.
+          python manage.py check_stock_boundaries
+        env:
+          DJANGO_DEBUG: "False"
+          SECRET_KEY: ci-stock-boundary-check
 
   backend-test:
     name: Backend Tests (pytest)

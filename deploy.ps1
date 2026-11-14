@@ -18,7 +18,11 @@ param(
     [ValidateSet("frontend", "backend", "backend-full", "all", "all-full")]
     [string]$Target = "all",
     [switch]$BackupDB,
-    [switch]$Rebuild
+    [switch]$Rebuild,
+    # Bypass du blocage sur migrations destructives (RemoveField/RenameField/
+    # DeleteModel détectés dans `migrate --plan`). À n'utiliser que pour une
+    # migration "contract" délibérée, revue et backupée.
+    [switch]$Force
 )
 
 $ErrorActionPreference = "Stop"
@@ -171,6 +175,33 @@ function Deploy-Backend {
             docker exec $BACKEND_CONTAINER python manage.py makemigrations 2>&1 |
                 Select-String -Pattern "No changes|Migration|already" |
                 ForEach-Object { Write-Host "    $_" }
+
+            # ── Dry-run : afficher le plan et bloquer les opérations destructives ──
+            # Expand/contract : les suppressions/renommages doivent partir dans une
+            # release "contract" dédiée, pas en plein déploiement expand.
+            $migPlan = docker exec $BACKEND_CONTAINER python manage.py migrate --plan 2>&1 | Out-String
+            $planLines = $migPlan -split "`r?`n" | Where-Object { $_.Trim() -ne '' }
+            Write-Host "  Plan de migration :" -ForegroundColor Yellow
+            foreach ($l in $planLines) { Write-Host "    $($l.Trim())" -ForegroundColor Gray }
+
+            # `migrate --plan` affiche operation.describe() (« Remove field … »),
+            # pas les noms de classes d'opérations.
+            $destructive = $planLines | Where-Object { $_ -match '(?i)remove field|rename field|delete model' }
+            $risky       = $planLines | Where-Object { $_ -match '(?i)alter field|rename model|remove constraint|remove index' }
+            if ($destructive) {
+                Write-Host "  ⚠️  OPÉRATIONS DESTRUCTIVES détectées :" -ForegroundColor Red
+                foreach ($l in $destructive) { Write-Host "    $($l.Trim())" -ForegroundColor Red }
+                if (-not $Force) {
+                    throw "Migration destructive bloquée — le code en cours tourne pendant migrate. " +
+                          "Découper en release 'contract' dédiée, ou relancer avec -Force après backup."
+                }
+                Write-Host "  ⚠️  -Force fourni : opérations destructives appliquées (backup fait ?)" -ForegroundColor Yellow
+            }
+            if ($risky) {
+                Write-Host "  ⚠️  Opérations à risque (verrous/réécriture possible) :" -ForegroundColor Yellow
+                foreach ($l in $risky) { Write-Host "    $($l.Trim())" -ForegroundColor Yellow }
+            }
+
             docker exec $BACKEND_CONTAINER python manage.py migrate 2>&1 |
                 Select-String -Pattern "Applying|OK|No migrations" |
                 ForEach-Object { Write-Host "    $_" }

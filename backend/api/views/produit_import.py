@@ -9,6 +9,7 @@ from rest_framework.response import Response
 
 from api.audit_helpers import log_audit
 from api.models import AuditLog, Produit
+from api.services.lot_allocation_service import LotAllocationService
 from api.services.realtime import notify_stock_changed
 
 
@@ -164,9 +165,16 @@ class ProduitImportViewSet(viewsets.ViewSet):
                             produit.selling_price = prix_vente_decimal
                             produit.tva = tva_decimal
                             
-                            # Ajouter la quantité au stock existant
-                            produit.stock = (produit.stock or 0) + quantite_int
-                            
+                            # Ajouter la quantité au stock existant — via un lot
+                            # pour les produits gérés par lots (stock fantôme sinon)
+                            if produit.use_lot_management:
+                                LotAllocationService.apply_imported_stock(
+                                    produit, quantite_int, absolute=False,
+                                    cost_price=prix_achat_decimal, selling_price=prix_vente_decimal,
+                                )
+                            else:
+                                produit.stock = (produit.stock or 0) + quantite_int
+
                             # Mettre à jour les CIP s'ils sont fournis
                             if cip1:
                                 produit.cip1 = cip1
@@ -188,8 +196,17 @@ class ProduitImportViewSet(viewsets.ViewSet):
                                 cip1=cip1,
                                 cip2=cip2,
                                 cip3=cip3,
-                                stock=quantite_int  # Stock initial = quantité du CSV
+                                stock=0  # compteur dérivé des lots (voir ci-dessous)
                             )
+                            if quantite_int > 0:
+                                if new_produit.use_lot_management:
+                                    LotAllocationService.apply_imported_stock(
+                                        new_produit, quantite_int, absolute=False,
+                                        cost_price=prix_achat_decimal, selling_price=prix_vente_decimal,
+                                    )
+                                else:
+                                    new_produit.stock = quantite_int
+                                    new_produit.save(update_fields=['stock'])
                             # Mettre à jour nos index en mémoire pour éviter les doublons au sein du même CSV
                             if cip1:
                                 by_cip1[cip1] = new_produit

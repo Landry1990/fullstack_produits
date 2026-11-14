@@ -1,4 +1,10 @@
 {
+    "morning_recap": {
+        "title": "Récap du matin",
+        "promis_dormants": "{{count}} promis en attente depuis plus de {{days}} j",
+        "lots_perimes": "{{lots}} lot(s) périmé(s) encore en rayon — {{unites}} u. sur {{produits}} produit(s)",
+        "ruptures": "{{count}} rupture(s) sur produits à rotation"
+    },
     "refresh_tooltip": "Actualiser tout",
     "hourly_traffic_title": "Fréquentation par Heure",
     "hourly_traffic_desc": "Nombre de ventes par tranche horaire",
