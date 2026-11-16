@@ -278,7 +278,7 @@ export function useFacturationActions({
             return
         }
         if (facture) {
-            ui.setMontantPaye(Math.round(Number(facture.total_ttc)).toString())
+            ui.setMontantPaye(Math.ceil(Number(facture.total_ttc)).toString())
             ui.openPaymentModal(facture)
         } else {
             if (!clientsHook.selectedClient) {
@@ -289,8 +289,10 @@ export function useFacturationActions({
                 setError(t('facturation:messages.add_product'))
                 return
             }
+            // Arrondi par excès : jamais moins que le montant dû exact
+            // (totaux décimaux, ex. majoration pro) → rendu monnaie ≥ 0.
             const montantInitial = totals.tauxCouverture > 0 ? totals.partPatient : totals.totalTtc
-            ui.setMontantPaye(Math.round(montantInitial).toString())
+            ui.setMontantPaye(Math.ceil(montantInitial).toString())
             ui.openPaymentModal()
         }
         ui.setModePaiement('especes')

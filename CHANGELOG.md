@@ -2,6 +2,123 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-11-16 — UX : sélecteur de caisse de destination (vente centralisée)
+
+- `PaymentModal` (facturation) : le choix « Envoyer vers (poste de caisse) »
+  devient des **cartes radio** lisibles — indicateur à cocher, badge
+  « Sélectionnée », nom de caisse + caissier, texte d'aide
+  « Choisissez la caisse qui encaissera cette vente »
+  (`send_to_cash_register_hint`, `selected_badge` fr/en). L'état sélectionné
+  était auparavant peu lisible (simple remplissage de bouton).
+- **Fix sélection invisible** : `selectedPosteVenteId` était branché sur
+  `myActivePoste` (poste du vendeur, jamais modifié au clic) — en mode
+  centralisé aucune carte n'apparaissait cochée. La sélection reflète
+  désormais `selectedPosteCaisseId` avec le même fallback que
+  `handleCompleteSale` (1er poste avec caisse) : la carte cochée = la
+  caisse réellement utilisée.
+- Fichier : `components/facturation/PaymentModal.tsx`.
+
+## 2026-11-16 — Encaissement tiers payant : montant réclamé = part patient
+
+- **Bug** : `reste_a_payer` (serializer facture) = `total_ttc − encaissé`,
+  il **inclut la part assurance `en_compte`**. Sur les factures à tiers
+  payant (pro 80 %…), `useCaissePayment.montantAEncaisser` visait le total
+  entier alors que la modale n'encaisse que `part_client` →
+  `montant_rendu` négatif → rejet `caisse/bulk_create`
+  (« montants du ticket positifs et finis ») à **chaque** vente pro.
+- `montantAEncaisser` = `ceil(reste_total − part_assurance)` = part
+  patient restante. `montant_rendu` tient compte du coupon
+  (`verse + coupon − aEncaisser`, planché à 0) **cappé au dû**
+  (`min(coupon, aEncaisser)`, comme `buildPaymentPayloads`) — sinon un
+  coupon > reste dû gonflait le rendu espèces (surplus coupon rendu en
+  cash).
+- Fichier : `hooks/useCaissePayment.ts`.
+
+## 2026-11-16 — Encaissement : arrondi par excès des montants dus
+
+- **Bug** : `PaymentModal` calculait le montant dû avec `Math.round` —
+  quand le total a des décimales (majoration client pro, ex. 12 340,4 F →
+  12 340 F affiché), le caissier encaissait moins que le reste à payer
+  exact → `montant_rendu` négatif → rejet `caisse/bulk_create`
+  (« montants du ticket positifs et finis »).
+- `PaymentModal.montantDu`, `useCaissePayment.montantAEncaisser` et la
+  pré-saisie `ouvrirModalPaiement` (`useFacturationActions`) passent en
+  `Math.ceil` : le montant réclamé n'est jamais inférieur au dû exact ;
+  le backend cappe au reste à payer exact (`_cap_montant`) → encaissement
+  complet, rendu cohérent avec l'affichage.
+- Fichiers : `components/caisse/PaymentModal.tsx`,
+  `hooks/useCaissePayment.ts`, `hooks/useFacturationActions.ts`.
+
+## 2026-11-16 — Annulation de réception partielle (par ligne)
+
+- `POST /commandes/{id}/annuler_reception/` accepte désormais un payload
+  optionnel (sans paramètre = annulation totale inchangée) :
+  - `item_ids: [...]` : annule toute la réception des lignes cochées
+    (`quantity_received=0`, `unites_gratuites=0`, lots supprimés) — la
+    commande **reste clôturée** tant qu'une ligne garde du stock reçu ;
+    tout annuler repasse en `PREP`.
+  - `updates: [{id, quantity_received}]` : ramène la réception d'une ligne
+    à cette quantité — le delta est retiré des lots (du plus récent au plus
+    ancien, jamais supprimés). Augmenter la quantité est refusé ; retirer
+    plus que le stock restant est refusé.
+  - `delete_item_ids: [...]` : annule la réception puis supprime la ligne.
+- Garde-fous : vente déjà allouée sur un lot sélectionné → 400 avec les
+  noms des produits ; commande avec **paiement automatique** (achat au
+  comptant / mise en place) → annulation partielle refusée (le paiement
+  global n'est pas ventilable ; l'annulation totale reste possible et le
+  supprime) ; lignes étrangères à la commande, chevauchement
+  annuler+modifier → 400.
+- Réouverture des dettes promis **scopée** aux lignes annulées
+  (`_reopen_obligation_allocations`, `_reopen_orphan_resolutions` avec
+  filtre `item_ids`) — les résolutions des autres lignes restent valides.
+- Frontend `CommandeDetails` : les cases à cocher existantes pilotent
+  l'annulation partielle (bouton « Annuler réception (n) ») ; menu « ⋮ »
+  par ligne clôturée → *Corriger la quantité reçue* (input inline) et
+  *Annuler et supprimer la ligne* ; même sudo `can_close_commande` et
+  confirmations. La colonne Qté affiche `reçu /commandé` quand ils diffèrent.
+- Fichiers : `views/commandes/cloture_mixin.py`,
+  `commandeService.ts`, `useCommandeActions.ts`, `useCommandeHandlers.ts`,
+  `useCommandesState.tsx`, `CommandeDetails.tsx`, locales `orders` fr/en.
+- Tests : `test_annulation_partielle_reception.py` — 13/13 verts
+  (sélection partielle, ligne intacte, blocage vente, update delta,
+  suppression, paiement auto, compat totale) ; ESLint + tsc propres.
+
+## 2026-11-16 — Sudo : annulation de réception commande + purge corbeille
+
+- `POST /commandes/{id}/annuler_reception/` exige désormais
+  `can_close_commande` via `validate_sudo_mode` — symétrique à `cloturer`
+  (l'action supprime des lots, retire du stock, rouvre des dettes promis).
+  Le frontend envoyait déjà les identifiants sudo : aucun changement UI.
+- `POST /corbeille/purge/` et `/empty/` : validation sudo **+ superuser
+  obligatoire** sur le validateur (même garde-fou que `reset_all_stock`) —
+  suppression définitive irréversible.
+- Frontend `Corbeille.tsx` : modale `SudoValidationModal` (sans permission →
+  superusers seuls éligibles) après la confirmation, envoi
+  `validated_by_id`/`sudo_password`. Clés i18n `corbeille.json` fr/en.
+- **Fix opportuniste** : `produit_actions/stock.py` `adjust_stock` plantait
+  en `NameError: today` lors de la création d'un lot `ADJ-…` (bug
+  pré-existant, 500 en prod possible) → `timezone.now()`.
+- Tests : `test_stock_movements_comprehensive` + `test_sensitive_permissions`
+  37/37 verts ; ESLint propre sur `Corbeille.tsx`.
+
+
+
+## 2026-11-16 — Relevés créanciers Excel : mise en page façon facture
+
+- Chaque feuille du classeur `releves_excel` ressemble désormais à un document
+  commercial : en-tête pharmacie à gauche, bloc relevé à droite
+  (**RELEVÉ DE COMPTE** + **numéro de relevé** `REL-<client>-<AAAAMMJJ>`,
+  date d'édition, période).
+- **Bloc client encadré** « CLIENT » : nom en gras, adresse, téléphone,
+  email, NIU et RC (tous les champs renseignés de la fiche).
+- **Montant en lettres** sous le total : « Arrêté le présent relevé à la
+  somme de : … Francs CFA » via `number_to_french` (reste à payer, comme
+  `total_lettres` des factures).
+- Nouvelles clés `utils_doclang` fr/en (`cre_releve_num`, `cre_lbl_period`,
+  `cre_period_*_v`, `cre_client_lbl`, `cre_amount_words`).
+- Fichiers : `views/ventes/creances.py`, `utils_doclang.py`.
+  Tests `test_creances.py` : 29/29 verts.
+
 ## 2026-11-14 — Relevés créanciers Excel multi-clients (une feuille par client)
 
 - Nouvelle modale « Relevés Excel » dans la page Créances : choix de la

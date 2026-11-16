@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { getApiErrorDetail } from '../utils/errorHandling';
 import type { Commande, CommandeProduit, User, PaginatedResponse } from '../types';
-import commandeService, { type SudoCredentials, type TransformationDisponible } from '../services/commandeService';
+import commandeService, { type SudoCredentials, type AnnulerReceptionPayload, type TransformationDisponible } from '../services/commandeService';
 import { logger } from '../utils/logger';
 import { buildReceptionPrintHtml, writePrintDocument, type ReceptionGroupBy } from '../utils/print/printHelpers';
 import { useLicence } from '../context/LicenceContext';
@@ -264,11 +264,11 @@ export function useCommandeActions({
         }
     };
 
-    const handleAnnulerReception = async (commande: Commande, sudoCredentials?: SudoCredentials) => {
+    const handleAnnulerReception = async (commande: Commande, payload?: AnnulerReceptionPayload) => {
         if (executingAction) return;
         setExecutingAction(true);
         try {
-            await commandeService.annulerReception(commande.id, sudoCredentials);
+            await commandeService.annulerReception(commande.id, payload);
             gooeyToast.success(t('orders:messages.cancel_reception_success'));
             fetchCommandes();
             const updated = await commandeService.getById(commande.id);

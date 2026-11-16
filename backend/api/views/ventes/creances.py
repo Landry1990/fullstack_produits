@@ -735,15 +735,17 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
 
         from ...utils_doclang import T, format_doc_date, get_document_language
         lang = get_document_language()
-        now_str = format_doc_date(timezone.localtime(timezone.now()), lang, with_time=True)
+        now_local = timezone.localtime(timezone.now())
+        now_str = format_doc_date(now_local, lang, with_time=True)
+        today_stamp = now_local.strftime('%Y%m%d')
 
-        period_label = ''
+        period_str = ''
         if date_debut and date_fin:
-            period_label = T(lang, 'cre_period_between', d=date_debut, f=date_fin)
+            period_str = T(lang, 'cre_period_between_v', d=date_debut, f=date_fin)
         elif date_debut:
-            period_label = T(lang, 'cre_period_from', d=date_debut)
+            period_str = T(lang, 'cre_period_from_v', d=date_debut)
         elif date_fin:
-            period_label = T(lang, 'cre_period_until', f=date_fin)
+            period_str = T(lang, 'cre_period_until_v', f=date_fin)
 
         thin = Side(style='thin', color='BFBFBF')
         thin_border = Border(left=thin, right=thin, top=thin, bottom=thin)
@@ -776,34 +778,66 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             used_titles.add(title.lower())
             return title
 
-        def write_releve_sheet(ws, client, factures):
+        from ...pdf_utils import number_to_french
+
+        def write_releve_sheet(ws, client, factures, releve_num):
             for i, (_, width) in enumerate(columns, start=1):
                 ws.column_dimensions[get_column_letter(i)].width = width
 
-            ws.append([pharma_name])
-            ws.append([pharma_address])
+            def right_line(row, text, *, bold=False, size=10, italic=False):
+                ws.merge_cells(start_row=row, start_column=4, end_row=row, end_column=nb_cols)
+                c = ws.cell(row=row, column=4, value=text)
+                c.font = Font(name='Calibri', bold=bold, italic=italic, size=size)
+                c.alignment = Alignment(horizontal='right')
+
+            # ── En-tête façon facture : pharmacie à gauche, bloc relevé à droite ──
+            r = 1
+            c = ws.cell(row=r, column=1, value=pharma_name)
+            c.font = Font(name='Calibri', bold=True, size=14)
+            right_line(r, T(lang, 'cre_releve_title').upper(), bold=True, size=13)
+            r += 1
+            if pharma_address:
+                c = ws.cell(row=r, column=1, value=pharma_address)
+                c.font = Font(name='Calibri', size=10)
+            right_line(r, T(lang, 'cre_releve_num', v=releve_num), bold=True)
+            r += 1
             if pharma_phone:
-                ws.append([T(lang, 'doc_tel', v=pharma_phone)])
-            ws.append([T(lang, 'doc_edited', d=now_str)])
-            ws.append([])
+                c = ws.cell(row=r, column=1, value=T(lang, 'doc_tel', v=pharma_phone))
+                c.font = Font(name='Calibri', size=10)
+            right_line(r, T(lang, 'doc_edited', d=now_str))
+            r += 1
+            if period_str:
+                right_line(r, T(lang, 'cre_lbl_period', v=period_str))
+                r += 1
+            r += 1  # ligne vide
 
-            # Bloc client
-            client_lines = [client.name if client else '']
-            if client and client.address:
-                client_lines.append(client.address)
-            if client and client.phone:
-                client_lines.append(T(lang, 'doc_tel', v=client.phone))
-            for line in client_lines:
-                c = ws.cell(row=ws.max_row + 1, column=1, value=line)
-                c.font = Font(name='Calibri', bold=(line == client_lines[0]), size=11)
+            # ── Bloc client encadré (comme « facturé à ») ──
+            box_start = r
+            c = ws.cell(row=r, column=1, value=T(lang, 'cre_client_lbl'))
+            c.font = Font(name='Calibri', bold=True, size=8, color='808080')
+            r += 1
+            client_lines = [(client.name if client else '', True)]
+            if client:
+                for text in (
+                    client.address,
+                    T(lang, 'doc_tel', v=client.phone) if client.phone else None,
+                    client.email,
+                    f"NIU : {client.niu}" if client.niu else None,
+                    f"RC : {client.registre_commerce}" if client.registre_commerce else None,
+                ):
+                    if text:
+                        client_lines.append((text, False))
+            for text, is_name in client_lines:
+                c = ws.cell(row=r, column=1, value=text)
+                c.font = Font(name='Calibri', bold=is_name, size=11 if is_name else 10)
+                r += 1
+            for br in range(box_start, r):
+                ws.merge_cells(start_row=br, start_column=1, end_row=br, end_column=3)
+                for bc in range(1, 4):
+                    ws.cell(row=br, column=bc).border = thin_border
+            r += 1  # ligne vide
 
-            ws.append([])
-            title = T(lang, 'cre_releve_title') + period_label
-            c = ws.cell(row=ws.max_row + 1, column=1, value=title)
-            c.font = Font(name='Calibri', bold=True, size=12)
-            ws.append([])
-
-            header_row = ws.max_row + 1
+            header_row = r
             for col_idx, (col_name, _) in enumerate(columns, start=1):
                 cell = ws.cell(row=header_row, column=col_idx, value=col_name)
                 cell.font = Font(name='Calibri', bold=True, size=10)
@@ -855,6 +889,16 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
                 c.alignment = Alignment(horizontal='right')
                 c.border = thin_border
 
+            # Montant en lettres (reste à payer), comme sur une facture
+            row += 2
+            ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=nb_cols)
+            c = ws.cell(row=row, column=1, value=T(lang, 'cre_amount_words'))
+            c.font = Font(name='Calibri', italic=True, size=10)
+            row += 1
+            ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=nb_cols)
+            c = ws.cell(row=row, column=1, value=number_to_french(int(total_reste)))
+            c.font = Font(name='Calibri', bold=True, size=11)
+
         first = True
         for cid in client_ids:
             factures = factures_par_client.get(cid)
@@ -866,7 +910,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             else:
                 ws = wb.create_sheet()
             ws.title = sheet_title_for(client.name if client else '', cid)
-            write_releve_sheet(ws, client, factures)
+            write_releve_sheet(ws, client, factures, releve_num=f"REL-{cid}-{today_stamp}")
 
         if first:
             # Aucun client n'avait de créance sur la période.

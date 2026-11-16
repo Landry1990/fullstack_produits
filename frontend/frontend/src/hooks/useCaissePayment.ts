@@ -162,16 +162,25 @@ export const useCaissePayment = ({
         factureValidee = data
       }
 
-      // 2. Calculer le montant à encaisser
-      const montantAEncaisser = factureValidee.reste_a_payer !== undefined && factureValidee.reste_a_payer !== null
+      // 2. Calculer le montant à encaisser — arrondi par excès (totaux
+      // décimaux, ex. majoration pro) : le backend cappe au reste exact,
+      // et le rendu monnaie reste cohérent avec le montant affiché.
+      // ATTENTION : reste_a_payer = total_ttc - encaissé, il INCLUT la part
+      // assurance (en_compte) des factures à tiers payant. En caisse on
+      // n'encaisse que la part patient : reste_total - part_assurance.
+      const totalTtc = Number(factureValidee.total_ttc)
+      const partClient = factureValidee.part_client !== null && factureValidee.part_client !== undefined
+        ? Number(factureValidee.part_client)
+        : null
+      const hasTiersPayant = partClient !== null && partClient >= 0 && partClient < totalTtc
+      const resteTotal = factureValidee.reste_a_payer !== undefined && factureValidee.reste_a_payer !== null
         ? Number(factureValidee.reste_a_payer)
-        : (factureValidee.part_client !== null && Number(factureValidee.part_client) >= 0
-            ? Number(factureValidee.part_client)
-            : Number(factureValidee.total_ttc))
+        : totalTtc
+      const partAssurance = hasTiersPayant ? totalTtc - (partClient as number) : 0
+      const montantAEncaisser = Math.ceil(Math.max(0, resteTotal - partAssurance))
 
       // 3. Enregistrer atomiquement coupon, paiements mixtes et informations ticket
       const couponUtilise = couponsParFacture[factureValidee.id]
-      const hasTiersPayant = factureValidee.part_client !== null && Number(factureValidee.part_client) >= 0
       const items = buildPaymentPayloads(
         factureValidee.id,
         paiementsValides,
@@ -184,7 +193,16 @@ export const useCaissePayment = ({
         coupon_numero: couponUtilise?.numero,
         ticket: {
           montant_verse: montantTotal.toString(),
-          montant_rendu: (montantTotal - montantAEncaisser).toString(),
+          // Le coupon couvre une partie du reste à payer : il réduit le dû
+          // cash (cf. montantDu du PaymentModal) mais n'est jamais rendu en
+          // monnaie — on le cappe au dû comme dans buildPaymentPayloads,
+          // sinon un coupon > dû gonflerait le rendu espèces.
+          montant_rendu: Math.max(
+            0,
+            montantTotal
+              + Math.min(Number(couponUtilise?.montant ?? 0), montantAEncaisser)
+              - montantAEncaisser
+          ).toString(),
         },
       }, { headers: { 'Idempotency-Key': idempotencyKey } })
 

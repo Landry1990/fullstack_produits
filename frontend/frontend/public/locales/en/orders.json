@@ -278,7 +278,11 @@
             "hide": "Hide summary",
             "show": "Show summary"
         },
-        "correct_lot_expiry": "Correct lot / expiry date"
+        "correct_lot_expiry": "Correct lot / expiry date",
+        "line_actions": "Line actions",
+        "edit_received_qty": "Correct received quantity",
+        "delete_received_line": "Cancel and delete line",
+        "received_qty": "Received quantity"
     },
     "form": {
         "back_to_list": "Back to list",
@@ -443,6 +447,12 @@
         "cancel_reception_confirm_title": "Cancel reception?",
         "cancel_reception_confirm_message": "Cancelling will delete the lots created during reception and return the order to draft status. Do you want to continue?",
         "cancel_reception_confirm_button": "Cancel reception",
+        "cancel_reception_partial_message": "Only the {{count}} checked lines will be cancelled: their received stock will be removed and their lots deleted. The order will remain closed. Do you want to continue?",
+        "update_received_qty_title": "Correct received quantity?",
+        "update_received_qty_message": "The received quantity of \"{{name}}\" will be set to {{quantity}}. Stock and lots will be reduced by the difference. Do you want to continue?",
+        "delete_received_line_title": "Delete line?",
+        "delete_received_line_message": "The reception of \"{{name}}\" will be cancelled (stock removed, lots deleted) then the line will be removed from the order. Do you want to continue?",
+        "invalid_received_qty": "Invalid received quantity",
         "exclusive_product_title": "Exclusive Product",
         "exclusive_product_message": "This product is usually exclusive to supplier: {{supplier}}. Do you still want to add it?",
         "exclusive_product_confirm": "Yes, add it",

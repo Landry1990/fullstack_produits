@@ -18,6 +18,7 @@ from rest_framework.viewsets import ViewSet
 
 from ..audit_helpers import log_audit
 from ..cache_utils import SearchCache
+from ..sudo_utils import validate_sudo_mode
 from ..models import (
     AuditLog,
     Avoir,
@@ -357,6 +358,17 @@ class CorbeilleViewSet(ViewSet):
         if not ids:
             return Response({'error': 'Aucun ID fourni'}, status=400)
 
+        # Suppression définitive irréversible : sudo + superadministrateur exigé
+        # (même garde-fou que reset_all_stock).
+        validation_user, error_res = validate_sudo_mode(request)
+        if error_res:
+            return error_res
+        if not validation_user.is_superuser:
+            return Response(
+                {'error': 'Seul un superadministrateur peut supprimer définitivement.'},
+                status=403
+            )
+
         Model = MODEL_MAP[model_key]
 
         try:
@@ -408,6 +420,16 @@ class CorbeilleViewSet(ViewSet):
     @action(detail=False, methods=['post'])
     def empty(self, request):
         """Empty the entire trash bin (permanent delete all inactive items)."""
+        # Vidage complet irréversible : sudo + superadministrateur exigé.
+        validation_user, error_res = validate_sudo_mode(request)
+        if error_res:
+            return error_res
+        if not validation_user.is_superuser:
+            return Response(
+                {'error': 'Seul un superadministrateur peut vider la corbeille.'},
+                status=403
+            )
+
         total_deleted = 0
         errors = []
 

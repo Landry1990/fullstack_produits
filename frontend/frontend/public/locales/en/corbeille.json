@@ -85,7 +85,10 @@
     "purge_confirm_blocked": "{{count}} item(s) will be refused because they are referenced by protected records.",
     "empty_confirm_title": "🗑️ Empty Recycle Bin",
     "empty_confirm_body": "Delete ALL {{count}} items in the recycle bin? This action is IRREVERSIBLE and affects products, clients, and suppliers.",
-    "empty_confirm_btn": "Delete All"
+    "empty_confirm_btn": "Delete All",
+    "sudo_purge_title": "Superadmin validation",
+    "sudo_purge_message": "Permanently deleting {{count}} item(s) is irreversible. It requires a superadministrator password.",
+    "sudo_empty_message": "Emptying the recycle bin ({{count}} item(s)) is irreversible. It requires a superadministrator password."
   },
   "footer": {
     "total": "Total",

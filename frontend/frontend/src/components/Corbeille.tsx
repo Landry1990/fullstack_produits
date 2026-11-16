@@ -5,6 +5,8 @@ import api from '../services/api';
 import { gooeyToast } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
 import { useConfirm } from '../hooks/useConfirm';
+import { useSudo } from '../hooks/useSudo';
+import SudoValidationModal from './common/SudoValidationModal';
 import { Button } from './shadcn/button';
 import { Input } from './shadcn/input';
 import { Badge } from './shadcn/badge';
@@ -91,6 +93,7 @@ function formatDateTime(dateStr: string | null, locale: string = 'fr-FR') {
 export default function Corbeille() {
   const { t, i18n } = useTranslation('corbeille');
   const confirm = useConfirm();
+  const { sudoState, requireSudo, closeSudo } = useSudo();
   const [data, setData] = useState<CorbeilleData | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -192,23 +195,35 @@ export default function Corbeille() {
     if (!ok) return;
     const grouped: Record<string, number[]> = {};
     items.forEach(({ model, id }) => { (grouped[model] ||= []).push(id); });
-    setActionLoading(true);
-    let deleted = 0;
-    try {
-      const res_all = await Promise.all(Object.entries(grouped).map(async ([model, ids]) => {
-        const res = await api.post('corbeille/purge/', { model, ids });
-        return res.data.deleted;
-      }));
-      deleted = res_all.reduce((acc, r) => acc + r, 0);
-      gooeyToast.success(t('messages.purge_success', { count: deleted }));
-      fetchData();
-    } catch (err: unknown) {
-      const detail = err && typeof err === 'object' && 'response' in err
-        ? (err as { response?: { data?: { detail?: string } } }).response?.data?.detail
-        : undefined;
-      gooeyToast.error(detail || t('messages.purge_error'));
-    }
-    finally { setActionLoading(false); }
+    // Suppression définitive : sudo superadministrateur exigé côté backend.
+    requireSudo(async (validatorId, password) => {
+      setActionLoading(true);
+      let deleted = 0;
+      try {
+        const res_all = await Promise.all(Object.entries(grouped).map(async ([model, ids]) => {
+          const res = await api.post('corbeille/purge/', {
+            model, ids,
+            validated_by_id: validatorId,
+            sudo_password: password,
+          });
+          return res.data.deleted;
+        }));
+        deleted = res_all.reduce((acc, r) => acc + r, 0);
+        gooeyToast.success(t('messages.purge_success', { count: deleted }));
+        fetchData();
+      } catch (err: unknown) {
+        const detail = err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { data?: { detail?: string; error?: string } } }).response?.data?.detail
+            ?? (err as { response?: { data?: { detail?: string; error?: string } } }).response?.data?.error
+          : undefined;
+        gooeyToast.error(detail || t('messages.purge_error'));
+        throw err;
+      }
+      finally { setActionLoading(false); }
+    }, {
+      title: t('messages.sudo_purge_title'),
+      message: t('messages.sudo_purge_message', { count: items.length }),
+    });
   };
 
   const handleEmptyTrash = async () => {
@@ -226,14 +241,26 @@ export default function Corbeille() {
       confirmText: t('messages.empty_confirm_btn'),
     });
     if (!ok) return;
-    setActionLoading(true);
-    try {
-      const res = await api.post('corbeille/empty/');
-      gooeyToast.success(res.data.message);
-      if (res.data.errors?.length) res.data.errors.forEach((e: string) => gooeyToast.error(e, { duration: 5000 }));
-      fetchData();
-    } catch { gooeyToast.error(t('messages.empty_error')); }
-    finally { setActionLoading(false); }
+    // Vidage complet : sudo superadministrateur exigé côté backend.
+    requireSudo(async (validatorId, password) => {
+      setActionLoading(true);
+      try {
+        const res = await api.post('corbeille/empty/', {
+          validated_by_id: validatorId,
+          sudo_password: password,
+        });
+        gooeyToast.success(res.data.message);
+        if (res.data.errors?.length) res.data.errors.forEach((e: string) => gooeyToast.error(e, { duration: 5000 }));
+        fetchData();
+      } catch (err) {
+        gooeyToast.error(t('messages.empty_error'));
+        throw err;
+      }
+      finally { setActionLoading(false); }
+    }, {
+      title: t('messages.sudo_purge_title'),
+      message: t('messages.sudo_empty_message', { count: data?.total || 0 }),
+    });
   };
 
   const selectedItems = useMemo(() => {
@@ -483,6 +510,17 @@ export default function Corbeille() {
           </div>
         </motion.div>
       )}
+
+      <SudoValidationModal
+        isOpen={sudoState.isOpen}
+        onClose={closeSudo}
+        onValidate={sudoState.onValidate}
+        title={sudoState.title}
+        message={sudoState.message}
+        permission={sudoState.permission}
+        forceCurrentUser={sudoState.forceCurrentUser}
+        saving={sudoState.isValidating}
+      />
     </motion.div>
   );
 }

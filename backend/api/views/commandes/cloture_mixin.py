@@ -10,7 +10,7 @@ from decimal import Decimal
 
 from django.core.cache import cache
 from django.db import transaction
-from django.db.models import F, Sum
+from django.db.models import F, Q, Sum
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import action
@@ -512,56 +512,326 @@ class CommandeClotureMixin:
                 {'detail': 'Seule une commande clôturée peut être annulée.'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
-        # Récupérer tous les produits de la commande
+
+        # Validation Sudo — symétrique à cloturer (can_close_commande) : cette
+        # action supprime des lots, retire du stock et rouvre des dettes promis.
+        _validation_user, error_res = validate_sudo_mode(request, permission_attr='can_close_commande')
+        if error_res:
+            return error_res
+
+        # ── Sélection des lignes ──
+        # Sans paramètre → annulation totale (comportement historique).
+        # item_ids        : annule toute la réception de ces lignes
+        #                   (quantity_received=0, unites_gratuites=0, lots supprimés)
+        # updates         : [{id, quantity_received}] ramène la réception à cette
+        #                   quantité (les lots sont réduits du delta, pas supprimés)
+        # delete_item_ids : annule la réception + supprime la ligne de commande
+        from ...utils.validation import parse_int
+        raw_cancel = request.data.get('item_ids')
+        raw_delete = request.data.get('delete_item_ids')
+        raw_updates = request.data.get('updates')
+        partial = any(v is not None for v in (raw_cancel, raw_delete, raw_updates))
+
+        cancel_ids, delete_ids, updates = [], [], []
+        if partial:
+            for raw, target, field in ((raw_cancel, cancel_ids, 'item_ids'), (raw_delete, delete_ids, 'delete_item_ids')):
+                if raw is not None:
+                    if not isinstance(raw, list):
+                        return Response({'detail': f'{field} doit être une liste.'}, status=status.HTTP_400_BAD_REQUEST)
+                    target.extend(parse_int(v, field=field) for v in raw)
+            if raw_updates is not None:
+                if not isinstance(raw_updates, list):
+                    return Response({'detail': 'updates doit être une liste.'}, status=status.HTTP_400_BAD_REQUEST)
+                for u in raw_updates:
+                    if not isinstance(u, dict):
+                        return Response({'detail': 'Chaque update doit être un objet {id, quantity_received}.'}, status=status.HTTP_400_BAD_REQUEST)
+                    uid = parse_int(u.get('id'), field='updates.id')
+                    uqty = parse_int(u.get('quantity_received'), field='updates.quantity_received')
+                    if uqty < 0:
+                        return Response({'detail': 'quantity_received doit être positif ou nul.'}, status=status.HTTP_400_BAD_REQUEST)
+                    updates.append((uid, uqty))
+
+            if not cancel_ids and not delete_ids and not updates:
+                return Response({'detail': 'Aucune ligne à traiter.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            if (set(cancel_ids) | set(delete_ids)) & {i for i, _ in updates}:
+                return Response({'detail': 'Une même ligne ne peut pas être annulée et modifiée en même temps.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Paiement automatique (achat au comptant / mise en place) : le
+            # paiement est global à la commande, impossible à ventiler sur une
+            # annulation partielle → annulation totale uniquement.
+            if commande.is_mise_en_place and commande.paye_a_la_cloture:
+                has_auto_paiement = PaiementFournisseur.objects.filter(
+                    commandes=commande,
+                    notes__startswith=f"Paiement automatique - achat au comptant / mise en place (Commande #{commande.id})"
+                ).exists()
+                if has_auto_paiement:
+                    return Response(
+                        {'detail': "Cette commande a un paiement automatique : l'annulation partielle est impossible. Annulez toute la réception."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
         items = commande.produits.select_related('produit').all()
-        
+        items_map = {i.id: i for i in items}
+
         if not items.exists():
             commande.status = Commande.Status.EN_PREPARATION
             commande.date_cloture = None
             commande.save(update_fields=['status', 'date_cloture'])
             return Response({'status': 'Commande vide, statut repassé en préparation.'})
-        
+
+        def _received_qty(item):
+            return item.quantity_received if item.quantity_received is not None else item.quantity
+
+        # plan[item_id] = {'mode': 'cancel'|'delete'|'update', 'qty_remove': Decimal, 'new_received': int|None}
+        plan = {}
+        if partial:
+            target_set = set(cancel_ids) | set(delete_ids) | {i for i, _ in updates}
+            if target_set - set(items_map):
+                return Response({'detail': "Certaines lignes n'appartiennent pas à cette commande."}, status=status.HTTP_400_BAD_REQUEST)
+            for iid in cancel_ids:
+                it = items_map[iid]
+                plan[iid] = {'mode': 'cancel', 'qty_remove': Decimal(_received_qty(it) + it.unites_gratuites), 'new_received': None}
+            for iid in delete_ids:
+                it = items_map[iid]
+                plan[iid] = {'mode': 'delete', 'qty_remove': Decimal(_received_qty(it) + it.unites_gratuites), 'new_received': None}
+            for iid, uqty in updates:
+                it = items_map[iid]
+                old = _received_qty(it)
+                if uqty > old:
+                    return Response(
+                        {'detail': f"Ligne #{iid} : impossible d'augmenter la quantité reçue ({old} → {uqty})."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                if uqty < old:
+                    plan[iid] = {'mode': 'update', 'qty_remove': Decimal(old - uqty), 'new_received': uqty}
+            if not plan:
+                return Response({'detail': 'Aucune modification à appliquer.'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            # Même repli qu'à la clôture : quantity_received saisi sinon quantity,
+            # pour retirer exactement ce qui avait été réceptionné.
+            for item in items:
+                qty = Decimal(_received_qty(item) + item.unites_gratuites)
+                plan[item.id] = {'mode': 'cancel', 'qty_remove': qty, 'new_received': None}
+
         # Verrouiller les produits pour éviter les modifications concurrentes
         # TRÈS IMPORTANT: order_by('id') pour éviter les deadlocks en DB !
-        product_ids = [item.produit_id for item in items]
+        target_items = [items_map[iid] for iid in plan]
+        product_ids = [it.produit_id for it in target_items if it.produit_id]
         locked_products = list(Produit.objects.select_for_update().filter(id__in=product_ids).order_by('id'))
         product_map = {p.id: p for p in locked_products}
-        
+
+        # Phase 1: Accumuler les quantités à retirer par produit
         produits_dict = {}
-        
-        # Phase 1: Calculer les retraits de stock
-        # Même repli qu'à la clôture : quantity_received saisi sinon quantity,
-        # pour retirer exactement ce qui avait été réceptionné.
-        for item in items:
-            quantity_paid = item.quantity_received if item.quantity_received is not None else item.quantity
-            quantity_free = item.unites_gratuites
-            total_qty = quantity_paid + quantity_free
-            
+        for iid, op in plan.items():
+            item = items_map[iid]
             produit = product_map.get(item.produit_id)
             if not produit:
                 continue
-            
-            # Accumuler les quantités à retirer par produit
             if produit.id not in produits_dict:
-                produits_dict[produit.id] = {
-                    'produit': produit,
-                    'qty_to_remove': Decimal(total_qty),
-                    'items': [item]
-                }
+                produits_dict[produit.id] = {'produit': produit, 'qty_to_remove': Decimal(0), 'items': [item]}
             else:
-                produits_dict[produit.id]['qty_to_remove'] += Decimal(total_qty)
                 produits_dict[produit.id]['items'].append(item)
-        
-        # Phase 2: Vérifier l'absence de ventes sur ces lots avant suppression
-        lots_to_delete = StockLot.objects.filter(commande_produit__commande=commande)
+            produits_dict[produit.id]['qty_to_remove'] += op['qty_remove']
 
-        # Rouvrir d'abord les obligations que cette réception avait couvertes.
-        # Elles ne sont pas des ventes : l'annulation doit remettre la dette en
-        # attente au lieu de bloquer la suppression des lots.
+        # Phase 2: Obligations puis ventes
+        # Lignes dont les lots sont supprimés (cancel/delete) — les 'update'
+        # ne font que réduire les lots, leurs résolutions de dettes restent valides.
+        lot_scope_ids = [iid for iid, op in plan.items() if op['mode'] in ('cancel', 'delete')]
+        # None = toute la commande (annulation totale, comportement historique)
+        obligation_scope = None if not partial else lot_scope_ids
+
+        # Rouvrir d'abord les obligations que la réception avait couvertes.
+        # Elles ne sont pas des ventes : l'annulation remet la dette en attente.
+        self._reopen_obligation_allocations(commande, obligation_scope)
+        self._reopen_orphan_resolutions(commande, obligation_scope)
+
+        # Les réintégrations de dettes non appliquées ont pu modifier le compteur
+        # via F() sur une autre instance Produit. On resynchronise les objets
+        # verrouillés avant le retrait de la réception elle-même.
+        for produit in product_map.values():
+            produit.refresh_from_db(fields=['stock', 'stock_reserve'])
+
+        # Vérifier si un des lots supprimés est déjà utilisé dans une vente (via allocation)
+        lots_to_delete = StockLot.objects.filter(commande_produit_id__in=lot_scope_ids) if lot_scope_ids else StockLot.objects.none()
+        if FactureProduitAllocation.objects.filter(stock_lot__in=lots_to_delete).exists():
+            sold_names = sorted({
+                (it.produit_nom or (it.produit.name if it.produit else '') or f"#{it.id}")
+                for it in target_items if it.id in lot_scope_ids
+            })
+            business_logger.warning(f"[COMMANDE] Annulation refusee #{commande.id} - du stock a deja ete vendu ({', '.join(sold_names)})")
+            return Response(
+                {'detail': "Impossible d'annuler la réception : une partie du stock sélectionné a déjà été vendue (" + ', '.join(sold_names) + ').'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        deleted_lots_count = lots_to_delete.count()
+        lots_to_delete.delete()
+
+        # Réduction des quantités reçues (mode 'update') : on déduit le delta
+        # des lots de la ligne, du plus récent au plus ancien. Un lot tombé à 0
+        # est conservé (historique), il n'est jamais supprimé ici.
+        for iid, op in plan.items():
+            if op['mode'] != 'update':
+                continue
+            item = items_map[iid]
+            produit = product_map.get(item.produit_id)
+            remaining = op['qty_remove']
+            if produit and produit.use_lot_management:
+                item_lots = list(
+                    StockLot.objects.filter(commande_produit_id=iid)
+                    .order_by('-id').select_for_update()
+                )
+                available = sum(l.quantity_remaining for l in item_lots)
+                if remaining > available:
+                    return Response(
+                        {'detail': f"Ligne #{iid} : le stock reçu a déjà été consommé ({available} unité(s) retirable(s) sur {remaining} demandée(s))."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                for lot in item_lots:
+                    if remaining <= 0:
+                        break
+                    taken = min(lot.quantity_remaining, remaining)
+                    lot.quantity_remaining -= taken
+                    lot.save(update_fields=['quantity_remaining'])
+                    remaining -= taken
+
+        # Phase 3: Mettre à jour les stocks (recalcul depuis les lots pour les produits en gestion par lots)
+        mouvements_to_create = []
+        for data in produits_dict.values():
+            produit = data['produit']
+            qty_to_remove = data['qty_to_remove']
+            if qty_to_remove <= 0:
+                continue
+
+            if produit.use_lot_management:
+                produit.calculate_stock_from_lots()
+            else:
+                old_stock = Decimal(produit.stock)
+                # Les stocks négatifs peuvent être légitimes (promis / vente
+                # forcée) : l'annulation retire simplement la quantité reçue.
+                produit.stock = old_stock - qty_to_remove
+                produit.save(update_fields=['stock'])
+
+            # Créer un MouvementStock pour traçabilité
+            mouvements_to_create.append(MouvementStock(
+                produit=produit,
+                type_mouvement=MouvementStock.TypeMouvement.AJUSTEMENT,
+                quantite=-int(qty_to_remove),  # Négatif car on retire
+                stock_apres=int(produit.total_stock),
+                user=request.user,
+                commande=commande,
+                description=f"Annulation réception commande #{commande.id}{' (' + commande.numero_facture + ')' if commande.numero_facture else ''}"
+            ))
+
+        # Phase 4: Créer les mouvements en bulk
+        if mouvements_to_create:
+            MouvementStock.objects.bulk_create(mouvements_to_create, batch_size=100)
+
+        # Phase 5: Appliquer les mutations de lignes
+        nb_cancelled = nb_updated = nb_deleted = 0
+        for iid, op in plan.items():
+            item = items_map[iid]
+            if op['mode'] == 'delete':
+                item.delete()
+                nb_deleted += 1
+            elif op['mode'] == 'cancel':
+                item.quantity_received = 0
+                item.unites_gratuites = 0
+                item.save(update_fields=['quantity_received', 'unites_gratuites'])
+                nb_cancelled += 1
+            else:
+                item.quantity_received = op['new_received']
+                item.save(update_fields=['quantity_received'])
+                nb_updated += 1
+
+        # Phase 6: Statut de la commande
+        if not partial:
+            commande.status = Commande.Status.EN_PREPARATION
+            commande.date_cloture = None
+            commande.save(update_fields=['status', 'date_cloture'])
+            status_changed = True
+        else:
+            # Partiel : la commande reste clôturée tant qu'une ligne garde du
+            # stock reçu ; si tout a été annulé → retour naturel en préparation.
+            still_received = commande.produits.filter(
+                Q(quantity_received__isnull=True)
+                | Q(quantity_received__gt=0)
+                | Q(unites_gratuites__gt=0)
+            ).exists()
+            status_changed = not still_received
+            if status_changed:
+                commande.status = Commande.Status.EN_PREPARATION
+                commande.date_cloture = None
+                commande.save(update_fields=['status', 'date_cloture'])
+
+        # Phase 7: Supprimer le paiement automatique créé à la clôture si la
+        # commande repasse en préparation (annulation totale). On identifie le
+        # paiement par sa note, ce qui évite de supprimer un paiement manuel.
+        if status_changed and commande.is_mise_en_place and commande.paye_a_la_cloture:
+            auto_paiements = PaiementFournisseur.objects.filter(
+                commandes=commande,
+                notes__startswith=f"Paiement automatique - achat au comptant / mise en place (Commande #{commande.id})"
+            )
+            auto_paiements.delete()
+
+        # Log audit
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.ORDER_CANCEL,
+            model_name='Commande',
+            object_id=commande.id,
+            description=(
+                f"Annulation réception commande #{commande.id}: "
+                f"{nb_cancelled} ligne(s) annulée(s), {nb_updated} modifiée(s), "
+                f"{nb_deleted} supprimée(s), {deleted_lots_count} lots supprimés"
+            ),
+            details={
+                 'commande_id': commande.id,
+                 'partielle': partial,
+                 'lignes_annulees': nb_cancelled,
+                 'lignes_modifiees': nb_updated,
+                 'lignes_supprimees': nb_deleted,
+                 'produits_affectes': len(produits_dict),
+                 'lots_supprimes': deleted_lots_count
+            },
+            request=request
+        )
+
+        business_logger.info(
+            f"[COMMANDE] Annulation reception OK #{commande.id} | partielle={partial} | "
+            f"lignes={nb_cancelled}/{nb_updated}/{nb_deleted} | "
+            f"produits={len(produits_dict)} | lots_supprimes={deleted_lots_count} | user={request.user.username}"
+        )
+        notify_stock_changed(produits_dict.keys())
+        self._invalidate_cache()
+        return Response({
+            'status': 'Réception annulée avec succès.' if not partial else 'Annulation appliquée avec succès.',
+            'details': {
+                'lignes_annulees': nb_cancelled,
+                'lignes_modifiees': nb_updated,
+                'lignes_supprimees': nb_deleted,
+                'produits_affectes': len(produits_dict),
+                'lots_supprimes': deleted_lots_count,
+                'nouveau_statut': 'En préparation' if status_changed else 'Clôturée'
+            }
+        })
+
+    def _reopen_obligation_allocations(self, commande, item_ids=None):
+        """Rouvre les dettes promis (StockObligation) que la réception avait
+        couvertes via des FactureProduitAllocation liées à cette commande.
+
+        Ces allocations ne sont pas des ventes : l'annulation remet la dette
+        en attente au lieu de bloquer la suppression des lots.
+
+        item_ids=None → toute la commande (annulation totale) ; sinon limite
+        aux allocations dont le lot appartient à ces lignes de commande.
+        """
+        qs = FactureProduitAllocation.objects.filter(resolved_commande=commande)
+        if item_ids is not None:
+            qs = qs.filter(stock_lot__commande_produit_id__in=item_ids)
         obligation_allocations = list(
-            FactureProduitAllocation.objects.filter(resolved_commande=commande)
-            .select_related(
+            qs.select_related(
                 'stock_obligation', 'stock_obligation__promis',
                 'stock_obligation__produit', 'stock_lot', 'stock_lot__commande_produit'
             )
@@ -615,13 +885,19 @@ class CommandeClotureMixin:
                     Produit.objects.filter(pk=produit.pk).update(stock=F('stock') + alloc.quantity)
             alloc.delete()
 
-        # Les promis manuels/historiques n'ont pas toujours de ligne de facture.
-        # Leur résolution est donc tracée séparément et doit aussi être rouverte.
+    def _reopen_orphan_resolutions(self, commande, item_ids=None):
+        """Rouvre les résolutions de promis manuels/historiques (sans ligne de
+        facture) tracées dans StockObligationResolution.
+
+        item_ids=None → toute la commande ; sinon limite aux résolutions dont
+        le lot appartient à ces lignes de commande.
+        """
+        resolutions_qs = StockObligationResolution.objects.filter(commande=commande)
+        if item_ids is not None:
+            resolutions_qs = resolutions_qs.filter(stock_lot__commande_produit_id__in=item_ids)
         orphan_resolutions = list(
-            StockObligationResolution.objects.filter(
-                commande=commande,
-                obligation__facture_produit__isnull=True,
-            ).select_related(
+            resolutions_qs.filter(obligation__facture_produit__isnull=True)
+            .select_related(
                 'obligation', 'obligation__promis', 'obligation__produit',
                 'stock_lot', 'stock_lot__commande_produit'
             )
@@ -670,101 +946,17 @@ class CommandeClotureMixin:
                 else:
                     Produit.objects.filter(pk=produit.pk).update(stock=F('stock') + resolution.quantity)
 
-        StockObligationResolution.objects.filter(commande=commande).delete()
-
-        # Les réintégrations de dettes non appliquées ont pu modifier le compteur
-        # via F() sur une autre instance Produit. On resynchronise les objets
-        # verrouillés avant le retrait de la réception elle-même.
-        for produit in product_map.values():
-            produit.refresh_from_db(fields=['stock', 'stock_reserve'])
-
-        # Vérifier si un de ces lots est déjà utilisé dans une vente (via allocation)
-        # On évite le ProtectedError brutal et on renvoie un message métier
-        if FactureProduitAllocation.objects.filter(stock_lot__in=lots_to_delete).exists():
-            business_logger.warning(f"[COMMANDE] Annulation refusee #{commande.id} - du stock a deja ete vendu")
-            return Response(
-                {'detail': 'Impossible d\'annuler la réception : une partie de cette commande a déjà été vendue.'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-            
-        deleted_lots_count = lots_to_delete.count()
-        lots_to_delete.delete()
-        
-        # Phase 3: Mettre à jour les stocks (recalcul depuis les lots pour les produits en gestion par lots)
-        mouvements_to_create = []
-        for data in produits_dict.values():
-            produit = data['produit']
-            qty_to_remove = data['qty_to_remove']
-            
-            if produit.use_lot_management:
-                produit.calculate_stock_from_lots()
-            else:
-                old_stock = Decimal(produit.stock)
-                # Les stocks négatifs peuvent être légitimes (promis / vente
-                # forcée) : l'annulation retire simplement la quantité reçue.
-                produit.stock = old_stock - qty_to_remove
-                produit.save(update_fields=['stock'])
-            
-            # Créer un MouvementStock pour traçabilité
-            mouvements_to_create.append(MouvementStock(
-                produit=produit,
-                type_mouvement=MouvementStock.TypeMouvement.AJUSTEMENT,
-                quantite=-int(qty_to_remove),  # Négatif car on retire
-                stock_apres=int(produit.total_stock),
-                user=request.user,
+        # Suppression : même périmètre que la réouverture. En annulation
+        # partielle, `item_ids` n'est jamais None ici (le scope ne contient que
+        # des lignes annulées/supprimées, pas les lignes 'update' qui gardent
+        # leurs lots) ; en total, on supprime toutes les résolutions.
+        if item_ids is not None:
+            StockObligationResolution.objects.filter(
                 commande=commande,
-                description=f"Annulation réception commande #{commande.id}{' (' + commande.numero_facture + ')' if commande.numero_facture else ''}"
-            ))
-        
-        # Phase 4: Créer les mouvements en bulk
-        if mouvements_to_create:
-            MouvementStock.objects.bulk_create(mouvements_to_create, batch_size=100)
-        
-        # Phase 5: Mettre à jour le statut de la commande
-        commande.status = Commande.Status.EN_PREPARATION
-        commande.date_cloture = None
-        commande.save(update_fields=['status', 'date_cloture'])
-
-        # Supprimer le paiement automatique créé à la clôture si la commande
-        # était un achat au comptant (paye_a_la_cloture). On identifie le
-        # paiement par sa note, ce qui évite de supprimer un paiement manuel.
-        if commande.is_mise_en_place and commande.paye_a_la_cloture:
-            auto_paiements = PaiementFournisseur.objects.filter(
-                commandes=commande,
-                notes__startswith=f"Paiement automatique - achat au comptant / mise en place (Commande #{commande.id})"
-            )
-            auto_paiements.delete()
-        
-        # Log audit
-        # Log audit
-        log_audit(
-            user=request.user,
-            action=AuditLog.Action.ORDER_CANCEL,
-            model_name='Commande',
-            object_id=commande.id,
-            description=f"Annulation réception commande #{commande.id}: stock retiré, {deleted_lots_count} lots supprimés",
-            details={
-                 'commande_id': commande.id,
-                 'produits_affectes': len(produits_dict),
-                 'lots_supprimes': deleted_lots_count
-            },
-            request=request
-        )
-        
-        business_logger.info(
-            f"[COMMANDE] Annulation reception OK #{commande.id} | "
-            f"produits={len(produits_dict)} | lots_supprimes={deleted_lots_count} | user={request.user.username}"
-        )
-        notify_stock_changed(produits_dict.keys())
-        self._invalidate_cache()
-        return Response({
-            'status': 'Réception annulée avec succès.',
-            'details': {
-                'produits_affectes': len(produits_dict),
-                'lots_supprimes': deleted_lots_count,
-                'nouveau_statut': 'En préparation'
-            }
-        })
+                stock_lot__commande_produit_id__in=item_ids,
+            ).delete()
+        else:
+            StockObligationResolution.objects.filter(commande=commande).delete()
 
     @action(detail=True, methods=['get'])
     def transformations_disponibles(self, request, pk=None):

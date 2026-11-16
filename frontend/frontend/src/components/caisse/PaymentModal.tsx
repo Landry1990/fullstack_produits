@@ -38,7 +38,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     && Number(facture.part_client) >= 0 
     && Number(facture.part_client) < Number(facture.total_ttc)
 
-  const montantDu = Math.round(
+  // Arrondi par excès : le montant réclamé ne doit jamais être inférieur
+  // au reste à payer exact (totaux décimaux, ex. majoration pro) sinon
+  // le rendu monnaie calculé devient négatif et l'encaissement est rejeté.
+  const montantDu = Math.ceil(
     (hasTiersPayant ? Number(facture.part_client) : Number(facture.total_ttc))
     - (coupon ? Number(coupon.montant) : 0)
   )

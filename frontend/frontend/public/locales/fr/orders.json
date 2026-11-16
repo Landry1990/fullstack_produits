@@ -278,7 +278,11 @@
             "hide": "Masquer la synthèse",
             "show": "Afficher la synthèse"
         },
-        "correct_lot_expiry": "Corriger lot / date péremption"
+        "correct_lot_expiry": "Corriger lot / date péremption",
+        "line_actions": "Actions sur la ligne",
+        "edit_received_qty": "Corriger la quantité reçue",
+        "delete_received_line": "Annuler et supprimer la ligne",
+        "received_qty": "Quantité reçue"
     },
     "form": {
         "back_to_list": "Retour à la liste",
@@ -443,6 +447,12 @@
         "cancel_reception_confirm_title": "Annuler la réception ?",
         "cancel_reception_confirm_message": "L'annulation supprimera les lots créés à la réception et repassera la commande en brouillon. Voulez-vous continuer ?",
         "cancel_reception_confirm_button": "Annuler la réception",
+        "cancel_reception_partial_message": "Seules les {{count}} lignes cochées seront annulées : leur stock reçu sera retiré et leurs lots supprimés. La commande restera clôturée. Voulez-vous continuer ?",
+        "update_received_qty_title": "Corriger la quantité reçue ?",
+        "update_received_qty_message": "La quantité reçue de « {{name}} » passera à {{quantity}}. Le stock et les lots seront réduits de la différence. Voulez-vous continuer ?",
+        "delete_received_line_title": "Supprimer la ligne ?",
+        "delete_received_line_message": "La réception de « {{name}} » sera annulée (stock retiré, lots supprimés) puis la ligne sera supprimée de la commande. Voulez-vous continuer ?",
+        "invalid_received_qty": "Quantité reçue invalide",
         "exclusive_product_title": "Produit Exclusif",
         "exclusive_product_message": "Ce produit est normalement exclusif au fournisseur : {{supplier}}. Voulez-vous quand même l'ajouter ?",
         "exclusive_product_confirm": "Oui, ajouter",

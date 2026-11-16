@@ -384,7 +384,7 @@ class ProduitStockMixin:
                         quantity_reserved=0,
                         price_cost=produit.pmp or 0,
                         selling_price=produit.selling_price or 0,
-                        lot=f"ADJ-{produit.id}-{today.strftime('%Y%m%d')}",
+                        lot=f"ADJ-{produit.id}-{timezone.now().strftime('%Y%m%d')}",
                         date_reception=timezone.now(),
                     )
             elif rayon_lot_change < 0:

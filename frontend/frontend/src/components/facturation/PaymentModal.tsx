@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import type { Facture, PosteVente } from '../../types'
 import { useTranslation } from 'react-i18next'
-import { Wallet, AlertTriangle, User, Info, X } from 'lucide-react'
+import { Wallet, AlertTriangle, User, Info, X, Check } from 'lucide-react'
 import { formatCurrency } from '../../utils/formatters'
 import PremiumModal from '../common/PremiumModal'
 import { getPaymentModeLabel } from '../../config/paymentModes'
@@ -154,37 +154,59 @@ export default function PaymentModal({
                     const displayedPostes = centralizedCashRegister
                         ? postesVenteActifs.filter((p) => !!p.caisse)
                         : postesVenteActifs
+                    // En mode centralisé la sélection vit dans selectedPosteCaisseId :
+                    // on répercute le même fallback que handleCompleteSale (1er poste
+                    // avec caisse) pour que la carte affichée = la caisse réellement
+                    // utilisée à la validation.
+                    const effectiveSelectedPosteId = centralizedCashRegister
+                        ? (displayedPostes.find((p) => p.caisse === selectedPosteCaisseId)?.id
+                            ?? displayedPostes[0]?.id ?? null)
+                        : selectedPosteVenteId
                     return (
-                    <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 mt-2 mb-4">
-                        <div className="mb-2">
+                    <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 mt-2 mb-4 text-left">
+                        <div className="mb-3">
                             <span className="uppercase font-bold text-emerald-600 flex items-center gap-1 text-xs">
                                 <Wallet className="size-3" />
                                 {t('facturation:payment.send_to_cash_register')}
                             </span>
+                            <p className="text-caption text-slate-500 mt-1">
+                                {t('facturation:payment.send_to_cash_register_hint')}
+                            </p>
                         </div>
-                        <div className="grid grid-cols-1 gap-2">
+                        <div className="grid grid-cols-1 gap-2" role="radiogroup" aria-label={t('facturation:payment.send_to_cash_register')}>
                             {displayedPostes.map((poste: PosteVente) => {
+                                const isSelected = effectiveSelectedPosteId === poste.id;
                                 const caissierName = poste.vendeur_name || t('facturation:payment.unknown_cashier');
 
                                 return (
                                     <button
                                         key={poste.id}
                                         type="button"
+                                        role="radio"
+                                        aria-checked={isSelected}
                                         onClick={() => setSelectedPosteVenteId?.(poste.id)}
-                                        className={`inline-flex items-center justify-start h-9 px-3 rounded-lg text-xs font-semibold transition-all duration-200 border-2 ${selectedPosteVenteId === poste.id ? 'bg-emerald-600 border-emerald-600 text-white shadow-sm scale-[1.02]' : 'bg-white border-slate-200 text-slate-700 hover:border-emerald-300'}`}
+                                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border-2 text-left transition-all duration-150 ${isSelected ? 'bg-white border-emerald-500 shadow-sm ring-2 ring-emerald-500/20' : 'bg-white/60 border-slate-200 text-slate-700 hover:border-emerald-300 hover:bg-white'}`}
                                     >
-                                        <div className="flex flex-col items-start">
-                                            <span className="font-bold text-xs uppercase">{poste.nom}</span>
-                                            <span className="text-caption opacity-70 flex items-center gap-1">
+                                        <span className={`inline-flex items-center justify-center size-5 rounded-full border-2 shrink-0 transition-colors ${isSelected ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-slate-300 text-transparent'}`}>
+                                            <Check className="size-3" strokeWidth={3} />
+                                        </span>
+                                        <span className="flex-1 min-w-0">
+                                            <span className={`block font-bold text-xs uppercase ${isSelected ? 'text-emerald-700' : 'text-slate-700'}`}>{poste.nom}</span>
+                                            <span className="text-caption text-slate-400 flex items-center gap-1">
                                                 <User className="size-2.5" />
                                                 {caissierName}
                                             </span>
-                                        </div>
+                                        </span>
+                                        {isSelected && (
+                                            <span className="inline-flex items-center px-2 h-5 rounded-full bg-emerald-100 text-emerald-700 text-caption font-bold uppercase shrink-0">
+                                                {t('facturation:payment.selected_badge')}
+                                            </span>
+                                        )}
                                     </button>
                                 );
                             })}
                         </div>
-                        {!selectedPosteVenteId && (
+                        {!effectiveSelectedPosteId && (
                             <p className="text-caption text-red-600 font-medium mt-2 italic flex items-center gap-1">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
                                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />

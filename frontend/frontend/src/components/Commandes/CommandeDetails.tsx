@@ -1,11 +1,11 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { staggerContainer, fadeInUp } from '../../lib/motion';
 import { useDocumentLock } from '../../hooks/useDocumentLock';
 import { LockBanner } from '../common/LockBanner';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Pencil, Pause, Play, Check, Printer, Trash2, Tag, RotateCcw, Package, Search, X, Loader2, ChevronDown, Eye, EyeOff } from 'lucide-react';
-import type { Commande, Fournisseur, ProduitModel } from '../../types';
+import { ArrowLeft, Pencil, Pause, Play, Check, Printer, Trash2, Tag, RotateCcw, Package, Search, X, Loader2, ChevronDown, Eye, EyeOff, MoreVertical } from 'lucide-react';
+import type { Commande, CommandeProduit, Fournisseur, ProduitModel } from '../../types';
 import type { ReceptionGroupBy } from '../../utils/print/printHelpers';
 import { formatCurrency, normalizeNumberInput } from '../../utils/formatters';
 import { formatDate } from '../../utils/dateUtils';
@@ -60,6 +60,10 @@ export interface CommandeDetailsProps {
   onImprimer: (fournisseurName: string, groupBy?: ReceptionGroupBy) => void;
 
   onAnnulerReception: () => void;
+
+  onUpdateReceptionQty?: (item: CommandeProduit, quantityReceived: number) => void;
+
+  onDeleteReceptionLigne?: (item: CommandeProduit) => void;
 
   onCreateAvoir: () => void;
 
@@ -126,6 +130,10 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
 
   onAnnulerReception,
 
+  onUpdateReceptionQty,
+
+  onDeleteReceptionLigne,
+
   onCreateAvoir,
 
   onOpenLabelsModal,
@@ -167,6 +175,31 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
   const [editLotValues, setEditLotValues] = useState<{ lot: string; date_expiration: string; produitId?: number }>({ lot: '', date_expiration: '' });
   const [savingLot, setSavingLot] = useState(false);
   const [localProduits, setLocalProduits] = useState<typeof selectedCommande.produits>(selectedCommande.produits);
+  // Resynchronise après un refetch (annulation partielle, modif de quantité…)
+  useEffect(() => {
+    setLocalProduits(selectedCommande.produits);
+  }, [selectedCommande.produits]);
+
+  // Édition de la quantité reçue d'une ligne clôturée (annulation partielle)
+  const [editingQtyId, setEditingQtyId] = useState<number | null>(null);
+  const [editQtyValue, setEditQtyValue] = useState('');
+
+  const startQtyEdit = useCallback((p: CommandeProduit) => {
+    setEditingQtyId(p.id);
+    setEditQtyValue(String(p.quantity_received ?? p.quantity ?? 0));
+  }, []);
+
+  const cancelQtyEdit = useCallback(() => setEditingQtyId(null), []);
+
+  const saveQtyEdit = useCallback((p: CommandeProduit) => {
+    const qty = parseInt(editQtyValue, 10);
+    if (isNaN(qty) || qty < 0) {
+      gooeyToast.error(t('orders:messages.invalid_received_qty'));
+      return;
+    }
+    setEditingQtyId(null);
+    onUpdateReceptionQty?.(p, qty);
+  }, [editQtyValue, onUpdateReceptionQty, t]);
 
   const startLotEdit = useCallback((p: unknown) => {
     setEditingLotId(p.id);
@@ -355,7 +388,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
             disabled={selectedCommande.status !== 'CLOT' || executingAction}
             title={selectedCommande.status !== 'CLOT' ? t('orders:details.labels_clot_only') : t('orders:details.cancel_reception')}
           >
-            {executingAction ? <Loader2 className="size-4 animate-spin text-slate-600" /> : <><RotateCcw className="size-4" /> {t('orders:details.cancel_reception')}</>}
+            {executingAction ? <Loader2 className="size-4 animate-spin text-slate-600" /> : <><RotateCcw className="size-4" /> {selectedRows.size > 0 ? `${t('orders:details.cancel_reception')} (${selectedRows.size})` : t('orders:details.cancel_reception')}</>}
           </Button>
 
           <Button
@@ -617,7 +650,27 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
                           <span className={cn("font-mono text-sm", stockNum === 0 ? 'text-red-500 font-semibold' : stockNum < 0 ? 'text-red-500' : 'text-emerald-600')}>{stock}</span>
                         </TableCell>
                         <TableCell className="px-3 py-2 text-center font-mono text-sm text-slate-400">{rotationDisplay}</TableCell>
-                        <TableCell className="px-3 py-2 text-right font-semibold text-slate-800">{p.quantity}</TableCell>
+                        <TableCell className="px-3 py-2 text-right font-semibold text-slate-800" onClick={e => e.stopPropagation()}>
+                          {editingQtyId === p.id ? (
+                            <Input
+                              type="number"
+                              min={0}
+                              className="w-20 ml-auto font-mono text-xs h-7 text-right"
+                              aria-label={t('orders:details.received_qty')}
+                              value={editQtyValue}
+                              onChange={e => setEditQtyValue(e.target.value)}
+                              onKeyDown={e => { if (e.key === 'Enter') saveQtyEdit(p); if (e.key === 'Escape') cancelQtyEdit(); }}
+                              autoFocus
+                            />
+                          ) : (
+                            <>
+                              {p.quantity_received ?? p.quantity}
+                              {selectedCommande.status === 'CLOT' && p.quantity_received != null && p.quantity_received !== p.quantity && (
+                                <span className="text-xs font-normal text-slate-400"> /{p.quantity}</span>
+                              )}
+                            </>
+                          )}
+                        </TableCell>
                         <TableCell className="px-3 py-2 text-center bg-emerald-50">
                           <span className={cn("font-semibold text-sm", (p.unites_gratuites || 0) > 0 ? 'text-emerald-600' : 'text-slate-400')}>{p.unites_gratuites || 0}</span>
                         </TableCell>
@@ -656,10 +709,40 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
                                   <X className="size-3.5" />
                                 </Button>
                               </div>
+                            ) : editingQtyId === p.id ? (
+                              <div className="flex items-center gap-1">
+                                <Button variant="ghost" size="sm" className="h-6 px-1 text-emerald-600 hover:text-emerald-800" onClick={() => saveQtyEdit(p)} disabled={executingAction} title={t('common:save')} aria-label={t('common:save')}>
+                                  <Check className="size-3.5" />
+                                </Button>
+                                <Button variant="ghost" size="sm" className="h-6 px-1 text-slate-400 hover:text-slate-600" onClick={cancelQtyEdit} disabled={executingAction} title={t('common:cancel')} aria-label={t('common:cancel')}>
+                                  <X className="size-3.5" />
+                                </Button>
+                              </div>
                             ) : (
-                              <Button variant="ghost" size="sm" className="h-6 px-1 text-slate-300 hover:text-blue-500" onClick={() => startLotEdit(p)} title={t('orders:details.correct_lot_expiry')} aria-label={t('orders:details.correct_lot_expiry')}>
-                                <Pencil className="size-3" />
-                              </Button>
+                              <div className="flex items-center justify-center gap-0.5">
+                                <Button variant="ghost" size="sm" className="h-6 px-1 text-slate-300 hover:text-blue-500" onClick={() => startLotEdit(p)} title={t('orders:details.correct_lot_expiry')} aria-label={t('orders:details.correct_lot_expiry')}>
+                                  <Pencil className="size-3" />
+                                </Button>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="sm" className="h-6 px-1 text-slate-300 hover:text-slate-600" title={t('orders:details.line_actions')} aria-label={t('orders:details.line_actions')}>
+                                      <MoreVertical className="size-3.5" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => startQtyEdit(p)} disabled={!onUpdateReceptionQty || executingAction}>
+                                      <Pencil className="size-3.5 mr-2" /> {t('orders:details.edit_received_qty')}
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() => onDeleteReceptionLigne?.(p)}
+                                      disabled={!onDeleteReceptionLigne || executingAction}
+                                      className="text-red-600 focus:text-red-600"
+                                    >
+                                      <Trash2 className="size-3.5 mr-2" /> {t('orders:details.delete_received_line')}
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
                             )}
                           </TableCell>
                         )}

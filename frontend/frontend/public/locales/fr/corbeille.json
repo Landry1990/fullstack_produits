@@ -85,7 +85,10 @@
     "purge_confirm_blocked": "{{count}} élément(s) seront refusés car référencés par des enregistrements protégés.",
     "empty_confirm_title": "🗑️ Vider la corbeille",
     "empty_confirm_body": "Supprimer TOUS les {{count}} éléments de la corbeille ? Cette action est IRRÉVERSIBLE et concerne produits, clients et fournisseurs.",
-    "empty_confirm_btn": "Tout supprimer"
+    "empty_confirm_btn": "Tout supprimer",
+    "sudo_purge_title": "Validation superadministrateur",
+    "sudo_purge_message": "La suppression définitive de {{count}} élément(s) est irréversible. Elle requiert le mot de passe d'un superadministrateur.",
+    "sudo_empty_message": "Le vidage complet de la corbeille ({{count}} élément(s)) est irréversible. Il requiert le mot de passe d'un superadministrateur."
   },
   "footer": {
     "total": "Total",

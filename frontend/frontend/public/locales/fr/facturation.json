@@ -197,6 +197,8 @@
             "processing": "Traitement..."
         },
         "send_to_cash_register": "Envoyer Vers (Poste de Caisse)",
+        "send_to_cash_register_hint": "Choisissez la caisse qui encaissera cette vente",
+        "selected_badge": "Sélectionnée",
         "unknown_cashier": "Inconnu",
         "select_active_cash_register": "Veuillez sélectionner un poste de caisse actif"
     },

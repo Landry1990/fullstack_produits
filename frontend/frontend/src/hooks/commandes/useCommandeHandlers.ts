@@ -1,7 +1,13 @@
 import { gooeyToast } from 'goey-toast';
 import type { Commande, CommandeProduit, ProduitModel } from '../../types';
+import type { AnnulerReceptionPayload } from '../../services/commandeService';
 import type { ReceptionGroupBy } from '../../utils/print/printHelpers';
 import { normalizeNumberInput } from '../../utils/formatters';
+
+interface SudoOpts {
+    validated_by_id: number;
+    sudo_password: string;
+}
 
 interface ConfirmOptions {
     title: string;
@@ -30,7 +36,7 @@ interface UseCommandeHandlersParams {
     handleCloturerCommande: (cmd: Commande, opts: { validated_by_id: number; sudo_password: string }) => Promise<void>;
     handleDeleteCommande: (cmd: Commande, opts: { validated_by_id: number; sudo_password: string }) => Promise<void>;
     handleMettreEnAttente: (cmd: Commande) => void;
-    handleAnnulerReception: (cmd: Commande, opts: { validated_by_id: number; sudo_password: string }) => Promise<void>;
+    handleAnnulerReception: (cmd: Commande, opts: SudoOpts & AnnulerReceptionPayload) => Promise<void>;
     handleImprimerReception: (cmd: Commande, fournisseurName: string, groupBy?: ReceptionGroupBy) => void;
     handleBulkDelete: (ids: number[], opts: { validated_by_id: number; sudo_password: string }) => Promise<void>;
     queryClient: { invalidateQueries: (opts: { queryKey: string[] }) => void };
@@ -179,10 +185,29 @@ export function useCommandeHandlers(params: UseCommandeHandlersParams) {
         if (selectedCommande) handleMettreEnAttente(selectedCommande);
     };
 
+    // Annulation partielle : les index de `selectedRows` pointent sur
+    // `selectedCommande.produits` (même convention que la création d'avoir).
+    const selectedItemIds = (): number[] => {
+        const produits = selectedCommande?.produits || [];
+        return Array.from(selectedRows)
+            .map(idx => produits[idx]?.id)
+            .filter((id): id is number => typeof id === 'number');
+    };
+
     const onAnnulerReception = async () => {
         if (!selectedCommande) return;
 
-        const confirmed = await confirm({
+        const itemIds = selectedItemIds();
+        const totalLines = selectedCommande.produits?.length || 0;
+        const isPartial = itemIds.length > 0 && itemIds.length < totalLines;
+
+        const confirmed = await confirm(isPartial ? {
+            title: t('orders:messages.cancel_reception_confirm_title'),
+            message: t('orders:messages.cancel_reception_partial_message', { count: itemIds.length }),
+            confirmText: t('orders:messages.cancel_reception_confirm_button'),
+            cancelText: t('common:cancel'),
+            variant: 'danger'
+        } : {
             title: t('orders:messages.cancel_reception_confirm_title'),
             message: t('orders:messages.cancel_reception_confirm_message'),
             confirmText: t('orders:messages.cancel_reception_confirm_button'),
@@ -194,7 +219,65 @@ export function useCommandeHandlers(params: UseCommandeHandlersParams) {
         requireSudo(
             (validatorId, password) => handleAnnulerReception(selectedCommande, {
                 validated_by_id: validatorId,
-                sudo_password: password
+                sudo_password: password,
+                ...(isPartial ? { item_ids: itemIds } : {}),
+            }),
+            {
+                permission: 'can_close_commande',
+                title: t('orders:messages.confirm_sudo_title'),
+                message: t('orders:messages.confirm_sudo_message')
+            }
+        );
+    };
+
+    const onUpdateReceptionQty = async (item: CommandeProduit, quantityReceived: number) => {
+        if (!selectedCommande || !item.id) return;
+
+        const confirmed = await confirm({
+            title: t('orders:messages.update_received_qty_title'),
+            message: t('orders:messages.update_received_qty_message', {
+                name: item.produit_nom || '',
+                quantity: quantityReceived,
+            }),
+            confirmText: t('common:confirm'),
+            cancelText: t('common:cancel'),
+            variant: 'warning'
+        });
+        if (!confirmed) return;
+
+        requireSudo(
+            (validatorId, password) => handleAnnulerReception(selectedCommande, {
+                validated_by_id: validatorId,
+                sudo_password: password,
+                updates: [{ id: item.id as number, quantity_received: quantityReceived }],
+            }),
+            {
+                permission: 'can_close_commande',
+                title: t('orders:messages.confirm_sudo_title'),
+                message: t('orders:messages.confirm_sudo_message')
+            }
+        );
+    };
+
+    const onDeleteReceptionLigne = async (item: CommandeProduit) => {
+        if (!selectedCommande || !item.id) return;
+
+        const confirmed = await confirm({
+            title: t('orders:messages.delete_received_line_title'),
+            message: t('orders:messages.delete_received_line_message', {
+                name: item.produit_nom || '',
+            }),
+            confirmText: t('orders:messages.cancel_reception_confirm_button'),
+            cancelText: t('common:cancel'),
+            variant: 'danger'
+        });
+        if (!confirmed) return;
+
+        requireSudo(
+            (validatorId, password) => handleAnnulerReception(selectedCommande, {
+                validated_by_id: validatorId,
+                sudo_password: password,
+                delete_item_ids: [item.id as number],
             }),
             {
                 permission: 'can_close_commande',
@@ -276,6 +359,8 @@ export function useCommandeHandlers(params: UseCommandeHandlersParams) {
         onDelete,
         onMettreEnAttente,
         onAnnulerReception,
+        onUpdateReceptionQty,
+        onDeleteReceptionLigne,
         onImprimer,
         onBulkDelete,
         handleCreateAvoirFromCommande,

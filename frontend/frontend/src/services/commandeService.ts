@@ -7,6 +7,15 @@ export interface SudoCredentials {
     sudo_password?: string;
 }
 
+export interface AnnulerReceptionPayload extends SudoCredentials {
+    /** Annule toute la réception de ces lignes (quantity_received=0, lots supprimés) */
+    item_ids?: number[];
+    /** Ramène la réception de ces lignes à la quantité indiquée (delta retiré des lots) */
+    updates?: { id: number; quantity_received: number }[];
+    /** Annule la réception ET supprime ces lignes de commande */
+    delete_item_ids?: number[];
+}
+
 export interface CommandeProduitPayload {
     id?: number | null;
     produit: number;
@@ -73,8 +82,8 @@ const commandeService = {
         return response.data;
     },
 
-    annulerReception: async (id: number, sudoData: SudoCredentials = {}): Promise<{ details?: string }> => {
-        const response = await api.post<{ details?: string }>(`commandes/${id}/annuler_reception/`, sudoData);
+    annulerReception: async (id: number, payload: AnnulerReceptionPayload = {}): Promise<{ details?: string }> => {
+        const response = await api.post<{ details?: string }>(`commandes/${id}/annuler_reception/`, payload);
         return response.data;
     },
 
