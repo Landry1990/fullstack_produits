@@ -540,7 +540,16 @@ class FactureProduitAllocation(models.Model):
 
 
 class RelevePaiement(models.Model):
-    """Regroupe plusieurs paiements de factures effectués en une seule opération (bulk)."""
+    """Regroupe plusieurs paiements de factures effectués en une seule opération (bulk).
+
+    Sert aussi à suivre les relevés créanciers émis (« transmis pour règlement ») :
+    statut EMIS → PARTIEL → SOLDE selon les encaissements recouvrement rattachés.
+    """
+    class Statut(models.TextChoices):
+        EMIS = 'EMIS', 'Émis'
+        PARTIEL = 'PARTIEL', 'Réglé partiellement'
+        SOLDE = 'SOLDE', 'Soldé'
+
     id = models.AutoField(primary_key=True)
     client = models.ForeignKey('Client', on_delete=models.PROTECT, related_name='releves')
     generated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
@@ -550,6 +559,22 @@ class RelevePaiement(models.Model):
         validators=[MinValueValidator(Decimal('0'))]
     )
     reference = models.CharField(max_length=50, unique=True, help_text="Ex: REL-20231212-001")
+    # Suivi des relevés émis : défaut SOLDE car les lignes existantes sont des
+    # regroupements de paiements déjà effectués (bulk_paiement historique).
+    statut = models.CharField(
+        max_length=10, choices=Statut.choices, default=Statut.SOLDE, db_index=True
+    )
+    montant_du = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True,
+        validators=[MinValueValidator(Decimal('0'))],
+        help_text="Total dû au moment de l'émission du relevé (null = règlement groupé historique)"
+    )
+    factures = models.ManyToManyField(
+        'Facture', blank=True, related_name='releves_emis',
+        help_text="Factures couvertes par le relevé émis (snapshot à l'émission)"
+    )
+    date_debut = models.DateField(null=True, blank=True)
+    date_fin = models.DateField(null=True, blank=True)
 
     def __str__(self):
         return f"Relevé {self.reference} - {self.client.name} ({self.total_amount})"
@@ -572,6 +597,7 @@ class Caisse(models.Model):
         ('en_compte', 'En compte'),
         ('depot', 'Dépôt/Acompte'),
         ('recouvrement', 'Recouvrement'),
+        ('retenue', 'Retenue sur salaire'),
     ]
     
     STATUTS = [

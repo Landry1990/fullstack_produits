@@ -57,13 +57,32 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             ),
             remainder=F('total_ttc') - F('paid_amount')
         )
-        
+
         if history:
             queryset = queryset.filter(remainder__lte=0, paiements__mode_paiement='en_compte')
         else:
             queryset = queryset.filter(remainder__gt=0)
 
-        queryset = queryset.distinct().select_related('client', 'ayant_droit').prefetch_related('paiements').order_by('-date')
+        # Factures déjà couvertes par un relevé émis non soldé : leur suivi se
+        # fait dans l'onglet Règlements, pas en Facturation.
+        if self.request.query_params.get('exclude_transmis', '').lower() == 'true':
+            queryset = queryset.exclude(
+                releves_emis__montant_du__isnull=False,
+                releves_emis__statut__in=[RelevePaiement.Statut.EMIS, RelevePaiement.Statut.PARTIEL],
+            )
+
+        from django.db.models import Prefetch
+        queryset = queryset.distinct().select_related('client', 'ayant_droit').prefetch_related(
+            'paiements',
+            # Relevés émis encore ouverts (pour le badge « Transmis » de la liste)
+            Prefetch(
+                'releves_emis',
+                queryset=RelevePaiement.objects.filter(
+                    montant_du__isnull=False
+                ).exclude(statut=RelevePaiement.Statut.SOLDE),
+                to_attr='open_releves'
+            )
+        ).order_by('-date')
         
         # parse_id lève ValidationError (400) : 'abc' dans le filtre ORM
         # lèverait ValueError → 500.
@@ -167,6 +186,14 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             paid_amount=Coalesce(Subquery(paid_subquery), Value(0, output_field=DecimalField())),
             remainder_val=F('total_ttc') - F('paid_amount')
         ).filter(remainder_val__gt=1)
+
+        # Factures déjà couvertes par un relevé émis non soldé : exclues de la
+        # synthèse Facturation (suivies dans l'onglet Règlements).
+        if self.request.query_params.get('exclude_transmis', '').lower() == 'true':
+            queryset = queryset.exclude(
+                releves_emis__montant_du__isnull=False,
+                releves_emis__statut__in=[RelevePaiement.Statut.EMIS, RelevePaiement.Statut.PARTIEL],
+            )
 
         # 3. Date filtering — dates invalides → 400 (une chaîne invalide passée
         # au filtre ORM lèverait ValidationError Django → 500).
@@ -501,6 +528,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             (T(lang, 'col_num_facture'), 18),
             (T(lang, 'cre_col_client_assurance'), 30),
             (T(lang, 'cre_col_beneficiaire'), 25),
+            (T(lang, 'cre_col_societe'), 20),
             (T(lang, 'col_total_ttc'), 14),
             (T(lang, 'cre_col_paye'), 14),
             (T(lang, 'cre_col_reste'), 14),
@@ -562,14 +590,15 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             montant_paye = getattr(facture, 'paid_amount', Decimal(0))
             reste = facture.total_ttc - montant_paye
             client_name = facture.client_name_override or (facture.client.name if facture.client else T(lang, 'client_passage'))
-            ayant_droit = facture.ayant_droit.nom if hasattr(facture, 'ayant_droit') and facture.ayant_droit else ''
+            ad = getattr(facture, 'ayant_droit', None)
             status_label = T(lang, 'cre_status_paid') if reste <= 0 else T(lang, 'cre_status_pending')
 
             vals = [
                 format_doc_date(facture.date, lang) if facture.date else '',
                 facture.numero_facture or str(facture.id),
                 client_name,
-                ayant_droit,
+                ad.nom if ad else '',
+                ad.societe if ad and ad.societe else '',
                 float(facture.total_ttc),
                 float(montant_paye),
                 float(reste),
@@ -581,7 +610,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
                 cell.border = thin_border
                 if isinstance(val, (int, float)):
                     cell.alignment = Alignment(horizontal='right')
-                    if col_idx in (5, 6, 7):
+                    if col_idx in (6, 7, 8):
                         cell.number_format = '#,##0'
                 else:
                     cell.alignment = Alignment(horizontal='left')
@@ -595,14 +624,14 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         # Ligne de totaux
         if count > 0:
             row += 1
-            ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=4)
+            ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=5)
             cell = ws.cell(row=row, column=1, value=T(lang, 'cre_total_line', n=count))
             cell.font = Font(name='Calibri', bold=True, size=10)
             cell.alignment = Alignment(horizontal='right')
             cell.border = thin_border
             for col_idx in range(1, nb_cols + 1):
                 ws.cell(row=row, column=col_idx).border = thin_border
-            for col_idx, val in [(5, float(total_ttc_sum)), (6, float(total_paye_sum)), (7, float(total_reste_sum))]:
+            for col_idx, val in [(6, float(total_ttc_sum)), (7, float(total_paye_sum)), (8, float(total_reste_sum))]:
                 c = ws.cell(row=row, column=col_idx, value=val)
                 c.number_format = '#,##0'
                 c.font = Font(name='Calibri', bold=True, size=10)
@@ -652,36 +681,17 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         response['Content-Disposition'] = build_safe_content_disposition(filename)
         return response
 
-    @action(detail=False, methods=['get'])
-    def releves_excel(self, request):
-        """Export Excel « relevés créanciers » : une feuille par client.
+    @staticmethod
+    def _creances_impayees(client_ids, date_debut=None, date_fin=None, exclude_transmis=False):
+        """Factures validées/payées encore dues (remainder > 0) pour les
+        clients donnés, optionnellement bornées par période.
 
-        Paramètres : client_ids=1,2,3 (obligatoire), date_debut, date_fin.
-        Chaque feuille reprend la structure du relevé client (en-tête
-        pharmacie, infos client, lignes de créances + total).
+        Sert de périmètre commun à `releves_excel` et `transmettre_releves`.
+        `exclude_transmis` retire les factures déjà couvertes par un relevé
+        émis non soldé (évite les relevés doublons à la retransmission).
         """
-        import re
-
-        import openpyxl
-        from openpyxl.styles import Alignment, Border, Font, Side
-        from openpyxl.utils import get_column_letter
-
         from django.db.models import OuterRef, Subquery
         from django.db.models.functions import Coalesce
-
-        raw_ids = request.query_params.get('client_ids', '')
-        try:
-            client_ids = [int(x) for x in raw_ids.split(',') if x.strip()]
-        except ValueError:
-            raise ValidationError({'detail': "Le paramètre client_ids doit être une liste d'identifiants séparés par des virgules."})
-        if not client_ids:
-            raise ValidationError({'detail': "Le paramètre client_ids est requis."})
-        # Garde-fou : un classeur par client, pas de rapport géant par erreur.
-        if len(client_ids) > 200:
-            raise ValidationError({'detail': "Trop de clients demandés (200 maximum)."})
-
-        date_debut = request.query_params.get('date_debut')
-        date_fin = request.query_params.get('date_fin')
 
         paid_subquery = Caisse.objects.filter(
             facture=OuterRef('pk'), statut='completee'
@@ -697,6 +707,12 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             remainder=F('total_ttc') - F('paid_amount')
         ).filter(remainder__gt=0)
 
+        if exclude_transmis:
+            queryset = queryset.exclude(
+                releves_emis__montant_du__isnull=False,
+                releves_emis__statut__in=[RelevePaiement.Statut.EMIS, RelevePaiement.Statut.PARTIEL],
+            )
+
         if date_debut:
             try:
                 start_date = timezone.make_aware(datetime.strptime(date_debut, '%Y-%m-%d'))
@@ -710,7 +726,37 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
                 raise ValidationError({'detail': "Le paramètre date_fin est invalide (format attendu : AAAA-MM-JJ)."})
             queryset = queryset.filter(date__lt=end_date)
 
-        queryset = queryset.distinct().select_related('client', 'ayant_droit').order_by('client__name', 'date')
+        return queryset.distinct().select_related('client', 'ayant_droit').order_by('client__name', 'date')
+
+    @action(detail=False, methods=['get'])
+    def releves_excel(self, request):
+        """Export Excel « relevés créanciers » : une feuille par client.
+
+        Paramètres : client_ids=1,2,3 (obligatoire), date_debut, date_fin.
+        Chaque feuille reprend la structure du relevé client (en-tête
+        pharmacie, infos client, lignes de créances + total).
+        """
+        import re
+
+        import openpyxl
+        from openpyxl.styles import Alignment, Border, Font, Side
+        from openpyxl.utils import get_column_letter
+
+        raw_ids = request.query_params.get('client_ids', '')
+        try:
+            client_ids = [int(x) for x in raw_ids.split(',') if x.strip()]
+        except ValueError:
+            raise ValidationError({'detail': "Le paramètre client_ids doit être une liste d'identifiants séparés par des virgules."})
+        if not client_ids:
+            raise ValidationError({'detail': "Le paramètre client_ids est requis."})
+        # Garde-fou : un classeur par client, pas de rapport géant par erreur.
+        if len(client_ids) > 200:
+            raise ValidationError({'detail': "Trop de clients demandés (200 maximum)."})
+
+        date_debut = request.query_params.get('date_debut')
+        date_fin = request.query_params.get('date_fin')
+
+        queryset = self._creances_impayees(client_ids, date_debut, date_fin)
 
         factures_par_client = {}
         for facture in queryset:
@@ -749,11 +795,27 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
 
         thin = Side(style='thin', color='BFBFBF')
         thin_border = Border(left=thin, right=thin, top=thin, bottom=thin)
+        medium = Side(style='medium', color='404040')
+
+        def frame_region(ws, r1, r2, c1, c2, side=medium):
+            """Dessine le périmètre d'une zone en épaisseur `side` sans
+            toucher aux bordures intérieures (façon encadré de facture)."""
+            for row in range(r1, r2 + 1):
+                for col in range(c1, c2 + 1):
+                    cell = ws.cell(row=row, column=col)
+                    b = cell.border
+                    cell.border = Border(
+                        left=side if col == c1 else b.left,
+                        right=side if col == c2 else b.right,
+                        top=side if row == r1 else b.top,
+                        bottom=side if row == r2 else b.bottom,
+                    )
 
         columns = [
             (T(lang, 'col_date'), 12),
             (T(lang, 'col_num_facture'), 18),
             (T(lang, 'cre_col_beneficiaire'), 25),
+            (T(lang, 'cre_col_societe'), 20),
             (T(lang, 'col_total_ttc'), 14),
             (T(lang, 'cre_col_paye'), 14),
             (T(lang, 'cre_col_reste'), 14),
@@ -809,6 +871,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             if period_str:
                 right_line(r, T(lang, 'cre_lbl_period', v=period_str))
                 r += 1
+            right_block_end = r - 1
             r += 1  # ligne vide
 
             # ── Bloc client encadré (comme « facturé à ») ──
@@ -831,6 +894,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
                 c = ws.cell(row=r, column=1, value=text)
                 c.font = Font(name='Calibri', bold=is_name, size=11 if is_name else 10)
                 r += 1
+            box_end = r - 1
             for br in range(box_start, r):
                 ws.merge_cells(start_row=br, start_column=1, end_row=br, end_column=3)
                 for bc in range(1, 4):
@@ -852,11 +916,12 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             for facture in factures:
                 montant_paye = facture.paid_amount
                 reste = facture.total_ttc - montant_paye
-                ayant_droit = facture.ayant_droit.nom if getattr(facture, 'ayant_droit', None) else ''
+                ad = getattr(facture, 'ayant_droit', None)
                 vals = [
                     format_doc_date(facture.date, lang) if facture.date else '',
                     facture.numero_facture or str(facture.id),
-                    ayant_droit,
+                    ad.nom if ad else '',
+                    ad.societe if ad and ad.societe else '',
                     float(facture.total_ttc),
                     float(montant_paye),
                     float(reste),
@@ -876,13 +941,14 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
                 row += 1
 
             row += 1
+            total_row = row
             ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=3)
             cell = ws.cell(row=row, column=1, value=T(lang, 'cre_total_line', n=len(factures)))
             cell.font = Font(name='Calibri', bold=True, size=10)
             cell.alignment = Alignment(horizontal='right')
             for col_idx in range(1, nb_cols + 1):
                 ws.cell(row=row, column=col_idx).border = thin_border
-            for col_idx, val in [(4, float(total_ttc)), (5, float(total_paye)), (6, float(total_reste))]:
+            for col_idx, val in [(5, float(total_ttc)), (6, float(total_paye)), (7, float(total_reste))]:
                 c = ws.cell(row=row, column=col_idx, value=val)
                 c.number_format = '#,##0'
                 c.font = Font(name='Calibri', bold=True, size=10)
@@ -891,6 +957,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
 
             # Montant en lettres (reste à payer), comme sur une facture
             row += 2
+            words_start = row
             ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=nb_cols)
             c = ws.cell(row=row, column=1, value=T(lang, 'cre_amount_words'))
             c.font = Font(name='Calibri', italic=True, size=10)
@@ -898,6 +965,14 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=nb_cols)
             c = ws.cell(row=row, column=1, value=number_to_french(int(total_reste)))
             c.font = Font(name='Calibri', bold=True, size=11)
+
+            # ── Encadrés façon facture (bordures moyennes sur les blocs,
+            # contour extérieur de tout le document) ──
+            frame_region(ws, 1, right_block_end, 4, nb_cols)          # bloc relevé (haut droit)
+            frame_region(ws, box_start, box_end, 1, 3)                # bloc client
+            frame_region(ws, header_row, total_row, 1, nb_cols)       # tableau des factures
+            frame_region(ws, words_start, row, 1, nb_cols)            # montant en lettres
+            frame_region(ws, 1, row, 1, nb_cols)                      # contour global
 
         first = True
         for cid in client_ids:
@@ -942,6 +1017,200 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         filename = f"releves_creanciers_{date_debut or 'all'}_{date_fin or 'now'}.xlsx"
         response['Content-Disposition'] = build_safe_content_disposition(filename)
         return response
+
+    @action(detail=False, methods=['post'])
+    @idempotent_action
+    @transaction.atomic
+    def transmettre_releves(self, request):
+        """Marque les créances de clients comme « transmises pour règlement ».
+
+        Crée un RelevePaiement EMIS par client (snapshot des factures dues +
+        montant dû à l'émission). Même périmètre que `releves_excel` : les
+        clients sans créance sur la période sont ignorés.
+        """
+        raw_ids = request.data.get('client_ids')
+        if not isinstance(raw_ids, list) or not raw_ids:
+            return Response({'detail': "client_ids doit être une liste non vide."}, status=status.HTTP_400_BAD_REQUEST)
+        client_ids = [parse_int(v, field='client_ids') for v in raw_ids]
+        if len(client_ids) > 200:
+            return Response({'detail': "Trop de clients demandés (200 maximum)."}, status=status.HTTP_400_BAD_REQUEST)
+
+        date_debut = request.data.get('date_debut') or None
+        date_fin = request.data.get('date_fin') or None
+
+        # Valide le format des dates (400) avant usage, comme releves_excel.
+        # exclude_transmis : une facture déjà couverte par un relevé ouvert ne
+        # doit pas être recouverte par un nouveau relevé.
+        queryset = self._creances_impayees(client_ids, date_debut, date_fin, exclude_transmis=True)
+        periode_debut = datetime.strptime(date_debut, '%Y-%m-%d').date() if date_debut else None
+        periode_fin = datetime.strptime(date_fin, '%Y-%m-%d').date() if date_fin else None
+
+        factures_par_client = {}
+        for f in queryset:
+            factures_par_client.setdefault(f.client_id, []).append(f)
+        clients = {c.id: c for c in Client.objects.filter(id__in=factures_par_client)}
+
+        today_stamp = timezone.localtime(timezone.now()).strftime('%Y%m%d')
+        created = []
+        for cid, factures in factures_par_client.items():
+            client = clients.get(cid)
+            if client is None:
+                continue
+            montant_du = sum((f.total_ttc - f.paid_amount for f in factures), Decimal('0'))
+            reference = f"REL-{cid}-{today_stamp}"
+            suffix = 2
+            while RelevePaiement.objects.filter(reference=reference).exists():
+                reference = f"REL-{cid}-{today_stamp}-{suffix}"
+                suffix += 1
+            releve = RelevePaiement.objects.create(
+                client=client,
+                generated_by=request.user if request.user.is_authenticated else None,
+                total_amount=Decimal('0.00'),
+                montant_du=montant_du,
+                statut=RelevePaiement.Statut.EMIS,
+                reference=reference,
+                date_debut=periode_debut,
+                date_fin=periode_fin,
+            )
+            releve.factures.set([f.id for f in factures])
+            created.append({
+                'id': releve.id,
+                'reference': releve.reference,
+                'client_id': cid,
+                'client': client.name,
+                'montant_du': str(montant_du),
+                'nb_factures': len(factures),
+            })
+
+        skipped = [cid for cid in client_ids if cid not in factures_par_client]
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.OTHER,
+            model_name='RelevePaiement',
+            object_id=0,
+            description=f"Relevés transmis pour règlement : {len(created)} créé(s)",
+            details={
+                'releve_ids': [r['id'] for r in created],
+                'clients_sans_creance': skipped,
+                'date_debut': date_debut,
+                'date_fin': date_fin,
+            },
+            request=request
+        )
+        return Response({'releves': created, 'clients_sans_creance': skipped}, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=['get'])
+    def releves_emis(self, request):
+        """Liste les relevés (émis pour règlement + regroupements historiques).
+
+        Le reste à payer et le statut des relevés émis sont recalculés à la
+        lecture depuis les factures du relevé : un paiement hors règlement
+        (caisse, avoir…) fait aussi baisser le reste.
+        """
+        from django.db.models import OuterRef, Subquery
+        from django.db.models.functions import Coalesce
+
+        releves = list(
+            RelevePaiement.objects
+            .select_related('client', 'generated_by')
+            .prefetch_related('factures')
+            .order_by('-created_at')
+        )
+
+        statut_filter = request.query_params.get('statut')
+        client_filter = request.query_params.get('client_id')
+        if client_filter:
+            cid = parse_id(client_filter, field='client_id')
+            releves = [r for r in releves if r.client_id == cid]
+
+        # Reste actuel de toutes les factures rattachées à des relevés émis.
+        all_fids = {f.id for r in releves for f in r.factures.all()}
+        reste_map = {}
+        if all_fids:
+            paid_subquery = Caisse.objects.filter(
+                facture=OuterRef('pk'), statut='completee'
+            ).exclude(mode_paiement='en_compte').values('facture').annotate(
+                total=Sum('montant')
+            ).values('total')[:1]
+            reste_map = {
+                f.id: f.remainder
+                for f in Facture.objects.filter(id__in=all_fids).annotate(
+                    paid_amount=Coalesce(Subquery(paid_subquery), Value(0, output_field=DecimalField())),
+                    remainder=F('total_ttc') - F('paid_amount')
+                )
+            }
+
+        # Montants encaissés via chaque relevé (paiements recouvrement rattachés).
+        paye_map = {
+            row['releve']: row['total']
+            for row in Caisse.objects.filter(
+                releve__in=releves, statut='completee'
+            ).values('releve').annotate(total=Sum('montant'))
+        }
+
+        today = timezone.localdate()
+        rows = []
+        statut_updates = []
+        for r in releves:
+            emis = r.montant_du is not None
+            if emis:
+                reste = sum((reste_map.get(f.id, Decimal('0')) for f in r.factures.all()), Decimal('0'))
+                paye = paye_map.get(r.id, Decimal('0'))
+                statut_calc = (
+                    RelevePaiement.Statut.SOLDE if reste <= 0
+                    else RelevePaiement.Statut.PARTIEL if reste < r.montant_du
+                    else RelevePaiement.Statut.EMIS
+                )
+                montant_du = r.montant_du
+                impayees = [
+                    {'id': f.id, 'numero_facture': f.numero_facture, 'reste': str(reste_map[f.id])}
+                    for f in r.factures.all()
+                    if reste_map.get(f.id, Decimal('0')) > 0
+                ]
+                # Le statut stocké sert au badge « Transmis » de la liste des
+                # créances : on le resynchronise ici (un encaissement hors
+                # relevé à la caisse ne passe pas par bulk_paiement).
+                if r.statut != statut_calc:
+                    r.statut = statut_calc
+                    statut_updates.append(r)
+                # Retard = jours depuis l'émission au-delà du délai du client.
+                delai = r.client.delai_paiement_jours or 0
+                age_releve = (today - r.created_at.date()).days
+                jours_retard = max(0, age_releve - delai) if delai > 0 and statut_calc != RelevePaiement.Statut.SOLDE else 0
+            else:
+                # Regroupement de paiement historique : tout est déjà encaissé.
+                reste = Decimal('0')
+                paye = r.total_amount
+                statut_calc = RelevePaiement.Statut.SOLDE
+                montant_du = r.total_amount
+                impayees = []
+                delai = None
+                jours_retard = 0
+
+            if statut_filter and statut_calc != statut_filter:
+                continue
+            rows.append({
+                'id': r.id,
+                'reference': r.reference,
+                'client_id': r.client_id,
+                'client': r.client.name if r.client else '',
+                'created_at': r.created_at,
+                'created_by': r.generated_by.username if r.generated_by else None,
+                'emis': emis,
+                'statut': statut_calc,
+                'montant_du': str(montant_du),
+                'montant_paye': str(paye),
+                'reste': str(reste),
+                'nb_factures': len(r.factures.all()) if emis else None,
+                'factures_impayees': impayees,
+                'date_debut': r.date_debut,
+                'date_fin': r.date_fin,
+                'delai_paiement_jours': delai,
+                'jours_retard': jours_retard,
+            })
+        if statut_updates:
+            RelevePaiement.objects.bulk_update(statut_updates, ['statut'])
+        return Response(rows)
 
     @action(detail=True, methods=['get'])
     def imprimer_recu(self, request, pk=None):
@@ -1223,7 +1492,9 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             item = {
                 'numero_facture': facture.numero_facture, 'date': facture.date,
                 'montant_total': facture.total_ttc, 'montant_paye': montant_paye,
-                'reste_a_payer': reste, 'ayant_droit': facture.ayant_droit.nom if facture.ayant_droit else None
+                'reste_a_payer': reste,
+                'ayant_droit': facture.ayant_droit.nom if facture.ayant_droit else None,
+                'societe': facture.ayant_droit.societe if facture.ayant_droit else None
             }
 
             if include_products:
@@ -1308,7 +1579,11 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         if not factures.exists():
              return Response({'detail': 'No invoices found.'}, status=status.HTTP_404_NOT_FOUND)
             
-        client_ids = factures.values_list('client', flat=True).distinct()
+        # Requête dédiée non triée : distinct() + order_by('date') injecte la
+        # date dans le SELECT → 2 factures du même client semblaient multi-clients.
+        client_ids = Facture.objects.filter(id__in=facture_ids).values_list(
+            'client_id', flat=True
+        ).distinct()
         if len(client_ids) > 1:
              return Response({'detail': 'All invoices must belong to the same client.'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1317,10 +1592,33 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         if client is None:
             # Facture.client est nullable : client.id → AttributeError → 500.
             return Response({'detail': 'Les factures sélectionnées ne sont pas rattachées à un client.'}, status=status.HTTP_400_BAD_REQUEST)
-        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
-        releve_ref = f"REL-{timestamp}-{client.id}"
-        
-        releve = RelevePaiement.objects.create(client=client, generated_by=request.user if request.user.is_authenticated else None, total_amount=Decimal('0.00'), reference=releve_ref)
+
+        # releve_id optionnel : règlement d'un relevé émis — les paiements sont
+        # rattachés à ce relevé au lieu d'en créer un nouveau.
+        releve_id = request.data.get('releve_id')
+        if releve_id is not None:
+            releve_id = parse_int(releve_id, field='releve_id')
+            try:
+                releve = RelevePaiement.objects.select_for_update().get(pk=releve_id)
+            except RelevePaiement.DoesNotExist:
+                return Response({'detail': 'Relevé introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+            if releve.client_id != client.id:
+                return Response({'detail': 'Ce relevé appartient à un autre client.'}, status=status.HTTP_400_BAD_REQUEST)
+            # Refuse les regroupements historiques : y rattacher des paiements
+            # écraserait leur total_amount (branche montant_du is None plus bas).
+            if releve.montant_du is None:
+                return Response({'detail': "Ce relevé n'est pas un relevé émis pour règlement."}, status=status.HTTP_400_BAD_REQUEST)
+            # Les factures réglées doivent appartenir au relevé : sinon leurs
+            # paiements gonfleraient total_amount hors du périmètre du statut.
+            factures_hors_releve = set(facture_ids) - set(
+                releve.factures.values_list('id', flat=True)
+            )
+            if factures_hors_releve:
+                return Response({'detail': 'Certaines factures ne font pas partie de ce relevé.'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+            releve_ref = f"REL-{timestamp}-{client.id}"
+            releve = RelevePaiement.objects.create(client=client, generated_by=request.user if request.user.is_authenticated else None, total_amount=Decimal('0.00'), reference=releve_ref)
 
         # Calculer le total des dettes
         total_dettes = Decimal('0.00')
@@ -1390,8 +1688,25 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
                 'est_soldee': reste_apres <= 0
             })
             
-        releve.total_amount = total_paid_bulk
-        releve.save()
+        # Relevé émis : cumul des encaissements + statut recalculé sur le
+        # reste réel des factures du relevé (paiements hors relevé inclus).
+        if releve.montant_du is not None:
+            releve.total_amount = (releve.total_amount or Decimal('0')) + total_paid_bulk
+            reste_releve = sum(
+                (f.total_ttc - f.paiements.filter(statut='completee').exclude(
+                    mode_paiement='en_compte'
+                ).aggregate(t=Sum('montant'))['t'] or Decimal('0'))
+                for f in releve.factures.all()
+            )
+            releve.statut = (
+                RelevePaiement.Statut.SOLDE if reste_releve <= 0
+                else RelevePaiement.Statut.PARTIEL if reste_releve < releve.montant_du
+                else RelevePaiement.Statut.EMIS
+            )
+            releve.save(update_fields=['total_amount', 'statut'])
+        else:
+            releve.total_amount = total_paid_bulk
+            releve.save()
         
         reste_a_payer_global = total_dettes - total_paid_bulk
 

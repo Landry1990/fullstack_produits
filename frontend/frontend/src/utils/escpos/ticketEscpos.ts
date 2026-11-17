@@ -164,6 +164,12 @@ export function buildTicketEscpos(
     parts.push(esc.columns(t('invoice.date'), dateStr, cols));
   }
   parts.push(esc.columns(t('invoice.customer'), clientName, cols));
+  if (isTiersPayant && facture?.ayant_droit_details?.nom) {
+    parts.push(esc.line(`${t('invoice.beneficiary')}: ${facture.ayant_droit_details.nom}`));
+  }
+  if (isTiersPayant && facture?.ayant_droit_details?.matricule) {
+    parts.push(esc.line(`${t('invoice.registration_number')}: ${facture.ayant_droit_details.matricule}`));
+  }
   if (ticket.client_solde_depot && Number(ticket.client_solde_depot) > 0) {
     parts.push(esc.columns(t('invoice.remaining_deposit'), formatM(ticket.client_solde_depot), cols));
   }

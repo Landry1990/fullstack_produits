@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Calendar, FileSpreadsheet, Loader2, Search, Users } from 'lucide-react';
+import { Calendar, Loader2, Search, Send, Users } from 'lucide-react';
 import PremiumModal from '../../common/PremiumModal';
 import { LocalizedDateInput } from '../../LocalizedDateInput';
 import { Checkbox } from '../../shadcn/checkbox';
@@ -104,29 +104,43 @@ export const RelevesExcelModal: React.FC<RelevesExcelModalProps> = ({ isOpen, on
         });
     };
 
-    const generate = async () => {
+    const downloadExcel = async () => {
+        const blob = await creanceService.exportRelevesExcel({
+            client_ids: [...selectedIds],
+            date_debut: dateDebut || undefined,
+            date_fin: dateFin || undefined,
+        });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `releves_creanciers_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        document.body.appendChild(link);
+        link.click();
+        link.parentNode?.removeChild(link);
+        setTimeout(() => window.URL.revokeObjectURL(url), 100);
+    };
+
+    // Génère l'Excel ET marque les relevés « transmis pour règlement »
+    // (suivi dans l'onglet Règlements : émis → partiel → soldé).
+    const generateAndTransmit = async () => {
         if (selectedIds.size === 0) return;
         setGenerating(true);
         const loadingToast = gooeyToast.info(t('creances:releves_excel.generating'), { duration: Infinity });
         try {
-            const blob = await creanceService.exportRelevesExcel({
+            await downloadExcel();
+            const res = await creanceService.transmettreReleves({
                 client_ids: [...selectedIds],
                 date_debut: dateDebut || undefined,
                 date_fin: dateFin || undefined,
             });
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', `releves_creanciers_${new Date().toISOString().slice(0, 10)}.xlsx`);
-            document.body.appendChild(link);
-            link.click();
-            link.parentNode?.removeChild(link);
-            setTimeout(() => window.URL.revokeObjectURL(url), 100);
-            gooeyToast.success(t('creances:releves_excel.success', { count: selectedIds.size }), { id: loadingToast });
+            gooeyToast.success(
+                t('creances:toasts.releves_transmis', { count: res.releves.length }),
+                { id: loadingToast }
+            );
             onClose();
         } catch (err) {
-            logger.error('Erreur export relevés:', err);
-            gooeyToast.error(t('creances:toasts.excel_export_error'), { id: loadingToast });
+            logger.error('Erreur génération + transmission relevés:', err);
+            gooeyToast.error(t('creances:toasts.releves_transmis_error'), { id: loadingToast });
         } finally {
             setGenerating(false);
         }
@@ -253,17 +267,22 @@ export const RelevesExcelModal: React.FC<RelevesExcelModalProps> = ({ isOpen, on
                     </div>
                 )}
 
-                <div className="pt-2 flex gap-3">
+                {/* La génération transmet toujours : chaque client reçoit un
+                    relevé « Émis » suivi dans l'onglet Règlements. */}
+                <p className="text-caption text-slate-400 ml-1 -mt-1">
+                    {t('creances:releves_excel.transmit_hint')}
+                </p>
+                <div className="pt-1 flex gap-3">
                     <button onClick={onClose} className="inline-flex items-center justify-center h-9 flex-1 rounded-lg text-xs font-bold uppercase tracking-widest text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors">
                         {t('creances:payment_modal.cancel')}
                     </button>
                     <button
-                        onClick={generate}
+                        onClick={generateAndTransmit}
                         disabled={generating || selectedIds.size === 0}
-                        className="inline-flex items-center justify-center h-9 flex-1 rounded-lg text-xs font-bold uppercase tracking-widest bg-emerald-600 text-white shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-colors gap-2 disabled:opacity-50"
+                        className="inline-flex items-center justify-center h-9 flex-1 rounded-lg text-xs font-bold uppercase tracking-widest bg-indigo-600 text-white shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-colors gap-2 disabled:opacity-50"
                     >
-                        {generating ? <Loader2 className="size-4 animate-spin" /> : <FileSpreadsheet className="size-4" />}
-                        {t('creances:releves_excel.generate', { count: selectedIds.size })}
+                        {generating ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+                        {t('creances:releves_excel.generate_transmit', { count: selectedIds.size })}
                     </button>
                 </div>
             </div>

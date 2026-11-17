@@ -1,7 +1,6 @@
 {
     "title": "Gestion des Créances",
     "subtitle": "Suivi des ventes en compte - Clients professionnels",
-    "history_toggle": "Voir Historique",
     "refresh": "Actualiser",
     "selection": "Sélection",
     "invoices_count": "{{count}} factures",
@@ -67,7 +66,9 @@
         "view_payments": "Voir les paiements",
         "add_payment": "Ajouter un paiement",
         "age": "Âge",
-        "overdue_badge": "EN RETARD"
+        "overdue_badge": "EN RETARD",
+        "transmitted": "Transmis",
+        "transmitted_hint": "Facture couverte par un relevé transmis pour règlement"
     },
     "print_statement": "Imprimer le Relevé",
     "print_statement_simple": "Relevé simple",
@@ -96,9 +97,45 @@
         "no_clients": "Aucun créancier sur cette période.",
         "select_all": "Tout sélectionner",
         "deselect_all": "Tout désélectionner",
-        "generate": "Générer ({{count}} feuilles)",
-        "generating": "Génération des relevés Excel...",
-        "success": "Relevés générés pour {{count}} client(s)."
+        "generate_transmit": "Générer + envoyer en règlement ({{count}})",
+        "transmit_hint": "Télécharge le classeur Excel ET crée un relevé « Émis » par client : à remettre au créancier, puis suivi dans l'onglet Règlements (Émis → Partiel → Soldé).",
+        "generating": "Génération des relevés Excel..."
+    },
+    "tabs": {
+        "facturation": "Facturation",
+        "reglements": "Règlements"
+    },
+    "reglements": {
+        "col_reference": "Référence",
+        "col_client": "Client",
+        "col_date": "Émis le",
+        "col_factures": "Factures",
+        "col_montant_du": "Montant dû",
+        "col_paye": "Réglé",
+        "col_reste": "Reste",
+        "col_statut": "Statut",
+        "col_actions": "Actions",
+        "statut_emis": "Émis",
+        "statut_partiel": "Partiel",
+        "statut_solde": "Soldé",
+        "legacy_badge": "Historique",
+        "regler": "Régler",
+        "relance": "Relancer le client",
+        "reprint": "Réimprimer le relevé Excel",
+        "filter_all": "Tous",
+        "filter_retard": "En retard",
+        "retard_days": "Retard {{count}} j",
+        "refresh": "Actualiser",
+        "empty": "Aucun relevé transmis pour règlement.",
+        "empty_hint": "Transmettez des relevés depuis « Relevés Excel » pour les suivre ici.",
+        "help": "Relevés remis aux créanciers (générés depuis « Relevés Excel », onglet Facturation) — réglez-les ici au fil des encaissements.",
+        "stats": {
+            "statements": "Relevés émis",
+            "to_collect": "À encaisser",
+            "collected": "Réglé",
+            "late": "En retard"
+        },
+        "payment_success": "Règlement enregistré avec succès !"
     },
     "client_label": "Client : {{name}}",
     "payment_modal": {
@@ -120,6 +157,7 @@
             "check": "📝 Chèque",
             "card": "💳 Carte",
             "transfer": "🏦 Virement",
+            "salary_deduction": "🧾 Retenue sur salaire",
             "recouvrement": "💸 Tiers Payeur"
         }
     },
@@ -183,7 +221,9 @@
         "excel_export_error": "Erreur lors de l'export Excel.",
         "invalid_date_range": "La date de début doit être antérieure à la date de fin",
         "relance_sent": "Relance envoyée à {{client}}",
-        "relance_failed": "Échec de la relance"
+        "relance_failed": "Échec de la relance",
+        "releves_transmis": "{{count}} relevé(s) généré(s) et transmis pour règlement.",
+        "releves_transmis_error": "Erreur lors de la génération/transmission des relevés."
     },
     "print_view": {
         "title": "RELEVÉ DE CRÉANCES",

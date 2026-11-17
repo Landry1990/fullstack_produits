@@ -6,7 +6,8 @@ export interface CreanceFilters {
     client_id?: string;
     date_debut?: string;
     date_fin?: string;
-    history?: boolean;
+    /** 'true' = masque les factures déjà couvertes par un relevé émis non soldé */
+    exclude_transmis?: string;
 }
 
 export interface CreanceAgingBucket {
@@ -50,6 +51,44 @@ export interface BulkPaiementPayload {
     validated_by_id: number;
     sudo_password: string;
     montant_total?: number; // Optionnel: pour paiement partiel
+    releve_id?: number; // Optionnel: règlement d'un relevé émis
+}
+
+export type ReleveStatut = 'EMIS' | 'PARTIEL' | 'SOLDE';
+
+export interface ReleveEmis {
+    id: number;
+    reference: string;
+    client_id: number;
+    client: string;
+    created_at: string;
+    created_by: string | null;
+    /** true = relevé émis pour règlement ; false = regroupement de paiement historique */
+    emis: boolean;
+    statut: ReleveStatut;
+    montant_du: string;
+    montant_paye: string;
+    reste: string;
+    nb_factures: number | null;
+    factures_impayees: Array<{ id: number; numero_facture: string; reste: string }>;
+    date_debut: string | null;
+    date_fin: string | null;
+    /** Délai de règlement du client (jours) — null pour les regroupements historiques */
+    delai_paiement_jours: number | null;
+    /** Jours de retard au-delà du délai client (0 = dans les délais ou soldé) */
+    jours_retard: number;
+}
+
+export interface TransmettreRelevesResponse {
+    releves: Array<{
+        id: number;
+        reference: string;
+        client_id: number;
+        client: string;
+        montant_du: string;
+        nb_factures: number;
+    }>;
+    clients_sans_creance: number[];
 }
 
 const creanceService = {
@@ -111,12 +150,12 @@ const creanceService = {
         return response.data;
     },
 
-    getSynthese: async (params: { date_debut?: string; date_fin?: string } = {}): Promise<unknown[]> => {
+    getSynthese: async (params: { date_debut?: string; date_fin?: string; exclude_transmis?: string } = {}): Promise<unknown[]> => {
         const response = await api.get('creances/synthese_clients/', { params });
         return Array.isArray(response.data) ? response.data : [];
     },
 
-    getAging: async (params: { client_id?: string; date_debut?: string; date_fin?: string } = {}): Promise<CreanceAging | null> => {
+    getAging: async (params: { client_id?: string; date_debut?: string; date_fin?: string; exclude_transmis?: string } = {}): Promise<CreanceAging | null> => {
         const response = await api.get('creances/aging/', { params });
         return response.data as CreanceAging;
     },
@@ -151,6 +190,18 @@ const creanceService = {
             responseType: 'blob'
         });
         return response.data;
+    },
+
+    transmettreReleves: async (payload: { client_ids: number[]; date_debut?: string; date_fin?: string }): Promise<TransmettreRelevesResponse> => {
+        const response = await api.post('creances/transmettre_releves/', payload, {
+            headers: { 'Idempotency-Key': generateUUID() },
+        });
+        return response.data;
+    },
+
+    getRelevesEmis: async (params: { statut?: ReleveStatut; client_id?: number } = {}): Promise<ReleveEmis[]> => {
+        const response = await api.get('creances/releves_emis/', { params });
+        return Array.isArray(response.data) ? response.data : [];
     }
 };
 

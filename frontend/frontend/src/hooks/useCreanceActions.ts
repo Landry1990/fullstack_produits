@@ -273,7 +273,6 @@ export const useCreanceActions = ({
         client_id?: string;
         date_debut?: string;
         date_fin?: string;
-        history?: boolean;
     }) => {
         const loadingToast = gooeyToast.info(t('creances:toasts.excel_loading'), { duration: Infinity });
         try {

@@ -44,7 +44,6 @@ export interface UseCreancesDataReturn {
         selectedClient: string;
         dateDebut: string;
         dateFin: string;
-        showHistory: boolean;
         debtorSearch: string;
         showOverdueOnly: boolean;
         sortConfig: { key: keyof Creance | 'client_name' | 'age', direction: 'asc' | 'desc' };
@@ -53,7 +52,6 @@ export interface UseCreancesDataReturn {
         setSelectedClient: (id: string) => void;
         setDateDebut: (date: string) => void;
         setDateFin: (date: string) => void;
-        setShowHistory: (show: boolean) => void;
         setDebtorSearch: (search: string) => void;
         setShowOverdueOnly: (show: boolean) => void;
         handleSort: (key: keyof Creance | 'client_name' | 'age') => void;
@@ -90,7 +88,6 @@ export const useCreancesData = (): UseCreancesDataReturn => {
     const [selectedClient, setSelectedClient] = useState<string>('');
     const [dateDebut, setDateDebut] = useState('');
     const [dateFin, setDateFin] = useState('');
-    const [showHistory, setShowHistory] = useState(false);
     const [debtorSearch, setDebtorSearch] = useState('');
     const [showOverdueOnly, setShowOverdueOnly] = useState(false);
     const [aging, setAging] = useState<CreanceAging | null>(null);
@@ -126,29 +123,31 @@ export const useCreancesData = (): UseCreancesDataReturn => {
         setLoading(true);
         setError(null);
         try {
-            // Mode: Debtor List (Synthesis) - Only when not in history mode
-            if (!selectedClient && !showHistory) {
+            // Mode: Debtor List (Synthesis) — vue par client, créances en cours
+            if (!selectedClient) {
                 const [synData, agingData] = await Promise.all([
                     creanceService.getSynthese({
                         date_debut: dateDebut || undefined,
-                        date_fin: dateFin || undefined
+                        date_fin: dateFin || undefined,
+                        exclude_transmis: 'true'
                     }),
                     creanceService.getAging({
                         date_debut: dateDebut || undefined,
-                        date_fin: dateFin || undefined
+                        date_fin: dateFin || undefined,
+                        exclude_transmis: 'true'
                     })
                 ]);
                 setSynthese(synData as SyntheseClient[]);
                 setAging(agingData);
                 setCreances([]);
             } 
-            // Mode: Invoice List (History or Specific Client)
+            // Mode: Invoice List (client sélectionné, créances en cours)
             else {
                 const results = await creanceService.getAll({
                     client_id: selectedClient || undefined,
                     date_debut: dateDebut || undefined,
                     date_fin: dateFin || undefined,
-                    history: showHistory
+                    exclude_transmis: 'true'
                 });
                 setCreances(results);
                 setSynthese([]);
@@ -164,7 +163,7 @@ export const useCreancesData = (): UseCreancesDataReturn => {
         } finally {
             setLoading(false);
         }
-    }, [selectedClient, dateDebut, dateFin, showHistory, t, fetchClients]);
+    }, [selectedClient, dateDebut, dateFin, t, fetchClients]);
 
     useEffect(() => {
         // No longer fetching 1000 clients on mount for better performance
@@ -183,7 +182,7 @@ export const useCreancesData = (): UseCreancesDataReturn => {
     };
 
     const groupedClients = useMemo(() => {
-        if (!selectedClient && !showHistory) {
+        if (!selectedClient) {
             if (!Array.isArray(synthese)) return [];
             return synthese.map(s => {
                 const clientObj = clients?.find(c => c?.id === s?.id) || {
@@ -219,8 +218,8 @@ export const useCreancesData = (): UseCreancesDataReturn => {
                 const resteVal = parseFloat(creance.reste_a_payer || '0');
                 const isPaid = resteVal <= 0;
 
-                if (!showHistory && isPaid) return;
-                if (showHistory && !isPaid) return;
+                // Facture déjà couverte par un relevé émis : gérée via l'onglet Règlements
+                if (isPaid || creance.releve_transmis) return;
 
                 if (!groupes[creance.client]) {
                     const clientObj = clients?.find(c => c?.id === creance.client) || {
@@ -265,7 +264,7 @@ export const useCreancesData = (): UseCreancesDataReturn => {
         }
 
         return Object.values(groupes).sort((a, b) => b.reste - a.reste);
-    }, [creances, clients, showHistory, synthese, selectedClient]);
+    }, [creances, clients, synthese, selectedClient]);
 
     // Recherche texte + filtre « en retard » sur la liste des débiteurs
     const visibleClients = useMemo(() => {
@@ -305,11 +304,9 @@ export const useCreancesData = (): UseCreancesDataReturn => {
         if (!selectedClient || !Array.isArray(creances)) return [];
         let result = [...creances].filter(c => c && c.client && c.client.toString() === selectedClient.toString());
 
-        if (showHistory) {
-            result = result.filter(c => parseFloat(c.reste_a_payer || '0') <= 0);
-        } else {
-            result = result.filter(c => parseFloat(c.reste_a_payer || '0') > 0);
-        }
+        result = result.filter(c => parseFloat(c.reste_a_payer || '0') > 0);
+        // Les factures déjà transmises (relevé émis) ne s'affichent plus ici
+        result = result.filter(c => !c.releve_transmis);
 
         if (sortConfig.key === 'age') {
             // Âge croissant = facture la plus récente d'abord (tri date inversé)
@@ -334,10 +331,10 @@ export const useCreancesData = (): UseCreancesDataReturn => {
         }
 
         return result;
-    }, [creances, selectedClient, sortConfig, showHistory]);
+    }, [creances, selectedClient, sortConfig]);
 
     const totals = useMemo(() => {
-        if (!selectedClient && !showHistory) {
+        if (!selectedClient) {
             if (!Array.isArray(synthese)) return { total: 0, paye: 0, reste: 0 };
             return synthese.reduce((acc, s) => {
                 acc.total += parseFloat(s?.total_facture || '0');
@@ -355,7 +352,7 @@ export const useCreancesData = (): UseCreancesDataReturn => {
             acc.reste += parseFloat(c?.reste_a_payer || '0');
             return acc;
         }, { total: 0, paye: 0, reste: 0 });
-    }, [creances, filteredCreances, selectedClient, synthese, showHistory]);
+    }, [creances, filteredCreances, selectedClient, synthese]);
 
     return {
         creances,
@@ -367,7 +364,6 @@ export const useCreancesData = (): UseCreancesDataReturn => {
             selectedClient,
             dateDebut,
             dateFin,
-            showHistory,
             debtorSearch,
             showOverdueOnly,
             sortConfig
@@ -379,10 +375,6 @@ export const useCreancesData = (): UseCreancesDataReturn => {
             },
             setDateDebut,
             setDateFin,
-            setShowHistory: (show) => {
-                setShowHistory(show);
-                setSelectedIds([]);
-            },
             setDebtorSearch,
             setShowOverdueOnly,
             handleSort

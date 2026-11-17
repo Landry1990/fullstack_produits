@@ -78,6 +78,7 @@ const ClientCredits = lazyWithRetry(() => import('./components/avoirs-client/Cli
 const RapportMensuel = lazyWithRetry(() => import('./components/RapportMensuel'));
 const Transformations = lazyWithRetry(() => import('./components/Transformations'));
 const ReapproRayon = lazyWithRetry(() => import('./components/stock/ReapproRayon'));
+const TraceurLots = lazyWithRetry(() => import('./components/stock/TraceurLots'));
 const ReapproHistory = lazyWithRetry(() => import('./components/stock/ReapproHistory'));
 const Cadencier = lazyWithRetry(() => import('./components/stock/Cadencier'));
 const JournalAudit = lazyWithRetry(() => import('./components/JournalAudit'));
@@ -191,7 +192,7 @@ export const router = createBrowserRouter([
           { path: 'statistiques-fournisseurs', ...perm('statistiques_fournisseurs', StatistiquesFournisseur) },
 
           // ── Inventaire ──
-          { path: 'stock', ...perm(['inventaire', 'inventaire_saisie', 'inventaire_journal', 'inventaire_reappro', 'inventaire_avoirs', 'inventaire_promis', 'inventaire_transformations', 'inventaire_perimes', 'inventaire_organisation', 'inventaire_analyse', 'inventaire_cadencier', 'inventaire_etats', 'inventaire_rapport_ug', 'perimes', 'avoirs', 'promis'], FeatureHub, { category: 'stock' }) },
+          { path: 'stock', ...perm(['inventaire', 'inventaire_saisie', 'inventaire_journal', 'inventaire_lots', 'inventaire_reappro', 'inventaire_avoirs', 'inventaire_promis', 'inventaire_transformations', 'inventaire_perimes', 'inventaire_organisation', 'inventaire_analyse', 'inventaire_cadencier', 'inventaire_etats', 'inventaire_rapport_ug', 'perimes', 'avoirs', 'promis'], FeatureHub, { category: 'stock' }) },
           { path: 'inventaire', ...perm(['inventaire', 'inventaire_saisie'], Inventaire) },
           { path: 'organisation', ...perm(['inventaire', 'inventaire_organisation'], Organisation) },
           { path: 'rayons', ...perm(['inventaire', 'inventaire_organisation'], Organisation, { defaultTab: 'rayons' }) },
@@ -207,6 +208,7 @@ export const router = createBrowserRouter([
           { path: 'rapport-ug', ...perm(['inventaire', 'inventaire_rapport_ug'], StockUGReport) },
           { path: 'etats-inventaire', ...perm(['inventaire', 'inventaire_etats'], EtatsInventaire) },
           { path: 'journal-ajustements', ...perm(['inventaire', 'inventaire_journal'], JournalAjustements) },
+          { path: 'lots', ...perm(['inventaire', 'inventaire_lots'], TraceurLots) },
           { path: 'transformations', ...perm(['inventaire', 'inventaire_transformations'], Transformations) },
 
           // ── Historique Achats ──

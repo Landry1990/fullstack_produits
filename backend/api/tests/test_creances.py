@@ -389,3 +389,197 @@ class CreancesTestCase(TestCase):
         api = APIClient()
         response = api.get('/api/creances/')
         self.assertIn(response.status_code, [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN])
+
+
+class RelevesEmisTestCase(TestCase):
+    """Relevés transmis pour règlement : transmettre_releves, releves_emis,
+    règlement via bulk_paiement(releve_id) total et partiel."""
+
+    def setUp(self):
+        self.api = APIClient()
+        self.factory = TestDataFactory()
+        self.user = self.factory.create_superuser(username='admin_releves')
+        self.api.force_authenticate(user=self.user)
+        self.client_a = self.factory.create_client(name='Assurance A')
+        self.client_b = self.factory.create_client(name='Client B')
+
+    def _creance(self, client=None, total=10000):
+        """Facture validée avec une vraie ligne (le signal post_save recalcule
+        total_ttc depuis les lignes — sans ligne, tout save() le remet à 0)."""
+        f = self.factory.create_facture(
+            client=client or self.client_a, status=Facture.Status.VALIDEE,
+        )
+        produit = self.factory.create_produit(selling_price=total)
+        self.factory.create_facture_produit(
+            f, produit, quantity=1, selling_price=total, discount=0, tva=0,
+        )
+        f.refresh_from_db()
+        return f
+
+    def _transmettre(self, client_ids, **extra):
+        return self.api.post(
+            '/api/creances/transmettre_releves/',
+            {'client_ids': client_ids, **extra}, format='json',
+        )
+
+    def _get_releve(self, releve_id):
+        rows = self.api.get('/api/creances/releves_emis/').data
+        return next(r for r in rows if r['id'] == releve_id)
+
+    # ------------------------------------------------------------------
+
+    def test_transmettre_cree_releve_emis(self):
+        f1 = self._creance(total=10000)
+        f2 = self._creance(total=5000)
+        response = self._transmettre([self.client_a.id])
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+        self.assertEqual(len(response.data['releves']), 1)
+
+        row = self._get_releve(response.data['releves'][0]['id'])
+        self.assertEqual(row['statut'], 'EMIS')
+        self.assertTrue(row['emis'])
+        self.assertEqual(Decimal(row['montant_du']), Decimal('15000'))
+        self.assertEqual(Decimal(row['reste']), Decimal('15000'))
+        self.assertEqual({f['id'] for f in row['factures_impayees']}, {f1.id, f2.id})
+        self.assertTrue(row['reference'].startswith(f"REL-{self.client_a.id}-"))
+
+    def test_transmettre_ignore_client_sans_creance(self):
+        response = self._transmettre([self.client_b.id])
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['releves'], [])
+        self.assertEqual(response.data['clients_sans_creance'], [self.client_b.id])
+
+    def test_transmettre_dedouble_reference(self):
+        f1 = self._creance(total=10000)
+        r1 = self._transmettre([self.client_a.id])
+        self.assertEqual(len(r1.data['releves']), 1)
+
+        # Retransmission à l'identique : la facture est déjà couverte par le
+        # relevé EMIS → pas de relevé doublon, client ignoré.
+        r2 = self._transmettre([self.client_a.id])
+        self.assertEqual(r2.data['releves'], [])
+        self.assertEqual(r2.data['clients_sans_creance'], [self.client_a.id])
+
+        # Nouvelle facture après transmission : le second relevé ne couvre
+        # qu'elle (les factures déjà transmises restent sur le premier).
+        f2 = self._creance(total=5000)
+        r3 = self._transmettre([self.client_a.id])
+        self.assertEqual(len(r3.data['releves']), 1)
+        self.assertNotEqual(
+            r1.data['releves'][0]['reference'],
+            r3.data['releves'][0]['reference'],
+        )
+        row = self._get_releve(r3.data['releves'][0]['id'])
+        self.assertEqual({f['id'] for f in row['factures_impayees']}, {f2.id})
+        self.assertEqual(Decimal(row['montant_du']), Decimal('5000'))
+
+    def test_reglement_total_solde_le_releve(self):
+        f1 = self._creance(total=10000)
+        f2 = self._creance(total=5000)
+        releve_id = self._transmettre([self.client_a.id]).data['releves'][0]['id']
+
+        response = self.api.post('/api/creances/bulk_paiement/', {
+            'facture_ids': [f1.id, f2.id],
+            'mode_paiement': 'virement',
+            'reference': 'VIR-001',
+            'releve_id': releve_id,
+            'sudo_password': 'adminpass123',
+        }, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+
+        row = self._get_releve(releve_id)
+        self.assertEqual(row['statut'], 'SOLDE')
+        self.assertEqual(Decimal(row['reste']), Decimal('0'))
+        self.assertEqual(Decimal(row['montant_paye']), Decimal('15000'))
+        self.assertEqual(row['factures_impayees'], [])
+
+    def test_reglement_partiel(self):
+        f = self._creance(total=10000)
+        releve_id = self._transmettre([self.client_a.id]).data['releves'][0]['id']
+
+        response = self.api.post('/api/creances/bulk_paiement/', {
+            'facture_ids': [f.id],
+            'mode_paiement': 'especes',
+            'reference': '',
+            'montant_total': '4000',
+            'releve_id': releve_id,
+            'sudo_password': 'adminpass123',
+        }, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+
+        row = self._get_releve(releve_id)
+        self.assertEqual(row['statut'], 'PARTIEL')
+        self.assertEqual(Decimal(row['reste']), Decimal('6000'))
+        self.assertEqual(Decimal(row['montant_paye']), Decimal('4000'))
+
+    def test_reglement_releve_autre_client_refuse(self):
+        self._creance(client=self.client_a)
+        fb = self._creance(client=self.client_b)
+        releve_id = self._transmettre([self.client_a.id]).data['releves'][0]['id']
+
+        response = self.api.post('/api/creances/bulk_paiement/', {
+            'facture_ids': [fb.id],
+            'mode_paiement': 'especes',
+            'reference': '',
+            'releve_id': releve_id,
+            'sudo_password': 'adminpass123',
+        }, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_paiement_hors_releve_fait_baisser_le_reste(self):
+        """Un paiement en caisse (hors règlement) réduit le reste du relevé."""
+        f = self._creance(total=10000)
+        releve_id = self._transmettre([self.client_a.id]).data['releves'][0]['id']
+        self.factory.create_caisse(facture=f, montant=10000, mode_paiement='especes')
+        row = self._get_releve(releve_id)
+        self.assertEqual(row['statut'], 'SOLDE')
+        self.assertEqual(Decimal(row['reste']), Decimal('0'))
+
+    def test_ancien_releve_paiement_affiche_solde(self):
+        """Un RelevePaiement historique (montant_du null) = regroupement soldé."""
+        from api.models import RelevePaiement
+        legacy = RelevePaiement.objects.create(
+            client=self.client_a, total_amount=Decimal('7000'),
+            reference='REL-LEGACY-1',
+        )
+        row = self._get_releve(legacy.id)
+        self.assertFalse(row['emis'])
+        self.assertEqual(row['statut'], 'SOLDE')
+        self.assertEqual(Decimal(row['montant_paye']), Decimal('7000'))
+
+    def test_reglement_releve_historique_refuse(self):
+        """Rattacher un règlement à un regroupement historique écraserait son
+        total_amount : rejeté en 400."""
+        from api.models import RelevePaiement
+        legacy = RelevePaiement.objects.create(
+            client=self.client_a, total_amount=Decimal('7000'),
+            reference='REL-LEGACY-2',
+        )
+        f = self._creance()
+
+        response = self.api.post('/api/creances/bulk_paiement/', {
+            'facture_ids': [f.id],
+            'mode_paiement': 'especes',
+            'reference': '',
+            'releve_id': legacy.id,
+            'sudo_password': 'adminpass123',
+        }, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        legacy.refresh_from_db()
+        self.assertEqual(legacy.total_amount, Decimal('7000'))
+
+    def test_reglement_facture_hors_releve_refuse(self):
+        """bulk_paiement(releve_id) : les factures doivent appartenir au relevé,
+        sinon leurs paiements gonfleraient total_amount hors périmètre."""
+        f1 = self._creance(total=10000)
+        releve_id = self._transmettre([self.client_a.id]).data['releves'][0]['id']
+        f2 = self._creance(total=3000)  # créée après transmission → hors relevé
+
+        response = self.api.post('/api/creances/bulk_paiement/', {
+            'facture_ids': [f1.id, f2.id],
+            'mode_paiement': 'especes',
+            'reference': '',
+            'releve_id': releve_id,
+            'sudo_password': 'adminpass123',
+        }, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

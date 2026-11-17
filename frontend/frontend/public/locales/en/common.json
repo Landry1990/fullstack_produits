@@ -251,7 +251,8 @@
         "depot": "Deposit/Advance",
         "en_compte": "On Account",
         "recouvrement": "Recovery",
-        "recouvrement_caps": "RECOVERY"
+        "recouvrement_caps": "RECOVERY",
+        "retenue": "Salary deduction"
     },
     "locale": "en-US",
     "currency_symbol": "FCFA",

@@ -34,7 +34,6 @@ interface CreancesTableProps {
     groupedClients: GroupedClient[];
     filteredCreances: Creance[];
     loading: boolean;
-    showHistory: boolean;
     selectedIds: number[];
     onSelectAll: (e: React.ChangeEvent<HTMLInputElement>) => void;
     onSelectOne: (id: number) => void;
@@ -53,7 +52,6 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
     groupedClients,
     filteredCreances,
     loading,
-    showHistory,
     selectedIds,
     onSelectAll,
     onSelectOne,
@@ -233,17 +231,15 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
             <table className="w-full min-w-[900px] text-sm border-separate border-spacing-0">
                 <thead>
                     <tr className="bg-slate-50 border-b border-slate-200">
-                        {!showHistory && (
-                            <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 w-12 h-9 text-center px-3">
-                                <input
-                                    type="checkbox"
-                                    aria-label={t('common:select_all')}
-                                    className="size-4 rounded border-slate-200 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
-                                    onChange={onSelectAll}
-                                    checked={filteredCreances.length > 0 && selectedIds.length === filteredCreances.filter(c => normalizeNumberInput(c.reste_a_payer) > 0).length}
-                                />
-                            </th>
-                        )}
+                        <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 w-12 h-9 text-center px-3">
+                            <input
+                                type="checkbox"
+                                aria-label={t('common:select_all')}
+                                className="size-4 rounded border-slate-200 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                                onChange={onSelectAll}
+                                checked={filteredCreances.length > 0 && selectedIds.length === filteredCreances.filter(c => normalizeNumberInput(c.reste_a_payer) > 0).length}
+                            />
+                        </th>
                         {([
                             { key: 'date', label: t('creances:invoice_list.date'), icon: <Calendar className="size-3.5" />, align: 'left' },
                             { key: 'age', label: t('creances:invoice_list.age'), icon: <Clock className="size-3.5" />, align: 'left' },
@@ -282,22 +278,23 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                         const remaining = normalizeNumberInput(creance.reste_a_payer);
                         const isPaid = remaining <= 0;
                         const invoiceAge = ageInDays(creance.date);
-                        const isOverdue = !isPaid && clientDelai > 0 && invoiceAge !== null && invoiceAge > clientDelai;
+                        // Le délai vient du serializer (creance.delai_paiement_jours) ;
+                        // fallback sur le délai du client sélectionné.
+                        const delaiJours = creance.delai_paiement_jours ?? clientDelai;
+                        const isOverdue = !isPaid && delaiJours > 0 && invoiceAge !== null && invoiceAge > delaiJours;
 
                         return (
                             <tr key={creance.id} className={`hover:bg-slate-50/50 transition-all group ${isSelected ? 'bg-emerald-50/30' : ''}`}>
-                                {!showHistory && (
-                                    <td className="text-center py-2 px-3">
-                                        <input
-                                            type="checkbox"
-                                            aria-label={t('common:select_row')}
-                                            className="size-4 rounded border-slate-200 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
-                                            checked={isSelected}
-                                            onChange={() => onSelectOne(creance.id)}
-                                            disabled={isPaid}
-                                        />
-                                    </td>
-                                )}
+                                <td className="text-center py-2 px-3">
+                                    <input
+                                        type="checkbox"
+                                        aria-label={t('common:select_row')}
+                                        className="size-4 rounded border-slate-200 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                                        checked={isSelected}
+                                        onChange={() => onSelectOne(creance.id)}
+                                        disabled={isPaid}
+                                    />
+                                </td>
                                 <td className="py-2 px-3">
                                     <div className="flex flex-col">
                                         <span className="font-mono text-xs font-bold text-slate-500">
@@ -314,7 +311,17 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                                     </span>
                                 </td>
                                 <td className="py-2 px-3">
-                                    <span className="font-bold text-sm text-emerald-600 tracking-tight">{creance.numero_facture || '-'}</span>
+                                    <div className="flex flex-col gap-0.5">
+                                        <span className="font-bold text-sm text-emerald-600 tracking-tight">{creance.numero_facture || '-'}</span>
+                                        {creance.releve_transmis && (
+                                            <span
+                                                className="w-fit px-1.5 py-0.5 bg-indigo-50 text-indigo-600 border border-indigo-200 rounded text-[9px] font-bold uppercase tracking-widest"
+                                                title={t('creances:invoice_list.transmitted_hint')}
+                                            >
+                                                {t('creances:invoice_list.transmitted')} {creance.releve_transmis}
+                                            </span>
+                                        )}
+                                    </div>
                                 </td>
                                 <td className="py-2 px-3 font-bold text-sm text-slate-500">{creance.ayant_droit_details?.nom || '-'}</td>
                                 <td className="py-2 px-3 text-right font-bold text-sm text-slate-800 tabular-nums whitespace-nowrap">{formatCurrency(normalizeNumberInput(creance.total_ttc))}</td>

@@ -14,6 +14,8 @@ import { BulkPaiementModal } from './creances/modals/BulkPaiementModal';
 import { RelanceModal } from './creances/modals/RelanceModal';
 import { RelevePeriodeModal } from './creances/modals/RelevePeriodeModal';
 import { RelevesExcelModal } from './creances/modals/RelevesExcelModal';
+import RelevesReglement from './creances/reglements/RelevesReglement';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './shadcn/tabs';
 import SudoValidationModal from './common/SudoValidationModal';
 import { ErrorState } from './ui/ErrorState';
 
@@ -50,28 +52,36 @@ export default function Creances() {
             className="h-full min-h-0 flex flex-col bg-slate-100 p-2 lg:p-3 gap-3 font-sans overflow-hidden max-w-[1600px] mx-auto w-full"
         >
 
+            <Tabs defaultValue="facturation" className="flex-1 min-h-0 flex flex-col gap-3">
             {/* Header Area */}
             <motion.div variants={fadeInUp} className="flex flex-col gap-3 shrink-0">
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col">
                     <div className="px-4 py-3 border-b border-slate-100 flex flex-wrap justify-between items-center gap-3 bg-white/50">
-                        <div>
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
-                                    <Wallet className="size-6" />
-                                </div>
-                                <div>
-                                    <h1 className="text-2xl font-bold text-slate-800 tracking-tight">
-                                        {t('creances:title')}
-                                    </h1>
-                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-0.5">
-                                        {t('creances:subtitle')}
-                                    </p>
-                                </div>
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
+                                <Wallet className="size-6" />
+                            </div>
+                            <div>
+                                <h1 className="text-2xl font-bold text-slate-800 tracking-tight">
+                                    {t('creances:title')}
+                                </h1>
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+                                    {t('creances:subtitle')}
+                                </p>
                             </div>
                         </div>
 
+                        <TabsList className="bg-slate-100 h-10">
+                            <TabsTrigger value="facturation" className="text-xs font-bold uppercase tracking-widest px-5 data-[state=active]:bg-white data-[state=active]:text-emerald-700">
+                                {t('creances:tabs.facturation')}
+                            </TabsTrigger>
+                            <TabsTrigger value="reglements" className="text-xs font-bold uppercase tracking-widest px-5 data-[state=active]:bg-white data-[state=active]:text-emerald-700">
+                                {t('creances:tabs.reglements')}
+                            </TabsTrigger>
+                        </TabsList>
+
                         {/* Selection Bar inside Header if active */}
-                        {data.filters.selectedClient && data.selectedIds.length > 0 && !data.filters.showHistory && (
+                        {data.filters.selectedClient && data.selectedIds.length > 0 && (
                             <div className="flex items-center gap-3 animate-in fade-in zoom-in duration-300">
                                 <div className="flex flex-col items-end">
                                     <span className="text-caption font-bold uppercase tracking-widest text-slate-400">{t('creances:selection')}</span>
@@ -92,7 +102,12 @@ export default function Creances() {
                             </div>
                         )}
                     </div>
+                </div>
+            </motion.div>
 
+            {/* Onglet Facturation : filtres + stats + créances en cours */}
+            <TabsContent value="facturation" className="flex-1 min-h-0 flex flex-col gap-3 mt-0">
+            <motion.div variants={fadeInUp} className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col shrink-0">
                     <CreancesFilters
                         clients={data.selectableClients}
                         selectedClient={data.filters.selectedClient}
@@ -105,20 +120,17 @@ export default function Creances() {
                         onDateDebutChange={data.setFilters.setDateDebut}
                         dateFin={data.filters.dateFin}
                         onDateFinChange={data.setFilters.setDateFin}
-                        showHistory={data.filters.showHistory}
-                        onHistoryToggle={data.setFilters.setShowHistory}
                         onRefresh={data.refresh}
                         onPrintStatement={() => setReleveModalOpen(true)}
                         onExportExcel={() => actions.actions.handleExportExcel({
                             client_id: data.filters.selectedClient || undefined,
                             date_debut: data.filters.dateDebut || undefined,
                             date_fin: data.filters.dateFin || undefined,
-                            history: data.filters.showHistory
+                            exclude_transmis: 'true'
                         })}
                         onRelevesExcel={() => setRelevesExcelOpen(true)}
                         loading={data.loading}
                     />
-                </div>
             </motion.div>
 
             {/* Stats Dashboard */}
@@ -137,7 +149,6 @@ export default function Creances() {
                     groupedClients={data.visibleClients}
                     filteredCreances={data.filteredCreances}
                     loading={data.loading}
-                    showHistory={data.filters.showHistory}
                     selectedIds={data.selectedIds}
                     onSelectAll={(e) => {
                         if (e.target.checked) {
@@ -164,6 +175,13 @@ export default function Creances() {
                     clientDelai={data.selectedClientDelai}
                 />
             </motion.div>
+            </TabsContent>
+
+            {/* Onglet Règlements : relevés transmis pour règlement */}
+            <TabsContent value="reglements" className="flex-1 min-h-0 flex flex-col mt-0">
+                <RelevesReglement />
+            </TabsContent>
+            </Tabs>
             {/* Error handling */}
             {data.error && (
                 <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">

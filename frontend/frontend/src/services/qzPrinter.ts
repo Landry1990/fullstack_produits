@@ -20,6 +20,7 @@ type QzApi = import('qz-tray').default;
 let qzLoadPromise: Promise<QzApi> | null = null;
 let connectionPromise: Promise<void> | null = null;
 let securityConfigured = false;
+let socketCallbacksConfigured = false;
 let qzUnavailableUntil = 0;
 let printQueue: Promise<unknown> = Promise.resolve();
 
@@ -27,6 +28,25 @@ let printQueue: Promise<unknown> = Promise.resolve();
  * connexion. Évite de relancer la tempête de tentatives WebSocket (8 ports ×
  * retries) à chaque clic sur Imprimer — c'était la cause du blocage Safari. */
 const QZ_UNAVAILABLE_COOLDOWN_MS = 60_000;
+
+/** Sans timeout, un qz.print/connect sur une socket morte-mais-pas-close
+ * (QZ Tray relancé, veille PC, prompt « Allow » ignoré) peut pendre
+ * indéfiniment : rien ne s'imprime et aucun fallback ne se déclenche. */
+const QZ_CONNECT_TIMEOUT_MS = 15_000;
+const QZ_PRINT_TIMEOUT_MS = 10_000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error(`${label} : délai dépassé (${ms} ms)`)),
+      ms
+    );
+    promise.then(
+      (v) => { clearTimeout(timer); resolve(v); },
+      (err) => { clearTimeout(timer); reject(err); }
+    );
+  });
+}
 
 async function loadQz(): Promise<QzApi> {
   if (qzLoadPromise) return qzLoadPromise;
@@ -109,10 +129,23 @@ async function ensureConnected(force = false): Promise<void> {
   }
   if (connectionPromise) return connectionPromise;
 
+  // Surveille les fermetures/erreurs de socket : sans ces callbacks, une
+  // déconnexion silencieuse n'était visible qu'au prochain print. La remise
+  // à null de connectionPromise (voir .then ci-dessous) permet la reconnexion.
+  if (!socketCallbacksConfigured) {
+    socketCallbacksConfigured = true;
+    qz.websocket.setClosedCallbacks((evt: unknown) => {
+      logger.warn('QZ Tray : socket fermée', evt);
+    });
+    qz.websocket.setErrorCallbacks((evt: unknown) => {
+      logger.error('QZ Tray : erreur socket', evt);
+    });
+  }
+
   // L'app est servie en HTTP : on tente les ports non sécurisés de QZ Tray
   // (8182…) puis les sécurisés en secours. 'localhost.qz.io' est inclus car
   // QZ le résout vers 127.0.0.1 avec un certificat valide en mode sécurisé.
-  connectionPromise = qz.websocket.connect({
+  connectionPromise = withTimeout(qz.websocket.connect({
     host: ['localhost', 'localhost.qz.io'],
     usingSecureProtocol: window.location.protocol === 'https:',
     port: {
@@ -121,7 +154,12 @@ async function ensureConnected(force = false): Promise<void> {
     },
     retries: 2,
     delay: 0,
-  } as never).then(() => {
+  } as never), QZ_CONNECT_TIMEOUT_MS, 'Connexion QZ Tray').then(() => {
+    // IMPORTANT : remettre à null aussi en cas de succès. Sinon la promesse
+    // résolue restait figée à vie : après une déconnexion, isActive() === false
+    // mais on retournait cette vieille promesse → jamais de reconnexion, et
+    // qz.print() sur socket morte → ticket perdu silencieusement.
+    connectionPromise = null;
     qzUnavailableUntil = 0;
     logger.info('QZ Tray connecté');
   }).catch((err: unknown) => {
@@ -266,9 +304,9 @@ async function printEscposInternal(commands: string | string[], printerNameOverr
   const data = commandsToBase64(joined);
   const config = qz.configs.create(printer);
 
-  await qz.print(config, [
+  await withTimeout(qz.print(config, [
     { type: 'RAW', format: 'BASE64', data },
-  ]);
+  ]), QZ_PRINT_TIMEOUT_MS, 'Impression QZ Tray');
   return true;
 }
 

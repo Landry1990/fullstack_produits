@@ -50,6 +50,9 @@
             "title": "Inventaire"
         },
         "journal": "Journal Ajustements",
+        "lots": {
+            "title": "Traceur de lots"
+        },
         "analyse": {
             "title": "Analyse Stock"
         },

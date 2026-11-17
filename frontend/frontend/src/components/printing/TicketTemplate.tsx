@@ -145,6 +145,18 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
                 <td className="pt-1 font-medium uppercase">{t('invoice.customer')}</td>
                 <td className="pt-1 text-right text-caption font-medium uppercase">{clientName}</td>
               </tr>
+              {isTiersPayant && facture?.ayant_droit_details?.nom && (
+                <tr>
+                  <td>{t('invoice.beneficiary')}</td>
+                  <td className="text-right uppercase">{facture.ayant_droit_details.nom}</td>
+                </tr>
+              )}
+              {isTiersPayant && facture?.ayant_droit_details?.matricule && (
+                <tr>
+                  <td>{t('invoice.registration_number')}</td>
+                  <td className="text-right">{facture.ayant_droit_details.matricule}</td>
+                </tr>
+              )}
               {ticket.client_solde_depot && Number(ticket.client_solde_depot) > 0 && (
                 <tr className="mt-1 border-t border-black/35">
                   <td className="py-1 font-medium uppercase">{t('invoice.remaining_deposit')}</td>

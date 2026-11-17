@@ -383,6 +383,10 @@ class CreanceSerializer(serializers.ModelSerializer):
     total_ttc = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     montant_paye = serializers.SerializerMethodField()
     reste_a_payer = serializers.SerializerMethodField()
+    delai_paiement_jours = serializers.ReadOnlyField(
+        source='client.delai_paiement_jours', default=None
+    )
+    releve_transmis = serializers.SerializerMethodField()
     _paiements = CaisseSerializer(many=True, read_only=True, source='paiements')
 
     class Meta:
@@ -391,7 +395,8 @@ class CreanceSerializer(serializers.ModelSerializer):
             'id', 'client', 'numero_facture', 'client_name',
             'ayant_droit_details', 'date', 'status_display',
             'total_ht', 'remise', 'tva', 'total_tva', 'total_ttc',
-            'montant_paye', 'reste_a_payer', '_paiements', 'notes'
+            'montant_paye', 'reste_a_payer', 'delai_paiement_jours',
+            'releve_transmis', '_paiements', 'notes'
         ]
 
     def get_client_name(self, obj):
@@ -420,3 +425,14 @@ class CreanceSerializer(serializers.ModelSerializer):
     def get_reste_a_payer(self, obj):
         montant_paye = self.get_montant_paye(obj)
         return Decimal(str(obj.total_ttc or 0)) - montant_paye
+
+    def get_releve_transmis(self, obj):
+        """Référence du relevé émis ouvert (EMIS/PARTIEL) couvrant la facture,
+        sinon None. 'open_releves' est prefetché par CreanceViewSet.get_queryset ;
+        le statut stocké est rafraîchi par l'endpoint releves_emis."""
+        releves = getattr(obj, 'open_releves', None)
+        if releves is None:
+            releves = obj.releves_emis.filter(
+                montant_du__isnull=False
+            ).exclude(statut='SOLDE')
+        return releves[0].reference if releves else None

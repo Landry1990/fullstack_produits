@@ -245,6 +245,10 @@ export interface Creance {
     total_ttc: string
     montant_paye: string
     reste_a_payer: string
+    /** Délai de règlement du client (jours) — 0/null = pas d'échéance */
+    delai_paiement_jours?: number | null
+    /** Référence du relevé émis ouvert couvrant la facture (badge « Transmis ») */
+    releve_transmis?: string | null
     paiements: Paiement[]
     notes?: string
 }

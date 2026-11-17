@@ -115,6 +115,7 @@ export const BulkPaiementModal: React.FC<BulkPaiementModalProps> = ({
                             <option value="cheque">{t('creances:payment_modal.modes.check')}</option>
                             <option value="carte">{t('creances:payment_modal.modes.card')}</option>
                             <option value="virement">{t('creances:payment_modal.modes.transfer')}</option>
+                            <option value="retenue">{t('creances:payment_modal.modes.salary_deduction')}</option>
                         </select>
                     </div>
 

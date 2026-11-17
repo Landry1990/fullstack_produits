@@ -102,9 +102,10 @@ export const NAV_ITEMS: NavItem[] = [
         category: 'stock',
         icon: <Boxes className={iconClass} />,
         submenus: [
-            { path: '/app/stock', labelKey: 'stock.overview', labelFallback: "Vue d'ensemble", key: 'inventaire', aliasPermissions: ['inventaire_saisie', 'inventaire_journal', 'inventaire_reappro', 'inventaire_avoirs', 'inventaire_promis', 'inventaire_transformations', 'inventaire_perimes', 'inventaire_organisation', 'inventaire_analyse', 'inventaire_cadencier', 'inventaire_etats', 'inventaire_rapport_ug', 'perimes', 'avoirs', 'promis'], loader: () => import('../components/hubs/FeatureHub') },
+            { path: '/app/stock', labelKey: 'stock.overview', labelFallback: "Vue d'ensemble", key: 'inventaire', aliasPermissions: ['inventaire_saisie', 'inventaire_journal', 'inventaire_lots', 'inventaire_reappro', 'inventaire_avoirs', 'inventaire_promis', 'inventaire_transformations', 'inventaire_perimes', 'inventaire_organisation', 'inventaire_analyse', 'inventaire_cadencier', 'inventaire_etats', 'inventaire_rapport_ug', 'perimes', 'avoirs', 'promis'], loader: () => import('../components/hubs/FeatureHub') },
             { path: '/app/inventaire', labelKey: 'stock.inventaire.title', key: 'inventaire_saisie', group: 'stock_operations', loader: () => import('../components/Inventaire') },
             { path: '/app/journal-ajustements', labelKey: 'stock.journal', key: 'inventaire_journal', group: 'stock_operations', loader: () => import('../components/JournalAjustements') },
+            { path: '/app/lots', labelKey: 'stock.lots.title', labelFallback: 'Traceur de lots', key: 'inventaire_lots', group: 'stock_operations', loader: () => import('../components/stock/TraceurLots') },
             { path: '/app/reappro-rayon', labelKey: 'stock.reappro.title', labelFallback: 'Réappro Rayon', key: 'inventaire_reappro', group: 'stock_operations', loader: () => import('../components/stock/ReapproRayon') },
             { path: '/app/avoirs', labelKey: 'stock.avoirs', key: 'inventaire_avoirs', group: 'stock_operations', aliasPermissions: ['avoirs'], loader: () => import('../components/Avoirs') },
             { path: '/app/promis', labelKey: 'stock.promis', key: 'inventaire_promis', group: 'stock_operations', aliasPermissions: ['promis'], loader: () => import('../components/Promis') },

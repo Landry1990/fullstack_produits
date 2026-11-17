@@ -265,7 +265,8 @@
         "depot": "Dépôt/Acompte",
         "en_compte": "En compte",
         "recouvrement": "Recouvrement",
-        "recouvrement_caps": "RECOUVREMENT"
+        "recouvrement_caps": "RECOUVREMENT",
+        "retenue": "Retenue sur salaire"
     },
     "locale": "fr-FR",
     "currency_symbol": "FCFA",

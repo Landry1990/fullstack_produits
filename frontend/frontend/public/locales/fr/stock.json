@@ -1683,6 +1683,50 @@
         "no_date": "sans date",
         "fallback": "Lot {{id}}"
     },
+    "lot_tracer": {
+        "title": "Traceur de lots",
+        "subtitle": "Entrées et mouvements de chaque lot",
+        "search_placeholder": "N° lot, produit, fournisseur…",
+        "include_empty": "Inclure les lots épuisés",
+        "filter_expiry": "Expiration",
+        "expiry_all": "Toutes",
+        "expiry_days": "≤ {{days}} j",
+        "count": "{{count}} lot(s)",
+        "col_product": "Produit",
+        "col_lot": "N° lot",
+        "col_supplier": "Fournisseur",
+        "col_entry_date": "Entrée",
+        "col_entry_qty": "Qté entrée",
+        "col_remaining": "Restante",
+        "col_expiration": "Expiration",
+        "col_value": "Valeur",
+        "col_actions": "Mouvements",
+        "empty": "Aucun lot trouvé",
+        "hint": "Tapez un n° de lot, un produit ou un fournisseur pour rechercher",
+        "expired_badge": "Expiré",
+        "depleted_badge": "Épuisé",
+        "mouvements": {
+            "title": "Mouvements du lot {{lot}}",
+            "subtitle": "{{product}} — entrée le {{date}}",
+            "col_date": "Date",
+            "col_type": "Type",
+            "col_qty": "Qté",
+            "col_balance": "Solde lot",
+            "col_ref": "Référence",
+            "col_detail": "Détail",
+            "col_user": "Utilisateur",
+            "empty": "Aucun mouvement",
+            "load_error": "Impossible de charger les mouvements du lot",
+            "types": {
+                "ENTREE": "Entrée",
+                "VENTE": "Vente",
+                "AJUSTEMENT": "Ajustement",
+                "AVOIR_FOURNISSEUR": "Retour fournisseur",
+                "RETOUR_CLIENT": "Retour client",
+                "RESOLUTION": "Dette résolue"
+            }
+        }
+    },
     "health_dashboard": {
         "interpretation": {
             "title": "Interprétation du Score",

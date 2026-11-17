@@ -1,7 +1,6 @@
 {
     "title": "Accounts Receivable Management",
     "subtitle": "Track on-account sales - Professional clients",
-    "history_toggle": "View History",
     "refresh": "Refresh",
     "selection": "Selection",
     "invoices_count": "{{count}} invoices",
@@ -67,7 +66,9 @@
         "view_payments": "View payments",
         "add_payment": "Add payment",
         "age": "Age",
-        "overdue_badge": "OVERDUE"
+        "overdue_badge": "OVERDUE",
+        "transmitted": "Submitted",
+        "transmitted_hint": "Invoice covered by a statement submitted for settlement"
     },
     "print_statement": "Print Statement",
     "print_statement_simple": "Simple Statement",
@@ -96,9 +97,45 @@
         "no_clients": "No creditors in this period.",
         "select_all": "Select all",
         "deselect_all": "Deselect all",
-        "generate": "Generate ({{count}} sheets)",
-        "generating": "Generating Excel statements...",
-        "success": "Statements generated for {{count}} client(s)."
+        "generate_transmit": "Generate + send for settlement ({{count}})",
+        "transmit_hint": "Downloads the Excel workbook AND creates an \"Issued\" statement per client: hand it to the debtor, then track it in the Settlements tab (Issued → Partial → Settled).",
+        "generating": "Generating Excel statements..."
+    },
+    "tabs": {
+        "facturation": "Invoicing",
+        "reglements": "Settlements"
+    },
+    "reglements": {
+        "col_reference": "Reference",
+        "col_client": "Client",
+        "col_date": "Issued on",
+        "col_factures": "Invoices",
+        "col_montant_du": "Amount due",
+        "col_paye": "Settled",
+        "col_reste": "Remaining",
+        "col_statut": "Status",
+        "col_actions": "Actions",
+        "statut_emis": "Issued",
+        "statut_partiel": "Partial",
+        "statut_solde": "Settled",
+        "legacy_badge": "Legacy",
+        "regler": "Settle",
+        "relance": "Send reminder to client",
+        "reprint": "Reprint Excel statement",
+        "filter_all": "All",
+        "filter_retard": "Overdue",
+        "retard_days": "{{count}}d overdue",
+        "refresh": "Refresh",
+        "empty": "No statement submitted for settlement.",
+        "empty_hint": "Submit statements from \"Excel Statements\" to track them here.",
+        "help": "Statements handed to debtors (generated from \"Excel statements\", Invoicing tab) — settle them here as payments come in.",
+        "stats": {
+            "statements": "Issued statements",
+            "to_collect": "To collect",
+            "collected": "Settled",
+            "late": "Overdue"
+        },
+        "payment_success": "Settlement recorded successfully!"
     },
     "client_label": "Client: {{name}}",
     "payment_modal": {
@@ -120,6 +157,7 @@
             "check": "📝 Check",
             "card": "💳 Card",
             "transfer": "🏦 Transfer",
+            "salary_deduction": "🧾 Salary deduction",
             "recouvrement": "💸 Third-Party Payer"
         }
     },
@@ -183,7 +221,9 @@
         "excel_export_error": "Error during Excel export.",
         "invalid_date_range": "Start date must be before end date",
         "relance_sent": "Reminder sent to {{client}}",
-        "relance_failed": "Reminder failed"
+        "relance_failed": "Reminder failed",
+        "releves_transmis": "{{count}} statement(s) generated and submitted for settlement.",
+        "releves_transmis_error": "Error while generating/submitting the statements."
     },
     "print_view": {
         "title": "ACCOUNTS RECEIVABLE STATEMENT",

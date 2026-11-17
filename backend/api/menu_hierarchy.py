@@ -66,6 +66,7 @@ MENU_HIERARCHY = [
         'submenus': [
             {'key': 'inventaire_saisie', 'labelKey': 'sidebar:stock.inventaire.title'},
             {'key': 'inventaire_journal', 'labelKey': 'sidebar:stock.journal'},
+            {'key': 'inventaire_lots', 'labelKey': 'sidebar:stock.lots.title'},
             {'key': 'inventaire_analyse', 'labelKey': 'sidebar:stock.analyse.title'},
             {'key': 'inventaire_cadencier', 'labelKey': 'sidebar:stock.cadencier.title'},
             {'key': 'inventaire_reappro', 'labelKey': 'sidebar:stock.reappro.title'},

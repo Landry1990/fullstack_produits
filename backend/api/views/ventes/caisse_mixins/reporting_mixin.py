@@ -228,12 +228,16 @@ class CaisseReportingMixin:
         total_coupons = ventes_aggregated['coupons']
 
         # 2. Totaux des recouvrements en UNE requête
+        # backoffice = rattachés à un relevé (règlement back-office : virement,
+        # chèque, retenue…) — l'argent ne transite jamais par le tiroir.
         recouv_aggregated = paiements_recouv.aggregate(
             total=Coalesce(Sum('montant'), Value(0, output_field=DecimalField())),
-            especes=Coalesce(Sum('montant', filter=Q(mode_paiement='especes')), Value(0, output_field=DecimalField()))
+            especes=Coalesce(Sum('montant', filter=Q(mode_paiement='especes')), Value(0, output_field=DecimalField())),
+            backoffice=Coalesce(Sum('montant', filter=Q(releve__isnull=False)), Value(0, output_field=DecimalField()))
         )
         total_recouvrement = recouv_aggregated['total']
         total_recouv_especes = recouv_aggregated['especes']
+        total_recouv_backoffice = recouv_aggregated['backoffice']
 
         # Breakdown séparé pour info (utile pour le frontend)
         modes_ventes = paiements_sales.values('mode_paiement').annotate(total=Sum('montant'))
@@ -264,7 +268,10 @@ class CaisseReportingMixin:
         total_entrees = moves_aggregated['entrees']
         total_sorties = moves_aggregated['sorties']
 
-        total_theorique = total_ventes + total_recouvrement + total_entrees - total_sorties
+        # Recouvrements back-office exclus du tiroir : l'argent n'y est jamais
+        # passé (virement, chèque, retenue sur salaire). Les recouvrements
+        # sans relevé (règlement d'une facture au comptoir) restent comptés.
+        total_theorique = total_ventes + (total_recouvrement - total_recouv_backoffice) + total_entrees - total_sorties
 
         # Calcul du CA Divers
         from ....models import FactureProduitAllocation
@@ -299,6 +306,7 @@ class CaisseReportingMixin:
             'total_ca_divers': total_ca_divers,
             'total_recouvrement': total_recouvrement,
             'total_recouv_especes': total_recouv_especes,
+            'total_recouvrement_bo': total_recouv_backoffice,
             'total_entrees': total_entrees,
             'total_sorties': total_sorties,
             'total_coupons': total_coupons,

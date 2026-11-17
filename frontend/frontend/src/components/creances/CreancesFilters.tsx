@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, RotateCcw, Printer, History, Users, Calendar, FileSpreadsheet, AlarmClock } from 'lucide-react';
+import { Search, RotateCcw, Printer, Users, Calendar, FileSpreadsheet, AlarmClock } from 'lucide-react';
 import type { Client } from '../../types';
 import { LocalizedDateInput } from '../LocalizedDateInput';
 
@@ -16,8 +16,6 @@ interface CreancesFiltersProps {
     onDateDebutChange: (date: string) => void;
     dateFin: string;
     onDateFinChange: (date: string) => void;
-    showHistory: boolean;
-    onHistoryToggle: (show: boolean) => void;
     onRefresh: () => void;
     onPrintStatement: () => void;
     onExportExcel: () => void;
@@ -37,8 +35,6 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
     onDateDebutChange,
     dateFin,
     onDateFinChange,
-    showHistory,
-    onHistoryToggle,
     onRefresh,
     onPrintStatement,
     onExportExcel,
@@ -150,32 +146,6 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
                         </div>
                     )}
 
-                    {/* Status Toggle */}
-                    <div className="space-y-2">
-                        <label className="text-caption font-bold uppercase tracking-widest text-slate-400 flex items-center gap-2 ml-1">
-                            <History className="size-3.5" /> {t('creances:history_toggle')}
-                        </label>
-                        <div
-                            role="switch"
-                            aria-checked={showHistory}
-                            tabIndex={0}
-                            className={`flex items-center gap-1 p-1 bg-slate-100/50 rounded-xl cursor-pointer transition-all h-10 ${showHistory ? 'ring-2 ring-emerald-500/20' : ''}`}
-                            onClick={() => onHistoryToggle(!showHistory)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter' || e.key === ' ') {
-                                    e.preventDefault();
-                                    onHistoryToggle(!showHistory);
-                                }
-                            }}
-                        >
-                            <div className={`flex-1 text-center py-1.5 rounded-lg text-caption font-bold uppercase transition-all ${!showHistory ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-400 hover:text-slate-500'}`}>
-                                {t('creances:invoice_list.pending_badge')}
-                            </div>
-                            <div className={`flex-1 text-center py-1.5 rounded-lg text-caption font-bold uppercase transition-all ${showHistory ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-400 hover:text-slate-500'}`}>
-                                {t('creances:history_toggle')}
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 {/* Actions Section */}

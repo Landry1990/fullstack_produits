@@ -12,7 +12,11 @@ from rest_framework.response import Response
 
 from ...audit_helpers import log_audit
 from ...centralized_configs import BaseViewSetConfig
-from ...models import AuditLog, CommandeProduit, MouvementStock, Produit, StockAdjustment, StockLot
+from ...models import (
+    AuditLog, CommandeProduit, FactureProduitAllocation, LigneAvoir,
+    LigneAvoirClient, MouvementStock, Produit, StockAdjustment, StockLot,
+    StockObligationResolution,
+)
 from ...serializer_mixins import OptimizedSerializerMixin
 from ...serializers import StockLotSerializer, StockLotUpdateSerializer
 from ...serializers_optimized import StockLotDetailSerializer, StockLotListSerializer
@@ -35,8 +39,9 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
         'produit', 'produit__rayon', 'produit__forme', 'fournisseur'
     ).order_by('date_reception')
     serializer_class = StockLotSerializer
-    filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter)
     filterset_fields = ['produit', 'fournisseur']
+    search_fields = ['lot', 'produit__name', 'produit_nom', 'fournisseur__name', 'fournisseur_nom']
     ordering_fields = ['date_expiration', 'date_reception', 'deplace_peremption_le']
     
     # Serializers optimisés
@@ -152,6 +157,146 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
             request=self.request,
         )
         super().perform_destroy(instance)
+
+    @action(detail=True, methods=['get'])
+    def mouvements(self, request, pk=None):
+        """
+        Chronologie unifiée des mouvements du lot (traceur de lots) :
+        entrée, ventes, ajustements, retours fournisseurs, retours clients
+        et résolutions de dettes de stock.
+        """
+        # Pas self.get_object() : get_queryset() exclut les lots épuisés,
+        # alors que la traçabilité concerne surtout les lots terminés.
+        try:
+            lot = StockLot.objects.select_related(
+                'produit', 'fournisseur', 'commande_produit__commande__fournisseur',
+                'commande_produit__commande__closed_by',
+            ).get(pk=pk)
+        except StockLot.DoesNotExist:
+            return Response({'detail': 'Lot introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+        events = []
+
+        # Entrée en stock (réception)
+        commande = lot.commande_produit.commande if lot.commande_produit_id else None
+        events.append({
+            'date': lot.date_reception,
+            'type': 'ENTREE',
+            'quantite': lot.quantity_initial,
+            'reference': (commande.numero_facture or f"CMD-{commande.id}") if commande else None,
+            'detail': commande.fournisseur.name if commande and commande.fournisseur else (lot.fournisseur_nom or ''),
+            'user': commande.closed_by.username if commande and commande.closed_by else None,
+        })
+
+        # Ventes (allocations prélevées sur ce lot)
+        allocations = FactureProduitAllocation.objects.filter(
+            stock_lot=lot, is_pending=False
+        ).select_related('facture_produit__facture', 'facture_produit__facture__created_by')
+        for alloc in allocations:
+            facture = alloc.facture_produit.facture if alloc.facture_produit_id else None
+            detail = facture.client.name if facture and facture.client else ''
+            if alloc.quantity_free:
+                detail = f"{detail} (dont {alloc.quantity_free} UG)".strip()
+            events.append({
+                'date': facture.date if facture else alloc.created_at,
+                'type': 'VENTE',
+                'quantite': -alloc.quantity,
+                'reference': facture.numero_facture if facture else None,
+                'detail': detail,
+                'user': facture.created_by.username if facture and facture.created_by else None,
+            })
+
+        # Ajustements manuels (inventaire, casse, périmé, réappro…)
+        adjustments = StockAdjustment.objects.filter(stock_lot=lot).select_related('user')
+        for adj in adjustments:
+            detail = adj.get_reason_type_display()
+            if adj.reason_detail:
+                detail = f"{detail} — {adj.reason_detail}"
+            events.append({
+                'date': adj.created_at,
+                'type': 'AJUSTEMENT',
+                'quantite': adj.quantity_change,
+                'reference': None,
+                'detail': detail,
+                'user': adj.user.username if adj.user else None,
+            })
+
+        # Retours fournisseurs (avoirs)
+        lignes_avoir = LigneAvoir.objects.filter(
+            stock_lot=lot, avoir__is_active=True
+        ).select_related('avoir')
+        for ligne in lignes_avoir:
+            events.append({
+                'date': ligne.avoir.created_at,
+                'type': 'AVOIR_FOURNISSEUR',
+                'quantite': -ligne.quantity,
+                'reference': ligne.avoir.numero or None,
+                'detail': ligne.motif,
+                'user': ligne.avoir.created_by.username if ligne.avoir.created_by else None,
+            })
+
+        # Retours clients (avoirs clients)
+        lignes_avoir_client = LigneAvoirClient.objects.filter(
+            stock_lot=lot
+        ).select_related('avoir_client', 'avoir_client__created_by')
+        for ligne in lignes_avoir_client:
+            events.append({
+                'date': ligne.avoir_client.date,
+                'type': 'RETOUR_CLIENT',
+                'quantite': ligne.quantity,
+                'reference': ligne.avoir_client.numero or None,
+                'detail': ligne.avoir_client.get_type_motif_display(),
+                'user': ligne.avoir_client.created_by.username if ligne.avoir_client.created_by else None,
+            })
+
+        # Résolutions de dettes de stock couvertes par ce lot
+        resolutions = StockObligationResolution.objects.filter(
+            stock_lot=lot
+        ).select_related('obligation', 'created_by')
+        for res in resolutions:
+            detail = res.obligation.get_type_display() if res.obligation_id else ''
+            if res.quantity_free:
+                detail = f"{detail} (dont {res.quantity_free} UG)".strip()
+            events.append({
+                'date': res.created_at,
+                'type': 'RESOLUTION',
+                'quantite': -res.quantity,
+                'reference': res.obligation.facture.numero_facture if res.obligation_id and res.obligation.facture else None,
+                'detail': detail,
+                'user': res.created_by.username if res.created_by else None,
+            })
+
+        # Tri chronologique : les sources mélangent DateField (avoirs clients)
+        # et DateTimeField aware — on normalise en datetime aware pour comparer.
+        def _sort_key(e):
+            d = e['date']
+            if d is None:
+                return datetime.max.replace(tzinfo=timezone.utc)
+            if isinstance(d, datetime):
+                return d
+            return timezone.make_aware(datetime.combine(d, datetime.min.time()))
+
+        events.sort(key=_sort_key)
+        solde = 0
+        for e in events:
+            solde += e['quantite']
+            e['solde_apres'] = solde
+
+        return Response({
+            'lot': {
+                'id': lot.id,
+                'lot': lot.lot,
+                'produit_id': lot.produit_id,
+                'produit_nom': lot.produit.name if lot.produit else lot.produit_nom,
+                'fournisseur_nom': lot.fournisseur.name if lot.fournisseur else lot.fournisseur_nom,
+                'date_reception': lot.date_reception,
+                'date_expiration': lot.date_expiration,
+                'quantity_initial': lot.quantity_initial,
+                'quantity_remaining': lot.quantity_remaining,
+                'quantity_reserved': lot.quantity_reserved,
+                'price_cost': lot.price_cost,
+            },
+            'mouvements': events,
+        })
 
     @action(detail=True, methods=['post'])
     @transaction.atomic

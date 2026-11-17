@@ -77,6 +77,7 @@ export const APP_PAGES: AppPage[] = [
   page('/app/rapport-ug', 'nav-rapport-ug', 'stock.rapport_ug.title', 'stock', ['inventaire', 'inventaire_rapport_ug'], ['unites gratuites', 'ug', 'rapport']),
   page('/app/etats-inventaire', 'nav-etats-inventaire', 'stock.etats_inventaire.title', 'stock', ['inventaire', 'inventaire_etats'], ['etat stock', 'rapports inventaire']),
   page('/app/journal-ajustements', 'nav-journal-ajustements', 'stock.journal', 'stock', ['inventaire', 'inventaire_journal'], ['ajustements', 'mouvements stock', 'audit stock']),
+  page('/app/lots', 'nav-lots', 'stock.lots.title', 'stock', ['inventaire', 'inventaire_lots'], ['lots', 'tracabilite', 'numero lot', 'batch']),
   page('/app/transformations', 'nav-transformations', 'stock.transformations.title', 'stock', ['inventaire', 'inventaire_transformations'], ['reconditionnement', 'transformation', 'packaging']),
 
   page('/app/rapports', 'nav-rapports-hub', 'hub.rapports_title', 'rapports', ['statistiques'], ['hub rapports', 'centre rapports', 'reports']),

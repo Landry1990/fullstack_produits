@@ -2,6 +2,138 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-11-17 — Ticket clients professionnels : identification de l'ayant droit
+
+- Ajout du nom de l'ayant droit et de son matricule sous le client sur les
+  tickets professionnels, uniquement lorsque ces informations sont renseignées.
+- Aperçu/impression HTML et impression thermique ESC/POS alignés ; données
+  existantes `facture.ayant_droit_details`, sans changement backend ni migration.
+- Fichiers : `TicketTemplate.tsx`, `utils/escpos/ticketEscpos.ts`, locales
+  `printing.json` fr/en. Vérification : TypeScript et ESLint ciblé sans erreur.
+
+## 2026-11-17 — Traceur de lots (page /app/lots)
+
+- Nouvelle page **Stock → Traceur de lots** : page vierge avec un seul
+  champ de recherche — taper un n° de lot (ou produit/fournisseur) affiche
+  les lots correspondants (produit, n° lot, fournisseur, date/qté d'entrée,
+  qté restante, expiration, valeur ; lots épuisés inclus).
+- Clic sur un lot → dialog **timeline des mouvements** : nouvel endpoint
+  `GET /api/stock-lots/{id}/mouvements/` qui agrège entrée (réception),
+  ventes (`FactureProduitAllocation`), ajustements (`StockAdjustment`),
+  retours fournisseurs (`LigneAvoir`), retours clients (`LigneAvoirClient`)
+  et résolutions de dettes (`StockObligationResolution`), avec solde du
+  lot recalculé en cascade.
+- Backend : `SearchFilter` + `search_fields` sur `StockLotViewSet` ;
+  clé de permission `inventaire_lots` ajoutée à `menu_hierarchy.py`.
+- Frontend : `components/stock/TraceurLots.tsx`, route `/app/lots`,
+  entrée sidebar `navConfig.tsx` + `appPages.ts`, i18n fr/en
+  (`sidebar.json`, `stock.json` → section `lot_tracer`).
+
+## 2026-11-17 — Créances : relevés transmis pour règlement (onglets Facturation/Règlements)
+
+- La page **Créances** est scindée en deux onglets : **Facturation**
+  (contenu existant : filtres, stats, créances en cours triées par client)
+  et **Règlements** (nouveau suivi des relevés transmis pour règlement).
+- `RelevePaiement` étendu : `date_debut`, `date_fin`, `montant_du`,
+  `statut` (`EMIS`/`PARTIEL`/`SOLDE`), M2M `factures`. Migration `0299`.
+- `POST /creances/transmettre_releves/` : crée un relevé `EMIS` par client
+  sélectionné (référence `REL-<client>-<AAAAMMJJ>`, montant dû et factures
+  figés à l'émission). Générer l'Excel seul **ne transmet rien** — la
+  transmission est une action explicite (bouton « Générer + transmettre »
+  de `RelevesExcelModal`).
+- `GET /creances/releves_emis/` : liste des relevés (émis + anciens
+  regroupements de paiement affichés soldés), payé/reste **recalculés**
+  depuis les factures réelles — le solde bouge si des factures sont
+  réglées hors relevé.
+- `bulk_paiement` accepte `releve_id` : les paiements `recouvrement` se
+  rattachent au relevé existant (au lieu d'en créer un nouveau) et son
+  statut est mis à jour. **Fix** : `values_list('client').distinct()` sur
+  un queryset trié par `date` renvoyait plusieurs « clients » pour un
+  même client (Postgres inclut `date` dans le DISTINCT) → 400 systématique
+  en multi-factures. Un `releve_id` pointant un regroupement historique
+  (montant_du null) est rejeté en 400 — y rattacher un règlement
+  écraserait son `total_amount`. Un `releve_id` émis exige que toutes
+  les `facture_ids` appartiennent au relevé (sinon 400) — des factures
+  étrangères gonfleraient `total_amount` hors du périmètre du statut.
+- Onglet Règlements (`creances/reglements/RelevesReglement.tsx`) : table
+  référence/client/date/nb factures/dû/payé/reste/statut, filtres par
+  statut, badge « hérité » pour les anciens regroupements, actions
+  « Régler » (total ou partiel via `BulkPaiementModal` + sudo
+  `can_cash_out`) et « Réimprimer » (export Excel du client/période).
+- Relevé PDF client (`releve` endpoint + `relevePdfDraft`) : colonne
+  « Société » ajoutée — même présentation que le relevé Excel.
+- Relevés Excel : encadrés pré-dessinés façon facture — bordures moyennes
+  sur le bloc relevé (haut droit), le bloc client, le tableau des
+  factures, la zone « montant en lettres » et le contour extérieur de la
+  feuille. **Fix** : l'en-tête du tableau n'avait pas la colonne
+  « Société » alors que les lignes si → décalage des colonnes corrigé.
+- Fichiers : `models/billing.py`, `views/ventes/creances.py`,
+  `creanceService.ts`, `Creances.tsx`, `RelevesExcelModal.tsx`,
+  `relevePdfDraft.ts`, locales `creances`/`printing` fr/en.
+- Tests : `test_creances.py` **39/39 verts** (transmission, listing,
+  règlement total/partiel, statuts, anciens regroupements, multi-factures
+  même client, rejets client incohérent/entrée invalide/facture hors
+  relevé) ; tsc + ESLint propres.
+- **Suivi des créances amélioré** :
+  - Facture : champs `delai_paiement_jours` (délai client) et
+    `releve_transmis` (référence du relevé émis ouvert) exposés par
+    `CreanceSerializer` (prefetch `open_releves` dans `get_queryset`) →
+    badge indigo « Transmis REL-… » sur les factures couvertes et badge
+    « En retard » par facture même sans délai pré-chargé.
+  - `releves_emis` **persiste** le statut recalculé (`bulk_update`) : le
+    statut stocké sert au badge « Transmis » et se resynchronise même
+    après un encaissement hors relevé. Réponse enrichie :
+    `delai_paiement_jours` + `jours_retard` (émission + délai dépassé).
+  - Onglet Règlements : badge rouge « Retard N j » + filtre « En retard »,
+    bouton « Relancer » (réutilise `RelanceModal`), montant du règlement
+    pré-rempli avec le reste à payer.
+- **Règlement des relevés = back-office, hors tiroir** : les paiements
+  rattachés à un relevé (releve_id / regroupement) sont exclus du
+  `total_theorique` du rapport de session caisse — virement, chèque ou
+  retenue n'apparaissent plus comme de l'argent attendu dans le tiroir.
+  Nouveau champ `total_recouvrement_bo` dans la réponse. Les recouvrements
+  comptoir (facture seule, sans relevé) restent comptés. La clôture les
+  excluait déjà.
+- **Mode « Retenue sur salaire »** : nouveau `mode_paiement` `retenue`
+  (`Caisse.MODES_PAIEMENT`), proposé dans la modale de règlement groupé,
+  libellé impression (`getModeLabel`), i18n fr/en. La modale relevé
+  pré-sélectionne désormais « Virement » (back-office par défaut).
+- **Transmission des relevés clarifiée** : un seul bouton « Générer +
+  envoyer en règlement » dans `RelevesExcelModal` (l'export transmet
+  toujours — plus de bouton Excel-seul), texte d'explication visible sous
+  le bouton, ligne d'aide en haut de l'onglet Règlements. Clés i18n
+  `generate`/`success` orphelines retirées (fr/en).
+- **Facturation masque les factures transmises** : param API
+  `exclude_transmis` (liste `GET /creances/`, `synthese_clients`, `aging`)
+  excluant les factures couvertes par un relevé EMIS/PARTIEL — utilisé par
+  tout l'onglet Facturation (liste, synthèse débiteurs, stats, export
+  Excel). Leur suivi se fait dans l'onglet Règlements.
+- **Anti-doublon de relevés** : `transmettre_releves` ignore les factures
+  déjà couvertes par un relevé ouvert — une retransmission à l'identique
+  ne crée plus de relevé ; une nouvelle facture donne un relevé ne
+  couvrant qu'elle. Test `test_transmettre_dedouble_reference` adapté.
+- **Onglet Règlements harmonisé avec Facturation** : barre de filtres
+  dans une carte blanche (même habillage que `CreancesFilters`), chips
+  arrondies `rounded-xl`, et rangée de 4 cartes stats façon
+  `CreancesQuickStats` (relevés émis, à encaisser, réglé, en retard).
+  Clés `reglements.stats.*` fr/en. Typographie des cellules alignée sur
+  `CreancesTable` : `text-sm` gras (montants non-mono), pill ardoise pour
+  le nb de factures, pill ambre pour le reste à payer.
+- **Créances — bascule « En attente / Historique » supprimée** : l'onglet
+  Facturation n'affiche plus que les créances en cours (retrait de
+  `showHistory` dans `useCreancesData`, `CreancesFilters`, `CreancesTable`,
+  `Creances.tsx`, `creanceService`/`useCreanceActions`, clé i18n
+  `history_toggle`). Le param `history` de `GET /creances/` reste dispo côté
+  API si besoin.
+- **Fix impression ticket** (`services/qzPrinter.ts`) : après une première
+  connexion QZ Tray réussie, `connectionPromise` restait résolue à vie —
+  si la socket mourait ensuite (redémarrage QZ, veille), plus aucune
+  reconnexion n'était tentée et `qz.print()` sur socket morte pouvait
+  pendre indéfiniment → ticket jamais imprimé, sans fallback. Correctifs :
+  promesse remise à `null` après succès, callbacks close/error logués,
+  timeouts 15 s (connexion) / 10 s (print) — au-delà, rejet → le fallback
+  aperçu/impression navigateur se déclenche toujours.
+
 ## 2026-11-16 — UX : sélecteur de caisse de destination (vente centralisée)
 
 - `PaymentModal` (facturation) : le choix « Envoyer vers (poste de caisse) »
@@ -114,8 +246,10 @@
 - **Montant en lettres** sous le total : « Arrêté le présent relevé à la
   somme de : … Francs CFA » via `number_to_french` (reste à payer, comme
   `total_lettres` des factures).
+- **Colonne « Société »** dans le relevé par client (et l'export créances
+  multi-clients) : `ayant_droit.societe`, insérée après « Bénéficiaire ».
 - Nouvelles clés `utils_doclang` fr/en (`cre_releve_num`, `cre_lbl_period`,
-  `cre_period_*_v`, `cre_client_lbl`, `cre_amount_words`).
+  `cre_period_*_v`, `cre_client_lbl`, `cre_amount_words`, `cre_col_societe`).
 - Fichiers : `views/ventes/creances.py`, `utils_doclang.py`.
   Tests `test_creances.py` : 29/29 verts.
 

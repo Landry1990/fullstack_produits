@@ -9,6 +9,7 @@ interface ReleveCreance {
     numero_facture: string;
     date: string;
     ayant_droit?: string | null;
+    societe?: string | null;
     montant_total: number | string;
     montant_paye: number | string;
     reste_a_payer: number | string;
@@ -171,7 +172,8 @@ export function generateRelevePdfDraft(data: RelevePdfData): jsPDF {
             doc.setFontSize(8);
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(0, 0, 0);
-            doc.text(`${fmtDate(creance.date)}  ${creance.numero_facture || '-'}  ${creance.ayant_droit ? creance.ayant_droit.toUpperCase() : '-'}`, margin + 3, currentY + 5);
+            const benefSociete = [creance.ayant_droit, creance.societe].filter(Boolean).join(' — ').toUpperCase() || '-';
+            doc.text(`${fmtDate(creance.date)}  ${creance.numero_facture || '-'}  ${benefSociete}`, margin + 3, currentY + 5);
             doc.text(`${docT('releve.ttc')} ${fmt(creance.montant_total)}  ${docT('releve.paid')} ${fmt(creance.montant_paye)}  ${docT('releve.remaining')} ${fmt(creance.reste_a_payer)}`, pageWidth - margin - 3, currentY + 5, { align: 'right' });
             currentY += 7;
 
@@ -245,6 +247,7 @@ export function generateRelevePdfDraft(data: RelevePdfData): jsPDF {
             fmtDate(c.date),
             c.numero_facture || '-',
             c.ayant_droit ? c.ayant_droit.toUpperCase() : '-',
+            c.societe ? c.societe.toUpperCase() : '-',
             fmt(c.montant_total),
             fmt(c.montant_paye),
             fmt(c.reste_a_payer),
@@ -252,7 +255,7 @@ export function generateRelevePdfDraft(data: RelevePdfData): jsPDF {
 
         autoTable(doc, {
             startY: tableStartY,
-            head: [[docT('releve.col_date'), docT('releve.col_invoice_num'), docT('releve.col_beneficiary'), docT('releve.col_total_ttc'), docT('releve.col_paid'), docT('releve.col_remaining')]],
+            head: [[docT('releve.col_date'), docT('releve.col_invoice_num'), docT('releve.col_beneficiary'), docT('releve.col_societe'), docT('releve.col_total_ttc'), docT('releve.col_paid'), docT('releve.col_remaining')]],
             body: rows,
             theme: 'plain',
             headStyles: {
@@ -269,12 +272,13 @@ export function generateRelevePdfDraft(data: RelevePdfData): jsPDF {
             },
             alternateRowStyles: { fillColor: [255, 255, 255] },
             columnStyles: {
-                0: { cellWidth: 22 },
-                1: { cellWidth: 28 },
+                0: { cellWidth: 20 },
+                1: { cellWidth: 26 },
                 2: { cellWidth: 'auto' },
-                3: { cellWidth: 28, halign: 'right' },
-                4: { cellWidth: 25, halign: 'right' },
-                5: { cellWidth: 25, halign: 'right', fontStyle: 'normal' },
+                3: { cellWidth: 'auto' },
+                4: { cellWidth: 26, halign: 'right' },
+                5: { cellWidth: 23, halign: 'right' },
+                6: { cellWidth: 23, halign: 'right', fontStyle: 'normal' },
             },
             margin: { left: margin, right: margin },
             didDrawPage: (hookData) => {

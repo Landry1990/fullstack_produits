@@ -114,7 +114,9 @@ export function getModeLabel(mode: string): string {
     om: 'common:payment_modes.orange_money',
     momo: 'common:payment_modes.mobile_money',
     coupon: 'common:payment_modes.coupon',
-    en_compte: 'common:payment_modes.recouvrement'
+    en_compte: 'common:payment_modes.recouvrement',
+    recouvrement: 'common:payment_modes.recouvrement',
+    retenue: 'common:payment_modes.retenue'
   };
 
   const key = keys[mode];
