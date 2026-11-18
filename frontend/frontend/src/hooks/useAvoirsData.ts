@@ -4,6 +4,7 @@ import { gooeyToast } from 'goey-toast';
 import { useDebounce } from 'use-debounce';
 import { useLocation } from 'react-router-dom';
 import type { Fournisseur, ProduitModel, Avoir, LigneAvoir, StockLot, SudoState, SudoOptions, PaginatedResponse } from '../types';
+import { getProduitId } from '../types/inventory';
 import { useSudo } from './useSudo';
 import { useConfirm } from './useConfirm';
 import avoirService from '../services/avoirService';
@@ -347,7 +348,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
             await api.post('ligne-avoirs/bulk_create/', {
                 items: lignes.map(ligne => ({
                     avoir: avoirId,
-                    produit: typeof ligne.produit === 'object' ? ligne.produit.id : ligne.produit,
+                    produit: getProduitId(ligne.produit),
                     stock_lot: ligne.stock_lot || null,
                     quantity: ligne.quantity,
                     price: ligne.price,
@@ -568,7 +569,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
 
     // --- Line Building functions ---
     const selectProduct = (product: ProduitModel) => {
-        const existing = lignes.find(l => (typeof l.produit === 'object' ? l.produit.id : l.produit) === product.id);
+        const existing = lignes.find(l => getProduitId(l.produit) === product.id);
         if (existing) {
             gooeyToast.error(t('avoirs.toasts.product_exists'));
             return;
@@ -629,7 +630,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
     const handleOpenLotModal = async (lineIndex: number) => {
         const line = lignes[lineIndex];
         if (!line) return;
-        const produitId = typeof line.produit === 'object' ? line.produit.id : line.produit;
+        const produitId = getProduitId(line.produit);
 
         setLotModal({ open: true, lineIndex, produitId });
         setLoadingLots(true);

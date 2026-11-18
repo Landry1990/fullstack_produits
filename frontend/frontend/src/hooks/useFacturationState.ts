@@ -4,7 +4,7 @@ import { gooeyToast } from 'goey-toast'
 import { useQueryClient } from '@tanstack/react-query'
 import type { ProduitModel, Facture, LigneFacture, PaginatedResponse } from '../types'
 import type { SaleCompletionResult } from '../types/finance'
-import { getProduitId } from '../types/inventory'
+import { getProduitId, getProduitObject } from '../types/inventory'
 import { useProductSearch } from './useProductSearch'
 import { useDatamatrixScan } from './useDatamatrixScan'
 import { useCart } from './useCart'
@@ -218,7 +218,10 @@ export function useFacturationState() {
     // 2. Charger les produits avec le stock réintégré (1 seule requête bulk)
     if (invoice.produits && invoice.produits.length > 0) {
       const missingIds = invoice.produits
-        .filter((p) => !(typeof p.produit === 'object' && p.produit !== null && 'stock' in p.produit))
+        .filter((p) => {
+          const prodObj = getProduitObject(p.produit)
+          return !(prodObj && 'stock' in prodObj)
+        })
         .map((p) => getProduitId(p.produit))
 
       const productMap = new Map<number, ProduitModel>()
@@ -231,8 +234,9 @@ export function useFacturationState() {
 
       const lignes: LigneFacture[] = invoice.produits.map((p) => {
         let produitData: ProduitModel
-        if (typeof p.produit === 'object' && p.produit !== null && 'stock' in p.produit) {
-          produitData = p.produit as ProduitModel
+        const prodObj = getProduitObject(p.produit)
+        if (prodObj && 'stock' in prodObj) {
+          produitData = prodObj
         } else {
           const produitId = getProduitId(p.produit)
           produitData = productMap.get(produitId) || {

@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { getApiErrorDetail } from '../utils/errorHandling';
 import type { Commande, CommandeProduit, User, PaginatedResponse } from '../types';
+import { getProduitId } from '../types/inventory';
 import commandeService, { type SudoCredentials, type AnnulerReceptionPayload, type TransformationDisponible } from '../services/commandeService';
 import { logger } from '../utils/logger';
 import { buildReceptionPrintHtml, writePrintDocument, type ReceptionGroupBy } from '../utils/print/printHelpers';
@@ -129,7 +130,7 @@ export function useCommandeActions({
 
                 return {
                     id: p.id && typeof p.id === 'number' && p.id < 1000000000 ? p.id : undefined,
-                    produit: typeof p.produit === 'object' ? p.produit.id : p.produit,
+                    produit: getProduitId(p.produit),
                     quantity: parseInt(String(p.quantity || 0)) || 0,
                     unites_gratuites: parseInt(String(p.unites_gratuites || 0)) || 0,
                     price: parseAndFormat(p.price),

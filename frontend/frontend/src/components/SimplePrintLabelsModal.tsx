@@ -13,6 +13,8 @@ import { Badge } from './shadcn/badge'
 import { EmptyState } from './ui/EmptyState'
 import { usePharmacySettings } from '../hooks/usePharmacySettings'
 import type { Commande, ProduitModel } from '../types'
+import { getProduitId, getProduitObject } from '../types/inventory'
+import { dateToMMYY } from '../utils/expiry'
 
 /* ═══════════════════════════════════════════
    TYPES
@@ -115,11 +117,7 @@ function loadFormat(): '40x20' | '30x15' {
 const PRODUCT_MODE_HIDDEN_FIELDS = new Set(['orderNumber', 'invoiceNumber'])
 
 function toMMYY(raw: string | null | undefined): string {
-  if (!raw) return ''
-  if (/^\d{2}\/\d{2}$/.test(raw)) return raw
-  const d = new Date(raw)
-  if (isNaN(d.getTime())) return raw
-  return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`
+  return dateToMMYY(raw)
 }
 
 function toShortDate(raw: string | null | undefined, locale: string): string {
@@ -581,9 +579,8 @@ export default function SimplePrintLabelsModal({
       : commande.produits
 
     for (const item of commandeProduits) {
-      const isObj = item.produit && typeof item.produit === 'object'
-      const produitObj = isObj ? (item.produit as ProduitModel) : null
-      const produitId = isObj ? produitObj!.id : (item.produit as number)
+      const produitObj = getProduitObject(item.produit)
+      const produitId = getProduitId(item.produit)
 
       // Resolve product data
       const resolved = produitObj || produitsMap.get(produitId)

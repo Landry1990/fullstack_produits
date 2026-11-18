@@ -2,6 +2,7 @@
 import type { Ref } from 'react';
 import Barcode from 'react-barcode';
 import type { TicketCaisse, PharmacySettings, FactureProduit, PaymentDetails } from '../../types';
+import { isProduitObject } from '../../types/inventory';
 import { formatNumber } from '../../utils/formatters';
 import { useTranslation } from 'react-i18next';
 import { useDocumentLocale } from '../../context/PharmacySettingsContext';
@@ -31,7 +32,7 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
 
   const getProductName = (p: FactureProduit) => {
     if (!p) return t('ticket.unknown_article');
-    if (typeof p.produit === 'object') return p.produit.name;
+    if (isProduitObject(p.produit)) return p.produit.name;
     return p.produit_nom || `${t('ticket.product')} #${p.produit || '?'}`;
   };
 

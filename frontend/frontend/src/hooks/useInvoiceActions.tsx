@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useTranslation } from 'react-i18next';
 import { gooeyToast } from 'goey-toast';
-import type { Facture, TicketCaisse, Client, FactureProduit, Paiement, PaymentDetails } from '../types';
+import type { Facture, TicketCaisse, Client, FactureProduit, Paiement } from '../types';
 import { safeStorage } from '../utils/storage';
-import { PAYMENT_MODES } from '../config/paymentModes';
+import { buildTicketCaisse } from '../utils/ticketCaisse';
 import { logger } from '../utils/logger'
 
 interface UseInvoiceActionsProps {
@@ -166,62 +166,20 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
         // Construire l'objet TicketCaisse
         // Note: On reconstruit un ticket approximatif car l'original n'est pas toujours persisté
         // ou accessible directement ici sans endpoint dédié.
-        
-        // Déterminer le mode de paiement principal
-        let modePaiement: TicketCaisse['mode_paiement'] = 'especes'; // Defaut
         const paiements = fullFacture.paiements as unknown as Paiement[] | undefined;
-        if (paiements && paiements.length > 0) {
-            const pm = paiements[0].mode_paiement;
-             if (PAYMENT_MODES.some(m => m.value === pm)) {
-                 modePaiement = pm as TicketCaisse['mode_paiement'];
-             } else {
-                 modePaiement = 'Mixte'; // Ou autre logique
-             }
-             if (paiements.length > 1) modePaiement = 'Mixte';
-        }
+        const paymentUser = paiements?.[0]?.user_details;
 
-        // Priorité: client_name_override > client_name > nom du client > 'Client de passage'
-        const clientNameForTicket = fullFacture.client_name_override 
-            || fullFacture.client_name 
-            || (typeof fullFacture.client === 'object' ? (fullFacture.client as Client).name : undefined) 
-            || t('common:passerby_client');
-        
-        const ticket: TicketCaisse = {
-            id: fullFacture.session_ticket_number || fullFacture.id,
-            facture: fullFacture,
-            facture_numero: fullFacture.numero_facture || undefined,
-            client_name: clientNameForTicket,
-            mode_paiement: modePaiement,
-            montant: fullFacture.total_ttc,
-            statut: 'completee',
-            date_paiement: paiements?.[0]?.date_paiement || fullFacture.date,
-            montant_verse: fullFacture.montant_verse || fullFacture.total_ttc,
-            rendu: fullFacture.montant_rendu || '0',
-            reference: null,
-            is_duplicate: true,
-            user_details: (() => {
-                const paymentUser = paiements?.[0]?.user_details;
-                if (paymentUser) {
-                    return {
-                        id: paymentUser.id,
-                        username: paymentUser.full_name || paymentUser.username || '?'
-                    };
-                }
-                return {
-                    id: 0,
-                    username: fullFacture.created_by_name || '?'
-                };
-            })(),
-            // Les paiements bruts de la facture utilisent le champ `mode_paiement` (modèle Paiement),
-            // alors que PaymentDetails/TicketTemplate attendent `mode` : on mappe explicitement pour
-            // éviter que le ticket affiche "[N/A]" (le cast direct ne fait pas cette conversion).
-            paiements_details: (paiements || []).map((p): PaymentDetails => ({
-                mode: p.mode_paiement,
-                montant: Number(p.montant),
-                part_patient: p.part_patient != null ? Number(p.part_patient) : null,
-                part_assurance: p.part_assurance != null ? Number(p.part_assurance) : null,
-            }))
-        };
+        const ticket = buildTicketCaisse(fullFacture, {
+            ticketId: fullFacture.session_ticket_number || fullFacture.id,
+            fallbackClientName: t('common:passerby_client'),
+            // Priorité: client_name_override > client_name > nom du client > 'Client de passage'
+            extraClientNames: [typeof fullFacture.client === 'object' ? (fullFacture.client as Client).name : undefined],
+            datePaiement: paiements?.[0]?.date_paiement || fullFacture.date,
+            isDuplicate: true,
+            userDetails: paymentUser
+                ? { id: paymentUser.id, username: paymentUser.full_name || paymentUser.username || '?' }
+                : { id: 0, username: fullFacture.created_by_name || '?' },
+        });
 
         setSelectedTicket(ticket);
         setShowTicketModal(true);

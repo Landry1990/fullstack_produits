@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Package } from 'lucide-react';
 import api from '../../services/api';
 import type { CommandeProduit, ProduitModel, Commande } from '../../types';
+import { getProduitId } from '../../types/inventory';
 import { usePharmacySettings } from '../../context/PharmacySettingsContext';
 import { Checkbox } from '../shadcn/checkbox';
 import { Table, TableHeader, TableBody, TableHead, TableRow } from '../shadcn/table';
@@ -71,7 +72,7 @@ export default function CommandeProductTable({
     // clôturées) — signale en ligne quand un autre fournisseur l'a moins cher.
     const [cheaperMap, setCheaperMap] = useState<Map<number, { fournisseur_id: number; fournisseur_name: string; price: number }>>(new Map());
     const idsKey = commandeProduits
-        .map(p => (typeof p.produit === 'object' ? p.produit?.id : p.produit) ?? 0)
+        .map(p => (p.produit ? getProduitId(p.produit) : 0))
         .filter(Boolean)
         .join(',');
     useEffect(() => {
@@ -101,7 +102,7 @@ export default function CommandeProductTable({
 
     // Un autre fournisseur l'a moins cher que le prix saisi ?
     const cheaperFor = (p: CommandeProduit) => {
-        const prodId = typeof p.produit === 'object' ? p.produit?.id : p.produit;
+        const prodId = getProduitId(p.produit);
         const cs = prodId ? cheaperMap.get(prodId) : undefined;
         if (!cs || !(cs.price < Number(p.price || 0))) return null;
         if (cs.fournisseur_id && selectedCommande?.fournisseur && cs.fournisseur_id === selectedCommande.fournisseur) return null;
@@ -125,8 +126,7 @@ export default function CommandeProductTable({
                 const rowIdx = parseInt(target.getAttribute('data-row')!, 10);
                 const p = commandeProduits[rowIdx];
                 if (!p) return;
-                const isObjectProduit = p.produit && typeof p.produit === 'object';
-                const produitId = isObjectProduit ? (p.produit as { id: number }).id : p.produit;
+                const produitId = getProduitId(p.produit);
                 if (produitId) {
                     e.preventDefault();
                     e.stopPropagation();
@@ -194,7 +194,7 @@ export default function CommandeProductTable({
 
                         <TableBody>
                             {commandeProduits.map((p, index) => (
-                                <React.Fragment key={p.id || (typeof p.produit === 'object' ? p.produit.id : p.produit) || `row-${p.produit_cip}-${p.produit_nom}`}>
+                                <React.Fragment key={p.id || getProduitId(p.produit) || `row-${p.produit_cip}-${p.produit_nom}`}>
                                     <CommandeProductRow
                                         p={p}
                                         index={index}
@@ -217,7 +217,7 @@ export default function CommandeProductTable({
                                         onDeleteProduct={() => setProductToDelete(index)}
                                         onDuplicateProduct={onDuplicateProduct ? () => onDuplicateProduct(index) : undefined}
                                         onEditProduct={(() => {
-                                            const produitId = p.produit && typeof p.produit === 'object' ? p.produit.id : p.produit;
+                                            const produitId = getProduitId(p.produit);
                                             return onEditProduct && produitId ? () => onEditProduct(produitId as number) : undefined;
                                         })()}
                                     />

@@ -6,6 +6,8 @@ import { LockBanner } from '../common/LockBanner';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Pencil, Pause, Play, Check, Printer, Trash2, Tag, RotateCcw, Package, Search, X, Loader2, ChevronDown, Eye, EyeOff, MoreVertical } from 'lucide-react';
 import type { Commande, CommandeProduit, Fournisseur, ProduitModel } from '../../types';
+import { getProduitId, getProduitObject } from '../../types/inventory';
+import { dateToMMYY } from '../../utils/expiry';
 import type { ReceptionGroupBy } from '../../utils/print/printHelpers';
 import { formatCurrency, normalizeNumberInput } from '../../utils/formatters';
 import { formatDate } from '../../utils/dateUtils';
@@ -203,7 +205,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
 
   const startLotEdit = useCallback((p: unknown) => {
     setEditingLotId(p.id);
-    const produitId = typeof p.produit === 'object' ? p.produit?.id : p.produit;
+    const produitId = getProduitId(p.produit);
     setEditLotValues({
       lot: p.lot || '',
       date_expiration: p.date_expiration ? String(p.date_expiration).slice(0, 10) : '',
@@ -251,7 +253,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
     const q = searchDetailQuery.toLowerCase();
     return [...(localProduits || [])]
       .flatMap((p, originalIndex) => {
-        const produitData = (typeof p.produit === 'object') ? p.produit : produitsList.find(prod => prod.id === p.produit);
+        const produitData = getProduitObject(p.produit) ?? produitsList.find(prod => prod.id === p.produit);
         const produitName = (p as unknown).produit_nom || (produitData?.name || t('orders:product_table.unknown_product_id', { id: p.produit }));
         const cip = (p as unknown).produit_cip || produitData?.cip1 || '-';
         const enriched = { ...p, produitName, cip, originalIndex };
@@ -617,7 +619,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
 
                 {displayedProduits.map((p) => {
 
-                    const produitData = (typeof p.produit === 'object') ? p.produit : produitsList.find(prod => prod.id === p.produit);
+                    const produitData = getProduitObject(p.produit) ?? produitsList.find(prod => prod.id === p.produit);
 
                     const stock = produitData?.stock ?? ((p as unknown).produit_stock ?? '-');
 
@@ -695,7 +697,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
                               value={editLotValues.date_expiration}
                               onChange={e => setEditLotValues(v => ({ ...v, date_expiration: e.target.value }))}
                             />
-                          ) : (p.date_expiration ? (() => { const d = new Date(p.date_expiration); return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`; })() : '')}
+                          ) : dateToMMYY(p.date_expiration)}
                         </TableCell>
                         <TableCell className="px-3 py-2 text-right font-semibold text-emerald-600">{formatCurrency(normalizeNumberInput(p.quantity) * normalizeNumberInput(p.price))}</TableCell>
                         {selectedCommande.status === 'CLOT' && (

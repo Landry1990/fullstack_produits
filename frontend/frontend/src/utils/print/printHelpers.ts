@@ -5,6 +5,7 @@ import { formatNumber } from '../formatters';
 import { logger } from '../logger';
 import { getDocumentLanguage, getDocumentLocale } from '../documentLang';
 import type { Commande, CommandeProduit } from '../../types';
+import { getProduitId, getProduitName } from '../../types/inventory';
 
 /**
  * Utilitaires d'assistance pour l'impression
@@ -462,7 +463,7 @@ export function buildReceptionPrintHtml(commande: Commande, companyInfo: { name?
   const dateImpression = new Date().toLocaleDateString(docLocale, { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + new Date().toLocaleTimeString(docLocale, { hour: '2-digit', minute: '2-digit' });
   const cloturePar = escHtml(commande.closed_by_name || docT('reception.system_admin'));
 
-  const nomOf = (p: CommandeProduit) => p.produit_nom || (typeof p.produit === 'object' ? p.produit.name : '') || '';
+  const nomOf = (p: CommandeProduit) => p.produit_nom || getProduitName(p.produit) || '';
 
   const rowFor = (p: CommandeProduit) => {
     const nom = escHtml(nomOf(p) || docT('reception.product_fallback', { id: p.produit }));
@@ -470,7 +471,7 @@ export function buildReceptionPrintHtml(commande: Commande, companyInfo: { name?
     const exp = p.date_expiration ? new Date(p.date_expiration).toLocaleDateString(docLocale, { month: '2-digit', year: 'numeric' }).replace('/', '/') : '';
     // On affiche l'ID produit (court) plutôt que le CIP1 (13 chiffres)
     // qui débordait sur la colonne « Stock avant ».
-    const productId = typeof p.produit === 'object' && p.produit !== null ? p.produit.id : p.produit;
+    const productId = getProduitId(p.produit);
     const cip = escHtml(String(productId ?? ''));
     const qty = p.quantity || 0;
     const free = p.unites_gratuites || 0;

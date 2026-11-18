@@ -6,6 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCommandesState } from '../hooks/useCommandesState';
 import { useCommandesStore } from '../stores/useCommandesStore';
 import type { Commande, ProduitModel } from '../types';
+import { getProduitId, isProduitObject } from '../types/inventory';
 import { ShoppingCart, Store, Truck } from 'lucide-react';
 import { Button } from './shadcn/button';
 import { Badge } from './shadcn/badge';
@@ -214,11 +215,11 @@ export default function Commandes({ forcedType, embedded }: CommandesProps) {
               // Met à jour la ligne de commande concernée sans recharger la page
               setCommandeProduits((prev) =>
                 prev.map((line) => {
-                  const lineProduitId = line.produit && typeof line.produit === 'object' ? line.produit.id : line.produit;
+                  const lineProduitId = getProduitId(line.produit);
                   if (lineProduitId !== updatedProduit.id) return line;
                   return {
                     ...line,
-                    produit: typeof line.produit === 'object' ? { ...line.produit, ...updatedProduit } : updatedProduit,
+                    produit: isProduitObject(line.produit) ? { ...line.produit, ...updatedProduit } : updatedProduit,
                   };
                 })
               );

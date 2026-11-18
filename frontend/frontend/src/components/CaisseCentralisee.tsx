@@ -290,8 +290,7 @@ const _navigate = useNavigate()
     setShowTicketPreview,
     fetchFacturesEnAttente,
     fetchSessionRecap,
-    fetchCoupons,
-    onSuccess: () => gooeyToast.success(t('messages.modification_success'))
+    fetchCoupons
   })
 
   // Wrapper pour adapter la signature au PaymentModal

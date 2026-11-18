@@ -10,6 +10,8 @@ import { logger } from '../../utils/logger';
 import commandeService from '../../services/commandeService';
 import produitService from '../../services/produitService';
 import type { Commande, CommandeProduit, Fournisseur, PharmacySettings, ProduitModel } from '../../types';
+import { getProduitId, getProduitObject } from '../../types/inventory';
+import { dateToMMYY } from '../../utils/expiry';
 
 interface UseCommandeNavigationOptions {
   forcedType?: 'LOC' | 'DIR' | 'DIV';
@@ -26,15 +28,6 @@ interface UseCommandeNavigationReturn {
   handleViewDetails: (commande: Commande) => Promise<void>;
   handleBackToList: () => void;
   handleApplySuggestions: (newLines: CommandeProduit[], supplierId: string) => void;
-}
-
-function formatDateToMMYY(isoDate: string | null | undefined): string {
-  if (!isoDate) return '';
-  const parts = isoDate.split('-');
-  if (parts.length === 3) {
-    return `${parts[1]}/${parts[0].slice(-2)}`;
-  }
-  return '';
 }
 
 export function useCommandeNavigation({
@@ -214,10 +207,10 @@ export function useCommandeNavigation({
         setCommandeProduits(newLines);
 
         const firstWithFournisseur = newLines.find(
-          (l) => l.produit && typeof l.produit === 'object' && (l.produit as ProduitModel).fournisseur
+          (l) => getProduitObject(l.produit)?.fournisseur
         );
         if (firstWithFournisseur) {
-          const fId = (firstWithFournisseur.produit as ProduitModel).fournisseur;
+          const fId = getProduitObject(firstWithFournisseur.produit)?.fournisseur;
           setNewCommandeFournisseurId(String(fId));
         }
 
@@ -293,7 +286,7 @@ export function useCommandeNavigation({
     try {
       const response = await produitService.getByIds(
         commande.produits
-          .map((p) => (typeof p.produit === 'object' ? p.produit?.id : p.produit))
+          .map((p) => getProduitId(p.produit))
           .filter((id): id is number => id != null)
       );
       freshProduitsList = response;
@@ -304,7 +297,7 @@ export function useCommandeNavigation({
     const productById = new Map(freshProduitsList.map((p) => [p.id, p]));
 
     const enrichedProducts = commande.produits.map((p) => {
-      const produitObj = typeof p.produit === 'object' ? p.produit : null;
+      const produitObj = getProduitObject(p.produit);
       const produitId = produitObj ? produitObj.id : p.produit;
       const fullProduct = produitId ? productById.get(produitId) : null;
 
@@ -333,7 +326,7 @@ export function useCommandeNavigation({
         tva: p.tva || (fullProduct?.tva || '0'),
         marge: String(normalizeNumberInput(tauxMarge)),
         lot: p.lot || '',
-        date_expiration: formatDateToMMYY(p.date_expiration || ''),
+        date_expiration: dateToMMYY(p.date_expiration || ''),
       };
     });
 

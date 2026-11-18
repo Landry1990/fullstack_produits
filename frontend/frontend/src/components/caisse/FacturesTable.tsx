@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Package, Minus, Plus, Trash2, Pencil, XCircle, Ticket, Banknote, Inbox } from 'lucide-react'
 import type { Facture, FactureProduit, CouponMonnaie } from '../../types'
+import { isProduitObject } from '../../types/inventory'
 import {
   Dialog,
   DialogContent,
@@ -161,7 +162,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
 
   // Helper to get product display name
   const getProductName = (p: FactureProduitRow): string => {
-    if (typeof p.produit === 'object' && p.produit !== null) {
+    if (isProduitObject(p.produit)) {
       return p.produit.name || `#${p.produit.id}`
     }
     if (p.produit_name) return p.produit_name

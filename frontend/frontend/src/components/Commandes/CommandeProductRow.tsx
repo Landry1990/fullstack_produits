@@ -7,6 +7,8 @@ import { Input } from '../shadcn/input';
 import { Checkbox } from '../shadcn/checkbox';
 import { TableRow, TableCell } from '../shadcn/table';
 import { normalizeNumberInput, formatCurrency } from '../../utils/formatters';
+import { isExpiryMMYYExpired } from '../../utils/parseDataMatrix';
+import { gooeyToast } from 'goey-toast';
 import {
     type FieldConfig,
     type FieldType,
@@ -384,10 +386,13 @@ export function CommandeProductRow({
                         onBlur={(e) => {
                             const finalized = finalizeExpiryMMYY(e.target.value);
                             updateCommandeProduitField(index, 'date_expiration', finalized);
+                            if (isExpiryMMYYExpired(finalized)) {
+                                gooeyToast.error(t('orders:product_table.expired_product'));
+                            }
                         }}
                         onKeyDown={(e) => handleTableFieldKeyDown(e, index, (commandeType === 'DIR' ? 8 : 7))}
                         onFocus={handleSelectAll}
-                        className={`h-8 px-2 text-xs font-medium w-full focus:bg-white ${!fieldsConfig[7].editable ? 'bg-slate-100 cursor-not-allowed' : ''} ${p.date_expiration && !/^(0[1-9]|1[0-2])\/\d{2}$/.test(p.date_expiration) ? 'border-red-500 text-red-600' : ''}`}
+                        className={`h-8 px-2 text-xs font-medium w-full focus:bg-white ${!fieldsConfig[7].editable ? 'bg-slate-100 cursor-not-allowed' : ''} ${p.date_expiration && (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(p.date_expiration) || isExpiryMMYYExpired(p.date_expiration)) ? 'border-red-500 text-red-600' : ''}`}
                         placeholder={t('orders:product_table.expiry_placeholder')}
                         maxLength={5}
                         autoFocus={focusedField?.row === index && focusedField?.field === 7}

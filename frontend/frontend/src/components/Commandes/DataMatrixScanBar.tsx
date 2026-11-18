@@ -69,14 +69,22 @@ export default function DataMatrixScanBar({
 
         switch (result.status) {
             case 'filled':
-                showFeedback({
-                    type: 'success',
-                    message: t('orders:data_matrix_scanner.filled', {
-                        cip: result.cip,
-                        lot: result.lot || '—',
-                        date: result.date || '—',
-                    }),
-                });
+                showFeedback(
+                    result.expired
+                        ? {
+                            type: 'warning',
+                            message: t('orders:product_table.expired_product'),
+                        }
+                        : {
+                            type: 'success',
+                            message: t('orders:data_matrix_scanner.filled', {
+                                cip: result.cip,
+                                lot: result.lot || '—',
+                                date: result.date || '—',
+                            }),
+                        },
+                    result.expired ? 6000 : 4000,
+                );
                 break;
             case 'already_filled':
                 showFeedback({

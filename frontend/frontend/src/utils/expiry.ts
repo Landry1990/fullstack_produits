@@ -21,3 +21,18 @@ export const isLotExpired = (dateExpiration?: string | null, cutoff?: string): b
     if (!dateExpiration) return false;
     return new Date(dateExpiration) < expiredBeforeDate(cutoff);
 };
+
+/**
+ * Convertit une date vers le format saisie MM/YY.
+ * Accepte "MM/YY" (inchangé), "YYYY-MM-DD" / ISO (split texte, pas de
+ * décalage fuseau) et tout format Date-parsable. '' si non convertible.
+ */
+export const dateToMMYY = (raw: string | null | undefined): string => {
+    if (!raw) return '';
+    if (/^\d{2}\/\d{2}$/.test(raw)) return raw;
+    const iso = raw.match(/^(\d{4})-(\d{2})(?:-(\d{2}))?/);
+    if (iso) return `${iso[2]}/${iso[1].slice(-2)}`;
+    const d = new Date(raw);
+    if (isNaN(d.getTime())) return '';
+    return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`;
+};

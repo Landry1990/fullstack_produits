@@ -27,6 +27,11 @@ export function isProduitObject(produit: number | ProduitModel | undefined | nul
     return typeof produit === 'object' && produit !== null && 'id' in produit;
 }
 
+/** Déplie l'union `number | ProduitModel` — retourne l'objet ou null (id / null / supprimé). */
+export function getProduitObject(produit: number | ProduitModel | undefined | null): ProduitModel | null {
+    return isProduitObject(produit) ? produit : null;
+}
+
 export function getProduitId(produit: number | ProduitModel): number {
     if (isProduitObject(produit)) return produit.id;
     return produit;

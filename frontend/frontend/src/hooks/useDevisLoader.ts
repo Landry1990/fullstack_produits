@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { safeStorage } from '../utils/storage'
 import { generateUUID } from '../utils/uuid'
 import type { ProduitModel, Facture, FactureProduit, LigneFacture, StockLot } from '../types'
+import { getProduitId, getProduitObject } from '../types/inventory'
 
 interface DevisProduit extends FactureProduit {
     stock_lot?: number | string | null
@@ -66,8 +67,8 @@ export function useDevisLoader({ clientsHook, cart, ui, isPosteActive = true }: 
                 if (devis.produits && devis.produits.length > 0) {
                     const devisProduits = devis.produits as DevisProduit[]
                     const missingIds = devisProduits
-                        .filter((p) => !(typeof p.produit === 'object' && p.produit.stock !== undefined))
-                        .map((p) => typeof p.produit === 'object' ? p.produit.id : p.produit)
+                        .filter((p) => getProduitObject(p.produit)?.stock === undefined)
+                        .map((p) => getProduitId(p.produit))
 
                     const productMap = new Map<number, ProduitModel>()
                     if (missingIds.length > 0) {
@@ -92,13 +93,14 @@ export function useDevisLoader({ clientsHook, cart, ui, isPosteActive = true }: 
                         }
                         productMap.forEach(collectLots)
                         devisProduits.forEach((p) => {
-                            if (typeof p.produit === 'object') collectLots(p.produit as ProduitModel)
+                            const prodObj = getProduitObject(p.produit)
+                            if (prodObj) collectLots(prodObj)
                         })
 
                         const pidsToFetch = new Set<number>()
                         devisProduits.forEach((p) => {
                             if (!p.stock_lot || lotsById.has(Number(p.stock_lot))) return
-                            const pid = typeof p.produit === 'object' ? p.produit.id : p.produit
+                            const pid = getProduitId(p.produit)
                             if (pid) pidsToFetch.add(pid)
                         })
                         if (pidsToFetch.size > 0) {
@@ -115,10 +117,11 @@ export function useDevisLoader({ clientsHook, cart, ui, isPosteActive = true }: 
                     const droppedLots: string[] = []
                     const lignes: LigneFacture[] = devisProduits.map((p) => {
                         let produitData: ProduitModel
-                        if (typeof p.produit === 'object' && p.produit.stock !== undefined) {
-                            produitData = p.produit
+                        const prodObj = getProduitObject(p.produit)
+                        if (prodObj && prodObj.stock !== undefined) {
+                            produitData = prodObj
                         } else {
-                            const produitId = typeof p.produit === 'object' ? p.produit.id : p.produit
+                            const produitId = getProduitId(p.produit)
                             produitData = productMap.get(produitId) || { id: produitId, name: p.produit_nom || t('messages.product_fallback_name', { id: produitId }), stock: 0, is_deleted: true } as ProduitModel
                         }
                         const stockLotId = !isDevis && p.stock_lot ? Number(p.stock_lot) : null

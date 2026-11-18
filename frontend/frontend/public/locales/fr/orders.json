@@ -349,6 +349,7 @@
         "max": "Max",
         "search_placeholder": "Rechercher un produit...",
         "expiry_placeholder": "MM/YY",
+        "expired_product": "Produit déjà périmé",
         "sort_options": {
             "chrono": "Chronologie",
             "stock": "Qté en stock",

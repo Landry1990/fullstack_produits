@@ -20,6 +20,7 @@ import {
 import { usePharmacySettings } from '../../hooks/usePharmacySettings';
 import { getCaissePaymentModes, getPaymentModeLabel } from '../../config/paymentModes';
 import type { ClientCredit, ClientCreditFilters } from '../../types';
+import { getProduitId, getProduitName } from '../../types/inventory';
 import { motion, AnimatePresence } from 'framer-motion';
 import { fadeInUp, tabContent } from '../../lib/motion';
 
@@ -192,7 +193,7 @@ export const ClientCreditsPage: React.FC = () => {
                                     <tbody className="divide-y divide-slate-100">
                                         {selectedCredit.lignes?.map((line) => (
                                             <tr key={line.id} className="bg-white border-b border-slate-100 last:border-0">
-                                                <td className="px-3 py-2">{line.produit_nom || (typeof line.produit === 'object' ? line.produit.name : `Produit ${line.produit}`)}</td>
+                                                <td className="px-3 py-2">{line.produit_nom || getProduitName(line.produit) || `Produit ${getProduitId(line.produit)}`}</td>
                                                 <td className="px-3 py-2 text-center">{line.quantity}</td>
                                                 <td className="px-3 py-2 text-right">{Number(line.prix_unitaire).toLocaleString(locale)} FCFA</td>
                                                 <td className="px-3 py-2 text-right">{(Number(line.prix_unitaire) * line.quantity).toLocaleString(locale)} FCFA</td>

@@ -1,5 +1,6 @@
 import React, { type RefObject, useState, useEffect, useMemo, useRef, useCallback, lazy, Suspense } from 'react';
 import type { Commande, Fournisseur, ProduitModel, CommandeProduit } from '../../types';
+import { getProduitId } from '../../types/inventory';
 import { useTranslation } from 'react-i18next';
 import { gooeyToast } from 'goey-toast';
 import { ArrowLeft, FileDown, FolderOpen, Plus, RotateCcw, Pause, Play, Check, Save, ScanLine, AlertTriangle, Send, Loader2, ChevronDown } from 'lucide-react';
@@ -707,7 +708,7 @@ export default function CommandeForm({
                 isOpen={!!pendingDuplicateProduct}
                 product={pendingDuplicateProduct ?? null}
                 existingLines={commandeProduits.filter(cp =>
-                  (typeof cp.produit === 'object' ? cp.produit?.id : cp.produit) === pendingDuplicateProduct?.id
+                  getProduitId(cp.produit) === pendingDuplicateProduct?.id
                 )}
                 onAddNewLine={() => handleDuplicateAddNewLine?.()}
                 onIncrementExisting={(i) => handleDuplicateIncrementExisting?.(i)}

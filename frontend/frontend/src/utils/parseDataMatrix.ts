@@ -60,6 +60,21 @@ export function normalizeDateExpiration(raw: string | null | undefined): string 
 }
 
 /**
+ * Indique si une péremption au format MM/YY est antérieure au mois en cours
+ * (le mois en cours lui-même n'est pas considéré comme périmé).
+ */
+export function isExpiryMMYYExpired(mmyy: string | null | undefined): boolean {
+    if (!mmyy) return false;
+    const match = mmyy.match(/^(\d{1,2})\/(\d{2})$/);
+    if (!match) return false;
+    const mm = Number(match[1]);
+    if (mm < 1 || mm > 12) return false;
+    const yy = 2000 + Number(match[2]);
+    const now = new Date();
+    return yy * 12 + (mm - 1) < now.getFullYear() * 12 + now.getMonth();
+}
+
+/**
  * Parse une chaîne GS1 Data Matrix reçue de la douchette
  * La douchette envoie généralement : ]d2<données>
  * Les champs de longueur variable sont séparés par GS (0x1D)

@@ -3,6 +3,7 @@ import { AlertTriangle } from 'lucide-react';
 import { formatCurrency } from '../../utils/formatters';
 import { TableRow, TableCell } from '../shadcn/table';
 import type { CommandeProduit } from '../../types';
+import { getProduitObject } from '../../types/inventory';
 
 interface CommandeProductExpandedRowProps {
     p: CommandeProduit;
@@ -14,7 +15,7 @@ const DATE_OPTIONS: Intl.DateTimeFormatOptions = { day: '2-digit', month: '2-dig
 export function CommandeProductExpandedRow({ p, colSpan }: CommandeProductExpandedRowProps) {
     const { t, i18n } = useTranslation(['orders', 'common']);
 
-    const pObj = (p.produit && typeof p.produit === 'object') ? p.produit : null;
+    const pObj = getProduitObject(p.produit);
 
     const s = {
         dernier_achat: pObj?.dernier_achat || p.produit_dernier_achat,

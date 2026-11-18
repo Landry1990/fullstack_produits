@@ -8,6 +8,7 @@ import {
 } from '../shadcn/dialog';
 import { Button } from '../shadcn/button';
 import type { ProduitModel, CommandeProduit } from '../../types';
+import { getProduitName } from '../../types/inventory';
 
 interface DuplicateLotModalProps {
     isOpen: boolean;
@@ -19,8 +20,7 @@ interface DuplicateLotModalProps {
 }
 
 function _getProductName(cp: CommandeProduit): string {
-    if (typeof cp.produit === 'object' && cp.produit !== null) return cp.produit.name;
-    return cp.produit_nom || `Produit #${cp.produit}`;
+    return getProduitName(cp.produit, cp.produit_nom || `Produit #${cp.produit}`);
 }
 
 export default function DuplicateLotModal({

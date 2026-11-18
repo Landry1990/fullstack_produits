@@ -1,5 +1,6 @@
 import { gooeyToast } from 'goey-toast';
-import type { Commande, CommandeProduit, ProduitModel } from '../../types';
+import type { Commande, CommandeProduit } from '../../types';
+import { getProduitId, getProduitObject, getProduitName } from '../../types/inventory';
 import type { AnnulerReceptionPayload } from '../../services/commandeService';
 import type { ReceptionGroupBy } from '../../utils/print/printHelpers';
 import { normalizeNumberInput } from '../../utils/formatters';
@@ -84,7 +85,7 @@ export function useCommandeHandlers(params: UseCommandeHandlersParams) {
 
         if (sansPeremption.length > 0) {
             const noms = sansPeremption.map((p) => {
-                const nom = typeof p.produit === 'object' ? (p.produit as ProduitModel).name : p.produit_nom;
+                const nom = getProduitName(p.produit, p.produit_nom ?? '');
                 return `   • ${nom || t('orders:messages.product_reference', { id: String(p.id || t('common:unknown')) })}`;
             });
             warnings.push(`${t('orders:messages.section_missing_expiration')}\n${noms.join('\n')}`);
@@ -100,7 +101,7 @@ export function useCommandeHandlers(params: UseCommandeHandlersParams) {
 
         if (produitsEnPerte.length > 0) {
             const nomsPerte = produitsEnPerte.map((p) => {
-                const nom = typeof p.produit === 'object' ? (p.produit as ProduitModel).name : p.produit_nom;
+                const nom = getProduitName(p.produit, p.produit_nom ?? '');
                 const price = Math.round(Number(p.price || 0));
                 const sellingHT = Math.round(Number(p.selling_price || 0) / (1 + Number(p.tva || 0) / 100));
                 const productName = nom || t('orders:messages.product_reference', { id: String(p.id || t('common:unknown')) });
@@ -334,9 +335,9 @@ export function useCommandeHandlers(params: UseCommandeHandlersParams) {
             ? produitsSource.filter((_, idx) => selectedRows.has(idx))
             : produitsSource
         ).map(p => ({
-            id: typeof p.produit === 'object' ? (p.produit as ProduitModel).id : p.produit,
+            id: getProduitId(p.produit),
             name: p.produit_nom,
-            cip: (typeof p.produit === 'object' ? (p.produit as ProduitModel).cip1 : p.produit_cip) || '',
+            cip: (getProduitObject(p.produit)?.cip1 ?? p.produit_cip) || '',
             purchase_price: p.price,
             quantity: 0,
             received_qty: p.quantity,

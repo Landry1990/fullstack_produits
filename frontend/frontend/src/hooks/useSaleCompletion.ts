@@ -6,7 +6,6 @@ import { useTranslation } from 'react-i18next';
 import type {
     Client,
     Facture,
-    TicketCaisse,
     AyantDroit,
     LigneFacture,
     PaymentDetails,
@@ -27,6 +26,7 @@ import venteService from '../services/venteService';
 import api from '../services/api';
 import ordonnancierService from '../services/ordonnancierService';
 import { logger } from '../utils/logger'
+import { buildTicketCaisse } from '../utils/ticketCaisse'
 
 // Local types and helpers removed (moved to types.ts / utils)
 
@@ -394,28 +394,18 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
                 const rendu = totalVerse - Number(finalFacture.total_ttc);
                 
                 // Construire le ticket pour l'UI
-                const clientNameForTicket = finalFacture.client_name_override
-                    || finalFacture.client_name
-                    || params.manualClientName
-                    || t('common:passerby_client');
-
                 // L'impression A4 pour le flux normal est gérée par le callback onSuccess
                 // (qui utilise pendingPrintWindowRef ouvert par handlePaymentClick)
-
-                const ticketCaisse: TicketCaisse = {
-                    id: finalFacture.id,
-                    facture: finalFacture,
-                    mode_paiement: paiementsList.length > 1 ? 'Mixte' : (paiementsList[0]?.mode as TicketCaisse['mode_paiement'] || 'N/A'),
-                    montant: finalFacture.total_ttc,
-                    montant_verse: (finalFacture.montant_verse ? Number(finalFacture.montant_verse) : totalVerse).toString(),
-                    rendu: (finalFacture.montant_rendu ? Number(finalFacture.montant_rendu) : rendu).toString(),
-                    statut: 'completee',
-                    client_name: clientNameForTicket,
-                    paiements_details: paiementsList,
-                    date_paiement: new Date().toISOString(),
-                    user_details: { id: 0, username: finalFacture.validated_by_name || finalFacture.created_by_name || '' },
-                    reference: params.reference || null
-                };
+                const ticketCaisse = buildTicketCaisse(finalFacture, {
+                    fallbackClientName: t('common:passerby_client'),
+                    extraClientNames: [params.manualClientName],
+                    enteredPayments: paiementsList,
+                    fallbackMontantVerse: totalVerse,
+                    fallbackRendu: rendu,
+                    datePaiement: new Date().toISOString(),
+                    defaultModePaiement: 'N/A',
+                    reference: params.reference || null,
+                });
 
                 // Mettre à jour les derniers produits vendus
                 addRecentProducts(params.lignesFacture.map(l => ({
@@ -627,24 +617,14 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
 
             // 7. Ticket UI
             // Priorité: client_name_override > client_name > nom du client > 'Client de passage'
-            const clientNameForTicket = updatedFacture.client_name_override
-                || updatedFacture.client_name
-                || t('common:passerby_client');
-
-            const ticketCaisse: TicketCaisse = {
-                id: updatedFacture.id,
-                facture: updatedFacture,
-                mode_paiement: paiementsList.length > 1 ? 'Mixte' : (paiementsList[0].mode as TicketCaisse['mode_paiement']),
-                montant: updatedFacture.total_ttc,
-                montant_verse: (updatedFacture.montant_verse ? Number(updatedFacture.montant_verse) : totalVerse).toString(),
-                rendu: (updatedFacture.montant_rendu ? Number(updatedFacture.montant_rendu) : rendu).toString(),
-                statut: 'completee',
-                client_name: clientNameForTicket,
-                date_paiement: new Date().toISOString(),
-                paiements_details: paiementsList,
-                user_details: { id: 0, username: updatedFacture.validated_by_name || updatedFacture.created_by_name || '' },
-                reference: reference || null
-            };
+            const ticketCaisse = buildTicketCaisse(updatedFacture, {
+                fallbackClientName: t('common:passerby_client'),
+                enteredPayments: paiementsList,
+                fallbackMontantVerse: totalVerse,
+                fallbackRendu: rendu,
+                datePaiement: new Date().toISOString(),
+                reference: reference || null,
+            });
 
             const result: SaleCompletionResult = { success: true, facture: updatedFacture, ticketCaisse, rendu };
             setLastResult(result);

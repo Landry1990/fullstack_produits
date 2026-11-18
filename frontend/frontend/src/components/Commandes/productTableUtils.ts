@@ -1,4 +1,5 @@
 import type { CommandeProduit, ProduitModel } from '../../types';
+import { getProduitObject, getProduitId } from '../../types/inventory';
 import React from 'react';
 
 export interface FieldConfig {
@@ -61,16 +62,16 @@ export function resolveProductInfo(
     let activePromisCount = 0;
     let hasPendingForce = false;
 
-    const isObjectProduit = p.produit && typeof p.produit === 'object';
-    const produitId = isObjectProduit ? (p.produit as ProduitModel).id : (p.produit as number);
+    const produitObj = getProduitObject(p.produit);
+    const produitId = produitObj ? produitObj.id : (p.produit as number);
 
-    if (isObjectProduit && (p.produit as ProduitModel).name) {
-        produitName = (p.produit as ProduitModel).name;
-        cip = (p.produit as ProduitModel).cip1 || '';
-        isExclusive = (p.produit as ProduitModel).is_supplier_exclusive || false;
-        supplierName = (p.produit as ProduitModel).fournisseur_name || '';
-        activePromisCount = (p.produit as ProduitModel).active_promis_count ?? 0;
-        hasPendingForce = (p.produit as ProduitModel).has_pending_force ?? false;
+    if (produitObj?.name) {
+        produitName = produitObj.name;
+        cip = produitObj.cip1 || '';
+        isExclusive = produitObj.is_supplier_exclusive || false;
+        supplierName = produitObj.fournisseur_name || '';
+        activePromisCount = produitObj.active_promis_count ?? 0;
+        hasPendingForce = produitObj.has_pending_force ?? false;
     } else {
         const found = produitId ? produitsList.find(prod => prod.id === produitId) : null;
         if (found) {
@@ -96,9 +97,9 @@ export function resolveProductInfo(
 }
 
 export function resolveCip(p: CommandeProduit, produitsList: ProduitModel[]): string {
-    if (p.produit && typeof p.produit === 'object' && p.produit.cip1) return p.produit.cip1;
-    const produitId = (p.produit && typeof p.produit === 'object') ? p.produit.id : p.produit;
-    const found = produitsList.find(prod => prod.id === produitId);
+    const produitObj = getProduitObject(p.produit);
+    if (produitObj?.cip1) return produitObj.cip1;
+    const found = produitsList.find(prod => prod.id === getProduitId(p.produit));
     if (found && found.cip1) return found.cip1;
     const flatCip = p.produit_cip || p.produit_ref;
     if (flatCip && flatCip !== p.produit_nom) return flatCip;
@@ -106,14 +107,14 @@ export function resolveCip(p: CommandeProduit, produitsList: ProduitModel[]): st
 }
 
 export function resolveStock(p: CommandeProduit): number {
-    return (p.produit && typeof p.produit === 'object' && p.produit.stock !== undefined)
-        ? p.produit.stock
-        : p.produit_stock ?? 0;
+    const produitObj = getProduitObject(p.produit);
+    return produitObj?.stock !== undefined ? produitObj.stock : p.produit_stock ?? 0;
 }
 
 export function resolveRotation(p: CommandeProduit): number {
-    if (p.produit && typeof p.produit === 'object' && p.produit.rotation_moyenne !== undefined) {
-        return Number(p.produit.rotation_moyenne) || 0;
+    const produitObj = getProduitObject(p.produit);
+    if (produitObj?.rotation_moyenne !== undefined) {
+        return Number(produitObj.rotation_moyenne) || 0;
     }
     return Number(p.produit_rotation_moyenne) || 0;
 }

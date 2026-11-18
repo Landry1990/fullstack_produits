@@ -1,6 +1,7 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import type { Facture, ProduitModel } from '../types';
+import { getProduitObject } from '../types/inventory';
 import { useTranslation } from 'react-i18next';
 import PremiumModal from './common/PremiumModal';
 import { Button } from './shadcn/button';
@@ -63,7 +64,7 @@ const OrdonnanceModal: React.FC<OrdonnanceModalProps> = ({ isOpen, onClose, onSa
           patient_nom: facture.client_name || '',
           lignes: facture.produits
             .flatMap((p) => {
-                const prod = typeof p.produit === 'object' ? p.produit : null;
+                const prod = getProduitObject(p.produit);
                 if (!prod) return [];
                 if (!prod.requires_prescription && !(prod.surveillance_category && prod.surveillance_category !== 'NONE')) return [];
                 return [{

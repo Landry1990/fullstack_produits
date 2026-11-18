@@ -2,6 +2,72 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-11-18 — Caisse : suppression du toast redondant à l'encaissement
+
+- La validation d'un encaissement (`CaisseCentralisee`) affichait **3 toasts** :
+  « Ticket envoyé à l'imprimante », « Paiement enregistré » et
+  « Facture modifiée avec succès » — ce dernier à la fois redondant et
+  trompeur (un encaissement n'est pas une modification de facture).
+- Le param `onSuccess` de `useCaissePayment` (un seul appelant, il ne
+  servait qu'à ce toast) est supprimé. Restent 2 toasts distincts :
+  paiement enregistré + confirmation d'impression.
+- Fichiers : `hooks/useCaissePayment.ts`, `components/CaisseCentralisee.tsx`.
+
+## 2026-11-18 — Refacto : helpers `produit: number | ProduitModel` + conversion date→MM/YY
+
+- L'union `produit: number | ProduitModel` était dépliée à la main
+  (`typeof p.produit === 'object' ? p.produit.id : p.produit`) dans ~48
+  endroits et ~20 fichiers. Tous utilisent désormais les helpers
+  canoniques de `types/inventory.ts` : `isProduitObject`, `getProduitId`,
+  `getProduitName` et le nouveau `getProduitObject` (objet ou null).
+- Fichiers touchés : module Commandes (`useCommandeProductLines`,
+  `useCommandeCsv`, `useCommandeNavigation`, `useCommandeHandlers`,
+  `useCommandeActions`, `useCommandes`, `Commandes.tsx`,
+  `CommandeDetails`, `CommandeForm`, `CommandeProductTable`,
+  `CommandeProductExpandedRow`, `DuplicateLotModal`,
+  `TransferCommandeModal`, `productTableUtils`, `SimplePrintLabelsModal`)
+  et hors module (`useAvoirsData`, `AvoirsForm`, `ClientCreditsPage`,
+  `FacturesTable`, `OrdonnanceModal`, `TicketTemplate`, `ticketEscpos`,
+  `printHelpers`, `useDevisLoader`, `useFacturationState`).
+- 3 convertisseurs date→MM/YY divergents (`useCommandeNavigation`,
+  `CommandeDetails`, `SimplePrintLabelsModal`) remplacés par
+  `dateToMMYY` dans `utils/expiry.ts` : accepte `MM/YY`, ISO
+  (`YYYY-MM-DD`, sans décalage fuseau) et formats Date-parsables.
+- Comportement inchangé. `tsc --noEmit`, ESLint et Vitest (7 fichiers,
+  42 tests) OK.
+
+## 2026-11-18 — Refacto : construction de TicketCaisse mutualisée
+
+- Nouvel utilitaire `utils/ticketCaisse.ts` (`buildTicketCaisse`) qui
+  centralise la fabrication de l'objet ticket : nom client (override →
+  client_name → noms supplémentaires → repli), mode de paiement (`Mixte`
+  si multi-paiements, validation contre `PAYMENT_MODES`), conversion
+  `mode_paiement` → `mode` des `paiements_details`, replis
+  `montant_verse`/`rendu`, `user_details`, `is_duplicate`.
+- Remplace les 4 constructions manuelles divergentes : encaissement
+  caisse (`useCaissePayment`), vente directe et complétion de facture
+  existante (`useSaleCompletion`), réimpression (`useInvoiceActions`) —
+  chaque variante est couverte par des options explicites.
+- Sémantique inchangée sauf un détail : `montant_verse`/`rendu` de la
+  réimpression sont désormais normalisés numériquement comme ailleurs.
+- Test : `utils/__tests__/ticketCaisse.test.ts` (7 cas). TypeScript,
+  ESLint et `Facturation.test.tsx` OK.
+
+## 2026-11-18 — Commandes : interception des péremptions antérieures au mois en cours
+
+- À la saisie d'une ligne de commande, une date de péremption `MM/YY`
+  antérieure au mois en cours déclenche le toast « Produit déjà périmé »
+  et le champ reste marqué en rouge (même pattern que le format invalide).
+  Le mois en cours reste accepté.
+- Le remplissage par scan DataMatrix est couvert : un lot périmé est
+  quand même renseigné mais la barre de scan affiche l'avertissement
+  « Produit déjà périmé » au lieu du succès.
+- Fichiers : `utils/parseDataMatrix.ts` (helper `isExpiryMMYYExpired`),
+  `Commandes/CommandeProductRow.tsx`, `hooks/useDataMatrixScanner.ts`
+  (flag `expired` sur `ScanResult`), `Commandes/DataMatrixScanBar.tsx`,
+  locales `orders.json` fr/en (`product_table.expired_product`),
+  test `utils/__tests__/parseDataMatrix.test.ts`.
+
 ## 2026-11-17 — Ticket clients professionnels : identification de l'ayant droit
 
 - Ajout du nom de l'ayant droit et de son matricule sous le client sur les

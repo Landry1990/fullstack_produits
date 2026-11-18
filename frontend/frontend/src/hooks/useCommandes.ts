@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Commande, Fournisseur, Rayon, CommandeProduit, PaginatedResponse } from '../types';
+import { getProduitId } from '../types/inventory';
 import commandeService from '../services/commandeService';
 import api from '../services/api';
 import i18n from '../i18n';
@@ -90,7 +91,7 @@ export const useSaveCommande = () => {
 
             const productsPayload = commandeProduits.map(p => ({
                 id: p.id && !String(p.id).startsWith('temp-') && typeof p.id === 'number' && p.id < 1000000000 ? p.id : null,
-                produit: typeof p.produit === 'object' ? p.produit.id : p.produit,
+                produit: getProduitId(p.produit),
                 quantity: parseInt(String(p.quantity)),
                 unites_gratuites: parseInt(String(p.unites_gratuites || 0)),
                 price: parseFloat(String(p.price)).toFixed(0),

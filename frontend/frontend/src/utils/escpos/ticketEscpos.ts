@@ -1,5 +1,6 @@
 import i18next from 'i18next';
 import type { TicketCaisse, PharmacySettings, FactureProduit, PaymentDetails } from '../../types';
+import { getProduitObject } from '../../types/inventory';
 import { formatNumber } from '../formatters';
 import { getDocumentLocale, getDocumentLanguage } from '../documentLang';
 import * as esc from './encoder';
@@ -34,7 +35,8 @@ function formatMoney(value: number | string, locale: string): string {
 
 function getProductName(p: FactureProduit, t: (key: string, options?: Record<string, unknown>) => string): string {
   if (!p) return t('ticket.unknown_article');
-  if (typeof p.produit === 'object' && p.produit?.name) return p.produit.name;
+  const produitObj = getProduitObject(p.produit);
+  if (produitObj?.name) return produitObj.name;
   return p.produit_nom || `${t('ticket.product')} #${p.produit || '?'}`;
 }
 

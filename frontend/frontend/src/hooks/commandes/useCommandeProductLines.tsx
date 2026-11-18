@@ -6,6 +6,7 @@ import { useCommandesStore } from '../../stores/useCommandesStore';
 import { useConfirm } from '../useConfirm';
 import { normalizeNumberInput } from '../../utils/formatters';
 import type { Commande, CommandeProduit, ProduitModel } from '../../types';
+import { getProduitId, getProduitName, getProduitObject } from '../../types/inventory';
 
 interface UseCommandeProductLinesOptions {
   commandeType: 'LOC' | 'DIR' | 'DIV';
@@ -85,7 +86,7 @@ export function useCommandeProductLines(
       const isLine = !key.startsWith('p');
       const id = Number(isLine ? key : key.slice(1));
       const idx = list.findIndex((p) =>
-        isLine ? p.id === id : (typeof p.produit === 'object' ? p.produit?.id : p.produit) === id);
+        isLine ? p.id === id : getProduitId(p.produit) === id);
       if (idx < 0) return;
       const input = document.querySelector(`[data-row="${idx}"][data-field="quantity"]`);
       const row = input?.closest('tr');
@@ -253,7 +254,7 @@ export function useCommandeProductLines(
     }
 
     const existingIndexes = commandeProduits.reduce<number[]>((acc, p, i) => {
-      if ((typeof p.produit === 'object' ? p.produit.id : p.produit) === product.id) acc.push(i);
+      if (getProduitId(p.produit) === product.id) acc.push(i);
       return acc;
     }, []);
 
@@ -342,7 +343,7 @@ export function useCommandeProductLines(
   function handleDuplicateIncrementExisting(relativeIndex: number) {
     if (!pendingDuplicateProduct) return;
     const existingIndexes = commandeProduits.reduce<number[]>((acc, p, i) => {
-      if ((typeof p.produit === 'object' ? p.produit.id : p.produit) === pendingDuplicateProduct.id) acc.push(i);
+      if (getProduitId(p.produit) === pendingDuplicateProduct.id) acc.push(i);
       return acc;
     }, []);
     const absoluteIndex = existingIndexes[relativeIndex];
@@ -442,7 +443,7 @@ export function useCommandeProductLines(
           try {
             const cid = selectedCommande?.id;
             if (cid) {
-              const prodId = item.produit && typeof item.produit === 'object' ? item.produit.id : item.produit;
+              const prodId = getProduitId(item.produit);
               const key = item.id ?? (prodId != null ? `p${prodId}` : null);
               if (key != null) localStorage.setItem(`zenith_cmd_last_line_${cid}`, String(key));
             }
@@ -504,13 +505,13 @@ export function useCommandeProductLines(
       });
 
       const currentItem = updatedList[index];
-      const currentProduitId = typeof currentItem.produit === 'object' ? currentItem.produit.id : currentItem.produit;
+      const currentProduitId = getProduitId(currentItem.produit);
       const currentLot = (currentItem.lot || '').trim();
 
       if (field === 'lot' && currentLot !== '') {
         const targetIndex = updatedList.findIndex((item, i) => {
           if (i === index) return false;
-          const pId = typeof item.produit === 'object' ? item.produit.id : item.produit;
+          const pId = getProduitId(item.produit);
           return pId === currentProduitId && (item.lot || '').trim() === currentLot;
         });
 
@@ -529,7 +530,7 @@ export function useCommandeProductLines(
             unites_gratuites: mergedUG,
           };
 
-          gooeyToast.success(t('orders:messages.lots_merged', { product: typeof currentItem.produit === 'object' ? currentItem.produit.name : 'produit' }), { icon: <RefreshCw className="h-4 w-4 text-emerald-600" /> });
+          gooeyToast.success(t('orders:messages.lots_merged', { product: getProduitName(currentItem.produit, 'produit') }), { icon: <RefreshCw className="h-4 w-4 text-emerald-600" /> });
 
           setTimeout(() => {
             const targetInput = document.querySelector(`input[data-row="${finalIndex}"][data-field="${fieldsConfig[0].name}"]`) as HTMLInputElement;
@@ -552,7 +553,7 @@ export function useCommandeProductLines(
     if (!isNaN(price) && !isNaN(selling) && price > 0 && selling > 0) {
       const sellingHT = selling / (1 + tva / 100);
       if (sellingHT < price) {
-        const productName = typeof item.produit === 'object' ? item.produit?.name : '';
+        const productName = getProduitName(item.produit);
         gooeyToast(t('orders:messages.selling_below_cost', {
           selling: Math.round(selling),
           cost: Math.round(price),
@@ -570,8 +571,8 @@ export function useCommandeProductLines(
         // les plus récentes, pas en tête de liste.
         if (sortBy === 'chrono') return (a.id ?? Number.MAX_SAFE_INTEGER) - (b.id ?? Number.MAX_SAFE_INTEGER);
 
-        const prodA = typeof a.produit === 'object' ? a.produit : produitsList.find((p) => p.id === a.produit);
-        const prodB = typeof b.produit === 'object' ? b.produit : produitsList.find((p) => p.id === b.produit);
+        const prodA = getProduitObject(a.produit) ?? produitsList.find((p) => p.id === getProduitId(a.produit));
+        const prodB = getProduitObject(b.produit) ?? produitsList.find((p) => p.id === getProduitId(b.produit));
 
         if (sortBy === 'name') {
           const nameA = prodA?.name || a.produit_nom || '';

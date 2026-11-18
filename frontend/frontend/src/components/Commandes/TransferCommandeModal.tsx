@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import api from '../../services/api';
 import { gooeyToast } from 'goey-toast';
 import type { Commande, CommandeProduit, Fournisseur, ProduitModel } from '../../types';
+import { getProduitId, isProduitObject } from '../../types/inventory';
 import { formatCurrency, normalizeNumberInput } from '../../utils/formatters';
 import { Button } from '../shadcn/button';
 import { logger } from '../../utils/logger';
@@ -88,7 +89,7 @@ export default function TransferCommandeModal({
         let productsWithoutPricing = 0;
 
         selectedProducts.forEach(p => {
-            const produitId = (p.produit && typeof p.produit === 'object') ? p.produit.id : p.produit;
+            const produitId = getProduitId(p.produit);
             const currentPrice = parseFloat(String(p.price || 0));
             const quantity = parseInt(String(p.quantity || 0));
             const currentTotal = currentPrice * quantity;
@@ -129,10 +130,10 @@ export default function TransferCommandeModal({
             const { data: newCommande } = await api.post<Commande>(commandesEndpoint, newCommandePayload);
 
             await Promise.all(selectedProducts.map(async (p) => {
-                const produitId = typeof p.produit === 'object' ? p.produit.id : p.produit;
+                const produitId = getProduitId(p.produit);
                 // Ligne sans prix de vente (0) → fallback sur le prix catalogue
                 // produit ; sinon envoyer 0 réinitialiserait le prix sur la ligne.
-                const cataloguePrice = typeof p.produit === 'object'
+                const cataloguePrice = isProduitObject(p.produit)
                     ? p.produit.selling_price
                     : produitsList.find(pr => pr.id === produitId)?.selling_price;
                 const payload = {
@@ -196,9 +197,9 @@ export default function TransferCommandeModal({
                         <h4 className="font-semibold text-sm mb-2">{t('orders:transfer_modal.products_title', { count: selectedProducts.length })}</h4>
                         <div className="space-y-2">
                             {selectedProducts.map((p, _i) => {
-                                const produitId = (p.produit && typeof p.produit === 'object') ? p.produit.id : p.produit;
+                                const produitId = getProduitId(p.produit);
                                 let produitName = '';
-                                if (p.produit && typeof p.produit === 'object' && p.produit.name) {
+                                if (isProduitObject(p.produit) && p.produit.name) {
                                     produitName = p.produit.name;
                                 } else if ((p as unknown as Record<string, unknown>).produit_nom) {
                                     produitName = (p as unknown as Record<string, unknown>).produit_nom as string;

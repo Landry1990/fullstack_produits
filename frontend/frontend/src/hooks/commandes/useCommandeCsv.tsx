@@ -3,6 +3,7 @@ import { gooeyToast } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle } from 'lucide-react';
 import type { Commande, CommandeProduit, ProduitModel } from '../../types';
+import { getProduitId, getProduitObject } from '../../types/inventory';
 import { normalizeNumberInput } from '../../utils/formatters';
 import { parseCsvPrice } from '../../utils/commandes/csvImportHelpers';
 import produitService from '../../services/produitService';
@@ -163,7 +164,7 @@ export function useCommandeCsv({
                 if (product) {
                     productsFound++;
                     const existingIndex = currentList.findIndex(
-                        p => (typeof p.produit === 'object' ? p.produit.id : p.produit) === product.id
+                        p => getProduitId(p.produit) === product.id
                     );
 
                     const priceFromSystem = product.cost_price || '0';
@@ -261,9 +262,9 @@ export function useCommandeCsv({
         const skippedProducts: { nom: string; qty: number }[] = [];
 
         commandeProduits.forEach(item => {
-            const product = typeof item.produit === 'object' ? item.produit : produitsList.find(p => p.id === item.produit);
-            const produitId = typeof item.produit === 'object' ? item.produit.id : item.produit;
-            const nom = (typeof item.produit === 'object' ? item.produit?.name : product?.name) || t('orders:messages.product_reference', { id: String(produitId || t('common:unknown')) });
+            const product = getProduitObject(item.produit) ?? produitsList.find(p => p.id === item.produit);
+            const produitId = getProduitId(item.produit);
+            const nom = (getProduitObject(item.produit)?.name ?? product?.name) || t('orders:messages.product_reference', { id: String(produitId || t('common:unknown')) });
             const qty = item.quantity || 0;
 
             if (!product) {

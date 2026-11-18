@@ -3,10 +3,11 @@ import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
 import { gooeyToast } from 'goey-toast'
 import api from '../services/api'
-import type { Facture, TicketCaisse, CouponMonnaie, PaymentDetails } from '../types'
+import type { Facture, TicketCaisse, CouponMonnaie } from '../types'
 import { getApiErrorDetail } from '../utils/errorHandling'
 import { logger } from '../utils/logger'
 import { generateUUID } from '../utils/uuid'
+import { buildTicketCaisse } from '../utils/ticketCaisse'
 import { usePharmacySettings } from './usePharmacySettings'
 import { useInvoiceSettings } from './useInvoiceSettings'
 import { printTicketSmart } from '../utils/print/printTicketSmart'
@@ -21,7 +22,6 @@ interface PaymentState {
   fetchFacturesEnAttente: () => Promise<void>
   fetchSessionRecap: () => Promise<void>
   fetchCoupons: () => Promise<void>
-  onSuccess?: () => void
 }
 
 const buildPaymentPayloads = (
@@ -75,41 +75,6 @@ const buildPaymentPayloads = (
   return items
 }
 
-const createTicketData = (
-  facture: Facture,
-  paiements: { mode: string; montant: number }[],
-  montantTotal: number,
-  montantAEncaisser: number,
-  user: unknown,
-  fallbackClientName: string
-): TicketCaisse => {
-  const rendu = montantTotal - montantAEncaisser
-  const clientName = facture.client_name_override || facture.client_name || fallbackClientName
-
-  return {
-    id: facture.id,
-    facture: facture as unknown,
-    mode_paiement: paiements.length > 1 ? 'Mixte' : (paiements[0]?.mode || 'especes'),
-    montant: facture.total_ttc,
-    montant_verse: (facture.montant_verse ? Number(facture.montant_verse) : montantTotal).toString(),
-    rendu: (facture.montant_rendu ? Number(facture.montant_rendu) : rendu).toString(),
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    statut: 'completee',
-    date_paiement: new Date().toISOString(),
-    client_name: clientName,
-    paiements_details: ((facture as unknown as { paiements?: Array<{ mode_paiement?: string; montant: string | number; part_patient?: string | number | null; part_assurance?: string | number | null }> }).paiements || [])
-      .map((p): PaymentDetails => ({
-        mode: p.mode_paiement ?? '',
-        montant: Number(p.montant),
-        part_patient: p.part_patient != null ? Number(p.part_patient) : null,
-        part_assurance: p.part_assurance != null ? Number(p.part_assurance) : null,
-      })),
-    user_details: user,
-    reference: null
-  } as TicketCaisse
-}
-
 export const useCaissePayment = ({
   selectedFacture,
   couponsParFacture,
@@ -119,8 +84,7 @@ export const useCaissePayment = ({
   setShowTicketPreview,
   fetchFacturesEnAttente,
   fetchSessionRecap,
-  fetchCoupons,
-  onSuccess
+  fetchCoupons
 }: PaymentState) => {
   const { t } = useTranslation('caisse')
   const queryClient = useQueryClient()
@@ -210,7 +174,15 @@ export const useCaissePayment = ({
       const { data: factureFinale } = await api.get<Facture>(`factures/${factureValidee.id}/`)
 
       // 7. Créer le ticket
-      const ticketData = createTicketData(factureFinale, paiementsValides, montantTotal, montantAEncaisser, user, t('table.passerby_client'))
+      const ticketData = buildTicketCaisse(factureFinale, {
+        fallbackClientName: t('table.passerby_client'),
+        enteredPayments: paiementsValides,
+        paiementsDetailsSource: 'facture',
+        fallbackMontantVerse: montantTotal,
+        fallbackRendu: montantTotal - montantAEncaisser,
+        datePaiement: new Date().toISOString(),
+        userDetails: user as TicketCaisse['user_details'],
+      })
       setTicketCaisse(ticketData)
 
       // 8. Fermer modale ; impression auto silencieuse ou aperçu ticket
@@ -243,7 +215,6 @@ export const useCaissePayment = ({
       }
 
       gooeyToast.success(successMessage ?? t('payment.success'))
-      onSuccess?.()
     } catch (err) {
       logger.error('Erreur lors du paiement:', err)
       gooeyToast.error(getApiErrorDetail(err, t('messages.save_payment_error')))
@@ -262,7 +233,6 @@ export const useCaissePayment = ({
     fetchSessionRecap,
     fetchCoupons,
     setCouponsParFacture,
-    onSuccess,
     queryClient
   ])
 

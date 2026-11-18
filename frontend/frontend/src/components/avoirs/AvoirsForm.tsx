@@ -4,6 +4,7 @@ import { Search, Save, Trash2, ArrowLeft, Package, Loader2 } from 'lucide-react'
 import api from '../../services/api';
 import { logger } from '../../utils/logger';
 import type { ProduitModel } from '../../types';
+import { getProduitObject } from '../../types/inventory';
 import type { UseAvoirsDataReturn } from '../../hooks/useAvoirsData';
 import { ProductSearch, type SearchResult } from '../common/ProductSearch';
 import { useProductSearch as useProductSearchBase } from '../../hooks/product-search/useProductSearch';
@@ -279,7 +280,7 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                                     </TableHeader>
                                     <TableBody>
                                         {lignes.map((ligne, index) => {
-                                            const prod = typeof ligne.produit === 'object' ? ligne.produit : null;
+                                            const prod = getProduitObject(ligne.produit);
                                             return (
                                                 <TableRow key={prod?.id ?? ligne.id ?? `ligne-${prod?.name ?? ligne.lot}`}>
                                                     <TableCell>

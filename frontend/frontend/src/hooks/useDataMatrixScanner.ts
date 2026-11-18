@@ -1,10 +1,10 @@
 import { useState, useCallback, useRef } from 'react';
 import { parseGS1Datamatrix } from '../utils/gs1Parser';
-import { normalizeDateExpiration } from '../utils/parseDataMatrix';
+import { normalizeDateExpiration, isExpiryMMYYExpired } from '../utils/parseDataMatrix';
 import type { CommandeProduit } from '../types/procurement';
 
 export type ScanResult =
-    | { status: 'filled'; index: number; cip: string; lot: string; date: string }
+    | { status: 'filled'; index: number; cip: string; lot: string; date: string; expired?: boolean }
     | { status: 'already_filled'; index: number; cip: string }
     | { status: 'not_found'; cip: string | null; raw: string }
     | { status: 'parse_error'; raw: string };
@@ -136,6 +136,7 @@ export function useDataMatrixScanner({
                 cip,
                 lot: finalLot,
                 date: finalDate,
+                expired: isExpiryMMYYExpired(finalDate),
             };
             setLastScanResult(r);
             return r;
