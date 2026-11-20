@@ -568,9 +568,10 @@ class ClientViewSet(SimpleListCacheMixin, OptimizedSerializerMixin, viewsets.Mod
         name = request.data.get('name', '')
         phone = request.data.get('phone', '')
         exclude_id = request.data.get('exclude_id')
+        client_type = request.data.get('client_type')
 
         try:
-            candidates = find_duplicate_candidates(name, phone, exclude_id)
+            candidates = find_duplicate_candidates(name, phone, exclude_id, client_type)
             return Response({'candidates': candidates})
         except Exception as e:
             return Response({'detail': str(e)}, status=500)
@@ -594,7 +595,11 @@ class ClientViewSet(SimpleListCacheMixin, OptimizedSerializerMixin, viewsets.Mod
                 model_name='Client',
                 object_id=target.pk,
                 description=f"Fusion du client #{pk} dans le client « {target.name} » (#{target.pk})",
-                details={'source_id': str(pk), 'target_id': target.pk},
+                details={
+                    'source_id': str(pk),
+                    'target_id': target.pk,
+                    'transferred': result.get('transferred', {}),
+                },
                 request=request,
             )
             serializer = ClientDetailSerializer(target)

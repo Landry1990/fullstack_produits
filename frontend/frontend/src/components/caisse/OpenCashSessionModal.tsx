@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { gooeyToast } from 'goey-toast'
 import { cashSessionService, type PosteCaisse, type PosteVente } from '../../services/cashSessionService'
@@ -38,6 +38,8 @@ export const OpenCashSessionModal: React.FC<OpenCashSessionModalProps> = ({
   const [fondCaisse, setFondCaisse] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [loadingCaisses, setLoadingCaisses] = useState(false)
+  const cardRefs = useRef<Map<number, HTMLDivElement>>(new Map())
+  const handleOpenSessionRef = useRef<(caisseId?: number) => void>(() => {})
 
   const loadCaisses = useCallback(async () => {
     setLoadingCaisses(true)
@@ -47,19 +49,19 @@ export const OpenCashSessionModal: React.FC<OpenCashSessionModalProps> = ({
       setAllCaisses(enabledCaisses)
 
       const available = enabledCaisses.filter((c) => !c.est_actif)
-      if (available.length === 1) {
+      if (available.length > 0) {
+        // Pré-sélectionner la première caisse disponible : Entrée valide directement
         setSelectedPosteId(available[0].id)
       }
 
       if (autoOpen && available.length === 1 && isOpen) {
-        handleOpenSession(available[0].id)
+        handleOpenSessionRef.current(available[0].id)
       }
     } catch {
       gooeyToast.error(t('messages.error_loading_caisses'))
     } finally {
       setLoadingCaisses(false)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoOpen, isOpen, t])
 
   useEffect(() => {
@@ -69,6 +71,46 @@ export const OpenCashSessionModal: React.FC<OpenCashSessionModalProps> = ({
       loadCaisses()
     }
   }, [isOpen, loadCaisses])
+
+  // Focus la carte sélectionnée quand la sélection ou le chargement change
+  useEffect(() => {
+    if (!isOpen || loadingCaisses || !selectedPosteId) return
+    cardRefs.current.get(selectedPosteId)?.focus()
+  }, [isOpen, loadingCaisses, selectedPosteId])
+
+  // Navigation clavier : flèches entre les caisses disponibles, Entrée ouvre la session
+  useEffect(() => {
+    if (!isOpen || loadingCaisses) return
+
+    const available = allCaisses.filter((c) => !c.est_actif)
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (available.length === 0) return
+
+      // Ne pas détourner les flèches quand le focus est dans le champ fond de caisse
+      const inField = e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        e.target instanceof HTMLSelectElement
+      if (inField && e.key !== 'Enter') return
+
+      const currentIndex = available.findIndex((c) => c.id === selectedPosteId)
+      const startIndex = currentIndex === -1 ? 0 : currentIndex
+
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+        e.preventDefault()
+        setSelectedPosteId(available[(startIndex + 1) % available.length].id)
+      } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+        e.preventDefault()
+        setSelectedPosteId(available[(startIndex - 1 + available.length) % available.length].id)
+      } else if (e.key === 'Enter') {
+        e.preventDefault()
+        handleOpenSessionRef.current()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, loadingCaisses, allCaisses, selectedPosteId])
 
   const handleOpenSession = async (caisseId?: number) => {
     const id = caisseId ?? selectedPosteId
@@ -94,6 +136,11 @@ export const OpenCashSessionModal: React.FC<OpenCashSessionModalProps> = ({
       setIsLoading(false)
     }
   }
+
+  // Met à jour la ref avec la dernière version de handleOpenSession
+  useEffect(() => {
+    handleOpenSessionRef.current = handleOpenSession
+  })
 
   const handleOpen = () => {
     if (!selectedPosteId) {
@@ -149,15 +196,23 @@ export const OpenCashSessionModal: React.FC<OpenCashSessionModalProps> = ({
                   return (
                     <Card
                       key={caisse.id}
+                      ref={(el) => {
+                        if (el) cardRefs.current.set(caisse.id, el)
+                      }}
                       role="button"
                       tabIndex={isActive ? -1 : 0}
                       aria-disabled={isActive}
                       aria-pressed={isSelected}
                       onClick={() => !isActive && setSelectedPosteId(caisse.id)}
                       onKeyDown={(e) => {
-                        if (!isActive && (e.key === 'Enter' || e.key === ' ')) {
-                          e.preventDefault();
-                          setSelectedPosteId(caisse.id);
+                        if (isActive) return
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          handleOpenSessionRef.current(caisse.id)
+                        } else if (e.key === ' ') {
+                          e.preventDefault()
+                          setSelectedPosteId(caisse.id)
                         }
                       }}
                       className={`

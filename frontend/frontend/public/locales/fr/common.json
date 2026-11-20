@@ -283,6 +283,7 @@
         "validate_password": "Mot de passe",
         "validate_required": "(Requis)",
         "validate_hint": "Saisissez le mot de passe d'un utilisateur disposant des droits requis",
+        "invalid_password": "Mot de passe incorrect ou droits insuffisants",
         "cancel": "Annuler",
         "confirm": "Confirmer la validation",
         "title": "Validation Requise",

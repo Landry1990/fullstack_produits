@@ -9,6 +9,7 @@ import {
   type ManagedUser,
   type UserFormData,
   type Role,
+  type GroupePerm,
 } from '../components/users/usersMeta';
 
 /**
@@ -40,6 +41,32 @@ export function useUserForm(menuHierarchy: MenuItem[], adminOnlyKeys?: string[])
       updates.allowed_menus = typedRole === 'PHARMACIEN' ? getAllMenuKeys() : ROLE_MENU_DEFAULTS[typedRole];
     }
 
+    setFormData(prev => ({ ...prev, ...updates }));
+  };
+
+  /** Affecte un groupe : applique ses droits (can_*, remise, menus, rôle métier). */
+  const applyGroupe = (g: GroupePerm | null) => {
+    if (!g) {
+      setFormData(prev => ({ ...prev, groupe: null }));
+      return;
+    }
+    const role = g.role_metier ?? 'VENDEUR';
+    const updates: Partial<UserFormData> = {
+      groupe: g.id,
+      role,
+      is_superuser: role === 'PHARMACIEN',
+      max_discount_rate: Number(g.max_discount_rate || 0),
+    };
+    PERMISSIONS_META.forEach(p => {
+      const gRecord = g as unknown as Record<string, unknown>;
+      (updates as Record<string, boolean>)[p.key] =
+        p.key in gRecord ? Boolean(gRecord[p.key]) : p.roleDefaults[role];
+    });
+    // allowed_menus du groupe : null = « ne gère pas les menus » → on garde
+    // les menus actuels ; sinon on applique ceux du groupe.
+    if (g.allowed_menus != null) {
+      updates.allowed_menus = g.allowed_menus;
+    }
     setFormData(prev => ({ ...prev, ...updates }));
   };
 
@@ -152,6 +179,7 @@ export function useUserForm(menuHierarchy: MenuItem[], adminOnlyKeys?: string[])
     setFormData,
     getAllMenuKeys,
     applyRole,
+    applyGroupe,
     copyFromUser,
     initForEdit,
     initForCreate,

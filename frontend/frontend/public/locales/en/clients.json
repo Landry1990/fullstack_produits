@@ -5,6 +5,7 @@
         "edit": "Edit Customer",
         "delete": "Delete Customer",
         "bulk_delete": "Delete {{count}} customer(s)",
+        "merge_client": "Merge",
         "mask_client": "Mask customer",
         "reactivate_client": "Reactivate customer"
     },
@@ -132,7 +133,18 @@
         "title": "Duplicate detected",
         "description": "One or more customers seem identical. You can merge information into an existing customer or create a new one.",
         "match": "match",
-        "keep_new": "Create anyway"
+        "keep_new": "Create anyway",
+        "manual": {
+            "title": "Merge customer",
+            "description": "Choose the customer into which \"{{name}}\" should be merged.",
+            "source_label": "Customer to hide",
+            "warning": "All sales, receivables, credit notes, deposits, promises, beneficiaries and history will be transferred to the selected customer. The source customer will then be hidden. This action is irreversible.",
+            "search_placeholder": "Search target customer...",
+            "empty": "No target customer found",
+            "choose": "Choose",
+            "confirm_title": "Confirm merge",
+            "confirm_message": "Merge \"{{source}}\" into \"{{target}}\"? All data will be transferred and the source customer will be hidden."
+        }
     },
     "status": {
         "inactive": "INACTIVE"

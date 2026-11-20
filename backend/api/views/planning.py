@@ -70,7 +70,7 @@ def _build_assignments(schedule, config, start_day):
     # --- Pharmaciens (éligibles aux gardes) ---
     pharmacist_ids = set(
         Profile.objects.filter(
-            user__in=operators, role='PHARMACIEN'
+            user__in=operators, groupe__role_metier='PHARMACIEN'
         ).values_list('user_id', flat=True)
     )
 

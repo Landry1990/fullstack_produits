@@ -2,6 +2,320 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-11-20 — Fusion complète des doublons clients avec ventes
+
+- `merge_clients()` transfère désormais tout l'historique métier du client
+  source vers la cible : factures, relevés de paiement, promis, avoirs,
+  dépôts, historique fidélité, journaux SMS/WhatsApp/Telegram et rappels de
+  traitement. Les ayants droit sont déplacés ou dédupliqués par matricule,
+  avec réaffectation des factures qui les référencent.
+- La fusion est limitée à deux clients actifs du même type ; le client source
+  est masqué (`is_active=False`), pointé par `merged_into` et ses soldes
+  opérationnels sont remis à zéro. La dette dénormalisée de la cible est
+  recalculée et les caches dette des deux clients sont invalidés après commit.
+- La détection de doublons ignore les clients masqués et peut filtrer sur le
+  type pour éviter une proposition particulier ↔ professionnel.
+- Fiche client : nouveau bouton « Fusionner » ouvrant une recherche du client
+  cible du même type, avec avertissement détaillé et confirmation avant
+  transfert irréversible. Traductions fr/en ajoutées.
+- Fichiers : `api/services/client_merger.py`, `api/views/clients.py`,
+  `api/tests/test_client_merge.py`,
+  `src/components/Clients.tsx`,
+  `src/components/clients/ClientMergeTargetModal.tsx`,
+  `src/services/clientService.ts`, `public/locales/{fr,en}/clients.json`.
+- Vérifications : 5 tests `test_client_merge`, `manage.py check`, ESLint
+  ciblé et `npm run build` — tous verts.
+
+## 2026-11-20 — Rotation moyenne : recalcul réel après vente et formule unifiée
+
+- `signals_rotation` est maintenant chargé au démarrage. Le recalcul se
+  déclenche au changement de statut de facture (validation, paiement,
+  annulation), après commit : il couvre les lignes créées en `bulk_create`
+  sans exécuter de calcul sur une transaction annulée.
+- Nouveau recalcul groupé `recalculate_products_rotation()` aligné sur les
+  métriques de réapprovisionnement : ventes 90 jours, VMD ajustée et tendance.
+  Il met aussi à jour `date_premiere_vente`.
+- L'action `produits/recalculate_rotation/` utilise désormais cette même
+  formule que le plan de commande expert, au lieu de l'ancienne moyenne depuis
+  la création du produit.
+- Le recalcul force maintenant la lecture réelle de `jours_donnees` : un
+  cache obsolète à 7 jours avait extrapolé les rotations au lieu d'utiliser
+  l'âge réel des ventes. Recalcul global relancé après correction : 283
+  produits synchronisés ; popup matinal = 26 ruptures et plan expert = 26
+  ruptures.
+- Fichiers : `api/apps.py`, `api/signals_rotation.py`,
+  `api/services/replenishment_service.py`,
+  `api/views/produit_actions/stats.py`,
+  `api/tests/test_rotation_moyenne.py`.
+- Tests : `test_rotation_moyenne` (3 tests), `test_sale_double_finalization`,
+  `test_stock_level_automation` — tous verts.
+
+## 2026-11-19 — Formulaire avoirs clients : hiérarchie et ajout de ligne
+
+- Formulaire restructuré en cartes : informations générales dans un bloc,
+  lignes dans un bloc dédié avec en-tête, compteur de lignes et total dans
+  le pied de carte. Actions finales regroupées dans un bloc séparé.
+- Champs portés à 44 px de haut ; libellés renforcés ; lignes reçues sur
+  fond léger avec bouton de suppression dédié et total par ligne.
+- L'ajout devient visible à deux endroits : bouton dans l'en-tête des lignes
+  et bouton central dans l'état vide. Références du motif corrigées vers les
+  clés existantes `motifs.*` ; aucune nouvelle clé i18n ni règle métier.
+  Calcul du total factorisé en `getLineTotal`.
+- Fichier : `src/components/avoirs-client/ClientCreditForm.tsx`.
+  Vérifications : ESLint ciblé et `npm run build` sans erreur.
+
+## 2026-11-19 — Échéancier prioritaire fournisseurs : lisibilité renforcée
+
+- Tableau du dashboard fournisseurs : passage des textes secondaires de
+  9–11 px (`micro/caption/label`) à 12 px minimum ; fournisseur et montant
+  portés à 16 px ; date, référence, statut et lien « Voir tout » restent à
+  12 px ou plus.
+- En-têtes rendus plus visibles (12 px, gras, fond plus marqué, séparateur) ;
+  lignes et badges agrandis avec bordures sémantiques, espacement ajusté et
+  largeur minimale pour préserver l'alignement horizontal.
+- Aucune donnée, requête, route ou clé i18n modifiée. Fichier :
+  `src/components/fournisseurs/SupplierDashboard.tsx`. Vérification :
+  ESLint ciblé sans erreur.
+
+## 2026-11-19 — Simulation de 4 validations simultanées à la facturation
+
+- Contrôle HTTP `users/verify_password/`, permission `can_validate_sales`,
+  utilisé par `PaymentModal` avant la finalisation ; aucune vente créée.
+- Même configuration : 4 workers, nginx, 5 comptes existants + 10 comptes
+  temporaires Argon2. Sélection de 4 comptes temporaires (positions 1, 4,
+  7, 10) pour répartir les positions dans la recherche des utilisateurs.
+- Référence séquentielle : 4/4 succès, moyenne 939 ms, de 573 à 1281 ms.
+- Trois vagues de 4 simultanées : 12/12 succès HTTP 200 ; moyennes par vague
+  2,63 / 2,73 / 2,66 s, réponses entre 1,80 et 3,24 s. Lenteur perceptible
+  dès quatre validations concurrentes dans ces conditions.
+- Limites : contrôle du mot de passe uniquement, trafic interne Docker,
+  sans réseau client ni traitement métier de finalisation de facture.
+- Nettoyage vérifié : 10 comptes, 10 profils et 10 jetons supprimés ; aucun
+  audit généré par ce contrôle ; aucun reliquat de ces éléments, retour à
+  5 comptes actifs. Clés de throttle utilisateur du test supprimées,
+  journaux techniques conservés. Secrets uniquement en mémoire.
+- Aucun code applicatif modifié. Fichier touché : `CHANGELOG.md`.
+
+## 2026-11-19 — Simulation HTTP de 10 validations de mot de passe simultanées
+
+- Test sur les conteneurs dev actifs via nginx → backend (4 workers), sans
+  changement de configuration ni opération métier. 10 comptes temporaires
+  Argon2 ajoutés aux 5 comptes actifs existants ; jetons créés uniquement
+  pour ces comptes, secrets aléatoires conservés en mémoire, jamais affichés.
+- Pour chaque endpoint : 10 requêtes séquentielles puis 2 vagues de 10
+  requêtes simultanées. 60/60 validations réussies (HTTP 200).
+- `verify-password/` : moyenne séquentielle 142 ms ; moyennes concurrentes
+  859 et 910 ms, maximum 981 ms.
+- `users/verify_password/` avec permission `can_validate_sales` : moyenne
+  séquentielle 974 ms ; moyennes concurrentes 6,05 et 6,07 s ; réponses
+  concurrentes entre 3,89 et 7,45 s. La recherche parcourt les comptes et
+  vérifie successivement les hashes, contrairement au contrôle personnel.
+- Limites : 15 comptes actifs pendant le test, comptes temporaires ajoutés
+  après les comptes existants ; mesure HTTP interne au réseau Docker,
+  sans navigateur ni latence réseau des postes clients. Ni test du login
+  ni exécution des actions métier après validation.
+- Nettoyage vérifié : 10 comptes, 10 profils, 10 jetons et 30 audits de test
+  supprimés ; aucun reliquat de ces éléments. Clés de throttle utilisateur
+  du test supprimées ; journaux techniques nginx/Docker conservés.
+- Aucun code applicatif modifié. Fichier touché : `CHANGELOG.md`.
+
+## 2026-11-19 — Formulaire utilisateur : le select « Rôle » devient « Groupe »
+
+- `UserInfoTab` : le menu déroulant « Rôles » est renommé « Groupe » et
+  liste désormais les vrais `GroupePermissions` (endpoint
+  `groupe-permissions/`) au lieu des 4 rôles figés.
+- `useUserForm.applyGroupe(g)` : choisir un groupe applique ses droits
+  (can_*, max_discount_rate, menus si le groupe les gère) et synchronise
+  `role` avec `g.role_metier` pour la compatibilité du payload. `groupe=null`
+  = droits personnalisés.
+- `GroupePerm.role_metier` ajouté au type ; i18n fr/en
+  (`groupes.select_placeholder`). Fichiers : `UserInfoTab.tsx`,
+  `useUserForm.ts`, `usersMeta.ts`, `users.json` (fr/en).
+
+## 2026-11-19 — Unification rôle/groupe : le groupe devient source de vérité
+
+- Problème : `Profile.role` (enum figé) et `Profile.groupe` (FK vers
+  `GroupePermissions`) coexistaient sans garantie de cohérence — un user
+  pouvait être `role=VENDEUR` + `groupe=Pharmacien`.
+- Solution (option A) : suppression de la colonne `Profile.role`. Nouveau
+  champ `GroupePermissions.role_metier` (PHARMACIEN/VENDEUR/CAISSIER/
+  COMPTABLE, défaut PHARMACIEN = vue manager) qui pilote la vue dashboard,
+  les accès métier (compta, audit, stats) et les filtres planning.
+- `Profile.role` reste disponible en **property** : lecture = `groupe.role_metier`
+  (fallback VENDEUR sans groupe) ; écriture = réaffecte au groupe système au
+  libellé canonique — sauf si le rôle demandé égale déjà celui du groupe
+  courant (préserve les groupes personnalisés). Compat : login, dashboard,
+  audit, compta, tests inchangés.
+- Migration `0301_role_to_groupe` : AddField → RunPython (role_metier des
+  groupes système par nom + profils sans groupe réaffectés par ancien rôle)
+  → RemoveField.
+- Filtres queryset adaptés : `groupe__role_metier=` (planning, apply_to_role,
+  list_filter admin). `role` déclaré ChoiceField dans ProfileSerializer.
+- Fichiers : `api/models/users.py`, `api/serializers/users.py`,
+  `api/views/{users,planning}.py`, `api/admin.py`,
+  `api/migrations/0301_role_to_groupe.py`. Frontend inchangé (l'API garde
+  le même contrat `role`).
+- Tests : 159 tests verts (user_management, dashboard, planning,
+  finance_marges, stats_discrepancy).
+
+## 2026-11-19 — Dashboard configurable par utilisateur (widgets masquables)
+
+- Demande : permettre à chaque utilisateur de choisir les éléments affichés
+  sur son tableau de bord, persistés en base (pas localStorage) pour les
+  pharmacies multi-postes.
+- Backend : nouveau champ `Profile.dashboard_prefs` (JSONField, migration
+  `0300_profile_dashboard_prefs`) + endpoint `GET/PATCH users/dashboard-prefs/`
+  dans `UserViewSet`. Convention : clé absente = visible ; le PATCH fusionne,
+  ne garde que les `false`, valide les clés (`[a-z0-9_.]{1,50}`) et ignore
+  les valeurs non booléennes. `{"reset": true}` réinitialise.
+- Frontend : hook `useDashboardPrefs` (React Query, maj optimiste + rollback)
+  avec le registre `DASHBOARD_WIDGET_GROUPS` (14 widgets en 3 groupes :
+  Vue d'ensemble, Stock, Finances) ; `DashboardCustomizeDialog` (Dialog +
+  Switch shadcn) ouvert depuis le menu ⋯ du dashboard.
+- Widgets masquables : KPIs, alerte réappro, graphique CA, trafic horaire,
+  historique P&L, ruptures fréquentes (overview) ; périssables, dormant,
+  surstock, promis, réappro, alertes stock (stock) ; UG, échéances (finance).
+- i18n : bloc `customize` ajouté dans `dashboard.json` (fr + en).
+- Fichiers : `backend/api/models/users.py`, `backend/api/views/users.py`,
+  `backend/api/migrations/0300_profile_dashboard_prefs.py`,
+  `src/hooks/useDashboardPrefs.ts` (nouveau),
+  `src/components/dashboard/DashboardCustomizeDialog.tsx` (nouveau),
+  `src/components/{DashboardShadcn,dashboard/StockIntelligence,dashboard/PerformanceOverview,dashboard/FinancialSummary}.tsx`,
+  `public/locales/{fr,en}/dashboard.json`.
+
+## 2026-11-19 — Dashboard : refonte visuelle des cartes stock (StockIntelligence)
+
+- Avant : 5 cartes en fond pastel saturé (rouge/indigo/orange/émeraude/cyan)
+  côte à côte — effet « guirlande », hiérarchie noyée, items colorés illisibles
+  dans leur carte de même teinte, footers incohérents.
+- Après : cartes blanches unifiées (`bg-white` + `border-slate-200`) avec une
+  barre de couleur en gradient en haut de chaque carte ; la couleur sémantique
+  vit désormais dans l'icône, le point d'urgence et les badges uniquement.
+- Items passés en `bg-slate-50` neutre (sauf urgence : rouge ≤ 7 jours,
+  amber ≤ 30 jours) ; suppression du `hover:scale` qui décalait le layout.
+- Footers harmonisés (`bg-slate-50` + `text-micro uppercase`) sur les 5 cartes
+  (périssables, dormant, surstock, promis, réappro rayon, alertes stock).
+- Zéro changement de logique, de routes ou de clés i18n.
+- Fichier : `frontend/frontend/src/components/dashboard/StockIntelligence.tsx`.
+
+## 2026-11-18 — Ticket de clôture : échec silencieux du fallback rendu visible
+
+- Symptôme : « Journal de caisse → Clôturer » réussissait mais aucun
+  ticket n'était produit. Chaîne : `printEscpos` (QZ Tray) → en cas
+  d'échec, fallback `window.open` + impression HTML. Or ce `window.open`
+  arrive ~15 s après le clic (POST clôture + timeout connexion QZ) —
+  hors « user activation », le navigateur bloque le popup, `win` est
+  `null` et le code retournait **en silence** : ni ticket, ni message.
+- Fix (`useJournalCaissePrinting.ts`) : quand la fenêtre est bloquée, un
+  toast `gooeyToast.error` explicite s'affiche (« fenêtre bloquée par le
+  navigateur — autorisez les popups ou vérifiez QZ Tray ») + `logger.warn`.
+  La cause probable reste QZ Tray arrêté sur le poste : le toast rend
+  désormais l'échec actionnable au lieu d'être invisible.
+- Clés i18n `cash_journal:print.popup_blocked` ajoutées (fr + en).
+- Fichiers : `src/hooks/caisse/useJournalCaissePrinting.ts`,
+  `public/locales/{fr,en}/cash_journal.json`.
+
+## 2026-11-18 — Clôture caisse : heure réelle au lieu de 23:59
+
+- Symptôme : la « fin de période » d'une clôture affichait parfois 23:59
+  au lieu de l'heure réelle. Cause : le frontend borne `date_fin` du jour
+  à 23:59:59 (`toApiDateEnd`, pertinent pour un **filtre** journalier) et
+  le backend la stockait telle quelle dans `ClotureCaisse.date_fin`.
+- Fix backend (`caisse_mixins/cloture_mixin.py`) : `date_fin` est bornée à
+  `timezone.now()` quand elle est absente (clôture « maintenant ») ou dans
+  le futur (jour en cours) — une clôture ne peut pas s'étendre dans le
+  futur. Une clôture d'un **jour passé** garde son 23:59:59 (fin de
+  période légitime).
+- Effets : `date_fin` reflète l'instant réel de clôture (table, dialog,
+  ticket ESC/POS) ; les mouvements manuels de clôture sont datés de
+  l'instant réel ; les clôtures passées en base restent à 23:59 (l'heure
+  réelle d'origine n'est pas récupérable rétroactivement).
+- Fichier : `backend/api/views/ventes/caisse_mixins/cloture_mixin.py`.
+
+## 2026-11-18 — Encaissement : mot de passe validateur saisi en ligne
+
+- Avant : « Valider la vente » sur la modale Encaissement ouvrait une
+  **seconde modale** sudo (mot de passe → confirmer) quand le poste est une
+  caisse active ou en mode caisse centralisée — deux modales, deux Enter.
+- La modale Encaissement affiche désormais le champ « Mot de passe » en
+  ligne (icône cadenas, hint contextuel vendeur/caisse centrale) quand le
+  sudo sera exigé : **une seule modale, un seul Enter** — focus direct sur
+  le champ, `verify_password` appelé avant `handleCompleteSale(creds)`,
+  erreur inline + re-focus en cas de mot de passe invalide, verrou
+  anti-double-soumission pendant la vérification.
+- Condition partagée `paymentSudoRequired`/`paymentSudoPermission`/
+  `paymentSudoHint` dans `useFacturationState` — la modale sudo séparée
+  reste le repli pour les autres chemins (montant nul, raccourcis…).
+- Bonus : clé `common:sudo.invalid_password` ajoutée (fr/en) — elle était
+  référencée par `SudoValidationModal` mais absente des locales.
+- Fichiers : `facturation/PaymentModal.tsx`,
+  `facturation/FacturationModals.tsx`, `hooks/useFacturationState.ts`,
+  locales fr/en `common.json`.
+
+## 2026-11-18 — Vente suspendue : re-vérification des lots à la reprise
+
+- Suspendre une vente conserve `lotId`/`lotAllocations` (localStorage) mais
+  ne réserve pas le stock : si le lot choisi a été vendu entre-temps,
+  l'encaissement échouait en 400 « Stock insuffisant dans le lot » sans
+  indication préalable.
+- À la restauration (`_flagStaleLots`), chaque ligne avec lot explicite est
+  re-contrôlée via `GET stock-lots/?produit=` (lots non vides uniquement) :
+  lot absent ou `quantity_remaining` insuffisant → flag `lotStale` sur la
+  ligne, bouton lot passé en **rouge** (table + sidebar), tooltip
+  « ⚠ Lot indisponible ou insuffisant — cliquez pour choisir un autre lot »
+  + toast d'avertissement. Multi-lots : flag si **une** allocation dépasse
+  le reliquat de son lot.
+- Robuste : un produit dont le fetch échoue n'est jamais flagué ; les lignes
+  dont le lot redevient suffisant sont dé-flaguées (le flag persiste en
+  localStorage si la vente est re-suspendue) ; une nouvelle sélection via le
+  sélecteur de lot efface le flag.
+- Fichiers : `hooks/useFacturationActions.ts`, `hooks/useLotDisplay.ts`,
+  `types/finance.ts` (`LigneFacture.lotStale`),
+  `facturation/TableCartRow.tsx`, `facturation/SidebarCartRow.tsx`,
+  locales fr/en (`pending_lots_stale`, `cart_extra.lot_stale`).
+
+## 2026-11-18 — Dashboard : toutes les cards harmonisées façon Créances
+
+- Convention appliquée partout : cards **stats** = fond pastel +
+  bordure teintée `{tone}-50/{tone}-200` + tuile icône blanche ;
+  cards **contenu** (charts, tableaux, listes) = blanches
+  `border-slate-200` + en-tête avec tuile icône `bg-{tone}-100`.
+- **PerformanceOverview** : les 5 KPI (CA, marge, créances, dettes,
+  valeur stock) en emerald/indigo/amber/rose/blue ; montants uniformisés
+  « F FCFA » (`formatCurrency` + `common:currency`) — la card
+  « Créances client » n'affichait avant que « F ».
+- **StockIntelligence** : 6 panneaux teintés sémantiquement (périssables
+  → red, stock dormant → indigo, surstock → orange, promis → emerald,
+  réappro → cyan, alertes stock → amber), tuiles d'icônes alignées.
+- **DashboardVendeur** : 4 KPI en pastel (CA sem. → emerald, CA mois →
+  blue, panier → indigo, classement → amber) ; card objectif non atteint
+  → indigo-50 (était blanche), ≥100 % reste emerald.
+- **FinancialSummary** : dernières classes DaisyUI éliminées
+  (`bg-base-100`, `text-warning`, `bg-error/10`…) → Tailwind standard ;
+  cards UG (purple) et échéances (amber) harmonisées.
+- Fichiers : `dashboard/PerformanceOverview.tsx`,
+  `dashboard/StockIntelligence.tsx`, `dashboard/DashboardVendeur.tsx`,
+  `dashboard/FinancialSummary.tsx`.
+
+## 2026-11-18 — Ouverture de session : premier poste/caisse disponible pré-sélectionné
+
+- Les modales « Ouvrir un point de vente » et « Ouvrir une session de
+  caisse » ne pré-sélectionnaient un poste que si l'utilisateur avait déjà
+  une session active ou s'il n'y avait qu'un seul choix disponible — avec
+  plusieurs postes libres, il fallait cliquer ou naviguer aux flèches
+  avant que **Entrée** ne valide.
+- Le **premier poste disponible** (ordre d'affichage) est désormais
+  pré-sélectionné : la carte est focusée et **Entrée** ouvre la session
+  immédiatement. Le poste actif de l'utilisateur garde la priorité
+  (réactivation), et `autoOpen` (un seul poste → ouverture directe) est
+  inchangé.
+- `OpenCashSessionModal` reçoit au passage la navigation clavier qui
+  manquait : flèches entre les caisses disponibles, **Entrée** ouvre la
+  session (aussi depuis le champ fond de caisse, où les flèches restent
+  intactes) et sur une carte focusée.
+- Fichiers : `components/caisse/OpenPointDeVenteModal.tsx`,
+  `components/caisse/OpenCashSessionModal.tsx`.
+
 ## 2026-11-18 — Caisse : suppression du toast redondant à l'encaissement
 
 - La validation d'un encaissement (`CaisseCentralisee`) affichait **3 toasts** :

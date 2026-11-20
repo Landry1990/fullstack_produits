@@ -11,7 +11,8 @@ import {
   Calendar,
   MoreHorizontal,
   BarChart3,
-  CreditCard
+  CreditCard,
+  SlidersHorizontal
 } from 'lucide-react';
 import {
   useDashboardInit,
@@ -47,6 +48,7 @@ import PerformanceOverview from './dashboard/PerformanceOverview';
 import StockIntelligence from './dashboard/StockIntelligence';
 import FinancialSummary from './dashboard/FinancialSummary';
 import DashboardVendeur from './dashboard/DashboardVendeur';
+import DashboardCustomizeDialog from './dashboard/DashboardCustomizeDialog';
 
 export default function DashboardShadcn() {
   const { t } = useTranslation(['dashboard', 'common']);
@@ -58,6 +60,7 @@ export default function DashboardShadcn() {
   const [sendingReport, setSendingReport] = useState(false);
   const [sendingInventaire, setSendingInventaire] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [customizeOpen, setCustomizeOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const { data: initData, isLoading: initLoading, error: initError, refetch: refetchInit } = useDashboardInit();
@@ -320,6 +323,16 @@ export default function DashboardShadcn() {
                     )}
                     {t('actions.send_inventory')}
                   </button>
+                  <div className="my-1 border-t border-slate-100" />
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                    onClick={() => { setCustomizeOpen(true); setMenuOpen(false); }}
+                  >
+                    <SlidersHorizontal className="size-4 text-slate-500" />
+                    {t('customize.menu_item')}
+                  </button>
                 </motion.div>
               )}
               </AnimatePresence>
@@ -402,6 +415,8 @@ export default function DashboardShadcn() {
           </motion.div>
         </AnimatePresence>
       </div>
+
+      <DashboardCustomizeDialog open={customizeOpen} onOpenChange={setCustomizeOpen} />
     </div>
     </MotionConfig>
   );

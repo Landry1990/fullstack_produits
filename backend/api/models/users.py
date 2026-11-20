@@ -23,6 +23,16 @@ PERMISSION_FIELDS = [
 ]
 
 
+# Rôles métier : déterminent la vue dashboard (vendeur vs manager) et les
+# accès métier (compta, audit, stats). Source de vérité portée par le groupe.
+ROLE_METIER_CHOICES = [
+    ('PHARMACIEN', 'Pharmacien'),
+    ('VENDEUR', 'Vendeur'),
+    ('CAISSIER', 'Caissier'),
+    ('COMPTABLE', 'Comptable'),
+]
+
+
 class GroupePermissions(models.Model):
     """Groupe de droits : base commune + dérogations individuelles sur Profile."""
     name = models.CharField(max_length=50, unique=True, verbose_name='Nom')
@@ -33,6 +43,15 @@ class GroupePermissions(models.Model):
     )
     # None = le groupe ne touche pas aux menus des membres
     allowed_menus = models.JSONField(null=True, blank=True, default=None)
+
+    # Rôle métier des membres : vue dashboard et accès métier associés.
+    # Défaut PHARMACIEN (vue complète) — les groupes personnalisés sont
+    # typiquement back-office ; les droits restent gouvernés par les can_*.
+    role_metier = models.CharField(
+        max_length=20, choices=ROLE_METIER_CHOICES, default='PHARMACIEN',
+        verbose_name='Rôle métier',
+        help_text='Détermine la vue du tableau de bord et les accès métier des membres.',
+    )
 
     can_do_returns = models.BooleanField(default=False)
     can_sell_negative_stock = models.BooleanField(default=False)
@@ -124,13 +143,8 @@ class Profile(models.Model):
         verbose_name="Remise maximum (%)"
     )
 
-    ROLE_CHOICES = [
-        ('PHARMACIEN', 'Pharmacien'),
-        ('VENDEUR', 'Vendeur'),
-        ('CAISSIER', 'Caissier'),
-        ('COMPTABLE', 'Comptable'),
-    ]
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='VENDEUR')
+    # Alias de compatibilité : la source de vérité est GroupePermissions.role_metier.
+    ROLE_CHOICES = ROLE_METIER_CHOICES
 
     # Groupe de droits : les can_* du profil matérialisent les valeurs
     # effectives (groupe + dérogations). Hors groupe → champs propres.
@@ -150,6 +164,48 @@ class Profile(models.Model):
         default=False,
         verbose_name="Changement de mot de passe obligatoire",
     )
+
+    # Préférences d'affichage du tableau de bord : {"stock.expiring": false, ...}
+    # Clé absente = widget visible (défaut).
+    dashboard_prefs = models.JSONField(
+        default=dict, blank=True,
+        help_text='Widgets du dashboard masqués par l\'utilisateur.',
+    )
+
+    @property
+    def role(self):
+        """Rôle métier dérivé du groupe de permissions (source de vérité).
+
+        Fallback 'VENDEUR' pour un profil sans groupe (comportement historique).
+        """
+        return self.groupe.role_metier if self.groupe_id else 'VENDEUR'
+
+    @role.setter
+    def role(self, value):
+        """Compat écriture : 'X' affecte le groupe système de rôle métier X.
+
+        Si le rôle demandé égale celui du groupe actuel, le groupe est
+        conservé — ainsi un utilisateur d'un groupe personnalisé n'est pas
+        réaffecté au groupe système lors d'une simple sauvegarde du profil.
+        """
+        if not value:
+            return
+        if self.groupe_id and self.groupe.role_metier == value:
+            return
+        # Plusieurs groupes peuvent partager le même role_metier (ex. un
+        # groupe custom "Commandes" en PHARMACIEN) : on cible le groupe
+        # système au libellé canonique, sinon fallback sur le premier trouvé.
+        name_by_role = {
+            'PHARMACIEN': 'Pharmacien',
+            'VENDEUR': 'Vendeur',
+            'CAISSIER': 'Caissier',
+            'COMPTABLE': 'Comptable',
+        }
+        self.groupe = GroupePermissions.objects.filter(
+            role_metier=value, is_system=True, name=name_by_role.get(value, '')
+        ).first() or GroupePermissions.objects.filter(
+            role_metier=value, is_system=True
+        ).first()
 
     def __str__(self):
         return f"Profile of {self.user.username}"

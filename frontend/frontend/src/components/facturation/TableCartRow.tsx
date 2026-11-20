@@ -198,7 +198,7 @@ export default React.memo(function TableCartRow({
             variant={(ligne.lotId || ligne.lotAllocations?.length) ? 'default' : 'outline'}
             size="sm"
             onClick={() => onOpenLotModal(ligne.produit, ligne.lotId || null, ligne.quantite, ligne.lotAllocations || null, ligne.lineId)}
-            className={`w-full max-w-[260px] truncate text-xs h-7 ${(ligne.lotId || ligne.lotAllocations?.length) ? 'bg-emerald-600 hover:bg-emerald-700' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
+            className={`w-full max-w-[260px] truncate text-xs h-7 ${ligne.lotStale ? 'bg-red-600 hover:bg-red-700' : (ligne.lotId || ligne.lotAllocations?.length) ? 'bg-emerald-600 hover:bg-emerald-700' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
             title={lotTooltip}
           >
             {lotDisplayText}

@@ -438,6 +438,23 @@ export function useFacturationState() {
         ? t('facturation:messages.no_cash_register_open')
         : null
 
+  // En caisse centralisée, le sudo ne fait que confirmer l'identité (le
+  // backend n'exige aucune permission pour une vente standard — les cas
+  // remise/prix/retour/stock négatif/montant nul ont leurs validations
+  // dédiées). Le réglage require_validator_password permet de le désactiver.
+  const identitySudoBypassed = multiCaisse.centralizedCashRegister
+    && invoiceSettings?.require_validator_password === false
+  // Le mot de passe validateur est exigé à l'encaissement d'une nouvelle
+  // vente : envoi en caisse centrale ou encaissement direct sur un poste
+  // caisse. La modale de paiement le saisit en ligne (une seule étape).
+  const paymentSudoRequired = (multiCaisse.centralizedCashRegister || isPosteCaisseActive)
+    && !identitySudoBypassed
+  // Encaissement direct (non centralisé) → le backend exige can_cash_out
+  const paymentSudoPermission = multiCaisse.centralizedCashRegister ? 'can_validate_sales' : 'can_cash_out'
+  const paymentSudoHint = isPosteCaisseActive
+    ? t('facturation:payment.sudo_seller_message')
+    : t('facturation:payment.sudo_send_to_caisse')
+
   // --- Complete Sale Handler ---
   const handleCompleteSale = async (sudoCredentials?: { validatorId: number, password: string }) => {
     // Le verrou couvre tout le flux (y compris le modal sudo) : un second
@@ -453,23 +470,17 @@ export function useFacturationState() {
       return
     }
 
-    // En caisse centralisée, le sudo ne fait que confirmer l'identité (le
-    // backend n'exige aucune permission pour une vente standard — les cas
-    // remise/prix/retour/stock négatif/montant nul ont leurs validations
-    // dédiées). Le réglage require_validator_password permet de le désactiver.
-    const identitySudoBypassed = multiCaisse.centralizedCashRegister
-      && invoiceSettings?.require_validator_password === false
-    // Sudo required when sending to centralized cash register or when selling on an opened cash register point
-    if ((multiCaisse.centralizedCashRegister || isPosteCaisseActive) && !sudoCredentials && !identitySudoBypassed) {
+    // Sudo requis pour une vente sans credentials → modale de validation
+    // dédiée (le mot de passe peut aussi être saisi en ligne dans la modale
+    // de paiement, qui appelle alors handleCompleteSale avec credentials).
+    if (paymentSudoRequired && !sudoCredentials) {
       requireSudo(async (validatorId, password) => {
         await handleCompleteSale({ validatorId, password })
       }, {
         title: isPosteCaisseActive ? t('facturation:payment.sudo_seller_title') : t('facturation:payment.sudo_confirm_identity'),
-        message: isPosteCaisseActive
-          ? t('facturation:payment.sudo_seller_message')
-          : t('facturation:payment.sudo_send_to_caisse'),
+        message: paymentSudoHint,
         // Encaissement direct (non centralisé) → le backend exige can_cash_out
-        permission: multiCaisse.centralizedCashRegister ? 'can_validate_sales' : 'can_cash_out',
+        permission: paymentSudoPermission,
         forceCurrentUser: false,
         onCancel: () => { saleInProgressRef.current = false },
       })
@@ -848,6 +859,9 @@ export function useFacturationState() {
     isPosteCaisseActive,
     hasMyActivePoste,
     paymentUnavailableReason,
+    paymentSudoRequired,
+    paymentSudoPermission,
+    paymentSudoHint,
     allPostes: multiCaisse.postesCaisses,
     lignesFacture: cart.lignesFacture,
     sortedLignes,

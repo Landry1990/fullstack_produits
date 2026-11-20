@@ -5,6 +5,7 @@
         "edit": "Modifier Client",
         "delete": "Supprimer Client",
         "bulk_delete": "Supprimer {{count}} client(s)",
+        "merge_client": "Fusionner",
         "mask_client": "Masquer le client",
         "reactivate_client": "Réactiver le client"
     },
@@ -137,7 +138,18 @@
         "title": "Doublon détecté",
         "description": "Un ou plusieurs clients semblent identiques. Vous pouvez fusionner les informations dans un client existant ou créer un nouveau client.",
         "match": "correspondance",
-        "keep_new": "Créer quand même"
+        "keep_new": "Créer quand même",
+        "manual": {
+            "title": "Fusionner le client",
+            "description": "Choisissez le client dans lequel \"{{name}}\" doit être fusionné.",
+            "source_label": "Client à masquer",
+            "warning": "Toutes les ventes, créances, avoirs, dépôts, promis, bénéficiaires et historiques seront transférés vers le client choisi. Le client source sera ensuite masqué. Cette action est irréversible.",
+            "search_placeholder": "Rechercher le client cible...",
+            "empty": "Aucun client cible trouvé",
+            "choose": "Choisir",
+            "confirm_title": "Confirmer la fusion",
+            "confirm_message": "Fusionner \"{{source}}\" dans \"{{target}}\" ? Toutes les données seront transférées et le client source sera masqué."
+        }
     },
     "status": {
         "inactive": "INACTIF"

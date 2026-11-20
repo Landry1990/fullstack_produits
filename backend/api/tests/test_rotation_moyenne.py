@@ -1,0 +1,120 @@
+from datetime import timedelta
+from decimal import Decimal
+
+from django.core.cache import cache
+from django.test import TestCase
+from django.utils import timezone
+
+from api.models import Facture, FactureProduit
+from api.services.replenishment_service import (
+    JOURS_DONNEES_CACHE_KEY,
+    get_replenishment_metrics,
+    recalculate_products_rotation,
+)
+from api.services.sale_validator import SaleValidator
+from api.tests.factories import TestDataFactory
+
+
+class RotationMoyenneTests(TestCase):
+    def setUp(self):
+        self.user = TestDataFactory.create_superuser()
+        self.produit = TestDataFactory.create_produit(
+            name='Produit Rotation',
+            stock=10,
+            selling_price=500,
+        )
+        self.facture = Facture.objects.create(
+            numero_facture='FAC-TEST-ROTATION',
+            status=Facture.Status.BROUILLON,
+            created_by=self.user,
+            validated_by=self.user,
+        )
+        FactureProduit.objects.bulk_create([
+            FactureProduit(
+                facture=self.facture,
+                produit=self.produit,
+                quantity=3,
+                selling_price=Decimal('500'),
+                discount=Decimal('0'),
+                tva=Decimal('0'),
+            )
+        ])
+        self.facture.calculate_totals(save=True)
+
+    def test_validation_recalcule_rotation_apres_bulk_create(self):
+        self.assertEqual(self.produit.rotation_moyenne, Decimal('0.00'))
+
+        with self.captureOnCommitCallbacks(execute=True):
+            SaleValidator.validate_invoice(
+                self.facture,
+                self.user,
+                {
+                    'paiement_immediat': Decimal('1500'),
+                    'points_to_use': 0,
+                    'use_pending_discount': False,
+                },
+            )
+
+        self.facture.refresh_from_db()
+        self.produit.refresh_from_db()
+        metrics = get_replenishment_metrics(self.produit.id, produit=self.produit)
+        expected_rotation = Decimal(str(metrics['consommation_mensuelle'])).quantize(Decimal('0.01'))
+
+        self.assertEqual(self.facture.status, Facture.Status.VALIDEE)
+        self.assertEqual(self.produit.rotation_moyenne, expected_rotation)
+        self.assertGreater(self.produit.rotation_moyenne, Decimal('0.00'))
+        self.assertEqual(
+            self.produit.date_premiere_vente,
+            timezone.localtime(self.facture.date).date(),
+        )
+
+    def test_recalcul_global_ignore_le_cache_jours_donnees(self):
+        old_date = timezone.now() - timedelta(days=40)
+        old_facture = Facture.objects.create(
+            numero_facture='FAC-TEST-ROTATION-OLD',
+            status=Facture.Status.VALIDEE,
+            created_by=self.user,
+            validated_by=self.user,
+        )
+        FactureProduit.objects.bulk_create([
+            FactureProduit(
+                facture=old_facture,
+                produit=self.produit,
+                quantity=30,
+                selling_price=Decimal('500'),
+                discount=Decimal('0'),
+                tva=Decimal('0'),
+            )
+        ])
+        Facture.objects.filter(pk=old_facture.pk).update(date=old_date)
+        type(self.produit).objects.filter(pk=self.produit.pk).update(created_at=old_date)
+        cache.set(JOURS_DONNEES_CACHE_KEY, 7, 3600)
+
+        recalculate_products_rotation([self.produit.id])
+
+        self.produit.refresh_from_db()
+        metrics = get_replenishment_metrics(self.produit.id, produit=self.produit)
+        expected_rotation = Decimal(str(metrics['consommation_mensuelle'])).quantize(Decimal('0.01'))
+        self.assertEqual(self.produit.rotation_moyenne, expected_rotation)
+        self.assertLess(self.produit.rotation_moyenne, Decimal('60.00'))
+
+    def test_annulation_recalcule_rotation_a_zero(self):
+        with self.captureOnCommitCallbacks(execute=True):
+            SaleValidator.validate_invoice(
+                self.facture,
+                self.user,
+                {
+                    'paiement_immediat': Decimal('1500'),
+                    'points_to_use': 0,
+                    'use_pending_discount': False,
+                },
+            )
+        self.produit.refresh_from_db()
+        self.assertGreater(self.produit.rotation_moyenne, Decimal('0.00'))
+
+        with self.captureOnCommitCallbacks(execute=True):
+            self.facture.status = Facture.Status.ANNULEE
+            self.facture.save(update_fields=['status'])
+
+        self.produit.refresh_from_db()
+        self.assertEqual(self.produit.rotation_moyenne, Decimal('0.00'))

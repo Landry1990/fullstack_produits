@@ -46,6 +46,7 @@ export interface GroupePerm {
   allowed_menus: string[] | null;
   membres_count?: number;
   max_discount_rate: string | number;
+  role_metier?: Role;
 }
 
 export interface ManagedUser {

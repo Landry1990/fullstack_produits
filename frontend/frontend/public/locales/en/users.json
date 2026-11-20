@@ -205,7 +205,8 @@
         "delete_title": "Delete the group?",
         "delete_confirm": "Delete the group \"{{name}}\"? Its members will keep their current rights but switch to individual management.",
         "delete_error": "Unable to delete.",
-        "groupe": "Permission group",
+        "groupe": "Group",
+        "select_placeholder": "— Select a group —",
         "none": "— None (custom rights) —",
         "hint": "differences from the group are marked 'derogation'",
         "derogation": "override"

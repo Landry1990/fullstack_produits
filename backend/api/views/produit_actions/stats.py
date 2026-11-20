@@ -10,6 +10,7 @@ from rest_framework.response import Response
 
 from ...audit_helpers import log_audit
 from ...models import AuditLog, CommandeProduit, FactureProduit, LigneAvoirClient, Produit
+from ...services.replenishment_service import recalculate_products_rotation
 from ...utils.validation import parse_id, parse_int
 
 
@@ -112,55 +113,18 @@ class ProduitStatsMixin:
 
     @action(detail=False, methods=['post'])
     def recalculate_rotation(self, request):
-        from django.db import transaction
         try:
-            today = timezone.localtime(timezone.now()).date()
-            
-            ventes_par_produit = FactureProduit.objects.filter(
-                facture__status__in=['VAL', 'PAY']
-            ).values('produit_id').annotate(
-                total=Sum('quantity')
-            )
-            
-            avoirs_par_produit = LigneAvoirClient.objects.filter(
-                avoir_client__statut='VALIDEE'
-            ).values('produit_id').annotate(
-                total=Sum('quantity')
-            )
-            
-            sold_dict = {item['produit_id']: (item['total'] or 0) for item in ventes_par_produit}
-            avoirs_dict = {item['produit_id']: (item['total'] or 0) for item in avoirs_par_produit}
-            
-            for key, qte in avoirs_dict.items():
-                sold_dict[key] = sold_dict.get(key, 0) - qte
-            
-            produits = Produit.objects.all()
-            produits_to_update = []
-            
-            for produit in produits:
-                months_since_creation = (today - produit.created_at.date()).days / 30.0
-                months = max(1.0, months_since_creation)
-                
-                total_sold = sold_dict.get(produit.id, 0)
-                rotation = float(total_sold) / months
-                
-                current_rotation = getattr(produit, 'rotation_moyenne', 0) or 0
-                if abs(float(current_rotation) - rotation) > 0.001:
-                    produit.rotation_moyenne = rotation
-                    produits_to_update.append(produit)
-            
-            if produits_to_update:
-                with transaction.atomic():
-                    Produit.objects.bulk_update(produits_to_update, ['rotation_moyenne'], batch_size=1000)
+            total = Produit.objects.count()
+            updated = recalculate_products_rotation()
 
             log_audit(
                 user=request.user, action=AuditLog.Action.OTHER,
                 model_name='Produit', object_id='BULK',
-                description=f"Recalcul global de la rotation moyenne — {len(produits_to_update)} produit(s) mis à jour",
-                details={'updated': len(produits_to_update), 'total': produits.count()},
+                description=f"Recalcul global de la rotation moyenne — {updated} produit(s) mis à jour",
+                details={'updated': updated, 'total': total},
                 request=request
             )
-            return Response({'message': f'Rotation recalculée. {len(produits_to_update)} produits mis à jour sur {produits.count()}.'})
+            return Response({'message': f'Rotation recalculée. {updated} produits mis à jour sur {total}.'})
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

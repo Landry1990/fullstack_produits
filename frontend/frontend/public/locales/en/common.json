@@ -269,6 +269,7 @@
         "validate_password": "Password",
         "validate_required": "(Required)",
         "validate_hint": "Enter the password of a user with the required permission",
+        "invalid_password": "Incorrect password or insufficient permissions",
         "cancel": "Cancel",
         "confirm": "Confirm validation",
         "title": "Validation Required",

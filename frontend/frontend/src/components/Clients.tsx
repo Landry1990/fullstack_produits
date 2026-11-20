@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { gooeyToast } from 'goey-toast';
 import {
   UserPlus, Users, Settings, Trash2, Eye, EyeOff, Search, Phone, MapPin, Mail,
-  User, ShoppingBag, ShieldCheck, Edit, Activity, CreditCard, ArrowLeft, Gift
+  User, ShoppingBag, ShieldCheck, Edit, Activity, CreditCard, ArrowLeft, Gift, GitMerge
 } from 'lucide-react';
 import { Button } from './shadcn/button';
 import { Badge } from './shadcn/badge';
@@ -29,6 +29,7 @@ import ClientDepositModal from './clients/ClientDepositModal';
 import ClientDeleteWarningModal from './clients/ClientDeleteWarningModal';
 import BulkDeleteWarningModal from './clients/BulkDeleteWarningModal';
 import ClientMergeModal from './clients/ClientMergeModal';
+import ClientMergeTargetModal from './clients/ClientMergeTargetModal';
 import clientService from '../services/clientService';
 import { formatCurrency, normalizeNumberInput } from '../utils/formatters';
 import { clientSchema } from '../schemas/clientSchema';
@@ -88,6 +89,8 @@ export default function Clients() {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
   const [isMergeModalOpen, setIsMergeModalOpen] = useState(false);
+  const [isMergeTargetModalOpen, setIsMergeTargetModalOpen] = useState(false);
+  const [isMergingClient, setIsMergingClient] = useState(false);
   const [mergeCandidates, setMergeCandidates] = useState<Array<{ id: number; name: string; client_type: 'PARTICULIER' | 'PROFESSIONNEL'; phone: string | null; score: number }>>([]);
   const [pendingFormData, setPendingFormData] = useState<{ data: Partial<Client>; mode: 'create' | 'edit' } | null>(null);
   const [isDeleteWarningOpen, setIsDeleteWarningOpen] = useState(false);
@@ -296,7 +299,12 @@ export default function Clients() {
         }
 
         const cleanData = validation.data as unknown as Partial<Client>;
-        const dupData = { name: cleanData.name, phone: cleanData.phone, exclude_id: formData.id || undefined };
+        const dupData = {
+            name: cleanData.name,
+            phone: cleanData.phone,
+            client_type: cleanData.client_type,
+            exclude_id: formData.id || undefined,
+        };
         const { candidates } = await clientService.checkDuplicates(dupData);
 
         if (candidates && candidates.length > 0) {
@@ -328,6 +336,39 @@ export default function Clients() {
     setIsSubmitting(true);
     setIsMergeModalOpen(false);
     await processFormData(pendingFormData.data, pendingFormData.mode, candidate.id);
+  };
+
+  const handleMergeSelectedClient = async (target: Client) => {
+    if (!selectedClient) return;
+
+    const confirmed = await confirm({
+      title: t('clients:merge.manual.confirm_title'),
+      message: t('clients:merge.manual.confirm_message', {
+        source: selectedClient.name,
+        target: target.name,
+      }),
+      confirmText: t('clients:actions.merge_client'),
+      variant: 'danger'
+    });
+    if (!confirmed) return;
+
+    const sourceId = selectedClient.id;
+    try {
+      setIsMergingClient(true);
+      const result = await clientService.merge(sourceId, target.id) as { client: Client };
+      gooeyToast.success(t('clients:messages.merge_success'));
+      setIsMergeTargetModalOpen(false);
+      setClients(prev => prev
+        .filter(client => client.id !== sourceId)
+        .map(client => client.id === result.client.id ? result.client : client));
+      setSelectedClient(null);
+      setTimeout(() => fetchClients(true), 500);
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { detail?: string; message?: string } } };
+      gooeyToast.error(axiosErr.response?.data?.detail || axiosErr.response?.data?.message || t('clients:messages.error_save'), { duration: 5000 });
+    } finally {
+      setIsMergingClient(false);
+    }
   };
 
   const handleDelete = async () => {
@@ -644,6 +685,14 @@ export default function Clients() {
                   <Button variant="outline" size="sm" className="gap-2" onClick={() => handleOpenEdit(selectedClient)}>
                     <Edit className="size-4" /> {t('common:edit')}
                   </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 border-indigo-200 text-indigo-600 hover:bg-indigo-50"
+                    onClick={() => setIsMergeTargetModalOpen(true)}
+                  >
+                    <GitMerge className="size-4" /> {t('clients:actions.merge_client')}
+                  </Button>
                   <Button variant="outline" size="sm" className="gap-2 border-red-200 text-red-600 hover:bg-red-50" onClick={handleDelete}>
                     <Trash2 className="size-4" /> {t('common:delete')}
                   </Button>
@@ -925,6 +974,14 @@ export default function Clients() {
         onKeepNew={handleKeepNew}
         onMerge={handleMerge}
         candidates={mergeCandidates}
+      />
+
+      <ClientMergeTargetModal
+        isOpen={isMergeTargetModalOpen}
+        onClose={() => setIsMergeTargetModalOpen(false)}
+        onMerge={handleMergeSelectedClient}
+        source={selectedClient}
+        isSubmitting={isMergingClient}
       />
     </motion.div>
   );

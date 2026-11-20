@@ -205,7 +205,8 @@
         "delete_title": "Supprimer le groupe ?",
         "delete_confirm": "Supprimer le groupe « {{name}} » ? Ses membres garderont leurs droits actuels mais passeront en gestion individuelle.",
         "delete_error": "Suppression impossible.",
-        "groupe": "Groupe de permissions",
+        "groupe": "Groupe",
+        "select_placeholder": "— Choisir un groupe —",
         "none": "— Aucun (droits personnalisés) —",
         "hint": "les écarts au groupe sont marqués « dérogation »",
         "derogation": "dérogation"

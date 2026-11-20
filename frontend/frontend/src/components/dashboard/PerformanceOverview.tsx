@@ -22,17 +22,27 @@ import { motion } from 'framer-motion';
 import { fadeInUp, staggerContainer, staggerFadeContainer } from '../../lib/motion';
 import type { TFunction } from 'i18next';
 import type { DashboardStats, RevenueChartData, HourlyTrafficData, SupplierDebtsResponse, FrequentStockoutItem } from '../../hooks/useDashboard';
+import { useDashboardPrefs } from '../../hooks/useDashboardPrefs';
 
 interface KpiCard {
   title: string;
   value: string;
   sub: string;
   icon: typeof TrendingUp;
-  accent: string;
+  tone: keyof typeof CARD_TONES;
   isPositive: boolean;
   highlight?: boolean;
   link?: string;
 }
+
+// Teintes pastel façon CreancesQuickStats (fond + bordure + icône)
+const CARD_TONES = {
+  emerald: { card: 'bg-emerald-50 border-emerald-200', icon: 'text-emerald-600' },
+  indigo: { card: 'bg-indigo-50 border-indigo-200', icon: 'text-indigo-600' },
+  amber: { card: 'bg-amber-50 border-amber-200', icon: 'text-amber-600' },
+  rose: { card: 'bg-rose-50 border-rose-200', icon: 'text-rose-600' },
+  blue: { card: 'bg-blue-50 border-blue-200', icon: 'text-blue-600' },
+} as const;
 
 interface PerformanceOverviewProps {
   stats: DashboardStats | undefined;
@@ -57,6 +67,7 @@ export default function PerformanceOverview({
 }: PerformanceOverviewProps) {
   const navigate = useNavigate();
   const Recharts = useRecharts();
+  const { isVisible } = useDashboardPrefs();
 
   const isVendeur = stats?.role === 'VENDEUR' || stats?.role === 'CAISSIER';
   const totalDettes = supplierDebts?.total_debt ?? 0;
@@ -69,61 +80,65 @@ export default function PerformanceOverview({
   })) : [], [revenueChart]);
 
   // KPI cards config
-  const kpiCards = useMemo(() => stats ? (isVendeur ? [
-    {
-      title: t('stats.my_avg_basket'),
-      value: formatCurrencyLocal(stats.user_stats?.avg_basket ?? 0),
-      sub: t('stats.avg_per_client'),
-      icon: Package, accent: '#10b981', isPositive: true,
-    },
-    {
-      title: t('stats.supplier_debts_title'),
-      value: formatCurrencyLocal(totalDettes),
-      sub: nbFournisseursDetteurs > 1
-        ? t('stats.supplier_debts_sub_plural', { count: nbFournisseursDetteurs })
-        : t('stats.supplier_debts_sub', { count: nbFournisseursDetteurs }),
-      icon: HandCoins, accent: '#10b981', isPositive: true,
-      link: '/app/fournisseurs',
-    },
-  ] : [
-    {
-      title: t('stats.revenue'),
-      value: formatCurrencyLocal(stats.revenue?.value ?? 0),
-      sub: `${(stats.revenue?.change || 0) > 0 ? '+' : ''}${stats.revenue?.change || 0}% ${t('stats.vs_yesterday')}`,
-      icon: Wallet, accent: '#10b981',
-      isPositive: (stats.revenue?.change || 0) >= 0,
-      highlight: true,
-      link: '/app/historique-ventes',
-    },
-    ...(stats.margin_today !== undefined ? [{
-      title: t('stats.margin_today'),
-      value: formatCurrencyLocal(stats.margin_today),
-      sub: `${((stats.margin_today_pct ?? (stats.margin_today / (stats.revenue?.value || 1)) * 100)).toFixed(1)}% ${t('stats.margin_rate')}`,
-      icon: Target, accent: '#10b981', isPositive: true,
-    }] : []),
-    {
-      title: t('stats.receivables'),
-      value: formatCurrency(stats.receivables?.value ?? 0),
-      sub: t('stats.invoices_count', { count: stats.receivables?.count || 0 }),
-      icon: Users, accent: '#10b981', isPositive: true,
-      link: '/app/creances',
-    },
-    {
-      title: t('stats.supplier_debts_title'),
-      value: formatCurrencyLocal(totalDettes),
-      sub: nbFournisseursDetteurs > 1
-        ? t('stats.supplier_debts_sub_plural', { count: nbFournisseursDetteurs })
-        : t('stats.supplier_debts_sub', { count: nbFournisseursDetteurs }),
-      icon: HandCoins, accent: '#10b981', isPositive: true,
-      link: '/app/fournisseurs',
-    },
-    {
-      title: t('stats.stock_value'),
-      value: formatCurrencyLocal(stats.stock_value?.value ?? 0),
-      sub: t('stats.products_count', { count: stats.stock_value?.count ?? 0 }),
-      icon: Package, accent: '#10b981', isPositive: true,
-    },
-  ]) : [], [isVendeur, stats, totalDettes, nbFournisseursDetteurs, t, formatCurrencyLocal]);
+  const kpiCards = useMemo<KpiCard[]>(() => {
+    if (!stats) return [];
+    const money = (v: number) => `${formatCurrency(v)} ${t('common:currency')}`;
+    return isVendeur ? [
+      {
+        title: t('stats.my_avg_basket'),
+        value: money(stats.user_stats?.avg_basket ?? 0),
+        sub: t('stats.avg_per_client'),
+        icon: Package, tone: 'emerald', isPositive: true,
+      },
+      {
+        title: t('stats.supplier_debts_title'),
+        value: money(totalDettes),
+        sub: nbFournisseursDetteurs > 1
+          ? t('stats.supplier_debts_sub_plural', { count: nbFournisseursDetteurs })
+          : t('stats.supplier_debts_sub', { count: nbFournisseursDetteurs }),
+        icon: HandCoins, tone: 'rose', isPositive: true,
+        link: '/app/fournisseurs',
+      },
+    ] : [
+      {
+        title: t('stats.revenue'),
+        value: money(stats.revenue?.value ?? 0),
+        sub: `${(stats.revenue?.change || 0) > 0 ? '+' : ''}${stats.revenue?.change || 0}% ${t('stats.vs_yesterday')}`,
+        icon: Wallet, tone: 'emerald',
+        isPositive: (stats.revenue?.change || 0) >= 0,
+        highlight: true,
+        link: '/app/historique-ventes',
+      },
+      ...(stats.margin_today !== undefined ? [{
+        title: t('stats.margin_today'),
+        value: money(stats.margin_today),
+        sub: `${((stats.margin_today_pct ?? (stats.margin_today / (stats.revenue?.value || 1)) * 100)).toFixed(1)}% ${t('stats.margin_rate')}`,
+        icon: Target, tone: 'indigo', isPositive: true,
+      }] : []),
+      {
+        title: t('stats.receivables'),
+        value: money(stats.receivables?.value ?? 0),
+        sub: t('stats.invoices_count', { count: stats.receivables?.count || 0 }),
+        icon: Users, tone: 'amber', isPositive: true,
+        link: '/app/creances',
+      },
+      {
+        title: t('stats.supplier_debts_title'),
+        value: money(totalDettes),
+        sub: nbFournisseursDetteurs > 1
+          ? t('stats.supplier_debts_sub_plural', { count: nbFournisseursDetteurs })
+          : t('stats.supplier_debts_sub', { count: nbFournisseursDetteurs }),
+        icon: HandCoins, tone: 'rose', isPositive: true,
+        link: '/app/fournisseurs',
+      },
+      {
+        title: t('stats.stock_value'),
+        value: money(stats.stock_value?.value ?? 0),
+        sub: t('stats.products_count', { count: stats.stock_value?.count ?? 0 }),
+        icon: Package, tone: 'blue', isPositive: true,
+      },
+    ];
+  }, [isVendeur, stats, totalDettes, nbFournisseursDetteurs, t]);
 
   if (!Recharts) return <div className="p-8"><Skeleton className="h-64 w-full rounded-2xl" /></div>;
   const { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } = Recharts;
@@ -132,33 +147,28 @@ export default function PerformanceOverview({
     <motion.div className="space-y-5" variants={staggerContainer} initial="hidden" animate="show">
 
       {/* ── KPI CARDS ──────────────────────────────────────── */}
+      {isVisible('overview.kpis') && (
       <motion.div variants={staggerFadeContainer} className={`grid gap-3 ${
         isVendeur
           ? 'grid-cols-1 sm:grid-cols-2'
           : 'grid-cols-2 md:grid-cols-3 xl:grid-cols-5'
       }`}>
-        {kpiCards.map((card: KpiCard, _i: number) => {
+        {kpiCards.map((card: KpiCard) => {
           const Icon = card.icon;
+          const tone = CARD_TONES[card.tone] ?? CARD_TONES.emerald;
           const inner = (
-            <div className="relative p-2 sm:p-3 xl:p-3 flex flex-col gap-1 sm:gap-1.5 h-full overflow-hidden">
-              {/* accent bar top */}
-              <div className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl" style={{ background: card.accent }} />
-
-              <div className="flex items-start justify-between gap-2">
-                <p className="text-micro sm:text-caption font-black uppercase tracking-widest text-slate-500 leading-tight">
+            <div className="p-3 sm:p-4 flex items-center gap-3 sm:gap-4 h-full">
+              <div className={`p-2.5 sm:p-3 bg-white rounded-xl shadow-sm shrink-0 ${tone.icon}`}>
+                <Icon className="size-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-micro sm:text-xs font-bold text-slate-500 uppercase tracking-wider leading-tight">
                   {card.title}
                 </p>
-                <div className="size-7 xl:size-8 rounded-lg xl:rounded-xl flex items-center justify-center shrink-0" style={{ background: card.accent + '20', color: card.accent }}>
-                  <Icon className="size-3.5 xl:size-4" />
-                </div>
-              </div>
-
-              <p className={`text-base sm:text-lg xl:text-xl font-black text-slate-800 tracking-tight leading-none ${card.highlight ? 'xl:text-2xl' : ''}`}>
-                {card.value}
-              </p>
-
-              <div className="flex items-center gap-1.5 mt-auto">
-                <span className={`inline-flex items-center gap-0.5 text-micro sm:text-caption font-black px-1.5 py-0.5 rounded ${
+                <p className={`text-base sm:text-lg font-bold text-slate-800 mt-0.5 leading-tight ${card.highlight ? 'xl:text-2xl' : 'xl:text-xl'}`}>
+                  {card.value}
+                </p>
+                <span className={`mt-1 inline-flex items-center gap-0.5 text-micro sm:text-caption font-black px-1.5 py-0.5 rounded ${
                   card.isPositive ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-500'
                 }`}>
                   {card.isPositive ? <ArrowUpRight className="size-2.5" /> : <ArrowDownRight className="size-2.5" />}
@@ -169,15 +179,16 @@ export default function PerformanceOverview({
           );
 
           return (
-            <motion.div variants={fadeInUp} key={card.title} className={`bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden transition-all ${card.link ? 'hover:shadow-md hover:-translate-y-0.5 cursor-pointer active:scale-[0.98]' : ''}`}>
+            <motion.div variants={fadeInUp} key={card.title} className={`${tone.card} border rounded-xl shadow-sm overflow-hidden transition-all ${card.link ? 'hover:shadow-md hover:-translate-y-0.5 cursor-pointer active:scale-[0.98]' : ''}`}>
               {card.link ? <Link to={card.link} className="block h-full">{inner}</Link> : inner}
             </motion.div>
           );
         })}
       </motion.div>
+      )}
 
       {/* ── REAPPRO ALERT ──────────────────────────────────── */}
-      {reapproStats && reapproStats.product_count > 0 && (
+      {isVisible('overview.reappro') && reapproStats && reapproStats.product_count > 0 && (
         <motion.div
           variants={fadeInUp}
           className="flex items-center justify-between p-4 sm:p-5 bg-cyan-700 rounded-2xl shadow-lg shadow-cyan-700/20 cursor-pointer hover:bg-cyan-800 transition-all group"
@@ -208,6 +219,7 @@ export default function PerformanceOverview({
       <motion.div variants={staggerFadeContainer} className="grid grid-cols-1 xl:grid-cols-2 gap-5">
 
         {/* Revenue Bar Chart */}
+        {isVisible('overview.revenue') && (
         <motion.div variants={fadeInUp} className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
           <div className="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-slate-100">
             <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg">
@@ -271,8 +283,10 @@ export default function PerformanceOverview({
             )}
           </div>
         </motion.div>
+        )}
 
         {/* Hourly Traffic Chart */}
+        {isVisible('overview.hourly') && (
         <motion.div variants={fadeInUp} className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
           <div className="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-slate-100">
             <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
@@ -312,6 +326,7 @@ export default function PerformanceOverview({
             )}
           </div>
         </motion.div>
+        )}
 
       </motion.div>
 
@@ -319,7 +334,7 @@ export default function PerformanceOverview({
       <motion.div variants={staggerFadeContainer} className="grid grid-cols-1 xl:grid-cols-2 gap-5">
 
       {/* ── 7-DAY P&L HISTORY TABLE ─────────────────────────── */}
-      {revenueChart && revenueChart.labels && revenueChart.couts && revenueChart.marges && (
+      {isVisible('overview.pnl') && revenueChart && revenueChart.labels && revenueChart.couts && revenueChart.marges && (
         <motion.div variants={fadeInUp} className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
           <div className="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-slate-100">
             <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg">
@@ -392,7 +407,7 @@ export default function PerformanceOverview({
       )}
 
       {/* ── FREQUENT STOCKOUTS ─────────────────────────────── */}
-      {frequentStockouts && frequentStockouts.length > 0 && (
+      {isVisible('overview.stockouts') && frequentStockouts && frequentStockouts.length > 0 && (
         <motion.div variants={fadeInUp} className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
           <div className="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-slate-100">
             <div className="p-2 bg-red-100 text-red-600 rounded-lg">

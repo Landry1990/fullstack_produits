@@ -77,6 +77,15 @@ class CaisseClotureMixin:
                 logger.error(f"Error parsing date_fin {date_fin}")
                 return Response({'detail': 'Date de fin invalide.'}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Une clôture ne peut pas s'étendre dans le futur : si date_fin est
+        # absente (clôture « maintenant ») ou dépasse l'instant présent (jour
+        # en cours borné à 23:59:59 par toApiDateEnd côté frontend), on retient
+        # l'instant réel de la clôture. Une journée passée garde son 23:59:59
+        # (fin de période légitime).
+        now_local = timezone.now()
+        if end_date is None or end_date > now_local:
+            end_date = now_local
+
         if not start_date:
             # FIX: Filtrer la dernière clôture par user_id pour éviter de mélanger les caissiers
             if user_id:

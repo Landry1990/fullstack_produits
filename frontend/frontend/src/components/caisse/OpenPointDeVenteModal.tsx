@@ -78,7 +78,8 @@ export const OpenPointDeVenteModal: React.FC<OpenPointDeVenteModalProps> = ({
       // S'il y a un POS déjà actif pour l'utilisateur, le pré-sélectionner pour réactivation
       if (myActivePoste) {
         setSelectedPosteId(myActivePoste.id)
-      } else if (available.length === 1) {
+      } else if (available.length > 0) {
+        // Sinon pré-sélectionner le premier poste disponible : Entrée valide directement
         setSelectedPosteId(available[0].id)
       }
 

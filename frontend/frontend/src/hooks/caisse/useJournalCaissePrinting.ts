@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { gooeyToast } from 'goey-toast';
 import { formatCurrency, normalizeNumberInput } from '../../utils/formatters';
 import { escHtml, writePrintDocument } from '../../utils/print/printHelpers';
 import { printClotureSmart } from '../../utils/print/printClotureSmart';
@@ -86,7 +87,14 @@ export function useJournalCaissePrinting({
 
       const printHtml = () => {
         const win = window.open('about:blank', '_blank', 'width=800,height=600');
-        if (!win) return;
+        // Appelé après le POST + le timeout QZ (~15 s) → hors activation
+        // utilisateur : window.open renvoie null en silence. Sans ce toast,
+        // l'échec était invisible (« clôture OK mais aucun ticket »).
+        if (!win) {
+          logger.warn('Impression clôture : fenêtre bloquée par le navigateur (popup blocker).');
+          gooeyToast.error(t('cash_journal:print.popup_blocked'));
+          return;
+        }
         const startStr = (data.date_debut || data.start_date)
           ? new Date((data.date_debut || data.start_date) as string).toLocaleString(docLocale)
           : '--';
@@ -239,7 +247,7 @@ export function useJournalCaissePrinting({
       }
       printHtml();
     },
-    [pharmacySettings, actualAmountRef, closingTotalsRef, docLocale, docT, formatCurrencyDoc]
+    [pharmacySettings, actualAmountRef, closingTotalsRef, docLocale, docT, formatCurrencyDoc, t]
   );
 
   return {

@@ -1,5 +1,6 @@
 import hashlib
 import math
+import re
 import time
 
 from django.core.cache import caches
@@ -341,6 +342,43 @@ class UserViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
             'timestamp': timezone.now().timestamp(),
         })
 
+    @action(detail=False, methods=['get', 'patch'], url_path='dashboard-prefs')
+    def dashboard_prefs(self, request):
+        """
+        Préférences d'affichage du tableau de bord de l'utilisateur courant.
+        GET → {"stock.expiring": false, ...} (clé absente = widget visible).
+        PATCH → fusionne un dict {clé: bool} ; seules les valeurs booléennes
+        et les clés "section.widget" (alphanum, points, underscores) sont
+        acceptées. PATCH {"reset": true} réinitialise tout.
+        """
+        profile, _ = Profile.objects.get_or_create(user=request.user)
+        if request.method == 'GET':
+            return Response(profile.dashboard_prefs or {})
+
+        if request.data.get('reset') is True:
+            profile.dashboard_prefs = {}
+            profile.save(update_fields=['dashboard_prefs'])
+            return Response(profile.dashboard_prefs)
+
+        incoming = request.data.get('prefs', request.data)
+        if not isinstance(incoming, dict):
+            return Response(
+                {'detail': 'Un objet {clé_widget: bool} est attendu.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        cleaned = {}
+        for key, value in incoming.items():
+            if isinstance(value, bool) and isinstance(key, str) \
+                    and re.fullmatch(r'[a-z0-9_.]{1,50}', key):
+                cleaned[key] = value
+        prefs = dict(profile.dashboard_prefs or {})
+        prefs.update(cleaned)
+        # Purger les entrées à True (défaut = visible) pour garder le JSON minimal.
+        prefs = {k: v for k, v in prefs.items() if v is False}
+        profile.dashboard_prefs = prefs
+        profile.save(update_fields=['dashboard_prefs'])
+        return Response(profile.dashboard_prefs)
+
     def perform_create(self, serializer):
         user = serializer.save()
         log_audit(
@@ -423,7 +461,7 @@ class UserViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         updates = dict(serializer.validated_data)
         updates.pop('role', None)
 
-        targets = Profile.objects.filter(role=role, user__is_active=True)
+        targets = Profile.objects.filter(groupe__role_metier=role, user__is_active=True)
         updated = targets.update(**updates) if updates else targets.count()
 
         log_audit(

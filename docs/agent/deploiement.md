@@ -10,25 +10,25 @@ Utiliser `deploy.ps1` (sans rebuild Docker, copie directe dans les conteneurs) :
 
 ```powershell
 # Frontend + backend (rapide, usage courant)
-.\deploy.ps1 -Target all
+./deploy.ps1 -Target all
 
 # Frontend + backend + migrations + setup DCI (changements de modèles)
-.\deploy.ps1 -Target all-full
+./deploy.ps1 -Target all-full
 
 # Frontend seul
-.\deploy.ps1 -Target frontend
+./deploy.ps1 -Target frontend
 
 # Backend seul (sans migrations)
-.\deploy.ps1 -Target backend
+./deploy.ps1 -Target backend
 
 # Backend + migrations + DCI
-.\deploy.ps1 -Target backend-full
+./deploy.ps1 -Target backend-full
 
 # Avec backup DB avant déploiement
-.\deploy.ps1 -Target all -BackupDB
+./deploy.ps1 -Target all -BackupDB
 
 # Rebuild complet des images Docker (changement de requirements.txt, Dockerfile)
-.\deploy.ps1 -Target all -Rebuild
+./deploy.ps1 -Target all -Rebuild
 ```
 
 Le script `deploy.ps1` :

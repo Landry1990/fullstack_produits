@@ -3,7 +3,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from math import ceil
 
 from django.core.cache import cache
-from django.db.models import Sum
+from django.db.models import Min, Q, Sum
 from django.utils import timezone
 
 from api.models import Facture, FactureProduit, Produit
@@ -13,6 +13,7 @@ from api.models import Facture, FactureProduit, Produit
 MIN_JOURS_OBSERVATION = 7
 
 _STATUTS_VENTE = [Facture.Status.VALIDEE, Facture.Status.PAYEE]
+JOURS_DONNEES_CACHE_KEY = 'stock_jours_donnees'
 
 
 def get_jours_donnees(today=None):
@@ -23,7 +24,7 @@ def get_jours_donnees(today=None):
     (sinon ventes/90 sous-estime systématiquement les quantités).
     Mis en cache 1 h (granularité journalière).
     """
-    cached = cache.get('stock_jours_donnees')
+    cached = cache.get(JOURS_DONNEES_CACHE_KEY)
     if cached is not None:
         return cached
 
@@ -36,7 +37,7 @@ def get_jours_donnees(today=None):
     else:
         age = (today - timezone.localtime(first_sale).date()).days + 1
         jours = min(90, max(MIN_JOURS_OBSERVATION, age))
-    cache.set('stock_jours_donnees', jours, 3600)
+    cache.set(JOURS_DONNEES_CACHE_KEY, jours, 3600)
     return jours
 
 
@@ -117,6 +118,72 @@ def get_replenishment_metrics(produit_id, produit=None):
         'tendance': tendance,
         'jours_base': jours_dispo,
     }
+
+
+def recalculate_products_rotation(product_ids=None):
+    """Recalcule rotation_moyenne et date_premiere_vente par lot."""
+    ids = None
+    if product_ids is not None:
+        ids = {int(pid) for pid in product_ids if pid}
+        if not ids:
+            return 0
+
+    now = timezone.now()
+    today = timezone.localtime(now).date()
+    sales = FactureProduit.objects.filter(facture__status__in=_STATUTS_VENTE)
+    produits = Produit.objects.all()
+    if ids is not None:
+        sales = sales.filter(produit_id__in=ids)
+        produits = produits.filter(id__in=ids)
+
+    sales_by_product = {
+        row['produit_id']: row
+        for row in sales.values('produit_id').annotate(
+            ventes_90j=Sum('quantity', filter=Q(facture__date__gte=now - timedelta(days=90))),
+            ventes_4s=Sum('quantity', filter=Q(facture__date__gte=now - timedelta(days=28))),
+            ventes_8s_4s=Sum('quantity', filter=Q(
+                facture__date__gte=now - timedelta(days=56),
+                facture__date__lt=now - timedelta(days=28),
+            )),
+            premiere_vente=Min('facture__date'),
+        )
+    }
+
+    cache.delete(JOURS_DONNEES_CACHE_KEY)
+    jours_donnees = get_jours_donnees(today)
+    updated_produits = []
+    for produit in produits.only('id', 'created_at', 'rotation_moyenne', 'date_premiere_vente'):
+        row = sales_by_product.get(produit.id, {})
+        jours_dispo = compute_jours_dispo(produit.created_at, today, jours_donnees)
+        _vmd_historique, vmd_ajustee, _tendance = compute_vmd_tendance(
+            row.get('ventes_90j') or 0,
+            row.get('ventes_4s') or 0,
+            row.get('ventes_8s_4s') or 0,
+            jours_dispo,
+        )
+        rotation = Decimal(str(vmd_ajustee * 30.0)).quantize(
+            Decimal('0.01'), rounding=ROUND_HALF_UP
+        )
+        first_sale = row.get('premiere_vente')
+        first_sale_date = timezone.localtime(first_sale).date() if first_sale else None
+        changed = False
+
+        if produit.date_premiere_vente != first_sale_date:
+            produit.date_premiere_vente = first_sale_date
+            changed = True
+        if abs(float(produit.rotation_moyenne or 0) - float(rotation)) > 0.001:
+            produit.rotation_moyenne = rotation
+            changed = True
+        if changed:
+            updated_produits.append(produit)
+
+    if updated_produits:
+        Produit.objects.bulk_update(
+            updated_produits,
+            ['rotation_moyenne', 'date_premiere_vente'],
+            batch_size=1000,
+        )
+    return len(updated_produits)
 
 
 def calculate_stock_thresholds(produit, coverage_days=30):

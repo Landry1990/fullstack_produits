@@ -65,6 +65,7 @@
         "manager": "Responsable",
         "footer": "Généré le {{date}} - Logiciel de Gestion Pharmacie",
         "window_title": "Clôture Caisse",
+        "popup_blocked": "Impression impossible : fenêtre bloquée par le navigateur. Autorisez les popups ou vérifiez QZ Tray.",
         "pharmacy_sales": "Ventes Pharmacie",
         "misc_sales": "Ventes Diverses",
         "total_sales": "Total Ventes",

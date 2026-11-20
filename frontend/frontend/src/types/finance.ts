@@ -277,6 +277,8 @@ export interface LigneFacture {
     lotSellingPrice?: string | null
     lotAllocations?: LotAllocation[] | null
     lotMaxQuantity?: number | null
+    /** Lot choisi devenu indisponible/insuffisant (ex. vente restaurée) — à revérifier */
+    lotStale?: boolean
     treatment_duration_days?: number
 }
 

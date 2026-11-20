@@ -11,7 +11,7 @@ from rest_framework import serializers
 from rest_framework.authtoken.models import Token
 
 from ..models import GroupePermissions, PosteCaisse, PosteVente, Profile, Team
-from ..models.users import PERMISSION_FIELDS
+from ..models.users import PERMISSION_FIELDS, ROLE_METIER_CHOICES
 from .mixins import UppercaseSerializerMixin
 
 
@@ -29,6 +29,9 @@ class GroupePermissionsSerializer(serializers.ModelSerializer):
 
 class ProfileSerializer(serializers.ModelSerializer):
     groupe_detail = GroupePermissionsSerializer(source='groupe', read_only=True)
+    # 'role' n'est plus une colonne : property dérivée de groupe.role_metier.
+    # En écriture, le setter mappe vers le groupe système correspondant.
+    role = serializers.ChoiceField(choices=ROLE_METIER_CHOICES, required=False)
 
     class Meta:
         model = Profile

@@ -181,6 +181,34 @@
         "new_client": "New Client",
         "refresh_tooltip": "Refresh all"
     },
+    "customize": {
+        "menu_item": "Customize dashboard",
+        "title": "Customize dashboard",
+        "subtitle": "Choose which widgets to display. Your preferences are saved to your account.",
+        "reset": "Reset all",
+        "save_error": "Could not save your preferences.",
+        "groups": {
+            "overview": "Overview",
+            "stock": "Stock",
+            "finance": "Finance"
+        },
+        "widgets": {
+            "overview_kpis": "Key indicators (KPIs)",
+            "overview_reappro": "Shelf restock alert",
+            "overview_revenue": "Revenue chart",
+            "overview_hourly": "Hourly traffic",
+            "overview_pnl": "Revenue / margin history (7 days)",
+            "overview_stockouts": "Frequent stockouts",
+            "stock_expiring": "Expiring alerts",
+            "stock_dormant": "Dormant stock",
+            "stock_overstock": "Overstock",
+            "stock_promis": "Available reservations",
+            "stock_reappro": "Shelf restock",
+            "stock_low": "Stock alerts",
+            "finance_ug": "Free units (UG)",
+            "finance_echeances": "Supplier due dates"
+        }
+    },
     "alerts": {
         "perf_title": "Performance Alert",
         "perf_msg": "Daily Revenue is behind ({{rate}}% of target). Planned corrective actions.",

@@ -188,9 +188,11 @@ export default React.memo(function SidebarCartRow({
            size="sm"
            onClick={(e) => { e.stopPropagation(); onOpenLotModal(ligne.produit, ligne.lotId || null, ligne.quantite, ligne.lotAllocations || null, ligne.lineId); }}
            className={`h-9 px-2 text-label font-semibold uppercase transition-colors shrink min-w-0 gap-1.5
-             ${(ligne.lotId || ligne.lotAllocations?.length)
-               ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300'
-               : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200 hover:text-slate-600'}`}
+             ${ligne.lotStale
+               ? 'bg-red-50 text-red-600 border-red-300 hover:bg-red-100 hover:border-red-400'
+               : (ligne.lotId || ligne.lotAllocations?.length)
+                 ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300'
+                 : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200 hover:text-slate-600'}`}
            title={lotTooltip}
          >
            <Tag className="size-3 shrink-0" />

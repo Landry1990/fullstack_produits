@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { gooeyToast } from 'goey-toast';
 import { User, Mail, Lock, Copy } from 'lucide-react';
@@ -7,8 +7,10 @@ import { Label } from '../../shadcn/label';
 import { Select } from '../../shadcn/select';
 import { Button } from '../../shadcn/button';
 import { Card } from '../../shadcn/card';
-import { ROLES, type ManagedUser } from '../usersMeta';
+import { type GroupePerm, type ManagedUser } from '../usersMeta';
 import type { UserForm } from '../../../hooks/useUserForm';
+import api from '../../../services/api';
+import { logger } from '../../../utils/logger';
 
 interface Props {
   form: UserForm;
@@ -18,8 +20,15 @@ interface Props {
 
 export default function UserInfoTab({ form, users, isEditing }: Props) {
   const { t } = useTranslation(['users', 'sidebar', 'common']);
-  const { formData, setFormData, applyRole, copyFromUser } = form;
+  const { formData, setFormData, applyGroupe, copyFromUser } = form;
   const [copyFromUserId, setCopyFromUserId] = useState<number | ''>('');
+  const [groupes, setGroupes] = useState<GroupePerm[]>([]);
+
+  useEffect(() => {
+    api.get('groupe-permissions/')
+      .then(res => setGroupes(res.data?.results ?? res.data ?? []))
+      .catch(err => logger.error('Error loading groupes:', err));
+  }, []);
 
   const handleCopy = (sourceUserId: number | '') => {
     if (!sourceUserId) return;
@@ -84,7 +93,7 @@ export default function UserInfoTab({ form, users, isEditing }: Props) {
 
       <Card className="bg-transparent border-2 shadow-none p-6">
         <div className="flex items-center gap-2 mb-4 border-l-2 border-primary pl-3">
-          <h4 className="font-bold text-xs uppercase tracking-widest text-primary">{t('form.role')}</h4>
+          <h4 className="font-bold text-xs uppercase tracking-widest text-primary">{t('groupes.groupe', { defaultValue: 'Groupe' })}</h4>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="w-full">
@@ -102,14 +111,17 @@ export default function UserInfoTab({ form, users, isEditing }: Props) {
             </div>
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="user-role-select">{t('form.role')}</Label>
+            <Label htmlFor="user-groupe-select">{t('groupes.groupe', { defaultValue: 'Groupe de permissions' })}</Label>
             <Select
-              id="user-role-select"
-              value={formData.role}
-              onChange={e => applyRole(e.target.value)}
+              id="user-groupe-select"
+              value={formData.groupe == null ? '' : String(formData.groupe)}
+              onChange={e => applyGroupe(groupes.find(g => g.id === Number(e.target.value)) ?? null)}
             >
-              {ROLES.map(role => (
-                <option key={role.value} value={role.value}>{t(role.labelKey)}</option>
+              {formData.groupe == null && (
+                <option value="" disabled>{t('groupes.select_placeholder', { defaultValue: '— Choisir un groupe —' })}</option>
+              )}
+              {groupes.map(g => (
+                <option key={g.id} value={g.id}>{g.name}</option>
               ))}
             </Select>
           </div>

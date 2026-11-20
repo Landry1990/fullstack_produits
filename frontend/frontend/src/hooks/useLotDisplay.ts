@@ -57,30 +57,38 @@ export function useLotDisplay({ ligne, t }: UseLotDisplayParams) {
 
   const lotTooltip = useMemo(() => {
     const manualAllocs = ligne.lotAllocations?.filter(a => a.quantity > 0)
+    let base: string
     if (manualAllocs && manualAllocs.length > 0) {
-      return [
+      base = [
         t('facturation:cart_extra.manual_allocation'),
         ...manualAllocs.map(a => {
           const exp = a.lotExpiration ? new Date(a.lotExpiration).toLocaleDateString('fr-FR') : t('stock:lots.no_date')
           return `${a.lotText || a.lotId} × ${a.quantity} (exp ${exp})`
         })
       ].join('\n')
+    } else if (!ligne.lotId) {
+      if (fefoPreview.length === 0) {
+        base = t('facturation:cart.product_status.auto_lot')
+      } else {
+        base = [
+          t('facturation:cart_extra.fefo_automatic'),
+          ...fefoPreview.map(p => {
+            const exp = p.expiration ? new Date(p.expiration).toLocaleDateString('fr-FR') : t('stock:lots.no_date')
+            return `${p.lot} × ${p.qty} (exp ${exp})`
+          })
+        ].join('\n')
+      }
+    } else {
+      base = [
+        ligne.lotText ? `${t('facturation:cart.headers.lot')}: ${ligne.lotText}` : '',
+        ligne.lotExpiration ? `${t('facturation:cart_extra.peremption')} ${new Date(ligne.lotExpiration).toLocaleDateString('fr-FR')}` : '',
+        ligne.lotSellingPrice ? `${t('facturation:cart_extra.prix_lot')} ${formatCurrency(Number(ligne.lotSellingPrice))}` : ''
+      ].filter(Boolean).join(' | ')
     }
-    if (!ligne.lotId) {
-      if (fefoPreview.length === 0) return t('facturation:cart.product_status.auto_lot')
-      return [
-        t('facturation:cart_extra.fefo_automatic'),
-        ...fefoPreview.map(p => {
-          const exp = p.expiration ? new Date(p.expiration).toLocaleDateString('fr-FR') : t('stock:lots.no_date')
-          return `${p.lot} × ${p.qty} (exp ${exp})`
-        })
-      ].join('\n')
+    if (ligne.lotStale) {
+      return `${t('facturation:cart_extra.lot_stale')}\n${base}`
     }
-    return [
-      ligne.lotText ? `${t('facturation:cart.headers.lot')}: ${ligne.lotText}` : '',
-      ligne.lotExpiration ? `${t('facturation:cart_extra.peremption')} ${new Date(ligne.lotExpiration).toLocaleDateString('fr-FR')}` : '',
-      ligne.lotSellingPrice ? `${t('facturation:cart_extra.prix_lot')} ${formatCurrency(Number(ligne.lotSellingPrice))}` : ''
-    ].filter(Boolean).join(' | ')
+    return base
   }, [ligne, t, fefoPreview])
 
   return { fefoPreview, lotDisplayText, lotTooltip }

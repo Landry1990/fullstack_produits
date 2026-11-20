@@ -62,7 +62,9 @@ cd backend && python manage.py <cmd>
 docker exec fullstack_produits-backend-1 python manage.py test api.tests.test_<module> -v 2 --noinput
 # Déploiement dev (sans rebuild) : all | all-full | frontend | backend | backend-full
 # ⚠️ Lancer avec pwsh (PS7) — powershell 5.1 casse les templates `docker inspect`
-pwsh -File .\deploy.ps1 -Target all        # -BackupDB, -Rebuild disponibles
+# ⚠️ Chemin en `./` (pas `.\`) : sous Git Bash le backslash échappe le point
+#    (`.\deploy.ps1` → `.deploy.ps1` → "fichier non reconnu"). `./` marche partout.
+pwsh -File ./deploy.ps1 -Target all        # -BackupDB, -Rebuild disponibles
 # Code keyday du jour (dev)
 docker exec fullstack_produits-backend-1 python manage.py shell -c "from api.keyday import get_today_keyday; print(get_today_keyday())"
 # Garde-fou stock : échoue si un fichier HORS api/services/ (et models/, tests/)

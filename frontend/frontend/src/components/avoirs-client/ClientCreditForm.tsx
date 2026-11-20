@@ -182,16 +182,17 @@ export const ClientCreditForm: React.FC<ClientCreditFormProps> = ({
         setProductSearch('');
     };
 
+    const getLineTotal = (line: FormLine) => {
+        const qty = Number(line.quantity) || 0;
+        const price = Number(line.prix_unitaire) || 0;
+        const remise = Number(line.remise) || 0;
+        const tva = Number(line.tva) || 0;
+        const ht = qty * price - remise;
+        return Math.max(0, ht + (ht * tva) / 100);
+    };
+
     const total = useMemo(() => {
-        return lines.reduce((sum, line) => {
-            const qty = Number(line.quantity) || 0;
-            const price = Number(line.prix_unitaire) || 0;
-            const remise = Number(line.remise) || 0;
-            const tva = Number(line.tva) || 0;
-            const ht = qty * price - remise;
-            const ttc = ht + (ht * tva) / 100;
-            return sum + Math.max(0, ttc);
-        }, 0);
+        return lines.reduce((sum, line) => sum + getLineTotal(line), 0);
     }, [lines]);
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -230,131 +231,159 @@ export const ClientCreditForm: React.FC<ClientCreditFormProps> = ({
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Invoice origin search */}
-                <div className="space-y-2 relative">
-                    <label htmlFor="invoice-search" className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('form.invoice_origin')}</label>
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-                        <Input
-                            id="invoice-search"
-                            value={invoiceSearch}
-                            onChange={(e) => {
-                                setInvoiceSearch(e.target.value);
-                                if (selectedInvoice && e.target.value !== selectedInvoice.numero_facture) {
-                                    setSelectedInvoice(null);
-                                }
-                            }}
-                            placeholder={t('form.invoice_search_placeholder')}
-                            className="pl-9"
-                            disabled={isSubmitting}
-                        />
-                        {invoicesLoading && (
-                            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 size-4 animate-spin text-slate-400" />
+        <form onSubmit={handleSubmit} className="mx-auto w-full max-w-7xl space-y-5">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+                    {/* Invoice origin search */}
+                    <div className="relative space-y-2">
+                        <label htmlFor="invoice-search" className="block text-xs font-bold uppercase tracking-wider text-slate-600">{t('form.invoice_origin')}</label>
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                            <Input
+                                id="invoice-search"
+                                value={invoiceSearch}
+                                onChange={(e) => {
+                                    setInvoiceSearch(e.target.value);
+                                    if (selectedInvoice && e.target.value !== selectedInvoice.numero_facture) {
+                                        setSelectedInvoice(null);
+                                    }
+                                }}
+                                placeholder={t('form.invoice_search_placeholder')}
+                                className="h-11 pl-9"
+                                disabled={isSubmitting}
+                            />
+                            {invoicesLoading && (
+                                <Loader2 className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-slate-400" />
+                            )}
+                        </div>
+                        {invoiceResults.length > 0 && (
+                            <ul role="listbox" className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-slate-200 bg-white shadow-lg">
+                                {invoiceResults.map((invoice) => (
+                                    <li
+                                        key={invoice.id}
+                                        role="option"
+                                        aria-selected={false}
+                                        tabIndex={0}
+                                        className="cursor-pointer px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                                        onClick={() => handleSelectInvoice(invoice)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                e.preventDefault();
+                                                handleSelectInvoice(invoice);
+                                            }
+                                        }}
+                                    >
+                                        {invoice.numero_facture} — {invoice.client_name}
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                        {selectedInvoice && (
+                            <p className="text-xs font-semibold text-emerald-600">
+                                {t('form.selected_invoice')}: {selectedInvoice.numero_facture}
+                            </p>
                         )}
                     </div>
-                    {invoiceResults.length > 0 && (
-                        <ul role="listbox" className="absolute z-10 w-full bg-white border border-slate-200 rounded-md shadow-lg max-h-60 overflow-auto">
-                            {invoiceResults.map((invoice) => (
-                                <li
-                                    key={invoice.id}
-                                    role="option"
-                                    aria-selected={false}
-                                    tabIndex={0}
-                                    className="px-3 py-2 hover:bg-slate-50 cursor-pointer text-sm text-slate-700"
-                                    onClick={() => handleSelectInvoice(invoice)}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter' || e.key === ' ') {
-                                            e.preventDefault();
-                                            handleSelectInvoice(invoice);
-                                        }
-                                    }}
-                                >
-                                    {invoice.numero_facture} — {invoice.client_name}
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                    {selectedInvoice && (
-                        <p className="text-xs text-emerald-600 font-medium">
-                            {t('form.selected_invoice')}: {selectedInvoice.numero_facture}
-                        </p>
-                    )}
-                </div>
 
-                {/* Client */}
-                <div className="space-y-2">
-                    <label htmlFor="client-display" className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('form.client')}</label>
-                    <Input
-                        id="client-display"
-                        value={selectedInvoice?.client_name || t('list.no_client')}
-                        readOnly
-                        disabled
-                        className="bg-slate-50"
-                    />
-                </div>
-            </div>
+                    {/* Client */}
+                    <div className="space-y-2">
+                        <label htmlFor="client-display" className="block text-xs font-bold uppercase tracking-wider text-slate-600">{t('form.client')}</label>
+                        <Input
+                            id="client-display"
+                            value={selectedInvoice?.client_name || t('list.no_client')}
+                            readOnly
+                            disabled
+                            className="h-11 bg-slate-50 font-medium"
+                        />
+                    </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Motif */}
-                <div className="space-y-2">
-                    <label htmlFor="type-motif" className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('form.type_motif')}</label>
-                    <Select
-                        id="type-motif"
-                        value={typeMotif}
-                        onChange={(e) => setTypeMotif(e.target.value as ClientCreditTypeMotif)}
-                        disabled={isSubmitting}
-                    >
-                        <option value="ERREUR">{t('form.motifs.erreur')}</option>
-                        <option value="RETOUR">{t('form.motifs.retour')}</option>
-                        <option value="REMISE">{t('form.motifs.remise')}</option>
-                        <option value="AUTRE">{t('form.motifs.autre')}</option>
-                    </Select>
-                </div>
+                    {/* Motif */}
+                    <div className="space-y-2">
+                        <label htmlFor="type-motif" className="block text-xs font-bold uppercase tracking-wider text-slate-600">{t('form.type_motif')}</label>
+                        <Select
+                            id="type-motif"
+                            value={typeMotif}
+                            onChange={(e) => setTypeMotif(e.target.value as ClientCreditTypeMotif)}
+                            disabled={isSubmitting}
+                            className="h-11"
+                        >
+                            <option value="ERREUR">{t('motifs.erreur')}</option>
+                            <option value="RETOUR">{t('motifs.retour')}</option>
+                            <option value="REMISE">{t('motifs.remise')}</option>
+                            <option value="AUTRE">{t('motifs.autre')}</option>
+                        </Select>
+                    </div>
 
-                {/* Notes */}
-                <div className="space-y-2 md:col-span-1">
-                    <label htmlFor="notes" className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('form.notes')}</label>
-                    <Textarea
-                        id="notes"
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                        placeholder={t('form.notes_placeholder')}
-                        rows={3}
-                        disabled={isSubmitting}
-                    />
+                    {/* Notes */}
+                    <div className="space-y-2">
+                        <label htmlFor="notes" className="block text-xs font-bold uppercase tracking-wider text-slate-600">{t('form.notes')}</label>
+                        <Textarea
+                            id="notes"
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
+                            placeholder={t('form.notes_placeholder')}
+                            rows={3}
+                            disabled={isSubmitting}
+                            className="min-h-[88px]"
+                        />
+                    </div>
                 </div>
             </div>
 
             {/* Lines */}
-            <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-slate-900">{t('form.lines_title')}</h3>
-                    <Button type="button" variant="outline" size="sm" onClick={addLine} disabled={isSubmitting}>
-                        <Plus className="size-4 mr-1" />
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <div className="flex items-center justify-between gap-4 border-b border-slate-200 bg-slate-50 px-5 py-4">
+                    <div className="flex items-center gap-3">
+                        <h3 className="text-sm font-bold uppercase tracking-tight text-slate-800">{t('form.lines_title')}</h3>
+                        {lines.length > 0 && (
+                            <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-700">
+                                {lines.length}
+                            </span>
+                        )}
+                    </div>
+                    <Button type="button" variant="outline" onClick={addLine} disabled={isSubmitting}>
+                        <Plus className="size-4" />
                         {t('form.add_line')}
                     </Button>
                 </div>
 
                 {lines.length === 0 ? (
-                    <EmptyState
-                        compact
-                        title={t('form.no_lines')}
-                        className="border border-dashed border-slate-200 rounded-xl py-8"
-                    />
+                    <div className="p-4">
+                        <EmptyState
+                            compact
+                            title={t('form.no_lines')}
+                            className="rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 py-10"
+                            action={(
+                                <Button type="button" onClick={addLine} disabled={isSubmitting}>
+                                    <Plus className="size-4" />
+                                    {t('form.add_line')}
+                                </Button>
+                            )}
+                        />
+                    </div>
                 ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-4 p-4">
                         {lines.map((line) => (
                             <div
                                 key={line.id}
-                                className="space-y-2 p-3 border border-slate-200 rounded-xl bg-white"
+                                className="relative space-y-3 rounded-xl border border-slate-200 bg-slate-50/60 p-4 pr-14"
                             >
-                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
-                                <div className="sm:col-span-4 space-y-1 relative">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => removeLine(line.id)}
+                                disabled={isSubmitting}
+                                className="absolute right-2 top-2 size-8 text-slate-400 hover:bg-red-50 hover:text-red-600"
+                                aria-label={t('common:remove')}
+                            >
+                                <X className="size-4" />
+                            </Button>
+                            <div className="grid grid-cols-1 gap-4 xl:grid-cols-12 xl:items-end">
+                                <div className="relative space-y-1.5 xl:col-span-5">
                                     <label htmlFor={`credit-product-${line.id}`} className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('form.product')}</label>
                                     {line.produit ? (
-                                        <div className="flex items-center justify-between h-10 px-3 rounded-md border border-slate-200 bg-slate-50 text-sm">
+                                        <div className="flex h-11 items-center justify-between rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium">
                                             <span className="truncate">{line.produit_nom}</span>
                                             <button
                                                 type="button"
@@ -376,7 +405,7 @@ export const ClientCreditForm: React.FC<ClientCreditFormProps> = ({
                                                     setProductSearch(e.target.value);
                                                 }}
                                                 placeholder={t('form.product_placeholder')}
-                                                className="pl-8 text-sm"
+                                                className="h-11 pl-8 text-sm"
                                                 disabled={isSubmitting}
                                             />
                                             {productSearch && !line.produit && (
@@ -413,8 +442,8 @@ export const ClientCreditForm: React.FC<ClientCreditFormProps> = ({
                                         </div>
                                     )}
                                 </div>
-                                <div className="sm:col-span-1 space-y-1">
-                                    <label htmlFor={`credit-qty-${line.id}`} className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('form.quantity')}</label>
+                                <div className="space-y-1.5 xl:col-span-1">
+                                    <label htmlFor={`credit-qty-${line.id}`} className="block text-xs font-bold uppercase tracking-wider text-slate-500">{t('form.quantity')}</label>
                                     <Input
                                         id={`credit-qty-${line.id}`}
                                         type="number"
@@ -422,10 +451,11 @@ export const ClientCreditForm: React.FC<ClientCreditFormProps> = ({
                                         value={line.quantity}
                                         onChange={(e) => updateLine(line.id, { quantity: parseInt(e.target.value) || 0 })}
                                         disabled={isSubmitting}
+                                        className="h-11"
                                     />
                                 </div>
-                                <div className="sm:col-span-2 space-y-1">
-                                    <label htmlFor={`credit-price-${line.id}`} className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('form.unit_price')}</label>
+                                <div className="space-y-1.5 xl:col-span-2">
+                                    <label htmlFor={`credit-price-${line.id}`} className="block text-xs font-bold uppercase tracking-wider text-slate-500">{t('form.unit_price')}</label>
                                     <Input
                                         id={`credit-price-${line.id}`}
                                         type="number"
@@ -434,10 +464,11 @@ export const ClientCreditForm: React.FC<ClientCreditFormProps> = ({
                                         value={line.prix_unitaire}
                                         onChange={(e) => updateLine(line.id, { prix_unitaire: e.target.value })}
                                         disabled={isSubmitting}
+                                        className="h-11"
                                     />
                                 </div>
-                                <div className="sm:col-span-2 space-y-1">
-                                    <label htmlFor={`credit-discount-${line.id}`} className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('form.discount')}</label>
+                                <div className="space-y-1.5 xl:col-span-2">
+                                    <label htmlFor={`credit-discount-${line.id}`} className="block text-xs font-bold uppercase tracking-wider text-slate-500">{t('form.discount')}</label>
                                     <Input
                                         id={`credit-discount-${line.id}`}
                                         type="number"
@@ -446,10 +477,11 @@ export const ClientCreditForm: React.FC<ClientCreditFormProps> = ({
                                         value={line.remise}
                                         onChange={(e) => updateLine(line.id, { remise: e.target.value })}
                                         disabled={isSubmitting}
+                                        className="h-11"
                                     />
                                 </div>
-                                <div className="sm:col-span-2 space-y-1">
-                                    <label htmlFor={`credit-vat-${line.id}`} className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('form.vat')}</label>
+                                <div className="space-y-1.5 xl:col-span-1">
+                                    <label htmlFor={`credit-vat-${line.id}`} className="block text-xs font-bold uppercase tracking-wider text-slate-500">{t('form.vat')}</label>
                                     <Input
                                         id={`credit-vat-${line.id}`}
                                         type="number"
@@ -458,20 +490,14 @@ export const ClientCreditForm: React.FC<ClientCreditFormProps> = ({
                                         value={line.tva}
                                         onChange={(e) => updateLine(line.id, { tva: e.target.value })}
                                         disabled={isSubmitting}
+                                        className="h-11"
                                     />
                                 </div>
-                                <div className="sm:col-span-1 flex justify-end">
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => removeLine(line.id)}
-                                        disabled={isSubmitting}
-                                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                        aria-label={t('common:remove')}
-                                    >
-                                        <X className="size-4" />
-                                    </Button>
+                                <div className="space-y-1.5 xl:col-span-1">
+                                    <span className="block text-xs font-bold uppercase tracking-wider text-slate-500">{t('form.total')}</span>
+                                    <div className="flex h-11 items-center justify-end whitespace-nowrap font-black text-slate-800">
+                                        {formatCurrency(getLineTotal(line))}
+                                    </div>
                                 </div>
                             </div>
                             {line.lot_locked && line.stock_lot && (
@@ -501,20 +527,19 @@ export const ClientCreditForm: React.FC<ClientCreditFormProps> = ({
                     </div>
                 )}
 
-                <div className="flex justify-end">
-                    <div className="text-lg font-bold text-slate-900">
-                        {t('form.total')}: {formatCurrency(total)}
-                    </div>
+                <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-5 py-4">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('form.total')}</span>
+                    <span className="text-xl font-black text-slate-900">{formatCurrency(total)}</span>
                 </div>
             </div>
 
             {/* Actions */}
-            <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
-                <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
+            <div className="flex justify-end gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <Button type="button" variant="outline" size="lg" onClick={onCancel} disabled={isSubmitting}>
                     {t('common:cancel')}
                 </Button>
-                <Button type="submit" disabled={isSubmitting || lines.length === 0}>
-                    {isSubmitting && <Loader2 className="size-4 mr-2 animate-spin" />}
+                <Button type="submit" size="lg" disabled={isSubmitting || lines.length === 0}>
+                    {isSubmitting && <Loader2 className="size-4 animate-spin" />}
                     {t('form.create')}
                 </Button>
             </div>

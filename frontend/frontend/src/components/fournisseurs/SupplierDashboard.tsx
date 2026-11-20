@@ -269,27 +269,27 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
             </div>
             <div>
               <h2 className="text-sm font-bold text-base-content tracking-tight uppercase">{t('providers:dashboard.deadlines.title')}</h2>
-              <p className="text-caption font-semibold text-base-content/30 uppercase tracking-widest">{t('providers:dashboard.deadlines.subtitle')}</p>
+              <p className="text-xs font-semibold text-base-content/45 uppercase tracking-widest">{t('providers:dashboard.deadlines.subtitle')}</p>
             </div>
           </div>
           <button 
             onClick={onViewAllDeadlines}
-            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-base-content/60 hover:bg-base-200 text-caption font-semibold uppercase tracking-widest transition-colors"
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-base-content/70 hover:bg-base-200 text-xs font-bold uppercase tracking-widest transition-colors"
           >
             {t('providers:dashboard.deadlines.view_all')} <ChevronRight className="size-3 ml-1" />
           </button>
         </div>
 
         <div className="overflow-auto flex-1">
-          <table className="w-full">
+          <table className="w-full min-w-[760px] text-sm">
             <thead>
-              <tr className="text-caption font-semibold uppercase text-base-content/40 bg-base-200/30 border-none">
-                <th className="pl-6">{t('providers:table.provider')}</th>
-                <th>{t('providers:finance.table.reference')}</th>
-                <th>{t('providers:schedule.table.due_date')}</th>
-                <th className="text-right">{t('providers:schedule.table.amount')}</th>
-                <th className="text-center">{t('providers:schedule.table.status')}</th>
-                <th className="pr-6"></th>
+              <tr className="text-xs font-bold uppercase tracking-wider text-base-content/55 bg-base-200/40 border-b border-base-200">
+                <th className="pl-6 py-3 text-left whitespace-nowrap">{t('providers:table.provider')}</th>
+                <th className="py-3 text-left whitespace-nowrap">{t('providers:finance.table.reference')}</th>
+                <th className="py-3 text-left whitespace-nowrap">{t('providers:schedule.table.due_date')}</th>
+                <th className="py-3 text-right whitespace-nowrap">{t('providers:schedule.table.amount')}</th>
+                <th className="py-3 text-center whitespace-nowrap">{t('providers:schedule.table.status')}</th>
+                <th className="pr-6 py-3"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-base-100">
@@ -299,36 +299,36 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
                  </tr>
               ) : (stats?.prochaines_echeances ?? []).map((ech, _i) => (
                 <tr key={ech.numero_facture} className="hover:bg-base-200/50 transition-colors group">
-                  <td className="pl-6 py-4">
-                    <span className="font-semibold text-base-content text-sm">{ech.fournisseur_nom}</span>
+                  <td className="pl-6 py-3.5 whitespace-nowrap">
+                    <span className="font-bold text-base-content text-base">{ech.fournisseur_nom}</span>
                   </td>
-                  <td>
-                    <span className="font-mono text-label text-base-content/50 uppercase">{ech.numero_facture}</span>
+                  <td className="py-3.5 whitespace-nowrap">
+                    <span className="font-mono text-xs font-semibold text-base-content/60 uppercase">{ech.numero_facture}</span>
                   </td>
-                  <td>
-                    <div className="flex flex-col">
-                      <span className="font-medium text-xs">{new Date(ech.date_echeance).toLocaleDateString(currentLocale, { day: 'numeric', month: 'short' })}</span>
-                      <span className={`text-caption font-medium ${ech.jours_restants < 0 ? 'text-error' : 'text-base-content/40'}`}>
+                  <td className="py-3.5 whitespace-nowrap">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="font-bold text-sm text-base-content">{new Date(ech.date_echeance).toLocaleDateString(currentLocale, { day: 'numeric', month: 'short' })}</span>
+                      <span className={`text-xs font-semibold ${ech.jours_restants < 0 ? 'text-error' : 'text-base-content/50'}`}>
                         {ech.jours_restants < 0 
                           ? t('providers:dashboard.deadlines.days_late', { count: Math.abs(ech.jours_restants) }) 
                           : t('providers:dashboard.deadlines.in_days', { count: ech.jours_restants })}
                       </span>
                     </div>
                   </td>
-                  <td className="text-right">
-                    <span className="font-bold text-base-content text-sm">{formatCurrency(ech.montant_du)}</span>
+                  <td className="py-3.5 text-right whitespace-nowrap">
+                    <span className="font-black text-base-content text-base">{formatCurrency(ech.montant_du)}</span>
                   </td>
-                  <td className="text-center">
-                    <span className={`inline-flex items-center rounded-full font-bold text-micro uppercase py-1 px-2 ${
-                      ech.status === 'EN RETARD' ? 'bg-error/10 text-error' : 
-                      ech.status === "AUJOURD'HUI" ? 'bg-warning/10 text-warning' : 
-                      'bg-success/10 text-success'
+                  <td className="py-3.5 text-center whitespace-nowrap">
+                    <span className={`inline-flex items-center rounded-full font-bold text-xs uppercase py-1.5 px-3 border ${
+                      ech.status === 'EN RETARD' ? 'bg-error/10 text-error border-error/20' : 
+                      ech.status === "AUJOURD'HUI" ? 'bg-warning/10 text-warning border-warning/20' : 
+                      'bg-success/10 text-success border-success/20'
                     }`}>
                       {t(getStatusKey(ech.status))}
                     </span>
                   </td>
-                  <td className="pr-6 text-right">
-                    <button className="inline-flex items-center justify-center size-7 rounded-full text-base-content/60 hover:bg-base-200 opacity-0 group-hover:opacity-100 transition-opacity" aria-label={t('providers:dashboard.deadlines.view_all')}>
+                  <td className="pr-6 py-3.5 text-right">
+                    <button className="inline-flex items-center justify-center size-8 rounded-full text-base-content/60 hover:bg-base-200 hover:text-base-content opacity-0 group-hover:opacity-100 transition-all" aria-label={t('providers:dashboard.deadlines.view_all')}>
                       <ArrowUpRight className="size-4" />
                     </button>
                   </td>

@@ -16,6 +16,7 @@ import { formatDate } from '../../utils/dateUtils';
 import { EmptyState } from '../ui/EmptyState';
 import { motion } from 'framer-motion';
 import { fadeInUp, staggerContainer } from '../../lib/motion';
+import { useDashboardPrefs } from '../../hooks/useDashboardPrefs';
 
 interface StockStats {
   low_stock?: { value?: number };
@@ -102,6 +103,7 @@ export default function StockIntelligence({
   formatCurrencyLocal
 }: StockIntelligenceProps) {
   const navigate = useNavigate();
+  const { isVisible } = useDashboardPrefs();
 
   // Permet d'activer les entêtes de cartes navigables au clavier (Enter/Espace)
   const handleNavKeyDown = (e: KeyboardEvent, path: string) => {
@@ -143,7 +145,9 @@ export default function StockIntelligence({
   return (
     <motion.div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6 auto-rows-fr" variants={staggerContainer} initial="hidden" animate="show">
         {/* Expiring Lots (Alertes Périssables) - Swapped to first position */}
-        <motion.div variants={fadeInUp} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col">
+        {isVisible('stock.expiring') && (
+        <motion.div variants={fadeInUp} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col">
+          <div className="h-1 bg-gradient-to-r from-red-500 to-rose-400 shrink-0" />
           <div className="p-6 flex flex-col h-full">
             <div className="flex items-center justify-between mb-4 shrink-0">
               <div
@@ -153,7 +157,7 @@ export default function StockIntelligence({
                 tabIndex={0}
                 onKeyDown={(e) => handleNavKeyDown(e, '/app/perimes')}
               >
-                <div className="p-2 bg-red-50 text-red-500 rounded-lg">
+                <div className="p-2 bg-red-50 text-red-500 rounded-xl border border-red-100">
                   <CalendarDays className="size-5" />
                 </div>
                 <div>
@@ -196,14 +200,14 @@ export default function StockIntelligence({
                     ? Math.floor((new Date(lot.date_expiration).getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
                     : 0;
                   
-                  let urgencyStyle = 'bg-amber-50 border-amber-100 text-amber-900';
+                  let urgencyStyle = 'bg-slate-50 border-slate-100 text-slate-700 hover:border-amber-200';
                   let dotStyle = 'bg-amber-500';
-                  
+
                   if (daysUntilExpiry <= 7) {
-                    urgencyStyle = 'bg-red-50 border-red-200 text-red-900 shadow-sm';
+                    urgencyStyle = 'bg-red-50/70 border-red-100 text-red-900 hover:border-red-300';
                     dotStyle = 'bg-red-500';
                   } else if (daysUntilExpiry <= 30) {
-                    urgencyStyle = 'bg-amber-50 border-orange-200 text-orange-900';
+                    urgencyStyle = 'bg-amber-50/60 border-amber-100 text-amber-900 hover:border-amber-300';
                     dotStyle = 'bg-orange-500';
                   }
                   
@@ -213,7 +217,7 @@ export default function StockIntelligence({
                       to="/app/produits"
                       state={{ searchProduitId: lot.produit }}
                       aria-label={t('alerts.open_product', { name: lot.produit_nom })}
-                      className={`flex items-center justify-between p-3 rounded-xl border transition-all hover:scale-[1.02] hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 ${urgencyStyle}`}
+                      className={`flex items-center justify-between p-3 rounded-xl border transition-colors hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 ${urgencyStyle}`}
                     >
                       <div className="flex items-center gap-3 flex-1 min-w-0">
                         <div className={`size-1.5 rounded-full shrink-0 ${dotStyle} ${daysUntilExpiry <= 7 ? 'animate-ping' : ''}`}></div>
@@ -241,30 +245,33 @@ export default function StockIntelligence({
               )}
             </div>
             <div className="mt-4 shrink-0">
-              <Link to="/app/perimes" className="inline-flex items-center justify-center w-full px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-400 text-micro font-bold uppercase tracking-widest rounded-lg border border-slate-200 transition-colors">
+              <Link to="/app/perimes" className="inline-flex items-center justify-center w-full px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-700 text-micro font-bold uppercase tracking-widest rounded-lg border border-slate-200 transition-colors">
                 {t('alerts.manage_perimes')}
               </Link>
             </div>
           </div>
         </motion.div>
+        )}
 
         {/* Dormant Stock (Rossignols) */}
-        <motion.div variants={fadeInUp} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col">
+        {isVisible('stock.dormant') && (
+        <motion.div variants={fadeInUp} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col">
+          <div className="h-1 bg-gradient-to-r from-indigo-500 to-violet-400 shrink-0" />
           <div className="p-6 flex flex-col h-full">
-            <div className="flex items-center justify-between mb-6 shrink-0">
+            <div className="flex items-center justify-between mb-4 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-slate-100 text-slate-500 rounded-lg">
+                <div className="p-2 bg-indigo-50 text-indigo-500 rounded-xl border border-indigo-100">
                   <Archive className="size-5" />
                 </div>
                 <div>
-                  <h2 className="text-sm font-bold text-slate-800 tracking-tight uppercase">{t('charts.dormant_stock')}</h2>
+                  <h2 className="text-xs font-bold text-slate-800 tracking-tight uppercase">{t('charts.dormant_stock')}</h2>
                   <p className="text-caption font-bold text-slate-400 uppercase tracking-widest">{t('charts.dormant_desc')}</p>
                 </div>
               </div>
               {dormantTotal > 0 && (
                 <div className="text-right">
-                  <span className="text-xs font-black text-slate-800 block">{formatCurrencyLocal(dormantTotal)}</span>
-                  <span className="text-micro font-bold text-slate-300 uppercase tracking-wider">{t('charts.immobilized')}</span>
+                  <span className="text-sm font-black text-slate-800 block">{formatCurrencyLocal(dormantTotal)}</span>
+                  <span className="text-micro font-bold text-indigo-400 uppercase tracking-wider">{t('charts.immobilized')}</span>
                 </div>
               )}
             </div>
@@ -277,7 +284,7 @@ export default function StockIntelligence({
                     to="/app/produits"
                     state={{ searchProduitId: p.id }}
                     aria-label={t('alerts.open_product', { name: p.name })}
-                    className="flex items-center justify-between p-3 rounded-xl bg-slate-100 border border-slate-100 hover:border-slate-300 transition-all group focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                    className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 hover:border-indigo-200 transition-colors group focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <span className="text-xs font-bold text-slate-700 truncate">{p.name}</span>
@@ -297,19 +304,22 @@ export default function StockIntelligence({
               )}
             </div>
             
-            <div className="mt-4 pt-4 border-t border-slate-200 shrink-0">
-              <Link to="/app/stock-analysis?tab=unsold&days=90" className="inline-flex items-center justify-center w-full px-3 py-2 bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold gap-2 rounded-lg border border-slate-200 transition-colors">
+            <div className="mt-4 shrink-0">
+              <Link to="/app/stock-analysis?tab=unsold&days=90" className="inline-flex items-center justify-center w-full px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-700 text-micro font-bold uppercase tracking-widest gap-2 rounded-lg border border-slate-200 transition-colors">
                 {t('charts.see_all_dormant')}
                 <ArrowRight className="size-3" />
               </Link>
             </div>
           </div>
         </motion.div>
+        )}
 
         {/* Surstock (Excédents) */}
-        <motion.div variants={fadeInUp} className="bg-white rounded-xl shadow-sm border border-orange-200 overflow-hidden h-full flex flex-col">
+        {isVisible('stock.overstock') && (
+        <motion.div variants={fadeInUp} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col">
+          <div className="h-1 bg-gradient-to-r from-orange-500 to-amber-400 shrink-0" />
           <div className="p-6 flex flex-col h-full">
-            <div className="flex items-center justify-between mb-6 shrink-0">
+            <div className="flex items-center justify-between mb-4 shrink-0">
               <div
                 className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
                 onClick={() => navigate('/app/stock-analysis?tab=overstock')}
@@ -317,7 +327,7 @@ export default function StockIntelligence({
                 tabIndex={0}
                 onKeyDown={(e) => handleNavKeyDown(e, '/app/stock-analysis?tab=overstock')}
               >
-                <div className="p-2 bg-amber-50 text-amber-500 rounded-lg">
+                <div className="p-2 bg-orange-50 text-orange-500 rounded-xl border border-orange-100">
                   <TrendingUp className="size-5" />
                 </div>
                 <div>
@@ -327,7 +337,7 @@ export default function StockIntelligence({
               </div>
               {overstockTotal > 0 && (
                 <div className="text-right">
-                  <span className="text-xs font-black text-amber-500 block">{formatCurrencyLocal(overstockTotal)}</span>
+                  <span className="text-sm font-black text-slate-800 block">{formatCurrencyLocal(overstockTotal)}</span>
                   <span className="text-micro font-bold text-orange-400 uppercase tracking-wider">{t('overstock.capital_blocked')}</span>
                 </div>
               )}
@@ -341,10 +351,10 @@ export default function StockIntelligence({
                     to="/app/produits"
                     state={{ searchProduitId: p.id }}
                     aria-label={t('alerts.open_product', { name: p.name })}
-                    className="flex items-center justify-between p-3 rounded-xl bg-amber-50/60 border border-orange-100 hover:border-orange-300 transition-all group focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+                    className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 hover:border-orange-200 transition-colors group focus:outline-none focus:ring-2 focus:ring-orange-500/30"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <span className="text-xs font-black text-orange-500 bg-amber-100 size-6 flex items-center justify-center rounded-lg border border-orange-200 shrink-0">{i + 1}</span>
+                      <span className="text-xs font-black text-orange-600 bg-orange-50 size-6 flex items-center justify-center rounded-lg border border-orange-100 shrink-0">{i + 1}</span>
                       <div className="min-w-0">
                         <span className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
                           <span className="truncate">{p.name}</span>
@@ -356,8 +366,8 @@ export default function StockIntelligence({
                       </div>
                     </div>
                     <div className="flex flex-col items-end shrink-0 ml-2">
-                      <span className="text-caption font-bold text-amber-500">{formatCurrencyLocal(p.excess_value ?? p.value ?? 0)}</span>
-                      <span className="text-micro font-bold text-slate-400">{t('overstock.excess_label')}</span>
+                      <span className="text-caption font-bold text-slate-700">{formatCurrencyLocal(p.excess_value ?? p.value ?? 0)}</span>
+                      <span className="text-micro font-bold text-orange-500/80 uppercase tracking-widest">{t('overstock.excess_label')}</span>
                     </div>
                   </Link>
                 ))
@@ -370,10 +380,10 @@ export default function StockIntelligence({
               )}
             </div>
 
-            <div className="mt-4 pt-4 border-t border-orange-100 shrink-0">
+            <div className="mt-4 shrink-0">
               <Link
                 to="/app/stock-analysis?tab=overstock"
-                className="inline-flex items-center justify-center w-full px-3 py-2 bg-white hover:bg-amber-50 text-amber-500 text-xs font-bold gap-2 rounded-lg border border-orange-100 transition-colors"
+                className="inline-flex items-center justify-center w-full px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-700 text-micro font-bold uppercase tracking-widest gap-2 rounded-lg border border-slate-200 transition-colors"
               >
                 {t('overstock.see_all')}
                 <ArrowRight className="size-3" />
@@ -381,10 +391,12 @@ export default function StockIntelligence({
             </div>
           </div>
         </motion.div>
+        )}
 
         {/* Promis Disponibles Alert */}
-        {promisDisponibles.length > 0 && (
-          <motion.div variants={fadeInUp} className="bg-emerald-50 rounded-xl shadow-sm border border-emerald-100 overflow-hidden h-full flex flex-col">
+        {isVisible('stock.promis') && promisDisponibles.length > 0 && (
+          <motion.div variants={fadeInUp} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col">
+            <div className="h-1 bg-gradient-to-r from-emerald-500 to-teal-400 shrink-0" />
             <div className="p-6 flex flex-col h-full">
               <div
                 className="flex items-center justify-between mb-4 cursor-pointer hover:opacity-80 transition-opacity shrink-0"
@@ -393,9 +405,11 @@ export default function StockIntelligence({
                 tabIndex={0}
                 onKeyDown={(e) => handleNavKeyDown(e, '/app/promis')}
               >
-                <div className="flex items-center gap-2">
-                  <ShoppingBag className="size-5 text-emerald-600" />
-                  <h2 className="text-sm font-bold text-emerald-800 tracking-tight uppercase">{t('alerts.promis_title')}</h2>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-emerald-50 text-emerald-500 rounded-xl border border-emerald-100">
+                    <ShoppingBag className="size-5" />
+                  </div>
+                  <h2 className="text-xs font-bold text-slate-800 tracking-tight uppercase">{t('alerts.promis_title')}</h2>
                 </div>
                 <span className="bg-emerald-500 text-white px-2 py-0.5 rounded-lg text-caption font-bold">{promisDisponibles.length}</span>
               </div>
@@ -405,7 +419,7 @@ export default function StockIntelligence({
                     key={p.id}
                     to="/app/promis"
                     aria-label={t('alerts.open_promis', { name: p.produit_nom })}
-                    className="flex items-center justify-between p-3 rounded-xl bg-white border border-emerald-100 shadow-sm transition-all hover:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                    className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 transition-colors hover:border-emerald-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
                   >
                     <div className="flex-1 min-w-0">
                       <span className="text-xs font-bold text-slate-700 block truncate">{p.produit_nom}</span>
@@ -425,7 +439,7 @@ export default function StockIntelligence({
                 ))}
               </div>
               <div className="mt-4 shrink-0">
-                <Link to="/app/promis" className="inline-flex items-center justify-center w-full px-3 py-2 text-emerald-600 bg-emerald-100 hover:bg-emerald-200 rounded-lg font-bold text-caption uppercase tracking-widest transition-colors">
+                <Link to="/app/promis" className="inline-flex items-center justify-center w-full px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-700 rounded-lg border border-slate-200 font-bold text-micro uppercase tracking-widest transition-colors">
                   {t('alerts.deliver_promis')}
                 </Link>
               </div>
@@ -434,8 +448,9 @@ export default function StockIntelligence({
         )}
 
         {/* Reappro Rayon Alert */}
-        {reapproStats && reapproStats.product_count > 0 && (
-          <motion.div variants={fadeInUp} className="bg-cyan-50 rounded-xl shadow-sm border border-blue-100 overflow-hidden h-full flex flex-col">
+        {isVisible('stock.reappro') && reapproStats && reapproStats.product_count > 0 && (
+          <motion.div variants={fadeInUp} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col">
+            <div className="h-1 bg-gradient-to-r from-cyan-500 to-sky-400 shrink-0" />
             <div className="p-6 flex flex-col h-full">
               <div
                 className="flex items-center justify-between mb-4 cursor-pointer hover:opacity-80 transition-opacity shrink-0"
@@ -445,10 +460,10 @@ export default function StockIntelligence({
                 onKeyDown={(e) => handleNavKeyDown(e, '/app/reappro-rayon')}
               >
                 <div className="flex items-center gap-2">
-                  <div className="p-2 bg-cyan-100 text-cyan-600 rounded-lg">
+                  <div className="p-2 bg-cyan-50 text-cyan-500 rounded-xl border border-cyan-100">
                     <Package className="size-5" />
                   </div>
-                  <h2 className="text-sm font-bold text-blue-800 tracking-tight uppercase">{t('reappro.rayon_title')}</h2>
+                  <h2 className="text-xs font-bold text-slate-800 tracking-tight uppercase">{t('reappro.rayon_title')}</h2>
                 </div>
                 <span className="bg-cyan-500 text-white px-2.5 py-1 rounded-lg text-xs font-bold animate-pulse">
                   {reapproStats.product_count}
@@ -456,20 +471,20 @@ export default function StockIntelligence({
               </div>
 
               <div className="flex-grow flex flex-col items-center justify-center p-4 text-center h-[300px] 2xl:h-[350px]">
-                <div className="size-20 bg-cyan-100/50 rounded-full flex items-center justify-center mb-4 border-4 border-white shadow-inner">
-                  <Package className="size-10 text-blue-500" />
+                <div className="size-20 bg-cyan-50 rounded-full flex items-center justify-center mb-4 border-4 border-slate-50">
+                  <Package className="size-10 text-cyan-500" />
                 </div>
-                <p className="text-sm font-bold text-blue-900 leading-tight">
+                <p className="text-sm font-bold text-slate-800 leading-tight">
                   {t('reappro.products_waiting', '{{count}} produits en attente de transfert', { count: reapproStats.product_count })}
                 </p>
-                <p className="text-caption text-cyan-600 font-medium mt-1">
+                <p className="text-caption text-slate-400 font-medium mt-1">
                   {t('reappro.threshold_warning')}
                 </p>
 
                 {reapproStats.total_units_suggested > 0 && (
-                  <div className="mt-4 px-4 py-2 bg-cyan-100/30 rounded-xl border border-blue-100/50">
+                  <div className="mt-4 px-4 py-2 bg-cyan-50 rounded-xl border border-cyan-100">
                     <span className="text-caption font-bold uppercase tracking-widest text-cyan-600 block">{t('reappro.suggestion_label')}</span>
-                    <span className="text-lg font-bold text-blue-800">+{reapproStats.total_units_suggested} <small className="text-xs">{t('reappro.units_label')}</small></span>
+                    <span className="text-lg font-bold text-slate-800">+{reapproStats.total_units_suggested} <small className="text-xs">{t('reappro.units_label')}</small></span>
                   </div>
                 )}
               </div>
@@ -485,7 +500,9 @@ export default function StockIntelligence({
         )}
 
         {/* Stock Alerts */}
-        <motion.div variants={fadeInUp} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col">
+        {isVisible('stock.low') && (
+        <motion.div variants={fadeInUp} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col">
+          <div className="h-1 bg-gradient-to-r from-amber-500 to-yellow-400 shrink-0" />
           <div className="p-6 flex flex-col h-full">
             <div className="flex items-center justify-between mb-4 shrink-0">
               <div
@@ -495,7 +512,7 @@ export default function StockIntelligence({
                 tabIndex={0}
                 onKeyDown={(e) => handleNavKeyDown(e, '/app/stock-analysis?tab=shortage')}
               >
-                <div className="p-2 bg-amber-50 text-amber-500 rounded-lg">
+                <div className="p-2 bg-amber-50 text-amber-500 rounded-xl border border-amber-100">
                   <Package className="size-5" />
                 </div>
                 <div>
@@ -522,7 +539,7 @@ export default function StockIntelligence({
                     to="/app/produits"
                     state={{ searchProduitId: item.id }}
                     aria-label={t('alerts.open_product', { name: item.name })}
-                    className={`flex flex-col gap-1 p-3 rounded-xl border transition-all hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 ${item.stock <= 0 ? 'bg-red-50 border-red-100 shadow-sm' : 'bg-amber-50 border-amber-100'}`}
+                    className={`flex flex-col gap-1 p-3 rounded-xl border transition-colors hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 ${item.stock <= 0 ? 'bg-red-50/70 border-red-100 hover:border-red-300' : 'bg-slate-50 border-slate-100 hover:border-amber-200'}`}
                   >
                     <p className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
                       <span className="truncate">{item.name}</span>
@@ -566,13 +583,14 @@ export default function StockIntelligence({
               )}
               <Link
                 to="/app/stock-analysis?tab=shortage"
-                className="inline-flex items-center justify-center flex-1 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-400 text-micro font-bold uppercase tracking-widest rounded-lg border border-slate-200 transition-colors"
+                className="inline-flex items-center justify-center flex-1 px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-700 text-micro font-bold uppercase tracking-widest rounded-lg border border-slate-200 transition-colors"
               >
                 {t('alerts.view_all')}
               </Link>
             </div>
           </div>
         </motion.div>
+        )}
 
     </motion.div>
   );

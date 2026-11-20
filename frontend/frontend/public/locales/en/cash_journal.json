@@ -65,6 +65,7 @@
         "manager": "Manager",
         "footer": "Generated on {{date}} - Pharmacy Management Software",
         "window_title": "Cash Register Closing",
+        "popup_blocked": "Printing failed: window blocked by the browser. Allow popups or check QZ Tray.",
         "pharmacy_sales": "Pharmacy Sales",
         "misc_sales": "Misc. Sales",
         "total_sales": "Total Sales",

@@ -428,6 +428,7 @@ export function useFacturationActions({
                             lotExpiration: null,
                             lotSellingPrice: null,
                             lotAllocations: null,
+                            lotStale: false,
                         }
                     }
                     if (allocations.length === 1) {
@@ -443,6 +444,7 @@ export function useFacturationActions({
                             lotAllocations: allocations,
                             prix_unitaire: newPrixUnitaire,
                             total_ligne: calculateLineTotal(l.quantite, newPrixUnitaire, l.remise_produit),
+                            lotStale: false,
                         }
                     }
                     // Ce cas ne devrait plus arriver (multi-lots géré ci-dessus), mais on garde le fallback
@@ -453,6 +455,7 @@ export function useFacturationActions({
                         lotExpiration: null,
                         lotSellingPrice: null,
                         lotAllocations: allocations,
+                        lotStale: false,
                     }
                 }
                 return l
@@ -553,9 +556,51 @@ export function useFacturationActions({
         _resetSale()
     }, [cart.lignesFacture.length, ui, t, _resetSale])
 
+    // Après restauration d'une vente suspendue, revérifie que les lots
+    // choisis ont encore du stock : le backend refuse la vente si un lot
+    // est insuffisant → on marque les lignes en rouge pour re-sélection.
+    const _flagStaleLots = useCallback(async (lignes: LigneFacture[]) => {
+        const candidates = lignes.filter(l => !l.produit.is_service && (l.lotId || l.lotAllocations?.length))
+        if (candidates.length === 0) return
+        const produitIds = [...new Set(candidates.map(l => l.produit.id))]
+        const lotsByProduit = new Map<number, Map<number, number>>()
+        const failedProduits = new Set<number>()
+        await Promise.all(produitIds.map(async (pid) => {
+            try {
+                const { data } = await api.get('stock-lots/', { params: { produit: pid, page_size: 100 } })
+                const items: { id: number; quantity_remaining: number }[] = Array.isArray(data) ? data : (data.results ?? [])
+                lotsByProduit.set(pid, new Map(items.map((lot) => [lot.id, Number(lot.quantity_remaining ?? 0)])))
+            } catch {
+                // Endpoint injoignable → on ne flague pas, l'encaissement tranchera
+                failedProduits.add(pid)
+            }
+        }))
+        const staleIds = new Set<string>()
+        for (const l of candidates) {
+            if (failedProduits.has(l.produit.id)) continue
+            const lots = lotsByProduit.get(l.produit.id) ?? new Map()
+            if (l.lotAllocations?.length) {
+                if (l.lotAllocations.some(a => (lots.get(Number(a.lotId)) ?? 0) < Number(a.quantity))) staleIds.add(l.lineId)
+            } else if (l.lotId && (lots.get(Number(l.lotId)) ?? 0) < Number(l.quantite)) {
+                staleIds.add(l.lineId)
+            }
+        }
+        // Dé-flague aussi les lignes dont le lot est redevenu suffisant
+        // (un flag stale persiste en localStorage si la vente est re-suspendue)
+        const candidateIds = new Set(candidates.filter(l => !failedProduits.has(l.produit.id)).map(l => l.lineId))
+        cart.setLignesFacture(prev => prev.map(l =>
+            candidateIds.has(l.lineId) ? { ...l, lotStale: staleIds.has(l.lineId) } : l
+        ))
+        if (staleIds.size > 0) {
+            gooeyToast.warning(t('facturation:messages.pending_lots_stale'))
+        }
+    }, [cart, t])
+
     const _applyRestoredVente = useCallback((vente: typeof pendingSales.ventesEnAttente[number], mode: 'replace' | 'merge') => {
+        let appliedLines: LigneFacture[] = []
         if (mode === 'replace') {
             cart.setLignesFacture(vente.lignes)
+            appliedLines = vente.lignes
             clientsHook.setUseManualClient(vente.useManualClient)
             clientsHook.setManualClientName(vente.manualClientName)
             ui.setRemiseGlobale(vente.remise)
@@ -573,13 +618,15 @@ export function useFacturationActions({
             const existingIds = new Set(cart.lignesFacture.map(l => l.lineId))
             const uniqueNewLines = vente.lignes.filter(l => !existingIds.has(l.lineId))
             cart.setLignesFacture(prev => [...prev, ...uniqueNewLines])
+            appliedLines = uniqueNewLines
             if (uniqueNewLines.length < vente.lignes.length) {
                 gooeyToast.info(t('facturation:messages.pending_merge_duplicates_skipped'))
             }
         }
         if (setIsRetrocession) setIsRetrocession(!!vente.isRetrocession)
         if (setIsFactureA4) setIsFactureA4(!!vente.isFactureA4)
-    }, [cart, clientsHook, ui, setIsRetrocession, setIsFactureA4, t])
+        void _flagStaleLots(appliedLines)
+    }, [cart, clientsHook, ui, setIsRetrocession, setIsFactureA4, t, _flagStaleLots])
 
     const restaurerVente = useCallback(async (id: number) => {
         const vente = pendingSales.ventesEnAttente.find((v) => v.id === id)

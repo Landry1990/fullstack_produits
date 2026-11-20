@@ -1,10 +1,11 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Facture, PosteVente } from '../../types'
 import { useTranslation } from 'react-i18next'
-import { Wallet, AlertTriangle, User, Info, X, Check } from 'lucide-react'
+import { Wallet, AlertTriangle, User, Info, X, Check, Lock, ShieldCheck } from 'lucide-react'
 import { formatCurrency } from '../../utils/formatters'
 import PremiumModal from '../common/PremiumModal'
 import { getPaymentModeLabel } from '../../config/paymentModes'
+import api from '../../services/api'
 
 type PaymentItem = {
     mode: string
@@ -45,6 +46,10 @@ type PaymentModalProps = {
     selectedPosteVenteId?: number | null
     setSelectedPosteVenteId?: (id: number | null) => void
     selectedPosteCaisseId?: number | null
+    /** Mot de passe validateur saisi en ligne (évite la modale sudo séparée) */
+    requireValidatorPassword?: boolean
+    validatorPermission?: string
+    validatorHint?: string
 }
 
 export default function PaymentModal({
@@ -71,21 +76,81 @@ export default function PaymentModal({
     postesVenteActifs,
     selectedPosteVenteId,
     setSelectedPosteVenteId,
-    selectedPosteCaisseId
+    selectedPosteCaisseId,
+    requireValidatorPassword,
+    validatorPermission,
+    validatorHint
 }: PaymentModalProps) {
     const { t } = useTranslation(['facturation', 'common'])
     // Refs for keyboard-driven flow
     const submitBtnRef = useRef<HTMLButtonElement>(null);
 
-    // Focus on submit button when modal opens
+    // Sudo en ligne : mot de passe validateur saisi dans la modale même
+    const [sudoPassword, setSudoPassword] = useState('')
+    const [sudoError, setSudoError] = useState<string | null>(null)
+    const [verifying, setVerifying] = useState(false)
+    const sudoInputRef = useRef<HTMLInputElement>(null)
+    // Verrou synchrone : deux Enter rapides lançaient deux verify_password
+    const sudoInFlightRef = useRef(false)
+    const inlineSudo = isNewSale && !!requireValidatorPassword
+
+    // Reset du mot de passe + focus : champ sudo si requis, sinon le bouton
     useEffect(() => {
         if (isOpen) {
+            setSudoPassword('');
+            setSudoError(null);
+            setVerifying(false);
             const timeoutId = setTimeout(() => {
-                submitBtnRef.current?.focus();
+                if (isNewSale && requireValidatorPassword) {
+                    sudoInputRef.current?.focus();
+                } else {
+                    submitBtnRef.current?.focus();
+                }
             }, 150);
             return () => clearTimeout(timeoutId);
         }
-    }, [isOpen]);
+    }, [isOpen, isNewSale, requireValidatorPassword]);
+
+    const handleSubmit = async () => {
+        if (loading || verifying || sudoInFlightRef.current) return;
+        if (!isNewSale) {
+            onRegisterPayment();
+            return;
+        }
+        if (inlineSudo) {
+            if (!sudoPassword) {
+                setSudoError(t('facturation:validation.sudo_password_required'));
+                sudoInputRef.current?.focus();
+                return;
+            }
+            sudoInFlightRef.current = true;
+            setVerifying(true);
+            setSudoError(null);
+            try {
+                const payload = validatorPermission
+                    ? { password: sudoPassword, permission: validatorPermission }
+                    : { password: sudoPassword };
+                const { data } = await api.post('users/verify_password/', payload);
+                if (!data?.valid || !data?.user?.id) {
+                    setSudoPassword('');
+                    setSudoError(t('common:sudo.invalid_password'));
+                    setTimeout(() => sudoInputRef.current?.focus(), 50);
+                    return;
+                }
+                onCompleteSale({ validatorId: data.user.id, password: sudoPassword });
+            } catch (error: unknown) {
+                setSudoPassword('');
+                const errObj = error as { response?: { data?: { detail?: string } } };
+                setSudoError(errObj?.response?.data?.detail || t('common:sudo.invalid_password'));
+                setTimeout(() => sudoInputRef.current?.focus(), 50);
+            } finally {
+                sudoInFlightRef.current = false;
+                setVerifying(false);
+            }
+            return;
+        }
+        onCompleteSale();
+    }
 
     return (
         <PremiumModal
@@ -98,12 +163,7 @@ export default function PaymentModal({
           {(facturePourPaiement || isNewSale) ? (
             <form onSubmit={(e) => {
               e.preventDefault();
-              if (loading) return;
-              if (isNewSale) {
-                onCompleteSale();
-              } else {
-                onRegisterPayment();
-              }
+              void handleSubmit();
             }} className="p-6 space-y-5">
 
               <div className="text-center mb-6">
@@ -372,14 +432,56 @@ export default function PaymentModal({
                 </>
               )}
 
+              {/* Sudo en ligne : le mot de passe validateur se saisit ici,
+                  évitant l'ouverture d'une seconde modale à la validation */}
+              {inlineSudo && (
+                <div className={`w-full rounded-xl border p-3.5 space-y-2.5 transition-colors ${sudoError ? 'bg-red-50/70 border-red-200' : 'bg-emerald-50/70 border-emerald-100'}`}>
+                  <div className="flex items-center gap-2.5">
+                    <span className={`inline-flex items-center justify-center size-8 rounded-lg shrink-0 border ${sudoError ? 'bg-red-100 text-red-600 border-red-200' : 'bg-white text-emerald-600 border-emerald-200'}`}>
+                      <ShieldCheck className="size-4" />
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <label htmlFor="facturation-payment-sudo" className={`block text-xs font-bold uppercase tracking-wide ${sudoError ? 'text-red-700' : 'text-emerald-700'}`}>
+                        {t('common:sudo.validate_password')}
+                      </label>
+                      {validatorHint && (
+                        <p className="text-caption text-slate-500 leading-snug mt-0.5">{validatorHint}</p>
+                      )}
+                    </div>
+                    <span className={`inline-flex items-center h-5 px-2 rounded-full text-caption font-bold uppercase shrink-0 ${sudoError ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-700'}`}>
+                      {t('common:sudo.validate_required')}
+                    </span>
+                  </div>
+                  <div className={`flex items-center gap-2 h-10 px-3 rounded-lg border bg-white transition-all ${sudoError ? 'border-red-300' : 'border-slate-200 focus-within:border-slate-400'}`}>
+                    <Lock className={`size-4 shrink-0 ${sudoError ? 'text-red-400' : 'text-slate-400'}`} />
+                    <input
+                      id="facturation-payment-sudo"
+                      ref={sudoInputRef}
+                      type="password"
+                      autoComplete="off"
+                      value={sudoPassword}
+                      onChange={(e) => { setSudoPassword(e.target.value); setSudoError(null); }}
+                      className="w-full bg-transparent text-sm text-slate-700 outline-none"
+                      placeholder={t('common:sudo.validate_password')}
+                    />
+                  </div>
+                  {sudoError && (
+                    <p className="text-red-600 text-xs flex items-center gap-1">
+                      <AlertTriangle className="size-3.5 shrink-0" />
+                      {sudoError}
+                    </p>
+                  )}
+                </div>
+              )}
+
               <div className="pt-4 border-t border-slate-200 mt-2">
                 <button
                     ref={submitBtnRef}
                     type="submit"
-                    disabled={loading || (isNewSale && (!montantPaye || Number(montantPaye) < 0)) || (isMultiCaisse && !centralizedCashRegister && isNewSale && !selectedPosteVenteId) || (centralizedCashRegister && isNewSale && !postesVenteActifs?.some((p) => !!p.caisse))}
+                    disabled={loading || verifying || (isNewSale && (!montantPaye || Number(montantPaye) < 0)) || (inlineSudo && !sudoPassword) || (isMultiCaisse && !centralizedCashRegister && isNewSale && !selectedPosteVenteId) || (centralizedCashRegister && isNewSale && !postesVenteActifs?.some((p) => !!p.caisse))}
                     className="inline-flex items-center justify-center w-full h-10 rounded-lg text-sm font-semibold bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    {loading ? (
+                    {loading || verifying ? (
                       <div className="flex items-center gap-2">
                         <div className="animate-spin rounded-full size-4 border-b-2 border-white"></div>
                         {t('facturation:payment.status.processing')}

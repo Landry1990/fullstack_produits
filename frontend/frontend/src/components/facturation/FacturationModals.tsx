@@ -80,6 +80,9 @@ export default function FacturationModals({ hook, showOpenPosteModal, setShowOpe
             }
           }}
           selectedPosteCaisseId={hook.selectedPosteCaisseId}
+          requireValidatorPassword={hook.paymentSudoRequired}
+          validatorPermission={hook.paymentSudoPermission}
+          validatorHint={hook.paymentSudoHint}
         />
         </Suspense>
       )}

@@ -130,7 +130,7 @@ const clientService = {
         return response.data;
     },
 
-    checkDuplicates: async (data: { name?: string; phone?: string; exclude_id?: number }): Promise<{ candidates: Array<{ id: number; name: string; client_type: string; phone: string | null; score: number }> }> => {
+    checkDuplicates: async (data: { name?: string; phone?: string; client_type?: string; exclude_id?: number }): Promise<{ candidates: Array<{ id: number; name: string; client_type: string; phone: string | null; score: number }> }> => {
         const response = await api.post('clients/check_duplicates/', data);
         return response.data;
     },

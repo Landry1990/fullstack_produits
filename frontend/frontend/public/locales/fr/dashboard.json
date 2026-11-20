@@ -181,6 +181,34 @@
         "new_client": "Nouveau Client",
         "refresh_tooltip": "Actualiser tout"
     },
+    "customize": {
+        "menu_item": "Personnaliser le tableau",
+        "title": "Personnaliser le tableau de bord",
+        "subtitle": "Choisissez les éléments à afficher. Vos préférences sont enregistrées sur votre compte.",
+        "reset": "Tout réinitialiser",
+        "save_error": "Impossible d'enregistrer vos préférences.",
+        "groups": {
+            "overview": "Vue d'ensemble",
+            "stock": "Stock",
+            "finance": "Finances"
+        },
+        "widgets": {
+            "overview_kpis": "Indicateurs clés (KPI)",
+            "overview_reappro": "Alerte réappro rayon",
+            "overview_revenue": "Graphique du chiffre d'affaires",
+            "overview_hourly": "Trafic par heure",
+            "overview_pnl": "Historique CA / marge (7 jours)",
+            "overview_stockouts": "Ruptures fréquentes",
+            "stock_expiring": "Alertes périssables",
+            "stock_dormant": "Stock dormant",
+            "stock_overstock": "Surstock",
+            "stock_promis": "Promis disponibles",
+            "stock_reappro": "Réappro rayon",
+            "stock_low": "Alertes de stock",
+            "finance_ug": "Unités gratuites (UG)",
+            "finance_echeances": "Échéances fournisseurs"
+        }
+    },
     "alerts": {
         "perf_title": "Alerte Performance",
         "perf_msg": "Le CA journalier est en retard ({{rate}}% de l'objectif). Prévoir des actions correctives.",
