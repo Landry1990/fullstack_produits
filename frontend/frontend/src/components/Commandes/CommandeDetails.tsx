@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { staggerContainer, fadeInUp } from '../../lib/motion';
 import { useDocumentLock } from '../../hooks/useDocumentLock';
 import { LockBanner } from '../common/LockBanner';
@@ -32,6 +32,7 @@ import {
 } from '../shadcn/dropdown-menu';
 import { cn } from '../../lib/utils';
 import { usePharmacySettings } from '../../context/PharmacySettingsContext';
+import { usePermissions } from '../../hooks/usePermissions';
 import { EmptyState } from '../ui/EmptyState';
 import api from '../../services/api';
 import { gooeyToast } from 'goey-toast';
@@ -151,6 +152,11 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
 }) => {
 
   const { t } = useTranslation(['orders', 'products', 'common']);
+  const { hasPerm } = usePermissions();
+  // Clôture / annulation de réception → sudo can_close_commande ;
+  // suppression → sudo can_delete_commande.
+  const canCloseCommande = hasPerm('can_close_commande');
+  const canDeleteCommande = hasPerm('can_delete_commande');
   const showSaleMargin = usePharmacySettings().settings.show_order_sale_margin !== false;
 
   const [searchDetailQuery, setSearchDetailQuery] = useState('');
@@ -278,7 +284,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
 
   return (
 
-    <motion.div
+    <m.div
       variants={staggerContainer}
       initial="hidden"
       animate="show"
@@ -289,7 +295,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
         <LockBanner lock={lock} documentLabel={t('orders:details.lock_document_label', { id: selectedCommande.numero_facture || selectedCommande.id })} />
       )}
       {/* Header */}
-      <motion.div variants={fadeInUp} className="flex flex-wrap items-start gap-2 shrink-0 px-4 py-2.5">
+      <m.div variants={fadeInUp} className="flex flex-wrap items-start gap-2 shrink-0 px-4 py-2.5">
         <Button variant="ghost" size="icon" onClick={onBack} aria-label={t('orders:form.back_to_list')} className="size-9 text-slate-400 hover:text-slate-600">
           <ArrowLeft className="size-5" />
         </Button>
@@ -320,14 +326,16 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
             {executingAction ? <Loader2 className="size-4 animate-spin text-white" /> : (selectedCommande.status === 'ATT' ? <><Play className="size-4" /> {t('orders:details.resume')}</> : <><Pause className="size-4" /> {t('orders:details.suspend')}</>)}
           </Button>
 
-          <Button
-            size="sm"
-            className="gap-1 bg-emerald-600 hover:bg-emerald-700"
-            onClick={onCloture}
-            disabled={selectedCommande.status === 'CLOT' || executingAction || isReadOnly}
-          >
-            {executingAction ? <Loader2 className="size-4 animate-spin text-white" /> : <><Check className="size-4" /> {t('orders:details.close')}</>}
-          </Button>
+          {canCloseCommande && (
+            <Button
+              size="sm"
+              className="gap-1 bg-emerald-600 hover:bg-emerald-700"
+              onClick={onCloture}
+              disabled={selectedCommande.status === 'CLOT' || executingAction || isReadOnly}
+            >
+              {executingAction ? <Loader2 className="size-4 animate-spin text-white" /> : <><Check className="size-4" /> {t('orders:details.close')}</>}
+            </Button>
+          )}
 
           <Button
             size="sm"
@@ -340,15 +348,17 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
             <Tag className="size-4" /> {t('orders:details.labels')}
           </Button>
 
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1 border-red-200 text-red-600 hover:bg-red-50"
-            onClick={onDelete}
-            disabled={selectedCommande.status === 'CLOT' || executingAction || isReadOnly}
-          >
-            {executingAction ? <Loader2 className="size-4 animate-spin text-slate-600" /> : <><Trash2 className="size-4" /> {t('orders:details.delete')}</>}
-          </Button>
+          {canDeleteCommande && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1 border-red-200 text-red-600 hover:bg-red-50"
+              onClick={onDelete}
+              disabled={selectedCommande.status === 'CLOT' || executingAction || isReadOnly}
+            >
+              {executingAction ? <Loader2 className="size-4 animate-spin text-slate-600" /> : <><Trash2 className="size-4" /> {t('orders:details.delete')}</>}
+            </Button>
+          )}
 
           <div className="flex">
             <Button
@@ -382,16 +392,18 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
             </DropdownMenu>
           </div>
 
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1 border-amber-200 text-amber-600 hover:bg-amber-50"
-            onClick={onAnnulerReception}
-            disabled={selectedCommande.status !== 'CLOT' || executingAction}
-            title={selectedCommande.status !== 'CLOT' ? t('orders:details.labels_clot_only') : t('orders:details.cancel_reception')}
-          >
-            {executingAction ? <Loader2 className="size-4 animate-spin text-slate-600" /> : <><RotateCcw className="size-4" /> {selectedRows.size > 0 ? `${t('orders:details.cancel_reception')} (${selectedRows.size})` : t('orders:details.cancel_reception')}</>}
-          </Button>
+          {canCloseCommande && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1 border-amber-200 text-amber-600 hover:bg-amber-50"
+              onClick={onAnnulerReception}
+              disabled={selectedCommande.status !== 'CLOT' || executingAction}
+              title={selectedCommande.status !== 'CLOT' ? t('orders:details.labels_clot_only') : t('orders:details.cancel_reception')}
+            >
+              {executingAction ? <Loader2 className="size-4 animate-spin text-slate-600" /> : <><RotateCcw className="size-4" /> {selectedRows.size > 0 ? `${t('orders:details.cancel_reception')} (${selectedRows.size})` : t('orders:details.cancel_reception')}</>}
+            </Button>
+          )}
 
           <Button
             type="button"
@@ -406,12 +418,12 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
             {selectedRows.size > 0 ? `${t('orders:details.return')} (${selectedRows.size})` : t('orders:details.return')}
           </Button>
         </div>
-      </motion.div>
+      </m.div>
 
 
 
       {/* Grid Info */}
-      <motion.div variants={fadeInUp} className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-white px-3 py-2 rounded-lg border border-slate-200 shadow-sm shrink-0">
+      <m.div variants={fadeInUp} className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-white px-3 py-2 rounded-lg border border-slate-200 shadow-sm shrink-0">
         <div>
           <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('orders:details.id')}</div>
           <div className="text-sm font-semibold text-slate-800">{selectedCommande.id}</div>
@@ -442,12 +454,12 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
             <div className="text-sm font-semibold text-slate-800">{selectedCommande.closed_by_name}</div>
           </div>
         )}
-      </motion.div>
+      </m.div>
 
 
 
       {/* Barre de synthèse horizontale */}
-      <motion.div variants={fadeInUp} className="mt-2 flex flex-wrap justify-between items-end gap-4 shrink-0 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+      <m.div variants={fadeInUp} className="mt-2 flex flex-wrap justify-between items-end gap-4 shrink-0 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
         {!showRecap ? (
           <button
             type="button"
@@ -515,7 +527,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
             <EyeOff className="size-4" />
           </button>
         )}
-      </motion.div>
+      </m.div>
 
 
 
@@ -524,7 +536,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
         const totalUG = (selectedCommande.produits || []).reduce((sum, p) => sum + normalizeNumberInput(p.unites_gratuites || 0), 0);
         if (totalUG > 0) {
           return (
-            <motion.div variants={fadeInUp} className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg shrink-0">
+            <m.div variants={fadeInUp} className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg shrink-0">
               <div className="flex items-center gap-3">
                 <div className="size-10 rounded-full bg-emerald-100 flex items-center justify-center">
                   <span className="text-emerald-700 font-bold text-sm">{t('orders:product_table.headers.ug')}</span>
@@ -536,14 +548,14 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
                   </p>
                 </div>
               </div>
-            </motion.div>
+            </m.div>
           );
         }
         return null;
       })()}
 
       {/* Liste des produits (Read Only) */}
-      <motion.div variants={fadeInUp} className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden flex flex-col flex-1 min-h-0">
+      <m.div variants={fadeInUp} className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden flex flex-col flex-1 min-h-0">
         <div className="p-3 border-b border-slate-200 flex justify-between items-center gap-4 bg-slate-50 shrink-0">
           <div className="flex items-center gap-2">
             <Package className="size-4 text-slate-500" />
@@ -732,12 +744,12 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
                                     </Button>
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => startQtyEdit(p)} disabled={!onUpdateReceptionQty || executingAction}>
+                                    <DropdownMenuItem onClick={() => startQtyEdit(p)} disabled={!onUpdateReceptionQty || executingAction || !canCloseCommande}>
                                       <Pencil className="size-3.5 mr-2" /> {t('orders:details.edit_received_qty')}
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                       onClick={() => onDeleteReceptionLigne?.(p)}
-                                      disabled={!onDeleteReceptionLigne || executingAction}
+                                      disabled={!onDeleteReceptionLigne || executingAction || !canCloseCommande}
                                       className="text-red-600 focus:text-red-600"
                                     >
                                       <Trash2 className="size-3.5 mr-2" /> {t('orders:details.delete_received_line')}
@@ -761,9 +773,9 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
 
         </div>
 
-      </motion.div>
+      </m.div>
 
-    </motion.div>
+    </m.div>
 
   );
 

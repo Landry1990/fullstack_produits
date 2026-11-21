@@ -205,8 +205,8 @@ export const ClientCreditsList: React.FC<ClientCreditsListProps> = ({
                                                 '—'
                                             )}
                                         </TableCell>
-                                        <TableCell className="pl-4 pr-8 py-3 text-right text-sm font-semibold text-slate-700 whitespace-nowrap">
-                                            {formatCurrency(credit.montant_total)}
+                                        <TableCell className="pl-4 pr-8 py-3 text-right text-sm font-semibold text-red-600 whitespace-nowrap">
+                                            -{formatCurrency(credit.montant_total)}
                                         </TableCell>
                                         <TableCell className="px-4 py-3">{getStatusBadge(credit.statut)}</TableCell>
                                         <TableCell className="px-4 py-3 text-right">

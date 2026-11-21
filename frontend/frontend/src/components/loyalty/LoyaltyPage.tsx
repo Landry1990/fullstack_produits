@@ -24,7 +24,7 @@ import {
     useLoyaltyClients,
 } from '../../hooks/useLoyalty';
 import type { LoyaltyHistoryEntry, LoyaltySettings } from '../../types';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { staggerContainer, staggerGrid, fadeInUp } from '../../lib/motion';
 
 const PAGE_SIZE = 25;
@@ -170,14 +170,14 @@ const LoyaltyPage: React.FC = () => {
     const settingsTyped = settings as LoyaltySettings | undefined;
 
     return (
-        <motion.div
+        <m.div
             variants={staggerContainer}
             initial="hidden"
             animate="show"
             className="p-6 w-full h-full flex flex-col gap-4"
         >
             {/* ── Header ── */}
-            <motion.div variants={fadeInUp} className="bg-white border border-slate-200 rounded-xl shadow-sm p-5 w-full">
+            <m.div variants={fadeInUp} className="bg-white border border-slate-200 rounded-xl shadow-sm p-5 w-full">
                 <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
                     <div className="flex items-start gap-3">
                         <div className="p-2.5 bg-purple-100 rounded-lg text-purple-600">
@@ -201,11 +201,11 @@ const LoyaltyPage: React.FC = () => {
                         </Button>
                     </div>
                 </div>
-            </motion.div>
+            </m.div>
 
             {/* ── Stats ── */}
-            <motion.div variants={staggerGrid} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <motion.div variants={fadeInUp}>
+            <m.div variants={staggerGrid} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <m.div variants={fadeInUp}>
                 <StatCard
                     label={t('loyalty:stats.amount_per_point')}
                     value={settingsTyped ? formatCurrency(settingsTyped.amount_per_point) : '—'}
@@ -213,8 +213,8 @@ const LoyaltyPage: React.FC = () => {
                     icon={<Award className="size-5 text-emerald-600" />}
                     accent="bg-emerald-100"
                 />
-                </motion.div>
-                <motion.div variants={fadeInUp}>
+                </m.div>
+                <m.div variants={fadeInUp}>
                 <StatCard
                     label={t('loyalty:stats.point_value')}
                     value={settingsTyped ? formatCurrency(settingsTyped.point_value) : '—'}
@@ -222,8 +222,8 @@ const LoyaltyPage: React.FC = () => {
                     icon={<Award className="size-5 text-blue-600" />}
                     accent="bg-blue-100"
                 />
-                </motion.div>
-                <motion.div variants={fadeInUp}>
+                </m.div>
+                <m.div variants={fadeInUp}>
                 <StatCard
                     label={t('loyalty:stats.auto_reward_threshold')}
                     value={settingsTyped ? String(settingsTyped.auto_reward_threshold) : '—'}
@@ -231,8 +231,8 @@ const LoyaltyPage: React.FC = () => {
                     icon={<Award className="size-5 text-purple-600" />}
                     accent="bg-purple-100"
                 />
-                </motion.div>
-                <motion.div variants={fadeInUp}>
+                </m.div>
+                <m.div variants={fadeInUp}>
                 <StatCard
                     label={t('loyalty:stats.auto_reward_percent')}
                     value={settingsTyped ? `${settingsTyped.auto_reward_percent} %` : '—'}
@@ -240,11 +240,11 @@ const LoyaltyPage: React.FC = () => {
                     icon={<Award className="size-5 text-amber-600" />}
                     accent="bg-amber-100"
                 />
-                </motion.div>
-            </motion.div>
+                </m.div>
+            </m.div>
 
             {/* ── Filters ── */}
-            <motion.div variants={fadeInUp} className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 w-full">
+            <m.div variants={fadeInUp} className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 w-full">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                     <div className="flex flex-col gap-1 flex-1 min-w-0" ref={clientDropdownRef}>
                         <label htmlFor="loyalty-client-search" className="text-caption font-bold uppercase tracking-wider text-slate-500">
@@ -321,10 +321,10 @@ const LoyaltyPage: React.FC = () => {
                         </Select>
                     </div>
                 </div>
-            </motion.div>
+            </m.div>
 
             {/* ── Table ── */}
-            <motion.div variants={fadeInUp} className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col w-full flex-1 min-h-0">
+            <m.div variants={fadeInUp} className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col w-full flex-1 min-h-0">
                 <div className="overflow-x-auto w-full">
                     <Table className="w-full min-w-[1100px]">
                         <TableHeader>
@@ -419,11 +419,11 @@ const LoyaltyPage: React.FC = () => {
                         </span>
                     </div>
                 </div>
-            </motion.div>
+            </m.div>
 
             {/* ── Config Modal ── */}
             <LoyaltyConfigModal isOpen={configOpen} onClose={() => setConfigOpen(false)} />
-        </motion.div>
+        </m.div>
     );
 };
 

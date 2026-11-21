@@ -27,7 +27,7 @@ import {
 } from '../hooks/useDashboard';
 
 import { useTranslation } from 'react-i18next';
-import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
+import { AnimatePresence, MotionConfig, m } from 'framer-motion';
 import { popover, tabContent } from '../lib/motion';
 import { formatCurrency } from '../utils/formatters';
 import { useAuth } from '../context/AuthContext';
@@ -273,7 +273,7 @@ export default function DashboardShadcn() {
               </Button>
               <AnimatePresence>
               {menuOpen && (
-                <motion.div
+                <m.div
                   variants={popover}
                   initial="hidden"
                   animate="show"
@@ -333,7 +333,7 @@ export default function DashboardShadcn() {
                     <SlidersHorizontal className="size-4 text-slate-500" />
                     {t('customize.menu_item')}
                   </button>
-                </motion.div>
+                </m.div>
               )}
               </AnimatePresence>
             </div>
@@ -368,7 +368,7 @@ export default function DashboardShadcn() {
       {/* ── TAB CONTENT ── */}
       <div className="p-3 flex-1 overflow-y-auto">
         <AnimatePresence mode="wait" initial={false}>
-          <motion.div
+          <m.div
             key={isVendeur ? 'vendeur' : activeTab}
             variants={tabContent}
             initial="hidden"
@@ -412,7 +412,7 @@ export default function DashboardShadcn() {
                 formatCurrencyLocal={formatCurrencyLocal}
               />
             )}
-          </motion.div>
+          </m.div>
         </AnimatePresence>
       </div>
 

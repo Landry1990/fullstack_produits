@@ -6,7 +6,7 @@ import {
     RefreshCw, Award
 } from 'lucide-react';
 import { Skeleton } from '../shadcn/skeleton';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { fadeInUp, staggerContainer, staggerFadeContainer } from '../../lib/motion';
 import { useRecharts } from '../../hooks/useRecharts';
 import { useVendeurStats } from '../../hooks/useDashboard';
@@ -86,10 +86,10 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
 
 
     return (
-        <motion.div className="space-y-5" variants={staggerContainer} initial="hidden" animate="show">
+        <m.div className="space-y-5" variants={staggerContainer} initial="hidden" animate="show">
 
             {/* ── Header vendeur ──────────────────────────────────────────── */}
-            <motion.div variants={fadeInUp} className="flex items-center justify-between">
+            <m.div variants={fadeInUp} className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <div className="size-11 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-lg shadow-lg">
                         {data.vendeur[0]?.toUpperCase() ?? '?'}
@@ -107,11 +107,11 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
                 >
                     <RefreshCw className="size-4" />
                 </button>
-            </motion.div>
+            </m.div>
 
             {/* ── Objectif du jour ─────────────────────────────────────────── */}
             {data.objectif_jour_perso > 0 && (
-                <motion.div variants={fadeInUp} className={`rounded-xl p-4 border shadow-sm ${data.progression_perso >= 100 ? 'bg-emerald-50 border-emerald-200' : 'bg-indigo-50 border-indigo-200'}`}>
+                <m.div variants={fadeInUp} className={`rounded-xl p-4 border shadow-sm ${data.progression_perso >= 100 ? 'bg-emerald-50 border-emerald-200' : 'bg-indigo-50 border-indigo-200'}`}>
                     <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                             <Target className={`size-4 ${data.progression_perso >= 100 ? 'text-emerald-600' : 'text-indigo-600'}`} />
@@ -142,11 +142,11 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
                         </div>
                     </div>
                     <ProgressBar value={data.progression_perso} color={progressColor} />
-                </motion.div>
+                </m.div>
             )}
 
             {/* ── KPI Cards ────────────────────────────────────────────────── */}
-            <motion.div variants={staggerFadeContainer} className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+            <m.div variants={staggerFadeContainer} className="grid grid-cols-2 xl:grid-cols-4 gap-3">
                 {[
                     {
                         label: t('vendeur.this_week'),
@@ -182,19 +182,19 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
                         custom: <RangBadge rang={data.rang} total={data.total_vendeurs} />,
                     },
                 ].map((kpi, _i) => (
-                    <motion.div variants={fadeInUp} key={kpi.label} className={`${kpi.card} border rounded-xl shadow-sm p-4`}>
+                    <m.div variants={fadeInUp} key={kpi.label} className={`${kpi.card} border rounded-xl shadow-sm p-4`}>
                         <div className={`inline-flex p-2.5 bg-white rounded-xl shadow-sm mb-2 ${kpi.color}`}>
                             <kpi.icon className="size-5" />
                         </div>
                         <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-0.5 leading-tight">{kpi.label}</p>
                         {kpi.custom ?? <p className="text-xl font-bold text-slate-800">{kpi.value}</p>}
                         <p className="text-caption text-slate-400 font-medium mt-0.5">{kpi.sub}</p>
-                    </motion.div>
+                    </m.div>
                 ))}
-            </motion.div>
+            </m.div>
 
             {/* ── Sparkline 7 jours ────────────────────────────────────────── */}
-            <motion.div variants={fadeInUp} className="bg-white border border-slate-200 rounded-xl shadow-sm p-4">
+            <m.div variants={fadeInUp} className="bg-white border border-slate-200 rounded-xl shadow-sm p-4">
                 <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                         <div className="p-1.5 bg-indigo-100 text-indigo-600 rounded-lg">
@@ -240,11 +240,11 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
                         </div>
                     ))}
                 </div>
-            </motion.div>
+            </m.div>
 
             {/* ── Top produits perso ───────────────────────────────────────── */}
             {data.top_produits.length > 0 && (
-                <motion.div variants={fadeInUp} className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                <m.div variants={fadeInUp} className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
                     <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-2">
                         <div className="p-1.5 bg-amber-100 text-amber-600 rounded-lg">
                             <Star className="size-3.5" />
@@ -274,12 +274,12 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
                             );
                         })}
                     </div>
-                </motion.div>
+                </m.div>
             )}
 
             {/* ── Dernière vente ───────────────────────────────────────────── */}
             {data.derniere_vente && (
-                <motion.div variants={fadeInUp} className="flex items-center gap-3 px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 shadow-sm">
+                <m.div variants={fadeInUp} className="flex items-center gap-3 px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 shadow-sm">
                     <Clock className="size-4 text-slate-400 shrink-0" />
                     <div className="flex-1 min-w-0">
                         <p className="text-xs font-black text-slate-600">
@@ -290,8 +290,8 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
                         </p>
                     </div>
                     <p className="text-sm font-black text-slate-700 shrink-0">{formatCurrencyLocal(data.derniere_vente.montant)}</p>
-                </motion.div>
+                </m.div>
             )}
-        </motion.div>
+        </m.div>
     );
 }

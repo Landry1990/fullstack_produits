@@ -9,6 +9,7 @@ import creanceService, {
 } from '../../../services/creanceService';
 import { formatCurrency } from '../../../utils/formatters';
 import { useSudo } from '../../../hooks/useSudo';
+import { usePermissions } from '../../../hooks/usePermissions';
 import { useConfirm } from '../../../hooks/useConfirm';
 import { usePharmacySettings } from '../../../hooks/usePharmacySettings';
 import { buildRelevePaiementPrintHtml } from '../../../utils/print/relevePaiementPrintHtml';
@@ -33,6 +34,8 @@ export default function RelevesReglement() {
     const { t, i18n } = useTranslation(['creances', 'common']);
     const confirm = useConfirm();
     const { sudoState, requireSudo, closeSudo } = useSudo();
+    const { hasPerm } = usePermissions();
+    const canSettle = hasPerm('can_cash_out');
     const { settings: pharmacySettings } = usePharmacySettings();
 
     const [releves, setReleves] = useState<ReleveEmis[]>([]);
@@ -333,7 +336,7 @@ export default function RelevesReglement() {
                                     </TableCell>
                                     <TableCell className="text-center">
                                         <div className="flex items-center justify-center gap-1">
-                                            {r.emis && Number(r.reste) > 0 && (
+                                            {r.emis && Number(r.reste) > 0 && canSettle && (
                                                 <Button
                                                     size="sm"
                                                     className="h-7 px-3 text-caption font-bold uppercase"

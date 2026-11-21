@@ -26,6 +26,8 @@ interface ClientMergeModalProps {
   onKeepNew: () => void;
   onMerge: (candidate: Candidate) => void;
   candidates: Candidate[];
+  /** Fusion réservée aux superusers — sinon les candidats sont affichés en lecture seule. */
+  canMerge?: boolean;
 }
 
 export default function ClientMergeModal({
@@ -34,6 +36,7 @@ export default function ClientMergeModal({
   onKeepNew,
   onMerge,
   candidates,
+  canMerge = false,
 }: ClientMergeModalProps) {
   const { t } = useTranslation(['clients', 'common']);
 
@@ -53,7 +56,7 @@ export default function ClientMergeModal({
         </DialogHeader>
 
         <div className="space-y-2 max-h-64 overflow-y-auto py-2">
-          {candidates.map((candidate) => (
+          {candidates.map((candidate) => canMerge ? (
             <button
               key={candidate.id}
               type="button"
@@ -80,6 +83,31 @@ export default function ClientMergeModal({
                 <span className="font-medium text-emerald-600">{Math.round(candidate.score * 100)}% {t('clients:merge.match')}</span>
               </div>
             </button>
+          ) : (
+            <div
+              key={candidate.id}
+              className={cn(
+                "w-full text-left p-3 rounded-lg border",
+                candidate.score >= 0.9 ? 'border-amber-200 bg-amber-50/50' : 'border-slate-200 bg-white'
+              )}
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-slate-800 text-sm truncate pr-2">{candidate.name}</span>
+                <Badge variant="outline" className={cn(
+                  "text-caption uppercase tracking-wide",
+                  candidate.client_type === 'PROFESSIONNEL' ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-slate-100 text-slate-500 border-slate-200'
+                )}>
+                  {candidate.client_type === 'PROFESSIONNEL' ? t('clients:types.pro_short') : t('clients:types.part_short')}
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between mt-1 text-xs text-slate-500">
+                <span className="flex items-center gap-1">
+                  <Phone className="size-3" />
+                  {candidate.phone || '—'}
+                </span>
+                <span className="font-medium text-emerald-600">{Math.round(candidate.score * 100)}% {t('clients:merge.match')}</span>
+              </div>
+            </div>
           ))}
         </div>
 

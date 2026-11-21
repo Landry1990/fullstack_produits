@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { staggerContainer, fadeInUp } from '../lib/motion';
 import { useTranslation } from 'react-i18next';
 import api from '../services/api';
@@ -443,7 +443,7 @@ export default function SystemAdmin() {
   ];
 
   return (
-    <motion.div
+    <m.div
       variants={staggerContainer}
       initial="hidden"
       animate="show"
@@ -453,10 +453,10 @@ export default function SystemAdmin() {
       {/* ── OVERLAY RESTAURATION ── */}
       <RestoreOverlay restoring={restoring} restoreProgress={restoreProgress} t={t} />
 
-      <motion.div variants={staggerContainer} className="max-w-5xl mx-auto">
+      <m.div variants={staggerContainer} className="max-w-5xl mx-auto">
 
         {/* Header */}
-        <motion.div variants={fadeInUp} className="mb-6">
+        <m.div variants={fadeInUp} className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <Server className="w-6 h-6 text-indigo-600" />
             {t('title')}
@@ -464,10 +464,10 @@ export default function SystemAdmin() {
           <p className="text-sm text-gray-500 mt-1">
             {t('subtitle')}
           </p>
-        </motion.div>
+        </m.div>
 
         {/* Tabs */}
-        <motion.div variants={fadeInUp} className="flex gap-1 mb-6 bg-white border border-gray-100 rounded-xl p-1 shadow-sm w-fit max-w-full overflow-x-auto">
+        <m.div variants={fadeInUp} className="flex gap-1 mb-6 bg-white border border-gray-100 rounded-xl p-1 shadow-sm w-fit max-w-full overflow-x-auto">
           {tabs.map(tab => (
             <button
               key={tab.id}
@@ -482,7 +482,7 @@ export default function SystemAdmin() {
               {tab.label}
             </button>
           ))}
-        </motion.div>
+        </m.div>
 
         {/* ── ONGLET SANTÉ ── */}
         {activeTab === 'sante' && (
@@ -579,7 +579,7 @@ export default function SystemAdmin() {
             t={t}
           />
         )}
-      </motion.div>
-    </motion.div>
+      </m.div>
+    </m.div>
   );
 }

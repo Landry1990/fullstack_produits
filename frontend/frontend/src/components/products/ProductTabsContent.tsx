@@ -28,7 +28,7 @@ import { usePharmacySettings } from '../../hooks/usePharmacySettings';
 import { isLotExpired } from '../../utils/expiry';
 import { exportToExcel } from '../../utils/excelExport';
 import { logger } from '../../utils/logger';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { tabContent } from '../../lib/motion';
 
 interface ProductTabsContentProps {
@@ -632,7 +632,7 @@ export const ProductTabsContent: React.FC<ProductTabsContentProps> = ({
 
       {/* Contenu des onglets */}
       <div className="flex-1 overflow-auto p-4">
-        <motion.div key={activeTab} variants={tabContent} initial="hidden" animate="show">
+        <m.div key={activeTab} variants={tabContent} initial="hidden" animate="show">
         {activeTab === 'general' && (
           <Table>
             <TableBody>
@@ -723,7 +723,7 @@ export const ProductTabsContent: React.FC<ProductTabsContentProps> = ({
         {activeTab === 'stats' && <StatsTabContent monthlyStats={monthlyStats} t={t} />}
 
         {activeTab === 'mvmts' && <MovementsTabContent stockHistory={stockHistory} loadingHistory={loadingHistory} onMovementClick={onMovementClick} produitName={selectedProduit.name} t={t} />}
-        </motion.div>
+        </m.div>
       </div>
     </div>
   );

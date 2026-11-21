@@ -208,7 +208,11 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
     // Un service n'a pas de stock : toujours sélectionnable, jamais "épuisé".
     const isOutOfStock = !isService && stock <= 0
     const isBlocked = isOutOfStock && !canSellNegativeStock
-    const isLowStock = stock > 0 && stockMin > 0 && stock <= stockMin
+    // Un produit sans rotation n'est jamais "stock faible" : l'alerte n'a de
+    // sens que si le produit se vend (évite de flagger les invendus). Si le
+    // champ est absent du payload (recherches partielles), on reste conservateur.
+    const noRotation = item.rotation_moyenne != null && Number(item.rotation_moyenne) <= 0
+    const isLowStock = stock > 0 && stockMin > 0 && stock <= stockMin && !noRotation
 
     const handleClick = () => {
       if (isBlocked) return

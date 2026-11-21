@@ -17,7 +17,7 @@ import { Skeleton } from '../shadcn/skeleton';
 import { useConfirm } from '../../hooks/useConfirm';
 import { getApiErrorDetail } from '../../utils/errorHandling';
 import { logger } from '../../utils/logger'
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { staggerContainer, fadeInUp } from '../../lib/motion';
 
 
@@ -119,14 +119,14 @@ const PromotionList: React.FC = () => {
     );
 
     return (
-        <motion.div
+        <m.div
           variants={staggerContainer}
           initial="hidden"
           animate="show"
           className="h-full flex flex-col bg-slate-50 p-3 sm:p-6 gap-4 sm:gap-6 font-sans"
         >
           {/* Header */}
-          <motion.div variants={fadeInUp}>
+          <m.div variants={fadeInUp}>
           <Card className="flex flex-col p-4 sm:p-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
               <div>
@@ -233,8 +233,8 @@ const PromotionList: React.FC = () => {
                     </TableBody>
                 </Table>
           </Card>
-          </motion.div>
-        </motion.div>
+          </m.div>
+        </m.div>
     );
 };
 

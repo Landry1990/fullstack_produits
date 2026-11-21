@@ -59,7 +59,8 @@ function ConversationThread({ peer, currentUser, onZoomAttachment, onBack }: Con
     let active = true;
     communicationService.markConversationRead(peer.peer_id, ids).then(() => {
       if (!active) return;
-      const markPage = (page: ConversationPage): ConversationPage => ({ ...page, results: page.results.map((message) => ids.includes(message.id) ? { ...message, is_read: true } : message) });
+      const idsSet = new Set(ids);
+      const markPage = (page: ConversationPage): ConversationPage => ({ ...page, results: page.results.map((message) => idsSet.has(message.id) ? { ...message, is_read: true } : message) });
       queryClient.setQueryData<ConversationPage>(['internalMessages', 'thread', currentUser.id, peer.peer_id], (page) => page ? markPage(page) : page);
       queryClient.setQueryData<InfiniteData<ConversationPage>>(['internalMessages', 'threadOlder', currentUser.id, peer.peer_id], (data) => data ? { ...data, pages: data.pages.map(markPage) } : data);
       void queryClient.invalidateQueries({ queryKey: ['internalMessages'] });

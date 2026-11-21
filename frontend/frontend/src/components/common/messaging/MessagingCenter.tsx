@@ -120,14 +120,14 @@ export function MessagingCenter({ currentUser, isOpen, onMessageRead }: Messagin
         variant: 'danger',
       })) return;
       const failed: number[] = [];
-      for (const id of ids) {
+      await Promise.all(ids.map(async (id) => {
         try {
           if (operation === 'delete') await communicationService.deleteMessage(id);
           else await communicationService.archiveMessage(id);
         } catch {
           failed.push(id);
         }
-      }
+      }));
       setSelection({ scope: selectionScope, ids: failed });
       setSelectedId(null);
       if (failed.length) gooeyToast.error(t('bulk.partial_error', { count: failed.length }));

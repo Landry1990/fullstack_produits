@@ -11,7 +11,7 @@ import { formatVersion } from '../version';
 import { cn } from '../lib/utils';
 import { prefetchRoute, warmupRoutes } from '../utils/routePrefetch';
 import { NAV_ITEMS, filterNavItemsForUser, getRouteLoader, getAllRouteLoaders, groupNavSubMenus } from '../config/navConfig';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { fadeInUp, staggerContainer, staggerGrid } from '../lib/motion';
 
 const prefetchedRoutes = new Set<string>();
@@ -126,7 +126,8 @@ export default function Sidebar() {
 
     if (hasSubmenus) {
       return (
-        <motion.li variants={fadeInUp} key={item.key}>
+        <m.li variants={fadeInUp} key={item.key}>
+          <AnimatePresence initial={false}>
           {effectiveCollapsed ? (
             <div className="relative group w-full">
               <button
@@ -203,9 +204,8 @@ export default function Sidebar() {
               </button>
 
               {/* Submenus with vertical connector */}
-              <AnimatePresence initial={false}>
-                {isMenuOpen && (
-                <motion.div
+              {isMenuOpen && (
+                <m.div
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
@@ -247,17 +247,17 @@ export default function Sidebar() {
                     </Fragment>
                   ))}
                 </ul>
-                </motion.div>
-                )}
-              </AnimatePresence>
+                </m.div>
+              )}
             </>
           )}
-        </motion.li>
+          </AnimatePresence>
+        </m.li>
       );
     }
 
     return (
-      <motion.li variants={fadeInUp} key={item.path}>
+      <m.li variants={fadeInUp} key={item.path}>
         <NavLink
           to={item.path!}
           end={item.path === '/app'}
@@ -278,7 +278,7 @@ export default function Sidebar() {
           <span className="size-5 shrink-0">{item.icon}</span>
           {!effectiveCollapsed && <span className="text-sm font-medium tracking-tight truncate">{item.label}</span>}
         </NavLink>
-      </motion.li>
+      </m.li>
     );
   };
 
@@ -351,22 +351,22 @@ export default function Sidebar() {
         {/* ── NAV ── */}
         <nav className="flex-1 overflow-y-auto py-2 custom-scrollbar" aria-label={t('sidebar:navigation_label')}>
           {effectiveCollapsed ? (
-            <motion.ul className="flex flex-col gap-1 px-2" variants={staggerGrid} initial="hidden" animate="show">
+            <m.ul className="flex flex-col gap-1 px-2" variants={staggerGrid} initial="hidden" animate="show">
               {menuItems.map((item) => renderMenuItem(item))}
-            </motion.ul>
+            </m.ul>
           ) : (
-            <motion.div className="px-3" variants={staggerContainer} initial="hidden" animate="show">
+            <m.div className="px-3" variants={staggerContainer} initial="hidden" animate="show">
               {menuGroups.map((group) => (
-                <motion.div variants={fadeInUp} key={group.category}>
+                <m.div variants={fadeInUp} key={group.category}>
                   <h3 className="text-caption font-semibold uppercase tracking-wider text-slate-400 px-1 mt-4 mb-1.5">
                     {t(`sidebar:categories.${group.category}`)}
                   </h3>
-                  <motion.ul variants={staggerGrid} className="flex flex-col gap-0.5">
+                  <m.ul variants={staggerGrid} className="flex flex-col gap-0.5">
                     {group.items.map((item) => renderMenuItem(item))}
-                  </motion.ul>
-                </motion.div>
+                  </m.ul>
+                </m.div>
               ))}
-            </motion.div>
+            </m.div>
           )}
         </nav>
 

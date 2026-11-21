@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { staggerContainer, fadeInUp } from '../../lib/motion'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -139,7 +139,7 @@ export default function TraceurLots() {
     }
 
     return (
-        <motion.div
+        <m.div
             variants={staggerContainer}
             initial="hidden"
             animate="show"
@@ -147,7 +147,7 @@ export default function TraceurLots() {
         >
             <PageContainer className="flex flex-col h-full gap-2 lg:gap-4 p-0 sm:p-0">
                 {/* Header */}
-                <motion.div variants={fadeInUp} className="flex items-center gap-2 lg:gap-3 shrink-0">
+                <m.div variants={fadeInUp} className="flex items-center gap-2 lg:gap-3 shrink-0">
                     <div className="size-8 lg:size-10 rounded-xl lg:rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-200">
                         <History className="size-4 lg:size-5" />
                     </div>
@@ -159,10 +159,10 @@ export default function TraceurLots() {
                             {t('stock:lot_tracer.subtitle')}
                         </p>
                     </div>
-                </motion.div>
+                </m.div>
 
                 {/* Recherche uniquement — rien n'est chargé tant qu'on ne tape pas */}
-                <motion.div variants={fadeInUp} className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-slate-200 p-3 shrink-0">
+                <m.div variants={fadeInUp} className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-slate-200 p-3 shrink-0">
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
                         <Input
@@ -173,10 +173,10 @@ export default function TraceurLots() {
                             autoFocus
                         />
                     </div>
-                </motion.div>
+                </m.div>
 
                 {/* Résultats */}
-                <motion.div variants={fadeInUp} className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col flex-1 min-h-0">
+                <m.div variants={fadeInUp} className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col flex-1 min-h-0">
                     <div className="overflow-auto flex-1 min-h-0">
                         {loading ? (
                             <SkeletonTable rows={6} columns={8} />
@@ -245,7 +245,7 @@ export default function TraceurLots() {
                             </Table>
                         )}
                     </div>
-                </motion.div>
+                </m.div>
             </PageContainer>
 
             {/* Dialog timeline des mouvements */}
@@ -285,8 +285,8 @@ export default function TraceurLots() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {mouvementsData.mouvements.map((mvt, i) => (
-                                        <TableRow key={i}>
+                                    {mouvementsData.mouvements.map((mvt) => (
+                                        <TableRow key={`${mvt.date}-${mvt.type}-${mvt.quantite}-${mvt.solde_apres}-${mvt.reference ?? ''}`}>
                                             <TableCell className="whitespace-nowrap">{formatDateTime(mvt.date)}</TableCell>
                                             <TableCell>
                                                 <Badge variant="outline" className={cn('whitespace-nowrap', TYPE_BADGE_CLASS[mvt.type])}>
@@ -310,6 +310,6 @@ export default function TraceurLots() {
                     </div>
                 </DialogContent>
             </Dialog>
-        </motion.div>
+        </m.div>
     )
 }

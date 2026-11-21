@@ -13,7 +13,8 @@ interface SelectionHeaderProps {
   selectedCount: number;
   onClear: () => void;
   colSpan: number;
-  actions: React.ReactNode;
+  /** Contenu du dropdown — si absent, le bouton « Actions » est masqué. */
+  actions?: React.ReactNode;
   children: React.ReactNode;
 }
 
@@ -36,18 +37,22 @@ const SelectionHeader: React.FC<SelectionHeaderProps> = ({
       <div className="flex items-center justify-between w-full h-8">
         {selectedCount > 0 ? (
           <div className="flex items-center gap-4 animate-in fade-in slide-in-from-left-2 duration-200">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="default" size="sm" className="gap-2">
-                  <MoreVertical className="size-4" />
-                  {t('common:actions_title')}
-                  <Badge className="bg-white/20 text-white">{selectedCount}</Badge>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-60 rounded-xl p-1.5">
-                {actions}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {actions ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="default" size="sm" className="gap-2">
+                    <MoreVertical className="size-4" />
+                    {t('common:actions_title')}
+                    <Badge className="bg-white/20 text-white">{selectedCount}</Badge>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-60 rounded-xl p-1.5">
+                  {actions}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Badge variant="secondary">{selectedCount}</Badge>
+            )}
             <Button
               variant="ghost" size="sm"
               onClick={onClear}

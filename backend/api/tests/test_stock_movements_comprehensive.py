@@ -11,6 +11,7 @@ from api.models import (
     LigneInventaire,
     MouvementStock,
     RelationTransformation,
+    StockAdjustment,
     StockLot,
 )
 from api.tests.factories import TestDataFactory
@@ -493,3 +494,82 @@ class StockMovementsComprehensiveTestCase(TestCase):
         )
         self.assertEqual(produit.stock, 40)
         self.assertEqual(total_lots, 40)
+
+    # ------------------------------------------------------------------
+    # 18. Restauration d'une sortie périmée -> RETOUR + stock réintégré
+    # ------------------------------------------------------------------
+    def test_restauration_sortie_perimee_reintegre_stock_et_cree_retour(self):
+        """Après une sortie périmée, la restauration doit remettre le lot ET
+        le produit en stock, avec un MouvementStock RETOUR. Sans ce mouvement,
+        la réintégration serait invisible dans l'historique."""
+        produit = self.factory.create_produit(stock=0, use_lot_management=True)
+        lot = self.factory.create_stock_lot(produit=produit, quantity=12, lot_name="LOT-RESTAURE")
+        produit.calculate_stock_from_lots()
+
+        response = self.client.post(reverse("stocklot-sortir-perimes", kwargs={"pk": lot.pk}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        produit.refresh_from_db()
+        self.assertEqual(produit.stock, 0)
+
+        adjustment = StockAdjustment.objects.get(
+            produit=produit, reason_type=StockAdjustment.ReasonType.PERIME, quantity_change=-12
+        )
+
+        response = self.client.post(
+            reverse("stockadjustment-restaurer-sortie-perimee", kwargs={"pk": adjustment.pk})
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+
+        lot.refresh_from_db()
+        produit.refresh_from_db()
+        self.assertEqual(lot.quantity_remaining, 12)
+        self.assertEqual(produit.stock, 12)
+
+        mvt = self._get_latest_mvt(produit, MouvementStock.TypeMouvement.RETOUR)
+        self.assertEqual(mvt.quantite, 12)
+        self.assertEqual(mvt.stock_apres, 12)
+
+        # Double restauration refusée — sinon stock gonflé artificiellement.
+        response = self.client.post(
+            reverse("stockadjustment-restaurer-sortie-perimee", kwargs={"pk": adjustment.pk})
+        )
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+        produit.refresh_from_db()
+        self.assertEqual(produit.stock, 12)
+
+    # ------------------------------------------------------------------
+    # 19. Modification de vente -> mouvement delta (RETOUR ou SORTIE)
+    # ------------------------------------------------------------------
+    def test_modification_vente_cree_mouvement_delta_et_ajuste_stock(self):
+        """Baisser la quantité d'une facture validée doit réintégrer la
+        différence en stock et créer un RETOUR du delta exact."""
+        produit = self.factory.create_produit(stock=50)
+        facture = self._make_sale(produit, quantity=10)
+        produit.refresh_from_db()
+        self.assertEqual(produit.stock, 40)
+
+        response = self.client.post(
+            reverse("facture-modifier", kwargs={"pk": facture.pk}),
+            {
+                "produits": [
+                    {
+                        "produit": produit.id,
+                        "quantity": 4,
+                        "selling_price": str(produit.selling_price),
+                        "discount": "0",
+                        "tva": "0",
+                    }
+                ],
+                "remise": "0",
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+
+        produit.refresh_from_db()
+        self.assertEqual(produit.stock, 46)
+
+        mvt = self._get_latest_mvt(produit, MouvementStock.TypeMouvement.RETOUR)
+        self.assertEqual(mvt.facture_id, facture.id)
+        self.assertEqual(mvt.quantite, 6)
+        self.assertEqual(mvt.stock_apres, 46)

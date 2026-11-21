@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { staggerContainer, fadeInUp } from '../lib/motion';
 import api from '../services/api';
 import { formatDate, getLocalDateString } from '../utils/dateUtils';
@@ -157,7 +157,7 @@ const HistoriqueVentes = () => {
   const totalPages = Math.ceil(totalItems / pageSize);
 
   return (
-    <motion.div
+    <m.div
       variants={staggerContainer}
       initial="hidden"
       animate="show"
@@ -165,7 +165,7 @@ const HistoriqueVentes = () => {
     >
 
       {/* Header Section */}
-      <motion.div variants={fadeInUp} className="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col p-4 sm:p-6">
+      <m.div variants={fadeInUp} className="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col p-4 sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start mb-4 sm:mb-6">
           <div>
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
@@ -225,10 +225,10 @@ const HistoriqueVentes = () => {
             {t('common:refresh')}
           </Button>
         </div>
-      </motion.div>
+      </m.div>
 
       {/* Main Content: Table */}
-      <motion.div variants={fadeInUp} className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col flex-1 min-h-0">
+      <m.div variants={fadeInUp} className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col flex-1 min-h-0">
         {loading ? (
           <div className="flex flex-col items-center justify-center p-20 gap-4">
             <div className="animate-spin rounded-full size-10 border-b-2 border-emerald-600"></div>
@@ -358,8 +358,8 @@ const HistoriqueVentes = () => {
             </div>
           </>
         )}
-      </motion.div>
-    </motion.div>
+      </m.div>
+    </m.div>
   );
 };
 

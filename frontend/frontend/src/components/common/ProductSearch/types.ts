@@ -9,6 +9,8 @@ export interface SearchResult {
   is_service?: boolean
   stock?: number
   stock_minimum?: number | null
+  /** Rotation moyenne des ventes — 0 = jamais vendu (pas de badge « stock faible »). */
+  rotation_moyenne?: number | string | null
   selling_price?: number | string
   isPromis?: boolean
   active_promis_count?: number

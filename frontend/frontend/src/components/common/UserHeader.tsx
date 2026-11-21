@@ -9,7 +9,7 @@ import { useUnreadMessageCount } from './messaging/useMessaging';
 import { ChevronDown, LogOut, Moon, Sun, MessageSquare, User as UserIcon, MessageCircle, Key, Bell, BellOff } from 'lucide-react';
 import { usePopupAlertsEnabled, setPopupAlertsEnabled } from '../../utils/popupPrefs';
 import { playNotificationSound } from '../../utils/audio';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, m } from 'framer-motion';
 import { popover } from '../../lib/motion';
 
 export default function UserHeader() {
@@ -98,7 +98,7 @@ export default function UserHeader() {
             {/* Dropdown Menu */}
             <AnimatePresence>
             {isMenuOpen && (
-              <motion.div
+              <m.div
                 variants={popover}
                 initial="hidden"
                 animate="show"
@@ -195,7 +195,7 @@ export default function UserHeader() {
                     <span className="font-semibold">{t('common:logout')}</span>
                   </button>
                 </div>
-              </motion.div>
+              </m.div>
             )}
             </AnimatePresence>
           </div>

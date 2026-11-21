@@ -22,7 +22,7 @@ import { EmptyState } from '../ui/EmptyState';
 import { SubRayonsBadge } from '../common/SubRayonsBadge';
 import PaginationControls from '../ui/PaginationControls';
 import { logger } from '../../utils/logger'
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { staggerContainer, fadeInUp } from '../../lib/motion';
 
 interface CadencierItem {
@@ -229,14 +229,14 @@ const Cadencier: React.FC = () => {
 
   return (
     <div className="h-full min-h-0 overflow-hidden bg-slate-50 p-2 sm:p-3 lg:p-4">
-      <motion.div
+      <m.div
         variants={staggerContainer}
         initial="hidden"
         animate="show"
         className="h-full max-w-[1600px] mx-auto space-y-3 overflow-hidden flex flex-col"
       >
         {/* Header */}
-        <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <m.div variants={fadeInUp} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="size-10 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-600/20">
               <TrendingUp className="size-5" />
@@ -259,12 +259,12 @@ const Cadencier: React.FC = () => {
             {headerCollapsed ? <ChevronDown className="size-3.5" /> : <ChevronUp className="size-3.5" />}
             {headerCollapsed ? t('common:show_header', 'Afficher') : t('common:hide_header', 'Masquer')}
           </button>
-        </motion.div>
+        </m.div>
 
         {!headerCollapsed && (
           <>
             {/* Filters Card */}
-            <motion.div variants={fadeInUp}>
+            <m.div variants={fadeInUp}>
             <Card className="py-3">
               <CardContent className="pb-2">
                 <div className="grid grid-cols-2 md:grid-cols-12 gap-2 lg:gap-3 items-end">
@@ -358,10 +358,10 @@ const Cadencier: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
-            </motion.div>
+            </m.div>
 
             {/* Stats Cards */}
-            <motion.div variants={fadeInUp} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <m.div variants={fadeInUp} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               <Card>
                 <CardContent className="p-3 flex items-center gap-3">
                   <div className="size-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
@@ -432,12 +432,12 @@ const Cadencier: React.FC = () => {
                   </div>
                 </CardContent>
               </Card>
-            </motion.div>
+            </m.div>
           </>
         )}
 
         {/* Table Card */}
-        <motion.div variants={fadeInUp} className="flex-1 min-h-0 flex flex-col">
+        <m.div variants={fadeInUp} className="flex-1 min-h-0 flex flex-col">
         <Card className="overflow-hidden flex flex-col flex-1 min-h-0">
           <div className="px-4 py-2 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
             <div className="flex items-center gap-2">
@@ -633,8 +633,8 @@ const Cadencier: React.FC = () => {
             </div>
           )}
         </Card>
-        </motion.div>
-      </motion.div>
+        </m.div>
+      </m.div>
     </div>
   );
 };

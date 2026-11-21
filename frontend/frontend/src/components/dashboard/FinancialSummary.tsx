@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import type { Echeance, DashboardStats, UgStatsResponse, UgStatItem } from '../../hooks/useDashboard';
 import { formatDate } from '../../utils/dateUtils';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { fadeInUp, staggerContainer, staggerFadeContainer } from '../../lib/motion';
 import type { TFunction } from 'i18next';
 import { useDashboardPrefs } from '../../hooks/useDashboardPrefs';
@@ -33,12 +33,12 @@ export default function FinancialSummary({
   const showUG = isVisible('finance.ug') && ugStats && ugStats.results && stats?.role !== 'VENDEUR' && stats?.role !== 'CAISSIER';
 
   return (
-    <motion.div className="space-y-6" variants={staggerContainer} initial="hidden" animate="show">
+    <m.div className="space-y-6" variants={staggerContainer} initial="hidden" animate="show">
       {/* Row: UG (left) + Echéances (right) */}
-      <motion.div variants={staggerFadeContainer} className="grid grid-cols-1 2xl:grid-cols-2 gap-6">
+      <m.div variants={staggerFadeContainer} className="grid grid-cols-1 2xl:grid-cols-2 gap-6">
         {/* Section Unités Gratuites (UG) */}
         {showUG && (
-          <motion.div variants={fadeInUp} className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+          <m.div variants={fadeInUp} className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
             <div className="flex items-center justify-between gap-3 px-4 sm:px-5 pt-4 pb-3 border-b border-slate-100">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-purple-100 text-purple-600 rounded-lg">
@@ -101,12 +101,12 @@ export default function FinancialSummary({
                 </table>
               </div>
             </div>
-          </motion.div>
+          </m.div>
         )}
 
         {/* Echéances Widget */}
         {isVisible('finance.echeances') && echeances.length > 0 && (
-          <motion.div variants={fadeInUp} className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+          <m.div variants={fadeInUp} className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
             <div className="flex items-center justify-between gap-3 px-4 sm:px-5 pt-4 pb-3 border-b border-slate-100">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-amber-100 text-amber-600 rounded-lg">
@@ -183,9 +183,9 @@ export default function FinancialSummary({
                 </table>
               </div>
             </div>
-          </motion.div>
+          </m.div>
         )}
-      </motion.div>
-    </motion.div>
+      </m.div>
+    </m.div>
   );
 }

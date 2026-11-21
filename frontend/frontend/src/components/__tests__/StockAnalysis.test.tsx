@@ -98,7 +98,13 @@ const defaultHookValue = {
     setUnsoldDays: vi.fn(),
     page: 1,
     setPage: vi.fn(),
-    actions: { fetchData: mockFetchData, handleGenerateOrder: vi.fn(), toggleSelectItem: vi.fn(), toggleSelectAll: vi.fn() }
+    actions: {
+        fetchData: mockFetchData,
+        fetchAllItems: vi.fn().mockResolvedValue(mockAnalysisData.items),
+        handleGenerateOrder: vi.fn(),
+        toggleSelectItem: vi.fn(),
+        toggleSelectAll: vi.fn()
+    }
 };
 
 describe('StockAnalysis', () => {
@@ -230,6 +236,32 @@ describe('StockAnalysis', () => {
         expect(exportToExcel).toHaveBeenCalled();
         const records = (exportToExcel as unknown as { mock: { calls: unknown[][] } }).mock.calls[0][0] as Record<string, unknown>[];
         expect(records).toHaveLength(mockAnalysisData.items.length);
+    });
+
+    it('exporte tous les articles (toutes pages) et pas seulement la page affichée', async () => {
+        const allItems = [
+            ...mockAnalysisData.items,
+            { id: 3, name: 'Produit C', stock: 5, selling_price: 50, urgency: 'caution', avg_daily_sales: 1, days_until_stockout: 20, value: 150, cost_price: 30, fournisseur_name: 'Fournisseur A' }
+        ];
+        const fetchAllItems = vi.fn().mockResolvedValue(allItems);
+        (useStockAnalysis as unknown).mockReturnValue({
+            ...defaultHookValue,
+            actions: { ...defaultHookValue.actions, fetchAllItems }
+        });
+        renderWithContext(<StockAnalysis />);
+        await waitFor(() => {
+            expect(screen.getByText('Produit A')).toBeInTheDocument();
+        });
+        const btn = screen.getByRole('button', { name: /Excel/i });
+        await act(async () => {
+            fireEvent.click(btn);
+        });
+        await waitFor(() => {
+            expect(fetchAllItems).toHaveBeenCalled();
+            expect(exportToExcel).toHaveBeenCalled();
+        });
+        const records = (exportToExcel as unknown as { mock: { calls: unknown[][] } }).mock.calls[0][0] as Record<string, unknown>[];
+        expect(records).toHaveLength(allItems.length);
     });
 });
 

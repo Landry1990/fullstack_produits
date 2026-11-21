@@ -140,6 +140,7 @@ export function MessageList({
   selectionDisabled = false,
 }: MessageListProps) {
   const { t } = useTranslation(['messaging', 'common']);
+  const checkedIdSet = new Set(checkedIds);
 
   if (error && messages.length === 0) {
     return (
@@ -193,7 +194,7 @@ export function MessageList({
         <div key={m.id} className="flex items-center gap-2 min-w-0">
           {onToggleChecked && (
             <Checkbox
-              checked={checkedIds.includes(m.id)}
+              checked={checkedIdSet.has(m.id)}
               onCheckedChange={() => onToggleChecked(m.id)}
               disabled={selectionDisabled}
               aria-label={t('bulk.select_message', { name: m.sender_name })}

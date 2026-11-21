@@ -1,6 +1,6 @@
 import { Suspense, useEffect } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { MotionConfig, motion } from 'framer-motion'
+import { MotionConfig, m } from 'framer-motion'
 import { pageFade } from '../lib/motion'
 import { Loader2, Clock } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -80,9 +80,9 @@ function LayoutContent() {
               <Loader2 className="size-8 animate-spin text-primary" />
             </div>
           }>
-            <motion.div key={location.pathname} variants={pageFade} initial="hidden" animate="show" className="h-full">
+            <m.div key={location.pathname} variants={pageFade} initial="hidden" animate="show" className="h-full">
               <Outlet />
-            </motion.div>
+            </m.div>
           </Suspense>
         </main>
       </div>
@@ -130,9 +130,9 @@ function LayoutContent() {
                 <Loader2 className="size-8 animate-spin text-primary" />
               </div>
             }>
-              <motion.div key={location.pathname} variants={pageFade} initial="hidden" animate="show" className="flex-1 flex flex-col min-h-0">
+              <m.div key={location.pathname} variants={pageFade} initial="hidden" animate="show" className="flex-1 flex flex-col min-h-0">
                 <Outlet />
-              </motion.div>
+              </m.div>
             </Suspense>
           </div>
         </main>

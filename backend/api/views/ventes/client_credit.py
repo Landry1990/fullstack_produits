@@ -384,7 +384,7 @@ class AvoirClientViewSet(viewsets.ModelViewSet):
             ws.cell(row=row_idx, column=2, value=avoir.date.strftime('%d/%m/%Y')).border = border
             ws.cell(row=row_idx, column=3, value=str(avoir.client) if avoir.client else avoir.facture_origine.client_name if avoir.facture_origine else '—').border = border
             ws.cell(row=row_idx, column=4, value=avoir.facture_origine.numero_facture if avoir.facture_origine else '—').border = border
-            ws.cell(row=row_idx, column=5, value=float(avoir.montant_total)).border = border
+            ws.cell(row=row_idx, column=5, value=-float(avoir.montant_total)).border = border
             ws.cell(row=row_idx, column=6, value=avoir.statut).border = border
             ws.cell(row=row_idx, column=7, value=avoir.type_motif).border = border
             ws.cell(row=row_idx, column=8, value=avoir.lignes.count()).border = border

@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { staggerContainer, fadeInUp } from '../lib/motion';
 import api from '../services/api';
 import { gooeyToast } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
 import { useConfirm } from '../hooks/useConfirm';
+import { useAuth } from '../context/AuthContext';
 import { useSudo } from '../hooks/useSudo';
 import SudoValidationModal from './common/SudoValidationModal';
 import { Button } from './shadcn/button';
@@ -93,7 +94,10 @@ function formatDateTime(dateStr: string | null, locale: string = 'fr-FR') {
 export default function Corbeille() {
   const { t, i18n } = useTranslation('corbeille');
   const confirm = useConfirm();
+  const { user } = useAuth();
   const { sudoState, requireSudo, closeSudo } = useSudo();
+  // Purge définitive : sudo superadministrateur exigé côté backend.
+  const canPurge = !!user?.is_superuser;
   const [data, setData] = useState<CorbeilleData | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -274,14 +278,14 @@ export default function Corbeille() {
 
 
   return (
-    <motion.div
+    <m.div
       variants={staggerContainer}
       initial="hidden"
       animate="show"
       className="h-full bg-base-200 flex flex-col max-w-[1600px] mx-auto w-full"
     >
       {/* Header */}
-      <motion.div variants={fadeInUp} className="bg-base-100 border-b border-base-200 px-6 py-4 shrink-0">
+      <m.div variants={fadeInUp} className="bg-base-100 border-b border-base-200 px-6 py-4 shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-error/10 flex items-center justify-center">
@@ -296,7 +300,7 @@ export default function Corbeille() {
             <Button variant="ghost" size="sm" className="p-2 h-9 w-9" onClick={fetchData} disabled={loading} title={t('actions.refresh')} aria-label={t('actions.refresh')} aria-busy={loading}>
               {loading ? <span className="inline-block size-4 border-2 border-base-300 border-t-primary rounded-full animate-spin" aria-hidden="true" /> : <RotateCcw className="size-4" aria-hidden="true" />}
             </Button>
-            {(data?.total ?? 0) > 0 && (
+            {(data?.total ?? 0) > 0 && canPurge && (
               <Button variant="destructive" size="sm" onClick={handleEmptyTrash} disabled={actionLoading} aria-label={t('actions.empty_all')}>
                 <Trash2 className="size-3.5 mr-1.5" aria-hidden="true" />
                 <span className="hidden sm:inline">{t('actions.empty_all')}</span>
@@ -304,10 +308,10 @@ export default function Corbeille() {
             )}
           </div>
         </div>
-      </motion.div>
+      </m.div>
 
       {/* Toolbar */}
-      <motion.div variants={fadeInUp} className="bg-base-100 border-b border-base-200 px-6 py-3 flex flex-wrap items-center gap-3 shrink-0">
+      <m.div variants={fadeInUp} className="bg-base-100 border-b border-base-200 px-6 py-3 flex flex-wrap items-center gap-3 shrink-0">
         {/* Search */}
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground z-10" aria-hidden="true" />
@@ -349,10 +353,10 @@ export default function Corbeille() {
             </span>
           </div>
         )}
-      </motion.div>
+      </m.div>
 
       {/* Content */}
-      <motion.div variants={fadeInUp} className="flex-1 min-h-0 overflow-y-auto px-6 py-4">
+      <m.div variants={fadeInUp} className="flex-1 min-h-0 overflow-y-auto px-6 py-4">
         {loading && (
           <div className="flex items-center justify-center py-20" role="status" aria-busy="true" aria-label={t('common:loading', 'Chargement')}>
             <span className="inline-block size-8 border-2 border-base-300 border-t-primary rounded-full animate-spin" aria-hidden="true" />
@@ -442,17 +446,19 @@ export default function Corbeille() {
                         >
                           <ArrowUpFromLine className="size-4" aria-hidden="true" />
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-8 w-8 p-0 text-red-600 hover:bg-red-50"
-                          onClick={e => { e.stopPropagation(); handlePurge([{ model: item.type, id: item.id }]); }}
-                          disabled={actionLoading}
-                          title={t('actions.delete_permanently')}
-                          aria-label={t('actions.delete_permanently')}
-                        >
-                          <Trash2 className="size-4" aria-hidden="true" />
-                        </Button>
+                        {canPurge && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0 text-red-600 hover:bg-red-50"
+                            onClick={e => { e.stopPropagation(); handlePurge([{ model: item.type, id: item.id }]); }}
+                            disabled={actionLoading}
+                            title={t('actions.delete_permanently')}
+                            aria-label={t('actions.delete_permanently')}
+                          >
+                            <Trash2 className="size-4" aria-hidden="true" />
+                          </Button>
+                        )}
                         <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={e => { e.stopPropagation(); setExpandedId(isExp ? null : key); }} aria-expanded={isExp} aria-label={t('common:details')}>
                           {isExp ? <ChevronUp className="size-4" aria-hidden="true" /> : <ChevronDown className="size-4" aria-hidden="true" />}
                         </Button>
@@ -480,11 +486,11 @@ export default function Corbeille() {
             </div>
           </div>
         ))}
-      </motion.div>
+      </m.div>
 
       {/* Bulk actions bar */}
       {selectedIds.size > 0 && (
-        <motion.div variants={fadeInUp} initial="hidden" animate="show" className="shrink-0 bg-slate-50 border-t border-slate-200 px-6 py-3 flex items-center justify-between">
+        <m.div variants={fadeInUp} initial="hidden" animate="show" className="shrink-0 bg-slate-50 border-t border-slate-200 px-6 py-3 flex items-center justify-between">
           <span className="text-sm font-medium text-slate-700">
             {t('actions.selected', { count: selectedIds.size })}
           </span>
@@ -498,17 +504,19 @@ export default function Corbeille() {
               <ArrowUpFromLine className="size-3.5 mr-1.5" />
               {t('actions.restore')}
             </Button>
-            <Button
-              size="sm"
-              variant="destructive"
-              onClick={() => handlePurge(selectedItems)}
-              disabled={actionLoading}
-            >
-              <Trash2 className="size-3.5 mr-1.5" />
-              {t('actions.delete_permanently')}
-            </Button>
+            {canPurge && (
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => handlePurge(selectedItems)}
+                disabled={actionLoading}
+              >
+                <Trash2 className="size-3.5 mr-1.5" />
+                {t('actions.delete_permanently')}
+              </Button>
+            )}
           </div>
-        </motion.div>
+        </m.div>
       )}
 
       <SudoValidationModal
@@ -521,6 +529,6 @@ export default function Corbeille() {
         forceCurrentUser={sudoState.forceCurrentUser}
         saving={sudoState.isValidating}
       />
-    </motion.div>
+    </m.div>
   );
 }

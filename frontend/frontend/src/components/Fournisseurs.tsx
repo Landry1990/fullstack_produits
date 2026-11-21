@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { fadeInUp, tabContent } from '../lib/motion';
 import { Building2, LayoutDashboard, List, BarChart3 } from 'lucide-react';
@@ -38,7 +38,7 @@ export default function Fournisseurs() {
       <ErrorState error={state.error} className="mx-4 mt-4 shrink-0" />
 
       {/* Header with Tabs */}
-      <motion.div variants={fadeInUp} initial="hidden" animate="show" className="px-4 py-2.5 shrink-0 flex flex-col sm:flex-row items-center justify-between gap-2 border-b border-slate-200 bg-white">
+      <m.div variants={fadeInUp} initial="hidden" animate="show" className="px-4 py-2.5 shrink-0 flex flex-col sm:flex-row items-center justify-between gap-2 border-b border-slate-200 bg-white">
         <div className="flex items-center gap-3">
            <div className="p-2.5 bg-emerald-100 rounded-lg">
               <Building2 className="size-5 text-emerald-600" />
@@ -83,11 +83,11 @@ export default function Fournisseurs() {
           </Button>
           </div>
         </div>
-      </motion.div>
+      </m.div>
 
       <div className="flex-1 min-h-0 overflow-y-auto">
         <AnimatePresence mode="wait" initial={false}>
-        <motion.div
+        <m.div
           key={activeTab}
           variants={tabContent}
           initial="hidden"
@@ -106,7 +106,7 @@ export default function Fournisseurs() {
              <FournisseurDetails hook={hook} />
           </div>
         )}
-        </motion.div>
+        </m.div>
         </AnimatePresence>
       </div>
 

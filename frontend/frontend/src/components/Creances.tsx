@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { staggerContainer, fadeInUp } from '../lib/motion';
 
 import { useCreancesData } from '../hooks/useCreancesData';
 import { useCreanceActions } from '../hooks/useCreanceActions';
+import { usePermissions } from '../hooks/usePermissions';
 import { CreancesQuickStats } from './creances/CreancesQuickStats';
 import { CreancesFilters } from './creances/CreancesFilters';
 import { CreancesTable } from './creances/CreancesTable';
@@ -24,6 +25,8 @@ import { normalizeNumberInput, formatCurrency } from '../utils/formatters';
 
 export default function Creances() {
     const { t } = useTranslation(['creances', 'common']);
+    const { hasPerm } = usePermissions();
+    const canCashOut = hasPerm('can_cash_out');
     const data = useCreancesData();
     const [relanceClientId, setRelanceClientId] = useState<number | null>(null);
     const [releveModalOpen, setReleveModalOpen] = useState(false);
@@ -45,7 +48,7 @@ export default function Creances() {
     }, [data.selectedIds, data.creances]);
 
     return (
-        <motion.div
+        <m.div
             variants={staggerContainer}
             initial="hidden"
             animate="show"
@@ -54,7 +57,7 @@ export default function Creances() {
 
             <Tabs defaultValue="facturation" className="flex-1 min-h-0 flex flex-col gap-3">
             {/* Header Area */}
-            <motion.div variants={fadeInUp} className="flex flex-col gap-3 shrink-0">
+            <m.div variants={fadeInUp} className="flex flex-col gap-3 shrink-0">
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col">
                     <div className="px-4 py-3 border-b border-slate-100 flex flex-wrap justify-between items-center gap-3 bg-white/50">
                         <div className="flex items-center gap-3">
@@ -81,7 +84,7 @@ export default function Creances() {
                         </TabsList>
 
                         {/* Selection Bar inside Header if active */}
-                        {data.filters.selectedClient && data.selectedIds.length > 0 && (
+                        {data.filters.selectedClient && data.selectedIds.length > 0 && canCashOut && (
                             <div className="flex items-center gap-3 animate-in fade-in zoom-in duration-300">
                                 <div className="flex flex-col items-end">
                                     <span className="text-caption font-bold uppercase tracking-widest text-slate-400">{t('creances:selection')}</span>
@@ -103,11 +106,11 @@ export default function Creances() {
                         )}
                     </div>
                 </div>
-            </motion.div>
+            </m.div>
 
             {/* Onglet Facturation : filtres + stats + créances en cours */}
             <TabsContent value="facturation" className="flex-1 min-h-0 flex flex-col gap-3 mt-0">
-            <motion.div variants={fadeInUp} className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col shrink-0">
+            <m.div variants={fadeInUp} className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col shrink-0">
                     <CreancesFilters
                         clients={data.selectableClients}
                         selectedClient={data.filters.selectedClient}
@@ -131,7 +134,7 @@ export default function Creances() {
                         onRelevesExcel={() => setRelevesExcelOpen(true)}
                         loading={data.loading}
                     />
-            </motion.div>
+            </m.div>
 
             {/* Stats Dashboard */}
             <CreancesQuickStats
@@ -143,7 +146,7 @@ export default function Creances() {
             />
 
             {/* Main Content Table Card */}
-            <motion.div variants={fadeInUp} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex-1 relative min-h-0">
+            <m.div variants={fadeInUp} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex-1 relative min-h-0">
                 <CreancesTable
                     mode={data.filters.selectedClient ? 'invoices' : 'clients'}
                     groupedClients={data.visibleClients}
@@ -167,6 +170,7 @@ export default function Creances() {
                     onRelance={setRelanceClientId}
                     onViewDetails={actions.actions.handleOpenDetailsModal}
                     onPay={actions.actions.handleOpenPaiementModal}
+                    canPay={canCashOut}
                     sortConfig={{
                         key: data.filters.sortConfig.key,
                         direction: data.filters.sortConfig.direction
@@ -174,7 +178,7 @@ export default function Creances() {
                     onSort={data.setFilters.handleSort}
                     clientDelai={data.selectedClientDelai}
                 />
-            </motion.div>
+            </m.div>
             </TabsContent>
 
             {/* Onglet Règlements : relevés transmis pour règlement */}
@@ -246,6 +250,6 @@ export default function Creances() {
                 message={actions.modals.sudoState.message}
             />
 
-        </motion.div>
+        </m.div>
     );
 }

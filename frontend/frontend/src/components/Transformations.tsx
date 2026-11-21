@@ -18,7 +18,7 @@ import {
 import { normalizeNumberInput, formatNumber } from '../utils/formatters';
 import { formatDate, formatDateTime } from '../utils/dateUtils';
 import { logger } from '../utils/logger'
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { staggerContainer, fadeInUp, tabContent } from '../lib/motion';
 
 // Interfaces
@@ -472,14 +472,14 @@ const Transformations: React.FC = () => {
   };
 
   return (
-    <motion.div
+    <m.div
       variants={staggerContainer}
       initial="hidden"
       animate="show"
       className="h-full flex flex-col bg-slate-100 overflow-hidden font-sans"
     >
       {/* Header Section */}
-      <motion.div variants={fadeInUp} className="bg-white border-b border-slate-200 sticky top-0 z-30 flex flex-col shrink-0">
+      <m.div variants={fadeInUp} className="bg-white border-b border-slate-200 sticky top-0 z-30 flex flex-col shrink-0">
         <div className="px-6 py-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-emerald-50 rounded-xl text-emerald-600 shadow-inner">
@@ -532,10 +532,10 @@ const Transformations: React.FC = () => {
             />
           </div>
         </div>
-      </motion.div>
+      </m.div>
 
       {/* Main Content Section */}
-      <motion.div variants={fadeInUp} className="flex-1 overflow-auto p-6">
+      <m.div variants={fadeInUp} className="flex-1 overflow-auto p-6">
         <AnimatePresence mode="wait" initial={false}>
         {loading ? (
           <div key="loading" className="space-y-3">
@@ -545,7 +545,7 @@ const Transformations: React.FC = () => {
             <Skeleton className="h-20 w-full rounded-2xl" />
           </div>
         ) : (
-          <motion.div
+          <m.div
             key={activeTab}
             variants={tabContent}
             initial="hidden"
@@ -696,10 +696,10 @@ const Transformations: React.FC = () => {
                 </div>
               </div>
             )}
-          </motion.div>
+          </m.div>
         )}
         </AnimatePresence>
-      </motion.div>
+      </m.div>
 
       {/* ===== Modal Création Relation ===== */}
       <PremiumModal
@@ -1018,7 +1018,7 @@ const Transformations: React.FC = () => {
         )}
       </PremiumModal>
 
-    </motion.div>
+    </m.div>
   );
 };
 

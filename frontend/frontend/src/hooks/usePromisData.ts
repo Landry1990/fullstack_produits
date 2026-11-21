@@ -213,13 +213,16 @@ export function usePromisData(): UsePromisDataReturn {
         try {
             const blob = await promisService.imprimerTicket(id);
             const url = window.URL.createObjectURL(blob);
-            if (!window.open(url, '_blank')) {
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `ticket_promis_${id}.pdf`;
-                link.click();
+            try {
+                if (!window.open(url, '_blank')) {
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `ticket_promis_${id}.pdf`;
+                    link.click();
+                }
+            } finally {
+                setTimeout(() => window.URL.revokeObjectURL(url), 10000);
             }
-            setTimeout(() => window.URL.revokeObjectURL(url), 10000);
         } catch (err) {
             logger.error('Erreur impression ticket:', err);
             gooeyToast.error(t('stock:promis.messages.print_ticket_error', 'Erreur lors de l\'impression'));

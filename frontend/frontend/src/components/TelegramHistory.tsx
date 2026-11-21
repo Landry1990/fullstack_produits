@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { staggerContainer, fadeInUp } from '../lib/motion';
 import api from '../services/api';
 import { useTranslation } from 'react-i18next';
@@ -111,9 +111,9 @@ const TelegramHistory: React.FC = () => {
     const totalPages = Math.max(1, Math.ceil(count / PAGE_SIZE));
 
     return (
-        <motion.div variants={staggerContainer} initial="hidden" animate="show">
+        <m.div variants={staggerContainer} initial="hidden" animate="show">
         <PageContainer variant="dense" className="lg:px-10">
-            <motion.div variants={fadeInUp} className="flex flex-wrap items-start justify-between gap-3 mb-5">
+            <m.div variants={fadeInUp} className="flex flex-wrap items-start justify-between gap-3 mb-5">
                 <div className="flex items-center gap-3">
                     <div className="p-2.5 bg-sky-600 text-white rounded-xl"><Send className="size-5" /></div>
                     <div>
@@ -130,17 +130,17 @@ const TelegramHistory: React.FC = () => {
                         {t('common:refresh')}
                     </Button>
                 </div>
-            </motion.div>
+            </m.div>
 
             {error && (
-                <motion.div variants={fadeInUp} className="flex items-center gap-2 p-3 rounded-xl bg-red-50 border border-red-200 mb-4 text-sm text-red-700">
+                <m.div variants={fadeInUp} className="flex items-center gap-2 p-3 rounded-xl bg-red-50 border border-red-200 mb-4 text-sm text-red-700">
                     <AlertTriangle className="size-4" />
                     {t('view.load_error')}
                     <Button variant="outline" size="sm" onClick={fetchLogs} className="ml-auto">{t('view.retry')}</Button>
-                </motion.div>
+                </m.div>
             )}
 
-            <motion.div variants={fadeInUp} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+            <m.div variants={fadeInUp} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
                 <div className="relative sm:col-span-2">
                     <Search className="absolute left-2.5 top-2.5 size-3.5 text-slate-400 pointer-events-none" />
                     <Input
@@ -166,14 +166,14 @@ const TelegramHistory: React.FC = () => {
                         {STATUSES.map(status => <option key={status} value={status}>{t(`statuses.${status}`)}</option>)}
                     </Select>
                 </label>
-            </motion.div>
+            </m.div>
 
-            <motion.div variants={fadeInUp} className="flex gap-2 items-center mb-2 text-xs font-black text-slate-500 uppercase">
+            <m.div variants={fadeInUp} className="flex gap-2 items-center mb-2 text-xs font-black text-slate-500 uppercase">
                 <Send className="size-3.5" />
                 <span className="text-sky-600 bg-sky-50 px-2 py-0.5 rounded-full">{count} {t('view.items')}</span>
-            </motion.div>
+            </m.div>
 
-            <motion.div variants={fadeInUp} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <m.div variants={fadeInUp} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                 <Table>
                     <TableHeader>
                         <TableRow>
@@ -249,16 +249,16 @@ const TelegramHistory: React.FC = () => {
                         })}
                     </TableBody>
                 </Table>
-            </motion.div>
+            </m.div>
 
             {!loading && totalPages > 1 && (
-                <motion.div variants={fadeInUp} className="flex justify-center items-center gap-3 mt-6">
+                <m.div variants={fadeInUp} className="flex justify-center items-center gap-3 mt-6">
                     <span className="text-xs text-slate-500">{t('view.page', { page, total: totalPages })}</span>
                     <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} />
-                </motion.div>
+                </m.div>
             )}
         </PageContainer>
-        </motion.div>
+        </m.div>
     );
 };
 

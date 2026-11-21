@@ -21,7 +21,7 @@ import { usePharmacySettings } from '../../hooks/usePharmacySettings';
 import { getCaissePaymentModes, getPaymentModeLabel } from '../../config/paymentModes';
 import type { ClientCredit, ClientCreditFilters } from '../../types';
 import { getProduitId, getProduitName } from '../../types/inventory';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { fadeInUp, tabContent } from '../../lib/motion';
 
 const PAGE_SIZE = 25;
@@ -95,9 +95,9 @@ export const ClientCreditsPage: React.FC = () => {
     };
 
     return (
-        <motion.div variants={fadeInUp} initial="hidden" animate="show" className="p-6 w-full h-full">
+        <m.div variants={fadeInUp} initial="hidden" animate="show" className="p-6 w-full h-full">
             <AnimatePresence mode="wait" initial={false}>
-            <motion.div
+            <m.div
                 key={showForm ? 'form' : 'list'}
                 variants={tabContent}
                 initial="hidden"
@@ -132,7 +132,7 @@ export const ClientCreditsPage: React.FC = () => {
                     onValidate={handleValidate}
                 />
             )}
-            </motion.div>
+            </m.div>
             </AnimatePresence>
 
             <Dialog open={!!selectedCredit} onOpenChange={(open) => !open && setSelectedCredit(null)}>
@@ -168,7 +168,7 @@ export const ClientCreditsPage: React.FC = () => {
                                 </div>
                                 <div>
                                     <span className="text-slate-500 block">{t('detail.amount')}</span>
-                                    <span className="font-medium">{Number(selectedCredit.montant_total).toLocaleString(locale)} FCFA</span>
+                                    <span className="font-medium text-red-600">-{Number(selectedCredit.montant_total).toLocaleString(locale)} FCFA</span>
                                 </div>
                             </div>
 
@@ -196,7 +196,7 @@ export const ClientCreditsPage: React.FC = () => {
                                                 <td className="px-3 py-2">{line.produit_nom || getProduitName(line.produit) || `Produit ${getProduitId(line.produit)}`}</td>
                                                 <td className="px-3 py-2 text-center">{line.quantity}</td>
                                                 <td className="px-3 py-2 text-right">{Number(line.prix_unitaire).toLocaleString(locale)} FCFA</td>
-                                                <td className="px-3 py-2 text-right">{(Number(line.prix_unitaire) * line.quantity).toLocaleString(locale)} FCFA</td>
+                                                <td className="px-3 py-2 text-right text-red-600">-{(Number(line.prix_unitaire) * line.quantity).toLocaleString(locale)} FCFA</td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -248,7 +248,7 @@ export const ClientCreditsPage: React.FC = () => {
                     </DialogContent>
                 )}
             </Dialog>
-        </motion.div>
+        </m.div>
     );
 };
 

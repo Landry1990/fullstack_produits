@@ -1,17 +1,20 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { staggerContainer, fadeInUp, tabContent } from '../lib/motion';
 import { useTranslation } from 'react-i18next';
 import {
     PackageSearch, ShoppingBag, X,
     TrendingUp, AlertTriangle, Package, Clock, FileSpreadsheet,
-    ChevronDown, ChevronUp
+    ChevronDown, ChevronUp, Loader2
 } from 'lucide-react';
+import { gooeyToast } from 'goey-toast';
 import { formatCurrency } from '../utils/formatters';
 import { formatDate } from '../utils/dateUtils';
 import { exportToExcel } from '../utils/excelExport';
+import { logger } from '../utils/logger';
 import { usePharmacySettings } from '../hooks/usePharmacySettings';
 import { useStockAnalysis } from '../hooks/useStockAnalysis';
+import type { StockAnalysisItem } from '../hooks/useStockAnalysis';
 import { StockAnalysisFilters } from './stock/StockAnalysisFilters';
 import { StockAnalysisTable } from './stock/StockAnalysisTable';
 import StockHealthDashboard from './stock/StockHealthDashboard';
@@ -32,6 +35,47 @@ const tabs = [
 ];
 
 const FILTERS_COLLAPSED_KEY = 'stock-analysis-filters-collapsed';
+
+type AnalysisTab = 'pilotage' | 'unsold' | 'overstock' | 'shortage';
+
+const buildExportRecords = (
+    items: StockAnalysisItem[],
+    activeTab: AnalysisTab,
+    t: (key: string, fallback?: string) => string
+): Record<string, string | number>[] => {
+    if (activeTab === 'unsold') {
+        return items.map(item => ({
+            [t('stock:analyse.columns.product', 'Produit')]: item.name,
+            CIP: item.cip || '-',
+            [t('stock:analyse.columns.current_stock', 'Stock actuel')]: item.stock,
+            [t('stock:analyse.columns.last_purchase', 'Dernier achat')]: formatDate(item.dernier_achat),
+            [t('stock:analyse.columns.last_sale', 'Dernière vente')]: formatDate(item.derniere_vente),
+            [t('stock:analyse.columns.inactive_since', 'Inactif depuis')]: item.days_since_sale != null ? `${item.days_since_sale} ${t('stock:analyse.day_short', 'j')}` : '-',
+            [t('stock:analyse.columns.cost_price', "Prix d'achat")]: item.cost_price,
+            [t('stock:analyse.columns.stock_value', 'Valeur stock')]: item.value,
+        }));
+    }
+    if (activeTab === 'overstock') {
+        return items.map(item => ({
+            [t('stock:analyse.columns.product', 'Produit')]: item.name,
+            CIP: item.cip || '-',
+            [t('stock:analyse.columns.current_stock', 'Stock actuel')]: item.stock,
+            [t('stock:analyse.columns.avg_rotation', 'Rotation moyenne')]: item.rotation ?? '-',
+            [t('stock:analyse.columns.threshold', 'Seuil')]: item.threshold ?? '-',
+            [t('stock:analyse.columns.excess_qty', 'Excès quantité')]: item.excess_qty ?? '-',
+            [t('stock:analyse.columns.excess_value', 'Valeur excès')]: item.value,
+        }));
+    }
+    return items.map(item => ({
+        [t('stock:analyse.columns.product', 'Produit')]: item.name,
+        CIP: item.cip || '-',
+        [t('stock:analyse.columns.current_stock', 'Stock actuel')]: item.stock,
+        [t('stock:analyse.columns.avg_rotation', 'Rotation moyenne')]: item.rotation_moyenne ?? '-',
+        [t('stock:analyse.columns.days_until_stockout', 'Jours avant rupture')]: item.days_until_stockout ?? '-',
+        [t('stock:analyse.columns.urgency', 'Urgence')]: item.urgency ?? '-',
+        [t('stock:analyse.columns.value_at_risk', 'Valeur à risque')]: item.value,
+    }));
+};
 
 const StockAnalysis = () => {
     const { t } = useTranslation(['stock', 'common']);
@@ -66,64 +110,40 @@ const StockAnalysis = () => {
     const currentTab = tabs.find(t => t.id === activeTab) || tabs[0];
     const TabIcon = currentTab.icon;
     const { settings } = usePharmacySettings();
+    const [exporting, setExporting] = useState(false);
 
-    const handleExportExcel = () => {
-        if (!data || activeTab === 'pilotage') return;
-        const tabLabel = t(`stock:analyse.tabs.${activeTab}`);
-        let records: Record<string, string | number>[] = [];
-
-        if (activeTab === 'unsold') {
-            records = data.items.map(item => ({
-                [t('stock:analyse.columns.product', 'Produit')]: item.name,
-                CIP: item.cip || '-',
-                [t('stock:analyse.columns.current_stock', 'Stock actuel')]: item.stock,
-                [t('stock:analyse.columns.last_purchase', 'Dernier achat')]: formatDate(item.dernier_achat),
-                [t('stock:analyse.columns.last_sale', 'Dernière vente')]: formatDate(item.derniere_vente),
-                [t('stock:analyse.columns.inactive_since', 'Inactif depuis')]: item.days_since_sale != null ? `${item.days_since_sale} ${t('stock:analyse.day_short', 'j')}` : '-',
-                [t('stock:analyse.columns.cost_price', "Prix d'achat")]: item.cost_price,
-                [t('stock:analyse.columns.stock_value', 'Valeur stock')]: item.value,
-            }));
-        } else if (activeTab === 'overstock') {
-            records = data.items.map(item => ({
-                [t('stock:analyse.columns.product', 'Produit')]: item.name,
-                CIP: item.cip || '-',
-                [t('stock:analyse.columns.current_stock', 'Stock actuel')]: item.stock,
-                [t('stock:analyse.columns.avg_rotation', 'Rotation moyenne')]: item.rotation ?? '-',
-                [t('stock:analyse.columns.threshold', 'Seuil')]: item.threshold ?? '-',
-                [t('stock:analyse.columns.excess_qty', 'Excès quantité')]: item.excess_qty ?? '-',
-                [t('stock:analyse.columns.excess_value', 'Valeur excès')]: item.value,
-            }));
-        } else {
-            records = data.items.map(item => ({
-                [t('stock:analyse.columns.product', 'Produit')]: item.name,
-                CIP: item.cip || '-',
-                [t('stock:analyse.columns.current_stock', 'Stock actuel')]: item.stock,
-                [t('stock:analyse.columns.avg_rotation', 'Rotation moyenne')]: item.rotation_moyenne ?? '-',
-                [t('stock:analyse.columns.days_until_stockout', 'Jours avant rupture')]: item.days_until_stockout ?? '-',
-                [t('stock:analyse.columns.urgency', 'Urgence')]: item.urgency ?? '-',
-                [t('stock:analyse.columns.value_at_risk', 'Valeur à risque')]: item.value,
-            }));
+    const handleExportExcel = async () => {
+        if (!data || activeTab === 'pilotage' || exporting) return;
+        setExporting(true);
+        try {
+            const items = await actions.fetchAllItems();
+            const records = buildExportRecords(items, activeTab, t);
+            const tabLabel = t(`stock:analyse.tabs.${activeTab}`);
+            const dateStr = new Date().toISOString().slice(0, 10);
+            exportToExcel(records, settings, {
+                filename: `analyse_stock_${activeTab}_${dateStr}.xlsx`,
+                title: `${t('stock:analyse.title', 'Analyse de stock')} - ${tabLabel}`,
+                sheetName: activeTab,
+            });
+        } catch (err) {
+            logger.error('Export analyse stock:', err);
+            gooeyToast.error(t('common:export_error', "Erreur lors de l'export"));
+        } finally {
+            setExporting(false);
         }
-
-        const dateStr = new Date().toISOString().slice(0, 10);
-        exportToExcel(records, settings, {
-            filename: `analyse_stock_${activeTab}_${dateStr}.xlsx`,
-            title: `${t('stock:analyse.title', 'Analyse de stock')} - ${tabLabel}`,
-            sheetName: activeTab,
-        });
     };
 
     return (
         <div className="h-full min-h-0 overflow-hidden bg-slate-50 p-2 sm:p-3 lg:p-4">
 
-            <motion.div
+            <m.div
                 variants={staggerContainer}
                 initial="hidden"
                 animate="show"
                 className="h-full max-w-[1600px] mx-auto space-y-3 overflow-hidden flex flex-col"
             >
                 {/* Header */}
-                <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <m.div variants={fadeInUp} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
                         <div className="size-10 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-600/20">
                             <PackageSearch className="size-5" />
@@ -147,19 +167,21 @@ const StockAnalysis = () => {
                                 variant="outline"
                                 size="sm"
                                 onClick={handleExportExcel}
-                                disabled={!data.items.length}
+                                disabled={!data.items.length || exporting}
                                 title={t('stock:analyse.export_excel', 'Exporter Excel')}
                                 aria-label={t('stock:analyse.export_excel', 'Exporter Excel')}
                             >
-                                <FileSpreadsheet className="size-4 mr-1.5 text-emerald-600" />
+                                {exporting
+                                    ? <Loader2 className="size-4 mr-1.5 animate-spin text-emerald-600" />
+                                    : <FileSpreadsheet className="size-4 mr-1.5 text-emerald-600" />}
                                 <span className="hidden sm:inline">{t('stock:analyse.export_excel_short', 'Excel')}</span>
                             </Button>
                         </div>
                     )}
-                </motion.div>
+                </m.div>
 
                 {/* Navigation Tabs — shadcn */}
-                <motion.div variants={fadeInUp}>
+                <m.div variants={fadeInUp}>
                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
                     <TabsList className="bg-white border border-slate-200 p-1 h-9 w-full sm:w-auto">
                         {tabs.map((tab) => {
@@ -178,10 +200,10 @@ const StockAnalysis = () => {
                         })}
                     </TabsList>
                 </Tabs>
-                </motion.div>
+                </m.div>
 
                 <AnimatePresence mode="wait" initial={false}>
-                <motion.div
+                <m.div
                     key={activeTab}
                     variants={tabContent}
                     initial="hidden"
@@ -357,7 +379,7 @@ const StockAnalysis = () => {
                         </Card>
                     </div>
                 )}
-                </motion.div>
+                </m.div>
                 </AnimatePresence>
 
                 {/* Floating Action Bar */}
@@ -397,7 +419,7 @@ const StockAnalysis = () => {
                         </Card>
                     </div>
                 )}
-            </motion.div>
+            </m.div>
         </div>
     );
 };

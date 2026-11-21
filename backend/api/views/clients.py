@@ -18,6 +18,7 @@ from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -112,7 +113,9 @@ class ClientViewSet(SimpleListCacheMixin, OptimizedSerializerMixin, viewsets.Mod
 
     @action(detail=True, methods=['post'])
     def toggle_active(self, request, pk=None):
-        """Bascule le statut actif/inactif d'un client."""
+        """Bascule le statut actif/inactif d'un client (réservé superuser)."""
+        if not request.user.is_superuser:
+            raise PermissionDenied('Action réservée aux administrateurs.')
         client = self.get_object()
         client.is_active = not client.is_active
         client.save(update_fields=['is_active'])
@@ -160,6 +163,8 @@ class ClientViewSet(SimpleListCacheMixin, OptimizedSerializerMixin, viewsets.Mod
 
     @transaction.atomic
     def perform_destroy(self, instance):
+        if not self.request.user.is_superuser:
+            raise PermissionDenied('Action réservée aux administrateurs.')
         import logging
 
         from django.utils import timezone
@@ -400,7 +405,9 @@ class ClientViewSet(SimpleListCacheMixin, OptimizedSerializerMixin, viewsets.Mod
 
     @action(detail=False, methods=['post'])
     def bulk_delete(self, request):
-        """Supprime plusieurs clients par lot."""
+        """Supprime plusieurs clients par lot (réservé superuser)."""
+        if not request.user.is_superuser:
+            raise PermissionDenied('Action réservée aux administrateurs.')
         ids = request.data.get('ids', [])
         if not ids:
             return Response({'detail': 'Aucun ID fourni.'}, status=400)
@@ -580,6 +587,10 @@ class ClientViewSet(SimpleListCacheMixin, OptimizedSerializerMixin, viewsets.Mod
     @transaction.atomic
     def merge(self, request, pk=None):
         """Fusionne le client source (pk) dans le client cible (target_id)."""
+        # Fusion irréversible : réservée aux superusers (même règle que le
+        # bouton « Fusionner » de la fiche client).
+        if not request.user.is_superuser:
+            return Response({'detail': 'Action réservée aux administrateurs.'}, status=403)
         target_id = request.data.get('target_id')
         if not target_id:
             return Response({'detail': 'target_id requis.'}, status=400)

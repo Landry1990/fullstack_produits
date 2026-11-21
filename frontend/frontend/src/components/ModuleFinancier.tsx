@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { staggerContainer, staggerGrid, fadeInUp } from '../lib/motion';
 import { useTranslation } from 'react-i18next';
 import { useRecharts } from '../hooks/useRecharts';
@@ -134,14 +134,14 @@ export default function ModuleFinancier() {
   const { AreaChart, Area, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } = Recharts;
 
   return (
-    <motion.div
+    <m.div
       variants={staggerContainer}
       initial="hidden"
       animate="show"
       className="p-4 space-y-3"
     >
         {/* Header */}
-        <motion.div variants={fadeInUp} className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 px-4 py-2.5">
+        <m.div variants={fadeInUp} className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 px-4 py-2.5">
           <div>
             <h1 className="text-xl font-bold text-slate-800">
               {t('title', 'Module Financier')}
@@ -161,7 +161,7 @@ export default function ModuleFinancier() {
               <option value="annee">{t('periode.annee', 'Cette année')}</option>
             </Select>
           </div>
-        </motion.div>
+        </m.div>
       {/* KPIs Cards */}
       {loadingKPIs ? (
         <div data-testid="finance-loading" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
@@ -170,9 +170,9 @@ export default function ModuleFinancier() {
           ))}
         </div>
       ) : kpis && (
-        <motion.div variants={staggerGrid} initial="hidden" animate="show" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
+        <m.div variants={staggerGrid} initial="hidden" animate="show" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
           {/* Panier Moyen */}
-          <motion.div variants={fadeInUp} className="rounded-xl bg-emerald-50 border border-emerald-200 shadow-sm">
+          <m.div variants={fadeInUp} className="rounded-xl bg-emerald-50 border border-emerald-200 shadow-sm">
             <div className="px-3 py-2">
               <h3 className="text-xs font-medium text-emerald-700">
                 {t('kpis.avg_basket', 'Panier Moyen')}
@@ -182,10 +182,10 @@ export default function ModuleFinancier() {
                 {t('kpis.annual')}: {formatMoneyFull(kpis.panier_moyen.annee)}
               </p>
             </div>
-          </motion.div>
+          </m.div>
 
           {/* Taux de Marge */}
-          <motion.div variants={fadeInUp} className="rounded-xl bg-blue-50 border border-blue-200 shadow-sm">
+          <m.div variants={fadeInUp} className="rounded-xl bg-blue-50 border border-blue-200 shadow-sm">
             <div className="px-3 py-2">
               <h3 className="text-xs font-medium text-blue-700">
                 {t('kpis.margin_rate', 'Taux de Marge')}
@@ -195,10 +195,10 @@ export default function ModuleFinancier() {
                 {kpis.nb_ventes_mois} {t('charts.sales_count', 'ventes ce mois')}
               </p>
             </div>
-          </motion.div>
+          </m.div>
 
           {/* DSI */}
-          <motion.div variants={fadeInUp} className="rounded-xl bg-purple-50 border border-purple-200 shadow-sm">
+          <m.div variants={fadeInUp} className="rounded-xl bg-purple-50 border border-purple-200 shadow-sm">
             <div className="px-3 py-2">
               <h3 className="text-xs font-medium text-purple-700">
                 {t('kpis.dsi', 'Jours Stock (DSI)')}
@@ -208,10 +208,10 @@ export default function ModuleFinancier() {
                 {t('common:stock')}: {formatMoneyFull(kpis.stock_value)}
               </p>
             </div>
-          </motion.div>
+          </m.div>
 
           {/* Croissance */}
-          <motion.div variants={fadeInUp} className={`rounded-xl border shadow-sm ${kpis.croissance_mensuelle >= 0
+          <m.div variants={fadeInUp} className={`rounded-xl border shadow-sm ${kpis.croissance_mensuelle >= 0
             ? 'bg-emerald-50 border-emerald-200'
             : 'bg-red-50 border-red-200'}`}>
             <div className="px-3 py-2">
@@ -225,12 +225,12 @@ export default function ModuleFinancier() {
                 {t('kpis.ca_label')}: {formatMoneyFull(kpis.ca_mois)}
               </p>
             </div>
-          </motion.div>
-        </motion.div>
+          </m.div>
+        </m.div>
       )}
 
       {/* Margin Variance Report (NEW) */}
-      <motion.div variants={fadeInUp} className="bg-white rounded-xl shadow-xl border-t-4 border-indigo-500 overflow-hidden">
+      <m.div variants={fadeInUp} className="bg-white rounded-xl shadow-xl border-t-4 border-indigo-500 overflow-hidden">
         <div className="p-0">
           <div className="bg-indigo-50 p-4 flex items-center justify-between flex-wrap gap-3">
             <div>
@@ -349,10 +349,10 @@ export default function ModuleFinancier() {
             </div>
           )}
         </div>
-      </motion.div>
+      </m.div>
 
       {/* Main Charts */}
-      <motion.div variants={fadeInUp} className="bg-white rounded-xl shadow-lg">
+      <m.div variants={fadeInUp} className="bg-white rounded-xl shadow-lg">
         <div className="p-6">
           {/* Chart Tabs */}
           <div className="inline-flex bg-slate-100 p-1 rounded-lg mb-4 w-fit gap-1">
@@ -519,10 +519,10 @@ export default function ModuleFinancier() {
             </div>
           )}
         </div>
-      </motion.div>
+      </m.div>
 
       {/* Bottom Section: Repartition + Top Products */}
-      <motion.div variants={fadeInUp} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <m.div variants={fadeInUp} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Repartition CA */}
         <div className="bg-white rounded-xl shadow-lg">
           <div className="p-6">
@@ -619,10 +619,10 @@ export default function ModuleFinancier() {
             )}
           </div>
         </div>
-      </motion.div>
+      </m.div>
 
       {/* Category Analysis Section */}
-      <motion.div variants={fadeInUp} className="bg-white rounded-xl shadow-lg">
+      <m.div variants={fadeInUp} className="bg-white rounded-xl shadow-lg">
         <div className="p-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
             <h3 className="text-lg font-semibold">
@@ -730,12 +730,12 @@ export default function ModuleFinancier() {
             </div>
           )}
         </div>
-      </motion.div>
+      </m.div>
 
 
 
       {/* Margin Analysis Section */}
-      <motion.div variants={fadeInUp} className="bg-white rounded-xl shadow-lg">
+      <m.div variants={fadeInUp} className="bg-white rounded-xl shadow-lg">
         <div className="p-6">
           <h3 className="text-lg font-semibold mb-4">
             {t('margin_analysis', 'Analyse Avancée et Opportunités')}
@@ -907,12 +907,12 @@ export default function ModuleFinancier() {
             <EmptyState title={t('common:no_data', 'Aucune donnée disponible')} className="h-48" />
           )}
         </div>
-      </motion.div>
+      </m.div>
 
 
 
       {/* Supplier Analysis Section */}
-      <motion.div variants={fadeInUp} className="bg-white rounded-xl shadow-lg">
+      <m.div variants={fadeInUp} className="bg-white rounded-xl shadow-lg">
         <div className="p-6">
           <h3 className="text-lg font-semibold mb-4">
             {t('supplier_analysis', 'Analyse Fournisseurs')}
@@ -989,11 +989,11 @@ export default function ModuleFinancier() {
             <EmptyState title={t('supplier.no_data_12m', 'Aucune donnée fournisseur disponible sur 12 mois')} className="h-48" />
           )}
         </div>
-      </motion.div>
+      </m.div>
 
       {/* Summary Stats */}
       {caEvolution && (
-        <motion.div variants={fadeInUp} className="bg-white rounded-xl shadow-lg">
+        <m.div variants={fadeInUp} className="bg-white rounded-xl shadow-lg">
           <div className="p-6">
             <h3 className="text-lg font-semibold mb-4">
               {t('summary', 'Résumé Annuel')}
@@ -1020,9 +1020,9 @@ export default function ModuleFinancier() {
               )}
             </div>
           </div>
-        </motion.div>
+        </m.div>
       )}
-    </motion.div>
+    </m.div>
   );
 }
 

@@ -34,7 +34,7 @@ import {
   formatDateISO, getMonthName, getDaysInMonth, getWeekdayShort,
   getWeekDays, getWeekLabel, startOfWeek,
 } from '../lib/planningHelpers';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { staggerContainer, fadeInUp } from '../lib/motion';
 
 const shiftColors: Record<string, string> = {
@@ -1152,14 +1152,14 @@ export default function PlanningOperateurs() {
   const [activeTab, setActiveTab] = useState<'planning' | 'conges' | 'teams' | 'config'>('planning');
 
   return (
-    <motion.div
+    <m.div
       variants={staggerContainer}
       initial="hidden"
       animate="show"
       className="h-full flex flex-col bg-slate-50 dark:bg-slate-950 p-4 sm:p-6 gap-4 font-sans"
     >
       
-      <motion.div variants={fadeInUp} className="flex-1 min-h-0 flex flex-col">
+      <m.div variants={fadeInUp} className="flex-1 min-h-0 flex flex-col">
       <Card className="flex flex-col flex-1 min-h-0">
         {/* Header */}
         <div className="p-6 border-b border-slate-100 dark:border-slate-800">
@@ -1210,7 +1210,7 @@ export default function PlanningOperateurs() {
           </Tabs>
         </div>
       </Card>
-      </motion.div>
-    </motion.div>
+      </m.div>
+    </m.div>
   );
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { staggerContainer, staggerGrid, fadeInUp, tabContent } from '../lib/motion';
 import api from '../services/api';
 import { formatDate, getLocalDateString } from '../utils/dateUtils';
@@ -218,14 +218,14 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
   return (
     <>
       <div className="h-full flex flex-col p-3 sm:p-6 overflow-hidden">
-        <motion.div
+        <m.div
           variants={staggerContainer}
           initial="hidden"
           animate="show"
           className="w-full max-w-[1600px] mx-auto flex flex-col h-full min-h-0 overflow-hidden"
         >
           {/* Header */}
-          <motion.div variants={fadeInUp} className="flex flex-col gap-3 mb-4 sm:mb-5 shrink-0">
+          <m.div variants={fadeInUp} className="flex flex-col gap-3 mb-4 sm:mb-5 shrink-0">
             <div>
               <h1 className="text-lg sm:text-xl font-bold text-slate-800 flex flex-col sm:flex-row sm:items-center gap-2">
                 <span className="inline-flex items-center gap-2">
@@ -259,10 +259,10 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                 </button>
               </div>
             </div>
-          </motion.div>
+          </m.div>
 
           {/* Filters Bar */}
-          <motion.div variants={fadeInUp} className="mb-4 shrink-0 no-print">
+          <m.div variants={fadeInUp} className="mb-4 shrink-0 no-print">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
                 <div className="relative w-full">
@@ -334,7 +334,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                 </div>
               </div>
             </div>
-          </motion.div>
+          </m.div>
 
           {/* Search bar inside filters bar logic or below */}
           {activeTab === 'details' && (
@@ -351,8 +351,8 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
           )}
 
           {/* Summary Cards */}
-          <motion.div variants={staggerGrid} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 shrink-0">
-            <motion.div variants={fadeInUp} className="bg-gradient-to-br from-blue-50 to-blue-100/60 border border-blue-200 rounded-2xl px-5 py-3 flex items-center shadow-sm">
+          <m.div variants={staggerGrid} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 shrink-0">
+            <m.div variants={fadeInUp} className="bg-gradient-to-br from-blue-50 to-blue-100/60 border border-blue-200 rounded-2xl px-5 py-3 flex items-center shadow-sm">
               <div className="flex items-center gap-3">
                 <div className="size-10 rounded-xl bg-blue-100 flex items-center justify-center">
                   <Package className="size-5 text-blue-600" />
@@ -364,8 +364,8 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                   <p className="text-xl font-black text-slate-800 leading-none">{totalDisplayCount}</p>
                 </div>
               </div>
-            </motion.div>
-            <motion.div variants={fadeInUp} className="bg-gradient-to-br from-emerald-50 to-emerald-100/60 border border-emerald-200 rounded-2xl px-5 py-3 flex items-center shadow-sm">
+            </m.div>
+            <m.div variants={fadeInUp} className="bg-gradient-to-br from-emerald-50 to-emerald-100/60 border border-emerald-200 rounded-2xl px-5 py-3 flex items-center shadow-sm">
               <div className="flex items-center gap-3">
                 <div className="size-10 rounded-xl bg-emerald-100 flex items-center justify-center">
                   <TrendingUp className="size-5 text-emerald-600" />
@@ -377,12 +377,12 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                   </p>
                 </div>
               </div>
-            </motion.div>
-          </motion.div>
+            </m.div>
+          </m.div>
 
           {/* Table Container */}
           <AnimatePresence mode="wait">
-          <motion.div key={activeTab} variants={tabContent} initial="hidden" animate="show" exit="exit" className="flex-1 min-h-0 flex flex-col">
+          <m.div key={activeTab} variants={tabContent} initial="hidden" animate="show" exit="exit" className="flex-1 min-h-0 flex flex-col">
             <div className={`overflow-auto flex-1 rounded-xl border border-slate-200 bg-white shadow-sm transition-opacity duration-300 ${loading ? 'opacity-60 pointer-events-none' : 'opacity-100'}`}>
               <table className="w-full table-fixed border-separate border-spacing-0 text-sm">
                 <thead>
@@ -522,9 +522,9 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                 />
               </div>
             )}
-          </motion.div>
+          </m.div>
           </AnimatePresence>
-        </motion.div>
+        </m.div>
       </div>
       <style>{`
         @media print {

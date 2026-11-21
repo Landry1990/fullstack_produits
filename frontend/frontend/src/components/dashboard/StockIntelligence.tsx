@@ -14,7 +14,7 @@ import api from '../../services/api';
 import type { TFunction } from 'i18next';
 import { formatDate } from '../../utils/dateUtils';
 import { EmptyState } from '../ui/EmptyState';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { fadeInUp, staggerContainer } from '../../lib/motion';
 import { useDashboardPrefs } from '../../hooks/useDashboardPrefs';
 
@@ -143,10 +143,10 @@ export default function StockIntelligence({
   }, []);
 
   return (
-    <motion.div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6 auto-rows-fr" variants={staggerContainer} initial="hidden" animate="show">
+    <m.div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6 auto-rows-fr" variants={staggerContainer} initial="hidden" animate="show">
         {/* Expiring Lots (Alertes Périssables) - Swapped to first position */}
         {isVisible('stock.expiring') && (
-        <motion.div variants={fadeInUp} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col">
+        <m.div variants={fadeInUp} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col">
           <div className="h-1 bg-gradient-to-r from-red-500 to-rose-400 shrink-0" />
           <div className="p-6 flex flex-col h-full">
             <div className="flex items-center justify-between mb-4 shrink-0">
@@ -250,12 +250,12 @@ export default function StockIntelligence({
               </Link>
             </div>
           </div>
-        </motion.div>
+        </m.div>
         )}
 
         {/* Dormant Stock (Rossignols) */}
         {isVisible('stock.dormant') && (
-        <motion.div variants={fadeInUp} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col">
+        <m.div variants={fadeInUp} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col">
           <div className="h-1 bg-gradient-to-r from-indigo-500 to-violet-400 shrink-0" />
           <div className="p-6 flex flex-col h-full">
             <div className="flex items-center justify-between mb-4 shrink-0">
@@ -311,12 +311,12 @@ export default function StockIntelligence({
               </Link>
             </div>
           </div>
-        </motion.div>
+        </m.div>
         )}
 
         {/* Surstock (Excédents) */}
         {isVisible('stock.overstock') && (
-        <motion.div variants={fadeInUp} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col">
+        <m.div variants={fadeInUp} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col">
           <div className="h-1 bg-gradient-to-r from-orange-500 to-amber-400 shrink-0" />
           <div className="p-6 flex flex-col h-full">
             <div className="flex items-center justify-between mb-4 shrink-0">
@@ -390,12 +390,12 @@ export default function StockIntelligence({
               </Link>
             </div>
           </div>
-        </motion.div>
+        </m.div>
         )}
 
         {/* Promis Disponibles Alert */}
         {isVisible('stock.promis') && promisDisponibles.length > 0 && (
-          <motion.div variants={fadeInUp} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col">
+          <m.div variants={fadeInUp} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col">
             <div className="h-1 bg-gradient-to-r from-emerald-500 to-teal-400 shrink-0" />
             <div className="p-6 flex flex-col h-full">
               <div
@@ -444,12 +444,12 @@ export default function StockIntelligence({
                 </Link>
               </div>
             </div>
-          </motion.div>
+          </m.div>
         )}
 
         {/* Reappro Rayon Alert */}
         {isVisible('stock.reappro') && reapproStats && reapproStats.product_count > 0 && (
-          <motion.div variants={fadeInUp} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col">
+          <m.div variants={fadeInUp} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col">
             <div className="h-1 bg-gradient-to-r from-cyan-500 to-sky-400 shrink-0" />
             <div className="p-6 flex flex-col h-full">
               <div
@@ -496,12 +496,12 @@ export default function StockIntelligence({
                 </Link>
               </div>
             </div>
-          </motion.div>
+          </m.div>
         )}
 
         {/* Stock Alerts */}
         {isVisible('stock.low') && (
-        <motion.div variants={fadeInUp} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col">
+        <m.div variants={fadeInUp} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col">
           <div className="h-1 bg-gradient-to-r from-amber-500 to-yellow-400 shrink-0" />
           <div className="p-6 flex flex-col h-full">
             <div className="flex items-center justify-between mb-4 shrink-0">
@@ -589,9 +589,9 @@ export default function StockIntelligence({
               </Link>
             </div>
           </div>
-        </motion.div>
+        </m.div>
         )}
 
-    </motion.div>
+    </m.div>
   );
 }

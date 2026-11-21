@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { staggerContainer, fadeInUp } from '../lib/motion';
 import { LayoutGrid, Tablets, FolderTree, Settings } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -75,13 +75,13 @@ export default function Organisation({ defaultTab = 'rayons' }: OrganisationProp
   const currentTab = tabs.find(t => t.id === activeTab)!;
 
   return (
-    <motion.div
+    <m.div
       variants={staggerContainer}
       initial="hidden"
       animate="show"
       className="h-full flex flex-col bg-slate-50 p-2 sm:p-4 gap-4 font-sans overflow-hidden"
     >
-      <motion.div variants={fadeInUp} className="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col">
+      <m.div variants={fadeInUp} className="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col">
         <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
            <div>
               <h1 className="text-2xl font-bold text-slate-800 tracking-tight">{t('organisation.title')}</h1>
@@ -105,9 +105,9 @@ export default function Organisation({ defaultTab = 'rayons' }: OrganisationProp
               ))}
            </div>
         </div>
-      </motion.div>
+      </m.div>
 
-      <motion.div variants={fadeInUp} className="w-full flex-1 min-h-0">
+      <m.div variants={fadeInUp} className="w-full flex-1 min-h-0">
          {(currentTab.config as unknown).isConfigOption ? (
             <ConfigOptionManager 
                key={activeTab}
@@ -121,7 +121,7 @@ export default function Organisation({ defaultTab = 'rayons' }: OrganisationProp
               {...(currentTab.config as unknown)}
             />
          )}
-      </motion.div>
-    </motion.div>
+      </m.div>
+    </m.div>
   );
 }

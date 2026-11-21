@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { staggerContainer, fadeInUp } from '../lib/motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Loader2, Download, AlertTriangle, Building2 } from 'lucide-react';
@@ -273,9 +273,9 @@ export default function StatistiquesFournisseur() {
   const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } = Recharts;
 
   return (
-    <motion.div variants={staggerContainer} initial="hidden" animate="show">
+    <m.div variants={staggerContainer} initial="hidden" animate="show">
     <PageContainer variant="dense" className="space-y-4 sm:space-y-6 animate-fade-in">
-      <motion.div variants={fadeInUp} className="flex flex-col gap-3 md:flex-row md:justify-between md:items-start">
+      <m.div variants={fadeInUp} className="flex flex-col gap-3 md:flex-row md:justify-between md:items-start">
         <div className="flex flex-wrap items-center gap-3">
           <div>
             <h1 className="text-2xl font-bold text-base-content">{t('title')}</h1>
@@ -339,7 +339,7 @@ export default function StatistiquesFournisseur() {
             </div>
             </div>
         )}
-      </motion.div>
+      </m.div>
 
       {/* Tabs Navigation */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -356,7 +356,7 @@ export default function StatistiquesFournisseur() {
 
       {/* TAB 1: VENTES (Existing Content) */}
       {activeTab === 'ventes' && (
-        <motion.div variants={fadeInUp} className="space-y-6 animate-fade-in">
+        <m.div variants={fadeInUp} className="space-y-6 animate-fade-in">
            {/* Info Box */}
             <div className="flex items-start gap-3 p-4 rounded-lg bg-info/10 text-info border border-info/20 shadow-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 size-6">
@@ -491,12 +491,12 @@ export default function StatistiquesFournisseur() {
                 </Table>
                 </div>
             </Card>
-        </motion.div>
+        </m.div>
       )}
 
       {/* TAB 2: PERFORMANCE (Scoring) */}
       {activeTab === 'performance' && (
-        <motion.div variants={fadeInUp} className="space-y-6 animate-fade-in">
+        <m.div variants={fadeInUp} className="space-y-6 animate-fade-in">
           <Card className="border-amber-200/60 bg-amber-50/50 dark:bg-amber-900/20">
             <CardContent className="p-4">
               <div className="flex items-start gap-3 text-amber-900 dark:text-amber-400">
@@ -575,12 +575,12 @@ export default function StatistiquesFournisseur() {
               </CardContent>
             </Card>
           )}
-        </motion.div>
+        </m.div>
       )}
 
       {/* TAB 3: COMPARATEUR PRIX */}
       {activeTab === 'prix' && (
-        <motion.div variants={fadeInUp} className="space-y-6 animate-fade-in">
+        <m.div variants={fadeInUp} className="space-y-6 animate-fade-in">
              <div className="flex items-start gap-3 p-4 rounded-lg bg-success-soft text-success-strong border border-success shadow-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 <div>
@@ -650,12 +650,12 @@ export default function StatistiquesFournisseur() {
                     </div>
                 </Card>
             )}
-        </motion.div>
+        </m.div>
       )}
 
       {/* TAB 4: CONCENTRATION */}
       {activeTab === 'concentration' && (
-        <motion.div variants={fadeInUp} className="space-y-6 animate-fade-in">
+        <m.div variants={fadeInUp} className="space-y-6 animate-fade-in">
              <Card className="bg-base-100 shadow-sm border border-base-200">
                 <CardContent>
                     <CardTitle>{t('concentration_tab.title')}</CardTitle>
@@ -725,12 +725,12 @@ export default function StatistiquesFournisseur() {
                     )}
                 </CardContent>
              </Card>
-        </motion.div>
+        </m.div>
       )}
 
       {/* TAB 5: PAIEMENTS FOURNISSEURS (Historique généralisé) */}
       {activeTab === 'paiements' && (
-        <motion.div variants={fadeInUp} className="space-y-6 animate-fade-in">
+        <m.div variants={fadeInUp} className="space-y-6 animate-fade-in">
           {/* Filtres */}
           <Card className="shadow-sm border border-slate-200">
             <CardContent className="p-4">
@@ -911,10 +911,10 @@ export default function StatistiquesFournisseur() {
               )}
             </CardContent>
           </Card>
-        </motion.div>
+        </m.div>
       )}
 
     </PageContainer>
-    </motion.div>
+    </m.div>
   );
 }

@@ -48,9 +48,9 @@ export default function UserFormDialog({ open, onOpenChange, editingUser, users,
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="flex flex-col min-h-0 overflow-hidden">
-          {/* Hauteur fixe : la modale garde la même taille quel que soit
-              l'onglet actif, le contenu défile en interne. */}
-          <div className="h-[60vh] overflow-y-auto p-6">
+          {/* Hauteur plafonnée : la modale s'adapte au contenu de l'onglet
+              actif et défile en interne au-delà de 60vh. */}
+          <div className="max-h-[60vh] overflow-y-auto p-6">
             <Tabs defaultValue="informations" className="w-full">
               <TabsList className="mb-4">
                 <TabsTrigger value="informations">{t('modal.tabs.information')}</TabsTrigger>

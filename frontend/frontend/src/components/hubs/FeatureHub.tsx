@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { staggerContainer, fadeInUp } from '../../lib/motion';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -39,25 +39,25 @@ export default function FeatureHub({ category }: FeatureHubProps) {
   );
 
   return (
-    <motion.div
+    <m.div
       variants={staggerContainer}
       initial="hidden"
       animate="show"
       className="mx-auto w-full max-w-6xl space-y-8 p-4 sm:p-6"
     >
-      <motion.header variants={fadeInUp} className="space-y-1">
+      <m.header variants={fadeInUp} className="space-y-1">
         <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100 sm:text-2xl">
           {t(`hub.${category}_title`)}
         </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
           {t(`hub.${category}_subtitle`)}
         </p>
-      </motion.header>
+      </m.header>
 
       {sections.map(item => {
         const groups = item.submenus ? groupNavSubMenus(item.submenus) : null;
         return (
-          <motion.section key={item.key} variants={fadeInUp} aria-labelledby={`hub-section-${item.key}`} className="space-y-3">
+          <m.section key={item.key} variants={fadeInUp} aria-labelledby={`hub-section-${item.key}`} className="space-y-3">
             <h2
               id={`hub-section-${item.key}`}
               className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400"
@@ -86,9 +86,9 @@ export default function FeatureHub({ category }: FeatureHubProps) {
                 </div>
               )
             )}
-          </motion.section>
+          </m.section>
         );
       })}
-    </motion.div>
+    </m.div>
   );
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { fadeInUp } from '../lib/motion';
 import { useTranslation } from 'react-i18next';
 import { Wrench, AlertTriangle, Database } from 'lucide-react';
@@ -37,7 +37,7 @@ export default function Maintenance() {
   return (
     <PageContainer variant="dense" className="p-4 md:p-6">
       {/* Header */}
-      <motion.div variants={fadeInUp} initial="hidden" animate="show" className="flex items-center gap-3 mb-6">
+      <m.div variants={fadeInUp} initial="hidden" animate="show" className="flex items-center gap-3 mb-6">
         <div className="p-3 rounded-xl bg-gradient-to-br from-red-500/20 to-orange-500/20">
           <Wrench className="size-7 text-red-400" />
         </div>
@@ -45,18 +45,18 @@ export default function Maintenance() {
           <h1 className="text-2xl font-bold">{t('title')}</h1>
           <p className="text-sm text-slate-500">{t('subtitle')}</p>
         </div>
-      </motion.div>
+      </m.div>
 
       {/* Warning Banner */}
-      <motion.div variants={fadeInUp} initial="hidden" animate="show" className="flex items-center gap-3 mb-6 shadow-lg bg-amber-50 border border-amber-200 rounded-xl p-4">
+      <m.div variants={fadeInUp} initial="hidden" animate="show" className="flex items-center gap-3 mb-6 shadow-lg bg-amber-50 border border-amber-200 rounded-xl p-4">
         <AlertTriangle className="size-5 text-amber-600 shrink-0" />
         <div>
           <h3 className="font-bold text-amber-800">{t('irreversible')}</h3>
           <p className="text-sm text-amber-700">{t('warning_msg')}</p>
         </div>
-      </motion.div>
+      </m.div>
 
-      <motion.div variants={fadeInUp} initial="hidden" animate="show" className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <m.div variants={fadeInUp} initial="hidden" animate="show" className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Table Selection */}
         <div className="lg:col-span-2">
           <TableSelectionCard
@@ -109,20 +109,20 @@ export default function Maintenance() {
             <BackupsTab backup={backup} update={update} />
           )}
         </div>
-      </motion.div>
+      </m.div>
 
       {/* Preview Results */}
       {purge.preview && (
-        <motion.div variants={fadeInUp} initial="hidden" animate="show">
+        <m.div variants={fadeInUp} initial="hidden" animate="show">
           <PreviewResultsCard preview={purge.preview} totalCount={purge.totalPreviewCount} />
-        </motion.div>
+        </m.div>
       )}
 
       {/* Purge Results */}
       {purge.purgeResults && (
-        <motion.div variants={fadeInUp} initial="hidden" animate="show">
+        <m.div variants={fadeInUp} initial="hidden" animate="show">
           <PurgeResultsCard results={purge.purgeResults} />
-        </motion.div>
+        </m.div>
       )}
 
       {/* Confirmation Modal */}

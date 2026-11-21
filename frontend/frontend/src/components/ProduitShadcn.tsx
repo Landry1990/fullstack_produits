@@ -6,7 +6,7 @@ import { Package, Upload, RefreshCw, Eraser } from 'lucide-react'
 import type { ProduitModel } from '../types'
 import type { Groupe } from '../types/catalog'
 import { cn } from '../lib/utils'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { fadeInUp, pageFade, staggerContainer, staggerGrid } from '../lib/motion'
 import { useProduitPage } from '../hooks/useProduitPage'
 import type { ActiveTab } from '../hooks/useProduitPage'
@@ -64,10 +64,10 @@ export default function ProduitShadcn() {
   } = state
 
   return (
-    <motion.div className="flex-1 flex flex-col overflow-hidden bg-slate-50" variants={staggerContainer} initial="hidden" animate="show">
+    <m.div className="flex-1 flex flex-col overflow-hidden bg-slate-50" variants={staggerContainer} initial="hidden" animate="show">
 
       {/* ── Header ── */}
-      <motion.header variants={fadeInUp} className="px-6 py-4 border-b border-slate-200 bg-white shrink-0 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <m.header variants={fadeInUp} className="px-6 py-4 border-b border-slate-200 bg-white shrink-0 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-emerald-50 rounded-xl">
             <Package className="size-5 text-emerald-600" />
@@ -96,17 +96,17 @@ export default function ProduitShadcn() {
             {t('products:reset_stock.button')}
           </Button>
         </div>
-      </motion.header>
+      </m.header>
 
       {/* ── Error Banner ── */}
       <ErrorState error={error} onRetry={() => refetch()} retrying={isLoading} className="mx-6 mt-4" />
 
       {/* ── Main Content ── */}
       <main className="flex-1 p-4 min-h-0 overflow-hidden">
-        <motion.div variants={staggerGrid} className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-full min-h-0 w-full overflow-hidden">
+        <m.div variants={staggerGrid} className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-full min-h-0 w-full overflow-hidden">
 
           {/* ═════ Left Panel : List ═════ */}
-          <motion.section variants={fadeInUp} className={cn('lg:col-span-5 flex flex-col h-full min-h-0 min-w-0 gap-3', selectedProduit && 'max-lg:hidden')}>
+          <m.section variants={fadeInUp} className={cn('lg:col-span-5 flex flex-col h-full min-h-0 min-w-0 gap-3', selectedProduit && 'max-lg:hidden')}>
             <ProductListPanel
               produits={produits}
               isLoading={isLoading}
@@ -136,12 +136,12 @@ export default function ProduitShadcn() {
               onPageChange={setPage}
               onNewProduct={() => handleOpenCreate(searchQuery)}
             />
-          </motion.section>
+          </m.section>
 
           {/* ═════ Right Panel : Details ═════ */}
-          <motion.section variants={fadeInUp} className={cn('lg:col-span-7 h-full min-h-0 min-w-0', !selectedProduit && 'max-lg:hidden')}>
+          <m.section variants={fadeInUp} className={cn('lg:col-span-7 h-full min-h-0 min-w-0', !selectedProduit && 'max-lg:hidden')}>
             <Card className="h-full flex flex-col overflow-hidden p-0">
-              <motion.div
+              <m.div
                 key={selectedProduit?.id ?? 'empty'}
                 variants={pageFade}
                 initial="hidden"
@@ -179,10 +179,10 @@ export default function ProduitShadcn() {
                   <p className="text-sm font-medium">{t('products:detail.select_hint')}</p>
                 </div>
               )}
-              </motion.div>
+              </m.div>
             </Card>
-          </motion.section>
-        </motion.div>
+          </m.section>
+        </m.div>
       </main>
 
       {/* ── Modals ── */}
@@ -263,6 +263,6 @@ export default function ProduitShadcn() {
         title={sudoState.title}
         message={sudoState.message}
       />}
-    </motion.div>
+    </m.div>
   )
 }

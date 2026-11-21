@@ -1,4 +1,4 @@
-﻿import { motion } from 'framer-motion';
+﻿import { m } from 'framer-motion';
 import { staggerContainer, fadeInUp } from '../lib/motion';
 import { GoeyToaster } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
@@ -21,7 +21,7 @@ export default function JournalAjustements() {
     } = useAjustementsData();
 
     return (
-        <motion.div
+        <m.div
             variants={staggerContainer}
             initial="hidden"
             animate="show"
@@ -29,9 +29,9 @@ export default function JournalAjustements() {
         >
             <GoeyToaster position="top-right" />
 
-            <motion.div variants={staggerContainer} className="max-w-[1600px] mx-auto w-full flex flex-col h-full gap-2 lg:gap-4">
+            <m.div variants={staggerContainer} className="max-w-[1600px] mx-auto w-full flex flex-col h-full gap-2 lg:gap-4">
                 {/* Header Section */}
-                <motion.div variants={fadeInUp} className="flex flex-col md:flex-row md:items-end justify-between gap-2 lg:gap-6 shrink-0">
+                <m.div variants={fadeInUp} className="flex flex-col md:flex-row md:items-end justify-between gap-2 lg:gap-6 shrink-0">
                     <div>
                         <div className="flex items-center gap-2 lg:gap-3 mb-1 lg:mb-2">
                             <div className="size-8 lg:size-10 rounded-xl lg:rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-200">
@@ -47,10 +47,10 @@ export default function JournalAjustements() {
                             </div>
                         </div>
                     </div>
-                </motion.div>
+                </m.div>
 
                 {/* Search & Filter Bar */}
-                <motion.div variants={fadeInUp} className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-slate-200 overflow-hidden shrink-0">
+                <m.div variants={fadeInUp} className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-slate-200 overflow-hidden shrink-0">
                     <AjustementsFilters
                         searchQuery={filters.searchQuery}
                         onSearchChange={setFilters.setSearchQuery}
@@ -70,10 +70,10 @@ export default function JournalAjustements() {
                         onExport={actions.handleExportExcel}
                         loading={loading}
                     />
-                </motion.div>
+                </m.div>
 
                 {/* Table Section */}
-                <motion.div variants={fadeInUp} className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col flex-1 min-h-0">
+                <m.div variants={fadeInUp} className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col flex-1 min-h-0">
                     <AjustementsTable
                         adjustments={adjustments}
                         loading={loading}
@@ -82,8 +82,8 @@ export default function JournalAjustements() {
                         totalCount={totalCount}
                         onPageChange={pagination.setCurrentPage}
                     />
-                </motion.div>
-            </motion.div>
-        </motion.div>
+                </m.div>
+            </m.div>
+        </m.div>
     );
 }

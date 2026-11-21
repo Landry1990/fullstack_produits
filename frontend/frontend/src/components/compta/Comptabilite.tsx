@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { staggerContainer, fadeInUp } from '../../lib/motion';
 import { useAccounting, type Compte, type Ecriture, type LigneEcriture, type Journal } from '../../hooks/useAccounting';
 import api from '../../services/api';
@@ -50,6 +50,7 @@ import { formatCurrency as formatCurrencyValue, formatNumber as formatNumberValu
 const comptaLocale = () => (i18n.language.startsWith('en') ? 'en-GB' : 'fr-FR');
 const formatFCFA = (amount: number) => formatCurrencyValue(amount, comptaLocale());
 const formatAmount = (amount: number) => formatNumberValue(amount, 0, comptaLocale());
+const tvaFormatter = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
 
 interface ComptabiliteProps {
     defaultTab?: string;
@@ -129,10 +130,10 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
     }, [exercices, setCurrentExercice, setDateRange]);
 
     return (
-        <motion.div variants={staggerContainer} initial="hidden" animate="show">
+        <m.div variants={staggerContainer} initial="hidden" animate="show">
         <PageContainer variant="dense" className="bg-slate-50 p-4 md:p-8 animate-fade-in">
             {/* Header */}
-            <motion.div variants={fadeInUp} className="flex flex-col xl:flex-row xl:items-center justify-between mb-8 gap-6">
+            <m.div variants={fadeInUp} className="flex flex-col xl:flex-row xl:items-center justify-between mb-8 gap-6">
                 <div>
                     <span className="text-xs font-semibold uppercase tracking-wider text-blue-600 mb-2 block">{t('ohada')}</span>
                     <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-800 flex items-center gap-3">
@@ -221,10 +222,10 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
                         </div>
                     )}
                 </div>
-            </motion.div>
+            </m.div>
 
             {/* Navigation Tabs */}
-            <motion.div variants={fadeInUp} className="flex overflow-x-auto hide-scrollbar gap-1 mb-8 p-1.5 rounded-2xl bg-white border border-slate-200 shadow-sm w-full lg:w-fit">
+            <m.div variants={fadeInUp} className="flex overflow-x-auto hide-scrollbar gap-1 mb-8 p-1.5 rounded-2xl bg-white border border-slate-200 shadow-sm w-full lg:w-fit">
                 {tabs.map((tab) => (
                     <button
                         key={tab.id}
@@ -241,16 +242,16 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
                         <span className="whitespace-nowrap">{tab.label}</span>
                     </button>
                 ))}
-            </motion.div>
+            </m.div>
 
             {/* Content Area */}
             {isLoading ? (
-                <motion.div variants={fadeInUp} className="flex flex-col items-center justify-center py-20">
+                <m.div variants={fadeInUp} className="flex flex-col items-center justify-center py-20">
                     <span className="size-10 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin mb-3"></span>
                     <p className="font-medium text-slate-400">{t('loading_msg')}</p>
-                </motion.div>
+                </m.div>
             ) : (
-                <motion.div variants={fadeInUp} className="space-y-6">
+                <m.div variants={fadeInUp} className="space-y-6">
                     <Suspense fallback={
                         <div className="flex flex-col items-center justify-center py-20 text-slate-300">
                             <span className="size-8 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin mb-2"></span>
@@ -288,11 +289,11 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
                         {activeTab === 'plan' && <PlanTab comptes={comptes} actions={actions} t={t} />}
                         {activeTab === 'charges' && <ChargesTab actions={actions} comptes={comptes} journaux={journaux} ecritures={ecritures} locale={currentLocale} t={t} />}
                     </Suspense>
-                </motion.div>
+                </m.div>
 
             )}
         </PageContainer>
-        </motion.div>
+        </m.div>
     );
 }
 
@@ -1182,7 +1183,7 @@ function ChargesTab({ actions, comptes, journaux, ecritures, locale, t }: Charge
     const compteDebitLibelle = formData.typeCharge === 'autre'
         ? chargeAccounts?.find(c => c.numero === formData.comptePersonnalise)?.libelle
         : selectedCategory ? t(`ohada_categories.${selectedCategory.id}`, { defaultValue: selectedCategory.label }) : '';
-    const modeInfo = MODES_PAIEMENT.find(m => m.compte === formData.modePaiement)!;
+    const modeInfo = MODES_PAIEMENT.find(mode => mode.compte === formData.modePaiement)!;
 
     // Dernières écritures de charge (débit sur un compte 6x), 6 max.
     const recentCharges = (ecritures || [])
@@ -1456,7 +1457,7 @@ interface RapportTva {
 }
 
 function TvaTab({ rapport, t }: { rapport?: RapportTva; t: TFunction }) {
-    const fmt = (n: number) => new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(Math.round(n || 0));
+    const fmt = (n: number) => tvaFormatter.format(Math.round(n || 0));
     if (!rapport || rapport.details.length === 0) {
         return <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center text-slate-400 text-sm">{t('tva.empty')}</div>;
     }

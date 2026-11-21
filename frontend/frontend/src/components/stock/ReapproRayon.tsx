@@ -39,7 +39,7 @@ import PaginationControls from '../ui/PaginationControls';
 import { logger } from '../../utils/logger'
 import { renderRayonOptions } from '../../utils/rayon'
 import { SubRayonsBadge } from '../common/SubRayonsBadge'
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { staggerContainer, staggerGrid, fadeInUp } from '../../lib/motion';
 
 export default function ReapproRayon() {
@@ -216,7 +216,7 @@ export default function ReapproRayon() {
   };
 
   return (
-    <motion.div
+    <m.div
       variants={staggerContainer}
       initial="hidden"
       animate="show"
@@ -224,7 +224,7 @@ export default function ReapproRayon() {
     >
       
       {/* Header & Stats Section */}
-      <motion.div variants={fadeInUp} className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 no-print">
+      <m.div variants={fadeInUp} className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 no-print">
         <div>
           <div className="flex items-center gap-3">
             <div className="p-3 bg-emerald-600 text-white rounded-2xl shadow-lg shadow-emerald-500/20">
@@ -273,11 +273,11 @@ export default function ReapproRayon() {
             </button>
           </div>
         </div>
-      </motion.div>
+      </m.div>
 
       {/* Quick Stats Grid */}
-      <motion.div variants={staggerGrid} className="grid grid-cols-1 md:grid-cols-3 gap-6 no-print">
-        <motion.div variants={fadeInUp} className="bg-white shadow-sm border border-slate-200 rounded-2xl p-6 flex flex-row items-center gap-4">
+      <m.div variants={staggerGrid} className="grid grid-cols-1 md:grid-cols-3 gap-6 no-print">
+        <m.div variants={fadeInUp} className="bg-white shadow-sm border border-slate-200 rounded-2xl p-6 flex flex-row items-center gap-4">
           <div className={`p-3 rounded-xl ${stats.criticalProductsCount > 0 ? 'bg-red-50 text-red-500' : 'bg-emerald-50 text-emerald-600'}`}>
             <AlertCircle className="size-6" />
           </div>
@@ -285,8 +285,8 @@ export default function ReapproRayon() {
             <p className="text-caption font-bold text-slate-400 uppercase tracking-widest">{t('stock:reappro.critical_alerts')}</p>
             <p className="text-2xl font-black text-slate-800">{stats.criticalProductsCount}</p>
           </div>
-        </motion.div>
-        <motion.div variants={fadeInUp} className="bg-white shadow-sm border border-slate-200 rounded-2xl p-6 flex flex-row items-center gap-4">
+        </m.div>
+        <m.div variants={fadeInUp} className="bg-white shadow-sm border border-slate-200 rounded-2xl p-6 flex flex-row items-center gap-4">
           <div className="p-3 rounded-xl bg-blue-50 text-blue-500">
             <Truck className="size-6" />
           </div>
@@ -294,8 +294,8 @@ export default function ReapproRayon() {
             <p className="text-caption font-bold text-slate-400 uppercase tracking-widest">{t('stock:reappro.suggested_volume')}</p>
             <p className="text-2xl font-black text-slate-800">{stats.totalToTransfer} <small className="text-xs text-slate-400">{t('stock:reappro.stats.units')}</small></p>
           </div>
-        </motion.div>
-        <motion.div variants={fadeInUp} className="bg-white shadow-sm border border-slate-200 rounded-2xl p-6 flex flex-row items-center gap-4">
+        </m.div>
+        <m.div variants={fadeInUp} className="bg-white shadow-sm border border-slate-200 rounded-2xl p-6 flex flex-row items-center gap-4">
           <div className="p-3 rounded-xl bg-purple-50 text-purple-600">
             <Filter className="size-6" />
           </div>
@@ -303,11 +303,11 @@ export default function ReapproRayon() {
             <p className="text-caption font-bold text-slate-400 uppercase tracking-widest">{t('stock:reappro.displayed_products')}</p>
             <p className="text-2xl font-black text-slate-800">{stats.totalDisplayed}</p>
           </div>
-        </motion.div>
-      </motion.div>
+        </m.div>
+      </m.div>
 
       {/* Main Content Section */}
-      <motion.div variants={fadeInUp} className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+      <m.div variants={fadeInUp} className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
         {/* Toolbar */}
         <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-6 bg-slate-50/50 no-print">
           <div className="flex flex-col md:flex-row md:items-center gap-4 flex-1">
@@ -527,7 +527,7 @@ export default function ReapproRayon() {
                 </div>
             </div>
         )}
-      </motion.div>
+      </m.div>
 
       {/* ── Modal Confirmation Transfert Groupé ── */}
       <Dialog open={showConfirmBulk} onOpenChange={(open) => {
@@ -674,7 +674,7 @@ export default function ReapproRayon() {
             }
           `}
       </style>
-    </motion.div>
+    </m.div>
   );
 }
 

@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { staggerContainer, fadeInUp } from '../lib/motion';
 import { useTranslation } from 'react-i18next';
 import { useRecharts } from '../hooks/useRecharts';
@@ -80,9 +80,9 @@ export default function AnalyseTemporelle() {
   const { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, LineChart, Line, Legend } = Recharts;
 
   return (
-    <motion.div variants={staggerContainer} initial="hidden" animate="show" className="p-6 space-y-6 animate-fade-in">
+    <m.div variants={staggerContainer} initial="hidden" animate="show" className="p-6 space-y-6 animate-fade-in">
       {/* Header */}
-      <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <m.div variants={fadeInUp} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
             <span>⏱️</span>
@@ -108,15 +108,15 @@ export default function AnalyseTemporelle() {
             </button>
           ))}
         </div>
-      </motion.div>
+      </m.div>
 
       {/* Content */}
-      <motion.div variants={fadeInUp} className="bg-white rounded-2xl border border-slate-200 shadow-sm">
+      <m.div variants={fadeInUp} className="bg-white rounded-2xl border border-slate-200 shadow-sm">
         <div className="p-4 sm:p-6">
           
           {/* TAB 1: PEAK HOURS */}
           {activeTab === 'hours' && (
-            <motion.div variants={fadeInUp} className="space-y-6">
+            <m.div variants={fadeInUp} className="space-y-6">
               <PanelHeader
                 icon="⚡"
                 iconClassName="bg-blue-100 text-blue-600"
@@ -187,12 +187,12 @@ export default function AnalyseTemporelle() {
                   </ResponsiveContainer>
                 </div>
               )}
-            </motion.div>
+            </m.div>
           )}
 
           {/* TAB 2: DAILY COMPARISON */}
           {activeTab === 'days' && (
-            <motion.div variants={fadeInUp} className="space-y-6">
+            <m.div variants={fadeInUp} className="space-y-6">
               <PanelHeader
                 icon="📅"
                 iconClassName="bg-emerald-100 text-emerald-600"
@@ -262,12 +262,12 @@ export default function AnalyseTemporelle() {
                   </div>
                 </div>
               )}
-            </motion.div>
+            </m.div>
           )}
 
           {/* TAB 3: SEASONALITY */}
           {activeTab === 'seasons' && (
-            <motion.div variants={fadeInUp} className="space-y-6">
+            <m.div variants={fadeInUp} className="space-y-6">
               <PanelHeader
                 icon="🍂"
                 iconClassName="bg-amber-100 text-amber-600"
@@ -351,11 +351,11 @@ export default function AnalyseTemporelle() {
                   </div>
                 </div>
               )}
-            </motion.div>
+            </m.div>
           )}
         </div>
-      </motion.div>
-    </motion.div>
+      </m.div>
+    </m.div>
   );
 }
 

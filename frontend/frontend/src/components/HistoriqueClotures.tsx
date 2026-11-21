@@ -4,7 +4,7 @@
  * `hooks/caisse/useHistoriqueClotures` ; le rendu est découpé dans
  * `components/caisse/clotures/` (header, stats, table, sessions, modales).
  */
-import { motion, AnimatePresence } from 'framer-motion'
+import { m, AnimatePresence } from 'framer-motion'
 import { useHistoriqueClotures } from '../hooks/caisse/useHistoriqueClotures'
 import { tabContent } from '../lib/motion'
 import CloturesHeader from './caisse/clotures/CloturesHeader'
@@ -26,7 +26,7 @@ export default function HistoriqueClotures() {
 
       {/* Contenu conditionnel selon l'onglet */}
       <AnimatePresence mode="wait">
-        <motion.div
+        <m.div
           key={showSessions ? 'sessions' : 'clotures'}
           variants={tabContent}
           initial="hidden"
@@ -47,7 +47,7 @@ export default function HistoriqueClotures() {
               <ClotureDetailDialog state={state} />
             </>
           )}
-        </motion.div>
+        </m.div>
       </AnimatePresence>
 
       {/* Modal Détail Session de Caisse */}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { staggerContainer, staggerGrid, fadeInUp } from '../lib/motion';
 import api from '../services/api';
 import { gooeyToast } from 'goey-toast';
@@ -87,9 +87,9 @@ const OrdonnancierPage: React.FC = () => {
     };
 
     return (
-        <motion.div variants={staggerContainer} initial="hidden" animate="show" className="h-full flex flex-col bg-slate-50 p-3 sm:p-6 gap-4 sm:gap-6 font-sans">
+        <m.div variants={staggerContainer} initial="hidden" animate="show" className="h-full flex flex-col bg-slate-50 p-3 sm:p-6 gap-4 sm:gap-6 font-sans">
             {/* Header */}
-            <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <m.div variants={fadeInUp} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                   <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{t('title')}</h1>
                   <p className="text-slate-500 text-sm mt-1">{t('subtitle')}</p>
@@ -103,12 +103,12 @@ const OrdonnancierPage: React.FC = () => {
                          <RefreshCw className="size-4" />
                     </Button>
                 </div>
-            </motion.div>
+            </m.div>
 
             {/* Stats Cards */}
             {stats && (
-                <motion.div variants={staggerGrid} className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <motion.div variants={fadeInUp} className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex flex-col justify-center">
+                <m.div variants={staggerGrid} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <m.div variants={fadeInUp} className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex flex-col justify-center">
                         <div className="flex justify-between items-start">
                             <div>
                                 <h3 className="text-slate-500 text-xs font-bold uppercase tracking-wider">{t('stats.total_entries')}</h3>
@@ -119,8 +119,8 @@ const OrdonnancierPage: React.FC = () => {
                                 <ClipboardList className="size-6" />
                             </div>
                         </div>
-                    </motion.div>
-                    <motion.div variants={fadeInUp} className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex flex-col justify-center">
+                    </m.div>
+                    <m.div variants={fadeInUp} className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex flex-col justify-center">
                         <div className="flex justify-between items-start">
                             <div>
                                 <h3 className="text-slate-500 text-xs font-bold uppercase tracking-wider">{t('stats.delivered_meds')}</h3>
@@ -131,8 +131,8 @@ const OrdonnancierPage: React.FC = () => {
                                 <Pill className="size-6" />
                             </div>
                         </div>
-                    </motion.div>
-                    <motion.div variants={fadeInUp} className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex flex-col justify-center">
+                    </m.div>
+                    <m.div variants={fadeInUp} className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex flex-col justify-center">
                         <div className="flex justify-between items-start">
                             <div>
                                 <h3 className="text-slate-500 text-xs font-bold uppercase tracking-wider">{t('stats.under_surveillance')}</h3>
@@ -143,12 +143,12 @@ const OrdonnancierPage: React.FC = () => {
                                 <ShieldAlert className="size-6" />
                             </div>
                         </div>
-                    </motion.div>
-                </motion.div>
+                    </m.div>
+                </m.div>
             )}
 
             {/* Filters */}
-            <motion.div variants={fadeInUp} className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+            <m.div variants={fadeInUp} className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
                     <div>
                         <label className="block text-xs font-bold uppercase text-slate-500 tracking-wider mb-1.5">{t('filters.date_start')}</label>
@@ -224,10 +224,10 @@ const OrdonnancierPage: React.FC = () => {
                         </select>
                     </div>
                 </div>
-            </motion.div>
+            </m.div>
 
             {/* Table */}
-            <motion.div variants={fadeInUp} className="bg-white rounded-xl shadow-sm border border-slate-200 flex-1 overflow-hidden">
+            <m.div variants={fadeInUp} className="bg-white rounded-xl shadow-sm border border-slate-200 flex-1 overflow-hidden">
                 <div className="overflow-x-auto h-full">
                     <table className="min-w-full table-fixed divide-y divide-slate-200">
                         <thead className="bg-slate-100 sticky top-0 z-10">
@@ -298,8 +298,8 @@ const OrdonnancierPage: React.FC = () => {
                         </tbody>
                     </table>
                 </div>
-            </motion.div>
-        </motion.div>
+            </m.div>
+        </m.div>
     );
 };
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { m, AnimatePresence } from 'framer-motion'
 import { fadeInUp, tabContent } from '../lib/motion'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import api from '../services/api'
@@ -29,6 +29,7 @@ import type { StockLot } from '../types'
 import { formatCurrency } from '../utils/formatters'
 import { formatDate, toApiDateEnd } from '../utils/dateUtils'
 import SudoValidationModal from './common/SudoValidationModal'
+import { usePermissions } from '../hooks/usePermissions'
 import { useSudo } from '../hooks/useSudo'
 import { useConfirm } from '../hooks/useConfirm'
 import usePrint from '../hooks/usePrint'
@@ -186,8 +187,11 @@ export default function Perimes() {
   })
   const [dateFin, setDateFin] = useState<string>(() => new Date().toISOString().split('T')[0])
 
+  const { hasPerm } = usePermissions()
   const { sudoState, requireSudo, closeSudo } = useSudo()
   const confirm = useConfirm()
+  // Sorties de stock (unitaires, groupées, restauration) : sudo can_manage_perimes.
+  const canManagePerimes = hasPerm('can_manage_perimes')
   const [processing, setProcessing] = useState(false)
   const [pendingExitLot, setPendingExitLot] = useState<StockLot | null>(null)
 
@@ -604,7 +608,7 @@ export default function Perimes() {
   return (
     <div className="h-full flex flex-col bg-slate-50 overflow-hidden max-w-[1600px] mx-auto w-full">
       {/* Header */}
-      <motion.div variants={fadeInUp} initial="hidden" animate="show" className="flex items-center justify-between px-3 lg:px-6 py-2 lg:py-4 border-b border-slate-200/60 bg-white/80 backdrop-blur-md sticky top-0 z-30 shrink-0">
+      <m.div variants={fadeInUp} initial="hidden" animate="show" className="flex items-center justify-between px-3 lg:px-6 py-2 lg:py-4 border-b border-slate-200/60 bg-white/80 backdrop-blur-md sticky top-0 z-30 shrink-0">
         <div className="flex items-center gap-2 lg:gap-4">
           <div className="p-1.5 lg:p-2.5 bg-red-50 text-red-500 rounded-lg lg:rounded-xl">
             <AlertTriangle className="size-5 lg:size-6" />
@@ -649,7 +653,7 @@ export default function Perimes() {
             <span className="hidden sm:inline">{t('common:refresh')}</span>
           </Button>
         </div>
-      </motion.div>
+      </m.div>
 
       {error && (
         <div className="px-3 lg:px-6 pt-2 lg:pt-4 shrink-0">
@@ -663,7 +667,7 @@ export default function Perimes() {
       {/* Content */}
       <div className="flex-1 overflow-auto px-3 lg:px-6 py-2 lg:py-4">
         <AnimatePresence mode="wait" initial={false}>
-        <motion.div key={activeTab} variants={tabContent} initial="hidden" animate="show" exit="exit">
+        <m.div key={activeTab} variants={tabContent} initial="hidden" animate="show" exit="exit">
         {activeTab === 'dashboard' ? (
           /* ========== DASHBOARD VIEW ========== */
           <div className="space-y-4 lg:space-y-6">
@@ -826,9 +830,11 @@ export default function Perimes() {
                              <PinOff className="size-4 mr-2" /> {t('perimes.shelf.unmark')}
                            </DropdownMenuItem>
                            <DropdownMenuSeparator />
-                           <DropdownMenuItem onClick={handleBulkSortir} className="text-red-500 focus:bg-red-50 focus:text-red-600">
-                             <Trash2 className="size-4 mr-2" /> {t('perimes.table.exit_btn')}
-                           </DropdownMenuItem>
+                           {canManagePerimes && (
+                             <DropdownMenuItem onClick={handleBulkSortir} className="text-red-500 focus:bg-red-50 focus:text-red-600">
+                               <Trash2 className="size-4 mr-2" /> {t('perimes.table.exit_btn')}
+                             </DropdownMenuItem>
+                           )}
                          </DropdownMenuContent>
                        </DropdownMenu>
                        <Button
@@ -1015,7 +1021,7 @@ export default function Perimes() {
                                 {row.lot.deplace_peremption_le ? <PinOff className="size-3.5" /> : <Pin className="size-3.5" />}
                               </Button>
                             )}
-                            {row.lot.quantity_remaining > 0 ? (
+                            {row.lot.quantity_remaining > 0 && canManagePerimes ? (
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -1026,12 +1032,12 @@ export default function Perimes() {
                                 <Trash2 className="size-3.5" />
                                 {t('perimes.table.exit_btn')}
                               </Button>
-                            ) : (
+                            ) : row.lot.quantity_remaining <= 0 ? (
                             <span className="text-caption font-black text-slate-400 uppercase tracking-widest flex items-center justify-center gap-1">
                               <Check className="size-3" />
                               {t('perimes.table.sorti')}
                             </span>
-                          )}
+                          ) : null}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -1059,16 +1065,18 @@ export default function Perimes() {
                       {t('perimes.shelf.unmark')}
                       <Badge variant="secondary">{selectedShelfIds.size}</Badge>
                     </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      className="gap-2"
-                      onClick={handleBulkSortirShelf}
-                      disabled={processing}
-                    >
-                      <Trash2 className="size-4" />
-                      {t('perimes.table.exit_btn')}
-                    </Button>
+                    {canManagePerimes && (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="gap-2"
+                        onClick={handleBulkSortirShelf}
+                        disabled={processing}
+                      >
+                        <Trash2 className="size-4" />
+                        {t('perimes.table.exit_btn')}
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="sm"
@@ -1292,7 +1300,7 @@ export default function Perimes() {
                              {t(`stock:ajustements.filters.reasons.${adj.reason_type}`, { defaultValue: adj.reason_type_display })} {adj.reason_detail ? `- ${adj.reason_detail}` : ''}
                            </TableCell>
                            <TableCell className="text-right px-4 py-2.5">
-                             {adj.reason_type === 'PERIME' && adj.quantity_change < 0 && !adj.restored && (
+                             {adj.reason_type === 'PERIME' && adj.quantity_change < 0 && !adj.restored && canManagePerimes && (
                                <Button
                                  variant="outline"
                                  size="sm"
@@ -1316,7 +1324,7 @@ export default function Perimes() {
              )}
           </div>
         )}
-        </motion.div>
+        </m.div>
         </AnimatePresence>
       </div>
 

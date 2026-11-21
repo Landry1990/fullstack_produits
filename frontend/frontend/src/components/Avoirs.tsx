@@ -13,7 +13,7 @@ import { AvoirsForm } from './avoirs/AvoirsForm';
 import { AvoirsDetails } from './avoirs/AvoirsDetails';
 import { AvoirsLotModal } from './avoirs/modals/AvoirsLotModal';
 import SudoValidationModal from './common/SudoValidationModal';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { staggerContainer, fadeInUp } from '../lib/motion';
 
 export default function Avoirs() {
@@ -76,14 +76,14 @@ export default function Avoirs() {
     // Default 'LIST' view
     return (
         <div className="h-full min-h-0 overflow-hidden bg-slate-50 p-2 sm:p-3 lg:p-4">
-            <motion.div
+            <m.div
                 variants={staggerContainer}
                 initial="hidden"
                 animate="show"
                 className="h-full max-w-[1600px] mx-auto space-y-3 overflow-hidden flex flex-col"
             >
                 {/* Header */}
-                <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <m.div variants={fadeInUp} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
                         <div className="size-10 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-600/20">
                             <FileText className="size-5" />
@@ -106,12 +106,12 @@ export default function Avoirs() {
                         {headerCollapsed ? <ChevronDown className="size-3.5" /> : <ChevronUp className="size-3.5" />}
                         {headerCollapsed ? t('common:show_header', 'Afficher') : t('common:hide_header', 'Masquer')}
                     </button>
-                </motion.div>
+                </m.div>
 
                 {!headerCollapsed && (
                     <>
                         {/* Filters Card */}
-                        <motion.div variants={fadeInUp}>
+                        <m.div variants={fadeInUp}>
                         <Card className="py-3">
                             <CardContent className="pb-2">
                                 <AvoirsFilters
@@ -126,17 +126,17 @@ export default function Avoirs() {
                                 />
                             </CardContent>
                         </Card>
-                        </motion.div>
+                        </m.div>
 
                         {/* Stats Cards */}
-                        <motion.div variants={fadeInUp}>
+                        <m.div variants={fadeInUp}>
                         <AvoirsQuickStats avoirs={avoirsData.avoirs} />
-                        </motion.div>
+                        </m.div>
                     </>
                 )}
 
                 {/* Table Card */}
-                <motion.div variants={fadeInUp} className="flex-1 min-h-0 flex flex-col">
+                <m.div variants={fadeInUp} className="flex-1 min-h-0 flex flex-col">
                 <Card className="overflow-hidden flex flex-col flex-1 min-h-0">
                     <div className="flex-1 overflow-hidden min-h-0 flex flex-col">
                         <AvoirsTable
@@ -159,7 +159,7 @@ export default function Avoirs() {
                         />
                     </div>
                 </Card>
-                </motion.div>
+                </m.div>
 
                 <SudoValidationModal
                     isOpen={sudoState.isOpen}
@@ -169,7 +169,7 @@ export default function Avoirs() {
                     title={sudoState.title || t('stock:avoirs.modals.sudo_validate_title')}
                     message={sudoState.message || t('stock:avoirs.modals.sudo_validate_message')}
                 />
-            </motion.div>
+            </m.div>
         </div>
     );
 }

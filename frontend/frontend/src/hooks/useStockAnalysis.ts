@@ -183,6 +183,40 @@ export const useStockAnalysis = () => {
         });
     };
 
+    // Récupère TOUS les items (toutes pages) pour l'export Excel.
+    // Le backend plafonne page_size à 500 → on boucle sur total_pages.
+    const EXPORT_PAGE_SIZE = 500;
+    const fetchAllItems = useCallback(async (): Promise<StockAnalysisItem[]> => {
+        if (activeTab === 'pilotage') return [];
+
+        const params: Record<string, string | number> = {
+            page: 1,
+            page_size: EXPORT_PAGE_SIZE
+        };
+        if (selectedFournisseur) params.fournisseur = selectedFournisseur;
+        if (activeTab === 'unsold') params.days = unsoldDays;
+
+        const first = await api.get<StockAnalysisResponse>(
+            `stock-analysis/${activeTab}/`,
+            { params }
+        );
+        const items = [...first.data.items];
+        const totalPages = first.data.total_pages ?? 1;
+
+        if (totalPages > 1) {
+            const rest = await Promise.all(
+                Array.from({ length: totalPages - 1 }, (_, i) =>
+                    api.get<StockAnalysisResponse>(
+                        `stock-analysis/${activeTab}/`,
+                        { params: { ...params, page: i + 2 } }
+                    )
+                )
+            );
+            for (const r of rest) items.push(...r.data.items);
+        }
+        return items;
+    }, [activeTab, selectedFournisseur, unsoldDays]);
+
     return {
         activeTab,
         setActiveTab,
@@ -199,6 +233,7 @@ export const useStockAnalysis = () => {
         setPage,
         actions: {
             fetchData,
+            fetchAllItems,
             handleGenerateOrder,
             toggleSelectItem,
             toggleSelectAll

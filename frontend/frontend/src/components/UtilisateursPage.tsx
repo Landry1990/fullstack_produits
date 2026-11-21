@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { staggerContainer, fadeInUp } from '../lib/motion';
 import { useTranslation } from 'react-i18next';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './shadcn/tabs';
@@ -15,14 +15,14 @@ const UtilisateursPage: React.FC<UtilisateursPageProps> = ({ defaultTab = 'users
   const { t } = useTranslation(['users']);
 
   return (
-    <motion.div
+    <m.div
       variants={staggerContainer}
       initial="hidden"
       animate="show"
       className="flex flex-col min-h-full"
     >
       <Tabs defaultValue={defaultTab} className="flex flex-col flex-1">
-        <motion.div variants={fadeInUp} className="px-6 pt-4">
+        <m.div variants={fadeInUp} className="px-6 pt-4">
           <TabsList>
             <TabsTrigger value="users" className="gap-2">
               <Users className="h-4 w-4" />
@@ -33,7 +33,7 @@ const UtilisateursPage: React.FC<UtilisateursPageProps> = ({ defaultTab = 'users
               {t('page_tabs.sessions', 'Sessions')}
             </TabsTrigger>
           </TabsList>
-        </motion.div>
+        </m.div>
         <TabsContent value="users" className="flex-1 mt-0">
           <GestionUtilisateurs />
         </TabsContent>
@@ -41,7 +41,7 @@ const UtilisateursPage: React.FC<UtilisateursPageProps> = ({ defaultTab = 'users
           <UserSessions />
         </TabsContent>
       </Tabs>
-    </motion.div>
+    </m.div>
   );
 };
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { staggerContainer, staggerGrid, fadeInUp } from '../lib/motion';
 import { useTranslation } from 'react-i18next';
 import api from '../services/api';
@@ -130,9 +130,9 @@ export default function ClassementVendeurs() {
   const { LineChart, Line, BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } = Recharts;
 
   return (
-    <motion.div variants={staggerContainer} initial="hidden" animate="show" className="p-3 space-y-3">
+    <m.div variants={staggerContainer} initial="hidden" animate="show" className="p-3 space-y-3">
       {/* Header */}
-      <motion.div variants={fadeInUp} className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 px-4 py-2.5">
+      <m.div variants={fadeInUp} className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 px-4 py-2.5">
         <div>
           <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
             🏆 {t('sellers:ranking.title')}
@@ -160,13 +160,13 @@ export default function ClassementVendeurs() {
             <option value="annee">{t('sellers:ranking.period.year')}</option>
           </select>
         </div>
-      </motion.div>
+      </m.div>
 
       {/* Stats Cards */}
       {ranking && ranking.data.length > 0 && (
-        <motion.div variants={staggerGrid} className="grid grid-cols-1 md:grid-cols-3 gap-2">
+        <m.div variants={staggerGrid} className="grid grid-cols-1 md:grid-cols-3 gap-2">
           {ranking.data.slice(0, 3).map((v, i) => (
-            <motion.div
+            <m.div
               key={v.vendeur_id}
               variants={fadeInUp}
               className={`rounded-xl border shadow-sm cursor-pointer hover:shadow-md transition-shadow px-3 py-2 flex items-center gap-3 ${
@@ -202,13 +202,13 @@ export default function ClassementVendeurs() {
                   {v.nbre_ventes} {t('sellers:ranking.sales_count')} · {t('sellers:ranking.avg_basket')}: {formatMoney(v.panier_moyen, t('common:currency'))}
                 </p>
               </div>
-            </motion.div>
+            </m.div>
           ))}
-        </motion.div>
+        </m.div>
       )}
 
       {/* Main Content */}
-      <motion.div variants={fadeInUp} className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+      <m.div variants={fadeInUp} className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         {/* Ranking Table */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-3">
           <h3 className="text-base font-bold text-slate-800 mb-3">
@@ -308,11 +308,11 @@ export default function ClassementVendeurs() {
             </div>
           )}
         </div>
-      </motion.div>
+      </m.div>
 
       {/* Bar Chart Comparison (Top 5) */}
       {ranking && ranking.data.length > 0 && (
-        <motion.div variants={fadeInUp} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-3">
+        <m.div variants={fadeInUp} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-3">
           <h3 className="text-base font-bold text-slate-800 mb-3">
             {t('sellers:ranking.comparison')}
           </h3>
@@ -329,8 +329,8 @@ export default function ClassementVendeurs() {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
-        </motion.div>
+        </m.div>
       )}
-    </motion.div>
+    </m.div>
   );
 }

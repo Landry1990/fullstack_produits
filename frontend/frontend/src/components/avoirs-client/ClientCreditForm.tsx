@@ -495,8 +495,8 @@ export const ClientCreditForm: React.FC<ClientCreditFormProps> = ({
                                 </div>
                                 <div className="space-y-1.5 xl:col-span-1">
                                     <span className="block text-xs font-bold uppercase tracking-wider text-slate-500">{t('form.total')}</span>
-                                    <div className="flex h-11 items-center justify-end whitespace-nowrap font-black text-slate-800">
-                                        {formatCurrency(getLineTotal(line))}
+                                    <div className="flex h-11 items-center justify-end whitespace-nowrap font-black text-red-600">
+                                        -{formatCurrency(getLineTotal(line))}
                                     </div>
                                 </div>
                             </div>
@@ -529,7 +529,7 @@ export const ClientCreditForm: React.FC<ClientCreditFormProps> = ({
 
                 <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-5 py-4">
                     <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('form.total')}</span>
-                    <span className="text-xl font-black text-slate-900">{formatCurrency(total)}</span>
+                    <span className="text-xl font-black text-red-600">-{formatCurrency(total)}</span>
                 </div>
             </div>
 

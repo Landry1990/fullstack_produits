@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { staggerContainer, fadeInUp } from '../lib/motion';
 import { PackageOpen, Calendar, Download, RefreshCw, Banknote, Printer, Search, Eye, X } from 'lucide-react';
 import api from '../services/api';
@@ -242,12 +242,12 @@ export default function StockUGReportShadcn() {
   }, []);
 
   return (
-    <motion.div variants={staggerContainer} initial="hidden" animate="show" className="h-full flex flex-col bg-base-200 p-2 lg:p-3">
+    <m.div variants={staggerContainer} initial="hidden" animate="show" className="h-full flex flex-col bg-base-200 p-2 lg:p-3">
       <GoeyToaster position="top-right" />
 
-      <motion.div variants={fadeInUp} className="max-w-[1600px] w-full space-y-3">
+      <m.div variants={fadeInUp} className="max-w-[1600px] w-full space-y-3">
         {/* Header */}
-        <motion.div variants={fadeInUp} className="flex flex-col md:flex-row md:items-end justify-between gap-3 px-4 py-2.5">
+        <m.div variants={fadeInUp} className="flex flex-col md:flex-row md:items-end justify-between gap-3 px-4 py-2.5">
           <div className="flex items-center gap-3">
             <div className="size-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-200">
               <PackageOpen className="size-7" />
@@ -291,10 +291,10 @@ export default function StockUGReportShadcn() {
               {t('stock:rapport_ug.refresh')}
             </Button>
           </div>
-        </motion.div>
+        </m.div>
 
         {/* Global KPIs */}
-        <motion.div variants={fadeInUp} className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+        <m.div variants={fadeInUp} className="grid grid-cols-2 lg:grid-cols-4 gap-2">
           {kpiCards.map((kpi) => (
             <Card key={kpi.title} className="flex items-center gap-2 px-3 py-2">
               <div className={`size-10 rounded-xl ${kpi.bg} ${kpi.color} flex items-center justify-center shrink-0`}>
@@ -308,10 +308,10 @@ export default function StockUGReportShadcn() {
               </div>
             </Card>
           ))}
-        </motion.div>
+        </m.div>
 
         {/* List Card */}
-        <motion.div variants={fadeInUp}>
+        <m.div variants={fadeInUp}>
         <Card className="overflow-hidden flex flex-col">
           {/* Toolbar */}
           <div className="px-4 py-2.5 border-b border-base-200 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-2 bg-base-200/50">
@@ -452,8 +452,8 @@ export default function StockUGReportShadcn() {
             )}
           </div>
         </Card>
-        </motion.div>
-      </motion.div>
+        </m.div>
+      </m.div>
 
       {/* Supplier Details Dialog */}
       <Dialog open={!!selectedSupplier} onOpenChange={() => setSelectedSupplier(null)}>
@@ -532,6 +532,6 @@ export default function StockUGReportShadcn() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </motion.div>
+    </m.div>
   );
 }

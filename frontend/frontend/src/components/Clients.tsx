@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { staggerContainer, fadeInUp, tabContent } from '../lib/motion';
 import api from '../services/api';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -34,6 +34,7 @@ import clientService from '../services/clientService';
 import { formatCurrency, normalizeNumberInput } from '../utils/formatters';
 import { clientSchema } from '../schemas/clientSchema';
 import { useConfirm } from '../hooks/useConfirm';
+import { useAuth } from '../context/AuthContext';
 
 // Components
 import LoyaltyConfigModal from './LoyaltyConfigModal';
@@ -64,6 +65,7 @@ const emptyForm: Partial<Client> = {
 
 export default function Clients() {
   const { t } = useTranslation(['clients', 'common']);
+  const { user } = useAuth();
   const confirm = useConfirm();
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -481,21 +483,21 @@ export default function Clients() {
   };
 
   return (
-    <motion.div
+    <m.div
       variants={staggerContainer}
       initial="hidden"
       animate="show"
       className="flex flex-col lg:flex-row h-full bg-slate-50 max-w-[1600px] mx-auto w-full"
     >
       {/* LEFT PANEL */}
-      <motion.div variants={fadeInUp} className={cn("w-full lg:w-1/3 border-b lg:border-b-0 lg:border-r border-slate-200 flex flex-col bg-white h-full lg:h-full", selectedClient ? 'hidden lg:flex' : 'flex')}>
+      <m.div variants={fadeInUp} className={cn("w-full lg:w-1/3 border-b lg:border-b-0 lg:border-r border-slate-200 flex flex-col bg-white h-full lg:h-full", selectedClient ? 'hidden lg:flex' : 'flex')}>
         <div className="p-4 border-b border-slate-200 space-y-4">
            {selectedIds.length > 0 ? (
              <SelectionHeader
                 selectedCount={selectedIds.length}
                 onClear={() => setSelectedIds([])}
                 colSpan={1}
-                actions={
+                actions={user?.is_superuser ? (
                   <DropdownMenuItem
                     onSelect={handleBulkDelete}
                     className="gap-2.5 px-3 py-2 rounded-md cursor-pointer text-red-600 font-semibold focus:bg-red-50 focus:text-red-600 dark:focus:bg-red-950/50"
@@ -503,7 +505,7 @@ export default function Clients() {
                     <Trash2 className="size-4" />
                     {t('clients:actions.bulk_delete', { count: selectedIds.length })}
                   </DropdownMenuItem>
-                }
+                ) : undefined}
              >
                 <></>
              </SelectionHeader>
@@ -641,12 +643,12 @@ export default function Clients() {
             onPageChange={setCurrentPage}
           />
         </div>
-      </motion.div>
+      </m.div>
 
       {/* RIGHT PANEL */}
-      <motion.div variants={fadeInUp} className={cn("flex-1 bg-slate-50 flex flex-col overflow-hidden max-w-full h-full", !selectedClient ? 'hidden lg:flex' : 'flex')}>
+      <m.div variants={fadeInUp} className={cn("flex-1 bg-slate-50 flex flex-col overflow-hidden max-w-full h-full", !selectedClient ? 'hidden lg:flex' : 'flex')}>
         <AnimatePresence mode="wait" initial={false}>
-        <motion.div
+        <m.div
           key={selectedClient?.id ?? 'empty'}
           variants={tabContent}
           initial="hidden"
@@ -685,17 +687,21 @@ export default function Clients() {
                   <Button variant="outline" size="sm" className="gap-2" onClick={() => handleOpenEdit(selectedClient)}>
                     <Edit className="size-4" /> {t('common:edit')}
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-2 border-indigo-200 text-indigo-600 hover:bg-indigo-50"
-                    onClick={() => setIsMergeTargetModalOpen(true)}
-                  >
-                    <GitMerge className="size-4" /> {t('clients:actions.merge_client')}
-                  </Button>
-                  <Button variant="outline" size="sm" className="gap-2 border-red-200 text-red-600 hover:bg-red-50" onClick={handleDelete}>
-                    <Trash2 className="size-4" /> {t('common:delete')}
-                  </Button>
+                  {user?.is_superuser && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2 border-indigo-200 text-indigo-600 hover:bg-indigo-50"
+                      onClick={() => setIsMergeTargetModalOpen(true)}
+                    >
+                      <GitMerge className="size-4" /> {t('clients:actions.merge_client')}
+                    </Button>
+                  )}
+                  {user?.is_superuser && (
+                    <Button variant="outline" size="sm" className="gap-2 border-red-200 text-red-600 hover:bg-red-50" onClick={handleDelete}>
+                      <Trash2 className="size-4" /> {t('common:delete')}
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     size="icon"
@@ -718,16 +724,18 @@ export default function Clients() {
                       <CreditCard className="size-4" />
                     </Button>
                   )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleToggleActive}
-                    className="text-slate-500"
-                    title={selectedClient.is_active ? t('clients:actions.mask_client') : t('clients:actions.reactivate_client')}
-                    aria-label={selectedClient.is_active ? t('clients:actions.mask_client') : t('clients:actions.reactivate_client')}
-                  >
-                    {selectedClient.is_active ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                  </Button>
+                  {user?.is_superuser && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleToggleActive}
+                      className="text-slate-500"
+                      title={selectedClient.is_active ? t('clients:actions.mask_client') : t('clients:actions.reactivate_client')}
+                      aria-label={selectedClient.is_active ? t('clients:actions.mask_client') : t('clients:actions.reactivate_client')}
+                    >
+                      {selectedClient.is_active ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    </Button>
+                  )}
                </div>
             </div>
 
@@ -915,9 +923,9 @@ export default function Clients() {
             description={t('clients:modals.select_client_empty_desc')}
           />
         )}
-        </motion.div>
+        </m.div>
         </AnimatePresence>
-      </motion.div>
+      </m.div>
 
       {/* MODALS */}
       <ClientFormModal 
@@ -974,6 +982,7 @@ export default function Clients() {
         onKeepNew={handleKeepNew}
         onMerge={handleMerge}
         candidates={mergeCandidates}
+        canMerge={!!user?.is_superuser}
       />
 
       <ClientMergeTargetModal
@@ -983,6 +992,6 @@ export default function Clients() {
         source={selectedClient}
         isSubmitting={isMergingClient}
       />
-    </motion.div>
+    </m.div>
   );
 }

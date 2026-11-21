@@ -11,6 +11,7 @@ import { gooeyToast } from 'goey-toast';
 
 import type { Inventaire } from '../../../types';
 import { useInventaireEditor } from '../../../hooks/inventaire/useInventaireEditor';
+import { usePermissions } from '../../../hooks/usePermissions';
 import { useProductSearch } from '../../../hooks/inventaire/useProductSearch';
 import { useInventairePDF } from '../../../hooks/inventaire/useInventairePDF';
 import { LocalizedDateInput } from '../../LocalizedDateInput';
@@ -33,6 +34,9 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
     editorLogic
 }) => {
     const { t } = useTranslation(['stock', 'common']);
+    const { hasPerm } = usePermissions();
+    // Validation de l'inventaire (ajustement de stock) : sudo can_adjust_stock.
+    const canAdjustStock = hasPerm('can_adjust_stock');
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     
     const [activeTab, setActiveTab] = React.useState<'ENTRY' | 'ANALYSIS'>('ENTRY');
@@ -278,17 +282,19 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                             <span className="hidden sm:inline">{t('common:import')}</span>
                         </button>
 
-                        <button
-                            type="button"
-                            className="inline-flex items-center justify-center h-9 px-4 rounded-xl gap-2 text-sm font-black bg-emerald-600 text-white shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-colors disabled:opacity-60"
-                            onClick={handleOpenValidateModal}
-                            disabled={saving}
-                        >
-                            {saving
-                                ? <div className="animate-spin rounded-full size-4 border-b-2 border-white"></div>
-                                : <CheckCircle2 className="h-4 w-4" />}
-                            {t('inventaire.detail.validate')}
-                        </button>
+                        {canAdjustStock && (
+                            <button
+                                type="button"
+                                className="inline-flex items-center justify-center h-9 px-4 rounded-xl gap-2 text-sm font-black bg-emerald-600 text-white shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-colors disabled:opacity-60"
+                                onClick={handleOpenValidateModal}
+                                disabled={saving}
+                            >
+                                {saving
+                                    ? <div className="animate-spin rounded-full size-4 border-b-2 border-white"></div>
+                                    : <CheckCircle2 className="h-4 w-4" />}
+                                {t('inventaire.detail.validate')}
+                            </button>
+                        )}
                     </div>
                   )}
                 </div>
@@ -355,7 +361,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
           </div>
 
           {/* Bottom action bar */}
-          {!isReadOnly && activeInventaire && (
+          {!isReadOnly && activeInventaire && canAdjustStock && (
               <div className="shrink-0 p-4 bg-white rounded-2xl shadow-sm border border-slate-200 flex items-center justify-end gap-3">
                   <button
                       type="button"

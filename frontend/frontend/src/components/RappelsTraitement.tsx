@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { staggerContainer, fadeInUp } from '../lib/motion';
 import { gooeyToast } from 'goey-toast';
 import { BellPlus, Calendar, Check, Pencil, Phone, Pill, Search, Settings2, Trash2, X } from 'lucide-react';
@@ -289,11 +289,11 @@ export default function RappelsTraitement() {
     ];
 
     return (
-        <motion.div variants={staggerContainer} initial="hidden" animate="show"
+        <m.div variants={staggerContainer} initial="hidden" animate="show"
             className="h-full min-h-0 flex flex-col bg-slate-100 p-2 lg:p-3 gap-3 font-sans overflow-hidden max-w-[1600px] mx-auto w-full">
 
             {/* Header */}
-            <motion.div variants={fadeInUp} className="bg-white rounded-xl shadow-sm border border-slate-200 px-4 py-3 flex flex-wrap justify-between items-center gap-3 shrink-0">
+            <m.div variants={fadeInUp} className="bg-white rounded-xl shadow-sm border border-slate-200 px-4 py-3 flex flex-wrap justify-between items-center gap-3 shrink-0">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl"><Pill className="size-6" /></div>
                     <div>
@@ -307,11 +307,11 @@ export default function RappelsTraitement() {
                         <BellPlus className="size-4" /> {t('rappels:new')}
                     </button>
                 )}
-            </motion.div>
+            </m.div>
 
             {/* Réglages (admin) */}
             {isAdmin && (
-                <motion.div variants={fadeInUp} className="bg-white rounded-xl shadow-sm border border-slate-200 px-4 py-3 flex flex-wrap items-center gap-4 shrink-0">
+                <m.div variants={fadeInUp} className="bg-white rounded-xl shadow-sm border border-slate-200 px-4 py-3 flex flex-wrap items-center gap-4 shrink-0">
                     <div className="flex items-center gap-2 text-slate-500">
                         <Settings2 className="size-4" />
                         <span className="text-caption font-bold uppercase tracking-widest">{t('rappels:settings.title')}</span>
@@ -333,11 +333,11 @@ export default function RappelsTraitement() {
                         className="ml-auto h-8 px-4 rounded-lg bg-slate-700 text-white text-caption font-bold uppercase tracking-widest hover:bg-slate-800 transition-colors">
                         {t('rappels:settings.save')}
                     </button>
-                </motion.div>
+                </m.div>
             )}
 
             {/* Filtres statut */}
-            <motion.div variants={fadeInUp} className="flex gap-2 shrink-0">
+            <m.div variants={fadeInUp} className="flex gap-2 shrink-0">
                 {tabs.map(tb => (
                     <button key={tb.key} onClick={() => setStatutFilter(tb.key)}
                         className={`h-9 px-4 rounded-xl text-caption font-bold uppercase tracking-widest transition-all ${
@@ -348,15 +348,15 @@ export default function RappelsTraitement() {
                         {tb.label}
                     </button>
                 ))}
-            </motion.div>
+            </m.div>
 
             {/* Table */}
-            <motion.div variants={fadeInUp} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-auto flex-1 min-h-0">
+            <m.div variants={fadeInUp} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-auto flex-1 min-h-0">
                 <table className="w-full text-sm">
                     <thead className="bg-slate-50 border-b border-slate-200 sticky top-0">
                         <tr>
-                            {[t('rappels:table.client'), t('rappels:table.produit'), t('rappels:table.posologie'), t('rappels:table.debut'), t('rappels:table.fin'), t('rappels:table.reste'), t('rappels:table.statut'), ''].map((h, i) => (
-                                <th key={i} className="px-4 py-3 text-left text-caption font-bold uppercase tracking-widest text-slate-400 whitespace-nowrap">{h}</th>
+                            {[t('rappels:table.client'), t('rappels:table.produit'), t('rappels:table.posologie'), t('rappels:table.debut'), t('rappels:table.fin'), t('rappels:table.reste'), t('rappels:table.statut'), ''].map((h) => (
+                                <th key={h} className="px-4 py-3 text-left text-caption font-bold uppercase tracking-widest text-slate-400 whitespace-nowrap">{h}</th>
                             ))}
                         </tr>
                     </thead>
@@ -426,7 +426,7 @@ export default function RappelsTraitement() {
                         ))}
                     </tbody>
                 </table>
-            </motion.div>
+            </m.div>
 
             {error && (
                 <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
@@ -507,6 +507,6 @@ export default function RappelsTraitement() {
                     </div>
                 </div>
             </PremiumModal>
-        </motion.div>
+        </m.div>
     );
 }

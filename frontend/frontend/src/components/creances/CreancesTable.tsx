@@ -41,6 +41,8 @@ interface CreancesTableProps {
     onRelance: (clientId: number) => void;
     onViewDetails: (creance: Creance) => void;
     onPay: (creance: Creance) => void;
+    /** Encaissement : boutons masqués si l'utilisateur n'a pas can_cash_out. */
+    canPay?: boolean;
     sortConfig: { key: string, direction: 'asc' | 'desc' };
     onSort: (key: unknown) => void;
     /** Délai de règlement (jours) du client sélectionné — 0 = pas d'échéance */
@@ -59,6 +61,7 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
     onRelance,
     onViewDetails,
     onPay,
+    canPay = true,
     sortConfig,
     onSort,
     clientDelai = 0
@@ -352,7 +355,7 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                                         >
                                             <Eye className="size-4" />
                                         </button>
-                                        {!isPaid && (
+                                        {!isPaid && canPay && (
                                             <button
                                                 onClick={() => onPay(creance)}
                                                 className="inline-flex items-center justify-center size-8 rounded-full bg-emerald-600 text-white shadow-lg shadow-emerald-200 hover:scale-110 active:scale-95 transition-all"

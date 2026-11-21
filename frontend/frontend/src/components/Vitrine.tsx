@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { staggerContainer, fadeInUp } from '../lib/motion';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -103,14 +103,14 @@ function GestionVitrine({
   const isAllSelected = products.length > 0 && selectedIds.size === products.length;
 
   return (
-    <motion.div
+    <m.div
       variants={staggerContainer}
       initial="hidden"
       animate="show"
       className="space-y-6 relative"
     >
       {/* Filters */}
-      <motion.div variants={fadeInUp}>
+      <m.div variants={fadeInUp}>
       <Card className="p-6 shadow-lg hover:-translate-y-1 transition-transform flex flex-col lg:flex-row gap-4 items-stretch lg:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-base-content/40" />
@@ -133,11 +133,11 @@ function GestionVitrine({
           </div>
         </div>
       </Card>
-      </motion.div>
+      </m.div>
 
       {/* Bulk Actions Bar */}
       {selectedIds.size > 0 && (
-        <motion.div variants={fadeInUp} initial="hidden" animate="show">
+        <m.div variants={fadeInUp} initial="hidden" animate="show">
         <Card
           className="p-4 bg-transparent border-2 shadow-none flex flex-col sm:flex-row justify-between items-center gap-4 animate-in slide-in-from-top-2"
         >
@@ -179,11 +179,11 @@ function GestionVitrine({
             </Button>
           </div>
         </Card>
-        </motion.div>
+        </m.div>
       )}
 
       {/* Table */}
-      <motion.div variants={fadeInUp}>
+      <m.div variants={fadeInUp}>
       <Card className="p-0 overflow-hidden">
         <div className="overflow-x-auto">
           <Table className="table-fixed">
@@ -309,8 +309,8 @@ function GestionVitrine({
           </Table>
         </div>
       </Card>
-      </motion.div>
-    </motion.div>
+      </m.div>
+    </m.div>
   );
 }
 
@@ -410,14 +410,14 @@ function SimulateurClient() {
   };
 
   return (
-    <motion.div
+    <m.div
       variants={staggerContainer}
       initial="hidden"
       animate="show"
       className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-auto lg:h-full"
     >
       {/* Colonne Recherche */}
-      <motion.div variants={fadeInUp} className="lg:col-span-2 space-y-4 order-1 lg:order-none">
+      <m.div variants={fadeInUp} className="lg:col-span-2 space-y-4 order-1 lg:order-none">
         <Card className="p-8 shadow-lg hover:-translate-y-1 transition-transform">
           <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
             <Search className="size-6 text-primary" />
@@ -502,10 +502,10 @@ function SimulateurClient() {
             )}
           </div>
         </Card>
-      </motion.div>
+      </m.div>
 
       {/* Colonne "Panier" */}
-      <motion.div variants={fadeInUp} className="lg:col-span-1 order-2 lg:order-none">
+      <m.div variants={fadeInUp} className="lg:col-span-1 order-2 lg:order-none">
         <Card className="p-0 shadow-lg hover:-translate-y-1 transition-transform h-full sticky top-4 overflow-hidden flex flex-col">
           <div className="bg-primary/5 p-5 border-b border-primary/10">
             <div className="flex justify-between items-center">
@@ -628,8 +628,8 @@ function SimulateurClient() {
             )}
           </div>
         </Card>
-      </motion.div>
-    </motion.div>
+      </m.div>
+    </m.div>
   );
 }
 
@@ -731,13 +731,13 @@ export default function Vitrine() {
   });
 
   return (
-    <motion.div
+    <m.div
       variants={staggerContainer}
       initial="hidden"
       animate="show"
       className="p-4 lg:p-6 space-y-6"
     >
-      <motion.div variants={fadeInUp} className="flex flex-col lg:flex-row gap-4 lg:items-center justify-between">
+      <m.div variants={fadeInUp} className="flex flex-col lg:flex-row gap-4 lg:items-center justify-between">
         <div>
           <h1 className="text-2xl lg:text-3xl font-bold flex items-center gap-2">
             <Globe className="size-6 lg:size-8 text-emerald-500" />
@@ -769,7 +769,7 @@ export default function Vitrine() {
             </TabsList>
           </Tabs>
         </div>
-      </motion.div>
+      </m.div>
 
       {activeTab === 'gestion' ? (
         <GestionVitrine
@@ -786,6 +786,6 @@ export default function Vitrine() {
       ) : (
         <SimulateurClient />
       )}
-    </motion.div>
+    </m.div>
   );
 }

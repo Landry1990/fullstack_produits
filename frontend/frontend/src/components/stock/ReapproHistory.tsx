@@ -39,7 +39,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from '../shadcn/dialog';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { staggerContainer, fadeInUp } from '../../lib/motion';
 
 interface ReapproAdjustment {
@@ -113,14 +113,14 @@ export default function ReapproHistory() {
   }, [history, searchQuery]);
 
   return (
-    <motion.div
+    <m.div
       variants={staggerContainer}
       initial="hidden"
       animate="show"
       className="h-full flex flex-col bg-slate-50 p-4 sm:p-6 gap-4 sm:gap-6 font-sans"
     >
       {/* Header */}
-      <motion.div variants={fadeInUp} className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+      <m.div variants={fadeInUp} className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
           <Link to="/app/reappro-rayon">
             <Button variant="outline" size="sm" className="rounded-full w-10 h-10 p-0" aria-label={t('common:back')}>
@@ -157,10 +157,10 @@ export default function ReapproHistory() {
             />
           </div>
         </div>
-      </motion.div>
+      </m.div>
 
       {/* Main Content */}
-      <motion.div variants={fadeInUp}>
+      <m.div variants={fadeInUp}>
       <Card className="rounded-2xl overflow-hidden p-0">
         <div className="overflow-x-auto">
           <Table className="table-fixed">
@@ -264,7 +264,7 @@ export default function ReapproHistory() {
           </Table>
         </div>
       </Card>
-      </motion.div>
+      </m.div>
 
       {/* Detail Dialog */}
       <Dialog open={!!selectedSession} onOpenChange={(open) => !open && setSelectedSession(null)}>
@@ -362,6 +362,6 @@ export default function ReapproHistory() {
           </div>
         </DialogContent>
       </Dialog>
-    </motion.div>
+    </m.div>
   );
 }

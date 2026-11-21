@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { staggerContainer, fadeInUp } from '../../lib/motion';
 import { Eye, Trash2, GitMerge, Sparkles, Plus, Search, X, Package, Loader2 } from 'lucide-react';
 import type { Commande, Fournisseur } from '../../types';
@@ -18,6 +18,7 @@ import {
   TableRow,
 } from '../shadcn/table';
 import CommandeSelectionHeader from './CommandeSelectionHeader';
+import { usePermissions } from '../../hooks/usePermissions';
 import { cn } from '../../lib/utils';
 import { EmptyState } from '../ui/EmptyState';
 import PaginationControls from '../ui/PaginationControls';
@@ -160,6 +161,8 @@ export default function CommandeList({
 }: CommandeListProps) {
 
   const { t } = useTranslation(['orders', 'common']);
+  const { hasPerm } = usePermissions();
+  const canDeleteCommande = hasPerm('can_delete_commande');
 
 
 
@@ -177,14 +180,14 @@ export default function CommandeList({
 
 
   return (
-    <motion.div
+    <m.div
       variants={staggerContainer}
       initial="hidden"
       animate="show"
       className="flex flex-col h-full p-4 space-y-3"
     >
       {/* Header Section */}
-      <motion.div variants={fadeInUp} className="flex flex-col md:flex-row justify-between items-center gap-4 shrink-0">
+      <m.div variants={fadeInUp} className="flex flex-col md:flex-row justify-between items-center gap-4 shrink-0">
         <div className="flex items-center gap-2">
           <h1 className="text-lg font-semibold text-slate-800">{t('orders:list.title')}</h1>
           <Badge variant="secondary" className="text-xs">{totalCount}</Badge>
@@ -213,12 +216,12 @@ export default function CommandeList({
             {t('orders:list.create_btn')}
           </Button>
         </div>
-      </motion.div>
+      </m.div>
 
 
 
       {/* Unified Filter/Sort Bar */}
-      <motion.div variants={fadeInUp} className="flex flex-wrap items-center gap-3 p-3 bg-white rounded-lg border border-slate-200 shadow-sm shrink-0">
+      <m.div variants={fadeInUp} className="flex flex-wrap items-center gap-3 p-3 bg-white rounded-lg border border-slate-200 shadow-sm shrink-0">
         <div className="flex items-center gap-2 mr-2">
           <span className="text-caption font-semibold uppercase tracking-wider text-slate-400">{t('orders:list.sort_by')}:</span>
           <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
@@ -345,10 +348,10 @@ export default function CommandeList({
               {t('orders:list.filters.closed')} ({statusCounts.CLOT || 0})
             </Button>
           </div>
-        </motion.div>
+        </m.div>
 
       {/* Table Section */}
-      <motion.div variants={fadeInUp} className="flex-1 min-h-0 overflow-auto bg-white rounded-xl shadow-sm border border-slate-200">
+      <m.div variants={fadeInUp} className="flex-1 min-h-0 overflow-auto bg-white rounded-xl shadow-sm border border-slate-200">
         <Table className="table-fixed min-w-[900px] text-sm">
           <TableHeader>
             <TableRow className="bg-slate-50 text-slate-500 border-b border-slate-200 hover:bg-slate-50">
@@ -404,7 +407,7 @@ export default function CommandeList({
 
                                 </li>
 
-                                {commande.status === 'PREP' && (
+                                {commande.status === 'PREP' && canDeleteCommande && (
 
                                      <li>
 
@@ -450,15 +453,19 @@ export default function CommandeList({
 
                           )}
 
-                          <li>
+                          {canDeleteCommande && (
 
-                            <a role="button" tabIndex={0} onClick={onBulkDelete} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onBulkDelete(); } }} className="flex items-center gap-2 py-2 hover:bg-error/10 text-error font-medium text-sm">
+                            <li>
 
-                              <Trash2 className="size-4" /> {t('orders:bulk_delete_btn')}
+                              <a role="button" tabIndex={0} onClick={onBulkDelete} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onBulkDelete(); } }} className="flex items-center gap-2 py-2 hover:bg-error/10 text-error font-medium text-sm">
 
-                            </a>
+                                <Trash2 className="size-4" /> {t('orders:bulk_delete_btn')}
 
-                          </li>
+                              </a>
+
+                            </li>
+
+                          )}
 
                         </>
 
@@ -617,12 +624,12 @@ export default function CommandeList({
 
         </Table>
 
-      </motion.div>
+      </m.div>
 
 
 
       {/* Pagination Footer */}
-      <motion.div variants={fadeInUp} className="flex flex-col px-4 py-2 bg-white rounded-lg border border-slate-200 shadow-sm shrink-0 gap-1.5">
+      <m.div variants={fadeInUp} className="flex flex-col px-4 py-2 bg-white rounded-lg border border-slate-200 shadow-sm shrink-0 gap-1.5">
         {/* Ligne 1 : Info + Pagination */}
         <div className="flex items-center justify-between">
           <div className="text-xs font-medium text-slate-400">
@@ -656,9 +663,9 @@ export default function CommandeList({
             </div>
           );
         })()}
-      </motion.div>
+      </m.div>
 
-    </motion.div>
+    </m.div>
 
   );
 

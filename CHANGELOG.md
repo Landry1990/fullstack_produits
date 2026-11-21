@@ -2,6 +2,106 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-11-21 — React Doctor : 77 findings traités (LazyMotion + micro-fixes)
+
+- Scan `react-doctor` à la racine : 77 warnings, dont 67 `use-lazy-motion`.
+  `LazyMotion` + `domAnimation` ajoutés à la racine (`main.tsx`) et les 63
+  fichiers composants convertis de `motion.*` vers `m.*` (AnimatePresence,
+  MotionConfig et variants `lib/motion` préservés) → bundle allégé.
+- Fixes ciblés : clés stables sans index (`RappelsTraitement`, `TraceurLots`),
+  `AnimatePresence` déplacé hors du conditionnel qui le démontait (`Sidebar`),
+  `.find()` en boucle remplacé par une `Map` (`SimplePrintLabelsModal`),
+  lookups en boucle en `Set.has` (`ConversationsPanel`, `MessageList`),
+  awaits sériels parallélisés (`MessagingCenter`), `Intl.NumberFormat`
+  hoisté au module (`Comptabilite`), `revokeObjectURL` ajouté
+  (`usePromisData`, via `finally` + délai pour laisser l'onglet charger).
+- Restants après re-scan (2) : le `createObjectURL` ci-dessus (faux positif —
+  le revoke existe mais non détecté dans `setTimeout`) et
+  `duplicate-jsx-subtree` entre `mobile-facturation` et `pda-inventaire`
+  (LoginScreen, hors périmètre).
+- Vérifs : `tsc --noEmit` OK, ESLint fichiers modifiés OK, build Vite OK,
+  vitest StockAnalysis 10/11 (échec format devise pré-existant).
+
+## 2026-11-20 — Avoirs clients : montants affichés en négatif
+
+- Une note de crédit représente une sortie d'argent : les montants affichés
+  passent en négatif rouge — colonne Montant de la liste, modale de détail
+  (montant + totaux de lignes), formulaire de création (totaux de ligne et
+  total général) et export Excel (valeur `-montant`). Prix unitaires et
+  quantités restent positifs (composition de l'avoir).
+- Le stockage reste positif : `AvoirClient.montant_total` impose
+  `MinValueValidator(0)` et alimente `MouvementCaisse SORTIE` / `DepotClient
+  DEPOT`, qui attendent des montants positifs. Changement d'affichage
+  uniquement, aucune migration.
+- Rappel métier : la validation crée un `MouvementCaisse SORTIE` pour un
+  remboursement monétaire ; `refund_method='credit'` crée un `DepotClient`
+  à la place (pas de ligne au journal de caisse).
+- Fichiers : `ClientCreditsList.tsx`, `ClientCreditsPage.tsx`,
+  `ClientCreditForm.tsx`, `api/views/ventes/client_credit.py`.
+
+## 2026-11-20 — Badge « Stock faible » masqué pour les invendus (rotation nulle)
+
+- Dans la recherche produit (`ProductSearch`), le badge s'affichait dès que
+  `stock <= stock_minimum`, même pour un produit qui ne se vend jamais :
+  un invendu avec `stock_minimum` hérité de l'import se retrouvait flaggé.
+  La condition exige désormais une rotation > 0 (`rotation_moyenne`, présent
+  dans `ProduitListSerializer` donc dispo en caisse, omnisearch, récents) ;
+  si le champ est absent du payload, le comportement précédent est conservé.
+- Fichiers : `src/components/common/ProductSearch/index.tsx`,
+  `src/components/common/ProductSearch/types.ts`.
+- Vérifs : `tsc --noEmit`, ESLint ciblé.
+
+## 2026-11-20 — Export Excel Analyse Stock : toutes les pages, pas seulement la page affichée
+
+- Le bouton Excel des onglets Invendus / Surstock / Ruptures n'exportait que les
+  50 items de la page courante (`data.items` paginé). Nouvel action
+  `fetchAllItems` dans `useStockAnalysis` qui appelle `stock-analysis/<tab>/`
+  avec `page_size=500` (plafond backend) puis boucle sur `total_pages` en
+  parallèle ; `handleExportExcel` est devenu async avec spinner et toast
+  d'erreur (`common:export_error`). Le bug était identique sur les 3 onglets
+  (même code partagé) — corrigé d'un coup ; « Pilotage Expert » n'a pas
+  d'export.
+- Fichiers : `src/hooks/useStockAnalysis.ts`, `src/components/StockAnalysis.tsx`,
+  `src/components/__tests__/StockAnalysis.test.tsx` (+1 test couvrant
+  l'export multi-pages).
+- Vérifs : `tsc --noEmit`, ESLint ciblé, vitest StockAnalysis (10/11 — le
+  seul échec est préexistant : regex du test « valeur totale » qui attend
+  `1,400` alors que `formatCurrency` produit `1.400`).
+
+## 2026-11-20 — Tests stock : restauration périmée et modification de vente
+
+- Deux opérations qui mouvementent le stock n'étaient couvertes par aucun test :
+  - **Restauration d'une sortie périmée** (`stockadjustment-restaurer-sortie-perimee`) :
+    lot et produit réintégrés, `MouvementStock RETOUR` créé, double restauration → 409.
+  - **Modification de vente** (`facture-modifier`) : baisse de quantité →
+    réintégration du delta exact en stock + `MouvementStock RETOUR` lié à la facture.
+- Fichier : `api/tests/test_stock_movements_comprehensive.py` (17 → 19 tests,
+  tous verts). Modales utilisateurs alignées (header/footer/hauteur) dans
+  `GroupePermissionsModal.tsx` et `UserFormDialog.tsx`.
+
+## 2026-11-20 — Boutons sensibles masqués selon les droits + suppression client protégée
+
+- **Fusion et suppression client réservées aux superusers** : `merge`,
+  `destroy`, `bulk_delete` et `toggle_active` renvoient 403 côté API
+  (auparavant `IsAuthenticated` seul — n'importe quel vendeur pouvait
+  supprimer ou masquer un client). Boutons Fusionner, Supprimer,
+  Masquer/Réactiver et suppression en masse masqués dans `Clients.tsx` ;
+  les options de fusion de la modale « doublon détecté » deviennent
+  informatives seules pour les non-superusers.
+- **Boutons sudo masqués sans la permission** au lieu d'ouvrir la modale :
+  périmés (sorties/restauration → `can_manage_perimes`), corbeille (purge →
+  superuser), créances (règlements/paiements → `can_cash_out`), commandes
+  (clôture/suppression/annulation réception → `can_close_commande` /
+  `can_delete_commande`), inventaire (validation → `can_adjust_stock`).
+- Nouveau hook `usePermissions` : `hasPerm('can_x')` via `users/me/` (React
+  Query, 5 min) — le localStorage ne persiste qu'un sous-ensemble des flags,
+  insuffisant après un F5.
+- Fichiers : `api/views/clients.py`, `src/hooks/usePermissions.ts`,
+  `Clients.tsx`, `ClientMergeModal.tsx`, `Perimes.tsx`, `Corbeille.tsx`,
+  `Creances.tsx`, `CreancesTable.tsx`, `RelevesReglement.tsx`,
+  `CommandeDetails.tsx`, `CommandeList.tsx`, `InventaireEditor.tsx`.
+- Vérifications : ESLint ciblé, `manage.py check`, `test_client_merge` (5/5).
+
 ## 2026-11-20 — Fusion complète des doublons clients avec ventes
 
 - `merge_clients()` transfère désormais tout l'historique métier du client

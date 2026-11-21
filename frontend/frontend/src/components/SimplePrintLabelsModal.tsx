@@ -886,12 +886,13 @@ ${labelsHTML}
       // labelsData is the final expanded queue (selection, free units and fixed quantity).
       // Collapse only consecutive identical labels to preserve order and native copies.
       const items: LabelTsplItem[] = []
+      const fieldsByKey = new Map(fields.map(f => [f.key, f]))
       for (const label of labelsData) {
         const item: LabelTsplItem = {
           name: label.productName,
           barcode: label.barcode,
           barcodeType,
-          price: fields.find(f => f.key === 'sellingPrice')?.enabled
+          price: fieldsByKey.get('sellingPrice')?.enabled
             ? `${label.sellingPrice.toLocaleString(i18n.language.startsWith('en') ? 'en-GB' : 'fr-FR', { maximumFractionDigits: 0 }).replace(/[\u00a0\u202f]/g, ' ')} ${t('common:currency_symbol', { defaultValue: 'F' })}`
             : undefined,
           count: 1,

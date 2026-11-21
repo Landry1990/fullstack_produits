@@ -126,15 +126,17 @@ export default function GroupePermissionsModal({ open, onOpenChange, onSaved }: 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[min(92vw,1200px)] max-w-none aspect-video overflow-hidden p-6 flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
+      <DialogContent className="max-w-5xl max-h-[90vh] p-0 grid-rows-[auto_1fr]">
+        <DialogHeader className="p-6 pb-2 border-b border-base-200">
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <div className="size-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+              <Users className="h-5 w-5" />
+            </div>
             {t('groupes.title', { defaultValue: 'Groupes de permissions' })}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-[220px_1fr] gap-4 flex-1 min-h-0">
+        <div className="grid grid-cols-[220px_1fr] gap-4 h-[60vh] p-6 min-h-0">
           {/* Liste */}
           <div className="border rounded-lg p-2 space-y-1 overflow-y-auto min-h-0">
             {groupes.map(g => (
@@ -210,7 +212,7 @@ export default function GroupePermissionsModal({ open, onOpenChange, onSaved }: 
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="p-4 border-t border-base-200">
           {selected?.id && !selected.is_system && (
             <Button variant="destructive" onClick={remove}><Trash2 className="h-4 w-4" /> {t('common:actions.delete', { defaultValue: 'Supprimer' })}</Button>
           )}
