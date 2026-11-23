@@ -1,4 +1,5 @@
 {
+    "rounding_adjustment": "Arrondi à 5 F",
     "clock_sync": {
         "title": "Horloge désynchronisée",
         "subtitle": "Décalage détecté avec le serveur",

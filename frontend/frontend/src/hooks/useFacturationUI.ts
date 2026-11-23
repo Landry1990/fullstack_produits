@@ -78,6 +78,7 @@ export function useFacturationUI() {
     // Global Discount
     const [remiseGlobale, setRemiseGlobale] = useState('0')
     const [remiseMode, setRemiseMode] = useState<'montant' | 'taux'>('montant')
+    const [arrondi5f, setArrondi5f] = useState(true)
 
     // Payment Form State
     const [modePaiement, setModePaiement] = useState<string>('especes')
@@ -159,6 +160,7 @@ export function useFacturationUI() {
     const resetUIState = useCallback(() => {
         setRemiseGlobale('0')
         setRemiseMode('montant')
+        setArrondi5f(true)
         setModePaiement('especes')
         setMontantPaye('')
         setPaiements([])
@@ -208,13 +210,14 @@ export function useFacturationUI() {
         cartStats: { sousTotal: number, totalTva: number, totalTTC: number, totalBuyHT?: number },
         selectedClient: Client | null | undefined
     ): TotalsData => {
-        return calculateFactureTotals({ ...cartStats, totalBuyHT: cartStats.totalBuyHT ?? 0 }, selectedClient, remiseGlobale, remiseMode);
-    }, [remiseGlobale, remiseMode])
+        return calculateFactureTotals({ ...cartStats, totalBuyHT: cartStats.totalBuyHT ?? 0 }, selectedClient, remiseGlobale, remiseMode, modificationInvoiceId ? arrondi5f : true);
+    }, [remiseGlobale, remiseMode, modificationInvoiceId, arrondi5f])
 
     return {
         // States
         remiseGlobale, setRemiseGlobale,
         remiseMode, setRemiseMode,
+        arrondi5f, setArrondi5f,
         modePaiement, setModePaiement,
         montantPaye, setMontantPaye,
         paiements, setPaiements,

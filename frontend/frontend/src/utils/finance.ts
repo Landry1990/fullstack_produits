@@ -81,7 +81,8 @@ export const calculateFactureTotals = (
     cartStats: { sousTotal: number, totalTva: number, totalTTC: number, totalBuyHT: number },
     selectedClient: Client | null | undefined,
     remiseGlobale: string | number,
-    remiseMode: 'montant' | 'taux'
+    remiseMode: 'montant' | 'taux',
+    arrondi5f = true
 ): TotalsData => {
     let finalTTC = cartStats.totalTTC;
     let remiseMontant = 0;
@@ -97,6 +98,8 @@ export const calculateFactureTotals = (
         finalTTC = Math.max(0, finalTTC - remiseMontant);
     }
 
+    finalTTC = (finalTTC < 0 ? -1 : 1) * Math.round(Math.abs(finalTTC));
+
     // 2. Tiers Payant (Assurance)
     let tauxCouverture = 0;
     let partAssurance = 0;
@@ -105,14 +108,27 @@ export const calculateFactureTotals = (
     if (selectedClient && selectedClient.taux_couverture) {
         const tc = parseFloat(selectedClient.taux_couverture) || 0;
         if (tc > 0) {
-            tauxCouverture = tc;
-            partAssurance = finalTTC * (tauxCouverture / 100);
-            partPatient = finalTTC - partAssurance;
+            tauxCouverture = Math.min(100, tc);
+            const weighted = finalTTC * (10000 - Math.round(tauxCouverture * 100));
+            const cents = Math.floor(Math.abs(weighted) / 100);
+            const remainder = Math.abs(weighted) % 100;
+            const patientCents = Math.sign(weighted) * (cents + (remainder > 50 || (remainder === 50 && cents % 2 !== 0) ? 1 : 0));
+            partPatient = patientCents / 100;
+            partAssurance = (finalTTC * 100 - patientCents) / 100;
         }
+    }
+
+    let ecartArrondi = 0;
+    if (arrondi5f && partPatient > 0 && finalTTC >= 0) {
+        const rounded = Math.round(partPatient / 5) * 5;
+        ecartArrondi = Math.round((rounded - partPatient) * 100) / 100;
+        partPatient = rounded;
+        finalTTC = Math.round((finalTTC + ecartArrondi) * 100) / 100;
     }
 
     // Final safety wrap to ensure no NaN escapes
     const safeResult = {
+        ecartArrondi: Number.isFinite(ecartArrondi) ? ecartArrondi : 0,
         totalHt: Number.isFinite(cartStats.sousTotal) ? cartStats.sousTotal : 0,
         totalTva: Number.isFinite(cartStats.totalTva) ? cartStats.totalTva : 0,
         totalTtc: Number.isFinite(finalTTC) ? finalTTC : 0,

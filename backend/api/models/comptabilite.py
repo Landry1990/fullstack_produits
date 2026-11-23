@@ -89,7 +89,7 @@ class EcritureComptable(models.Model):
 
     # Écritures générées par signal sans FK dédiée — identifiées par la
     # référence système (préfixe). Toute autre écriture auto est liée par FK.
-    REFERENCES_AUTO = ('MST-', 'IMMO-')
+    REFERENCES_AUTO = ('MST-', 'IMMO-', 'RECL-CHARGE-')
 
     class Meta:
         verbose_name = "Écriture Comptable"
@@ -236,11 +236,14 @@ class Immobilisation(models.Model):
 
     def montant_dotation(self, annee):
         """Dotation de l'année : prorata temporis l'année d'acquisition."""
-        annuel = self.dotation_annuelle
-        if annee == self.date_acquisition.year:
-            mois = 13 - self.date_acquisition.month
-            return (annuel * mois / 12).quantize(Decimal('0.01'))
-        return annuel.quantize(Decimal('0.01'))
+        total_mois = self.duree_annees * 12
+        if total_mois <= 0:
+            return Decimal('0.00')
+        debut = max(0, min(total_mois, (annee - self.date_acquisition.year) * 12 - self.date_acquisition.month + 1))
+        fin = max(0, min(total_mois, (annee + 1 - self.date_acquisition.year) * 12 - self.date_acquisition.month + 1))
+        cumul_debut = (self.base_amortissable * debut / total_mois).quantize(Decimal('0.01'))
+        cumul_fin = (self.base_amortissable * fin / total_mois).quantize(Decimal('0.01'))
+        return cumul_fin - cumul_debut
 
     @property
     def cumul_amortissements(self):

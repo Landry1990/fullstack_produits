@@ -9,6 +9,18 @@
     "pending_count": "{{count}} pending invoice(s)",
     "no_pending": "No pending invoices",
     "no_pending_desc": "All invoices have been processed. Ready for the next sale.",
+    "change_assistant": {
+        "title": "Change-giving assistant",
+        "option_hint": "Optional, remembered in this browser. First enter the amount actually handed over by the customer.",
+        "suggestion_title": "Simpler change suggestion",
+        "suggestion": "Instead of returning {{original}}, ask for an extra {{additional}}, if the customer has it, to return {{change}}.",
+        "pieces": "Estimated change: {{before}} coin(s) or note(s) → {{after}}. Available denominations in the drawer are not known.",
+        "confirm_hint": "Extra cash is limited to 2,500 F. Confirm only after actually receiving it. This does not confirm the payment.",
+        "received": "Extra {{amount}} actually received",
+        "without_extra": "Without extra cash",
+        "confirmed": "Extra {{amount}} included: {{received}} received, {{change}} to return. Then add the payment as usual.",
+        "no_suggestion": "No useful suggestion for this entry. The amount received and payment remain unchanged."
+    },
     "shortcuts": {
         "title": "Shortcuts:",
         "navigate": "Navigate",

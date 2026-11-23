@@ -70,16 +70,19 @@ export function buildTicketEscpos(
   const docLocale = getDocumentLocale();
   const docLang = getDocumentLanguage();
   const t = i18next.getFixedT(docLang, 'printing');
-  const formatM = (val: number | string) => formatMoney(val, docLocale);
+  const formatM = (val: number | string) => facture?.arrondi_5f
+    ? formatNumber(Number(val), Number.isInteger(Number(val)) ? 0 : 2, docLocale)
+    : formatMoney(val, docLocale);
 
   const facture = typeof ticket.facture === 'object' ? ticket.facture : null;
   const isTiersPayant = facture?.client_type === 'PROFESSIONNEL';
   const produits = facture?.produits || [];
   const cols = getTicketCols(settings);
 
-  const totalTTC = Math.round(Number(ticket.montant || facture?.total_ttc || 0));
+  const totalTTC = facture?.arrondi_5f ? Number(ticket.montant || facture.total_ttc || 0) : Math.round(Number(ticket.montant || facture?.total_ttc || 0));
   const totalTVA = facture ? Math.round(Number(facture.total_tva || 0)) : 0;
-  const totalHT = totalTTC - totalTVA;
+  const totalHT = facture?.arrondi_5f ? Number(facture.total_ht || 0) : totalTTC - totalTVA;
+  const netClient = facture?.arrondi_5f && isTiersPayant ? Number(facture.part_client ?? totalTTC) : totalTTC;
   const remiseGlobale = facture ? Number(facture.remise || 0) : 0;
   const totalRemisesLignes = produits.reduce(
     (sum: number, p: FactureProduit) => sum + Math.abs(Number(p.quantity || 0)) * Number(p.discount || 0),
@@ -217,14 +220,22 @@ export function buildTicketEscpos(
     parts.push(esc.columns(t('ticket.global_discount_minus'), `-${formatM(remiseGlobale)}`, cols));
   }
 
+  if (Number(facture?.ecart_arrondi) && facture?.ecart_arrondi != null) {
+    parts.push(esc.columns(t('common:rounding_adjustment'), `${Number(facture.ecart_arrondi) > 0 ? '+' : ''}${formatM(facture.ecart_arrondi)}`, cols));
+  }
+
+  if (facture?.arrondi_5f && isTiersPayant) {
+    parts.push(esc.columns(t('invoice.total_general'), formatM(totalTTC), cols));
+    parts.push(esc.columns(t('invoice.part_assurance'), `-${formatM(totalTTC - netClient)}`, cols));
+  }
   parts.push(esc.left(), esc.defaultLineSpacing());
-  parts.push(esc.totalLine(t('ticket.net_a_payer_cfa'), formatM(totalTTC), cols));
+  parts.push(esc.totalLine(t('ticket.net_a_payer_cfa'), formatM(netClient), cols));
   parts.push(esc.lineSpacing(COMPACT_LINE_SPACING));
 
   const totalLettres = ticket.total_lettres || facture?.total_lettres;
   if (totalLettres) {
     parts.push(esc.center());
-    parts.push(esc.line(totalLettres));
+    parts.push(esc.line((facture?.arrondi_5f && isTiersPayant ? `${t('invoice.total_general')}: ` : '') + totalLettres));
     parts.push(esc.left());
   }
   parts.push(esc.hr(cols));

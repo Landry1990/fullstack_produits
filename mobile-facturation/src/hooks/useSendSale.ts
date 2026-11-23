@@ -299,7 +299,7 @@ export function useSendSale({
       void addHistoriqueItem({
         numero_facture: facture?.numero_facture ?? null,
         articles_count: sentCart.totalArticles(),
-        total_estime: sentCart.totalTTC(),
+        total_estime: tiersPayantSplit(sentCart.totalTTC(), Number(sentCart.client?.taux_couverture ?? 0)).totalTtc,
         client: sentCart.client?.name ?? null,
         remise_globale: sentCart.remiseGlobaleMontant(),
         lignes: sentCart.lines.map((l) => ({

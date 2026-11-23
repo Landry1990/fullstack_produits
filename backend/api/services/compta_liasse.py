@@ -101,6 +101,84 @@ def _montant(prefixes, soldes, signe):
     return -total if signe in ('passif', 'produit') else total
 
 
+EBE_RUBRIQUES = [
+    ('TA', 'Ventes de marchandises', ['701']),
+    ('RA', 'Achats de marchandises', ['601']),
+    ('RB', 'Variation de stocks de marchandises', ['6031']),
+    ('TB', 'Ventes de produits fabriqués', ['702', '703', '704']),
+    ('TC', 'Travaux, services vendus', ['705', '706']),
+    ('TD', 'Produits accessoires', ['707']),
+    ('TE', 'Production stockée ou déstockée', ['73']),
+    ('TF', 'Production immobilisée', ['72']),
+    ('TG', 'Subventions d’exploitation', ['71']),
+    ('TH', 'Autres produits', ['75']),
+    ('TI', 'Transferts de charges d’exploitation', ['781']),
+    ('RC', 'Achats de matières premières et fournitures liées', ['602']),
+    ('RD', 'Variation de stocks de matières premières', ['6032']),
+    ('RE', 'Autres achats', ['604', '605', '608']),
+    ('RF', 'Variation de stocks d’autres approvisionnements', ['6033']),
+    ('RG', 'Transports', ['61']),
+    ('RH', 'Services extérieurs', ['62', '63']),
+    ('RI', 'Impôts et taxes', ['64']),
+    ('RJ', 'Autres charges', ['65']),
+    ('RK', 'Charges de personnel', ['66']),
+]
+
+
+EBE_LABELS_EN = dict(zip(
+    ('TA', 'RA', 'RB', 'TB', 'TC', 'TD', 'TE', 'TF', 'TG', 'TH', 'TI',
+     'RC', 'RD', 'RE', 'RF', 'RG', 'RH', 'RI', 'RJ', 'RK', 'XA', 'XB', 'XC', 'XD'),
+    ('Sales of merchandise', 'Purchases of merchandise', 'Change in merchandise inventories',
+     'Sales of manufactured products', 'Work and services sold', 'Ancillary revenue',
+     'Production inventory change', 'Capitalised production', 'Operating subsidies',
+     'Other income', 'Transfers of operating expenses',
+     'Purchases of raw materials and related supplies', 'Change in raw material inventories',
+     'Other purchases', 'Change in other supply inventories', 'Transport', 'External services',
+     'Taxes and duties', 'Other expenses', 'Personnel expenses', 'Commercial margin',
+     'Revenue', 'Value added', 'Gross operating surplus (or deficit)')
+))
+
+
+def compute_ebe(date_debut, date_fin, lang='fr'):
+    soldes = _soldes_par_compte(date_debut, date_fin)
+    montants = {ref: _montant(prefixes, soldes, 'produit')
+                for ref, _, prefixes in EBE_RUBRIQUES}
+    montants['XA'] = sum(montants[r] for r in ('TA', 'RA', 'RB'))
+    montants['XB'] = sum(montants[r] for r in ('TA', 'TB', 'TC', 'TD'))
+    montants['XC'] = montants['XB'] + sum(
+        montants[r] for r, _, _ in EBE_RUBRIQUES
+        if r not in ('TA', 'TB', 'TC', 'TD', 'RK'))
+    montants['XD'] = montants['XC'] + montants['RK']
+    rubriques = {ref: (libelle, prefixes) for ref, libelle, prefixes in EBE_RUBRIQUES}
+    rubriques.update({
+        'XA': ('Marge commerciale', []),
+        'XB': ('Chiffre d’affaires', []),
+        'XC': ('Valeur ajoutée', []),
+        'XD': ('Excédent brut d’exploitation', []),
+    })
+    ordre = ('TA', 'RA', 'RB', 'XA', 'TB', 'TC', 'TD', 'XB',
+             'TE', 'TF', 'TG', 'TH', 'TI', 'RC', 'RD', 'RE',
+             'RF', 'RG', 'RH', 'RI', 'RJ', 'XC', 'RK', 'XD')
+    return {
+        'provisoire': True,
+        'lang': lang,
+        'avertissement': (
+            'Provisional report based only on recorded accounting entries. '
+            'Validate inventory changes (opening and closing inventory for the period) '
+            'and the completeness of expenses, especially personnel expenses. '
+            'No current physical inventory is added. This report is not a validated statutory filing.'
+        ) if lang == 'en' else (
+            'Rapport provisoire sur écritures comptabilisées uniquement. '
+            'Faire valider la variation des stocks (stocks initial et final de la période) '
+            'et l’exhaustivité des charges, notamment de personnel. '
+            'Aucun stock physique actuel n’est ajouté. Ce rapport ne constitue pas une liasse fiscale validée.'
+        ),
+        'lignes': [{'ref': ref, 'libelle': EBE_LABELS_EN[ref] if lang == 'en' else rubriques[ref][0],
+                    'comptes': rubriques[ref][1], 'montant': montants[ref]}
+                   for ref in ordre],
+    }
+
+
 def compute_liasse(date_debut, date_fin):
     """Retourne les lignes de la liasse avec montants calculés."""
     soldes = _soldes_par_compte(date_debut, date_fin)

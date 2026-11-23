@@ -3,6 +3,9 @@ import { m } from 'framer-motion';
 import { staggerContainer, fadeInUp } from '../../lib/motion';
 import { useAccounting, type Compte, type Ecriture, type LigneEcriture, type Journal } from '../../hooks/useAccounting';
 import api from '../../services/api';
+import EbeTab from './EbeTab';
+import ImmosTab from './ImmobilisationsTab';
+import { chargeAccounts as defaultChargeAccounts } from './chargeAccounts';
 import type { TFunction } from 'i18next';
 import type { Locale } from 'date-fns';
 import { 
@@ -94,6 +97,7 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
         'balance': 'balance',
         'bilan': 'bilan',
         'resultat': 'resultat',
+        'ebe': 'ebe',
         'tva': 'tva',
     } as Record<string, string>)[activeTab];
 
@@ -115,6 +119,7 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
         { id: 'balance', label: t('tabs.balance'), icon: <Scale className="size-4" /> },
         { id: 'bilan', label: t('tabs.bilan'), icon: <TrendingUp className="size-4" /> },
         { id: 'resultat', label: t('tabs.resultat'), icon: <ArrowUpRight className="size-4" /> },
+        { id: 'ebe', label: t('ebe.tab'), icon: <TrendingUp className="size-4" /> },
         { id: 'tva', label: t('tabs.tva'), icon: <Percent className="size-4" /> },
         { id: 'charges', label: t('tabs.charges'), icon: <PlusCircle className="size-4" /> },
         { id: 'immos', label: t('tabs.immos', 'Immobilisations'), icon: <FileText className="size-4" /> },
@@ -284,8 +289,9 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
                         {activeTab === 'balance' && <BalanceTab balance={balance?.comptes || []} t={t} />}
                         {activeTab === 'bilan' && <BilanTab bilan={bilan} t={t} />}
                         {activeTab === 'resultat' && <ResultatTab resultat={resultat} t={t} />}
+                        {activeTab === 'ebe' && <EbeTab dateRange={dateRange} />}
                         {activeTab === 'tva' && <TvaTab rapport={rapportTva} t={t} />}
-                        {activeTab === 'immos' && <ImmosTab t={t} />}
+                        {activeTab === 'immos' && <ImmosTab comptes={comptes || []} />}
                         {activeTab === 'plan' && <PlanTab comptes={comptes} actions={actions} t={t} />}
                         {activeTab === 'charges' && <ChargesTab actions={actions} comptes={comptes} journaux={journaux} ecritures={ecritures} locale={currentLocale} t={t} />}
                     </Suspense>
@@ -1029,12 +1035,12 @@ interface OhadaCategory {
 }
 
 const categoriesOHADA: OhadaCategory[] = [
-    { id: 'loyer', compte: '613000', label: 'Loyer (Bail)', icon: Building2 },
-    { id: 'energie', compte: '605000', label: 'Eau & Électricité (ENEO/CAMWATER)', icon: Zap },
-    { id: 'salaires', compte: '660000', label: 'Salaires du personnel', icon: Users },
-    { id: 'impots', compte: '640000', label: 'Impôts et Taxes', icon: Receipt },
-    { id: 'internet', compte: '622000', label: 'Internet & Téléphone', icon: Wifi },
-    { id: 'fournitures', compte: '604000', label: 'Fournitures de bureau', icon: Paperclip },
+    { id: 'loyer', compte: defaultChargeAccounts.loyer, label: 'Locations de bâtiments', icon: Building2 },
+    { id: 'energie', compte: defaultChargeAccounts.energie, label: 'Eau & Électricité (ENEO/CAMWATER)', icon: Zap },
+    { id: 'salaires', compte: defaultChargeAccounts.salaires, label: 'Rémunérations directes du personnel national', icon: Users },
+    { id: 'impots', compte: defaultChargeAccounts.impots, label: 'Autres impôts et taxes', icon: Receipt },
+    { id: 'internet', compte: defaultChargeAccounts.internet, label: 'Frais de télécommunications', icon: Wifi },
+    { id: 'fournitures', compte: defaultChargeAccounts.fournitures, label: 'Fournitures de bureau non stockables', icon: Paperclip },
     { id: 'autre', compte: 'autre', label: 'Autre charge...', icon: Ellipsis },
 ];
 
@@ -1083,7 +1089,7 @@ function ChargesTab({ actions, comptes, journaux, ecritures, locale, t }: Charge
                 chargeCompte = res.data;
             } catch { return; }
         }
-        if (!chargeCompte) {
+        if (!chargeCompte || !chargeCompte.is_active || chargeCompte.type !== 'CHARGE') {
             gooeyToast.error(t('charges_simple.account_not_found'));
             return;
         }
@@ -1173,7 +1179,7 @@ function ChargesTab({ actions, comptes, journaux, ecritures, locale, t }: Charge
         setFormData(emptyForm);
     };
 
-    const chargeAccounts = comptes?.filter((c) => c.numero.startsWith('6'));
+    const chargeAccounts = comptes?.filter((c) => c.is_active && c.type === 'CHARGE' && c.numero.startsWith('6'));
     const selectedCategory = categoriesOHADA.find(c => c.compte === formData.typeCharge);
 
     // Récap comptable de l'écriture qui sera créée
@@ -1199,6 +1205,7 @@ function ChargesTab({ actions, comptes, journaux, ecritures, locale, t }: Charge
             <div className="text-center mb-8">
                 <h3 className="text-2xl font-bold text-blue-600 mb-2">{t('charges_simple.title')}</h3>
                 <p className="text-slate-400 text-sm">{t('charges_simple.subtitle')}</p>
+                <p className="text-slate-600 text-sm mt-2">{t('charges_simple.accounting_scope')}</p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -1506,109 +1513,3 @@ function TvaTab({ rapport, t }: { rapport?: RapportTva; t: TFunction }) {
 }
 
 // ── Onglet Immobilisations (amortissements) ──────────────────
-
-interface Immo {
-    id: number;
-    nom: string;
-    compte_immo_numero: string;
-    date_acquisition: string;
-    valeur_acquisition: number;
-    duree_annees: number;
-    dotation_annuelle: number;
-    cumul_amortissements: number;
-    valeur_nette_comptable: number;
-    dotations: { id: number; annee: number; montant: number }[];
-    mode_paiement: string;
-}
-
-function ImmosTab({ t }: { t: TFunction }) {
-    const [immos, setImmos] = useState<Immo[]>([]);
-    const [annee] = useState(new Date().getFullYear());
-    const [loading, setLoading] = useState(true);
-
-    const load = useCallback(async () => {
-        setLoading(true);
-        try {
-            const res = await api.get('compta/immobilisations/');
-            setImmos(res.data.results || res.data);
-        } catch {
-            gooeyToast.error(t('immos.load_error', 'Chargement impossible'));
-        } finally {
-            setLoading(false);
-        }
-    }, [t]);
-
-    useEffect(() => { load(); }, [load]);
-
-    const doter = async (immo: Immo) => {
-        try {
-            await api.post(`compta/immobilisations/${immo.id}/generer_dotation/`, { annee });
-            gooeyToast.success(t('immos.dotation_ok', 'Dotation générée'));
-            load();
-        } catch (e: unknown) {
-            const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error;
-            gooeyToast.error(msg || t('immos.dotation_error', 'Dotation impossible'));
-        }
-    };
-
-    const doterTout = async () => {
-        try {
-            const res = await api.post('compta/immobilisations/generer_dotations_annee/', { annee });
-            gooeyToast.success(t('immos.dotation_all_ok', 'Dotations générées : {{n}}', { n: res.data.generees?.length || 0 }));
-            load();
-        } catch {
-            gooeyToast.error(t('immos.dotation_error', 'Dotation impossible'));
-        }
-    };
-
-    if (loading) return <div className="py-16 text-center text-slate-400">{t('loading_msg')}</div>;
-
-    return (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-                <h3 className="font-semibold text-slate-800">{t('immos.title', 'Immobilisations')} — {annee}</h3>
-                <button onClick={doterTout}
-                    className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
-                    {t('immos.doter_tout', 'Doter tout')}
-                </button>
-            </div>
-            <table className="w-full text-sm">
-                <thead className="bg-slate-50 text-slate-500 text-xs uppercase">
-                    <tr>
-                        <th className="px-4 py-2.5 text-left">{t('immos.nom', 'Nom')}</th>
-                        <th className="px-4 py-2.5 text-left">{t('immos.compte', 'Compte')}</th>
-                        <th className="px-4 py-2.5 text-left">{t('immos.acquisition', 'Acquisition')}</th>
-                        <th className="px-4 py-2.5 text-right">{t('immos.valeur', 'Valeur')}</th>
-                        <th className="px-4 py-2.5 text-right">{t('immos.dotation', 'Dot./an')}</th>
-                        <th className="px-4 py-2.5 text-right">{t('immos.cumul', 'Amorti')}</th>
-                        <th className="px-4 py-2.5 text-right">{t('immos.vnc', 'VNC')}</th>
-                        <th className="px-4 py-2.5"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {immos.length === 0 && (
-                        <tr><td colSpan={8} className="px-4 py-8 text-center text-slate-400">{t('immos.empty', 'Aucune immobilisation')}</td></tr>
-                    )}
-                    {immos.map(im => (
-                        <tr key={im.id} className="border-t border-slate-100">
-                            <td className="px-4 py-2.5 font-medium text-slate-700">{im.nom}</td>
-                            <td className="px-4 py-2.5 text-slate-500">{im.compte_immo_numero}</td>
-                            <td className="px-4 py-2.5 text-slate-500">{im.date_acquisition}</td>
-                            <td className="px-4 py-2.5 text-right">{formatFCFA(im.valeur_acquisition)}</td>
-                            <td className="px-4 py-2.5 text-right text-slate-600">{formatFCFA(im.dotation_annuelle)}</td>
-                            <td className="px-4 py-2.5 text-right text-slate-600">{formatFCFA(im.cumul_amortissements)}</td>
-                            <td className="px-4 py-2.5 text-right font-semibold text-slate-800">{formatFCFA(im.valeur_nette_comptable)}</td>
-                            <td className="px-4 py-2.5 text-right">
-                                <button onClick={() => doter(im)}
-                                    disabled={im.dotations.some(d => d.annee === annee)}
-                                    className="px-2.5 py-1 text-xs font-medium rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 disabled:opacity-40 disabled:cursor-not-allowed">
-                                    {im.dotations.some(d => d.annee === annee) ? t('immos.dote', 'Dotée') : t('immos.doter', 'Doter')}
-                                </button>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
-    );
-}

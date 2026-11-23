@@ -152,6 +152,19 @@ def generer_ecriture_vente(sender, instance, created, **kwargs):
                     )
                     LigneEcriture.objects.create(ecriture=ecriture, compte=compte_tva, credit=instance.total_tva)
                     
+                if instance.ecart_arrondi:
+                    favorable = instance.ecart_arrondi > 0
+                    compte_arrondi, _ = CompteComptable.objects.get_or_create(
+                        numero='758000' if favorable else '658000',
+                        defaults={'libelle': 'Produits divers' if favorable else 'Charges diverses', 'type': 'PRODUIT' if favorable else 'CHARGE'},
+                    )
+                    LigneEcriture.objects.create(
+                        ecriture=ecriture, compte=compte_arrondi,
+                        libelle_ligne='Écart d’arrondi au multiple de 5 F',
+                        debit=abs(instance.ecart_arrondi) if not favorable else Decimal('0'),
+                        credit=instance.ecart_arrondi if favorable else Decimal('0'),
+                    )
+
                 logger.info(f"[COMPTA] Écriture vente créée pour facture {instance.id}")
                 
     except Exception as e:
@@ -456,11 +469,19 @@ def generer_ecriture_acquisition_immo(sender, instance, created, **kwargs):
             else:
                 contrepartie = _compte('521100', 'Banque', 'ACTIF')
 
+            exercice = ExerciceComptable.objects.select_for_update().filter(
+                date_debut__lte=instance.date_acquisition,
+                date_fin__gte=instance.date_acquisition, est_cloture=False).first()
+            if exercice is None:
+                raise ValueError('Aucun exercice ouvert ne couvre la date d’acquisition.')
+            if not contrepartie.is_active or contrepartie.type != ('PASSIF' if instance.mode_paiement == 'credit' else 'ACTIF'):
+                raise ValueError('Le compte de contrepartie est inactif ou de type incorrect.')
             journal, _ = JournalComptable.objects.get_or_create(
                 code='IM', defaults={'nom': 'Immobilisations'})
+            JournalComptable.objects.select_for_update().get(pk=journal.pk)
             ecriture = EcritureComptable.objects.create(
                 date=instance.date_acquisition, journal=journal,
-                exercice=get_exercice_courant(),
+                exercice=exercice,
                 reference=f"IMMO-{instance.id}",
                 libelle=f"Acquisition immobilisation {instance.nom}")
             LigneEcriture.objects.create(

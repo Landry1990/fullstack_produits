@@ -91,7 +91,7 @@
         },
         "produits_annules": {
             "name": "Cancelled Products",
-            "description": "List of products from cancelled invoices with quantities and lots"
+            "description": "List of products from cancelled invoices and client credits with quantities and lots"
         },
         "balance_stock": {
             "name": "Accounting Stock Balance",
@@ -284,7 +284,8 @@
         "sources": {
             "CAISSE_CENTRALE": "Central Cashier",
             "VENTES": "Sales",
-            "VENTES_MODIF": "Sales (Modif)"
+            "VENTES_MODIF": "Sales (Modif)",
+            "AVOIR_CLIENT": "Client credit"
         }
     },
     "monthly_report": {

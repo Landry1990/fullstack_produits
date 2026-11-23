@@ -9,6 +9,18 @@
     "pending_count": "{{count}} facture(s) en attente",
     "no_pending": "Aucune facture en attente",
     "no_pending_desc": "Toutes les factures ont été encaissées. Prêt pour la prochaine vente.",
+    "change_assistant": {
+        "title": "Aide au rendu de monnaie",
+        "option_hint": "Option facultative, mémorisée sur ce navigateur. Saisissez d’abord la somme réellement remise par le client.",
+        "suggestion_title": "Proposition de rendu simplifié",
+        "suggestion": "Au lieu de rendre {{original}}, demandez {{additional}} supplémentaires si le client en dispose, pour rendre {{change}}.",
+        "pieces": "Rendu estimé : {{before}} pièce(s) ou billet(s) → {{after}}. Les coupures disponibles en caisse ne sont pas connues.",
+        "confirm_hint": "Complément limité à 2 500 F. Confirmez uniquement après l’avoir réellement reçu. Cela ne valide pas le paiement.",
+        "received": "{{amount}} supplémentaires effectivement reçus",
+        "without_extra": "Sans complément",
+        "confirmed": "Complément de {{amount}} pris en compte : {{received}} reçus, {{change}} à rendre. Ajoutez ensuite le règlement normalement.",
+        "no_suggestion": "Aucune proposition utile pour cette saisie. Le montant reçu et le paiement restent inchangés."
+    },
     "shortcuts": {
         "title": "Raccourcis :",
         "navigate": "Naviguer",

@@ -1,6 +1,7 @@
 // Ressources françaises — langue de référence (fallback).
 export default {
   common: {
+    rounding_adjustment: 'Arrondi à 5 F : {{amount}} F',
     cancel: 'Annuler',
     close: 'Fermer',
     back: 'Retour',

@@ -146,12 +146,23 @@ def generate_invoice_pdf(facture, settings, is_proforma=False, lang=None):
         ('TOPPADDING', (0, 0), (-1, -1), 8),
     ]))
     story.extend([items_table, Spacer(1, 1 * cm)])
-    totals_table = Table([
-        [T(lang, 'inv_subtotal'), f'{facture.total_ht:,.0f} F'],
-        [T(lang, 'inv_tva'), f'{facture.total_tva:,.0f} F'],
-        [T(lang, 'inv_remise'), f'{facture.remise:,.0f} F'],
-        [T(lang, 'inv_total_payer'), f'{facture.total_ttc:,.0f} F'],
-    ], colWidths=[4 * cm, 4 * cm])
+    def montant(value):
+        return f'{value:,.2f} F' if facture.arrondi_5f and value != int(value) else f'{value:,.0f} F'
+
+    totals_rows = [
+        [T(lang, 'inv_subtotal'), montant(facture.total_ht)],
+        [T(lang, 'inv_tva'), montant(facture.total_tva)],
+        [T(lang, 'inv_remise'), montant(facture.remise)],
+    ]
+    if facture.ecart_arrondi:
+        totals_rows.append([T(lang, 'inv_rounding'), ('+' if facture.ecart_arrondi > 0 else '') + montant(facture.ecart_arrondi)])
+    totals_rows.append([T(lang, 'inv_total_payer'), montant(facture.total_ttc)])
+    if facture.arrondi_5f and facture.part_client is not None and facture.part_client < facture.total_ttc:
+        totals_rows.extend([
+            [T(lang, 'inv_insurer_share'), montant(facture.total_ttc - facture.part_client)],
+            [T(lang, 'inv_patient_share'), montant(facture.part_client)],
+        ])
+    totals_table = Table(totals_rows, colWidths=[4 * cm, 4 * cm])
     totals_table.setStyle(TableStyle([('ALIGN', (0, 0), (-1, -1), 'RIGHT'), ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'), ('LINEABOVE', (0, -1), (-1, -1), 1, colors.black)]))
     story.append(totals_table)
 

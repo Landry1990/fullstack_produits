@@ -75,6 +75,9 @@ export const formatCurrency = (amount: number, locale: string = 'fr-FR', symbol:
     }) + '\u00a0' + symbol;
 }
 
+export const formatCurrencyPrecise = (amount: number, locale: string = 'fr-FR', symbol: string = 'F') =>
+    formatNumberString(amount, locale, { minimumFractionDigits: Number.isInteger(amount) ? 0 : 2, maximumFractionDigits: 2 }) + '\u00a0' + symbol;
+
 export const formatCompact = (value: number, locale: string = 'fr-FR') => {
     return formatNumberString(value, locale, {
         notation: 'compact',

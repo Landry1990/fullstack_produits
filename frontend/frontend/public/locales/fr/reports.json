@@ -91,7 +91,7 @@
         },
         "produits_annules": {
             "name": "Produits Annulés",
-            "description": "Liste des produits de factures annulées avec quantités et lots"
+            "description": "Liste des produits de factures annulées et avoirs clients avec quantités et lots"
         },
         "balance_stock": {
             "name": "Balance des Stocks (Comptabilité)",
@@ -284,7 +284,8 @@
         "sources": {
             "CAISSE_CENTRALE": "Caisse Centrale",
             "VENTES": "Ventes",
-            "VENTES_MODIF": "Ventes (Modif)"
+            "VENTES_MODIF": "Ventes (Modif)",
+            "AVOIR_CLIENT": "Avoir client"
         }
     },
     "monthly_report": {

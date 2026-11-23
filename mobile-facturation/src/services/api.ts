@@ -2,6 +2,7 @@ import axios from 'axios';
 import { useAuthStore } from '../stores/useAuthStore';
 import type { CartLine, Client, AyantDroit, Product, CurrentUser, SudoCreds, PosteVente, Fournisseur } from '../types';
 import { useSettingsStore } from '../stores/useSettingsStore';
+import { tiersPayantSplit } from '../utils/invoiceRounding';
 
 const api = axios.create({ timeout: 10000 });
 
@@ -342,11 +343,7 @@ export const getFactureStatuses = async (userId: number): Promise<Record<string,
 // 0,01 près) et au web (finance.ts). Seule la part mutuelle devient une
 // créance « en compte » du client pro ; la part patient est encaissée
 // à la caisse par le bénéficiaire.
-export const tiersPayantSplit = (totalTtc: number, tauxCouverture: number) => {
-  if (tauxCouverture <= 0) return { partAssurance: 0, partPatient: totalTtc };
-  const partPatient = Math.round(((totalTtc * (100 - tauxCouverture)) / 100) * 100) / 100;
-  return { partAssurance: totalTtc - partPatient, partPatient };
-};
+export { tiersPayantSplit } from '../utils/invoiceRounding';
 
 // ─── Ajustement de stock ──────────────────────────────────
 // Motifs personnalisés (ConfigurationOption type STOCK_ADJ) — s'ajoutent
@@ -557,13 +554,13 @@ export const sendSaleToCaisse = async (
   // que seule la part mutuelle devient réellement une créance.
   const totalTtc = cart.totalTTC();
   const tauxCouverture = parseFloat(cart.client?.taux_couverture ?? '0') || 0;
-  const { partAssurance, partPatient } = tiersPayantSplit(totalTtc, tauxCouverture);
+  const { partAssurance, partPatient, totalTtc: totalArrondi } = tiersPayantSplit(totalTtc, tauxCouverture);
   const paiements = partAssurance > 0
     ? [
         { mode: 'especes', montant: partPatient, part_patient: partPatient, part_assurance: null },
         { mode: 'en_compte', montant: partAssurance, part_patient: null, part_assurance: partAssurance },
       ]
-    : [{ mode: 'especes', montant: totalTtc, part_patient: null, part_assurance: null }];
+    : [{ mode: 'especes', montant: partPatient, part_patient: null, part_assurance: null }];
   const payload = {
     client: cart.client?.id ?? null,
     client_name_override: null,
@@ -574,7 +571,7 @@ export const sendSaleToCaisse = async (
     paiements,
     loyalty: { use_pending_discount: false, points_to_use: 0 },
     // totals.totalTtc = total NET après remise globale
-    totals: { totalTtc: cart.totalTTC(), totalHt: 0, totalTva: 0 },
+    totals: { totalTtc: totalArrondi, totalHt: 0, totalTva: 0 },
     // Forçage de stock (qté > stock) : creds superviseur validés dans
     // FacturationScreen — validate_sudo_mode exige alors
     // can_sell_negative_stock sur le compte validateur.

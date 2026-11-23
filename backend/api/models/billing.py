@@ -202,6 +202,8 @@ class Facture(models.Model):
     total_ht = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
     total_tva = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
     total_ttc = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    arrondi_5f = models.BooleanField(default=True)
+    ecart_arrondi = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
     ticket_session = models.IntegerField(null=True, blank=True, help_text="Numéro de ticket pour la session du jour")
     montant_verse = models.DecimalField(
         max_digits=12, decimal_places=2, null=True, blank=True, default=Decimal('0.00'),
@@ -300,9 +302,16 @@ class Facture(models.Model):
         else:
             self.part_client = self.total_ttc
 
+        self.ecart_arrondi = Decimal('0.00')
+        if self.arrondi_5f and self.part_client > 0:
+            part_arrondie = (self.part_client / Decimal('5')).quantize(Decimal('1'), rounding=ROUND_HALF_UP) * Decimal('5')
+            self.ecart_arrondi = part_arrondie - self.part_client
+            self.part_client = part_arrondie
+            self.total_ttc += self.ecart_arrondi
+
         if save:
             # Crucial: update_fields évite de déclencher post_save inutilement sur d'autres colonnes
-            self.save(update_fields=['total_ht', 'total_tva', 'total_ttc', 'part_client'])
+            self.save(update_fields=['total_ht', 'total_tva', 'total_ttc', 'part_client', 'ecart_arrondi'])
 
     def _compute_line_tva(self, quantity, selling_price, discount, tva_taux):
         """Calcule le HT et TVA d'une ligne (méthode partagée entre calculate_totals et get_tva_analysis)."""

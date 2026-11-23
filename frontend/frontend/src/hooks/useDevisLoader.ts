@@ -28,6 +28,7 @@ export interface UseDevisLoaderOptions {
         setModificationInvoiceId: (v: number | null) => void
         setModificationInvoiceStatus: (v: string | null) => void
         setOriginalTotalTtc: (v: number) => void
+        setArrondi5f?: (v: boolean) => void
         setIsAvoirClient?: (v: boolean) => void
     }
     /**
@@ -165,6 +166,7 @@ export function useDevisLoader({ clientsHook, cart, ui, isPosteActive = true }: 
                 if ((isDevis || isValidatedOrPaid) && devis.id) {
                     ui.setIsModificationMode(true)
                     ui.setModificationInvoiceId(devis.id)
+                    ui.setArrondi5f?.(devis.arrondi_5f ?? false)
                     ui.setModificationInvoiceStatus(devis.status || null)
                     ui.setOriginalTotalTtc(Number(devis.total_ttc || 0))
                     if (isDevis) {

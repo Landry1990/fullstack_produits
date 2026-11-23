@@ -1,6 +1,7 @@
 // English resources — mirrors fr.ts key-for-key.
 export default {
   common: {
+    rounding_adjustment: 'Rounding to 5 F: {{amount}} F',
     cancel: 'Cancel',
     close: 'Close',
     back: 'Back',

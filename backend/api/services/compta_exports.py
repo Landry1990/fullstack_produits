@@ -18,7 +18,7 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
 DOC_TYPES = ('balance', 'resultat', 'bilan', 'tva', 'ecritures', 'grand_livre',
-             'fec', 'liasse')
+             'fec', 'liasse', 'ebe')
 FORMATS = ('excel', 'pdf', 'txt')
 
 TITLES = {
@@ -30,6 +30,7 @@ TITLES = {
     'grand_livre': "Grand livre général",
     'fec': "Fichier des écritures comptables (FEC)",
     'liasse': "Liasse OHADA",
+    'ebe': "EBE SYSCOHADA révisé — PROVISOIRE",
 }
 
 # Ordre des colonnes du FEC (norme de la DGFIP, adaptée OHADA — les comptes
@@ -64,6 +65,14 @@ def _spec(doc_type, data):
                  _num(t['mouvement_debit']), _num(t['mouvement_credit']),
                  _num(t['cloture_debit']), _num(t['cloture_credit'])]
         return headers, rows, total
+
+    if doc_type == 'ebe':
+        headers = (['Ref', 'Item', 'Accounts', 'Signed amount'] if data.get('lang') == 'en'
+                   else ['Réf', 'Libellé', 'Comptes', 'Montant signé'])
+        rows = [[l['ref'], l['libelle'], ', '.join(l['comptes']), _num(l['montant'])]
+                for l in data['lignes']]
+        rows.append(['', data['avertissement'], '', ''])
+        return headers, rows, None
 
     if doc_type == 'resultat':
         headers = ['Section', 'Compte', 'Libellé', 'Montant']
@@ -133,6 +142,9 @@ def build_compta_export(doc_type, fmt, data, date_debut, date_fin):
     """Point d'entrée : rend la spec en HttpResponse Excel, PDF ou TXT (FEC)."""
     name, title, period = _pharmacy_header(doc_type, date_debut, date_fin)
     filename = f"compta_{doc_type}_{date_debut or 'debut'}_{date_fin or 'fin'}"
+    if doc_type == 'ebe' and data.get('lang') == 'en':
+        title = 'EBE revised SYSCOHADA — PROVISIONAL'
+        period = f"Period: {date_debut or '…'} → {date_fin or '…'}"
 
     if doc_type == 'fec':
         # Le FEC impose son format : texte plat, colonnes à '|', dates AAAAMMJJ,
@@ -150,10 +162,12 @@ def build_compta_export(doc_type, fmt, data, date_debut, date_fin):
     else:
         headers, rows, total_row = _spec(doc_type, data)
         if fmt == 'pdf':
-            response = _build_pdf(name, title, period, headers, rows, total_row)
+            response = _build_pdf(name, title, period, headers, rows, total_row,
+                                  wrap=doc_type == 'ebe')
             ext = 'pdf'
         else:
-            response = _build_excel(name, title, period, headers, rows, total_row)
+            response = _build_excel(name, title, period, headers, rows, total_row,
+                                    wrap=doc_type == 'ebe')
             ext = 'xlsx'
 
     response['Content-Disposition'] = f'attachment; filename="{filename}.{ext}"'
@@ -187,7 +201,7 @@ def _build_fec(data):
     return response
 
 
-def _build_excel(name, title, period, headers, rows, total_row):
+def _build_excel(name, title, period, headers, rows, total_row, wrap=False):
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = title[:31]
@@ -235,6 +249,15 @@ def _build_excel(name, title, period, headers, rows, total_row):
         width = max(len(str(h)),
                     max((len(str(r[i - 1])) for r in rows[:200]), default=0)) + 2
         ws.column_dimensions[get_column_letter(i)].width = min(max(width, 10), 55)
+
+    if wrap:
+        ws.merge_cells(start_row=ws.max_row, start_column=2, end_row=ws.max_row, end_column=4)
+        ws.cell(row=ws.max_row, column=2).alignment = Alignment(wrap_text=True, vertical='top')
+        ws.row_dimensions[ws.max_row].height = 90
+        ws.column_dimensions['D'].width = 24
+        for row in ws.iter_rows(min_row=6, max_row=ws.max_row - 1, min_col=4, max_col=4):
+            row[0].number_format = '#,##0.00'
+            row[0].alignment = Alignment(horizontal='right')
 
     response = HttpResponse(
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
@@ -355,7 +378,7 @@ def _build_liasse_pdf(name, title, period, data):
     return response
 
 
-def _build_pdf(name, title, period, headers, rows, total_row):
+def _build_pdf(name, title, period, headers, rows, total_row, wrap=False):
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import A4, landscape
     from reportlab.lib.styles import getSampleStyleSheet
@@ -382,7 +405,11 @@ def _build_pdf(name, title, period, headers, rows, total_row):
 
     table_data = [[Paragraph(f"<b>{h}</b>", styles['Normal']) for h in headers]]
     for r in rows:
-        table_data.append([fmt(v) for v in r])
+        if wrap:
+            from xml.sax.saxutils import escape
+            table_data.append([Paragraph(escape(fmt(v)), styles['Normal']) for v in r])
+        else:
+            table_data.append([fmt(v) for v in r])
     if total_row:
         table_data.append([Paragraph(f"<b>{fmt(v)}</b>", styles['Normal']) for v in total_row])
 
@@ -401,7 +428,8 @@ def _build_pdf(name, title, period, headers, rows, total_row):
     if total_row:
         style.append(('LINEABOVE', (0, -1), (-1, -1), 1, colors.black))
 
-    table = Table(table_data, repeatRows=1)
+    widths = [1.3 * cm, 16 * cm, 4.5 * cm, 5.5 * cm] if wrap else None
+    table = Table(table_data, repeatRows=1, colWidths=widths)
     table.setStyle(TableStyle(style))
     story.append(table)
     doc.build(story)

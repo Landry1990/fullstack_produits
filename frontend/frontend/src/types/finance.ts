@@ -103,6 +103,8 @@ export interface Facture {
     tva: string
     total_tva: string
     total_ttc: string
+    arrondi_5f?: boolean
+    ecart_arrondi?: string
     montant_paye: string
     produits: FactureProduit[]
     created_by_name?: string
@@ -283,6 +285,7 @@ export interface LigneFacture {
 }
 
 export interface TotalsData {
+    ecartArrondi?: number;
     totalHt: number;
     totalTva: number;
     totalTtc: number;

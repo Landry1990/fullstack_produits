@@ -28,7 +28,9 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
   const { lang: docLang, locale: docLocale } = useDocumentLocale();
   const { t } = useTranslation('printing', { lng: docLang });
 
-  const formatM = (val: number | string) => formatNumber(Math.round(Number(val)), 0, docLocale);
+  const formatM = (val: number | string) => facture?.arrondi_5f
+    ? formatNumber(Number(val), Number.isInteger(Number(val)) ? 0 : 2, docLocale)
+    : formatNumber(Math.round(Number(val)), 0, docLocale);
 
   const getProductName = (p: FactureProduit) => {
     if (!p) return t('ticket.unknown_article');
@@ -57,9 +59,10 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
       return getModeLabel(paiement.mode);
   };
   const produits = facture?.produits || [];
-  const totalTTC = Math.round(Number(ticket.montant || facture?.total_ttc || 0));
+  const totalTTC = facture?.arrondi_5f ? Number(ticket.montant || facture.total_ttc || 0) : Math.round(Number(ticket.montant || facture?.total_ttc || 0));
   const totalTVA = facture ? Math.round(Number(facture.total_tva || 0)) : 0;
-  const totalHT = totalTTC - totalTVA;
+  const totalHT = facture?.arrondi_5f ? Number(facture.total_ht || 0) : totalTTC - totalTVA;
+  const netClient = facture?.arrondi_5f && isTiersPayant ? Number(facture.part_client ?? totalTTC) : totalTTC;
   const remiseGlobale = facture ? Number(facture.remise || 0) : 0;
   const totalRemisesLignes = produits.reduce((sum: number, p: FactureProduit) => (
       sum + Math.abs(Number(p.quantity || 0)) * Number(p.discount || 0)
@@ -245,16 +248,30 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
             </div>
         )}
 
+        {Number(facture?.ecart_arrondi) !== 0 && facture?.ecart_arrondi != null && (
+            <div className="flex justify-between text-caption font-medium">
+                <span>{t('common:rounding_adjustment')}</span>
+                <span className="font-mono">{Number(facture.ecart_arrondi) > 0 ? '+' : ''}{formatM(facture.ecart_arrondi)}</span>
+            </div>
+        )}
+
+        {facture?.arrondi_5f && isTiersPayant && (
+            <div className="space-y-1 text-caption font-medium">
+                <div className="flex justify-between"><span>{t('invoice.total_general')}</span><span className="font-mono">{formatM(totalTTC)}</span></div>
+                <div className="flex justify-between"><span>{t('invoice.part_assurance')}</span><span className="font-mono">-{formatM(totalTTC - netClient)}</span></div>
+            </div>
+        )}
+
         <div className="flex items-center justify-between border-y border-black/40 py-1.5 font-semibold">
             <span className="text-caption uppercase tracking-tight">{t('ticket.net_a_payer_cfa')}</span>
             <span className="font-mono text-sm tabular-nums">
-                {formatM(totalTTC)}
+                {formatM(netClient)}
             </span>
         </div>
 
         {(ticket.total_lettres || facture?.total_lettres) && (
             <div className="border-b border-black/35 py-1.5 text-center text-micro font-medium italic uppercase">
-                {ticket.total_lettres || facture?.total_lettres}
+                {facture?.arrondi_5f && isTiersPayant ? `${t('invoice.total_general')}: ` : ''}{ticket.total_lettres || facture?.total_lettres}
             </div>
         )}
 

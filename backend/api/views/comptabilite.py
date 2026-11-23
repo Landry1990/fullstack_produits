@@ -1,9 +1,10 @@
+from datetime import date
 from decimal import Decimal
 
 from django.core.cache import cache
 from django.db import transaction
-from django.db.models import F, Q, Sum
-from django.db.models.functions import TruncMonth
+from django.db.models import CharField, Exists, F, OuterRef, Q, Sum, Value
+from django.db.models.functions import Cast, Concat, TruncMonth
 from django.utils import timezone
 from rest_framework import permissions, viewsets
 from rest_framework.decorators import action
@@ -287,6 +288,18 @@ class EcritureComptableViewSet(viewsets.ModelViewSet):
         return Response(response_data)
 
     @action(detail=False, methods=['get'])
+    def ebe(self, request):
+        from ..services.compta_liasse import compute_ebe
+        from rest_framework.exceptions import ValidationError
+
+        date_debut = parse_date_param(request.query_params.get('date_debut'), field='date_debut')
+        date_fin = parse_date_param(request.query_params.get('date_fin'), field='date_fin')
+        if date_debut and date_fin and date_debut > date_fin:
+            raise ValidationError('La date de début doit précéder la date de fin.')
+        from ..utils_doclang import get_document_language
+        return Response(compute_ebe(date_debut, date_fin, lang=get_document_language()))
+
+    @action(detail=False, methods=['get'])
     def compte_resultat(self, request):
         """Génère un compte de résultat simplifié (Produits - Charges)."""
         date_debut = parse_date_param(request.query_params.get('date_debut'), field='date_debut')
@@ -515,6 +528,8 @@ class EcritureComptableViewSet(viewsets.ModelViewSet):
         # Réutilise les calculs des actions existantes (Response.data = dict brut)
         if doc_type == 'balance':
             data = self.balance(request).data
+        elif doc_type == 'ebe':
+            data = self.ebe(request).data
         elif doc_type == 'resultat':
             data = self.compte_resultat(request).data
         elif doc_type == 'bilan':
@@ -899,54 +914,133 @@ class ImmobilisationViewSet(viewsets.ModelViewSet):
     serializer_class = ImmobilisationSerializer
     permission_classes = [IsComptaWriteAllowed]
 
+    def get_queryset(self):
+        acquisitions = EcritureComptable.objects.filter(
+            reference=Concat(Value('IMMO-'), Cast(OuterRef('pk'), output_field=CharField())))
+        qs = super().get_queryset().annotate(acquisition_comptabilisee=Exists(acquisitions))
+        if self.action == 'list':
+            statut = self.request.query_params.get('statut')
+            if statut in ('actives', 'archivees'):
+                qs = qs.filter(is_active=statut == 'actives')
+        if self.action in ('update', 'partial_update', 'generer_dotation'):
+            qs = qs.select_for_update(of=('self',))
+        return qs
+
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        user = request.user
+        can_write = user.is_superuser or user.is_staff or getattr(getattr(user, 'profile', None), 'role', None) in ('COMPTABLE', 'PHARMACIEN')
+        if isinstance(response.data, list):
+            response.data = {'results': response.data, 'count': len(response.data), 'next': None, 'previous': None}
+        response.data['can_write'] = can_write
+        return response
+
+    @transaction.atomic
+    def perform_create(self, serializer):
+        from rest_framework.exceptions import ValidationError
+
+        instance = serializer.save()
+        piece = EcritureComptable.objects.filter(reference=f'IMMO-{instance.pk}').first()
+        if piece is None or not piece.is_balanced() or piece.total_debit != instance.valeur_acquisition:
+            raise ValidationError('Impossible de comptabiliser l’acquisition. Aucune immobilisation n’a été enregistrée. Vérifiez l’exercice et les comptes comptables.')
+        log_audit(user=self.request.user, action=AuditLog.Action.CREATE,
+                  model_name='Immobilisation', object_id=instance.pk,
+                  description=f'Création immobilisation {instance.nom}',
+                  details={'ecriture_id': piece.pk}, request=self.request)
+
+    @transaction.atomic
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
+
+    def perform_update(self, serializer):
+        instance = serializer.save()
+        log_audit(user=self.request.user, action=AuditLog.Action.UPDATE,
+                  model_name='Immobilisation', object_id=instance.pk,
+                  description=f'Modification immobilisation {instance.nom}',
+                  details={'fields': sorted(serializer.validated_data), 'is_active': instance.is_active},
+                  request=self.request)
+
+    def perform_destroy(self, instance):
+        from rest_framework.exceptions import ValidationError
+        raise ValidationError('La suppression définitive est interdite. Archivez l’immobilisation pour conserver son historique comptable.')
+
+    @staticmethod
+    def _annee_dotation(request):
+        from rest_framework.exceptions import ValidationError
+
+        valeur = request.data.get('annee', timezone.localdate().year)
+        if isinstance(valeur, bool) or not isinstance(valeur, (str, int)):
+            raise ValidationError('L’année doit être un entier valide.')
+        try:
+            annee = int(valeur)
+        except (TypeError, ValueError):
+            raise ValidationError('L’année doit être un entier valide.')
+        if not 1 <= annee <= timezone.localdate().year:
+            raise ValidationError('L’année de dotation ne peut pas être future ou invalide.')
+        return annee
+
+    def _comptabiliser_dotation(self, immo, annee, request):
+        from ..models import DotationAmortissement
+        from rest_framework.exceptions import ValidationError
+
+        if not immo.is_active:
+            raise ValidationError('Une immobilisation archivée ne peut pas recevoir de nouvelle dotation.')
+        if not EcritureComptable.objects.filter(reference=f'IMMO-{immo.pk}').exists():
+            raise ValidationError('L’acquisition n’est pas comptabilisée. Faites vérifier cette fiche avant de générer une dotation.')
+        if immo.dotations.filter(annee=annee).exists():
+            raise ValidationError(f'Dotation {annee} déjà générée.')
+        montant = immo.montant_dotation(annee)
+        if montant <= 0:
+            raise ValidationError('Année hors période d’amortissement ou base amortissable nulle.')
+        if montant > immo.base_amortissable - immo.cumul_amortissements:
+            raise ValidationError('Cette dotation dépasserait la base amortissable. Vérifiez les dotations existantes.')
+        if not immo.compte_amortissement.is_active or immo.compte_amortissement.type != 'PASSIF' or not immo.compte_amortissement.numero.startswith(f'28{immo.compte_immo.numero[1]}'):
+            raise ValidationError('Le compte d’amortissement est inactif ou ne correspond pas à l’immobilisation.')
+        date_dotation = date(annee, 12, 31)
+        exercice = ExerciceComptable.objects.select_for_update().filter(
+            date_debut__lte=date_dotation, date_fin__gte=date_dotation, est_cloture=False).first()
+        if exercice is None:
+            raise ValidationError('Aucun exercice ouvert ne couvre le 31 décembre de cette année.')
+        journal, _ = JournalComptable.objects.get_or_create(code='IM', defaults={'nom': 'Immobilisations'})
+        JournalComptable.objects.select_for_update().get(pk=journal.pk)
+        compte = CompteComptable.objects.get_or_create(
+            numero='681100', defaults={'libelle': 'Dotations aux amortissements', 'type': 'CHARGE'})[0]
+        if not compte.is_active or compte.type != 'CHARGE':
+            raise ValidationError('Le compte de dotation 681100 est inactif ou de type incorrect.')
+        ecriture = EcritureComptable.objects.create(
+            date=date_dotation, journal=journal, exercice=exercice, reference=f'DOT-{immo.pk}-{annee}',
+            libelle=f'Dotation amortissement {immo.nom} {annee}')
+        LigneEcriture.objects.create(ecriture=ecriture, compte=compte, debit=montant)
+        LigneEcriture.objects.create(ecriture=ecriture, compte=immo.compte_amortissement, credit=montant)
+        DotationAmortissement.objects.create(immobilisation=immo, annee=annee, montant=montant, ecriture=ecriture)
+        log_audit(user=request.user, action=AuditLog.Action.OTHER,
+                  model_name='Immobilisation', object_id=immo.pk,
+                  description=f'Dotation {annee} {immo.nom} : {montant}', request=request)
+        return {'annee': annee, 'montant': str(montant), 'ecriture': ecriture.numero_piece}
+
     @action(detail=True, methods=['post'], url_path='generer_dotation')
     @transaction.atomic
     def generer_dotation(self, request, pk=None):
         """Génère l'écriture de dotation (D 681100 / C compte_amortissement)
         pour l'année fournie (body: {"annee": 2026})."""
-        from api.models import DotationAmortissement
-        annee = int(request.data.get('annee', timezone.now().year))
-        immo = self.get_object()
-
-        if annee < immo.date_acquisition.year or annee > immo.date_acquisition.year + immo.duree_annees:
-            return Response({'error': 'Année hors période d\'amortissement'}, status=400)
-        if DotationAmortissement.objects.filter(immobilisation=immo, annee=annee).exists():
-            return Response({'error': f'Dotation {annee} déjà générée'}, status=400)
-
-        montant = immo.montant_dotation(annee)
-        journal, _ = JournalComptable.objects.get_or_create(
-            code='IM', defaults={'nom': 'Immobilisations'})
-        from ..signals_comptabilite import get_exercice_courant
-        compte_dotation = CompteComptable.objects.get_or_create(
-            numero='681100', defaults={'libelle': 'Dotations aux amortissements',
-                                       'type': 'CHARGE'})[0]
-        ecriture = EcritureComptable.objects.create(
-            date=timezone.now().date(), journal=journal,
-            exercice=get_exercice_courant(), reference=f"DOT-{immo.id}-{annee}",
-            libelle=f"Dotation amortissement {immo.nom} {annee}")
-        LigneEcriture.objects.create(
-            ecriture=ecriture, compte=compte_dotation, debit=montant)
-        LigneEcriture.objects.create(
-            ecriture=ecriture, compte=immo.compte_amortissement, credit=montant)
-        DotationAmortissement.objects.create(
-            immobilisation=immo, annee=annee, montant=montant, ecriture=ecriture)
-        log_audit(
-            user=request.user, action=AuditLog.Action.OTHER,
-            model_name='Immobilisation', object_id=immo.pk,
-            description=f"Dotation {annee} {immo.nom} : {montant}",
-            request=request)
-        return Response({'annee': annee, 'montant': str(montant),
-                         'ecriture': ecriture.numero_piece})
+        annee = self._annee_dotation(request)
+        return Response(self._comptabiliser_dotation(self.get_object(), annee, request))
 
     @action(detail=False, methods=['post'], url_path='generer_dotations_annee')
     def generer_dotations_annee(self, request):
         """Génère les dotations de l'année pour toutes les immobilisations
         actives (skip celles déjà dotées ou hors période)."""
-        from api.models import Immobilisation
-        annee = int(request.data.get('annee', timezone.now().year))
+        from rest_framework.exceptions import ValidationError
+
+        annee = self._annee_dotation(request)
         done, skipped = [], []
-        for immo in Immobilisation.objects.filter(is_active=True):
-            res = self.generer_dotation(request, pk=immo.pk)
-            (done if res.status_code == 200 else skipped).append(
-                {'id': immo.id, 'status': res.status_code})
+        ids = list(self.get_queryset().filter(is_active=True).order_by('pk').values_list('pk', flat=True))
+        for pk in ids:
+            try:
+                with transaction.atomic():
+                    immo = self.get_queryset().select_for_update(of=('self',)).get(pk=pk)
+                    resultat = self._comptabiliser_dotation(immo, annee, request)
+                done.append({'id': pk, **resultat})
+            except ValidationError as exc:
+                skipped.append({'id': pk, 'motif': exc.detail})
         return Response({'annee': annee, 'generees': done, 'ignorees': skipped})

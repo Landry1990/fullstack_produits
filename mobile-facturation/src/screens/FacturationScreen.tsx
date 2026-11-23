@@ -484,7 +484,7 @@ export function FacturationScreen({ navigation }: { navigation?: { navigate: (sc
   // backend/web — la part mutuelle partira « en compte », la part
   // patient sera encaissée à la caisse.
   const tauxCouverture = isPro ? (parseFloat(cart.client?.taux_couverture ?? '0') || 0) : 0;
-  const { partAssurance, partPatient } = tiersPayantSplit(cart.totalTTC(), tauxCouverture);
+  const { partAssurance, partPatient, totalTtc, ecartArrondi } = tiersPayantSplit(cart.totalTTC(), tauxCouverture);
   // En-tête compact : sur petits écrans le bouton « Annuler » devient icône seule.
   const compactHeader = useWindowDimensions().width < 560;
   // Densité verticale compacte : sous ~720dp de hauteur, les sections
@@ -714,14 +714,17 @@ export function FacturationScreen({ navigation }: { navigation?: { navigate: (sc
       <View style={[styles.footerRow, compactVert && styles.footerRowCompact]}>
         <View style={[styles.totalBox, compactVert && styles.totalBoxCompact]}>
           <Text style={styles.totalLabel}>{t('facturation.total')}</Text>
-          <Text style={[styles.totalValue, compactVert && styles.totalValueCompact]}>{cart.totalTTC().toLocaleString('fr-FR')} F</Text>
+          <Text style={[styles.totalValue, compactVert && styles.totalValueCompact]}>{totalTtc.toLocaleString('fr-FR')} F</Text>
           {remiseMontant > 0 && (
             <Text style={styles.sousTotal}>{t('facturation.subtotal', { amount: cart.sousTotal().toLocaleString('fr-FR') })}</Text>
+          )}
+          {ecartArrondi !== 0 && (
+            <Text style={styles.sousTotal}>{t('common.rounding_adjustment', { amount: `${ecartArrondi > 0 ? '+' : ''}${ecartArrondi.toLocaleString('fr-FR')}` })}</Text>
           )}
           {partAssurance > 0 && (
             <Text style={styles.tiersPayant}>
               {t('facturation.tiers_payant', {
-                assurance: Math.round(partAssurance).toLocaleString('fr-FR'),
+                assurance: partAssurance.toLocaleString('fr-FR', { maximumFractionDigits: 2 }),
                 patient: Math.round(partPatient).toLocaleString('fr-FR'),
               })}
             </Text>

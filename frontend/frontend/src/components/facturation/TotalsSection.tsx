@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { formatCurrency } from '../../utils/formatters'
+import { formatCurrency, formatCurrencyPrecise } from '../../utils/formatters'
 import { Badge } from '../shadcn/badge'
 
 interface TotalsSectionProps {
@@ -13,6 +13,7 @@ interface TotalsSectionProps {
   remiseMontant: number
   tvaAmount: number
   totalTTC: number
+  ecartArrondi?: number
   // Tiers Payant Props
   tauxCouverture?: number
   partAssurance?: number
@@ -32,6 +33,7 @@ export default function TotalsSection({
   remiseMontant,
   tvaAmount,
   totalTTC,
+  ecartArrondi = 0,
   tauxCouverture = 0,
   partAssurance = 0,
   partPatient = 0,
@@ -39,6 +41,12 @@ export default function TotalsSection({
 }: TotalsSectionProps) {
   const { t } = useTranslation(['facturation', 'common'])
   const [localRemise, setLocalRemise] = useState(remiseGlobale)
+  const roundingRow = ecartArrondi !== 0 ? (
+    <div className="flex justify-between gap-3 text-sm font-medium text-slate-700">
+      <span>{t('common:rounding_adjustment')}</span>
+      <span className="font-mono">{ecartArrondi > 0 ? '+' : ''}{formatCurrencyPrecise(ecartArrondi)}</span>
+    </div>
+  ) : null
 
   useEffect(() => { setLocalRemise(remiseGlobale) }, [remiseGlobale])
 
@@ -90,16 +98,18 @@ export default function TotalsSection({
           </div>
         </div>
 
+        {roundingRow}
+
         {/* Tiers Payant / Insurance Info */}
         {tauxCouverture > 0 && (
           <div className="flex justify-between items-center py-2.5 px-3 bg-blue-50 border border-blue-200 rounded-xl">
              <div className="flex flex-col">
                 <span className="text-caption text-blue-600 font-bold uppercase tracking-wide">{t('facturation:totals.part_assurance')} ({tauxCouverture}%)</span>
-                <span className="text-sm font-bold text-blue-700">{formatCurrency(Math.round(partAssurance))}</span>
+                <span className="text-sm font-bold text-blue-700">{formatCurrencyPrecise(partAssurance)}</span>
              </div>
              <div className="text-right">
                 <span className="text-micro text-slate-400 uppercase font-semibold">{t('facturation:totals.total_ttc')}</span>
-                <div className="text-caption text-slate-500">{formatCurrency(Math.round(totalTTC))}</div>
+                <div className="text-caption text-slate-500">{formatCurrencyPrecise(totalTTC)}</div>
              </div>
           </div>
         )}
@@ -184,10 +194,12 @@ export default function TotalsSection({
                     <Badge variant="secondary" className="text-caption h-5 bg-blue-100 text-blue-700">{tauxCouverture}%</Badge>
                 </div>
                 <span className="font-bold text-lg sm:text-2xl text-blue-600">
-                    {formatCurrency(Math.round(partAssurance))}
+                    {formatCurrencyPrecise(partAssurance)}
                 </span>
              </div>
           )}
+
+          {roundingRow}
 
           {/* Total TTC & Net à Payer */}
           <div className="flex flex-col items-center sm:items-end gap-1 pl-4 sm:pl-8 border-l-2 border-emerald-200">
@@ -202,7 +214,7 @@ export default function TotalsSection({
 
             {tauxCouverture > 0 && (
                 <span className="text-caption font-semibold text-slate-400 uppercase tracking-wide">
-                    {t('facturation:totals.total_ttc')}: {formatCurrency(Math.round(totalTTC))}
+                    {t('facturation:totals.total_ttc')}: {formatCurrencyPrecise(totalTTC)}
                 </span>
             )}
           </div>

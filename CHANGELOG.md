@@ -2,6 +2,176 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-11-23 — Facturation : arrondi du net client au multiple de 5 F
+
+- Nouvelles factures : après remise et calcul du tiers payant, arrondi HALF_UP du
+  montant final dû par le patient au multiple de 5 F le plus proche (4 566 →
+  4 565 F ; 4 568 → 4 570 F). La part assurance calculée avant arrondi, y compris
+  ses centimes, reste inchangée. Le TTC est ajusté du seul écart signé.
+- Champs serveur `arrondi_5f` et `ecart_arrondi`, exposés en lecture seule dans
+  l’API. Migration additive 0304 : anciennes lignes marquées sans arrondi,
+  écart nul ; aucun recalcul historique. Recalcul idempotent depuis les lignes.
+- Génération comptable existante : écart créditeur en 758000 ou débiteur en
+  658000, sans modification des bases HT/TVA. Écritures de vente équilibrées.
+  Aucun branchement global supplémentaire des signaux comptables.
+- Aperçus web, chargement des anciens devis, encaissement, factures A4/HTML,
+  tickets HTML/ESC-POS et PDF serveur fr/en alignés. Écart explicite et précision
+  conservée sur l’assurance ; net patient arrondi mis en avant sur les tickets.
+  Aucun nouvel arrondi sur les acomptes ou la valeur des coupons existants.
+- Mobile facturation : répartition et payload alignés, aperçu, scan et historique
+  local cohérents ; pas d’encaissement ajouté. Mise à jour de l’app nécessaire
+  pour que les terminaux installés affichent ces nouveaux aperçus.
+- Fichiers : `models/billing.py`, migration 0304, `serializers/billing.py`,
+  `signals_comptabilite.py`, `services/invoice_pdf.py`, `utils_doclang.py` ;
+  utilitaires finance/formatters et types web, hooks de facturation, totaux,
+  caisse, templates et ESC-POS ; calcul mobile, API, écrans et traductions fr/en.
+- Déploiement local backend/frontend effectué après sauvegarde SQL sans purge
+  des sauvegardes précédentes et migration additive 0304. Empreinte financière
+  des 3 200 anciennes factures inchangée ; arrondi inactif et écart nul sur ces
+  lignes. Santé via nginx, configuration nginx et vérification Django OK.
+- Vérifications : 91 tests backend (dont encaissements réels en base de test,
+  remises fractionnaires/TVA et PDF fr/en), 60 tests frontend, TypeScript
+  web/mobile, ESLint ciblé et cohérence
+  migrations OK. Garde-fou stock en échec sur quatre écritures préexistantes de
+  `views/stocks/stock_lots.py`, hors périmètre ; baseline non modifiée.
+
+## 2026-11-23 — Caisse : aide facultative au rendu de monnaie
+
+- Case « Aide au rendu de monnaie » dans la fenêtre d’encaissement en espèces,
+  décochée initialement ; préférence mémorisée sur le navigateur via safeStorage.
+  Aucune modification du prix de facture, des règles d’encaissement ou du backend.
+- Suggestions calculées à partir du reste à payer et du montant saisi réellement
+  remis : privilégier moins de pièces/billets à rendre, puis le plus petit
+  complément à gain égal. Exemples : 400 F → demander 100 F et rendre 500 F ;
+  3 500 F → demander 1 500 F et rendre 5 000 F.
+- Complément plafonné à 2 500 F et au montant initialement remis, représentable
+  en trois coupures maximum. Pas de proposition sur paiement insuffisant, exact,
+  saisie non entière ou rendu non multiple de 25 F ; les rendus déjà simples
+  en un/deux billets de 1 000 F ou plus sont conservés.
+- Confirmation explicite « supplémentaires effectivement reçus » : seul le
+  champ de saisie est augmenté ; le règlement doit toujours être ajouté puis
+  validé normalement. Refus du complément sans changement de montant ; protection
+  contre le double clic et contre une deuxième demande après confirmation.
+- Calcul tenant compte des acomptes de la saisie en cours, de la part patient et
+  du coupon via le reste existant. Aide masquée hors espèces ou si ce mode est
+  désactivé. Estimation théorique des coupures, sans inventaire du tiroir.
+- Fichiers : `src/utils/{cashChange.ts,__tests__/cashChange.test.ts}`,
+  `src/components/caisse/{CashChangeAssistant.tsx,CashChangeAssistant.test.tsx,
+  PaymentModal.tsx,PaymentModal.test.tsx}`, `public/locales/{fr,en}/caisse.json`.
+- Vérifications : 37 tests ciblés OK (calculs, conservation du net à payer,
+  préférence, confirmation/refus, versements partiels, coupon/tiers payant et
+  non-espèces), TypeScript, ESLint ciblé et parité des traductions fr/en OK.
+- Frontend local reconstruit et déployé via `deploy.ps1 -Target frontend` ;
+  nginx et réponse HTTP OK. Avertissement habituel de taille de bundle conservé.
+  Aucune migration, intervention sur le backend ou opération de caisse réelle.
+- Contrôle complémentaire : les tests existants de la modale de facturation,
+  inchangée et sans dépendance à cette aide, ont 8 succès et 3 échecs reproduits
+  isolément sur le séparateur de milliers (`5.000 F` au lieu de `5 000 F`).
+
+## 2026-11-23 — Immobilisations : création, modification encadrée et archivage
+
+- Onglet dédié en shadcn : formulaires de création/modification, confirmation
+  d’archivage, filtres actives/archivées/toutes et pagination. Actions visibles
+  selon les droits renvoyés par le serveur ; traductions fr/en.
+- Acquisition atomique avec écriture équilibrée obligatoire et exercice ouvert
+  correspondant à la date d’acquisition (plus de rattachement automatique à
+  l’exercice courant pour une acquisition historique). Validation des valeurs,
+  durée et comptes actifs compatibles 21/281, 23/283, 24/284.
+- Données financières verrouillées après comptabilisation ; nom modifiable et
+  archivage via PATCH conservant écritures et dotations. DELETE interdit.
+  L’archivage n’est ni une cession ni une mise au rebut comptable.
+- Dotations : traitement groupé corrigé, verrouillage transactionnel par fiche,
+  exclusion des fiches archivées, années futures/invalides refusées, exercice
+  ouvert au 31 décembre exigé. Prorata de dernière année et arrondis cumulés
+  corrigés pour ne pas dépasser la base amortissable. Historique non réécrit.
+- Migration 0303 additive : comptes d’amortissement 281000, 283000 et 284000
+  créés seulement s’ils manquent, sans écraser les comptes personnalisés.
+- Fichiers : `api/{models/comptabilite.py,serializers/accounting.py,views/comptabilite.py,
+  signals_comptabilite.py}`, `api/migrations/0303_seed_amortissement_accounts.py`,
+  `api/tests/test_immobilisations.py`,
+  `src/components/compta/{Comptabilite,ImmobilisationsTab,ImmobilisationsTab.test}.tsx`,
+  `public/locales/{fr,en}/accounting.json`.
+- Vérifications : 29 tests backend (immobilisations/charges/EBE) et 8 tests
+  frontend ciblés OK ; TypeScript, ESLint ciblé, build Vite et parité des clés
+  de traduction OK ; `makemigrations --check` sans changement manquant.
+- Sauvegarde locale `backups/avant-immobilisations-20261123-195943.dump`
+  (format PostgreSQL vérifié), migration 0303 appliquée et déploiement local
+  frontend/backend effectué ; nginx et contrôle `/api/health/` OK.
+  Aucune création, modification ou suppression de fiche réelle pendant le déploiement.
+
+## 2026-11-23 — Charges : correction des catégories SYSCOHADA et reclassements locaux
+
+- Saisie simplifiée : loyers → 622200, télécommunications → 628000,
+  fournitures de bureau non stockées → 605500, salaires du personnel national
+  → 661000, autres impôts et taxes → 648000. Eau/électricité conservées dans
+  le regroupement 605000, sans inventer de ventilation historique.
+- Précisions de périmètre fr/en (pas de double comptabilisation des dettes de
+  paie, impôt sur le bénéfice exclu de la catégorie des autres taxes).
+  Comptes inactifs ou de type incorrect refusés dans le formulaire.
+- Migration 0302 : création idempotente des comptes de charges appropriés ;
+  correction de quelques libellés initiaux uniquement s’ils sont inchangés et
+  sans écritures. Comptes personnalisés et comptes utilisés préservés.
+- Commande `reclasser_charges_syscohada --ligne <id>` en simulation par défaut,
+  `--apply` après sauvegarde et validation : OD datées comme les originaux,
+  transaction atomique, audit obligatoire, refus des exercices clôturés et
+  des pièces liées/déséquilibrées, contrôle des corrections déjà présentes.
+  Les OD générées sont protégées contre la modification/suppression ordinaire.
+- Après sauvegarde locale `backups/avant-reclassement-charges-20261123-185434.dump`
+  (format PostgreSQL vérifié), migration 0302 appliquée et lignes 111, 3839,
+  8917 reclassées : 3 450 000 F de loyers vers 622200, 15 000 F de télécoms vers
+  628000. Anciens comptes mal affectés désactivés après solde nul.
+- Contrôles transactionnels sur la base locale : lignes originales et trésorerie
+  inchangées, EBE 2026 identique, transports 0 F, services extérieurs
+  −3 465 000 F. Aucun reclassement de la dépense d’eau de 25 000 F.
+- Fichiers : `src/components/compta/{Comptabilite.tsx,chargeAccounts.ts,chargeAccounts.test.ts}`,
+  `locales/{fr,en}/accounting.json`, `api/models/comptabilite.py`,
+  `api/migrations/0302_seed_charge_accounts_syscohada.py`,
+  `api/management/commands/reclasser_charges_syscohada.py`,
+  `api/tests/test_compta_charges.py`.
+- Vérifications : 16 tests backend et 3 tests frontend OK, TypeScript et lint
+  ciblé OK, aucune migration de schéma manquante (`makemigrations --check`).
+- Déploiement local frontend/backend effectué via `deploy.ps1 -Target all` :
+  build OK (avertissement de taille de bundle), nginx et `/api/health/` OK.
+
+## 2026-11-23 — Comptabilité : rapport EBE SYSCOHADA révisé séparé
+
+- Ajout d’un onglet EBE (fr/en) et de l’endpoint GET `compta/ecritures/ebe/` :
+  cascade XA marge commerciale, XB chiffre d’affaires, XC valeur ajoutée,
+  XD excédent brut d’exploitation, sur les écritures datées de la période.
+- Correspondances SYSCOHADA révisé : stocks 6031/6032/6033, production 73/72,
+  subventions 71, transferts d’exploitation 781, personnel 66 ; charges
+  financières, amortissements et impôts sur le résultat exclus de l’EBE.
+- Rapport explicitement provisoire : variation des stocks et exhaustivité des
+  charges à valider, aucun ajout du stock physique actuel. Aucun changement
+  des écritures, du stock, de la caisse ou des états comptables existants.
+- Exports Excel/PDF dédiés avec avertissement conservé ; langue des documents
+  selon les paramètres pharmacie. Affichage des charges en montants signés.
+- Fichiers : `backend/api/services/compta_{liasse,exports}.py`,
+  `backend/api/views/comptabilite.py`, `backend/api/tests/test_compta_ebe.py`,
+  `src/components/compta/{Comptabilite,EbeTab}.tsx`,
+  `public/locales/{fr,en}/accounting.json`.
+- Vérifications : 7 tests backend OK (`--noinput`), TypeScript et ESLint ciblé OK,
+  build Vite OK (avertissement de taille de bundle).
+- Déploiement local effectué via `pwsh -File ./deploy.ps1 -Target all` :
+  frontend reconstruit, nginx rechargé, backend redémarré ; smoke test
+  `/api/health/` OK. Aucune migration ni déploiement distant.
+
+## 2026-11-21 — Rapport « Produits Annulés » : intègre les avoirs clients
+
+- Le rapport ne listait que les lignes de factures au statut `ANNULEE` ;
+  les retours produits via avoirs clients validés (réintégration stock
+  identique) n'y apparaissaient pas. `/api/rapports/produits_annules/`
+  fusionne désormais `FactureProduit` (factures annulées actives) et
+  `LigneAvoirClient` (avoirs `VALIDEE` uniquement — brouillons et avoirs
+  annulés exclus), tri desc par date (`date_annulation` / `date` de l'avoir).
+- Lignes d'avoir : `numero_facture` = n° d'avoir (AVC-…), motif = type_motif,
+  source `AVOIR_CLIENT` (traduit « Avoir client » / « Client credit ») ;
+  descriptions du rapport mises à jour fr/en.
+- Fichiers : `api/views/rapports/sales.py`, `locales/{fr,en}/reports.json`,
+  `src/hooks/reports/queries.ts`.
+- Vérif : endpoint testé en conteneur — AVC-202611-0001 (ARCOXIA ×1)
+  remonte bien en tête de liste avec `source=AVOIR_CLIENT`.
+
 ## 2026-11-21 — React Doctor : 77 findings traités (LazyMotion + micro-fixes)
 
 - Scan `react-doctor` à la racine : 77 warnings, dont 67 `use-lazy-motion`.

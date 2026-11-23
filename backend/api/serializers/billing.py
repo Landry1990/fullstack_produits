@@ -132,6 +132,7 @@ class FactureSerializer(serializers.ModelSerializer):
             'ayant_droit', 'ayant_droit_details',
             'date', 'date_document', 'status', 'status_display', 'produits',
             'total_ht', 'remise', 'tva', 'total_tva', 'total_ttc', 'notes',
+            'arrondi_5f', 'ecart_arrondi',
             'vendeur_name', 'created_by_name', 'validated_by_name',
             'remise_validated_by', 'remise_validated_by_name',
             'prix_validated_by', 'prix_validated_by_name',
@@ -143,6 +144,7 @@ class FactureSerializer(serializers.ModelSerializer):
             'poste_caisse', 'avoirs_clients',
             'points_fidelite_gagnes', 'points_fidelite_utilises', 'montant_fidelite',
         ]
+        read_only_fields = ['arrondi_5f', 'ecart_arrondi']
 
     def get_vendeur_name(self, obj):
         if obj.created_by:
@@ -302,7 +304,7 @@ class FacturePrintSerializer(serializers.ModelSerializer):
             'vendeur_nom', 'validated_by_name', 'produits',
             'montant_recu', 'montant_rendu', 'mode_reglement',
             'tva_analysis', 'total_lettres', 'notes',
-            'part_client', 'part_assurance'
+            'part_client', 'part_assurance', 'arrondi_5f', 'ecart_arrondi'
         ]
 
     def get_client(self, obj):
@@ -368,7 +370,9 @@ class FacturePrintSerializer(serializers.ModelSerializer):
     def get_total_lettres(self, obj):
         try:
             from ..pdf_utils import number_to_french
-            return number_to_french(int(obj.total_ttc))
+            entier = int(obj.total_ttc)
+            fraction = round((obj.total_ttc - entier) * 100)
+            return number_to_french(entier) + (f' et {fraction:02d}/100' if obj.arrondi_5f and fraction else '')
         except Exception:
             return ''
 

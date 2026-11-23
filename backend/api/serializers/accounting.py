@@ -135,6 +135,44 @@ class ImmobilisationSerializer(serializers.ModelSerializer):
     cumul_amortissements = serializers.ReadOnlyField()
     valeur_nette_comptable = serializers.ReadOnlyField()
     dotation_annuelle = serializers.ReadOnlyField()
+    comptabilisee = serializers.SerializerMethodField()
+
+    def get_comptabilisee(self, obj):
+        acquisition = getattr(obj, 'acquisition_comptabilisee', None)
+        if acquisition is None:
+            acquisition = EcritureComptable.objects.filter(reference=f'IMMO-{obj.pk}').exists()
+        return acquisition or obj.dotations.exists()
+
+    def validate(self, data):
+        instance = self.instance
+        financiers = ('compte_immo', 'compte_amortissement', 'date_acquisition',
+                      'valeur_acquisition', 'duree_annees', 'valeur_residuelle', 'mode_paiement')
+        if instance and self.get_comptabilisee(instance):
+            modifies = [field for field in financiers if field in data and data[field] != getattr(instance, field)]
+            if modifies:
+                raise serializers.ValidationError({field: 'Donnée financière verrouillée après comptabilisation. Une écriture de correction est nécessaire.' for field in modifies})
+            return data
+        valeur = data.get('valeur_acquisition', getattr(instance, 'valeur_acquisition', Decimal('0')))
+        residuelle = data.get('valeur_residuelle', getattr(instance, 'valeur_residuelle', Decimal('0')))
+        duree = data.get('duree_annees', getattr(instance, 'duree_annees', 5))
+        if duree < 1:
+            raise serializers.ValidationError({'duree_annees': 'La durée doit être supérieure à zéro.'})
+        if residuelle > valeur:
+            raise serializers.ValidationError({'valeur_residuelle': 'La valeur résiduelle ne peut pas dépasser la valeur d’acquisition.'})
+        compte = data.get('compte_immo', getattr(instance, 'compte_immo', None))
+        amortissement = data.get('compte_amortissement', getattr(instance, 'compte_amortissement', None))
+        if compte and (not compte.is_active or compte.type != 'ACTIF' or not compte.numero.startswith(('21', '23', '24'))):
+            raise serializers.ValidationError({'compte_immo': 'Choisissez un compte actif d’immobilisation amortissable (21, 23 ou 24).'})
+        if amortissement and (not amortissement.is_active or amortissement.type != 'PASSIF' or
+                             not amortissement.numero.startswith(f'28{compte.numero[1]}')):
+            raise serializers.ValidationError({'compte_amortissement': 'Choisissez le compte d’amortissement actif correspondant à la classe de l’immobilisation (281, 283 ou 284).'})
+        date_acquisition = data.get('date_acquisition', getattr(instance, 'date_acquisition', None))
+        if date_acquisition:
+            if date_acquisition > timezone.localdate():
+                raise serializers.ValidationError({'date_acquisition': 'La date d’acquisition ne peut pas être future.'})
+            if not ExerciceComptable.objects.filter(date_debut__lte=date_acquisition, date_fin__gte=date_acquisition, est_cloture=False).exists():
+                raise serializers.ValidationError({'date_acquisition': 'Aucun exercice comptable ouvert ne couvre cette date d’acquisition.'})
+        return data
 
     class Meta:
         from api.models import Immobilisation
@@ -143,4 +181,4 @@ class ImmobilisationSerializer(serializers.ModelSerializer):
                   'compte_amortissement', 'compte_amortissement_numero', 'date_acquisition',
                   'valeur_acquisition', 'duree_annees', 'valeur_residuelle', 'mode_paiement',
                   'is_active', 'dotation_annuelle', 'cumul_amortissements',
-                  'valeur_nette_comptable', 'dotations', 'created_at']
+                  'valeur_nette_comptable', 'dotations', 'created_at', 'comptabilisee']

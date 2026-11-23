@@ -185,7 +185,7 @@ export const QUERIES: QueryDefinition[] = [
     {
         id: 'produits_annules',
         name: 'Produits Annulés',
-        description: 'Liste des produits issus de factures annulées avec quantités et lots',
+        description: 'Liste des produits issus de factures annulées et avoirs clients avec quantités et lots',
         endpoint: '/api/rapports/produits_annules/',
         params: [
             { key: 'date_debut', label: 'Début', type: 'date', required: false },

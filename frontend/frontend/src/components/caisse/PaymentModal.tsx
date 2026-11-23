@@ -6,6 +6,8 @@ import type { Facture, CouponMonnaie } from '../../types'
 import PremiumModal from '../common/PremiumModal'
 import { getCaissePaymentModes, getPaymentModeLabel } from '../../config/paymentModes'
 import { usePharmacySettings } from '../../hooks/usePharmacySettings'
+import CashChangeAssistant from './CashChangeAssistant'
+import { formatCurrencyPrecise } from '../../utils/formatters'
 
 interface PaymentModalProps {
   isOpen: boolean
@@ -233,7 +235,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             )}
             {hasTiersPayant && (
               <div className="text-sm text-blue-600 mt-1">
-                {t('payment.part_assurance', { amount: Math.round(Number(facture.total_ttc) - Number(facture.part_client!)) })}
+                {t('payment.part_assurance', { amount: facture.arrondi_5f ? (Number(facture.total_ttc) - Number(facture.part_client!)).toLocaleString('fr-FR', { maximumFractionDigits: 2 }) : Math.round(Number(facture.total_ttc) - Number(facture.part_client!)) })}
               </div>
             )}
             {/* Reminder for Cashier about existing deposit */}
@@ -246,6 +248,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               </div>
             )}
           </div>
+
+          {Number(facture.ecart_arrondi) !== 0 && facture.ecart_arrondi != null && (
+            <div className="flex justify-between gap-3 text-sm font-medium text-slate-700">
+              <span>{t('common:rounding_adjustment')}</span>
+              <span className="font-mono">{Number(facture.ecart_arrondi) > 0 ? '+' : ''}{formatCurrencyPrecise(Number(facture.ecart_arrondi))}</span>
+            </div>
+          )}
 
           {/* Ligne de saisie : Montant + boutons Mode + Ajouter */}
           <div className="flex gap-3 items-end">
@@ -291,6 +300,16 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               <Plus className="size-7" />
             </button>
           </div>
+
+          {modePaiement === 'especes' && paymentModes.some(mode => mode.value === 'especes') && (
+            <CashChangeAssistant
+              key={facture.id}
+              amountDue={resteReel}
+              amountReceived={Number(montantPaye)}
+              onAmountReceivedChange={amount => setMontantPaye(String(amount))}
+              disabled={loading}
+            />
+          )}
 
           {/* Hint: flux de saisie */}
           {Number(montantPaye) > 0 && Number(montantPaye) < resteReel && (

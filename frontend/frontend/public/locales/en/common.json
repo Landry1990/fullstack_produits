@@ -1,4 +1,5 @@
 {
+    "rounding_adjustment": "Rounding to 5 F",
     "clock_sync": {
         "title": "Clock out of sync",
         "subtitle": "Time drift detected with server",

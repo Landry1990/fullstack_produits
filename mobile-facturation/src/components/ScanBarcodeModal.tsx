@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { useSettingsStore } from '../stores/useSettingsStore';
 import { useCartStore } from '../stores/useCartStore';
 import { expiryInfo } from '../utils/format';
+import { tiersPayantSplit } from '../utils/invoiceRounding';
 import { theme } from '../config/theme';
 import { moderateScale as ms } from '../utils/scale';
 import type { ScanResult } from '../types';
@@ -34,7 +35,7 @@ export function ScanBarcodeModal({ visible, onResolve, onAdd, onClose }: Props) 
   const [permission, requestPermission] = useCameraPermissions();
   const { autoAddScan, setAutoAddScan } = useSettingsStore();
   const totalArticles = useCartStore((s) => s.totalArticles());
-  const totalTTC = useCartStore((s) => s.totalTTC());
+  const totalTTC = useCartStore((s) => tiersPayantSplit(s.totalTTC(), Number(s.client?.taux_couverture ?? 0)).totalTtc);
 
   const [feedback, setFeedback] = useState<{ text: string; ok: boolean } | null>(null);
   const [pending, setPending] = useState<ScanResult | null>(null);

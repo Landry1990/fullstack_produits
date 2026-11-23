@@ -10,6 +10,14 @@
 
 ## ✅ Déjà en place
 
+- [x] **Arrondi du net patient à 5 F** (2026-11-23) : calcul partagé mobile
+  `utils/invoiceRounding.ts`, part assurance préservée au centime, écart signé
+  et TTC ajusté comme le backend. Aperçu, scan, payload de finalisation et
+  historique local alignés ; traductions fr/en. Le panier conserve sa base
+  avant arrondi pour éviter les doubles calculs. Aucun encaissement mobile.
+  TypeScript et tests de parité web/mobile OK. Redéploiement de l’app requis
+  sur les terminaux installés pour actualiser les aperçus.
+
 - [x] **Fidélité désactivée par défaut** (2026-11-09) : la création rapide de
   client envoie `is_loyalty_member: false` — aligné sur le nouveau défaut
   backend (`Client.is_loyalty_member` passe à `False`, migration `0288`).

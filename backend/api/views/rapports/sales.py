@@ -11,7 +11,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from api.audit_helpers import log_audit
-from api.models import AuditLog, Facture, FactureProduit, Fournisseur
+from api.models import AuditLog, AvoirClient, Facture, FactureProduit, Fournisseur, LigneAvoirClient
 from api.services.ventes_lots import collect_sales_records, money, taux
 from api.utils.validation import parse_id, parse_int
 
@@ -183,20 +183,52 @@ class RapportSalesMixin:
         if date_fin: qs = qs.filter(facture__date_annulation__lte=date_fin)
 
         self._check_pagination_params(request)
-        page = self.paginator.paginate_queryset(qs, request, view=self)
+
+        # Fusion avec les lignes des avoirs clients validés : un retour produit
+        # via avoir réintègre le stock exactement comme une facture annulée.
+        # Les brouillons et avoirs annulés n'ont produit aucun mouvement actif.
+        lignes_avoirs = LigneAvoirClient.objects.filter(
+            avoir_client__statut=AvoirClient.Statut.VALIDEE,
+        ).select_related('avoir_client', 'avoir_client__created_by', 'produit')
+        if date_debut: lignes_avoirs = lignes_avoirs.filter(avoir_client__date__gte=date_debut.date())
+        if date_fin: lignes_avoirs = lignes_avoirs.filter(avoir_client__date__lte=date_fin.date())
+
+        # Tri fusionné desc : clé timestamp (date_annulation aware / date de l'avoir à minuit).
         data = []
-        for fp in (page if page is not None else qs):
+        for fp in qs:
             notes = fp.facture.notes or ""
-            data.append({
-                'date_annulation': fp.facture.date_annulation.strftime('%d/%m/%Y %H:%M') if fp.facture.date_annulation else "",
-                'numero_facture': fp.facture.numero_facture or f"#{fp.facture.id}",
-                'nom_produit': fp.produit.name if fp.produit else fp.produit_nom,
-                'quantite_annulee': fp.quantity, 'lot': fp.lot, 'stock_actuel': fp.produit.stock if fp.produit else 0,
-                'annule_par': fp.facture.cancelled_by.username if fp.facture.cancelled_by else "Système",
-                'motif': notes.split('Motif: ')[-1] if 'Motif: ' in notes else "",
-                'source': "CAISSE_CENTRALE" if "Caisse Centrale" in notes else "VENTES"
-            })
-        return self.paginator.get_paginated_response(data) if page is not None else Response(data)
+            data.append((
+                fp.facture.date_annulation.timestamp() if fp.facture.date_annulation else 0,
+                {
+                    'date_annulation': fp.facture.date_annulation.strftime('%d/%m/%Y %H:%M') if fp.facture.date_annulation else "",
+                    'numero_facture': fp.facture.numero_facture or f"#{fp.facture.id}",
+                    'nom_produit': fp.produit.name if fp.produit else fp.produit_nom,
+                    'quantite_annulee': fp.quantity, 'lot': fp.lot, 'stock_actuel': fp.produit.stock if fp.produit else 0,
+                    'annule_par': fp.facture.cancelled_by.username if fp.facture.cancelled_by else "Système",
+                    'motif': notes.split('Motif: ')[-1] if 'Motif: ' in notes else "",
+                    'source': "CAISSE_CENTRALE" if "Caisse Centrale" in notes else "VENTES"
+                }
+            ))
+        for ligne in lignes_avoirs:
+            avoir = ligne.avoir_client
+            data.append((
+                datetime.combine(avoir.date, datetime.min.time()).timestamp(),
+                {
+                    'date_annulation': avoir.date.strftime('%d/%m/%Y'),
+                    'numero_facture': avoir.numero,
+                    'nom_produit': ligne.produit.name if ligne.produit else "",
+                    'quantite_annulee': ligne.quantity, 'lot': ligne.lot,
+                    'stock_actuel': ligne.produit.stock if ligne.produit else 0,
+                    'annule_par': avoir.created_by.username if avoir.created_by else "Système",
+                    'motif': avoir.get_type_motif_display(),
+                    'source': "AVOIR_CLIENT"
+                }
+            ))
+        data.sort(key=lambda item: item[0], reverse=True)
+        rows = [row for _, row in data]
+
+        page = self.paginator.paginate_queryset(rows, request, view=self)
+        return self.paginator.get_paginated_response(page) if page is not None else Response(rows)
 
     @action(detail=False, methods=['get'])
     def classement_vendeurs_mensuel(self, request):

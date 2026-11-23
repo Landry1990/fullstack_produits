@@ -61,6 +61,7 @@ export default function FacturationRightPanel({ hook }: FacturationRightPanelPro
           remiseMontant={hook.totals.remiseMontant}
           tvaAmount={hook.totals.totalTva}
           totalTTC={hook.totals.totalTtc}
+          ecartArrondi={hook.totals.ecartArrondi}
           tauxCouverture={hook.totals.tauxCouverture}
           partAssurance={hook.totals.partAssurance}
           partPatient={hook.totals.partPatient}

@@ -1,5 +1,5 @@
 import { formatDate as formatLocaleDate } from '../../utils/dateUtils';
-import { formatNumber, formatCurrency } from '../../utils/formatters';
+import { formatNumber, formatCurrency, formatCurrencyPrecise } from '../../utils/formatters';
 import { useTranslation } from 'react-i18next';
 import { useDocumentLocale } from '../../context/PharmacySettingsContext';
 import { PharmacyContactBlock } from './PharmacyContactBlock';
@@ -43,6 +43,8 @@ export interface InvoiceData {
   total_ht: number;
   total_tva: number;
   total_ttc: number;
+  arrondi_5f?: boolean;
+  ecart_arrondi?: number;
   remise: number;
   vendeur_nom?: string;
   validated_by_name?: string;
@@ -341,6 +343,14 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
                       />
                     )}
 
+                    {Number(data.ecart_arrondi) !== 0 && data.ecart_arrondi != null && (
+                      <TotalRow
+                        rowClassName="text-base-content/80"
+                        label={t('common:rounding_adjustment')}
+                        amount={`${Number(data.ecart_arrondi) > 0 ? '+' : ''}${formatCurrencyPrecise(Number(data.ecart_arrondi), docLocale)}`}
+                      />
+                    )}
+
                     <div className="border-t border-base-200 my-1 mx-2"></div>
                     
                     {/* Bloc TOTAL GÉNÉRAL / NET À PAYER */}
@@ -358,7 +368,7 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
                           <div className={`text-right font-black font-mono tracking-tighter pr-2 ${
                              (data.part_assurance ?? 0) > 0 ? 'text-lg' : 'text-xl'
                           }`}>
-                            {formatCurrency(Math.round(Number(data.total_ttc)), docLocale)}
+                            {data.arrondi_5f ? formatCurrencyPrecise(Number(data.total_ttc), docLocale) : formatCurrency(Math.round(Number(data.total_ttc)), docLocale)}
                           </div>
                         </div>
                     </div>
@@ -375,7 +385,7 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
                         <div className="bg-success rounded-lg shadow-sm text-white grid grid-cols-[1fr,115px] items-center px-1 py-2.5 ring-1 ring-emerald-700/10">
                           <span className="text-micro uppercase font-black tracking-[0.1em] pl-1">{t('invoice.part_assurance')}</span>
                           <div className="text-right font-mono font-black text-lg leading-none pr-2 text-right">
-                            {formatCurrency(Math.round(Number(data.part_assurance ?? 0)), docLocale)}
+                            {data.arrondi_5f ? formatCurrencyPrecise(Number(data.part_assurance ?? 0), docLocale) : formatCurrency(Math.round(Number(data.part_assurance ?? 0)), docLocale)}
                           </div>
                         </div>
                       </div>
