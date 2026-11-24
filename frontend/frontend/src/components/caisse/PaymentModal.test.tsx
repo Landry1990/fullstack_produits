@@ -25,7 +25,7 @@ describe('Cash payment with optional change assistance', () => {
     it('only updates the input on confirmation, then uses the unchanged add-and-validate flow', () => {
         render(<PaymentModal {...props} />);
         enterReceived('1000');
-        fireEvent.click(screen.getByRole('checkbox', { name: 'Aide au rendu de monnaie' }));
+        expect(screen.getByRole('checkbox', { name: 'Aide au rendu de monnaie' })).toBeChecked();
         expect(screen.getByRole('spinbutton')).toHaveValue(1000);
         expect(confirm).not.toHaveBeenCalled();
         fireEvent.click(screen.getByRole('button', { name: '100 F supplémentaires effectivement reçus' }));
@@ -41,8 +41,7 @@ describe('Cash payment with optional change assistance', () => {
     it('does not change a payment when disabled or when a suggestion is declined', () => {
         render(<PaymentModal {...props} />);
         enterReceived('1000');
-        expect(screen.getByRole('checkbox')).not.toBeChecked();
-        fireEvent.click(screen.getByRole('checkbox'));
+        expect(screen.getByRole('checkbox')).toBeChecked();
         fireEvent.click(screen.getByRole('button', { name: 'Sans complément' }));
         expect(screen.getByRole('spinbutton')).toHaveValue(1000);
         fireEvent.click(screen.getByRole('button', { name: 'Ajouter' }));
@@ -54,7 +53,6 @@ describe('Cash payment with optional change assistance', () => {
         render(<PaymentModal {...props} facture={{ ...facture, total_ttc: '2000', part_client: '700' }} coupon={{ id: 1, numero: 'C1', montant: '100' } as CouponMonnaie} />);
         expect(screen.getByRole('spinbutton')).toHaveValue(600);
         enterReceived('1000');
-        fireEvent.click(screen.getByRole('checkbox'));
         fireEvent.click(screen.getByRole('button', { name: '100 F supplémentaires effectivement reçus' }));
         expect(screen.getByRole('spinbutton')).toHaveValue(1100);
         expect(confirm).not.toHaveBeenCalled();
@@ -66,7 +64,6 @@ describe('Cash payment with optional change assistance', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Ajouter' }));
         expect(screen.getByRole('spinbutton')).toHaveValue(600);
         enterReceived('1000');
-        fireEvent.click(screen.getByRole('checkbox'));
         fireEvent.click(screen.getByRole('button', { name: '100 F supplémentaires effectivement reçus' }));
         expect(screen.getByRole('spinbutton')).toHaveValue(1100);
         fireEvent.click(screen.getByRole('button', { name: 'Ajouter' }));

@@ -18,7 +18,7 @@ interface CashChangeAssistantProps {
 export default function CashChangeAssistant({ amountDue, amountReceived, onAmountReceivedChange, disabled = false }: CashChangeAssistantProps) {
     const { t, i18n } = useTranslation('caisse');
     const id = useId();
-    const [enabled, setEnabled] = useState(() => safeStorage.getItem(PREFERENCE_KEY, 'local') === 'true');
+    const [enabled, setEnabled] = useState(() => safeStorage.getItem(PREFERENCE_KEY, 'local') !== 'false');
     const [dismissed, setDismissed] = useState<string | null>(null);
     const [confirmed, setConfirmed] = useState<{ due: number; received: number; additional: number } | null>(null);
     const lastApplied = useRef<string | null>(null);

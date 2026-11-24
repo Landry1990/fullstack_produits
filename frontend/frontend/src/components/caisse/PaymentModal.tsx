@@ -319,20 +319,6 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             </div>
           )}
 
-          {/* Montants arrondis rapides */}
-          <div className="flex flex-wrap gap-2">
-            {[500, 1000, 5000, 10000, 20000].map((montant) => (
-              <button
-                key={montant}
-                type="button"
-                onClick={() => { setMontantPaye(montant.toString()); montantInputRef.current?.focus() }}
-                className="px-4 py-2 text-sm font-semibold rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 transition-colors"
-              >
-                {montant.toLocaleString('fr-FR')}
-              </button>
-            ))}
-          </div>
-
           {/* Modes de paiement en boutons */}
           <div className="w-full">
             <label className="block py-1 text-sm font-semibold text-slate-700">

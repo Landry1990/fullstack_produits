@@ -38,8 +38,11 @@
 ## 2026-11-23 — Caisse : aide facultative au rendu de monnaie
 
 - Case « Aide au rendu de monnaie » dans la fenêtre d’encaissement en espèces,
-  décochée initialement ; préférence mémorisée sur le navigateur via safeStorage.
+  cochée par défaut (2026-11-24 : passage d’opt-in à actif sauf refus) ;
+  préférence mémorisée sur le navigateur via safeStorage.
   Aucune modification du prix de facture, des règles d’encaissement ou du backend.
+  2026-11-24 : boutons de montants rapides (500/1 000/5 000/10 000/20 000)
+  retirés de la modale d’encaissement.
 - Suggestions calculées à partir du reste à payer et du montant saisi réellement
   remis : privilégier moins de pièces/billets à rendre, puis le plus petit
   complément à gain égal. Exemples : 400 F → demander 100 F et rendre 500 F ;

@@ -12,24 +12,20 @@ beforeEach(() => {
 });
 afterEach(cleanup);
 
-function enable() {
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Aide au rendu de monnaie' }));
-}
-
 describe('CashChangeAssistant', () => {
-    it('is opt-in and never changes an amount merely by enabling it', () => {
+    it('is enabled by default and never changes an amount merely by showing a suggestion', () => {
         render(<CashChangeAssistant {...props} />);
-        expect(screen.getByRole('checkbox')).not.toBeChecked();
-        expect(screen.queryByRole('button', { name: /effectivement reçus/ })).not.toBeInTheDocument();
-        enable();
         expect(screen.getByRole('checkbox')).toBeChecked();
         expect(screen.getByRole('button', { name: '100 F supplémentaires effectivement reçus' })).toBeInTheDocument();
+        expect(changed).not.toHaveBeenCalled();
+        fireEvent.click(screen.getByRole('checkbox', { name: 'Aide au rendu de monnaie' }));
+        expect(screen.getByRole('checkbox')).not.toBeChecked();
+        expect(screen.queryByRole('button', { name: /effectivement reçus/ })).not.toBeInTheDocument();
         expect(changed).not.toHaveBeenCalled();
     });
 
     it('only applies cash after confirmation, protects against double clicks, and displays the new change', () => {
         const { rerender } = render(<CashChangeAssistant {...props} />);
-        enable();
         const confirm = screen.getByRole('button', { name: /effectivement reçus/ });
         fireEvent.click(confirm);
         fireEvent.click(confirm);
@@ -43,7 +39,6 @@ describe('CashChangeAssistant', () => {
 
     it('does not ask for another complement after one has already been received', () => {
         const { rerender } = render(<CashChangeAssistant {...props} amountReceived={1850} />);
-        enable();
         fireEvent.click(screen.getByRole('button', { name: '250 F supplémentaires effectivement reçus' }));
         expect(changed).toHaveBeenCalledExactlyOnceWith(2100);
         rerender(<CashChangeAssistant {...props} amountReceived={2100} />);
@@ -53,7 +48,6 @@ describe('CashChangeAssistant', () => {
 
     it('can decline a suggestion without changing the amount and recomputes when the amount changes', () => {
         const { rerender } = render(<CashChangeAssistant {...props} />);
-        enable();
         fireEvent.click(screen.getByRole('button', { name: 'Sans complément' }));
         expect(changed).not.toHaveBeenCalled();
         expect(screen.queryByRole('button', { name: /effectivement reçus/ })).not.toBeInTheDocument();
@@ -61,18 +55,19 @@ describe('CashChangeAssistant', () => {
         expect(screen.getByRole('button', { name: '500 F supplémentaires effectivement reçus' })).toBeInTheDocument();
     });
 
-    it('remembers both enabled and disabled preferences without automatically applying money', () => {
+    it('remembers a disabled preference and defaults to enabled, without automatically applying money', () => {
         const first = render(<CashChangeAssistant {...props} />);
-        enable();
-        expect(localStorage.getItem(preference)).toBe('true');
-        first.unmount();
-        const second = render(<CashChangeAssistant {...props} />);
         expect(screen.getByRole('checkbox')).toBeChecked();
         fireEvent.click(screen.getByRole('checkbox'));
         expect(localStorage.getItem(preference)).toBe('false');
+        first.unmount();
+        const second = render(<CashChangeAssistant {...props} />);
+        expect(screen.getByRole('checkbox')).not.toBeChecked();
+        fireEvent.click(screen.getByRole('checkbox'));
+        expect(localStorage.getItem(preference)).toBe('true');
         second.unmount();
         render(<CashChangeAssistant {...props} />);
-        expect(screen.getByRole('checkbox')).not.toBeChecked();
+        expect(screen.getByRole('checkbox')).toBeChecked();
         expect(changed).not.toHaveBeenCalled();
     });
 
