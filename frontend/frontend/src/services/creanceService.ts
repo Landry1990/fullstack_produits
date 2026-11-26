@@ -89,6 +89,7 @@ export interface TransmettreRelevesResponse {
         nb_factures: number;
     }>;
     clients_sans_creance: number[];
+    factures_skippees?: number[];
 }
 
 const creanceService = {
@@ -109,8 +110,10 @@ const creanceService = {
         return allResults;
     },
 
-    getReleve: async (params: { client_id: string; date_debut?: string; date_fin?: string; include_products?: boolean }): Promise<unknown> => {
-        const response = await api.get('creances/releve/', { params });
+    getReleve: async (params: { client_id: string; date_debut?: string; date_fin?: string; include_products?: boolean; facture_ids?: number[] }): Promise<unknown> => {
+        const response = await api.get('creances/releve/', {
+            params: { ...params, facture_ids: params.facture_ids?.join(',') },
+        });
         return response.data;
     },
 
@@ -192,7 +195,7 @@ const creanceService = {
         return response.data;
     },
 
-    transmettreReleves: async (payload: { client_ids: number[]; date_debut?: string; date_fin?: string }): Promise<TransmettreRelevesResponse> => {
+    transmettreReleves: async (payload: { client_ids: number[]; date_debut?: string; date_fin?: string; facture_ids?: number[] }): Promise<TransmettreRelevesResponse> => {
         const response = await api.post('creances/transmettre_releves/', payload, {
             headers: { 'Idempotency-Key': generateUUID() },
         });

@@ -264,5 +264,33 @@
         "message": "Message",
         "send": "Send",
         "no_email": "No email address registered for this client."
+    },
+    "controle": {
+        "button": "Verify",
+        "button_hint": "Physical invoice check — statement of checked invoices only",
+        "title": "Physical invoice check",
+        "subtitle": "Check the invoices physically present, then generate the statement for your selection",
+        "load_error": "Could not load the customer invoices.",
+        "empty": "No unpaid invoice in the period",
+        "check_all": "Check all",
+        "uncheck_all": "Uncheck all",
+        "checked_count": "{{count}} / {{total}} checked",
+        "selection_totals": "Selection totals (Total · paid · remaining)",
+        "headers": {
+            "invoice": "Invoice #",
+            "date": "Date",
+            "beneficiary": "Beneficiary",
+            "total": "Total",
+            "paid": "Paid",
+            "remaining": "Remaining"
+        },
+        "generate_simple": "Grouped statement",
+        "generate_detailed": "Detailed statement",
+        "transfer": "Transfer to payment",
+        "transferring": "Transmitting…",
+        "transfer_done": "Statement {{ref}} transmitted — see the Settlements tab",
+        "transfer_skipped": "{{count}} invoice(s) skipped (already transmitted or settled)",
+        "transfer_none": "No invoice could be transmitted (already transmitted or settled)",
+        "transfer_error": "Failed to transfer to settlements"
     }
 }

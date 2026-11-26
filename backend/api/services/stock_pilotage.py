@@ -34,6 +34,7 @@ from api.services.replenishment_service import (
     compute_jours_dispo,
     compute_vmd_tendance,
     get_jours_donnees,
+    replenishment_cache_scope,
 )
 from api.utils.dates import day_start
 
@@ -44,7 +45,7 @@ _STATUTS_VENTE = [Facture.Status.VALIDEE, Facture.Status.PAYEE]
 
 def compute_stock_pilotage(periode=30, fournisseur_id=None):
     """Retourne le plan de commande expert (mis en cache 5 min)."""
-    cache_key = f"stock_pilotage:{periode}:{fournisseur_id or 'all'}"
+    cache_key = f"stock_pilotage_v2:{replenishment_cache_scope()}:{periode}:{fournisseur_id or 'all'}"
     cached = cache.get(cache_key)
     if cached is not None:
         return cached

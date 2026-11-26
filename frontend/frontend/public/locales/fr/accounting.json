@@ -50,7 +50,11 @@
         "charges": "Charges",
         "immos": "Immobilisations",
         "plan": "Plan Comptable",
-        "tva": "TVA"
+        "tva": "TVA",
+        "regs": "Régularisations",
+        "provisions": "Provisions",
+        "paie": "Paie",
+        "more": "Plus"
     },
     "exercice": {
         "label": "Exercice",
@@ -70,7 +74,10 @@
         "ready_subtitle": "Générez les écritures manquantes pour vos factures passées en un clic.",
         "init_button": "Initialiser l'historique",
         "init_loading": "Traitement...",
-        "action_required": "ACTION REQUISE"
+        "action_required": "ACTION REQUISE",
+        "treasury": "Trésorerie disponible",
+        "treasury_cash": "Caisse",
+        "treasury_bank": "Banque"
     },
     "ledger": {
         "title": "Journal Général",
@@ -298,5 +305,117 @@
         "month": "Mois",
         "empty": "Aucune écriture TVA sur la période.",
         "note": "Valeur positive = TVA à reverser au Trésor ; négative = crédit de TVA reportable."
+    },
+    "cloture": {
+        "button": "Clôturer",
+        "button_hint": "Clôturer l'exercice : écriture de résultat + à-nouveaux",
+        "confirm_title": "Clôturer l'exercice ?",
+        "confirm_body": "L'exercice {{exercice}} (fin {{fin}}) sera clôturé : écriture de détermination du résultat, à-nouveaux sur l'exercice suivant et extourne des régularisations. Cette action est irréversible.",
+        "confirm_yes": "Confirmer la clôture",
+        "success": "Exercice clôturé — résultat : {{resultat}}",
+        "error": "La clôture a échoué"
+    },
+    "regs": {
+        "new_title": "Nouvelle régularisation",
+        "hint": "Charges/produits constatés d'avance, charges à payer, produits à recevoir — extournés automatiquement à l'ouverture de l'exercice suivant.",
+        "type": "Type",
+        "types": {
+            "CCA": "Charge constatée d'avance (CCA)",
+            "PCA": "Produit constaté d'avance (PCA)",
+            "CAP": "Charge à payer (CAP)",
+            "PAR": "Produit à recevoir (PAR)"
+        },
+        "account": "Compte de charge/produit",
+        "account_placeholder": "Choisir un compte…",
+        "amount": "Montant",
+        "date": "Date",
+        "description": "Description",
+        "description_placeholder": "Ex. Loyer payé d'avance T1",
+        "create": "Créer l'écriture",
+        "required": "Tous les champs sont requis",
+        "saved": "Régularisation enregistrée",
+        "deleted": "Régularisation supprimée",
+        "delete_error": "Suppression impossible",
+        "list_title": "Régularisations",
+        "empty": "Aucune régularisation",
+        "extourne": "Extourne",
+        "pending": "À la clôture",
+        "extourned": "Extournée"
+    },
+    "provisions": {
+        "creances_title": "Créances douteuses",
+        "creances_hint": "Marquer une créance client génère une dépréciation (691 / 491). Recouvrement ou perte soldent la dépréciation.",
+        "mark_doubtful": "Marquer douteuse",
+        "client": "Client",
+        "client_placeholder": "Rechercher un client…",
+        "amount": "Montant déprécié",
+        "debt": "Dette actuelle",
+        "comment": "Commentaire",
+        "status": "Statut",
+        "statuts": {
+            "douteuse": "Douteuse",
+            "recouvree": "Recouvrée",
+            "irrecouvrable": "Irrécouvrable",
+            "dotee": "Dotée",
+            "reprise": "Reprise"
+        },
+        "creance_marked": "Créance marquée douteuse",
+        "empty_creances": "Aucune créance douteuse",
+        "recover": "Recouvrir",
+        "write_off": "Passer en perte",
+        "action_done": "Opération enregistrée",
+        "stock_title": "Dépréciation du stock périmé",
+        "stock_hint": "Dotation de dépréciation des lots périmés (691 / 391). Valeur estimée actuelle : {{amount}}.",
+        "dep_create": "Créer la dotation",
+        "label": "Libellé",
+        "label_placeholder": "Ex. Stock périmé — inventaire de fin d'exercice",
+        "dep_saved": "Dotation enregistrée",
+        "empty_stock": "Aucune dépréciation de stock",
+        "reverse": "Reprendre",
+        "error": "L'opération a échoué"
+    },
+    "paie": {
+        "employes_title": "Employés",
+        "name": "Nom",
+        "role": "Poste",
+        "base_gross": "Brut de référence",
+        "employe_add": "Ajouter",
+        "employe_saved": "Employé enregistré",
+        "new_title": "Nouvelle paie",
+        "hint": "Brouillon sans écriture ; « Comptabiliser » génère l'OD (661/664 au débit, 422/431/447 au crédit).",
+        "employee": "Employé",
+        "employee_placeholder": "Choisir un employé…",
+        "month": "Mois",
+        "gross": "Brut",
+        "employee_contrib": "Cotisations salariales",
+        "irpp": "IRPP",
+        "employer_contrib": "Charges patronales",
+        "net_preview": "Net à payer estimé",
+        "create_draft": "Créer le brouillon",
+        "saved": "Paie enregistrée",
+        "error": "L'opération a échoué",
+        "empty": "Aucune paie",
+        "net": "Net",
+        "post": "Comptabiliser",
+        "posted": "Paie comptabilisée",
+        "deleted": "Paie supprimée",
+        "statuts": {
+            "brouillon": "Brouillon",
+            "comptabilisee": "Comptabilisée"
+        }
+    },
+    "virement": {
+        "title": "Virement caisse ↔ banque",
+        "hint": "Génère une écriture OD (521100 Banque / 571100 Caisse).",
+        "direction": "Sens du virement",
+        "to_bank": "Caisse → Banque (dépôt d'espèces)",
+        "to_cash": "Banque → Caisse (retrait d'espèces)",
+        "amount": "Montant",
+        "date": "Date",
+        "label": "Libellé (facultatif)",
+        "label_placeholder": "Ex. Dépôt bancaire du jour",
+        "submit": "Enregistrer",
+        "saved": "Virement enregistré",
+        "error": "Le virement a échoué"
     }
 }

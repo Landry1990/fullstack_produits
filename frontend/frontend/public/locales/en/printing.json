@@ -338,6 +338,8 @@
     "total_invoiced": "Total invoiced:",
     "total_paid": "Total paid:",
     "net_to_pay": "NET TO PAY:",
+    "amount_in_words": "This statement is made out for the sum of:",
+    "justification": "This document is a statement of outstanding invoices.",
     "client_signature": "CUSTOMER SIGNATURE",
     "management": "MANAGEMENT",
     "generated_on": "Document generated on {{date}}"

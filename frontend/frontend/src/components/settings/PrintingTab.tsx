@@ -151,6 +151,15 @@ export function PrintingTab({ formData, handleChange, t, invSettings, updateInvS
             />
           </label>
           <p className="text-xs text-slate-400">{t('hints.auto_print_ticket')}</p>
+          <label htmlFor="ticket-copies" className="block text-sm font-bold text-slate-500 pt-3">
+            {t('labels.ticket_copies')}
+          </label>
+          <Select id="ticket-copies" value={invSettings.ticket_copies ?? 1}
+            onChange={(e) => updateInvSettings({ ticket_copies: Number(e.target.value) as 1 | 2 })}>
+            <option value={1}>{t('labels.ticket_copies_one')}</option>
+            <option value={2}>{t('labels.ticket_copies_two')}</option>
+          </Select>
+          <p className="text-xs text-slate-400">{t('hints.ticket_copies')}</p>
         </div>
       )}
 

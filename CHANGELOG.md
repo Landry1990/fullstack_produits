@@ -2,6 +2,203 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-11-26 — Revue compta : points mineurs traités
+
+- `CreanceDouteuseViewSet` : clients prefetchés avec `current_debt_annotated`
+  (même sous-requête que `ClientViewSet`) — fin du calcul de dette par ligne (N+1).
+- Comptes 481000/486000 seedés dans 0305 avec leurs vrais libellés ; le service
+  utilise `reg.get_type_display()` au lieu du libellé générique « Régularisation »
+  (le seed corrige aussi les lignes déjà créées avec l'ancien libellé).
+- Clé `compta_resultat_v2` scopée par base (`alias:nom`), comme les clés de
+  réappro — les tests ou une autre base ne partagent plus le résultat mis en cache.
+- Vérifié : 16/16 tests `test_compta_inventaire` OK, queryset annotée exécutée
+  sans erreur sur la base de dev.
+
+## 2026-11-25 — Revue compta : 3 correctifs avant merge
+
+- `RegularisationViewSet.perform_update` : une modification (montant, date,
+  compte) laissait l'OD initiale inchangée — divergence silencieuse suivi/compta.
+  Désormais l'OD est supprimée puis régénérée dans la même transaction
+  (toujours bloquée si extourne faite).
+- `virement_tresorerie` : `Decimal(str(montant))` levait `InvalidDecimal`
+  (HTTP 500) sur une valeur invalide — converti en `ValidationError` (400).
+- `comptabiliser_paie` : une paie entièrement nulle créait une écriture sans
+  lignes marquée « comptabilisée » — refusée désormais.
+- `cloturer_exercice` : choix de l'exercice N+1 rendu déterministe
+  (`order_by('date_debut')`).
+- Tests : +4 régressions dans `test_compta_inventaire.py` (PATCH régénère l'OD,
+  montant invalide → 400, paie nulle refusée, virement caisse→banque) —
+  16/16 OK en Docker.
+
+## 2026-11-25 — QZ Tray : récupération automatique de la détection
+
+- `qzPrinter.ts` : recherche complète de l’imprimante enregistrée avant envoi,
+  délai de détection limité à 5 s et une seule reconnexion/redétection si
+  la connexion ne répond plus ou si l’imprimante est introuvable.
+- Aucun renvoi automatique après soumission d’un job ; aucune bascule vers
+  une autre imprimante si une imprimante est configurée. Choix ticket et
+  étiquettes conservés. Détection manuelle et impressions partagent la file
+  pour ne pas interrompre un travail en cours.
+- `qzPrinter.test.ts` : 9 tests (connexion muette, liste vide, nom exact,
+  imprimante dédiée, timeout, file et absence de renvoi après erreur).
+  Avec les tests du ticket : 12 tests OK ; TypeScript et ESLint ciblé OK.
+- Frontend déployé en Docker local via `deploy.ps1 -Target frontend` ; build
+  OK. Comportement après veille/redémarrage QZ à confirmer sur le poste réel.
+
+## 2026-11-25 — Impression double : synchronisation des paramètres de caisse
+
+- Le choix `ticket_copies=2` était enregistré en base mais les instances du
+  hook `useInvoiceSettings` conservaient chacune leur ancien état, et l’API
+  autorisait un cache HTTP public de cinq minutes.
+- `useInvoiceSettings.ts` : diffusion du résultat sauvegardé aux écrans ouverts,
+  relecture au retour sur l’onglet, paramètre anti-cache HTTP et protection
+  contre une ancienne réponse GET écrasant le choix nouvellement sauvegardé.
+- `middleware_cache.py` : `invoice-settings` passe en `Cache-Control: no-store`.
+  Aucun changement aux paiements ni aux commandes ESC/POS.
+- Tests : `useInvoiceSettings.test.ts` (4 régressions), tests ESC/POS et
+  multi-caisse : 13 OK ; `test_settings.InvoiceConfigurationViewTest` : 7 OK.
+  TypeScript et ESLint ciblé OK. Déploiement Docker local frontend/backend
+  réussi via `deploy.ps1 -Target all`, build et healthcheck OK. Impression
+  physique à confirmer après Ctrl+F5 et réimpression d’un ticket existant.
+
+## 2026-11-25 — Plan expert : correction du cache d’historique contaminé
+
+- Diagnostic reproduit : ancienne clé `stock_jours_donnees` à 7 alors que
+  l’historique réel atteint le plafond de 90 jours ; le plan expert affichait
+  112 produits / 3 888 555 F HT. Les tests partageaient Redis avec l’application.
+- `backend/settings.py` : Django test et pytest utilisent désormais un
+  `LocMemCache` dédié au processus ; Redis de l’application reste inchangé.
+- `replenishment_service.py`, `stock_pilotage.py` : clés versionnées v2,
+  isolées par alias/base et date locale. Le recalcul des rotations invalide
+  la nouvelle clé d’historique du jour. Aucune formule de réapprovisionnement
+  ni aucun seuil produit n’a été modifié.
+- `test_rotation_moyenne.py` : régressions sur ancienne valeur 7, ancien plan
+  en cache, changement de date/base, réutilisation du cache et isolation tests.
+  35 tests `test_dashboard` + `test_rotation_moyenne` OK ; `manage.py check` OK.
+  Ruff non disponible dans l’environnement local/conteneur.
+- Backend Docker local redémarré, healthcheck HTTP 200. Suppression ciblée des
+  deux anciennes clés uniquement (aucun flush Redis). Vérification finale :
+  historique 90 jours, 77 produits / 297 587 F à commander immédiatement et
+  22 produits / 87 554 F à prévoir bientôt, identiques au recalcul sans cache.
+  Le cadencier donne alors 94 produits / 373 693 F ; l’écart résiduel provient
+  des règles distinctes, dont l’harmonisation reste une étape séparée.
+
+## 2026-11-25 — Impression : un ou deux exemplaires du ticket de caisse
+
+- Paramètres → Impression : choix de 1 ou 2 exemplaires, enregistré dans
+  `InvoiceSettings.ticket_copies` (défaut 1, valeurs limitées à 1/2), migration
+  additive `0307_invoice_ticket_copies` ; traductions fr/en.
+- Impression automatique après encaissement et impressions manuelles : deux
+  tickets dans un seul job ESC/POS (tiroir ouvert une seule fois), ou deux
+  exemplaires séparés par un saut de page dans le flux navigateur. Coupons
+  de monnaie et factures A4 inchangés ; aucune opération de paiement ajoutée.
+- Fichiers : `models/settings.py`, migration 0307, `useInvoiceSettings.ts`,
+  `PrintingTab.tsx`, locales `pharmacy_settings.json`, `printTicketSmart.ts`,
+  `useCaissePayment.ts`, modales `CaisseTicketPreviewModal.tsx` et
+  `TicketPreviewModal.tsx`, test `printTicketSmart.test.ts`.
+- Vérifications : 3 tests Vitest OK, TypeScript et ESLint ciblé OK,
+  validation serializer 1/2 et défaut OK, `makemigrations --check` OK.
+  Migration 0307 appliquée en Docker local ; déploiement frontend/backend
+  via `pwsh -File ./deploy.ps1 -Target all` réussi (build et healthcheck OK).
+  Impression matérielle à vérifier sur site.
+
+## 2026-11-25 — Index : audit + garde-fou migrations
+
+- **`check_index_migrations`** (nouveau, sur le modèle de
+  `check_stock_boundaries`) : échoue si une migration crée un index sans
+  `CONCURRENTLY` sur une grosse table (`AddIndex`, `AddField db_index`,
+  `CREATE INDEX` RunSQL). Ignore les `state_operations` (state-only) ;
+  baseline `api/checks/index_migrations_baseline.txt` (62 violations
+  historiques revues, essentiellement le squash 0001 + migrations
+  d'index pré-2026-11). Branché dans `ci.yml` (job backend-lint).
+- **`audit_indexes`** (nouveau, lecture seule) : index attendus par les
+  modèles absents en base, index en base non déclarés, **inutilisés**
+  (`idx_scan = 0`, hors uniques/PK, triés par taille — 326 index / 58 Mo
+  en dev), doublons par préfixe de colonnes, index auto-nommés.
+  Corrections de faux positifs : `managed=False`, contraintes uniques,
+  champs `-date`, index compagnons `*_like`.
+- Doc : `docs/agent/migrations-prod.md` (garde-fou, audit, convention de
+  nommage explicite pour éviter les doublons type 0263).
+- **Migration 0306 — nettoyage des doublons** : `audit_indexes` a confirmé
+  34 index dont les colonnes sont un préfixe strict d'un index plus large
+  sur la même table (FK absorbées par composites/uniques, index Meta
+  absorbés). Suppression en `DROP INDEX CONCURRENTLY` (`atomic = False`)
+  via `SeparateDatabaseAndState`. Déclarations alignées : retrait de 3
+  `Meta.indexes` redondants (`caisse -date_paiement`, `produit stock`,
+  `stocklot produit+quantity_remaining`) et `db_index=False` sur
+  `commande.is_active` (couvert par `commande_active_date_idx`). Les index
+  FK implicites restent `db_index=True` — le drop est purement
+  opérationnel, l'index couvrant sert les lookups FK et les cascades
+  DELETE. Audit post-migration : 0 doublon, 0 index manquant.
+- `audit_indexes` : exclusion des index partiels (indpred) de la détection
+  de doublons — un `WHERE`-index n'est pas substituable par un index complet.
+- Baseline `stock_writes_baseline.txt` régénérée : les écritures tolérées de
+  `views/stocks/stock_lots.py` avaient glissé de ~145 lignes au commit
+  0f161124 sans régénération (check CI rouge). Mêmes écritures revues.
+- `test_commands_smoke` : `audit_indexes`, `check_index_migrations` →
+  SAFE_RUN ; `reclasser_charges_syscohada` (non classée depuis sa création)
+  → ARG_GUARDED (`--ligne` requis).
+
+## 2026-11-25 — Revue code : correctifs compta inventaire
+
+- `cloturer_exercice` : `get_or_create` sur `date_debut` remplacé par recherche
+  d'exercice existant couvrant le lendemain de la clôture (évite un doublon
+  chevauchant si N+1 existe déjà avec une autre borne) ; erreur claire si
+  l'exercice suivant est déjà clôturé.
+- `test_compta_inventaire` : l'exercice de test couvre désormais aussi l'année
+  courante (`date.today()`), sinon les services postant à la date du jour
+  (créances douteuses, dépréciation stock) échoueraient hors de 2026 ;
+  l'assertion sur `exercice_n1.date_debut` est relative à `date_fin`.
+- Vérifié : 12/12 tests `test_compta_inventaire` OK dans Docker.
+
+## 2026-11-24 — Comptabilité : travaux d'inventaire (clôture, régularisations, provisions, paie)
+
+- **Clôture d'exercice** : `POST compta/exercices/<id>/cloturer/` génère l'OD de
+  détermination du résultat (soldes comptes 6/7 → 120000 bénéfice / 129000
+  déficit, journal CL daté `date_fin`), crée l'exercice N+1 si absent et poste
+  les à-nouveaux des comptes de bilan 1–5 (journal AN). `est_cloture` bloque
+  toute nouvelle écriture via validation au niveau du modèle.
+- **Régularisations** (CCA/PCA/CAP/PAR) : OD automatique en 481/486/482/487
+  contre le compte de charge/produit choisi, avec garde-fou sur le type de
+  compte. Extourne automatique `EXT-REG-<pk>` datée du jour 1 de N+1 générée
+  lors de la clôture. Suppression possible tant que non extournée.
+- **Provisions** : créances douteuses (marquage manuel par client —
+  dotation 691/491, reprise 781 au recouvrement, perte 651/411100 à
+  l'irrécouvrabilité) et dépréciation du stock périmé (dotation 691/391,
+  endpoint `estimation/` valorisant les lots périmés au coût).
+- **Paie** : modèles `Employe` + `PaieMois` (unique employé/mois), brouillon
+  sans écriture puis `comptabiliser` → OD journal PA : D 661 brut, D 664
+  patronales / C 422 net, C 431 cotisations totales, C 447 IRPP.
+- Migration additive 0305 : nouveaux comptes 129000/482000/487000, journaux
+  CL/AN/PA, modèles Regularisation, CreanceDouteuse, DepreciationStock,
+  Employe, PaieMois.
+- Frontend : 3 nouveaux onglets Comptabilité (Régularisations, Provisions,
+  Paie) + bouton « Clôturer » avec confirmation dans l'en-tête exercice ;
+  traductions fr/en complètes.
+- Fichiers : `models/comptabilite.py`, `services/compta_inventaire.py`,
+  `serializers/accounting.py`, `views/comptabilite.py`, `urls.py`, migration
+  0305, `tests/test_compta_inventaire.py` (12 tests) ; frontend
+  `RegularisationsTab.tsx`, `ProvisionsTab.tsx`, `PaieTab.tsx`,
+  `Comptabilite.tsx`, locales `accounting.json` fr/en.
+- Vérifications : 12/12 tests `test_compta_inventaire`, `manage.py check` +
+  `makemigrations --check` propres, tsc + eslint sans erreur.
+- Correctifs post-déploiement : callback `cloturer` déplacé après
+  `useAccounting()` (TDZ), prop `comptes` passée à `RegularisationsTab`,
+  barre d'onglets regroupée (8 visibles + menu « Plus » : EBE, immos,
+  régularisations, provisions, paie, plan).
+- Tableau de bord : nouvelle carte « Trésorerie disponible » (solde 52+57
+  cumulé jusqu'à `date_fin`, détail caisse/banque) renvoyée par
+  `compte-resultat` (clé de cache bumpée en `_v2`) ; bouton « Virement
+  caisse ↔ banque » sur la carte → `POST compta/ecritures/virement-tresorerie/`
+  génère l'OD `D 521100/C 571100` (dépôt) ou inverse (retrait), référence
+  `VIR-TRESO-<id>`, auditée.
+- Créances : bouton « Contrôle » (client sélectionné) → modale de pointage
+  physique des factures impayées de la période (checkbox, tout cocher,
+  totaux de sélection), génération du relevé PDF **des seules factures
+  cochées** en groupé ou détaillé (produits par ayant droit).
+  `creances/releve/` accepte `facture_ids` (CSV, ≤500) et renvoie `id`
+  par ligne ; `getReleve`/`handleImprimerReleve` véhiculent le filtre.
+
 ## 2026-11-23 — Facturation : arrondi du net client au multiple de 5 F
 
 - Nouvelles factures : après remise et calcul du tiers payant, arrondi HALF_UP du

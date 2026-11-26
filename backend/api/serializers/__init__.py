@@ -7,10 +7,15 @@ Tous les serializers sont exportés ici pour compatibilité ascendante.
 # Accounting
 from .accounting import (
     CompteComptableSerializer,
+    CreanceDouteuseSerializer,
+    DepreciationStockSerializer,
     EcritureComptableSerializer,
+    EmployeSerializer,
     ExerciceComptableSerializer,
     JournalComptableSerializer,
     LigneEcritureSerializer,
+    PaieMoisSerializer,
+    RegularisationSerializer,
 )
 
 # Audit & Logs

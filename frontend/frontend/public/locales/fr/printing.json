@@ -338,6 +338,8 @@
     "total_invoiced": "Total Facturé :",
     "total_paid": "Total Réglé :",
     "net_to_pay": "NET À PAYER :",
+    "amount_in_words": "Arrêté le présent relevé à la somme de :",
+    "justification": "Ce document est un relevé des factures dues.",
     "client_signature": "SIGNATURE CLIENT",
     "management": "LA DIRECTION",
     "generated_on": "Document généré le {{date}}"

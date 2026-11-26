@@ -296,6 +296,197 @@ class LigneEcriture(models.Model):
         return f"{self.compte.numero} | D:{self.debit} | C:{self.credit}"
 
 
+class Regularisation(models.Model):
+    """Écriture de régularisation d'inventaire (cut-off) avec extourne
+    automatique au premier jour de l'exercice suivant.
+
+    Sens des écritures (plan local) :
+    - CCA 481000 (actif)   : D 481 / C compte charge   → extourne D charge / C 481
+    - PCA 486000 (passif)  : D compte produit / C 486  → extourne D 486 / C produit
+    - CAP 482000 (passif)  : D compte charge / C 482   → extourne D 482 / C charge
+    - PAR 487000 (actif)   : D 487 / C compte produit  → extourne D produit / C 487
+    """
+
+    class Type(models.TextChoices):
+        CCA = 'CCA', "Charge constatée d'avance"
+        PCA = 'PCA', "Produit constaté d'avance"
+        CAP = 'CAP', "Charge à payer"
+        PAR = 'PAR', "Produit à recevoir"
+
+    # type → (numéro compte de régularisation, type attendu du compte de
+    # charge/produit, le compte de régularisation est-il débité à l'initiale ?)
+    PARAMS = {
+        'CCA': ('481000', 'CHARGE', True),
+        'PCA': ('486000', 'PRODUIT', False),
+        'CAP': ('482000', 'CHARGE', False),
+        'PAR': ('487000', 'PRODUIT', True),
+    }
+
+    type = models.CharField(max_length=3, choices=Type.choices)
+    compte = models.ForeignKey(
+        CompteComptable, on_delete=models.PROTECT, related_name='regularisations',
+        help_text='Compte de charge (CCA/CAP) ou de produit (PCA/PAR)')
+    montant = models.DecimalField(
+        max_digits=14, decimal_places=2,
+        validators=[MinValueValidator(Decimal('0.01'))])
+    date = models.DateField()
+    description = models.CharField(max_length=255)
+    ecriture = models.ForeignKey(
+        EcritureComptable, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='regularisations')
+    extourne_ecriture = models.ForeignKey(
+        EcritureComptable, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='regularisations_extournees')
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        'auth.User', on_delete=models.SET_NULL, null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Régularisation"
+        ordering = ['-date', '-created_at']
+
+    def __str__(self):
+        return f"{self.type} | {self.compte.numero} | {self.montant} | {self.date}"
+
+
+class CreanceDouteuse(models.Model):
+    """Dépréciation d'une créance client marquée manuellement.
+
+    Marquage      : D 691000 / C 491000
+    Recouvrement  : D 491000 / C 781000
+    Irrécouvrable : D 651000 / C 411100 (perte) + D 491000 / C 781000 (reprise)
+    """
+
+    class Statut(models.TextChoices):
+        DOUTEUSE = 'douteuse', 'Douteuse'
+        RECOUVREE = 'recouvree', 'Recouvrée'
+        IRRECOUVRABLE = 'irrecouvrable', 'Irrécouvrable'
+
+    client = models.ForeignKey(
+        'Client', on_delete=models.PROTECT, related_name='creances_douteuses')
+    montant = models.DecimalField(
+        max_digits=14, decimal_places=2,
+        validators=[MinValueValidator(Decimal('0.01'))])
+    statut = models.CharField(
+        max_length=15, choices=Statut.choices, default=Statut.DOUTEUSE)
+    commentaire = models.CharField(max_length=255, blank=True)
+    dotation_ecriture = models.ForeignKey(
+        EcritureComptable, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='depreciations_clients')
+    sortie_ecriture = models.ForeignKey(
+        EcritureComptable, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='sorties_depreciations_clients',
+        help_text='OD de reprise (recouvrement ou perte)')
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        'auth.User', on_delete=models.SET_NULL, null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Créance douteuse"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.client} | {self.montant} | {self.get_statut_display()}"
+
+
+class DepreciationStock(models.Model):
+    """Dotation annuelle (ou périodique) de dépréciation du stock périmé :
+    D 691000 / C 391000 — reprise D 391000 / C 781000."""
+
+    class Statut(models.TextChoices):
+        DOTEE = 'dotee', 'Dotée'
+        REPRISE = 'reprise', 'Reprise'
+
+    libelle = models.CharField(max_length=255)
+    montant = models.DecimalField(
+        max_digits=14, decimal_places=2,
+        validators=[MinValueValidator(Decimal('0.01'))])
+    statut = models.CharField(
+        max_length=10, choices=Statut.choices, default=Statut.DOTEE)
+    dotation_ecriture = models.ForeignKey(
+        EcritureComptable, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='depreciations_stock')
+    reprise_ecriture = models.ForeignKey(
+        EcritureComptable, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='reprises_depreciations_stock')
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        'auth.User', on_delete=models.SET_NULL, null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Dépréciation de stock"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.libelle} | {self.montant} | {self.get_statut_display()}"
+
+
+class Employe(models.Model):
+    """Employé pour le suivi des paies mensuelles."""
+
+    nom = models.CharField(max_length=200)
+    poste = models.CharField(max_length=100, blank=True)
+    salaire_brut = models.DecimalField(
+        max_digits=14, decimal_places=2, default=Decimal('0.00'),
+        help_text="Brut mensuel de référence pré-rempli à la saisie")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Employé"
+        ordering = ['nom']
+
+    def __str__(self):
+        return self.nom
+
+
+class PaieMois(models.Model):
+    """Paie mensuelle d'un employé.
+
+    OD générée (journal PA) : D 661 brut, D 664 charges patronales /
+    C 422 net à payer, C 431 cotisations totales, C 447 IRPP."""
+
+    class Statut(models.TextChoices):
+        BROUILLON = 'brouillon', 'Brouillon'
+        COMPTABILISEE = 'comptabilisee', 'Comptabilisée'
+
+    employe = models.ForeignKey(
+        Employe, on_delete=models.PROTECT, related_name='paies')
+    mois = models.DateField(help_text='Toujours le 1er du mois')
+    brut = models.DecimalField(max_digits=14, decimal_places=2,
+                               validators=[MinValueValidator(Decimal('0'))])
+    cotisations_salariales = models.DecimalField(
+        max_digits=14, decimal_places=2, default=Decimal('0.00'),
+        validators=[MinValueValidator(Decimal('0'))],
+        help_text='Part salariale CNPS et assimilées')
+    irpp = models.DecimalField(max_digits=14, decimal_places=2,
+                               default=Decimal('0.00'),
+                               validators=[MinValueValidator(Decimal('0'))])
+    charges_patronales = models.DecimalField(
+        max_digits=14, decimal_places=2, default=Decimal('0.00'),
+        validators=[MinValueValidator(Decimal('0'))])
+    statut = models.CharField(
+        max_length=15, choices=Statut.choices, default=Statut.BROUILLON)
+    ecriture = models.ForeignKey(
+        EcritureComptable, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='paies')
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        'auth.User', on_delete=models.SET_NULL, null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Paie mensuelle"
+        unique_together = [['employe', 'mois']]
+        ordering = ['-mois', 'employe__nom']
+
+    @property
+    def net_a_payer(self):
+        return self.brut - self.cotisations_salariales - self.irpp
+
+    def __str__(self):
+        return f"{self.employe.nom} | {self.mois:%Y-%m} | {self.net_a_payer}"
+
+
 class Lettrage(models.Model):
     """
     Lettrage des comptes tiers (411-Clients, 401-Fournisseurs).

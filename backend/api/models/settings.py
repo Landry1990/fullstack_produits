@@ -568,6 +568,10 @@ class InvoiceSettings(models.Model):
         default=False,
         help_text="Imprimer automatiquement le ticket après encaissement en caisse centralisée"
     )
+    ticket_copies = models.PositiveSmallIntegerField(
+        default=1, choices=[(1, '1 exemplaire'), (2, '2 exemplaires')],
+        validators=[MinValueValidator(1), MaxValueValidator(2)],
+    )
     require_validator_password = models.BooleanField(
         default=True,
         help_text="Exiger la saisie d'un mot de passe validateur pour envoyer une vente en caisse"

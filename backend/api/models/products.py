@@ -432,7 +432,7 @@ class Produit(models.Model):
 
     class Meta:
         indexes = [
-            models.Index(fields=['stock']),
+            # (stock) seul : préfixe de (stock, stock_minimum)
             models.Index(fields=['rayon', 'stock']),
             # (fournisseur) seul : couvert par l'index FK auto
             # (api_produit_fournisseur_id_*)

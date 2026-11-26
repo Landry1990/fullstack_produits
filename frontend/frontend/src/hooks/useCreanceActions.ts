@@ -13,14 +13,23 @@ import { useConfirm } from './useConfirm';
 interface ReleveData {
     client: { id?: number; name: string };
     creances: Array<{
+        id: number;
         numero_facture: string;
         date: string;
         ayant_droit?: string | null;
+        societe?: string | null;
         montant_total: number | string;
         montant_paye: number | string;
         reste_a_payer: number | string;
+        produits?: Array<{
+            produit_nom?: string;
+            quantity: number | string;
+            selling_price: number | string;
+            discount?: number | string;
+            total_ligne: number | string;
+        }>;
     }>;
-    totaux: { total_factures: number | string; total_paye: number | string; total_reste: number | string };
+    totaux: { total_factures: number | string; total_paye: number | string; total_reste: number | string; total_lettres?: string };
     periode: { date_debut?: string | null; date_fin?: string | null };
 }
 
@@ -233,7 +242,7 @@ export const useCreanceActions = ({
         requireSudo(performBulkPayment, { permission: 'can_cash_out' });
     };
 
-    const handleImprimerReleve = useCallback(async (selectedClient: string, dateDebut: string, dateFin: string, includeProducts: boolean = false) => {
+    const handleImprimerReleve = useCallback(async (selectedClient: string, dateDebut: string, dateFin: string, includeProducts: boolean = false, factureIds?: number[]) => {
         if (!selectedClient) {
             gooeyToast.error(t('creances:toasts.select_client_error'));
             return;
@@ -246,23 +255,20 @@ export const useCreanceActions = ({
                 ...(dateDebut ? { date_debut: dateDebut } : {}),
                 ...(dateFin ? { date_fin: dateFin } : {}),
                 include_products: includeProducts,
+                ...(factureIds?.length ? { facture_ids: factureIds } : {}),
             }) as ReleveData;
 
-            const { generateRelevePdfDraft } = await import('../utils/print/relevePdfDraft');
-            const doc = generateRelevePdfDraft({
+            const { buildRelevePrintHtml } = await import('../utils/print/relevePrintHtml');
+            const html = buildRelevePrintHtml({
                 client: releveData.client,
                 creances: releveData.creances,
                 totaux: releveData.totaux,
                 periode: releveData.periode,
-                settings: pharmacySettings,
                 includeProducts,
+            }, pharmacySettings);
+            printHtmlInIframe(html, () => {
+                gooeyToast.error(t('creances:toasts.error_print_statement'), { id: loadingToast });
             });
-
-            const clientSlug = releveData.client?.name
-                ? releveData.client.name.toLowerCase().replace(/\s+/g, '_')
-                : selectedClient;
-            const suffix = includeProducts ? '_detaille' : '';
-            doc.save(`releve_${clientSlug}${suffix}_${new Date().toISOString().slice(0, 10)}.pdf`);
             gooeyToast.success(t('creances:toasts.releve_generated'), { id: loadingToast });
         } catch {
             gooeyToast.error(t('creances:toasts.error_print_statement'), { id: loadingToast });

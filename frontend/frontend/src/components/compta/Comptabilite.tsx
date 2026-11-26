@@ -1,10 +1,15 @@
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { m } from 'framer-motion';
 import { staggerContainer, fadeInUp } from '../../lib/motion';
 import { useAccounting, type Compte, type Ecriture, type LigneEcriture, type Journal } from '../../hooks/useAccounting';
 import api from '../../services/api';
 import EbeTab from './EbeTab';
 import ImmosTab from './ImmobilisationsTab';
+import RegularisationsTab from './RegularisationsTab';
+import VirementTresorerieDialog from './VirementTresorerieDialog';
+import ProvisionsTab from './ProvisionsTab';
+import PaieTab from './PaieTab';
 import { chargeAccounts as defaultChargeAccounts } from './chargeAccounts';
 import type { TFunction } from 'i18next';
 import type { Locale } from 'date-fns';
@@ -16,6 +21,7 @@ import {
     PlusCircle, 
     RefreshCcw,
     ChevronRight as _ChevronRight,
+    ChevronDown,
     ArrowUpRight,
     ArrowDownRight,
     Search,
@@ -32,6 +38,7 @@ import {
     Paperclip,
     Ellipsis,
     Banknote,
+    ArrowLeftRight,
     Receipt,
     Check,
     History,
@@ -45,6 +52,7 @@ import { fr, enUS } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
 import { gooeyToast } from 'goey-toast';
 import PaginationControls from '../ui/PaginationControls';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../shadcn/dropdown-menu';
 import { PageContainer } from '../ui/PageContainer';
 import { LocalizedDateInput } from '../LocalizedDateInput';
 import i18n from '../../i18n';
@@ -61,7 +69,10 @@ interface ComptabiliteProps {
 
 export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteProps) {
     const { t, i18n } = useTranslation('accounting');
+    const queryClient = useQueryClient();
     const [activeTab, setActiveTab] = useState(defaultTab);
+    const [clotureConfirm, setClotureConfirm] = useState(false);
+    const [cloturePending, setCloturePending] = useState(false);
     const { 
         balance, 
         resultat, 
@@ -87,6 +98,24 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
         exportDocument,
         actions 
     } = useAccounting();
+
+    const cloturer = useCallback(async () => {
+        if (!currentExercice) return;
+        setCloturePending(true);
+        try {
+            const res = await api.post(`compta/exercices/${currentExercice.id}/cloturer/`);
+            gooeyToast.success(t('cloture.success', { resultat: formatFCFA(Number(res.data.resultat)) }));
+            queryClient.invalidateQueries({ queryKey: ['accounting'] });
+            setClotureConfirm(false);
+        } catch (e: unknown) {
+            const data = (e as { response?: { data?: Record<string, unknown> | string } })?.response?.data;
+            const msg = typeof data === 'string' ? data
+                : Object.values(data || {}).flat().filter((v): v is string => typeof v === 'string').join(' ');
+            gooeyToast.error(msg || t('cloture.error'));
+        } finally {
+            setCloturePending(false);
+        }
+    }, [currentExercice, queryClient, t]);
 
     // Onglet actif → type de document exporté
     const exportDocType = ({
@@ -119,12 +148,18 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
         { id: 'balance', label: t('tabs.balance'), icon: <Scale className="size-4" /> },
         { id: 'bilan', label: t('tabs.bilan'), icon: <TrendingUp className="size-4" /> },
         { id: 'resultat', label: t('tabs.resultat'), icon: <ArrowUpRight className="size-4" /> },
-        { id: 'ebe', label: t('ebe.tab'), icon: <TrendingUp className="size-4" /> },
         { id: 'tva', label: t('tabs.tva'), icon: <Percent className="size-4" /> },
         { id: 'charges', label: t('tabs.charges'), icon: <PlusCircle className="size-4" /> },
-        { id: 'immos', label: t('tabs.immos', 'Immobilisations'), icon: <FileText className="size-4" /> },
-        { id: 'plan', label: t('tabs.plan'), icon: <Settings className="size-4" /> },
+        { id: 'ebe', label: t('ebe.tab'), icon: <TrendingUp className="size-4" />, more: true },
+        { id: 'immos', label: t('tabs.immos', 'Immobilisations'), icon: <FileText className="size-4" />, more: true },
+        { id: 'regularisations', label: t('tabs.regs', 'Régularisations'), icon: <History className="size-4" />, more: true },
+        { id: 'provisions', label: t('tabs.provisions', 'Provisions'), icon: <Lock className="size-4" />, more: true },
+        { id: 'paie', label: t('tabs.paie', 'Paie'), icon: <Banknote className="size-4" />, more: true },
+        { id: 'plan', label: t('tabs.plan'), icon: <Settings className="size-4" />, more: true },
     ];
+    const primaryTabs = tabs.filter(t => !t.more);
+    const moreTabs = tabs.filter(t => t.more);
+    const activeMoreTab = moreTabs.find(t => t.id === activeTab);
 
     const handleExerciceChange = useCallback((exId: string) => {
         const selected = exercices?.find(ex => ex.id.toString() === exId);
@@ -167,6 +202,18 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
                             ))}
                         </select>
                     </div>
+
+                    {/* Clôture de l'exercice */}
+                    {currentExercice && !currentExercice.est_cloture && (
+                        <button
+                            onClick={() => setClotureConfirm(true)}
+                            className="flex items-center gap-2 px-3 py-2 bg-amber-50 text-amber-700 rounded-xl border border-amber-200 text-sm font-medium hover:bg-amber-100 transition-colors"
+                            title={t('cloture.button_hint')}
+                        >
+                            <Lock className="size-4" />
+                            {t('cloture.button')}
+                        </button>
+                    )}
 
                     {/* Date Range Picker */}
                     <div className="flex items-center gap-2 bg-slate-50 rounded-xl border border-slate-200 px-3 py-2">
@@ -231,7 +278,7 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
 
             {/* Navigation Tabs */}
             <m.div variants={fadeInUp} className="flex overflow-x-auto hide-scrollbar gap-1 mb-8 p-1.5 rounded-2xl bg-white border border-slate-200 shadow-sm w-full lg:w-fit">
-                {tabs.map((tab) => (
+                {primaryTabs.map((tab) => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
@@ -247,6 +294,35 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
                         <span className="whitespace-nowrap">{tab.label}</span>
                     </button>
                 ))}
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <button
+                            className={`group flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-200 font-bold text-sm
+                                ${activeMoreTab
+                                    ? 'bg-blue-600 text-white shadow-sm'
+                                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
+                                }`}
+                        >
+                            {activeMoreTab ? activeMoreTab.icon : <Ellipsis className="size-4" />}
+                            <span className="whitespace-nowrap">
+                                {activeMoreTab ? activeMoreTab.label : t('tabs.more', 'Plus')}
+                            </span>
+                            <ChevronDown className="size-3.5 opacity-60" />
+                        </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                        {moreTabs.map((tab) => (
+                            <DropdownMenuItem
+                                key={tab.id}
+                                onSelect={() => setActiveTab(tab.id)}
+                                className={`flex items-center gap-2 ${activeTab === tab.id ? 'bg-blue-50 text-blue-700 font-semibold' : ''}`}
+                            >
+                                {tab.icon}
+                                {tab.label}
+                            </DropdownMenuItem>
+                        ))}
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </m.div>
 
             {/* Content Area */}
@@ -292,11 +368,46 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
                         {activeTab === 'ebe' && <EbeTab dateRange={dateRange} />}
                         {activeTab === 'tva' && <TvaTab rapport={rapportTva} t={t} />}
                         {activeTab === 'immos' && <ImmosTab comptes={comptes || []} />}
+                        {activeTab === 'regularisations' && <RegularisationsTab comptes={comptes || []} />}
+                        {activeTab === 'provisions' && <ProvisionsTab />}
+                        {activeTab === 'paie' && <PaieTab />}
                         {activeTab === 'plan' && <PlanTab comptes={comptes} actions={actions} t={t} />}
                         {activeTab === 'charges' && <ChargesTab actions={actions} comptes={comptes} journaux={journaux} ecritures={ecritures} locale={currentLocale} t={t} />}
                     </Suspense>
                 </m.div>
 
+            )}
+
+            {/* Confirmation clôture d'exercice */}
+            {clotureConfirm && currentExercice && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4" role="dialog" aria-modal="true">
+                    <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+                        <h3 className="text-lg font-bold text-slate-800 mb-2 flex items-center gap-2">
+                            <Lock className="size-5 text-amber-600" />
+                            {t('cloture.confirm_title')}
+                        </h3>
+                        <p className="text-sm text-slate-600 mb-6">
+                            {t('cloture.confirm_body', { exercice: currentExercice.nom, fin: format(new Date(currentExercice.date_fin), 'dd/MM/yyyy') })}
+                        </p>
+                        <div className="flex justify-end gap-3">
+                            <button
+                                onClick={() => setClotureConfirm(false)}
+                                disabled={cloturePending}
+                                className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50"
+                            >
+                                {t('common:cancel', 'Annuler')}
+                            </button>
+                            <button
+                                onClick={cloturer}
+                                disabled={cloturePending}
+                                className="px-4 py-2 rounded-xl bg-amber-600 text-white text-sm font-semibold hover:bg-amber-700 disabled:opacity-50 flex items-center gap-2"
+                            >
+                                {cloturePending && <span className="size-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />}
+                                {t('cloture.confirm_yes')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </PageContainer>
         </m.div>
@@ -306,14 +417,15 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 interface DashboardTabProps {
-    resultat: { total_produits?: number; total_charges?: number; valeur_stock?: number; resultat_net?: number; marge_nette_pct?: number } | undefined;
+    resultat: { total_produits?: number; total_charges?: number; valeur_stock?: number; resultat_net?: number; marge_nette_pct?: number; tresorerie?: number; tresorerie_caisse?: number; tresorerie_banque?: number } | undefined;
     actions: ReturnType<typeof useAccounting>['actions'];
     t: TFunction<'accounting'>;
 }
 
 function DashboardTab({ resultat, actions, t }: DashboardTabProps) {
+    const [virementOpen, setVirementOpen] = useState(false);
     return (
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-3 animate-fade-in">
+        <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-3 animate-fade-in">
             {/* KPI Card 1 - Revenue */}
             <div className="bg-white p-4 rounded-2xl border border-slate-200 border-t-4 border-t-emerald-500 shadow-sm">
                 <p className="text-slate-400 text-caption font-bold uppercase tracking-wide mb-1 truncate">{t('dashboard.revenue')}</p>
@@ -374,8 +486,30 @@ function DashboardTab({ resultat, actions, t }: DashboardTabProps) {
                 </span>
             </div>
 
+            {/* Treasury Card */}
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 border-t-4 border-t-sky-500 shadow-sm flex flex-col justify-between">
+                <div>
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                        <p className="text-slate-400 text-caption font-bold uppercase tracking-wide truncate">{t('dashboard.treasury')}</p>
+                        <button
+                            type="button"
+                            onClick={() => setVirementOpen(true)}
+                            title={t('virement.title')}
+                            className="text-sky-500 hover:text-sky-700 hover:bg-sky-50 rounded-lg p-1 transition-colors"
+                        >
+                            <ArrowLeftRight className="size-4" />
+                        </button>
+                    </div>
+                    <h3 className="text-lg font-black text-sky-600">{formatFCFA(resultat?.tresorerie || 0)}</h3>
+                </div>
+                <p className="mt-1 text-caption text-slate-400 truncate">
+                    {t('dashboard.treasury_cash')} {formatFCFA(resultat?.tresorerie_caisse || 0)} · {t('dashboard.treasury_bank')} {formatFCFA(resultat?.tresorerie_banque || 0)}
+                </p>
+            </div>
+            <VirementTresorerieDialog open={virementOpen} onClose={() => setVirementOpen(false)} />
+
             {/* Closure Banner */}
-            <div className="md:col-span-5 bg-gradient-to-r from-blue-600 to-indigo-600 p-5 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm text-center md:text-left">
+            <div className="md:col-span-3 xl:col-span-6 bg-gradient-to-r from-blue-600 to-indigo-600 p-5 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm text-center md:text-left">
                 <div>
                     <h4 className="text-lg font-bold text-white">{t('dashboard.ready_title')}</h4>
                     <p className="text-white/80 text-sm">{t('dashboard.ready_subtitle')}</p>

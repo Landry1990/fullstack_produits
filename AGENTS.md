@@ -70,6 +70,11 @@ docker exec fullstack_produits-backend-1 python manage.py shell -c "from api.key
 # Garde-fou stock : échoue si un fichier HORS api/services/ (et models/, tests/)
 # écrit Produit.stock / StockLot.quantity_* — baseline api/checks/stock_writes_baseline.txt
 docker exec fullstack_produits-backend-1 python manage.py check_stock_boundaries
+# Garde-fou index : échoue si une migration crée un index sans CONCURRENTLY
+# sur une grosse table — baseline api/checks/index_migrations_baseline.txt
+docker exec fullstack_produits-backend-1 python manage.py check_index_migrations
+# Audit index (lecture seule) : manquants, non déclarés, inutilisés, doublons
+docker exec fullstack_produits-backend-1 python manage.py audit_indexes
 ```
 
 ## Conteneurs Docker

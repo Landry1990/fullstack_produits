@@ -14,10 +14,12 @@ import { logger } from '../logger';
 export async function printTicketSmart(
   ticket: TicketCaisse,
   settings: PharmacySettings,
-  htmlFallback: () => void
+  htmlFallback: () => void,
+  copies: number = 1
 ): Promise<'escpos' | 'html'> {
   try {
-    const commands = buildTicketEscpos(ticket, settings, { openDrawer: shouldOpenDrawer() });
+    const commands = buildTicketEscpos(ticket, settings, { openDrawer: shouldOpenDrawer() })
+      + (copies === 2 ? buildTicketEscpos(ticket, settings, { openDrawer: false }) : '');
     const ok = await printEscpos(commands);
     if (ok) {
       logger.info('Ticket envoyé en ESC/POS natif via QZ Tray');

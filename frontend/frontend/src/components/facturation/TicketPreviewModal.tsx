@@ -5,6 +5,7 @@ import { TicketTemplate } from '../printing/TicketTemplate'
 import { buildTicketPrintHtml } from '../../utils/print/printHelpers'
 import { printTicketSmart } from '../../utils/print/printTicketSmart'
 import { gooeyToast } from 'goey-toast'
+import { useInvoiceSettings } from '../../hooks/useInvoiceSettings'
 import type { TicketCaisse, PharmacySettings } from '../../types'
 
 interface TicketPreviewModalProps {
@@ -26,6 +27,7 @@ export default function TicketPreviewModal({
 }: TicketPreviewModalProps) {
   const { t } = useTranslation(['facturation', 'common'])
   const [printing, setPrinting] = useState(false)
+  const { settings: invoiceSettings } = useInvoiceSettings()
 
   useEffect(() => {
     if (!isOpen) return
@@ -59,7 +61,10 @@ export default function TicketPreviewModal({
         return
       }
 
-      const html = buildTicketPrintHtml(ticketWidth, ticketElement.outerHTML, styleTags)
+      const content = invoiceSettings?.ticket_copies === 2
+        ? `${ticketElement.outerHTML}<div style="break-before:page;page-break-before:always">${ticketElement.outerHTML}</div>`
+        : ticketElement.outerHTML
+      const html = buildTicketPrintHtml(ticketWidth, content, styleTags)
       printWindow.document.open()
       printWindow.document.write(html)
       printWindow.document.close()
@@ -67,7 +72,7 @@ export default function TicketPreviewModal({
     };
 
     try {
-      await printTicketSmart(ticket, settings, htmlFallback);
+      await printTicketSmart(ticket, settings, htmlFallback, invoiceSettings?.ticket_copies);
     } finally {
       setPrinting(false)
     }

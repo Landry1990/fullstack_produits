@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, RotateCcw, Printer, Users, Calendar, FileSpreadsheet, AlarmClock } from 'lucide-react';
+import { Search, RotateCcw, Printer, Users, Calendar, FileSpreadsheet, AlarmClock, ClipboardCheck } from 'lucide-react';
 import type { Client } from '../../types';
 import { LocalizedDateInput } from '../LocalizedDateInput';
 
@@ -18,6 +18,7 @@ interface CreancesFiltersProps {
     onDateFinChange: (date: string) => void;
     onRefresh: () => void;
     onPrintStatement: () => void;
+    onControle: () => void;
     onExportExcel: () => void;
     onRelevesExcel: () => void;
     loading: boolean;
@@ -37,6 +38,7 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
     onDateFinChange,
     onRefresh,
     onPrintStatement,
+    onControle,
     onExportExcel,
     onRelevesExcel,
     loading
@@ -171,6 +173,16 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
                         <FileSpreadsheet className="size-4" />
                         {t('creances:releves_excel.button')}
                     </button>
+                    {selectedClient && (
+                        <button
+                            onClick={onControle}
+                            className="inline-flex items-center justify-center h-10 px-6 rounded-xl bg-amber-100 text-amber-700 gap-2 shadow-sm transition-all hover:scale-105 active:scale-95 font-bold uppercase tracking-widest text-caption hover:bg-amber-200"
+                            title={t('creances:controle.button_hint')}
+                        >
+                            <ClipboardCheck className="size-4" />
+                            {t('creances:controle.button')}
+                        </button>
+                    )}
                     {selectedClient && (
                         <button
                             onClick={onPrintStatement}

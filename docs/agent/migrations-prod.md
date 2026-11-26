@@ -20,6 +20,14 @@
   lignes en prod (`Facture`, `FactureProduit`, `StockLot`, `MouvementStock`), utiliser
   `RunSQL` avec `CREATE INDEX CONCURRENTLY IF NOT EXISTS` au lieu de `migrations.AddIndex`.
   Cela nécessite `atomic = False` sur la migration.
+  - **Garde-fou automatique** : `python manage.py check_index_migrations` échoue si une
+    migration crée un index sans CONCURRENTLY sur une grosse table (liste `BIG_TABLES`
+    dans la commande). Baseline `api/checks/index_migrations_baseline.txt` ; branché en CI.
+  - **Audit** : `python manage.py audit_indexes` — index manquants vs modèles, index
+    inutilisés (`pg_stat_user_indexes`), doublons (préfixe), nommage auto. À lancer en
+    prod (stats `idx_scan` fiables après uptime) avant de supprimer un index.
+  - **Nommage** : toujours donner `name=` explicite aux `models.Index` — les noms hachés
+    auto (`api_facture_xxx_a1b2c3_idx`) ont causé les doublons de 0263.
 - **AddField avec default=** : sur une table >1000 lignes, préférer un `RunSQL` avec
   `ALTER TABLE ... ADD COLUMN ... DEFAULT ...` (PostgreSQL 11+ optimise cela sans
   full table rewrite si la valeur par défaut est constante).
@@ -27,6 +35,11 @@
   de charger toutes les lignes en mémoire.
 
 ### Tests backend (Docker)
+
+`manage.py test` et pytest utilisent un `LocMemCache` dédié au processus,
+indépendant du Redis de l’application. Conserver cette isolation : les tests
+qui calculent des rotations ou appellent `cache.clear()` ne doivent jamais
+lire, remplir ou vider le cache de l’instance utilisée par les utilisateurs.
 
 ```powershell
 # Tests complets d'un module

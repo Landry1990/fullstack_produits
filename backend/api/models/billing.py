@@ -661,7 +661,7 @@ class Caisse(models.Model):
         indexes = [
             models.Index(fields=['statut']),
             models.Index(fields=['facture', 'statut']),
-            models.Index(fields=['-date_paiement']),
+            # (-date_paiement) seul : préfixe de (-date_paiement, statut)
             models.Index(fields=['mode_paiement', 'statut']),
             models.Index(fields=['-date_paiement', 'statut']),
         ]

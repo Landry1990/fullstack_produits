@@ -195,7 +195,7 @@ class StockLot(models.Model):
         ordering = ['date_reception']
         indexes = [
             models.Index(fields=['produit', 'date_reception']),
-            models.Index(fields=['produit', 'quantity_remaining']),
+            # (produit, quantity_remaining) seul : préfixe de l'index suivant
             models.Index(fields=['produit', 'quantity_remaining', 'date_expiration']),
             models.Index(fields=['date_expiration']),
             # Perf (migration 0262) — index créés en CONCURRENTLY

@@ -1,6 +1,7 @@
 
 
 import os
+import sys
 from datetime import timedelta
 from pathlib import Path
 
@@ -335,7 +336,14 @@ SERVER_EMAIL = os.getenv('SERVER_EMAIL', 'noreply@example.com')
 # Email pour les notifications feedback
 FEEDBACK_EMAIL = os.getenv('FEEDBACK_EMAIL', 'admin@example.com')
 
-if REDIS_URL:
+if 'test' in sys.argv or 'pytest' in sys.modules:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'zenith-tests',
+        }
+    }
+elif REDIS_URL:
     CACHES = {
         'default': {
             'BACKEND': 'django_redis.cache.RedisCache',

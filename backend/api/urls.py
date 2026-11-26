@@ -153,10 +153,15 @@ from .views.communication import (
 )
 from .views.comptabilite import (
     CompteComptableViewSet,
+    CreanceDouteuseViewSet,
+    DepreciationStockViewSet,
     EcritureComptableViewSet,
+    EmployeViewSet,
     ExerciceComptableViewSet,
     ImmobilisationViewSet,
     JournalComptableViewSet,
+    PaieMoisViewSet,
+    RegularisationViewSet,
 )
 from .views.configuration_objectifs import ConfigurationObjectifsViewSet
 from .views.corbeille import CorbeilleViewSet
@@ -277,6 +282,11 @@ router.register(r'compta/journaux', JournalComptableViewSet, basename='compta-jo
 router.register(r'compta/exercices', ExerciceComptableViewSet, basename='compta-exercice')
 router.register(r'compta/ecritures', EcritureComptableViewSet, basename='compta-ecriture')
 router.register(r'compta/immobilisations', ImmobilisationViewSet, basename='compta-immobilisation')
+router.register(r'compta/regularisations', RegularisationViewSet, basename='compta-regularisation')
+router.register(r'compta/creances-douteuses', CreanceDouteuseViewSet, basename='compta-creance-douteuse')
+router.register(r'compta/depreciations-stock', DepreciationStockViewSet, basename='compta-depreciation-stock')
+router.register(r'compta/employes', EmployeViewSet, basename='compta-employe')
+router.register(r'compta/paies', PaieMoisViewSet, basename='compta-paie')
 
 # Planning
 router.register(r'shift-config', ShiftConfigViewSet, basename='shift-config')

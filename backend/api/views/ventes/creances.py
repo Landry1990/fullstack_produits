@@ -1038,10 +1038,29 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         date_debut = request.data.get('date_debut') or None
         date_fin = request.data.get('date_fin') or None
 
+        # Sous-ensemble explicite (contrôle physique) : seules les factures
+        # pointées par le gestionnaire partent dans le relevé de règlement.
+        facture_ids_raw = request.data.get('facture_ids')
+        facture_ids = None
+        if facture_ids_raw is not None:
+            if not isinstance(facture_ids_raw, list) or not facture_ids_raw:
+                return Response({'detail': "facture_ids doit être une liste non vide d'identifiants."}, status=status.HTTP_400_BAD_REQUEST)
+            facture_ids = [parse_int(v, field='facture_ids') for v in facture_ids_raw]
+            if len(facture_ids) > 500:
+                return Response({'detail': "Trop de factures demandées (500 maximum)."}, status=status.HTTP_400_BAD_REQUEST)
+
         # Valide le format des dates (400) avant usage, comme releves_excel.
         # exclude_transmis : une facture déjà couverte par un relevé ouvert ne
         # doit pas être recouverte par un nouveau relevé.
         queryset = self._creances_impayees(client_ids, date_debut, date_fin, exclude_transmis=True)
+        if facture_ids is not None:
+            queryset = queryset.filter(id__in=facture_ids)
+
+        # Factures demandées mais écartées (soldées, déjà transmises, autre client).
+        factures_skippees = []
+        if facture_ids is not None:
+            retenues = set(queryset.values_list('id', flat=True))
+            factures_skippees = [i for i in facture_ids if i not in retenues]
         periode_debut = datetime.strptime(date_debut, '%Y-%m-%d').date() if date_debut else None
         periode_fin = datetime.strptime(date_fin, '%Y-%m-%d').date() if date_fin else None
 
@@ -1097,7 +1116,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             },
             request=request
         )
-        return Response({'releves': created, 'clients_sans_creance': skipped}, status=status.HTTP_201_CREATED)
+        return Response({'releves': created, 'clients_sans_creance': skipped, 'factures_skippees': factures_skippees}, status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=['get'])
     def releves_emis(self, request):
@@ -1464,6 +1483,18 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
 
         include_products = request.query_params.get('include_products', 'false').lower() in ('true', '1', 'yes')
 
+        # Sous-ensemble explicite pour le contrôle physique (pointage) :
+        # le relevé ne couvre alors que les factures cochées par le gestionnaire.
+        facture_ids_raw = request.query_params.get('facture_ids', '')
+        facture_ids = None
+        if facture_ids_raw.strip():
+            try:
+                facture_ids = [int(v) for v in facture_ids_raw.split(',') if v.strip()]
+            except ValueError:
+                raise ValidationError({'detail': "Le paramètre facture_ids doit être une liste d'identifiants séparés par des virgules."})
+            if len(facture_ids) > 500:
+                raise ValidationError({'detail': 'Trop de factures demandées (500 maximum).'})
+
         from django.db.models import OuterRef, Subquery, Sum
         from django.db.models.functions import Coalesce
 
@@ -1472,6 +1503,8 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         queryset = self.get_queryset().filter(client_id=client_id).annotate(
             montant_paye_annotated=Coalesce(Subquery(paid_subquery), Value(0, output_field=DecimalField()))
         )
+        if facture_ids is not None:
+            queryset = queryset.filter(id__in=facture_ids)
 
         # Prefetch produits si demandé
         if include_products:
@@ -1490,6 +1523,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             total_reste += reste
 
             item = {
+                'id': facture.id,
                 'numero_facture': facture.numero_facture, 'date': facture.date,
                 'montant_total': facture.total_ttc, 'montant_paye': montant_paye,
                 'reste_a_payer': reste,
@@ -1519,6 +1553,12 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         except Client.DoesNotExist:
              return Response({'detail': 'Client non trouvé'}, status=status.HTTP_404_NOT_FOUND)
 
+        try:
+            from ...pdf_utils import number_to_french
+            total_lettres = number_to_french(int(total_reste))
+        except Exception:
+            total_lettres = ''
+
         return Response({
             'client': {
                 'id': client.id, 
@@ -1531,7 +1571,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             },
             'periode': {'date_debut': request.query_params.get('date_debut'), 'date_fin': request.query_params.get('date_fin')},
             'creances': creances_data,
-            'totaux': {'total_factures': str(total_factures), 'total_paye': str(total_paye), 'total_reste': str(total_reste)}
+            'totaux': {'total_factures': str(total_factures), 'total_paye': str(total_paye), 'total_reste': str(total_reste), 'total_lettres': total_lettres}
         })
 
     @action(detail=False, methods=['post'])

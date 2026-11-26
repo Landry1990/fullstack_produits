@@ -164,18 +164,20 @@ export function CaisseTicketPreviewModal({
       if (!ticketElement) return
 
       const ticketWidth = settings.ticket_paper_width || 80
-      const content = ticketElement.outerHTML
+      const content = invoiceSettings?.ticket_copies === 2
+        ? `${ticketElement.outerHTML}<div style="break-before:page;page-break-before:always">${ticketElement.outerHTML}</div>`
+        : ticketElement.outerHTML
       printTicketInIframe(ticketWidth, content, styleTags, () => {
         gooeyToast.error(t('common:popup_blocked'))
       })
     };
 
     try {
-      await printTicketSmart(ticket, settings, htmlFallback)
+      await printTicketSmart(ticket, settings, htmlFallback, invoiceSettings?.ticket_copies)
     } finally {
       setPrinting(false)
     }
-  }, [settings, styleTags, t, ticket, printing])
+  }, [settings, styleTags, t, ticket, printing, invoiceSettings?.ticket_copies])
 
   // Un seul déclenchement par ticket et par ouverture, même en StrictMode.
   useEffect(() => {

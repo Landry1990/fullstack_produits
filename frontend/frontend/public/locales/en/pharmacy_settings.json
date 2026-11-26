@@ -38,6 +38,9 @@
         "label_printer": "Label printer",
         "label_printer_browser": "None — browser printing",
         "auto_print_ticket": "Print receipt automatically after payment",
+        "ticket_copies": "Receipt copies",
+        "ticket_copies_one": "1 copy",
+        "ticket_copies_two": "2 copies",
         "pharmacy_name": "Pharmacy Name",
         "niu": "Unique Identification Number (NIU)",
         "rccm": "Trade Register (RCCM)",
@@ -127,6 +130,7 @@
         "report_recipients": "email1@example.com, email2@example.com"
     },
     "hints": {
+        "ticket_copies": "Applies to automatic and manual receipt printing, without duplicating change vouchers or A4 invoices.",
         "label_printer": "Use Detect, then select the dedicated printer in TSPL label mode (Hoin HL80B/HLB480B). This setting is local to this workstation; browser printing is used if unavailable.",
         "auto_print_ticket": "In centralized checkout, starts printing when the preview opens. Silent with QZ Tray; otherwise the usual print dialog opens.",
         "pharmacy_name": "The official name as it will appear on invoices and receipts.",

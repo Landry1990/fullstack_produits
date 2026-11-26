@@ -38,6 +38,9 @@
         "label_printer": "Imprimante étiquettes",
         "label_printer_browser": "Aucune — impression navigateur",
         "auto_print_ticket": "Imprimer le ticket automatiquement après encaissement",
+        "ticket_copies": "Nombre d’exemplaires du ticket de caisse",
+        "ticket_copies_one": "1 exemplaire",
+        "ticket_copies_two": "2 exemplaires",
         "pharmacy_name": "Nom de la pharmacie",
         "niu": "Numéro d'Identifiant Unique (NIU)",
         "rccm": "Registre du Commerce (RCCM)",
@@ -127,6 +130,7 @@
         "report_recipients": "email1@exemple.com, email2@exemple.com"
     },
     "hints": {
+        "ticket_copies": "S’applique aux impressions automatiques et manuelles des tickets, sans doubler les coupons de monnaie ni les factures A4.",
         "label_printer": "Utilisez Détecter puis sélectionnez l'imprimante dédiée en mode étiquette TSPL (Hoin HL80B/HLB480B). Réglage local à ce poste ; en cas d'indisponibilité, impression via le navigateur.",
         "auto_print_ticket": "En caisse centralisée, lance l'impression à l'ouverture de l'aperçu. Silencieuse avec QZ Tray ; sinon la boîte d'impression habituelle s'ouvre.",
         "pharmacy_name": "Le nom officiel tel qu'il apparaîtra sur les factures et tickets.",

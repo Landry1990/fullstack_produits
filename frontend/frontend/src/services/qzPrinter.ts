@@ -34,6 +34,8 @@ const QZ_UNAVAILABLE_COOLDOWN_MS = 60_000;
  * indéfiniment : rien ne s'imprime et aucun fallback ne se déclenche. */
 const QZ_CONNECT_TIMEOUT_MS = 15_000;
 const QZ_PRINT_TIMEOUT_MS = 10_000;
+const QZ_DISCOVERY_TIMEOUT_MS = 5_000;
+const QZ_DISCONNECT_TIMEOUT_MS = 3_000;
 
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
   return new Promise<T>((resolve, reject) => {
@@ -227,33 +229,51 @@ export function setOpenDrawer(value: boolean): void {
   }
 }
 
-export async function listPrinters(): Promise<string[]> {
-  const qz = await loadQz();
-  // La détection manuelle (Paramètres > Impression) ignore le cooldown :
-  // l'utilisateur vient peut-être de (ré)installer QZ Tray.
-  await ensureConnected(true);
-  return qz.printers.find();
+function enqueueQzOperation<T>(operation: () => Promise<T>): Promise<T> {
+  const task = printQueue.then(operation);
+  printQueue = task.then(() => undefined, () => undefined);
+  return task;
 }
 
-async function resolvePrinterName(): Promise<string | null> {
+export async function listPrinters(): Promise<string[]> {
+  return enqueueQzOperation(async () => {
+    const qz = await loadQz();
+    // La détection manuelle (Paramètres > Impression) ignore le cooldown :
+    // l'utilisateur vient peut-être de (ré)installer QZ Tray.
+    await ensureConnected(true);
+    return discoverWithRecovery(qz, () => qz.printers.find());
+  });
+}
+
+async function discoverWithRecovery<T>(qz: QzApi, discover: () => Promise<T>): Promise<T> {
+  try {
+    return await withTimeout(discover(), QZ_DISCOVERY_TIMEOUT_MS, 'Détection imprimantes QZ Tray');
+  } catch (err) {
+    logger.warn('Détection QZ Tray interrompue, reconnexion automatique avant impression.', err);
+    if (qz.websocket.isActive()) {
+      await withTimeout(qz.websocket.disconnect(), QZ_DISCONNECT_TIMEOUT_MS, 'Déconnexion QZ Tray');
+    }
+    await ensureConnected(true);
+    return withTimeout(discover(), QZ_DISCOVERY_TIMEOUT_MS, 'Détection imprimantes QZ Tray');
+  }
+}
+
+async function resolvePrinterName(printerNameOverride?: string): Promise<string | null> {
+  if (printerNameOverride === '') return null;
   const qz = await loadQz();
   await ensureConnected();
-  const saved = getSavedPrinterName();
-  if (saved) {
-    try {
-      const found = await qz.printers.find(saved);
-      if (Array.isArray(found)) {
-        return found[0] || null;
-      }
-      return found;
-    } catch (err) {
-      logger.warn(`Imprimante QZ Tray sauvegardée introuvable (${saved}), fallback sur l'imprimante par défaut.`, err);
-    }
-  }
+  const saved = printerNameOverride ?? getSavedPrinterName();
   try {
-    return await qz.printers.getDefault();
+    return await discoverWithRecovery(qz, async () => {
+      if (saved) {
+        const printers = await qz.printers.find();
+        if (!printers.includes(saved)) throw new Error(`Imprimante QZ Tray introuvable : ${saved}`);
+        return saved;
+      }
+      return qz.printers.getDefault();
+    });
   } catch (err) {
-    logger.warn('Aucune imprimante par défaut QZ Tray détectée.', err);
+    logger.warn('Imprimante QZ Tray indisponible après redétection automatique.', err);
     return null;
   }
 }
@@ -265,12 +285,7 @@ async function resolvePrinterName(): Promise<string | null> {
  * Retourne `true` si le job a été envoyé, `false` si la connexion/ impression a échoué.
  */
 export async function printEscpos(commands: string | string[], printerNameOverride?: string): Promise<boolean> {
-  const task = printQueue.then(() => printEscposInternal(commands, printerNameOverride));
-  printQueue = task.then(
-    () => undefined,
-    () => undefined
-  );
-  return task;
+  return enqueueQzOperation(() => printEscposInternal(commands, printerNameOverride));
 }
 
 async function printEscposInternal(commands: string | string[], printerNameOverride?: string): Promise<boolean> {
@@ -280,18 +295,7 @@ async function printEscposInternal(commands: string | string[], printerNameOverr
   let printer: string | null;
   if (printerNameOverride !== undefined) {
     // Une imprimante dédiée ne doit jamais retomber sur celle des tickets.
-    try {
-      if (!printerNameOverride) return false;
-      const found = await qz.printers.find(printerNameOverride);
-      printer = Array.isArray(found) ? found[0] || null : found;
-      if (!printer) {
-        logger.warn(`Imprimante QZ Tray dédiée introuvable (${printerNameOverride}).`);
-        return false;
-      }
-    } catch (err) {
-      logger.warn(`Imprimante QZ Tray dédiée introuvable (${printerNameOverride}).`, err);
-      return false;
-    }
+    printer = await resolvePrinterName(printerNameOverride);
   } else {
     printer = await resolvePrinterName();
   }

@@ -50,7 +50,11 @@
         "charges": "Expenses",
         "immos": "Fixed assets",
         "plan": "Chart of Accounts",
-        "tva": "VAT"
+        "tva": "VAT",
+        "regs": "Accruals",
+        "provisions": "Provisions",
+        "paie": "Payroll",
+        "more": "More"
     },
     "exercice": {
         "label": "Fiscal year",
@@ -70,7 +74,10 @@
         "ready_subtitle": "Generate missing entries for past invoices in one click.",
         "init_button": "Initialize History",
         "init_loading": "Initializing...",
-        "action_required": "ACTION REQUIRED"
+        "action_required": "ACTION REQUIRED",
+        "treasury": "Available cash",
+        "treasury_cash": "Cash",
+        "treasury_bank": "Bank"
     },
     "ledger": {
         "title": "General Journal",
@@ -298,5 +305,117 @@
         "month": "Month",
         "empty": "No VAT entries for the period.",
         "note": "Positive = VAT payable to the Treasury; negative = carry-forward VAT credit."
+    },
+    "cloture": {
+        "button": "Close",
+        "button_hint": "Close the fiscal year: result entry + opening balances",
+        "confirm_title": "Close the fiscal year?",
+        "confirm_body": "Fiscal year {{exercice}} (ending {{fin}}) will be closed: result entry, opening balances on the next fiscal year and reversal of accruals. This action is irreversible.",
+        "confirm_yes": "Confirm closing",
+        "success": "Fiscal year closed — result: {{resultat}}",
+        "error": "Closing failed"
+    },
+    "regs": {
+        "new_title": "New accrual/deferral",
+        "hint": "Prepaid expenses/income, accrued expenses and income — automatically reversed on the next fiscal year opening.",
+        "type": "Type",
+        "types": {
+            "CCA": "Prepaid expense (CCA)",
+            "PCA": "Deferred income (PCA)",
+            "CAP": "Accrued expense (CAP)",
+            "PAR": "Accrued income (PAR)"
+        },
+        "account": "Expense/income account",
+        "account_placeholder": "Select an account…",
+        "amount": "Amount",
+        "date": "Date",
+        "description": "Description",
+        "description_placeholder": "E.g. Rent paid in advance Q1",
+        "create": "Create entry",
+        "required": "All fields are required",
+        "saved": "Accrual saved",
+        "deleted": "Accrual deleted",
+        "delete_error": "Delete failed",
+        "list_title": "Accruals & deferrals",
+        "empty": "No accruals",
+        "extourne": "Reversal",
+        "pending": "On closing",
+        "extourned": "Reversed"
+    },
+    "provisions": {
+        "creances_title": "Doubtful receivables",
+        "creances_hint": "Marking a customer receivable as doubtful posts a depreciation (691 / 491). Recovery or write-off settles it.",
+        "mark_doubtful": "Mark doubtful",
+        "client": "Customer",
+        "client_placeholder": "Search a customer…",
+        "amount": "Depreciated amount",
+        "debt": "Current debt",
+        "comment": "Comment",
+        "status": "Status",
+        "statuts": {
+            "douteuse": "Doubtful",
+            "recouvree": "Recovered",
+            "irrecouvrable": "Written off",
+            "dotee": "Depreciated",
+            "reprise": "Reversed"
+        },
+        "creance_marked": "Receivable marked doubtful",
+        "empty_creances": "No doubtful receivables",
+        "recover": "Recover",
+        "write_off": "Write off",
+        "action_done": "Operation saved",
+        "stock_title": "Expired stock depreciation",
+        "stock_hint": "Depreciation of expired batches (691 / 391). Current estimated value: {{amount}}.",
+        "dep_create": "Create provision",
+        "label": "Label",
+        "label_placeholder": "E.g. Expired stock — year-end inventory",
+        "dep_saved": "Provision saved",
+        "empty_stock": "No stock depreciation",
+        "reverse": "Reverse",
+        "error": "Operation failed"
+    },
+    "paie": {
+        "employes_title": "Employees",
+        "name": "Name",
+        "role": "Position",
+        "base_gross": "Reference gross",
+        "employe_add": "Add",
+        "employe_saved": "Employee saved",
+        "new_title": "New payroll",
+        "hint": "Draft posts no entry; \"Post\" generates the journal entry (661/664 debit, 422/431/447 credit).",
+        "employee": "Employee",
+        "employee_placeholder": "Select an employee…",
+        "month": "Month",
+        "gross": "Gross",
+        "employee_contrib": "Employee contributions",
+        "irpp": "Income tax (IRPP)",
+        "employer_contrib": "Employer contributions",
+        "net_preview": "Estimated net pay",
+        "create_draft": "Create draft",
+        "saved": "Payroll saved",
+        "error": "Operation failed",
+        "empty": "No payrolls",
+        "net": "Net",
+        "post": "Post",
+        "posted": "Payroll posted",
+        "deleted": "Payroll deleted",
+        "statuts": {
+            "brouillon": "Draft",
+            "comptabilisee": "Posted"
+        }
+    },
+    "virement": {
+        "title": "Cash ↔ bank transfer",
+        "hint": "Posts an OD entry (521100 Bank / 571100 Cash).",
+        "direction": "Direction",
+        "to_bank": "Cash → Bank (cash deposit)",
+        "to_cash": "Bank → Cash (cash withdrawal)",
+        "amount": "Amount",
+        "date": "Date",
+        "label": "Label (optional)",
+        "label_placeholder": "E.g. Daily bank deposit",
+        "submit": "Save",
+        "saved": "Transfer saved",
+        "error": "Transfer failed"
     }
 }

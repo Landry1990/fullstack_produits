@@ -264,5 +264,33 @@
         "message": "Message",
         "send": "Envoyer",
         "no_email": "Aucune adresse email enregistrée pour ce client."
+    },
+    "controle": {
+        "button": "Contrôle",
+        "button_hint": "Pointage physique des factures — relevé des factures cochées",
+        "title": "Contrôle physique des factures",
+        "subtitle": "Cochez les factures présentes physiquement, puis générez le relevé de votre sélection",
+        "load_error": "Impossible de charger les factures du client.",
+        "empty": "Aucune facture impayée sur la période",
+        "check_all": "Tout cocher",
+        "uncheck_all": "Tout décocher",
+        "checked_count": "{{count}} / {{total}} cochées",
+        "selection_totals": "Totaux sélection (TTC · payé · reste)",
+        "headers": {
+            "invoice": "N° Facture",
+            "date": "Date",
+            "beneficiary": "Ayant droit",
+            "total": "Total",
+            "paid": "Payé",
+            "remaining": "Reste"
+        },
+        "generate_simple": "Relevé groupé",
+        "generate_detailed": "Relevé détaillé",
+        "transfer": "Transférer vers règlement",
+        "transferring": "Transmission en cours…",
+        "transfer_done": "Relevé {{ref}} transmis — visible dans l'onglet Règlements",
+        "transfer_skipped": "{{count}} facture(s) ignorée(s) (déjà transmises ou soldées)",
+        "transfer_none": "Aucune facture transmissible (déjà transmises ou soldées)",
+        "transfer_error": "Échec de la transmission vers règlement"
     }
 }

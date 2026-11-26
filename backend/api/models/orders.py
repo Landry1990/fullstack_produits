@@ -85,7 +85,7 @@ class Commande(models.Model):
         default=Source.MANUEL,
         help_text="Origine de la commande (manuelle ou auto-générée)"
     )
-    is_active = models.BooleanField(default=True, db_index=True, help_text="Commande active (non supprimée dans la corbeille)")
+    is_active = models.BooleanField(default=True, help_text="Commande active (non supprimée dans la corbeille)")
     deleted_by = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, blank=True,
         related_name='deleted_commandes', help_text="Utilisateur ayant supprimé cette commande"

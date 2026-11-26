@@ -68,6 +68,8 @@ SAFE_RUN = {
     'match_mq_by_name': ['--dry-run'],
     'resolve_mq_stubs': ['--dry-run'],
     'check_stock_boundaries': [],        # lecture seule (scan de fichiers)
+    'check_index_migrations': [],        # lecture seule (scan de fichiers)
+    'audit_indexes': [],                 # lecture seule (introspection index)
     # ── Mutations inoffensives sur DB jetable ──
     'cleanup_silk': [],                  # aucune donnée silk → no-op
     'clean_draft_invoices': ['--older-than', '3650'],  # queryset vide → pas de prompt
@@ -88,6 +90,7 @@ ARG_GUARDED = [
     'import_supplier_data',
     'restore_database',
     'pitr_restore',
+    'reclasser_charges_syscohada',       # --ligne requis, --apply pour écrire
 ]
 
 # Jamais exécutées en test : réseau réel, écriture disque lourde, destructrices

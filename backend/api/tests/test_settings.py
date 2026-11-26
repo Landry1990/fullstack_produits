@@ -209,6 +209,17 @@ class PharmacySettingsViewTest(SettingsBase):
 class InvoiceConfigurationViewTest(SettingsBase):
     URL = 'invoice-settings'
 
+    def test_get_never_caches_printing_settings(self):
+        response = self.api.get(reverse(self.URL))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('no-store', response.get('Cache-Control', ''))
+
+    def test_ticket_copies_saved_and_returned(self):
+        response = self.api.put(reverse(self.URL), {'ticket_copies': 2}, format='json')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(InvoiceSettings.objects.get(pk=1).ticket_copies, 2)
+        self.assertEqual(self.api.get(reverse(self.URL)).data['ticket_copies'], 2)
+
     def test_get_anonyme_refuse(self):
         resp = self.anon.get(reverse(self.URL))
         self.assertIn(resp.status_code, (401, 403))

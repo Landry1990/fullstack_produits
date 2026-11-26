@@ -17,12 +17,12 @@ import re
 # stocker puis resservir du contenu authentifié (comme categories/ avant).
 STABLE_PATTERNS = [
     re.compile(r'^/api/tva/?$'),
-    re.compile(r'^/api/invoice-settings/?$'),
     re.compile(r'^/api/version/?$'),
 ]
 
 # Patterns d'URLs sensibles (stock, ventes, caisse — jamais de cache)
 NO_STORE_PATTERNS = [
+    re.compile(r'^/api/invoice-settings/?$'),
     re.compile(r'^/api/produits'),
     re.compile(r'^/api/stock'),
     re.compile(r'^/api/ventes'),

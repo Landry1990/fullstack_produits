@@ -34,6 +34,9 @@ jobs:
           python manage.py makemigrations --check --noinput
           # Bloque toute NOUVELLE écriture directe de compteurs hors services/.
           python manage.py check_stock_boundaries
+          # Bloque toute NOUVELLE création d'index sans CONCURRENTLY sur les
+          # grosses tables (baseline dans api/checks/index_migrations_baseline.txt).
+          python manage.py check_index_migrations
         env:
           DJANGO_DEBUG: "False"
           SECRET_KEY: ci-stock-boundary-check

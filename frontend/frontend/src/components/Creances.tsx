@@ -14,6 +14,7 @@ import { CreanceDetailsModal } from './creances/modals/CreanceDetailsModal';
 import { BulkPaiementModal } from './creances/modals/BulkPaiementModal';
 import { RelanceModal } from './creances/modals/RelanceModal';
 import { RelevePeriodeModal } from './creances/modals/RelevePeriodeModal';
+import { ControleFacturesModal } from './creances/modals/ControleFacturesModal';
 import { RelevesExcelModal } from './creances/modals/RelevesExcelModal';
 import RelevesReglement from './creances/reglements/RelevesReglement';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './shadcn/tabs';
@@ -21,6 +22,8 @@ import SudoValidationModal from './common/SudoValidationModal';
 import { ErrorState } from './ui/ErrorState';
 
 import { Wallet, DollarSign } from 'lucide-react';
+import { gooeyToast } from 'goey-toast';
+import creanceService from '../services/creanceService';
 import { normalizeNumberInput, formatCurrency } from '../utils/formatters';
 
 export default function Creances() {
@@ -30,7 +33,9 @@ export default function Creances() {
     const data = useCreancesData();
     const [relanceClientId, setRelanceClientId] = useState<number | null>(null);
     const [releveModalOpen, setReleveModalOpen] = useState(false);
+    const [controleOpen, setControleOpen] = useState(false);
     const [relevesExcelOpen, setRelevesExcelOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState('facturation');
     const actions = useCreanceActions({
         refresh: data.refresh,
         selectedIds: data.selectedIds,
@@ -39,6 +44,33 @@ export default function Creances() {
         updateLocalCreance: (data as unknown).updateLocalCreance,
         updateLocalSynthese: (data as unknown).updateLocalSynthese
     });
+
+    // Contrôle physique → règlement : crée un relevé émis limité aux factures
+    // cochées, puis bascule sur l'onglet Règlements où le caissier l'encaissera.
+    const handleTransferToReglement = async (factureIds: number[]) => {
+        const loadingToast = gooeyToast.info(t('creances:controle.transferring'), { duration: Infinity });
+        try {
+            const res = await creanceService.transmettreReleves({
+                client_ids: [Number(data.filters.selectedClient)],
+                date_debut: data.filters.dateDebut || undefined,
+                date_fin: data.filters.dateFin || undefined,
+                facture_ids: factureIds,
+            });
+            setControleOpen(false);
+            setActiveTab('reglements');
+            const ref = res.releves?.[0]?.reference;
+            if (res.releves?.length) {
+                gooeyToast.success(t('creances:controle.transfer_done', { ref }), { id: loadingToast });
+            } else {
+                gooeyToast.info(t('creances:controle.transfer_none'), { id: loadingToast });
+            }
+            if (res.factures_skippees?.length) {
+                gooeyToast.info(t('creances:controle.transfer_skipped', { count: res.factures_skippees.length }));
+            }
+        } catch {
+            gooeyToast.error(t('creances:controle.transfer_error'), { id: loadingToast });
+        }
+    };
 
     const bulkTotalAmount = useMemo(() => {
         return data.selectedIds.reduce((sum, id) => {
@@ -55,7 +87,7 @@ export default function Creances() {
             className="h-full min-h-0 flex flex-col bg-slate-100 p-2 lg:p-3 gap-3 font-sans overflow-hidden max-w-[1600px] mx-auto w-full"
         >
 
-            <Tabs defaultValue="facturation" className="flex-1 min-h-0 flex flex-col gap-3">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 min-h-0 flex flex-col gap-3">
             {/* Header Area */}
             <m.div variants={fadeInUp} className="flex flex-col gap-3 shrink-0">
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col">
@@ -96,7 +128,7 @@ export default function Creances() {
                                     <span className="text-sm font-bold text-slate-800">{formatCurrency(Math.round(bulkTotalAmount))}</span>
                                 </div>
                                 <button
-                                    onClick={actions.actions.handleBulkPayment}
+                                    onClick={() => actions.actions.handleBulkPayment()}
                                     className="inline-flex items-center justify-center h-8 px-6 rounded-lg text-xs font-bold uppercase tracking-widest bg-emerald-600 text-white shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-colors"
                                 >
                                     <DollarSign className="size-4 mr-2" />
@@ -125,6 +157,7 @@ export default function Creances() {
                         onDateFinChange={data.setFilters.setDateFin}
                         onRefresh={data.refresh}
                         onPrintStatement={() => setReleveModalOpen(true)}
+                        onControle={() => setControleOpen(true)}
                         onExportExcel={() => actions.actions.handleExportExcel({
                             client_id: data.filters.selectedClient || undefined,
                             date_debut: data.filters.dateDebut || undefined,
@@ -225,6 +258,22 @@ export default function Creances() {
                     dateFin,
                     includeProducts
                 )}
+            />
+
+            <ControleFacturesModal
+                isOpen={controleOpen}
+                onClose={() => setControleOpen(false)}
+                clientId={data.filters.selectedClient}
+                dateDebut={data.filters.dateDebut}
+                dateFin={data.filters.dateFin}
+                onGenerate={(factureIds, includeProducts) => actions.actions.handleImprimerReleve(
+                    data.filters.selectedClient,
+                    data.filters.dateDebut,
+                    data.filters.dateFin,
+                    includeProducts,
+                    factureIds
+                )}
+                onTransfer={handleTransferToReglement}
             />
 
             <RelevesExcelModal

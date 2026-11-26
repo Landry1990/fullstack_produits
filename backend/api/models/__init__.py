@@ -51,13 +51,18 @@ from .communication import (
 # Comptabilité
 from .comptabilite import (
     CompteComptable,
+    CreanceDouteuse,
+    DepreciationStock,
     DotationAmortissement,
     EcritureComptable,
+    Employe,
     ExerciceComptable,
     Immobilisation,
     JournalComptable,
     Lettrage,
     LigneEcriture,
+    PaieMois,
+    Regularisation,
 )
 from .configuration_objectifs import ConfigurationObjectifs
 from .depot import DepotClient
@@ -150,9 +155,12 @@ __all__ = [
     'ConfigurationObjectifs',
     'ConfigurationOption',
     'CouponMonnaie',
+    'CreanceDouteuse',
     'DepotClient',
+    'DepreciationStock',
     'DrugInteraction',
     'EcritureComptable',
+    'Employe',
     'ExerciceComptable',
     # Billing
     'Facture',
@@ -194,6 +202,7 @@ __all__ = [
     'OrderSchedule',
     'Ordonnancier',
     'PaiementFournisseur',
+    'PaieMois',
     'PharmacySettings',
     'PosteCaisse',
     'PosteVente',
@@ -205,6 +214,7 @@ __all__ = [
     # Promotions
     'Promotion',
     'PromotionPackItem',
+    'Regularisation',
     # Products
     'Rayon',
     'ReapproSession',

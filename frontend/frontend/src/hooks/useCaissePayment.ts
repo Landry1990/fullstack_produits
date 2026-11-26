@@ -190,7 +190,7 @@ export const useCaissePayment = ({
       if (invoiceSettings?.auto_print_ticket && pharmacySettings) {
         try {
           // ESC/POS réussi → aucune modale ; sinon le fallback ouvre l'aperçu
-          const mode = await printTicketSmart(ticketData, pharmacySettings, () => setShowTicketPreview(true))
+          const mode = await printTicketSmart(ticketData, pharmacySettings, () => setShowTicketPreview(true), invoiceSettings.ticket_copies)
           if (mode === 'escpos') gooeyToast.success(t('ticket.printed'))
         } catch {
           setShowTicketPreview(true)

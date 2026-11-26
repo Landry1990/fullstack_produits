@@ -14,16 +14,26 @@ from ..audit_helpers import log_audit
 from ..models import (
     AuditLog,
     CompteComptable,
+    CreanceDouteuse,
+    DepreciationStock,
     EcritureComptable,
+    Employe,
     ExerciceComptable,
     JournalComptable,
     LigneEcriture,
+    PaieMois,
+    Regularisation,
 )
 from ..serializers import (
     CompteComptableSerializer,
+    CreanceDouteuseSerializer,
+    DepreciationStockSerializer,
     EcritureComptableSerializer,
+    EmployeSerializer,
     ExerciceComptableSerializer,
     JournalComptableSerializer,
+    PaieMoisSerializer,
+    RegularisationSerializer,
 )
 from ..utils.validation import parse_date_param, parse_id
 
@@ -173,6 +183,15 @@ class ExerciceComptableViewSet(viewsets.ModelViewSet):
         )
         instance.delete()
 
+    @action(detail=True, methods=['post'], url_path='cloturer')
+    def cloturer(self, request, pk=None):
+        """Clôture l'exercice : OD de résultat, à-nouveaux en N+1 et
+        extournes des régularisations."""
+        from ..services.compta_inventaire import cloturer_exercice
+        resultat = cloturer_exercice(self.get_object(), user=request.user)
+        resultat['resultat'] = str(resultat['resultat'])
+        return Response(resultat)
+
 from ..filters import EcritureComptableFilter
 
 
@@ -181,6 +200,22 @@ class EcritureComptableViewSet(viewsets.ModelViewSet):
     serializer_class = EcritureComptableSerializer
     permission_classes = [IsComptaWriteAllowed]
     filterset_class = EcritureComptableFilter
+
+    @action(detail=False, methods=['post'], url_path='virement-tresorerie')
+    def virement_tresorerie(self, request):
+        """Virement interne caisse ↔ banque : sens, montant, date, libelle."""
+        from ..services.compta_inventaire import virement_tresorerie
+        date_ = parse_date_param(request.data.get('date'), field='date')
+        if date_ is None:
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError({'date': 'La date est requise.'})
+        ecriture = virement_tresorerie(
+            sens=request.data.get('sens'),
+            montant=request.data.get('montant'),
+            date_=date_,
+            libelle=(request.data.get('libelle') or '').strip(),
+            user=request.user)
+        return Response(EcritureComptableSerializer(ecriture).data, status=201)
 
     @action(detail=False, methods=['get'])
     def balance(self, request):
@@ -305,8 +340,11 @@ class EcritureComptableViewSet(viewsets.ModelViewSet):
         date_debut = parse_date_param(request.query_params.get('date_debut'), field='date_debut')
         date_fin = parse_date_param(request.query_params.get('date_fin'), field='date_fin')
 
-        # Cache: 5 min
-        cache_key = f"compta_resultat:{date_debut}:{date_fin}"
+        # Cache: 5 min — scopé par base (tests/ autres environnements ne doivent
+        # pas partager le résultat), comme replenishment_cache_scope.
+        from django.db import connection
+        db_scope = f"{connection.alias}:{connection.settings_dict['NAME']}"
+        cache_key = f"compta_resultat_v2:{db_scope}:{date_debut}:{date_fin}"
         cached = cache.get(cache_key)
         if cached is not None:
             return Response(cached)
@@ -346,11 +384,26 @@ class EcritureComptableViewSet(viewsets.ModelViewSet):
             'montant': valeur_stock_actuel
         })
         
+        # 4. Trésorerie disponible (comptes 52 banques + 57 caisses) : solde
+        # cumulé jusqu'à date_fin — c'est un encours, pas un flux de période.
+        filters_treso = Q()
+        if date_fin: filters_treso &= Q(ecriture__date__lte=date_fin)
+        tresorerie_qs = LigneEcriture.objects.filter(
+            filters_treso, compte__numero__regex=r'^(52|57)')
+        tresorerie = tresorerie_qs.aggregate(total=Sum('debit') - Sum('credit'))['total'] or Decimal('0.00')
+        tresorerie_caisse = LigneEcriture.objects.filter(
+            filters_treso, compte__numero__startswith='57').aggregate(
+            total=Sum('debit') - Sum('credit'))['total'] or Decimal('0.00')
+        tresorerie_banque = tresorerie - tresorerie_caisse
+
         response_data = {
             'total_produits': total_produits,
             'valeur_stock': valeur_stock_actuel,
             'total_charges': total_charges,
             'resultat_net': resultat_net,
+            'tresorerie': tresorerie,
+            'tresorerie_caisse': tresorerie_caisse,
+            'tresorerie_banque': tresorerie_banque,
             'details_produits': details_produits,
             'details_charges': charges_qs.values('compte__numero', 'compte__libelle').annotate(montant=Sum('debit') - Sum('credit')),
         }
@@ -1044,3 +1097,177 @@ class ImmobilisationViewSet(viewsets.ModelViewSet):
             except ValidationError as exc:
                 skipped.append({'id': pk, 'motif': exc.detail})
         return Response({'annee': annee, 'generees': done, 'ignorees': skipped})
+
+
+class RegularisationViewSet(viewsets.ModelViewSet):
+    """Écritures de régularisation (CCA/PCA/CAP/PAR). La création génère
+    l'OD ; l'extourne est produite automatiquement à la clôture de
+    l'exercice, au premier jour de l'exercice suivant."""
+    queryset = Regularisation.objects.select_related(
+        'compte', 'ecriture', 'extourne_ecriture', 'created_by')
+    serializer_class = RegularisationSerializer
+    permission_classes = [IsComptaWriteAllowed]
+
+    @transaction.atomic
+    def perform_create(self, serializer):
+        from ..services.compta_inventaire import creer_regularisation
+        reg = serializer.save(created_by=self.request.user)
+        creer_regularisation(reg, user=self.request.user)
+        log_audit(user=self.request.user, action=AuditLog.Action.CREATE,
+                  model_name='Regularisation', object_id=reg.pk,
+                  description=f'Régularisation {reg.type} : {reg.montant} sur {reg.compte.numero}',
+                  request=self.request)
+
+    @transaction.atomic
+    def perform_update(self, serializer):
+        from rest_framework.exceptions import ValidationError
+        from ..services.compta_inventaire import creer_regularisation
+        if self.get_object().extourne_ecriture_id:
+            raise ValidationError('Régularisation déjà extournée — modification interdite.')
+        instance = serializer.save()
+        # L'OD initiale reflète le montant/date/compte saisis : on la remplace
+        # pour éviter toute divergence entre le suivi et la compta.
+        if instance.ecriture_id:
+            instance.ecriture.delete()
+            instance.ecriture = None
+        creer_regularisation(instance, user=self.request.user)
+        log_audit(user=self.request.user, action=AuditLog.Action.UPDATE,
+                  model_name='Regularisation', object_id=instance.pk,
+                  description=f'Modification régularisation {instance.pk}',
+                  request=self.request)
+
+    @transaction.atomic
+    def perform_destroy(self, instance):
+        from rest_framework.exceptions import ValidationError
+        if instance.extourne_ecriture_id:
+            raise ValidationError('Régularisation déjà extournée — suppression interdite.')
+        if instance.ecriture_id:
+            instance.ecriture.delete()  # OD générée, supprimable si exercice ouvert
+        log_audit(user=self.request.user, action=AuditLog.Action.DELETE,
+                  model_name='Regularisation', object_id=instance.pk,
+                  description=f'Suppression régularisation {instance.pk}',
+                  request=self.request)
+        instance.delete()
+
+
+class CreanceDouteuseViewSet(viewsets.ModelViewSet):
+    """Marquage manuel des créances douteuses : dotation 691/491 à la
+    création, reprise ou perte via les actions dédiées."""
+    serializer_class = CreanceDouteuseSerializer
+    permission_classes = [IsComptaWriteAllowed]
+    http_method_names = ['get', 'post', 'head', 'options']
+
+    def get_queryset(self):
+        # Clients prefetchés avec `current_debt_annotated` (même sous-requête
+        # que ClientViewSet) — évite le calcul dette par ligne (N+1).
+        from django.db.models import DecimalField, Prefetch, Subquery
+        from django.db.models.functions import Coalesce
+        from ..models import Caisse, Client, Facture
+        clients = Client.objects.annotate(
+            current_debt_annotated=Subquery(
+                Facture.objects.filter(
+                    client=OuterRef('pk'), status__in=['VAL', 'PAY'], is_active=True
+                ).annotate(
+                    paid_amount=Coalesce(
+                        Subquery(
+                            Caisse.objects.filter(
+                                facture=OuterRef('pk'), statut='completee'
+                            ).exclude(
+                                mode_paiement='en_compte'
+                            ).values('facture').annotate(
+                                total_paid=Sum('montant')
+                            ).values('total_paid')
+                        ),
+                        Value(0, output_field=DecimalField())
+                    ),
+                    remainder=F('total_ttc') - F('paid_amount')
+                ).filter(
+                    remainder__gt=0
+                ).values('client').annotate(
+                    total_debt=Sum('remainder')
+                ).values('total_debt')[:1],
+                output_field=DecimalField()
+            )
+        )
+        return CreanceDouteuse.objects.select_related('created_by').prefetch_related(
+            Prefetch('client', queryset=clients))
+
+    @transaction.atomic
+    def perform_create(self, serializer):
+        from ..services.compta_inventaire import marquer_creance
+        creance = serializer.save(created_by=self.request.user)
+        marquer_creance(creance, user=self.request.user)
+
+    @action(detail=True, methods=['post'], url_path='recouvrer')
+    def recouvrer(self, request, pk=None):
+        from ..services.compta_inventaire import solder_creance
+        solder_creance(self.get_object(), 'recouvree', user=request.user)
+        return Response(self.get_serializer(self.get_object()).data)
+
+    @action(detail=True, methods=['post'], url_path='perte')
+    def perte(self, request, pk=None):
+        from ..services.compta_inventaire import solder_creance
+        solder_creance(self.get_object(), 'irrecouvrable', user=request.user)
+        return Response(self.get_serializer(self.get_object()).data)
+
+
+class DepreciationStockViewSet(viewsets.ModelViewSet):
+    """Dépréciations du stock périmé (dotation 691/391, reprise 391/781)."""
+    queryset = DepreciationStock.objects.select_related('created_by')
+    serializer_class = DepreciationStockSerializer
+    permission_classes = [IsComptaWriteAllowed]
+    http_method_names = ['get', 'post', 'head', 'options']
+
+    @action(detail=False, methods=['get'], url_path='estimation')
+    def estimation(self, request):
+        """Valeur actuelle des lots expirés (qté restante × prix d'achat)."""
+        from ..services.compta_inventaire import valeur_stock_perime
+        return Response({'montant': str(valeur_stock_perime())})
+
+    @transaction.atomic
+    def perform_create(self, serializer):
+        from ..services.compta_inventaire import creer_depreciation_stock
+        dep = serializer.save(created_by=self.request.user)
+        creer_depreciation_stock(dep, user=self.request.user)
+        log_audit(user=self.request.user, action=AuditLog.Action.CREATE,
+                  model_name='DepreciationStock', object_id=dep.pk,
+                  description=f'Dépréciation stock {dep.montant} : {dep.libelle}',
+                  request=self.request)
+
+    @action(detail=True, methods=['post'], url_path='reprendre')
+    def reprendre(self, request, pk=None):
+        from ..services.compta_inventaire import reprendre_depreciation_stock
+        reprendre_depreciation_stock(self.get_object(), user=request.user)
+        return Response(self.get_serializer(self.get_object()).data)
+
+
+class EmployeViewSet(viewsets.ModelViewSet):
+    queryset = Employe.objects.all()
+    serializer_class = EmployeSerializer
+    permission_classes = [IsComptaWriteAllowed]
+
+    def perform_destroy(self, instance):
+        from rest_framework.exceptions import ValidationError
+        if instance.paies.exists():
+            raise ValidationError('Cet employé a des paies — désactivez-le plutôt.')
+        instance.delete()
+
+
+class PaieMoisViewSet(viewsets.ModelViewSet):
+    """Paies mensuelles : saisie en brouillon, comptabilisation explicite
+    (OD dans le journal PA)."""
+    queryset = PaieMois.objects.select_related('employe', 'ecriture')
+    serializer_class = PaieMoisSerializer
+    permission_classes = [IsComptaWriteAllowed]
+
+    def perform_destroy(self, instance):
+        from rest_framework.exceptions import ValidationError
+        if instance.statut == 'comptabilisee':
+            raise ValidationError('Une paie comptabilisée ne peut pas être supprimée.')
+        instance.delete()
+
+    @action(detail=True, methods=['post'], url_path='comptabiliser')
+    def comptabiliser(self, request, pk=None):
+        from ..services.compta_inventaire import comptabiliser_paie
+        paie = comptabiliser_paie(self.get_object(), user=request.user)
+        return Response(self.get_serializer(paie).data)

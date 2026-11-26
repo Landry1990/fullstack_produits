@@ -120,6 +120,89 @@ class EcritureComptableSerializer(serializers.ModelSerializer):
         return instance
 
 
+class RegularisationSerializer(serializers.ModelSerializer):
+    compte_numero = serializers.CharField(source='compte.numero', read_only=True)
+    compte_libelle = serializers.CharField(source='compte.libelle', read_only=True)
+    type_display = serializers.CharField(source='get_type_display', read_only=True)
+    extourne_faite = serializers.SerializerMethodField()
+
+    def get_extourne_faite(self, obj):
+        return obj.extourne_ecriture_id is not None
+
+    def validate(self, data):
+        from api.models import Regularisation
+        type_ = data.get('type', getattr(self.instance, 'type', None))
+        compte = data.get('compte', getattr(self.instance, 'compte', None))
+        if type_ and compte:
+            _, type_attendu, _ = Regularisation.PARAMS[type_]
+            if not compte.is_active or compte.type != type_attendu:
+                raise serializers.ValidationError(
+                    {'compte': f'Choisissez un compte actif de type {type_attendu}.'})
+        return data
+
+    class Meta:
+        from api.models import Regularisation
+        model = Regularisation
+        fields = ['id', 'type', 'type_display', 'compte', 'compte_numero',
+                  'compte_libelle', 'montant', 'date', 'description',
+                  'ecriture', 'extourne_ecriture', 'extourne_faite', 'created_at']
+        read_only_fields = ['ecriture', 'extourne_ecriture']
+
+
+class CreanceDouteuseSerializer(serializers.ModelSerializer):
+    client_nom = serializers.CharField(source='client.name', read_only=True)
+    dette_client = serializers.SerializerMethodField()
+
+    def get_dette_client(self, obj):
+        return str(obj.client.current_debt)
+
+    class Meta:
+        from api.models import CreanceDouteuse
+        model = CreanceDouteuse
+        fields = ['id', 'client', 'client_nom', 'dette_client', 'montant',
+                  'statut', 'commentaire', 'dotation_ecriture',
+                  'sortie_ecriture', 'created_at']
+        read_only_fields = ['statut', 'dotation_ecriture', 'sortie_ecriture']
+
+
+class DepreciationStockSerializer(serializers.ModelSerializer):
+    class Meta:
+        from api.models import DepreciationStock
+        model = DepreciationStock
+        fields = ['id', 'libelle', 'montant', 'statut', 'dotation_ecriture',
+                  'reprise_ecriture', 'created_at']
+        read_only_fields = ['statut', 'dotation_ecriture', 'reprise_ecriture']
+
+
+class EmployeSerializer(serializers.ModelSerializer):
+    class Meta:
+        from api.models import Employe
+        model = Employe
+        fields = '__all__'
+
+
+class PaieMoisSerializer(serializers.ModelSerializer):
+    employe_nom = serializers.CharField(source='employe.nom', read_only=True)
+    net_a_payer = serializers.ReadOnlyField()
+
+    def validate_mois(self, value):
+        return value.replace(day=1)
+
+    class Meta:
+        from api.models import PaieMois
+        model = PaieMois
+        fields = ['id', 'employe', 'employe_nom', 'mois', 'brut',
+                  'cotisations_salariales', 'irpp', 'charges_patronales',
+                  'net_a_payer', 'statut', 'ecriture', 'created_at']
+        read_only_fields = ['statut', 'ecriture']
+
+    def validate(self, data):
+        if self.instance and self.instance.statut == 'comptabilisee':
+            raise serializers.ValidationError(
+                'Une paie comptabilisée ne peut plus être modifiée.')
+        return data
+
+
 class DotationAmortissementSerializer(serializers.ModelSerializer):
     class Meta:
         from api.models import DotationAmortissement

@@ -68,10 +68,10 @@ views/stocks/inventaire/validation.py:153
 views/stocks/inventaire/validation.py:156
 views/stocks/inventaire/validation.py:268
 views/stocks/inventaire/validation.py:269
-views/stocks/stock_lots.py:203
-views/stocks/stock_lots.py:214
-views/stocks/stock_lots.py:327
-views/stocks/stock_lots.py:337
+views/stocks/stock_lots.py:348
+views/stocks/stock_lots.py:359
+views/stocks/stock_lots.py:472
+views/stocks/stock_lots.py:482
 views/stocks/transformations.py:152
 views/stocks/transformations.py:181
 views/stocks/transformations.py:209

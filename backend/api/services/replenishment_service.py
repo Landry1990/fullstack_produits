@@ -3,6 +3,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from math import ceil
 
 from django.core.cache import cache
+from django.db import connection
 from django.db.models import Min, Q, Sum
 from django.utils import timezone
 
@@ -13,7 +14,17 @@ from api.models import Facture, FactureProduit, Produit
 MIN_JOURS_OBSERVATION = 7
 
 _STATUTS_VENTE = [Facture.Status.VALIDEE, Facture.Status.PAYEE]
-JOURS_DONNEES_CACHE_KEY = 'stock_jours_donnees'
+JOURS_DONNEES_CACHE_KEY = 'stock_jours_donnees_v2'
+
+
+def replenishment_cache_scope(today=None):
+    today = today or timezone.localdate()
+    database = connection.settings_dict['NAME']
+    return f'{connection.alias}:{database}:{today.isoformat()}'
+
+
+def jours_donnees_cache_key(today=None):
+    return f'{JOURS_DONNEES_CACHE_KEY}:{replenishment_cache_scope(today)}'
 
 
 def get_jours_donnees(today=None):
@@ -24,11 +35,12 @@ def get_jours_donnees(today=None):
     (sinon ventes/90 sous-estime systématiquement les quantités).
     Mis en cache 1 h (granularité journalière).
     """
-    cached = cache.get(JOURS_DONNEES_CACHE_KEY)
+    today = today or timezone.localdate()
+    cache_key = jours_donnees_cache_key(today)
+    cached = cache.get(cache_key)
     if cached is not None:
         return cached
 
-    today = today or timezone.localtime(timezone.now()).date()
     first_sale = Facture.objects.filter(
         status__in=_STATUTS_VENTE
     ).order_by('date').values_list('date', flat=True).first()
@@ -37,7 +49,7 @@ def get_jours_donnees(today=None):
     else:
         age = (today - timezone.localtime(first_sale).date()).days + 1
         jours = min(90, max(MIN_JOURS_OBSERVATION, age))
-    cache.set(JOURS_DONNEES_CACHE_KEY, jours, 3600)
+    cache.set(cache_key, jours, 3600)
     return jours
 
 
@@ -149,7 +161,7 @@ def recalculate_products_rotation(product_ids=None):
         )
     }
 
-    cache.delete(JOURS_DONNEES_CACHE_KEY)
+    cache.delete(jours_donnees_cache_key(today))
     jours_donnees = get_jours_donnees(today)
     updated_produits = []
     for produit in produits.only('id', 'created_at', 'rotation_moyenne', 'date_premiere_vente'):
