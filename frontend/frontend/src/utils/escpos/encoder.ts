@@ -290,3 +290,19 @@ export function barcodeCODE128(data: string): string {
   // Hauteur 40 points, largeur module 2, HRI désactivé pour éviter doublon
   return `${GS}h${String.fromCharCode(40)}${GS}w${String.fromCharCode(2)}${GS}H${String.fromCharCode(0)}${GS}kI${String.fromCharCode(len)}${payload}`;
 }
+
+/**
+ * QR Code natif ESC/POS (séquence `GS ( k`, fonctions 165-181).
+ * Modèle 2, correction d'erreur L, taille de module configurable (dots).
+ */
+export function qrCode(data: string, moduleSize = 6): string {
+  const bytes = encodeWcp1252(String(data)).slice(0, 500);
+  const len = bytes.length + 3;
+  return (
+    `${GS}(k\x04\x001A\x32\x00` +                          // fn 167 : modèle 2
+    `${GS}(k\x03\x001C${String.fromCharCode(moduleSize)}` + // fn 169 : taille module
+    `${GS}(k\x03\x001E0` +                                 // fn 170 : ECC niveau L
+    `${GS}(k${String.fromCharCode(len & 0xFF)}${String.fromCharCode((len >> 8) & 0xFF)}1P0${bytes}` + // fn 180 : stockage
+    `${GS}(k\x03\x001Q0`                                   // fn 181 : impression
+  );
+}

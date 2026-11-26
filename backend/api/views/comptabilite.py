@@ -11,6 +11,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from ..audit_helpers import log_audit
+from ..idempotency import idempotent_action
 from ..models import (
     AuditLog,
     CompteComptable,
@@ -202,6 +203,7 @@ class EcritureComptableViewSet(viewsets.ModelViewSet):
     filterset_class = EcritureComptableFilter
 
     @action(detail=False, methods=['post'], url_path='virement-tresorerie')
+    @idempotent_action
     def virement_tresorerie(self, request):
         """Virement interne caisse ↔ banque : sens, montant, date, libelle."""
         from ..services.compta_inventaire import virement_tresorerie

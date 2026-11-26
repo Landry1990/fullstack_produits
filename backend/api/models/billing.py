@@ -909,7 +909,7 @@ class DocumentCounter(models.Model):
     si le client ne revient jamais), et un devis converti tardivement prend
     le prochain numéro FAC — l'ordre des numéros reste chronologique.
     """
-    name = models.CharField(max_length=10, primary_key=True)
+    name = models.CharField(max_length=20, primary_key=True)
     value = models.PositiveIntegerField(default=0)
 
     class Meta:

@@ -211,6 +211,21 @@
         "hint": "differences from the group are marked 'derogation'",
         "derogation": "override"
     },
+    "badge": {
+        "print_btn": "Badge",
+        "title": "Access badge",
+        "subtitle": "Prints a scannable badge for {{username}} — id, name and a code containing the password.",
+        "password_label": "Password to encode",
+        "password_hint": "The password is hashed and cannot be read back: re-enter this user's password.",
+        "password_required": "Enter the password to encode.",
+        "format_label": "Code format",
+        "format_qr": "QR Code",
+        "format_barcode": "Barcode",
+        "print": "Print badge",
+        "sent": "Badge sent to the receipt printer.",
+        "print_error": "Badge printing failed.",
+        "security_warning": "This badge gives direct access to the account — it can be compromised. Keep it safe and reprint it after any password change."
+    },
     "password_confirm": {
         "title": "Security Confirmation",
         "message": "Please confirm your password to continue.",

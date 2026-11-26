@@ -211,6 +211,21 @@
         "hint": "les écarts au groupe sont marqués « dérogation »",
         "derogation": "dérogation"
     },
+    "badge": {
+        "print_btn": "Badge",
+        "title": "Badge d'accès",
+        "subtitle": "Imprime un badge scannable pour {{username}} — id, nom et code contenant le mot de passe.",
+        "password_label": "Mot de passe à encoder",
+        "password_hint": "Le mot de passe est haché et ne peut pas être relu : ressaisissez celui de cet utilisateur.",
+        "password_required": "Saisissez le mot de passe à encoder.",
+        "format_label": "Format du code",
+        "format_qr": "QR Code",
+        "format_barcode": "Code-barres",
+        "print": "Imprimer le badge",
+        "sent": "Badge envoyé à l'imprimante ticket.",
+        "print_error": "Échec de l'impression du badge.",
+        "security_warning": "Ce badge donne un accès direct au compte — il peut être compromis. Conservez-le en lieu sûr et réimprimez-le après tout changement de mot de passe."
+    },
     "password_confirm": {
         "title": "Confirmation de sécurité",
         "message": "Veuillez confirmer votre mot de passe pour continuer.",

@@ -462,7 +462,15 @@ class PosteVenteViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
 
             filtre_postes = Q()
             for p in postes:
-                q = Q(facture__poste_vente=p)
+                # Même critère que la clôture : l'encaissement appartient à la
+                # caisse via facture.poste_caisse (ventes envoyées depuis un
+                # poste sans caisse — web centralisé, app mobile). Attribution
+                # unique : le critère poste_vente ne retient que les paiements
+                # non routés vers une caisse (sinon la vente PDA serait comptée
+                # dans le ruban du vendeur ET dans celui de la caisse).
+                q = Q(facture__poste_vente=p, facture__poste_caisse__isnull=True)
+                if p.caisse_id:
+                    q |= Q(facture__poste_caisse_id=p.caisse_id)
                 if p.date_ouverture:
                     q &= Q(date_paiement__gte=p.date_ouverture)
                 filtre_postes |= q
@@ -501,10 +509,13 @@ class PosteVenteViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
         if not poste:
             return Response({'has_session': False})
 
-        paiements = Caisse.objects.filter(
-            facture__poste_vente=poste,
-            statut='completee'
-        )
+        # Attribution unique identique à la branche multi-postes : les ventes
+        # routées vers une caisse (poste_caisse renseigné) ne sont comptées que
+        # dans le ruban du poste propriétaire de cette caisse.
+        filtre = Q(facture__poste_vente=poste, facture__poste_caisse__isnull=True)
+        if poste.caisse_id:
+            filtre |= Q(facture__poste_caisse_id=poste.caisse_id)
+        paiements = Caisse.objects.filter(filtre, statut='completee')
         if poste.date_ouverture:
             paiements = paiements.filter(date_paiement__gte=poste.date_ouverture)
         paiements = paiements.exclude(mode_paiement__in=['en_compte', 'depot'])

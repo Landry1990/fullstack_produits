@@ -17,10 +17,13 @@ class PaymentService:
 
         if caisse.statut != 'completee':
             return
-            
-        facture = caisse.facture
-        if not facture:
+        if not caisse.facture_id:
             return
+
+        # Verrou sur la facture : deux encaissements concurrents de la même
+        # facture sont sérialisés — sans cela le check `deja_traite` peut être
+        # évalué à False des deux côtés et créer un double en_compte AUTO-CREDIT.
+        facture = Facture.objects.select_for_update().get(pk=caisse.facture_id)
         
         # 1. Marquage Tiers Payant (Part Patient)
         if facture.part_client is not None and caisse.mode_paiement != 'en_compte' and not caisse.part_patient and (caisse.part_assurance is None or caisse.part_assurance == 0):

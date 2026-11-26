@@ -278,6 +278,10 @@
             "hide": "Hide summary",
             "show": "Show summary"
         },
+        "info": {
+            "hide": "Hide details",
+            "show": "Show details"
+        },
         "correct_lot_expiry": "Correct lot / expiry date",
         "line_actions": "Line actions",
         "edit_received_qty": "Correct received quantity",

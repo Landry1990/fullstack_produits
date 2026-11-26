@@ -12,6 +12,7 @@ import {
   setOpenDrawer as setSavedOpenDrawer,
   listPrinters,
   printTestTicket,
+  printTestLabel,
 } from '../../services/qzPrinter'
 import { logger } from '../../utils/logger'
 import type { PrintingTabProps } from './types'
@@ -23,6 +24,7 @@ export function PrintingTab({ formData, handleChange, t, invSettings, updateInvS
   const [printers, setPrinters] = useState<string[]>([])
   const [detecting, setDetecting] = useState(false)
   const [testingPrint, setTestingPrint] = useState(false)
+  const [testingLabelPrint, setTestingLabelPrint] = useState(false)
 
   useEffect(() => {
     setPrinterName(getSavedPrinterName() || '')
@@ -69,6 +71,23 @@ export function PrintingTab({ formData, handleChange, t, invSettings, updateInvS
       gooeyToast.error(t('messages.qz_not_found') + detail)
     } finally {
       setTestingPrint(false)
+    }
+  }
+
+  const handleTestLabelPrint = async () => {
+    setTestingLabelPrint(true)
+    try {
+      if (await printTestLabel()) {
+        gooeyToast.success(t('messages.label_print_test_sent', { defaultValue: 'Étiquette de test envoyée à l\'imprimante QZ Tray.' }))
+      } else {
+        gooeyToast.error(t('messages.qz_not_found'))
+      }
+    } catch (err) {
+      logger.warn('Erreur test impression étiquette QZ Tray', err)
+      const detail = err instanceof Error ? ` (${err.message})` : ''
+      gooeyToast.error(t('messages.qz_not_found') + detail)
+    } finally {
+      setTestingLabelPrint(false)
     }
   }
 
@@ -317,21 +336,33 @@ export function PrintingTab({ formData, handleChange, t, invSettings, updateInvS
             <label htmlFor="qz-label-printer" className="text-sm font-bold text-slate-500">
               {t('labels.label_printer')}
             </label>
-            <Select
-              id="qz-label-printer"
-              value={labelPrinterName}
-              onChange={(e) => {
-                setLabelPrinterName(e.target.value)
-                setSavedLabelPrinterName(e.target.value)
-              }}
-              className="h-12 text-base rounded-xl"
-            >
-              <option value="">{t('labels.label_printer_browser')}</option>
-              {labelPrinterName && !printers.includes(labelPrinterName) && (
-                <option value={labelPrinterName}>{labelPrinterName}</option>
-              )}
-              {printers.map((p) => <option key={p} value={p}>{p}</option>)}
-            </Select>
+            <div className="flex gap-2">
+              <Select
+                id="qz-label-printer"
+                value={labelPrinterName}
+                onChange={(e) => {
+                  setLabelPrinterName(e.target.value)
+                  setSavedLabelPrinterName(e.target.value)
+                }}
+                className="flex-1 h-12 text-base rounded-xl"
+              >
+                <option value="">{t('labels.label_printer_browser')}</option>
+                {labelPrinterName && !printers.includes(labelPrinterName) && (
+                  <option value={labelPrinterName}>{labelPrinterName}</option>
+                )}
+                {printers.map((p) => <option key={p} value={p}>{p}</option>)}
+              </Select>
+              <button
+                type="button"
+                onClick={handleTestLabelPrint}
+                disabled={testingLabelPrint || !labelPrinterName}
+                title={!labelPrinterName ? t('hints.label_printer_test_disabled') : t('buttons.test_print')}
+                className="inline-flex items-center gap-1 rounded-xl bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-600 hover:bg-emerald-100 disabled:opacity-50"
+              >
+                <Printer className={`size-4 ${testingLabelPrint ? 'animate-pulse' : ''}`} />
+                {t('buttons.test')}
+              </button>
+            </div>
             <p className="text-xs text-slate-400">{t('hints.label_printer')}</p>
           </div>
 

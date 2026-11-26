@@ -20,6 +20,7 @@ export default {
   app: {
     session_title: 'Session',
     server_down: 'Serveur injoignable — session conservée, les données seront rechargées au prochain accès',
+    auto_logout: 'Session expirée après 30 minutes d\'inactivité — reconnectez-vous',
   },
   login: {
     title: 'Connexion',

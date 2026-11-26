@@ -12,6 +12,7 @@ from rest_framework.views import APIView
 from ..audit_helpers import log_audit
 from ..models import AuditLog, Produit
 from ..services.lot_allocation_service import LotAllocationService
+from ..services.realtime import notify_stock_changed
 
 logger = logging.getLogger(__name__)
 business_logger = logging.getLogger('api.business')
@@ -113,6 +114,7 @@ class ProductImportView(APIView):
             created_count = 0
             updated_count = 0
             errors = []
+            stock_touched_ids = set()
 
             # Clean numeric data
             if 'selling_price' in df.columns:
@@ -223,6 +225,7 @@ class ProductImportView(APIView):
                             product.cip3 = cip3
                         
                         # Only update stock if explicitly provided in file
+                        stock_changed = False
                         if 'stock' in df.columns:
                             if product.use_lot_management:
                                 # Le compteur est dérivé des lots : on crée/ajuste
@@ -233,12 +236,14 @@ class ProductImportView(APIView):
                                 )
                             else:
                                 product.stock = stock_val
+                            stock_changed = True
 
                         product.save()
                         updated_count += 1
                     else:
                         # Create Logic
                         product = Produit.objects.create(**product_data)
+                        stock_changed = False
                         if 'stock' in df.columns:
                             if product.use_lot_management:
                                 LotAllocationService.apply_imported_stock(
@@ -248,18 +253,27 @@ class ProductImportView(APIView):
                             else:
                                 product.stock = stock_val
                                 product.save(update_fields=['stock'])
+                            stock_changed = True
                         created_count += 1
-                    
+
                     transaction.savepoint_commit(sid)
+                    # Ligne réellement persistée : seuls ces produits sont
+                    # diffusés (un savepoint_rollback ne doit pas broadcaster).
+                    if stock_changed:
+                        stock_touched_ids.add(product.id)
                         
                 except Exception as e:
                     transaction.savepoint_rollback(sid)
                     error_msg = f"Ligne {index + 2} ({name if 'name' in dir() else 'unknown'}): {e!s}"
                     errors.append(error_msg)
-                    if len(errors) > 20: 
+                    if len(errors) > 20:
                         errors.append("... trop d'erreurs, arrêt du rapport.")
                         break
-            
+
+            # Broadcast temps réel : les postes connectés (caisse, facturation)
+            # voient le nouveau stock sans rafraîchir la page.
+            notify_stock_changed(stock_touched_ids)
+
             log_audit(
                 user=request.user,
                 action=AuditLog.Action.CREATE,

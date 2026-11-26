@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, QrCode } from 'lucide-react';
 import { Badge } from '../shadcn/badge';
 import { Button } from '../shadcn/button';
 import { Card } from '../shadcn/card';
@@ -13,9 +13,10 @@ interface Props {
   menuLabel: (key: string) => string;
   onEdit: (user: ManagedUser) => void;
   onDeactivate: (user: ManagedUser) => void;
+  onPrintBadge: (user: ManagedUser) => void;
 }
 
-export default function UserListItem({ user, isSelf, onEdit, onDeactivate }: Props) {
+export default function UserListItem({ user, isSelf, onEdit, onDeactivate, onPrintBadge }: Props) {
   const { t } = useTranslation(['users', 'sidebar', 'common']);
 
   const roleBadge = (
@@ -49,6 +50,10 @@ export default function UserListItem({ user, isSelf, onEdit, onDeactivate }: Pro
         </div>
 
         <div className="flex items-center justify-end gap-2 md:ml-auto">
+          <Button variant="ghost" size="sm" onClick={() => onPrintBadge(user)} title={t('badge.print_btn')}>
+            <QrCode className="h-4 w-4" />
+            {t('badge.print_btn')}
+          </Button>
           <Button variant="ghost" size="sm" onClick={() => onEdit(user)}>
             <Pencil className="h-4 w-4" />
             {t('actions.edit')}

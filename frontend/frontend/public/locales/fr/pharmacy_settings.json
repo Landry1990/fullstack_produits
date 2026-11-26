@@ -132,6 +132,7 @@
     "hints": {
         "ticket_copies": "S’applique aux impressions automatiques et manuelles des tickets, sans doubler les coupons de monnaie ni les factures A4.",
         "label_printer": "Utilisez Détecter puis sélectionnez l'imprimante dédiée en mode étiquette TSPL (Hoin HL80B/HLB480B). Réglage local à ce poste ; en cas d'indisponibilité, impression via le navigateur.",
+        "label_printer_test_disabled": "Sélectionnez d'abord une imprimante étiquettes pour envoyer un test TSPL.",
         "auto_print_ticket": "En caisse centralisée, lance l'impression à l'ouverture de l'aperçu. Silencieuse avec QZ Tray ; sinon la boîte d'impression habituelle s'ouvre.",
         "pharmacy_name": "Le nom officiel tel qu'il apparaîtra sur les factures et tickets.",
         "pharmacy_name_from_licence": "Le nom de la pharmacie est défini par la licence d'activation. Pour le modifier, contactez votre administrateur système.",
@@ -239,7 +240,8 @@
         "caisse_toggle_error": "Erreur changement d'état caisse",
         "qz_not_found": "QZ Tray est introuvable ou n'a pas pu se connecter. Vérifiez qu'il est installé et lancé, puis réessayez.",
         "qz_printers_found": "{{count}} imprimante(s) détectée(s).",
-        "print_test_sent": "Ticket de test envoyé à l'imprimante QZ Tray."
+        "print_test_sent": "Ticket de test envoyé à l'imprimante QZ Tray.",
+        "label_print_test_sent": "Étiquette de test envoyée à l'imprimante QZ Tray."
     },
     "postes_vente": {
         "title": "Points de vente",

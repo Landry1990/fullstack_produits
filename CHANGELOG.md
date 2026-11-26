@@ -2,6 +2,91 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-11-26 — Utilisateurs : badge d'accès imprimé (QR ou code-barres)
+
+- `UserBadgeDialog` + bouton « Badge » par utilisateur (`UserListItem`) :
+  l'admin ressaisit le mot de passe (haché, non relisible), choisit le format
+  **QR Code** ou **CODE128**, et le badge s'imprime sur l'imprimante ticket
+  (id + username + nom complet + code) — scannable au login au lieu de taper.
+- `encoder.ts` : nouveau `qrCode()` — QR natif ESC/POS (`GS ( k`, modèle 2,
+  ECC L, module 6 dots) ; le code-barres réutilise `barcodeCODE128`.
+- Avertissement affiché : le badge est un accès direct au compte, à
+  conserver en lieu sûr et réimprimer après changement de mot de passe.
+  Le champ de saisie est masqué (type=password). i18n fr/en (`users:badge.*`).
+  NB : le code contient le mot de passe par design — le login accepte le
+  mot de passe seul (`CustomAuthToken`, scan badge = login direct).
+
+## 2026-11-26 — Paramètres : bouton « Tester » pour l'imprimante étiquettes
+
+- `qzPrinter.ts` : nouveau `printTestLabel()` — envoie une vraie étiquette
+  TSPL de test (`TEST IMPRESSION` + CODE128 `0123456789`, format 40x20) via
+  `buildLabelsTspl` sur l'imprimante étiquettes configurée ; refuse si aucune
+  n'est choisie (mode navigateur).
+- `PrintingTab.tsx` : bouton « Tester » à côté du sélecteur d'imprimante
+  étiquettes — désactivé tant qu'aucune imprimante dédiée n'est sélectionnée,
+  avec hint explicite. Toasts succès/échec, i18n fr/en
+  (`messages.label_print_test_sent`, `hints.label_printer_test_disabled`).
+
+## 2026-11-26 — Commandes : blocs d'en-tête repliables (gain de place)
+
+- `CommandeDetails.tsx` : l'état masqué de la barre prix/marge gardait le
+  conteneur `p-3` → le bloc restait une ligne entière. Repliée, c'est
+  désormais une fine barre (`px-3 py-1`) avec le bouton « Afficher ».
+- La carte « Grid Info » (id, n° facture, fournisseur, date, statut,
+  clôturée par) est elle aussi repliable (œil barré en haut à droite) —
+  même fine barre une fois masquée. Les deux replis sont indépendants,
+  préférences persistées (`commande_recap_hidden`, `commande_info_hidden`).
+  i18n fr/en : `orders:details.info.show/hide`.
+
+## 2026-11-26 — Récap caisse : ventes mobile-facturation comptées
+
+- `recap_session` (ruban « Récap caisse ») filtrait les encaissements par
+  `facture.poste_vente` : une vente prise sur PDA garde `poste_vente` = poste
+  du vendeur et `poste_caisse` = caisse qui encaisse → jamais comptée, alors
+  que la clôture (qui filtre sur `poste_caisse`) la comptait.
+- Le filtre prend désormais `poste_vente = poste` (uniquement si le paiement
+  n'est pas routé vers une caisse) OU `poste_caisse = caisse du poste` —
+  aligné sur la clôture et attribution unique : la vente PDA est comptée dans
+  le ruban de la caisse, pas dans celui du vendeur. Appliqué aux branches
+  mono-poste et multi-postes.
+- Tests : `RecapSessionMobileSalesTests` — vente PDA + vente directe, total et
+  détail espèces corrects, et la vente PDA absente du ruban vendeur.
+  `test_cash_payment_edges` : 17/17 OK.
+
+## 2026-11-26 — WebSocket stock : broadcast après import produits
+
+- `import_views.py` : l'import Excel/CSV de produits ne déclenchait aucun
+  `stock_update` — un caissier sur un autre poste gardait l'ancien stock
+  jusqu'au rafraîchissement. Les produits dont le stock a bougé (branche lots
+  et branche compteur direct) sont désormais diffusés en un seul message.
+- Vérifié en conditions réelles : handshake `ws/stock/` OK depuis le
+  navigateur (ping→pong), `notify_stock_changed` livré au frontend
+  ({type:stock_update, produits:[…]}) via Redis channel layer + nginx /ws/.
+- Les ids ne sont ajoutés au broadcast qu'après `savepoint_commit` : une ligne
+  importée en erreur (rollback) ne déclenche pas de rafraîchissement fantôme.
+
+## 2026-11-26 — Concurrence : numérotation, split billing, virement
+
+- `EcritureComptable._generer_numero_piece` : l'ancien `Max()+1` non verrouillé
+  finissait en IntegrityError sous charge (deux écritures concurrentes du même
+  journal). La séquence vit désormais dans `DocumentCounter` (select_for_update),
+  amorcée sur le max déjà émis à sa création. Migration 0308 : `name` élargi
+  10 → 20 (préfixes `EX2026-JOURNAL`). Compteur + insert atomiques dans
+  `save()` : hors transaction appelante, un échec de l'insert ne laisse pas
+  de trou dans la séquence.
+- `PaymentService.process_payment` : la facture est verrouillée
+  (`select_for_update`) pendant le traitement — deux encaissements simultanés
+  ne peuvent plus créer un double `en_compte` AUTO-CREDIT (check `deja_traite`
+  sérialisé).
+- `POST compta/ecritures/virement-tresorerie/` : `@idempotent_action` + envoi
+  d'une `Idempotency-Key` stable par contenu soumis dans
+  `VirementTresorerieDialog` — un retry/double-clic renvoie la même clé
+  (pas de doublon d'OD), un virement différent repart avec une nouvelle clé.
+- Tests : +4 régressions dans `test_compta_inventaire.py` (séquence compteur,
+  amorce sur max existant, pas de double AUTO-CREDIT, virement idempotent) —
+  20/20 OK ; `test_cash_payment_edges` 15/15 OK ; makemigrations --check OK ;
+  check_index_migrations OK.
+
 ## 2026-11-26 — Revue compta : points mineurs traités
 
 - `CreanceDouteuseViewSet` : clients prefetchés avec `current_debt_annotated`

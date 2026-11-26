@@ -411,6 +411,15 @@
   verrouillé efface le PIN — porte de sortie « code oublié », le login
   suivant exige le mot de passe. Le PIN survit au logout normal (rattaché
   au compte, pas à la session).
+- [x] **Déconnexion auto après 30 min d'inactivité** (2026-11-26) : la
+  session mobile restait ouverte indéfiniment (PIN seul, et seulement
+  s'il est défini). `App.tsx` : `lastActivity` alimenté par
+  `onTouchStart` racine + retour `AppState 'active'` ; vérification par
+  `setInterval` 60 s (couvre l'idle au premier plan — les timers JS sont
+  suspendus en arrière-plan) + contrôle immédiat au retour de veille avec
+  alerte « Session expirée ». `logout()` libère le poste de vente — le
+  PDA revient au login sans intervention. Le PIN garde son rôle pour les
+  absences courtes (< 30 min).
 
 ### P3 — Historique et finition
 

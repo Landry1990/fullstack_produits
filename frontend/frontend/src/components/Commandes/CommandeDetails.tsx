@@ -170,6 +170,16 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
   };
   const showRecap = showRecapState;
 
+  // Carte « Grid Info » (id, facture, fournisseur, statut…) : préférence persistée.
+  const [showInfoState, setShowInfoState] = useState(() => {
+    try { return localStorage.getItem('commande_info_hidden') !== '1'; } catch { return true; }
+  });
+  const setShowInfo = (v: boolean) => {
+    setShowInfoState(v);
+    try { localStorage.setItem('commande_info_hidden', v ? '0' : '1'); } catch { /* stockage bloqué */ }
+  };
+  const showInfo = showInfoState;
+
   const [detailSortKey, setDetailSortKey] = useState<'name' | 'quantity' | 'price' | null>(null);
 
   const [detailSortOrder, setDetailSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -422,44 +432,71 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
 
 
 
-      {/* Grid Info */}
-      <m.div variants={fadeInUp} className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-white px-3 py-2 rounded-lg border border-slate-200 shadow-sm shrink-0">
-        <div>
-          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('orders:details.id')}</div>
-          <div className="text-sm font-semibold text-slate-800">{selectedCommande.id}</div>
-        </div>
-        <div>
-          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('orders:details.invoice')}</div>
-          <div className="text-sm font-semibold text-slate-800">{selectedCommande.numero_facture || 'N/A'}</div>
-        </div>
-        <div>
-          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('orders:details.provider')}</div>
-          <div className="text-sm font-semibold text-slate-800">{fournisseurs.find(f => f.id === selectedCommande.fournisseur)?.name ?? `ID: ${selectedCommande.fournisseur}`}</div>
-        </div>
-        <div>
-          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('orders:details.date')}</div>
-          <div className="text-sm font-semibold text-slate-800">{formatDate(selectedCommande.date)}</div>
-        </div>
-        <div>
-          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('orders:details.status')}</div>
-          <div>
-            <Badge variant="outline" className={cn("text-xs font-semibold uppercase tracking-wider", getStatusBadgeClass(selectedCommande.status))}>
-              {getStatusLabel(selectedCommande.status)}
-            </Badge>
-          </div>
-        </div>
-        {selectedCommande.status === 'CLOT' && selectedCommande.closed_by_name && (
-          <div>
-            <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('orders:details.closed_by')}</div>
-            <div className="text-sm font-semibold text-slate-800">{selectedCommande.closed_by_name}</div>
-          </div>
+      {/* Grid Info — repliable : fine barre quand masquée */}
+      <m.div variants={fadeInUp} className={cn(
+        "bg-white rounded-lg border border-slate-200 shadow-sm shrink-0",
+        showInfo ? "relative grid grid-cols-2 md:grid-cols-4 gap-2 px-3 py-2" : "flex items-center px-3 py-1"
+      )}>
+        {!showInfo ? (
+          <button
+            type="button"
+            onClick={() => setShowInfo(true)}
+            className="flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-slate-600 transition-colors"
+          >
+            <Eye className="size-4" />
+            {t('orders:details.info.show')}
+          </button>
+        ) : (
+          <>
+            <div>
+              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('orders:details.id')}</div>
+              <div className="text-sm font-semibold text-slate-800">{selectedCommande.id}</div>
+            </div>
+            <div>
+              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('orders:details.invoice')}</div>
+              <div className="text-sm font-semibold text-slate-800">{selectedCommande.numero_facture || 'N/A'}</div>
+            </div>
+            <div>
+              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('orders:details.provider')}</div>
+              <div className="text-sm font-semibold text-slate-800">{fournisseurs.find(f => f.id === selectedCommande.fournisseur)?.name ?? `ID: ${selectedCommande.fournisseur}`}</div>
+            </div>
+            <div>
+              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('orders:details.date')}</div>
+              <div className="text-sm font-semibold text-slate-800">{formatDate(selectedCommande.date)}</div>
+            </div>
+            <div>
+              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('orders:details.status')}</div>
+              <div>
+                <Badge variant="outline" className={cn("text-xs font-semibold uppercase tracking-wider", getStatusBadgeClass(selectedCommande.status))}>
+                  {getStatusLabel(selectedCommande.status)}
+                </Badge>
+              </div>
+            </div>
+            {selectedCommande.status === 'CLOT' && selectedCommande.closed_by_name && (
+              <div>
+                <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('orders:details.closed_by')}</div>
+                <div className="text-sm font-semibold text-slate-800">{selectedCommande.closed_by_name}</div>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => setShowInfo(false)}
+              title={t('orders:details.info.hide')}
+              className="absolute top-1 right-1 p-1 rounded-lg text-slate-300 hover:text-slate-500 hover:bg-slate-100 transition-colors"
+            >
+              <EyeOff className="size-4" />
+            </button>
+          </>
         )}
       </m.div>
 
 
 
-      {/* Barre de synthèse horizontale */}
-      <m.div variants={fadeInUp} className="mt-2 flex flex-wrap justify-between items-end gap-4 shrink-0 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+      {/* Barre de synthèse horizontale — repliée : fine barre pour gagner de la place */}
+      <m.div variants={fadeInUp} className={cn(
+        "mt-2 flex shrink-0 bg-white rounded-xl border border-slate-200 shadow-sm",
+        showRecap ? "flex-wrap justify-between items-end gap-4 p-3" : "items-center px-3 py-1"
+      )}>
         {!showRecap ? (
           <button
             type="button"

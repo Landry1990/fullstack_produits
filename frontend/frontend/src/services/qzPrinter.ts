@@ -335,3 +335,19 @@ export async function printTestTicket(pharmacyName?: string): Promise<boolean> {
     esc.cut(true);
   return printEscpos(commands);
 }
+
+/** Imprime une étiquette de test (TSPL) sur l'imprimante étiquettes configurée. */
+export async function printTestLabel(): Promise<boolean> {
+  const printer = getSavedLabelPrinterName();
+  if (!printer) {
+    logger.warn('Test étiquette annulé : aucune imprimante étiquettes configurée.');
+    return false;
+  }
+  const { buildLabelsTspl } = await import('../utils/escpos/labelTspl');
+  return printEscpos(buildLabelsTspl([{
+    name: 'TEST IMPRESSION',
+    barcode: '0123456789',
+    barcodeType: 'CODE128',
+    count: 1,
+  }], '40x20'), printer);
+}

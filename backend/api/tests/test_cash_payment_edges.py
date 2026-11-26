@@ -6,7 +6,7 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from api.models import Caisse, CouponMonnaie, Facture, PosteCaisse
+from api.models import Caisse, CouponMonnaie, Facture, PosteCaisse, PosteVente
 from api.services.payment_service import PaymentService
 from api.services.sale_finalizer import SaleFinalizer
 
@@ -339,3 +339,65 @@ class CashClosurePostIsolationTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
         self.assertEqual(Decimal(str(response.data['cloture']['total_ventes'])), Decimal('700.00'))
         self.assertEqual(Decimal(str(response.data['cloture']['montant_theorique'])), Decimal('700.00'))
+
+
+class RecapSessionMobileSalesTests(APITestCase):
+    """Le ruban « Récap caisse » doit compter les ventes envoyées à la caisse
+    depuis un poste sans caisse (app mobile-facturation, web centralisé) —
+    critère facture.poste_caisse comme la clôture, pas seulement poste_vente."""
+
+    def setUp(self):
+        self.caissiere = TestDataFactory.create_superuser()
+        self.vendeur_pda = TestDataFactory.create_user(username='pda-vendeur')
+        self.caisse = PosteCaisse.objects.create(nom='Caisse principale')
+        self.poste_caisse = PosteVente.objects.create(
+            nom='Poste caisse', caisse=self.caisse, vendeur=self.caissiere,
+            est_actif=True, date_ouverture=timezone.now() - timedelta(hours=1),
+        )
+        self.poste_pda = PosteVente.objects.create(
+            nom='PDA vendeur', vendeur=self.vendeur_pda, est_actif=True,
+            date_ouverture=timezone.now() - timedelta(hours=1),
+        )
+        self.client.force_authenticate(self.caissiere)
+
+    def _encaisser(self, facture, montant):
+        return Caisse.objects.create(
+            facture=facture, mode_paiement='especes', montant=montant,
+            statut='completee', user=self.caissiere)
+
+    def test_vente_mobile_comptee_dans_le_recap(self):
+        # Vente prise sur PDA : poste_vente = poste vendeur, poste_caisse =
+        # caisse qui encaissera — le ruban de cette caisse doit la compter.
+        facture_mobile = TestDataFactory.create_facture(status=Facture.Status.VALIDEE)
+        Facture.objects.filter(pk=facture_mobile.pk).update(
+            poste_vente=self.poste_pda, poste_caisse=self.caisse)
+        self._encaisser(facture_mobile, Decimal('3750'))
+
+        # Vente directe à la caisse : les deux doivent figurer.
+        facture_directe = TestDataFactory.create_facture(status=Facture.Status.VALIDEE)
+        Facture.objects.filter(pk=facture_directe.pk).update(
+            poste_vente=self.poste_caisse, poste_caisse=self.caisse)
+        self._encaisser(facture_directe, Decimal('2000'))
+
+        response = self.client.get('/api/postes-ventes/recap_session/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.assertTrue(response.data['has_session'])
+        self.assertEqual(Decimal(str(response.data['total_encaisse'])), Decimal('5750'))
+        self.assertEqual(response.data['nb_transactions'], 2)
+        self.assertEqual(Decimal(str(response.data['details_par_mode']['especes'])), Decimal('5750'))
+
+    def test_vente_mobile_pas_comptee_chez_le_vendeur(self):
+        # Attribution unique : la vente routée vers la caisse ne doit PAS
+        # apparaître dans le ruban du poste vendeur (sinon double comptage
+        # entre les deux récaps).
+        facture_mobile = TestDataFactory.create_facture(status=Facture.Status.VALIDEE)
+        Facture.objects.filter(pk=facture_mobile.pk).update(
+            poste_vente=self.poste_pda, poste_caisse=self.caisse)
+        self._encaisser(facture_mobile, Decimal('3750'))
+
+        self.client.force_authenticate(self.vendeur_pda)
+        response = self.client.get('/api/postes-ventes/recap_session/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.assertTrue(response.data['has_session'])
+        self.assertEqual(Decimal(str(response.data['total_encaisse'])), Decimal('0'))
+        self.assertEqual(response.data['nb_transactions'], 0)

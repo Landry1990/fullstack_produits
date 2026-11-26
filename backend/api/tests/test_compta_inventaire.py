@@ -8,7 +8,8 @@ from rest_framework.test import APIRequestFactory, force_authenticate
 
 from api.models import (
     CompteComptable, CreanceDouteuse, DepreciationStock,
-    EcritureComptable, Employe, ExerciceComptable, PaieMois, Regularisation,
+    EcritureComptable, Employe, ExerciceComptable, Facture, PaieMois,
+    Regularisation,
 )
 from api.services.compta_inventaire import (
     cloturer_exercice, comptabiliser_paie, creer_depreciation_stock,
@@ -248,6 +249,20 @@ class PaieTests(BaseCompta):
 
 
 class VirementTresorerieTests(BaseCompta):
+    def test_virement_idempotent(self):
+        """Un retry avec la même Idempotency-Key ne duplique pas l'OD."""
+        from rest_framework.test import APIClient
+        api_client = APIClient()
+        api_client.force_authenticate(self.admin)
+        payload = {'sens': 'caisse_banque', 'montant': '10000',
+                   'date': f'{YEAR}-06-15', 'libelle': ''}
+        kwargs = {'format': 'json', 'HTTP_IDEMPOTENCY_KEY': 'cle-virement-test-1'}
+        url = '/api/compta/ecritures/virement-tresorerie/'
+        self.assertEqual(api_client.post(url, payload, **kwargs).status_code, 201)
+        self.assertIn(api_client.post(url, payload, **kwargs).status_code, (200, 201))
+        self.assertEqual(
+            EcritureComptable.objects.filter(reference__startswith='VIR-TRESO').count(), 1)
+
     def test_virement_caisse_banque(self):
         ecriture = virement_tresorerie(
             sens='caisse_banque', montant='250000',
@@ -262,3 +277,54 @@ class VirementTresorerieTests(BaseCompta):
                 virement_tresorerie(
                     sens='caisse_banque', montant=montant,
                     date_=date(YEAR, 6, 15))
+
+
+class NumeroPieceTests(BaseCompta):
+    def test_sequence_verrouillee_incremente(self):
+        """Le compteur DocumentCounter produit des numéros uniques et séquentiels."""
+        e1 = self.od([('571100', 100, 0), ('701100', 0, 100)], 'S1')
+        e2 = self.od([('571100', 100, 0), ('701100', 0, 100)], 'S2')
+        self.assertNotEqual(e1.numero_piece, e2.numero_piece)
+        self.assertRegex(e1.numero_piece, r'^EX\d+-OD-\d{5}$')
+        seq1 = int(e1.numero_piece.rsplit('-', 1)[1])
+        seq2 = int(e2.numero_piece.rsplit('-', 1)[1])
+        self.assertEqual(seq2, seq1 + 1)
+
+    def test_compteur_amorce_sur_existant(self):
+        """Un compteur nouvellement créé repart du max déjà émis (pas de
+        collision avec les numéros générés par l'ancien Max+1)."""
+        from api.models import DocumentCounter
+        e1 = self.od([('571100', 100, 0), ('701100', 0, 100)], 'S3')
+        prefix = e1.numero_piece.rsplit('-', 1)[0]
+        counter = DocumentCounter.objects.get(name=prefix)
+        # Le compteur connaît la dernière valeur émise
+        self.assertEqual(counter.value, int(e1.numero_piece.rsplit('-', 1)[1]))
+
+
+class AutoCreditTests(BaseCompta):
+    def test_pas_de_double_auto_credit(self):
+        """Deux encaissements successifs sur la même facture ne génèrent
+        qu'une seule créance AUTO-CREDIT."""
+        from api.models import Caisse
+        from api.services.payment_service import PaymentService
+        client = TestDataFactory.create_client()
+        facture = TestDataFactory.create_facture(
+            client=client, status='VAL')
+        # update() direct : Facture.save() recalculerait total_ttc depuis les
+        # lignes (0 ici) — on fige les montants utiles au scénario.
+        Facture.objects.filter(pk=facture.pk).update(
+            total_ttc=Decimal('100000'), part_client=Decimal('60000'))
+
+        p1 = Caisse.objects.create(
+            facture=facture, mode_paiement='especes', montant=Decimal('60000'),
+            statut='completee', user=self.admin)
+        PaymentService.process_payment(p1, is_created=True)
+        p2 = Caisse.objects.create(
+            facture=facture, mode_paiement='especes', montant=Decimal('10000'),
+            statut='completee', user=self.admin)
+        PaymentService.process_payment(p2, is_created=True)
+
+        autos = Caisse.objects.filter(
+            facture=facture, mode_paiement='en_compte', statut='completee')
+        self.assertEqual(autos.count(), 1)
+        self.assertEqual(autos.first().montant, Decimal('40000'))

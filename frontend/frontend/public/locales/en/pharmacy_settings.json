@@ -132,6 +132,7 @@
     "hints": {
         "ticket_copies": "Applies to automatic and manual receipt printing, without duplicating change vouchers or A4 invoices.",
         "label_printer": "Use Detect, then select the dedicated printer in TSPL label mode (Hoin HL80B/HLB480B). This setting is local to this workstation; browser printing is used if unavailable.",
+        "label_printer_test_disabled": "Select a label printer first to send a TSPL test.",
         "auto_print_ticket": "In centralized checkout, starts printing when the preview opens. Silent with QZ Tray; otherwise the usual print dialog opens.",
         "pharmacy_name": "The official name as it will appear on invoices and receipts.",
         "pharmacy_name_from_licence": "The pharmacy name is defined by the activation licence. To change it, contact your system administrator.",
@@ -239,7 +240,8 @@
         "caisse_toggle_error": "Error changing cash register state",
         "qz_not_found": "QZ Tray could not be found or could not connect. Make sure it is installed and running, then try again.",
         "qz_printers_found": "{{count}} printer(s) detected.",
-        "print_test_sent": "Test ticket sent to the QZ Tray printer."
+        "print_test_sent": "Test ticket sent to the QZ Tray printer.",
+        "label_print_test_sent": "Test label sent to the QZ Tray printer."
     },
     "postes_vente": {
         "title": "Sales points",

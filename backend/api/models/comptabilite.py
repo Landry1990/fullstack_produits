@@ -129,37 +129,51 @@ class EcritureComptable(models.Model):
         if exercice.est_cloture:
             raise ValidationError(f"L'exercice {exercice.nom} est cloturé. Aucune écriture n'est possible.")
         
-        # Génération du numéro de pièce (foliotage OHADA)
-        if not self.numero_piece:
-            self.numero_piece = self._generer_numero_piece()
-        
-        super().save(*args, **kwargs)
+        # Génération du numéro de pièce (foliotage OHADA) : compteur + insert
+        # dans la même transaction — hors transaction appelante, un échec de
+        # l'insert ne laisserait sinon un trou dans la séquence.
+        from django.db import transaction
+        with transaction.atomic():
+            if not self.numero_piece:
+                self.numero_piece = self._generer_numero_piece()
+
+            super().save(*args, **kwargs)
     
     def _generer_numero_piece(self):
-        """Génère un numéro de pièce unique selon le format OHADA: EX{année}-{journal}-{séquence}"""
+        """Génère un numéro de pièce unique selon le format OHADA: EX{année}-{journal}-{séquence}
+
+        La séquence vit dans DocumentCounter (ligne verrouillée en
+        select_for_update) : deux écritures concurrentes du même journal ne
+        peuvent pas tirer le même numéro — l'ancien Max()+1 finissait en
+        IntegrityError sous charge."""
         from django.db.models import IntegerField, Max
         from django.db.models.functions import Cast, Substr
-        
+        from .billing import DocumentCounter
+
         exercice_nom = self.exercice.nom.replace(' ', '').replace('.', '')[:6]  # EX2026
         journal_code = self.journal.code  # VT, AC, CA, BQ...
-        prefix = f"{exercice_nom}-{journal_code}-"
-        
-        # Utiliser une annotation pour extraire la partie numérique et trouver le max
-        # Format: EX2026-CA-00015 -> extraire 00015 -> 15
-        max_seq = EcritureComptable.objects.filter(
-            exercice=self.exercice,
-            journal=self.journal,
-            numero_piece__startswith=prefix
-        ).annotate(
-            seq_str=Substr('numero_piece', len(prefix) + 1, 10)  # Extraire après le dernier -
-        ).aggregate(
-            max_seq=Max(Cast('seq_str', output_field=IntegerField()))
-        )['max_seq']
-        
-        next_seq = (max_seq or 0) + 1
-        
-        sequence = str(next_seq).zfill(5)  # 00001, 00002...
-        return f"{prefix}{sequence}"
+        prefix = f"{exercice_nom}-{journal_code}"
+
+        def max_seq_existant():
+            # Amorce du compteur : max déjà émis pour ce préfixe.
+            # Format: EX2026-CA-00015 -> extraire 00015 -> 15
+            return EcritureComptable.objects.filter(
+                exercice=self.exercice,
+                journal=self.journal,
+                numero_piece__startswith=f"{prefix}-"
+            ).annotate(
+                seq_str=Substr('numero_piece', len(prefix) + 2, 10)
+            ).aggregate(
+                max_seq=Max(Cast('seq_str', output_field=IntegerField()))
+            )['max_seq'] or 0
+
+        from django.db import transaction
+        with transaction.atomic():
+            counter, _ = DocumentCounter.objects.select_for_update().get_or_create(
+                name=prefix, defaults={'value': max_seq_existant()})
+            counter.value += 1
+            counter.save(update_fields=['value'])
+        return f"{prefix}-{counter.value:05d}"
     
     def clean(self):
         super().clean()

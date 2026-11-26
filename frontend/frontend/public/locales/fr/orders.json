@@ -278,6 +278,10 @@
             "hide": "Masquer la synthèse",
             "show": "Afficher la synthèse"
         },
+        "info": {
+            "hide": "Masquer les informations",
+            "show": "Afficher les informations"
+        },
         "correct_lot_expiry": "Corriger lot / date péremption",
         "line_actions": "Actions sur la ligne",
         "edit_received_qty": "Corriger la quantité reçue",

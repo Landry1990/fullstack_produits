@@ -20,6 +20,7 @@ export default {
   app: {
     session_title: 'Session',
     server_down: 'Server unreachable — session kept, data will reload on next access',
+    auto_logout: 'Session expired after 30 minutes of inactivity — sign in again',
   },
   login: {
     title: 'Sign in',

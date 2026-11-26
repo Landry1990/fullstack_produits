@@ -27,6 +27,9 @@ import i18n from './src/i18n';
 
 const Stack = createNativeStackNavigator();
 
+// Déconnexion automatique après 30 min d'inactivité.
+const AUTO_LOGOUT_MS = 30 * 60 * 1000;
+
 export default function App() {
   const { isAuthenticated } = useAuthStore();
   const locked = useLockStore((s) => s.locked);
@@ -130,9 +133,27 @@ export default function App() {
     }
   }, [isAuthenticated, hydrateDraft]);
 
+  // Déconnexion automatique : après 30 min d'inactivité (app en
+  // arrière-plan OU sans toucher l'écran), la session se coupe → retour
+  // à l'écran de login. Le poste de vente est libéré par logout().
+  const lastActivity = useRef(Date.now());
+  const noteActivity = useCallback(() => { lastActivity.current = Date.now(); }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (useAuthStore.getState().isAuthenticated
+          && Date.now() - lastActivity.current >= AUTO_LOGOUT_MS) {
+        noteActivity();
+        void useAuthStore.getState().logout();
+      }
+    }, 60_000);
+    return () => clearInterval(timer);
+  }, [noteActivity]);
+
   // Verrouillage PIN au retour de veille : 'background'/'inactive'
   // mémorise l'heure de sortie ; au retour 'active', si le délai est
   // dépassé → écran de verrouillage (délai 0 = verrouillage immédiat).
+  // Au-delà de 30 min d'absence → déconnexion complète, pas de simple verrou.
   const bgAt = useRef<number | null>(null);
   useEffect(() => {
     if (Platform.OS === 'web') return;
@@ -143,14 +164,18 @@ export default function App() {
         const { pinSet, delaySec, loaded } = useLockStore.getState();
         const elapsed = Date.now() - bgAt.current;
         bgAt.current = null;
-        if (loaded && pinSet && elapsed >= delaySec * 1000
-            && useAuthStore.getState().isAuthenticated) {
+        noteActivity();
+        if (!useAuthStore.getState().isAuthenticated) return;
+        if (elapsed >= AUTO_LOGOUT_MS) {
+          void useAuthStore.getState().logout();
+          Alert.alert(i18n.t('app.session_title'), i18n.t('app.auto_logout'));
+        } else if (loaded && pinSet && elapsed >= delaySec * 1000) {
           useLockStore.getState().lock();
         }
       }
     });
     return () => sub.remove();
-  }, []);
+  }, [noteActivity]);
 
   if (restoring) {
     return (
@@ -162,7 +187,7 @@ export default function App() {
   }
 
   return (
-    <View style={styles.root}>
+    <View style={styles.root} onTouchStart={noteActivity}>
       <NavigationContainer>
         <StatusBar style="dark" />
         <Stack.Navigator screenOptions={{ headerShown: false }}>

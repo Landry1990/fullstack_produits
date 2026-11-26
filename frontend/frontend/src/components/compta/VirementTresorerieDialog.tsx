@@ -1,10 +1,11 @@
-import { useState, type FormEvent } from 'react';
+import { useRef, useState, type FormEvent } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import { ArrowLeftRight, X } from 'lucide-react';
 import { gooeyToast } from 'goey-toast';
 import api from '../../services/api';
+import { generateUUID } from '../../utils/uuid';
 import { Button } from '../shadcn/button';
 import { Input } from '../shadcn/input';
 import { Select } from '../shadcn/select';
@@ -22,10 +23,17 @@ export default function VirementTresorerieDialog({ open, onClose }: Props) {
     const [date, setDate] = useState(() => format(new Date(), 'yyyy-MM-dd'));
     const [libelle, setLibelle] = useState('');
     const [error, setError] = useState('');
+    // Une clé par contenu soumis : un retry/double-clic renvoie la même
+    // Idempotency-Key (pas de doublon d'OD), mais un virement réellement
+    // différent (montant/date modifiés) repart avec une nouvelle clé.
+    const idempotencyKey = useRef('');
+    const lastSignature = useRef('');
 
     const mutation = useMutation({
         mutationFn: async () => (await api.post('compta/ecritures/virement-tresorerie/', {
             sens, montant, date, libelle,
+        }, {
+            headers: { 'Idempotency-Key': idempotencyKey.current },
         })).data,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['accounting'] });
@@ -48,6 +56,11 @@ export default function VirementTresorerieDialog({ open, onClose }: Props) {
         if (!montant || Number(montant) <= 0 || !date) {
             setError(t('regs.required'));
             return;
+        }
+        const signature = `${sens}|${montant}|${date}|${libelle}`;
+        if (signature !== lastSignature.current) {
+            lastSignature.current = signature;
+            idempotencyKey.current = generateUUID();
         }
         mutation.mutate();
     };

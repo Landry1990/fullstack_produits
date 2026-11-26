@@ -17,6 +17,7 @@ import { PERMISSIONS_META, ROLES, type ManagedUser } from './usersMeta';
 import { MENU_HIERARCHY_FALLBACK } from './menuHierarchyFallback';
 import UserListItem from './UserListItem';
 import UserFormDialog from './UserFormDialog';
+import UserBadgeDialog from './UserBadgeDialog';
 import { PageContainer } from '../ui/PageContainer';
 
 export default function GestionUtilisateurs() {
@@ -30,6 +31,7 @@ export default function GestionUtilisateurs() {
   const [modalOpen, setModalOpen] = useState(false);
   const [groupesOpen, setGroupesOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<ManagedUser | null>(null);
+  const [badgeUser, setBadgeUser] = useState<ManagedUser | null>(null);
   const { user: currentUser, login } = useAuth();
   const form = useUserForm(MENU_HIERARCHY, menuData?.adminOnlyKeys);
   const { formData } = form;
@@ -230,6 +232,7 @@ export default function GestionUtilisateurs() {
             menuLabel={getMenuLabel}
             onEdit={handleOpenModal}
             onDeactivate={handleDeactivateUser}
+            onPrintBadge={setBadgeUser}
           />
         ))}
       </div>
@@ -252,6 +255,11 @@ export default function GestionUtilisateurs() {
         onConfirm={handlePasswordConfirmed}
         title={passwordModalConfig.title}
         message={passwordModalConfig.message}
+      />
+      <UserBadgeDialog
+        isOpen={badgeUser !== null}
+        onClose={() => setBadgeUser(null)}
+        user={badgeUser}
       />
     </PageContainer>
   );
