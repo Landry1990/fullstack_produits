@@ -887,18 +887,43 @@ ${labelsHTML}
       // Collapse only consecutive identical labels to preserve order and native copies.
       const items: LabelTsplItem[] = []
       const fieldsByKey = new Map(fields.map(f => [f.key, f]))
+      const enabled = (key: string) => fieldsByKey.get(key)?.enabled ?? false
       for (const label of labelsData) {
+        // Même layout que l'aperçu : pharmacie en tête, méta à gauche,
+        // prix en gros à droite — construit dans labelTspl.ts.
+        const meta: string[] = []
+        const rowRayonLot = [
+          enabled('rayon') && label.rayon ? `${t('prefixes.rayon')}:${label.rayon}` : '',
+          enabled('lot') && label.lot ? `${t('prefixes.lot')}:${label.lot}` : '',
+        ].filter(Boolean).join(' ')
+        if (rowRayonLot) meta.push(rowRayonLot)
+        if (enabled('dateEntree') && label.dateEntree) meta.push(label.dateEntree)
+        if (enabled('dateExpiration') && label.dateExpiration) meta.push(`${t('prefixes.expiration')}:${label.dateExpiration}`)
+        if (enabled('fournisseur') && label.fournisseur) meta.push(label.fournisseur)
+        const rowCmdFac = [
+          enabled('orderNumber') && label.orderNumber ? `${t('prefixes.order')}:${label.orderNumber}` : '',
+          enabled('invoiceNumber') && label.invoiceNumber ? `${t('prefixes.invoice')}:${label.invoiceNumber}` : '',
+        ].filter(Boolean).join(' ')
+        if (rowCmdFac) meta.push(rowCmdFac)
+
         const item: LabelTsplItem = {
-          name: label.productName,
-          barcode: label.barcode,
+          name: enabled('productName') ? label.productName : '',
+          barcode: enabled('barcode') ? label.barcode : '',
           barcodeType,
-          price: fieldsByKey.get('sellingPrice')?.enabled
-            ? `${label.sellingPrice.toLocaleString(i18n.language.startsWith('en') ? 'en-GB' : 'fr-FR', { maximumFractionDigits: 0 }).replace(/[\u00a0\u202f]/g, ' ')} ${t('common:currency_symbol', { defaultValue: 'F' })}`
+          header: enabled('pharmacyName') && label.pharmacyName ? label.pharmacyName : undefined,
+          meta: meta.length ? meta : undefined,
+          price: enabled('sellingPrice')
+            ? `${label.sellingPrice.toLocaleString(i18n.language.startsWith('en') ? 'en-GB' : 'fr-FR', { maximumFractionDigits: 0 }).replace(/[\u00a0\u202f]/g, ' ')} ${t('common:currency_symbol', { defaultValue: 'F' }).replace('FCFA', 'F')}`
             : undefined,
           count: 1,
         }
         const previous = items[items.length - 1]
-        if (previous && previous.name === item.name && previous.barcode === item.barcode && previous.price === item.price) {
+        if (previous
+          && previous.name === item.name
+          && previous.barcode === item.barcode
+          && previous.price === item.price
+          && previous.header === item.header
+          && JSON.stringify(previous.meta) === JSON.stringify(item.meta)) {
           previous.count++
         } else {
           items.push(item)

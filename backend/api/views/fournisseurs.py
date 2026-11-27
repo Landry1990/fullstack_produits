@@ -195,7 +195,32 @@ class FournisseurViewSet(viewsets.ModelViewSet):
                 continue
         
         result.sort(key=lambda x: x['produit_nom'].lower())
-        
+
+        # Pagination optionnelle (?page=&page_size=) : sans paramètre, la liste
+        # complète est renvoyée comme avant (compat descendante).
+        page_param = request.query_params.get('page')
+        size_param = request.query_params.get('page_size')
+        if page_param is not None or size_param is not None:
+            try:
+                page = max(int(page_param or 1), 1)
+                page_size = min(max(int(size_param or 50), 1), 200)
+            except (TypeError, ValueError):
+                return Response(
+                    {'detail': 'Paramètres de pagination invalides.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            total = len(result)
+            start = (page - 1) * page_size
+            return Response({
+                'fournisseur_id': fournisseur.id,
+                'fournisseur_nom': fournisseur.name,
+                'total_produits': total,
+                'produits': result[start:start + page_size],
+                'page': page,
+                'page_size': page_size,
+                'has_more': start + page_size < total,
+            })
+
         return Response({
             'fournisseur_id': fournisseur.id,
             'fournisseur_nom': fournisseur.name,

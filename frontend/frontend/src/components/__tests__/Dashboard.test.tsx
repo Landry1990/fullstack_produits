@@ -311,7 +311,7 @@ describe('Dashboard Component', () => {
         renderWithProviders(<Dashboard />);
         
         // Le Dashboard PHARMACIEN affiche le CA (150 000) dans les KPI cards
-        expect(screen.getAllByText(/150\s?000/).length).toBeGreaterThan(0);
+        expect(screen.getAllByText(/150[\s.]?000/).length).toBeGreaterThan(0);
         // Vérifie que le nombre de produits en stock s'affiche
         expect(screen.getByText(/342 produit\(s\)/)).toBeInTheDocument();
     });

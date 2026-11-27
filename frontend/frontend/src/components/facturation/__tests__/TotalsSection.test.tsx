@@ -37,7 +37,7 @@ describe('TotalsSection', () => {
     render(<TotalsSection {...defaultProps} totalHT={5000} tvaAmount={0} totalTTC={5000} />)
     
     // Vérifier HT et TTC (apparaissent 2 fois)
-    const amounts = screen.getAllByText((content) => content.includes('5 000') && content.includes('F'))
+    const amounts = screen.getAllByText((content) => content.includes('5.000') && content.includes('F'))
     expect(amounts.length).toBeGreaterThanOrEqual(2)
     
     expect(screen.getByText('Total TTC')).toBeInTheDocument()
@@ -61,14 +61,14 @@ describe('TotalsSection', () => {
     // Vérifier badges
     expect(screen.getByText('70%')).toBeInTheDocument()
     expect(screen.getByText('Assurance')).toBeInTheDocument()
-    expect(screen.getByText((content) => content.includes('7 000') && content.includes('F'))).toBeInTheDocument() // Part Assurance
+    expect(screen.getByText((content) => content.includes('7.000') && content.includes('F'))).toBeInTheDocument() // Part Assurance
 
     // Vérifier Part Patient qui remplace le gros Total TTC
     expect(screen.getByText(/Part Patient/i)).toBeInTheDocument()
-    expect(screen.getByText((content) => content.includes('3 000') && content.includes('F'))).toBeInTheDocument()
+    expect(screen.getByText((content) => content.includes('3.000') && content.includes('F'))).toBeInTheDocument()
 
     // Vérifier affichage discret du Total TTC global
-    expect(screen.getByText((content) => content.includes('Total TTC: 10 000') && content.includes('F'))).toBeInTheDocument()
+    expect(screen.getByText((content) => content.includes('Total TTC') && content.includes('10.000') && content.includes('F'))).toBeInTheDocument()
   })
 
 })

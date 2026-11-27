@@ -44,9 +44,9 @@ describe('JournalCaisse Component', () => {
     
     await waitFor(() => {
         // "50 000" (total_theorique)
-        expect(screen.getAllByText(/50\s?000/).length).toBeGreaterThan(0);
+        expect(screen.getAllByText(/50[\s.]?000/).length).toBeGreaterThan(0);
         // "45 000" (total_ventes)
-        expect(screen.getAllByText(/45\s?000/).length).toBeGreaterThan(0);
+        expect(screen.getAllByText(/45[\s.]?000/).length).toBeGreaterThan(0);
     });
   });
 

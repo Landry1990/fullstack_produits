@@ -20,6 +20,9 @@ export default function FournisseurDetails({ hook }: Props) {
     selectedFournisseur,
     showCatalogue,
     catalogueLoading,
+    catalogueLoadingMore,
+    catalogueHasMore,
+    catalogueTotal,
     catalogueSearch,
     catalogue
   } = state;
@@ -161,7 +164,7 @@ export default function FournisseurDetails({ hook }: Props) {
                 <div>
                   <h3 className="text-sm font-semibold text-slate-800">{t('providers:details.product_catalogue')}</h3>
                   <p className="text-label text-slate-500">
-                    {catalogueLoading ? t('providers:details.loading') : t('providers:details.products_ordered_plural', { count: catalogue.length })}
+                    {catalogueLoading ? t('providers:details.loading') : t('providers:details.products_ordered_plural', { count: catalogueTotal })}
                   </p>
                 </div>
               </div>
@@ -282,6 +285,24 @@ export default function FournisseurDetails({ hook }: Props) {
                         ))}
                       </tbody>
                     </table>
+                  </div>
+                )}
+
+                {!catalogueLoading && catalogueHasMore && (
+                  <div className="mt-3 flex flex-col items-center gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={actions.loadMoreCatalogue}
+                      disabled={catalogueLoadingMore}
+                    >
+                      {catalogueLoadingMore
+                        ? t('providers:details.loading')
+                        : t('providers:catalogue.load_more')}
+                    </Button>
+                    <p className="text-xs text-slate-400">
+                      {t('providers:catalogue.loaded_count', { loaded: catalogue.length, total: catalogueTotal })}
+                    </p>
                   </div>
                 )}
               </div>

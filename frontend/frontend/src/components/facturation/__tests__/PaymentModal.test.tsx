@@ -69,7 +69,7 @@ describe('PaymentModal', () => {
   it('affiche le total à payer pour une nouvelle vente', () => {
     renderWithContext(<PaymentModal {...defaultProps} />)
     // Le montant 5000 doit être affiché quelque part dans le modal
-    const amounts = screen.getAllByText(/5\s?000/)
+    const amounts = screen.getAllByText(/5[\s.]?000/)
     expect(amounts.length).toBeGreaterThan(0)
   })
 
@@ -100,8 +100,8 @@ describe('PaymentModal', () => {
         totals: { ...defaultProps.totals, tauxCouverture: 70, partPatient: 1500, partAssurance: 3500 }
     }
     renderWithContext(<PaymentModal {...props} />)
-    expect(screen.getAllByText(/1\s?500\s?F/)[0]).toBeInTheDocument()
-    expect(screen.getAllByText(/3\s?500\s?F/)[0]).toBeInTheDocument()
+    expect(screen.getAllByText(/1[\s.]?500\s?F/)[0]).toBeInTheDocument()
+    expect(screen.getAllByText(/3[\s.]?500\s?F/)[0]).toBeInTheDocument()
   })
 
   it('appelle onCompleteSale à la soumission pour une nouvelle vente', async () => {
@@ -132,7 +132,7 @@ describe('PaymentModal', () => {
   it('affiche le paiement dans la liste des paiements', () => {
     const paiementsMock = [{ mode: 'especes', montant: 5000 }]
     renderWithContext(<PaymentModal {...defaultProps} paiements={paiementsMock} />)
-    const amounts = screen.getAllByText(/5\s?000\s?F/)
+    const amounts = screen.getAllByText(/5[\s.]?000\s?F/)
     expect(amounts.length).toBeGreaterThan(0)
   })
 

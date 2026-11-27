@@ -2,6 +2,71 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-11-27 — CI : vitest réparé, ruff pinné
+
+- La CI GitHub était rouge depuis sa création (runs #89→#148) — 3 jobs
+  en échec : `Backend Lint (ruff)`, `Backend Tests (migrate)`,
+  `Frontend Tests (vitest)`.
+- **Vitest corrigé (14 tests, 8 fichiers)** : les assertions attendaient
+  l'ancien format montant « 10 000 F » alors que `formatters.ts` impose
+  désormais le point comme séparateur fr (« 10.000 F ») ; regex/chaînes
+  mises à jour (TotalsSection, CartTable, PaymentModal, Dashboard,
+  JournalCaisse, StockAnalysis). `validation.test.ts` attendait les
+  chaînes FR en dur alors que `validation.ts` retourne des clés i18n →
+  assertions sur les clés. `creanceService.test.ts` complété des params
+  `page`/`page_size` envoyés par `getAll`.
+- **Ruff pinné** : `pip install ruff` → `ruff==0.17.6` dans `ci.yml`
+  (les nouvelles règles type FURB157 ne casseront plus la CI au fil
+  des releases). Le job reste rouge : ~827 violations préexistantes
+  (~700 auto-fixables via `ruff check --fix`) — à traiter en dédié.
+- `manage.py migrate` échoue en CI mais passe en local sur BDD vierge
+  (308 migrations OK) — cause non déterminée (logs GH protégés).
+- Fichier local `facture_mixins/__init__.py` retrouvé corrompu (NUL
+  bytes, même taille → git ne le voyait pas modifié) : restauré depuis
+  HEAD ; jamais poussé.
+
+## 2026-11-27 — Étiquettes TSPL : layout aligné sur l'aperçu
+
+- `LabelTsplItem` ne portait que nom + code-barres + prix → l'impression
+  thermique (QZ Tray) sortait une étiquette vide de tout le reste : pharmacie,
+  rayon/lot, dates, EXP, fournisseur, commande/facture — alors que l'aperçu
+  et le fallback navigateur les affichaient.
+- `labelTspl.ts` : nouveau layout (203 dpi, coordonnées en dots) — pharmacie
+  centrée en tête, nom produit, code-barres avec CIP lisible, colonne méta à
+  gauche (≤5 lignes en 40×20, ≤3 en 30×15), prix à droite. Troncatures
+  adaptées à la largeur réelle de l'étiquette.
+- Calage validé sur Hoin physique (rouleau 40×20) : code-barres centré par
+  estimation de largeur CODE128, CIP imprimé en TEXT sous les barres (le
+  texte natif `human_readable` se décalait), prix suffixe « F » en ×2
+  (≤10 car., sinon ×1 sans troncature).
+- Nom produit : 3 paliers de taille selon la longueur (fonte 1 ×2 ≤19 car.
+  → fonte 2 ≤25 → fonte 1 ≤38) ; au-delà le nom passe sur **2 lignes**
+  (coupure au dernier espace, ~76 car. lisibles) plutôt que troncature —
+  le code-barres est alors raccourci de 12 dots pour préserver la zone méta.
+  Lisibilité scanner inchangée : dimension X (2 dots/module) et quiet zones
+  préservés, la hauteur ne sert qu'à la tolérance d'angle laser.
+- Lignes méta (lot, EXP, fournisseur…) en faux-gras : double impression
+  décalée d'1 dot — plus lisible que la fonte 1 seule, sans prendre la
+  largeur de la fonte 2.
+- `SimplePrintLabelsModal` : `header` + `meta` construits depuis les champs
+  cochés, dans l'ordre de l'aperçu (R:/L:, date entrée, EXP:, fournisseur,
+  C:/F:). La fusion de copies identiques compare désormais header+meta aussi.
+- `printTestLabel()` enrichi : l'étiquette de test exerce le nouveau layout.
+- `tsc --noEmit` + ESLint OK ; itérations validées par tirages réels.
+
+## 2026-11-26 — Fournisseurs : catalogue paginé (charge progressive)
+
+- `GET fournisseurs/{id}/catalogue/` accepte `?page=&page_size=` (≤200) :
+  réponse enrichie de `page`, `page_size`, `has_more`, `total_produits` =
+  total réel. Sans paramètre → liste complète comme avant (compat).
+- `useFournisseurs` : pages de 50 accumulées dans `catalogue` via
+  `loadMoreCatalogue` (bouton « Charger plus » + compteur « X sur Y » dans
+  `FournisseurDetails`) ; la recherche filtre les pages déjà chargées
+  (approche hybride demandée). Annulation requête conservée par provider.
+- i18n fr/en : `providers:catalogue.load_more`, `loaded_count`.
+- Vérifié : fournisseur à 303 produits → page 1 de 5 items, `has_more=true`,
+  mode non paginé inchangé ; `tsc --noEmit` + ESLint OK.
+
 ## 2026-11-26 — Utilisateurs : badge d'accès imprimé (QR ou code-barres)
 
 - `UserBadgeDialog` + bouton « Badge » par utilisateur (`UserListItem`) :

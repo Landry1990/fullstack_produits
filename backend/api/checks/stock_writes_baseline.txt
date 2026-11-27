@@ -38,8 +38,8 @@ views/commandes/promis.py:160
 views/commandes/promis.py:162
 views/commandes/promis.py:194
 views/commandes/promis.py:202
-views/import_views.py:235
-views/import_views.py:249
+views/import_views.py:238
+views/import_views.py:254
 views/produit_actions/stock.py:350
 views/produit_actions/stock.py:352
 views/produit_actions/stock.py:373

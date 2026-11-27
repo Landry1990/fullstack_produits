@@ -348,6 +348,9 @@ export async function printTestLabel(): Promise<boolean> {
     name: 'TEST IMPRESSION',
     barcode: '0123456789',
     barcodeType: 'CODE128',
+    header: 'TEST PHARM',
+    meta: ['L:TEST-001', 'EXP:01/29'],
+    price: '0 F',
     count: 1,
   }], '40x20'), printer);
 }

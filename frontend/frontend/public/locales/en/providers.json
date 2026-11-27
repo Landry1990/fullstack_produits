@@ -84,6 +84,8 @@
         "no_result": "No product found in catalogue",
         "empty": "Catalogue is empty for this provider",
         "open_product": "Open the {{name}} product sheet",
+        "load_more": "Load more",
+        "loaded_count": "{{loaded}} of {{total}} product(s) shown",
         "headers": {
             "cip": "CIP",
             "product": "Product",

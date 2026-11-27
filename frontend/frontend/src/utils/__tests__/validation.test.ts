@@ -21,19 +21,19 @@ describe('validation utilities', () => {
         it('should require a client', () => {
             const params = { ...baseParams, selectedClient: null, useManualClient: false };
             const error = validateSaleData(params as SaleCompletionParams);
-            expect(error).toBe('Veuillez sélectionner un client');
+            expect(error).toBe('messages.select_client');
         });
 
         it('should require products', () => {
             const params = { ...baseParams, lignesFacture: [] };
             const error = validateSaleData(params as SaleCompletionParams);
-            expect(error).toBe('Veuillez ajouter au moins un produit');
+            expect(error).toBe('messages.add_product');
         });
 
         it('should validate insufficient amount', () => {
             const params = { ...baseParams, montantPaye: '500' };
             const error = validateSaleData(params as SaleCompletionParams);
-            expect(error).toContain('insuffisant');
+            expect(error).toContain('insufficient_amount');
         });
     });
 
@@ -57,7 +57,7 @@ describe('validation utilities', () => {
 
         it('should detect credit limit exceeded', () => {
             const error = validateClientCreditLimit(params as SaleCompletionParams, clientPro);
-            expect(error).toContain('CRÉDIT DÉPASSÉ');
+            expect(error).toContain('credit_limit_exceeded_title');
         });
 
         it('should allow if payment covers the increment', () => {

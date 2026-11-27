@@ -28,7 +28,12 @@ export interface CatalogueResponse {
   fournisseur_nom: string;
   total_produits: number;
   produits: CatalogueItem[];
+  page?: number;
+  page_size?: number;
+  has_more?: boolean;
 }
+
+const CATALOGUE_PAGE_SIZE = 50;
 
 export const emptyForm: Omit<Fournisseur, 'id'> = {
   name: '',
@@ -72,6 +77,10 @@ export function useFournisseurs() {
   // Catalogue state
   const [catalogue, setCatalogue] = useState<CatalogueItem[]>([]);
   const [catalogueLoading, setCatalogueLoading] = useState<boolean>(false);
+  const [catalogueLoadingMore, setCatalogueLoadingMore] = useState<boolean>(false);
+  const [cataloguePage, setCataloguePage] = useState<number>(1);
+  const [catalogueHasMore, setCatalogueHasMore] = useState<boolean>(false);
+  const [catalogueTotal, setCatalogueTotal] = useState<number>(0);
   const [catalogueSearch, setCatalogueSearch] = useState<string>('');
   const [showCatalogue, setShowCatalogue] = useState<boolean>(true);
   const [showInactive, setShowInactive] = useState<boolean>(false);
@@ -117,26 +126,48 @@ export function useFournisseurs() {
 
   const catalogueControllerRef = useRef<AbortController | null>(null);
 
-  const fetchCatalogue = useCallback(async (fournisseurId: number) => {
+  const fetchCatalogue = useCallback(async (fournisseurId: number, page = 1) => {
     catalogueControllerRef.current?.abort();
     const controller = new AbortController();
     catalogueControllerRef.current = controller;
 
-    setCatalogueLoading(true);
+    if (page === 1) {
+      setCatalogueLoading(true);
+    } else {
+      setCatalogueLoadingMore(true);
+    }
     try {
       const response = await api.get<CatalogueResponse>(
         `fournisseurs/${fournisseurId}/catalogue/`,
-        { signal: controller.signal }
+        {
+          params: { page, page_size: CATALOGUE_PAGE_SIZE },
+          signal: controller.signal,
+        }
       );
-      setCatalogue(response.data.produits || []);
+      const items = response.data.produits || [];
+      setCatalogue(prev => (page === 1 ? items : [...prev, ...items]));
+      setCataloguePage(page);
+      setCatalogueTotal(response.data.total_produits ?? items.length);
+      // Compat : si le backend ignore la pagination, tout est déjà là.
+      setCatalogueHasMore(response.data.has_more ?? false);
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') return;
       logger.error('Erreur lors du chargement du catalogue:', err);
-      setCatalogue([]);
+      if (page === 1) {
+        setCatalogue([]);
+        setCatalogueTotal(0);
+        setCatalogueHasMore(false);
+      }
     } finally {
       setCatalogueLoading(false);
+      setCatalogueLoadingMore(false);
     }
   }, []);
+
+  const loadMoreCatalogue = useCallback(() => {
+    if (!selectedFournisseur || catalogueLoadingMore || !catalogueHasMore) return;
+    void fetchCatalogue(selectedFournisseur.id as number, cataloguePage + 1);
+  }, [selectedFournisseur, catalogueLoadingMore, catalogueHasMore, cataloguePage, fetchCatalogue]);
 
   useEffect(() => {
     if (selectedFournisseur) {
@@ -488,6 +519,9 @@ export function useFournisseurs() {
       searchInputRef,
       catalogue,
       catalogueLoading,
+      catalogueLoadingMore,
+      catalogueHasMore,
+      catalogueTotal,
       catalogueSearch, setCatalogueSearch,
       showCatalogue, setShowCatalogue,
       showInactive, setShowInactive,
@@ -506,6 +540,7 @@ export function useFournisseurs() {
       openEditModal, closeEditModal, handleEditFournisseur,
       handleBulkDelete, toggleSelectAll, toggleSelect,
       handleDeleteFournisseur, handleToggleActive,
+      loadMoreCatalogue,
       closeSudo,
     }
   };

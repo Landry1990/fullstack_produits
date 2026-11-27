@@ -23,7 +23,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install ruff
+      - run: pip install ruff==0.17.6
       - run: ruff check .
       # Bloque toute NOUVELLE écriture directe de Produit.stock /
       # StockLot.quantity_* hors api/services/ (baseline dans api/checks/).

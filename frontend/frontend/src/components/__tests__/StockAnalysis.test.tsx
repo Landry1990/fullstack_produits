@@ -131,7 +131,7 @@ describe('StockAnalysis', () => {
     it('calcule correctement la valeur totale du stock dans les stats', async () => {
         const { container } = renderWithContext(<StockAnalysis />);
         await waitFor(() => {
-            expect(container.textContent).toMatch(/1[,\s\u00a0]?400/);
+            expect(container.textContent).toMatch(/1[,.\s\u00a0]?400/);
         });
     });
 

@@ -208,7 +208,7 @@ describe('creanceService - Bulk Payment with Partial Amount', () => {
 
             const result = await creanceService.getAll(filters)
 
-            expect(api.get).toHaveBeenCalledWith('creances/', { params: filters })
+            expect(api.get).toHaveBeenCalledWith('creances/', { params: { ...filters, page: 1, page_size: 1000 } })
             expect(result).toHaveLength(2)
             expect(result[0].numero_facture).toBe('FAC-001')
         })

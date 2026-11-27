@@ -84,6 +84,8 @@
         "no_result": "Aucun produit trouvé dans le catalogue",
         "empty": "Le catalogue de ce fournisseur est vide",
         "open_product": "Ouvrir la fiche de {{name}}",
+        "load_more": "Charger plus",
+        "loaded_count": "{{loaded}} produit(s) affiché(s) sur {{total}}",
         "headers": {
             "cip": "CIP",
             "product": "Produit",

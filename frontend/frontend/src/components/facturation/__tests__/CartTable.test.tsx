@@ -90,7 +90,7 @@ describe('CartTable', () => {
   it('affiche les produits dans le tableau', () => {
     renderWithContext(<CartTable {...defaultProps} lignesFacture={[mockLigneFacture]} />)
     expect(screen.getByText('Doliprane 1000mg')).toBeInTheDocument()
-    expect(screen.getByText(/1\s?500\s?F/)).toBeInTheDocument()
+    expect(screen.getByText(/1[\s.]?500\s?F/)).toBeInTheDocument()
   })
 
   it('appelle updateQuantite lors du changement de quantité', () => {
