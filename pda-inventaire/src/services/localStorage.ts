@@ -1,7 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { LigneInventaire, Inventaire } from './inventaire';
+import { LigneInventaire, Inventaire, InventaireScope } from './inventaire';
 
 const STORAGE_KEY = 'pda_offline_lignes';
+const SCOPES_KEY = 'pda_inventaire_scopes';
 
 export interface OfflineLigne {
     tempId: string;
@@ -81,9 +82,21 @@ class LocalStorageService {
      * Marquer une ligne comme synchronisée
      */
     async markAsSynced(tempId: string): Promise<void> {
+        await this.markAllAsSynced([tempId]);
+    }
+
+    /**
+     * Marquer plusieurs lignes synchronisées en UNE écriture.
+     * (Promise.all de markAsSynced causait une race : chaque appel relisait
+     * le snapshot initial → seule la dernière écriture survivait → les
+     * lignes restaient "non synchronisées" et étaient reproposées.)
+     */
+    async markAllAsSynced(tempIds: string[]): Promise<void> {
+        if (tempIds.length === 0) return;
+        const ids = new Set(tempIds);
         const lignes = await this.getOfflineLignes();
         const updated = lignes.map(l =>
-            l.tempId === tempId ? { ...l, synced: true } : l
+            ids.has(l.tempId) ? { ...l, synced: true } : l
         );
         await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
     }
@@ -152,6 +165,35 @@ class LocalStorageService {
      */
     async clearAll(): Promise<void> {
         await AsyncStorage.removeItem(STORAGE_KEY);
+    }
+
+    // --- Périmètres d'inventaire (rayon/forme/groupe) ---
+
+    private async getScopes(): Promise<Record<string, InventaireScope>> {
+        try {
+            const data = await AsyncStorage.getItem(SCOPES_KEY);
+            return data ? JSON.parse(data) : {};
+        } catch {
+            return {};
+        }
+    }
+
+    /** Mémorise le périmètre choisi à la création d'un inventaire filtré. */
+    async saveScope(inventaireId: number, scope: InventaireScope): Promise<void> {
+        const scopes = await this.getScopes();
+        scopes[String(inventaireId)] = scope;
+        await AsyncStorage.setItem(SCOPES_KEY, JSON.stringify(scopes));
+    }
+
+    async getScope(inventaireId: number): Promise<InventaireScope | null> {
+        const scopes = await this.getScopes();
+        return scopes[String(inventaireId)] ?? null;
+    }
+
+    async removeScope(inventaireId: number): Promise<void> {
+        const scopes = await this.getScopes();
+        delete scopes[String(inventaireId)];
+        await AsyncStorage.setItem(SCOPES_KEY, JSON.stringify(scopes));
     }
 }
 

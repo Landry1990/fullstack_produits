@@ -15,7 +15,6 @@ from django.http import HttpResponse
 
 import openpyxl
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
-from openpyxl.utils import get_column_letter
 
 DOC_TYPES = ('balance', 'resultat', 'bilan', 'tva', 'ecritures', 'grand_livre',
              'fec', 'liasse', 'ebe')
@@ -245,20 +244,23 @@ def _build_excel(name, title, period, headers, rows, total_row, wrap=False):
                 cell.number_format = '#,##0.00'
                 cell.alignment = Alignment(horizontal='right')
 
-    for i, h in enumerate(headers, start=1):
-        width = max(len(str(h)),
-                    max((len(str(r[i - 1])) for r in rows[:200]), default=0)) + 2
-        ws.column_dimensions[get_column_letter(i)].width = min(max(width, 10), 55)
-
     if wrap:
         ws.merge_cells(start_row=ws.max_row, start_column=2, end_row=ws.max_row, end_column=4)
         ws.cell(row=ws.max_row, column=2).alignment = Alignment(wrap_text=True, vertical='top')
         ws.row_dimensions[ws.max_row].height = 90
-        ws.column_dimensions['D'].width = 24
         for row in ws.iter_rows(min_row=6, max_row=ws.max_row - 1, min_col=4, max_col=4):
             row[0].number_format = '#,##0.00'
             row[0].alignment = Alignment(horizontal='right')
 
+    from api.utils.excel import fit_excel_columns
+
+    for sheet in wb.worksheets:
+        fit_excel_columns(sheet, min_row=5)
+        if wrap:
+            # La note fusionnée (B:D) est exclue de la mesure : garantir
+            # assez de largeur cumulée pour son texte (hauteur fixe 90 px).
+            d = sheet.column_dimensions['D']
+            d.width = max(d.width or 0, 24)
     response = HttpResponse(
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     wb.save(response)
@@ -320,9 +322,11 @@ def _build_liasse_excel(name, title, period, data):
         for cell in ws[ws.max_row]:
             cell.font = Font(bold=True)
             cell.border = Border(top=Side(style='double'))
-        for i, w in enumerate((8, 55, 16), start=1):
-            ws.column_dimensions[get_column_letter(i)].width = w
 
+    from api.utils.excel import fit_excel_columns
+
+    for sheet in wb.worksheets:
+        fit_excel_columns(sheet, min_row=5)
     response = HttpResponse(
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     wb.save(response)

@@ -13,7 +13,6 @@ from django.db.models.functions import Coalesce
 from django.http import HttpResponse
 from django.utils import timezone
 from openpyxl.styles import Font
-from openpyxl.utils import get_column_letter
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -68,21 +67,11 @@ def _write_pharma_header(ws, PharmacySettings, title: str, lang: str | None = No
     ws.append([])
 
 
-def _apply_auto_width(ws, min_w=10, max_w=30) -> None:
+def _apply_auto_width(ws, min_row=8) -> None:
     """Ajuste la largeur des colonnes en ignorant les cellules fusionnées et l'en-tête."""
-    merged_ranges = set()
-    for mr in ws.merged_cells.ranges:
-        for row in range(mr.min_row, mr.max_row + 1):
-            for col in range(mr.min_col, mr.max_col + 1):
-                merged_ranges.add((row, col))
-    for col in ws.columns:
-        length = 0
-        for cell in col:
-            if (cell.row, cell.column) in merged_ranges:
-                continue
-            val = str(cell.value or "")
-            length = max(length, len(val))
-        ws.column_dimensions[get_column_letter(col[0].column)].width = min(max_w, max(min_w, length + 2))
+    from api.utils.excel import fit_excel_columns
+
+    fit_excel_columns(ws, min_row=min_row)
 
 
 def _parse_day_range(request):
@@ -825,7 +814,7 @@ class RapportFinanceMixin:
         for cell in ws[ws.max_row]:
             cell.font = Font(bold=True)
 
-        _apply_auto_width(ws)
+        _apply_auto_width(ws, min_row=10)
 
         # ── Feuille 2 : Détail des opérations (journal complet) ──
         ws2 = wb.create_sheet("Détail des opérations")
@@ -1006,7 +995,7 @@ class RapportFinanceMixin:
         for cell in ws2[ws2.max_row]:
             cell.font = Font(bold=True)
 
-        _apply_auto_width(ws2)
+        _apply_auto_width(ws2, min_row=10)
 
         filename = f"Livre_Caisse_{db_str}_{df_str}.xlsx"
         response = HttpResponse(

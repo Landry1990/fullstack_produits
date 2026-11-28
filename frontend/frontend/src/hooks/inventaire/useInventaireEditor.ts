@@ -3,7 +3,7 @@ import api from '../../services/api';
 import { gooeyToast } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
 import type { Inventaire, LigneInventaire, InventoryStats } from '../../types';
-import { getProduitId } from '../../types/inventory';
+import { getProduitId, isPurgeableZeroEcart } from '../../types/inventory';
 import { logger } from '../../utils/logger'
 
 interface FocusInfo {
@@ -397,6 +397,41 @@ export const useInventaireEditor = (
         }
     };
 
+    /**
+     * Suppression groupée : DELETE distant pour les lignes persistées
+     * (endpoint bulk-delete), puis retrait local + nettoyage des flags
+     * de sélection/saisie en cours.
+     */
+    const deleteLinesByIds = async (idsToDelete: number[]) => {
+        const currentLignes = autoSaveInvRef.current.lignes;
+        const remoteIds = idsToDelete.filter(id => {
+            const line = currentLignes.find(l => l.id === id);
+            return line && !line.isLocalOnly;
+        });
+
+        // 1. Suppression distante groupée
+        if (remoteIds.length > 0 && activeInventaire) {
+            await api.post(`inventaires/${activeInventaire.id}/lignes/bulk-delete/`, {
+                ids: remoteIds
+            });
+        }
+
+        // 2. Mise à jour locale
+        const idsSet = new Set(idsToDelete);
+        setLignes(prev => prev.filter(l => !idsSet.has(l.id)));
+        setSelectedLines(prev => {
+            const next = new Set(prev);
+            idsSet.forEach(id => next.delete(id));
+            return next;
+        });
+        idsSet.forEach(id => pendingChangesRef.current.delete(id));
+        setDirtyLineIds(prev => {
+            const next = new Set(prev);
+            idsSet.forEach(id => next.delete(id));
+            return next;
+        });
+    };
+
     const handleBulkDelete = async () => {
         if (selectedLines.size === 0) return;
 
@@ -411,26 +446,36 @@ export const useInventaireEditor = (
         try {
             setSaving(true);
             const idsToDelete = Array.from(selectedLines);
-
-            const remoteIds = idsToDelete.filter(id => {
-                const line = lignes.find(l => l.id === id);
-                return line && !line.isLocalOnly;
-            });
-
-            // 1. Suppression distante groupée
-            if (remoteIds.length > 0 && activeInventaire) {
-                await api.post(`inventaires/${activeInventaire.id}/lignes/bulk-delete/`, {
-                    ids: remoteIds
-                });
-            }
-
-            // 2. Mise à jour locale
-            setLignes(prev => prev.filter(l => !selectedLines.has(l.id)));
-            setSelectedLines(new Set());
+            await deleteLinesByIds(idsToDelete);
             gooeyToast.success(t('inventaire.detail.bulk_delete_success', { count: idsToDelete.length }));
 
         } catch (err) {
             logger.error("Erreur suppression bulk", err);
+            gooeyToast.error(t('inventaire.detail.save_error'));
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleDeleteZeroEcart = async () => {
+        const zeroEcartIds = lignes.filter(isPurgeableZeroEcart).map(l => l.id);
+        if (zeroEcartIds.length === 0) return;
+
+        const confirmed = await confirm({
+            title: t('inventaire.detail.delete_zero_ecart_title'),
+            message: t('inventaire.detail.delete_zero_ecart_message', { count: zeroEcartIds.length }),
+            variant: 'danger',
+            confirmText: t('inventaire.detail.delete_zero_ecart_confirm')
+        });
+        if (!confirmed) return;
+
+        try {
+            setSaving(true);
+            await deleteLinesByIds(zeroEcartIds);
+            gooeyToast.success(t('inventaire.detail.delete_zero_ecart_success', { count: zeroEcartIds.length }));
+
+        } catch (err) {
+            logger.error("Erreur suppression écarts nuls", err);
             gooeyToast.error(t('inventaire.detail.save_error'));
         } finally {
             setSaving(false);
@@ -619,7 +664,7 @@ export const useInventaireEditor = (
         handleCreate, handleEdit, handleCreateWithOptions,
         handleSaveHeader, handleImportCSV,
         handleUpdateQuantity, handleDeleteLine,
-        toggleSelectLine, toggleSelectAll, handleBulkDelete,
+        toggleSelectLine, toggleSelectAll, handleBulkDelete, handleDeleteZeroEcart,
         handleOpenValidateModal,
         inventoryStats, fetchInventoryStats,
         flushPendingChanges, syncLocalOnlyLines, cancelPendingSyncs

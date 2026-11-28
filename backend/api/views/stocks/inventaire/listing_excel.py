@@ -11,7 +11,6 @@ from django.http import HttpResponse
 try:
     from openpyxl import Workbook
     from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
-    from openpyxl.utils import get_column_letter
     HAS_OPENPYXL = True
 except ImportError:
     HAS_OPENPYXL = False
@@ -139,35 +138,36 @@ def generate_listing_excel(
     font_data = Font(name='Calibri', size=9)
     font_subtotal = Font(name='Calibri', bold=True, size=9)
 
-    # Colonnes : définition selon listing_type
+    # Colonnes : définition selon listing_type.
+    # Largeurs : mesurées à la fin par fit_excel_columns (données + en-têtes).
     if listing_type == 'inventaire':
         columns = [
-            ('CIP', 14),
-            (T(lang, 'col_designation'), 38),
-            (T(lang, 'col_lot'), 14),
-            (T(lang, 'lx_col_exp_lot'), 12),
-            (T(lang, 'lx_col_stock_theo'), 12),
-            (T(lang, 'lx_col_qte_comptee'), 12),
-            (T(lang, 'lx_col_ecart'), 10),
-            ('PMP', 12),
-            (T(lang, 'lx_col_val_ecart'), 14),
+            'CIP',
+            T(lang, 'col_designation'),
+            T(lang, 'col_lot'),
+            T(lang, 'lx_col_exp_lot'),
+            T(lang, 'lx_col_stock_theo'),
+            T(lang, 'lx_col_qte_comptee'),
+            T(lang, 'lx_col_ecart'),
+            'PMP',
+            T(lang, 'lx_col_val_ecart'),
         ]
     elif listing_type == 'blind':
         # Afficher la colonne (forme ou rayon) qui n'est PAS le critère de regroupement
         # car le regroupement est déjà dans l'en-tête de section
         if group_by == 'rayon':
-            secondary_col = (T(lang, 'col_forme'), 16)
+            secondary_col = T(lang, 'col_forme')
         elif group_by == 'forme':
-            secondary_col = (T(lang, 'col_rayon'), 14)
+            secondary_col = T(lang, 'col_rayon')
         else:
-            secondary_col = (T(lang, 'col_rayon'), 14)
+            secondary_col = T(lang, 'col_rayon')
         columns = [
-            ('ID', 8),
-            (T(lang, 'col_designation'), 38),
+            'ID',
+            T(lang, 'col_designation'),
             secondary_col,
-            (T(lang, 'col_lot'), 14),
-            (T(lang, 'lx_col_exp_lot'), 12),
-            (T(lang, 'lx_col_qte_comptee'), 14),
+            T(lang, 'col_lot'),
+            T(lang, 'lx_col_exp_lot'),
+            T(lang, 'lx_col_qte_comptee'),
         ]
     else:
         # Colonnes de stock selon l'emplacement choisi :
@@ -175,31 +175,27 @@ def generate_listing_excel(
         # - 'rayon'   : uniquement Stock Rayon (quantity_remaining)
         # - 'tous'    : les deux colonnes
         if stock_location == 'reserve':
-            stock_cols = [(T(lang, 'lx_col_stock_res'), 12)]
+            stock_cols = [T(lang, 'lx_col_stock_res')]
         elif stock_location == 'rayon':
-            stock_cols = [(T(lang, 'lx_col_stock_rayon'), 12)]
+            stock_cols = [T(lang, 'lx_col_stock_rayon')]
         else:
-            stock_cols = [(T(lang, 'lx_col_stock_rayon'), 10), (T(lang, 'lx_col_stock_res'), 10)]
+            stock_cols = [T(lang, 'lx_col_stock_rayon'), T(lang, 'lx_col_stock_res')]
 
         columns = [
-            ('ID', 8),
-            ('CIP', 14),
-            (T(lang, 'col_designation'), 38),
-            (T(lang, 'col_forme'), 16),
-            (T(lang, 'col_rayon'), 14),
-            (T(lang, 'col_lot'), 14),
-            (T(lang, 'lx_col_exp_lot'), 12),
+            'ID',
+            'CIP',
+            T(lang, 'col_designation'),
+            T(lang, 'col_forme'),
+            T(lang, 'col_rayon'),
+            T(lang, 'col_lot'),
+            T(lang, 'lx_col_exp_lot'),
             *stock_cols,
-            ('PMP', 12),
-            (T(lang, 'lx_col_val_stock'), 14),
-            (T(lang, 'col_prix_vente'), 12),
+            'PMP',
+            T(lang, 'lx_col_val_stock'),
+            T(lang, 'col_prix_vente'),
         ]
 
     nb_cols = len(columns)
-
-    # Appliquer largeurs
-    for i, (_, width) in enumerate(columns, start=1):
-        ws.column_dimensions[get_column_letter(i)].width = width
 
     # ------------------------------------------------------------------
     # 4. Bloc en-tête pharmacie
@@ -255,7 +251,7 @@ def generate_listing_excel(
     # 5. En-tête du tableau
     # ------------------------------------------------------------------
     header_row = row
-    for col_idx, (col_name, _) in enumerate(columns, start=1):
+    for col_idx, col_name in enumerate(columns, start=1):
         cell = ws.cell(row=header_row, column=col_idx, value=col_name)
         cell.font = font_header
         cell.fill = _header_fill('2E75B6')
@@ -483,7 +479,10 @@ def generate_listing_excel(
     # ------------------------------------------------------------------
     # 9. Réponse HTTP
     # ------------------------------------------------------------------
+    from api.utils.excel import fit_excel_columns
+
     output = io.BytesIO()
+    fit_excel_columns(ws, min_row=header_row)
     wb.save(output)
     output.seek(0)
 

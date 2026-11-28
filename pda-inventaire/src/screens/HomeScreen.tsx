@@ -18,7 +18,7 @@ import { produitService } from '../services/inventaire';
 import { productCacheService } from '../services/productCache';
 import { localStorageService } from '../services/localStorage';
 import { confirmDialog } from '../utils/confirmDialog';
-import type { Inventaire } from '../services/inventaire';
+import type { Inventaire, InventaireScope, ScopeOption } from '../services/inventaire';
 import { useAuthStore } from '../stores/useAuthStore';
 import { theme } from '../config/theme';
 
@@ -26,11 +26,6 @@ interface HomeScreenProps {
   onSelectInventaire: (inventaire: Inventaire) => void;
   onLogout: () => void;
 }
-
-const generateDefaultReference = () => {
-  const now = new Date();
-  return `INV-${now.toLocaleDateString('fr-FR').replace(/\//g, '')}-${now.getHours()}${now.getMinutes()}`;
-};
 
 export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenProps) {
   const insets = useSafeAreaInsets();
@@ -47,13 +42,30 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
   
   // Modal création inventaire
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newReference, setNewReference] = useState('');
+  const [newName, setNewName] = useState('');
   const [creating, setCreating] = useState(false);
+
+  // Périmètre de l'inventaire (Tout / Rayon / Forme) + listes de choix
+  const [scopeKind, setScopeKind] = useState<'TOUT' | 'RAYON' | 'FORME'>('TOUT');
+  const [scopeOptions, setScopeOptions] = useState<ScopeOption[]>([]);
+  const [selectedScopeId, setSelectedScopeId] = useState<number | null>(null);
+  const [loadingScopeOptions, setLoadingScopeOptions] = useState(false);
+  const [scopeMap, setScopeMap] = useState<Record<number, InventaireScope>>({});
 
   const loadData = async () => {
     try {
       const invData = await inventaireService.getInventaires();
-      setInventaires(invData.filter(i => i.status === 'EN_COURS'));
+      const enCours = invData.filter(i => i.status === 'EN_COURS');
+      setInventaires(enCours);
+      // Périmètres stockés localement (créés depuis ce PDA)
+      const entries = await Promise.all(
+        enCours.map(async i => [i.id, await localStorageService.getScope(i.id)] as const)
+      );
+      const map: Record<number, InventaireScope> = {};
+      for (const [id, scope] of entries) {
+        if (scope) map[id] = scope;
+      }
+      setScopeMap(map);
     } catch (error: unknown) {
       const status = (error as { response?: { status?: number } }).response?.status;
       if (status !== 401) {
@@ -134,19 +146,74 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
     );
   };
 
-  // Créer un nouvel inventaire
+  // Charge la liste des options du périmètre choisi (rayons ou formes)
+  const handleScopeKindChange = async (kind: 'TOUT' | 'RAYON' | 'FORME') => {
+    setScopeKind(kind);
+    setSelectedScopeId(null);
+    if (kind === 'TOUT') {
+      setScopeOptions([]);
+      return;
+    }
+    setLoadingScopeOptions(true);
+    try {
+      const options = kind === 'RAYON'
+        ? await inventaireService.getRayons()
+        : await inventaireService.getFormes();
+      setScopeOptions(options);
+    } catch {
+      showAlert(t('common.error'), t('home.scope_options_error'));
+      setScopeKind('TOUT');
+      setScopeOptions([]);
+    } finally {
+      setLoadingScopeOptions(false);
+    }
+  };
+
+  // Créer un nouvel inventaire — la référence INV-YYYYMM-XXXX est générée
+  // par le backend (numérotation harmonisée avec le web) ; le champ saisi
+  // est un libellé libre optionnel stocké en `description`.
   const handleCreateInventaire = async () => {
-    const reference = newReference.trim();
-    if (!reference) {
-      showAlert(t('common.error'), t('home.reference_required'));
+    const selectedOption = scopeKind !== 'TOUT'
+      ? scopeOptions.find(o => o.id === selectedScopeId)
+      : undefined;
+    if (scopeKind !== 'TOUT' && !selectedOption) {
+      showAlert(t('common.error'), t('home.scope_required'));
       return;
     }
 
     setCreating(true);
     try {
-      const newInv = await inventaireService.createInventaire(reference);
+      // Inventaire filtré → on compte le stock rayon (présent physique).
+      const inventoryType = scopeKind === 'TOUT' ? undefined : 'RAYON';
+      const newInv = await inventaireService.createInventaire(newName.trim() || undefined, { inventoryType });
+
+      if (scopeKind !== 'TOUT' && selectedOption) {
+        const scope: InventaireScope = {
+          kind: scopeKind,
+          id: selectedOption.id,
+          name: selectedOption.name,
+        };
+        try {
+          const { count } = await inventaireService.prePopulate(newInv.id, scope);
+          await localStorageService.saveScope(newInv.id, scope);
+          showAlert(
+            t('home.preload_done_title'),
+            t('home.preload_done_msg', { count, name: selectedOption.name })
+          );
+        } catch {
+          // L'inventaire est créé mais vide : pas de périmètre mémorisé
+          // (sinon le PDA enverrait en mode 'replace' et afficherait un
+          // badge trompeur). Le pré-remplissage reste refaisable côté web —
+          // les lignes créées là basculeront le PDA en mode pré-rempli.
+          showAlert(t('common.error'), t('home.preload_error'));
+        }
+      }
+
       setShowCreateModal(false);
-      setNewReference('');
+      setNewName('');
+      setScopeKind('TOUT');
+      setScopeOptions([]);
+      setSelectedScopeId(null);
       // Aller directement au scanner
       onSelectInventaire(newInv);
     } catch (error: unknown) {
@@ -158,9 +225,12 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
     }
   };
 
-  // Générer une référence par défaut
+  // Champ nom vide : le backend génère la référence INV-YYYYMM-XXXX
   const openCreateModal = () => {
-    setNewReference(generateDefaultReference());
+    setNewName('');
+    setScopeKind('TOUT');
+    setScopeOptions([]);
+    setSelectedScopeId(null);
     setShowCreateModal(true);
   };
 
@@ -181,6 +251,7 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
     try {
       await inventaireService.deleteInventaire(item.id);
       await localStorageService.removeLignesByInventaire(item.id);
+      await localStorageService.removeScope(item.id);
       setInventaires(prev => prev.filter(i => i.id !== item.id));
     } catch (error) {
       console.error('Erreur suppression inventaire:', error);
@@ -209,6 +280,15 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
         </View>
         {item.description?.trim() && item.description.trim() !== title && (
           <Text style={styles.cardDescription} numberOfLines={1}>{item.description.trim()}</Text>
+        )}
+        {scopeMap[item.id] && (
+          <View style={styles.scopeBadge}>
+            <Text style={styles.scopeBadgeText} numberOfLines={1}>
+              {scopeMap[item.id].kind === 'RAYON'
+                ? t('home.scope_badge_rayon', { name: scopeMap[item.id].name })
+                : t('home.scope_badge_forme', { name: scopeMap[item.id].name })}
+            </Text>
+          </View>
         )}
         <View style={styles.cardMetrics}>
           <View>
@@ -345,12 +425,59 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
             
             <TextInput
               style={styles.modalInput}
-              value={newReference}
-              onChangeText={setNewReference}
+              value={newName}
+              onChangeText={setNewName}
               placeholder={t('home.reference_placeholder')}
               placeholderTextColor={theme.textMuted}
               autoFocus
             />
+
+            {/* Périmètre : tout le stock, un rayon ou une forme */}
+            <Text style={styles.scopeLabel}>{t('home.scope_label')}</Text>
+            <View style={styles.scopeRow}>
+              {(['TOUT', 'RAYON', 'FORME'] as const).map(kind => (
+                <TouchableOpacity
+                  key={kind}
+                  style={[styles.scopeChip, scopeKind === kind && styles.scopeChipActive]}
+                  onPress={() => handleScopeKindChange(kind)}
+                >
+                  <Text style={[styles.scopeChipText, scopeKind === kind && styles.scopeChipTextActive]}>
+                    {kind === 'TOUT' ? t('home.scope_all') : kind === 'RAYON' ? t('home.scope_rayon') : t('home.scope_forme')}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {scopeKind !== 'TOUT' && (
+              <View style={styles.scopeListWrap}>
+                {loadingScopeOptions ? (
+                  <ActivityIndicator color={theme.primary} style={{ marginVertical: 16 }} />
+                ) : (
+                  <FlatList
+                    style={styles.scopeList}
+                    data={scopeOptions}
+                    keyExtractor={o => String(o.id)}
+                    keyboardShouldPersistTaps="handled"
+                    renderItem={({ item: opt }) => (
+                      <TouchableOpacity
+                        style={[styles.scopeOption, selectedScopeId === opt.id && styles.scopeOptionActive]}
+                        onPress={() => setSelectedScopeId(opt.id)}
+                      >
+                        <Text
+                          style={[styles.scopeOptionText, selectedScopeId === opt.id && styles.scopeOptionTextActive]}
+                          numberOfLines={1}
+                        >
+                          {opt.name}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                    ListEmptyComponent={
+                      <Text style={styles.scopeEmpty}>{t('home.scope_empty')}</Text>
+                    }
+                  />
+                )}
+              </View>
+            )}
 
             <View style={styles.modalActions}>
               <TouchableOpacity
@@ -570,6 +697,84 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderWidth: 1,
     borderColor: theme.border,
+  },
+  scopeLabel: {
+    color: theme.textMuted,
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  scopeRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+  },
+  scopeChip: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: theme.bgMuted,
+    borderWidth: 1,
+    borderColor: theme.border,
+    alignItems: 'center',
+  },
+  scopeChipActive: {
+    backgroundColor: theme.primaryLight,
+    borderColor: theme.primary,
+  },
+  scopeChipText: {
+    color: theme.textMuted,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  scopeChipTextActive: {
+    color: theme.primaryDark,
+  },
+  scopeListWrap: {
+    marginBottom: 12,
+  },
+  scopeList: {
+    maxHeight: 180,
+    borderWidth: 1,
+    borderColor: theme.border,
+    borderRadius: 10,
+    backgroundColor: theme.bgMuted,
+  },
+  scopeOption: {
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.border,
+  },
+  scopeOptionActive: {
+    backgroundColor: theme.primaryLight,
+  },
+  scopeOptionText: {
+    color: theme.text,
+    fontSize: 14,
+  },
+  scopeOptionTextActive: {
+    color: theme.primaryDark,
+    fontWeight: '700',
+  },
+  scopeEmpty: {
+    color: theme.textMuted,
+    fontSize: 13,
+    textAlign: 'center',
+    padding: 16,
+  },
+  scopeBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(5, 150, 105, 0.08)',
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    marginBottom: 6,
+  },
+  scopeBadgeText: {
+    color: theme.primaryDark,
+    fontSize: 11,
+    fontWeight: '700',
   },
   modalActions: {
     flexDirection: 'row',

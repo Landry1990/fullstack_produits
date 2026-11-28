@@ -871,6 +871,9 @@ class PurgeViewSet(ViewSet):
                 p.stock or 0,
             ])
 
+        from api.utils.excel import fit_excel_columns
+
+        fit_excel_columns(ws)
         buf = BytesIO()
         wb.save(buf)
         buf.seek(0)

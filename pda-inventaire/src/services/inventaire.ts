@@ -47,6 +47,7 @@ export interface LigneInventaire {
     produit: number;
     produit_nom?: string;
     produit_cip?: string;
+    produit_rayon?: string;
     stock_theorique?: number;
     quantite_physique: number;
     ecart?: number;
@@ -54,6 +55,21 @@ export interface LigneInventaire {
     lot_numero?: string;
     lot_expiration?: string | null;
     scanned_at?: string;
+    /** false = ligne pré-remplie jamais comptée (inventaire par rayon/forme) */
+    is_counted?: boolean;
+}
+
+/** Périmètre d'un inventaire filtré (pré-rempli côté serveur). */
+export type ScopeKind = 'RAYON' | 'FORME';
+export interface InventaireScope {
+    kind: ScopeKind;
+    id: number;
+    name: string;
+}
+
+export interface ScopeOption {
+    id: number;
+    name: string;
 }
 
 export interface CreateLigneInventaire {
@@ -81,11 +97,49 @@ class InventaireService {
     }
 
     /**
-     * Créer un nouvel inventaire
+     * Créer un nouvel inventaire.
+     * `reference` n'est JAMAIS envoyée : le backend génère INV-YYYYMM-XXXX
+     * (même numérotation que le web). `description` = libellé libre optionnel.
      */
-    async createInventaire(reference: string): Promise<Inventaire> {
-        const response = await api.post<Inventaire>('/inventaires/', { reference });
+    async createInventaire(
+        description?: string,
+        opts?: { inventoryType?: Inventaire['inventory_type'] }
+    ): Promise<Inventaire> {
+        const payload: Record<string, unknown> = {};
+        if (description?.trim()) payload.description = description.trim();
+        if (opts?.inventoryType) payload.inventory_type = opts.inventoryType;
+        const response = await api.post<Inventaire>('/inventaires/', payload);
         return response.data;
+    }
+
+    /**
+     * Pré-remplit l'inventaire avec les produits d'un périmètre
+     * (rayon / forme / groupe) — lignes créées avec is_counted=false.
+     */
+    async prePopulate(inventaireId: number, scope: InventaireScope): Promise<{ count: number }> {
+        const payload: Record<string, number> = {};
+        if (scope.kind === 'RAYON') payload.rayon_id = scope.id;
+        else payload.forme_id = scope.id;
+        const response = await api.post<{ count: number }>(
+            `/inventaires/${inventaireId}/pre_populate/`, payload
+        );
+        return response.data;
+    }
+
+    /** Liste des rayons pour le picker de périmètre (nom affiché = name). */
+    async getRayons(): Promise<ScopeOption[]> {
+        const response = await api.get<PaginatedResponse<{ id: number; name: string }>>(
+            '/rayons/?page_size=1000'
+        );
+        return (response.data.results || []).map(r => ({ id: r.id, name: r.name }));
+    }
+
+    /** Liste des formes galéniques pour le picker de périmètre (champ `nom`). */
+    async getFormes(): Promise<ScopeOption[]> {
+        const response = await api.get<PaginatedResponse<{ id: number; nom: string }>>(
+            '/formes/?page_size=1000'
+        );
+        return (response.data.results || []).map(f => ({ id: f.id, name: f.nom }));
     }
 
     /**

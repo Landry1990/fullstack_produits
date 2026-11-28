@@ -4,7 +4,7 @@ import { LockBanner } from '../../common/LockBanner';
 import { useTranslation } from 'react-i18next';
 import { 
     ChevronLeft, Plus, FileText, CheckCircle2, History, 
-    Download, Upload, Send, MoreHorizontal
+    Download, Upload, Send, MoreHorizontal, FileSpreadsheet
 } from 'lucide-react';
 import api from '../../../services/api';
 import { gooeyToast } from 'goey-toast';
@@ -14,6 +14,8 @@ import { useInventaireEditor } from '../../../hooks/inventaire/useInventaireEdit
 import { usePermissions } from '../../../hooks/usePermissions';
 import { useProductSearch } from '../../../hooks/inventaire/useProductSearch';
 import { useInventairePDF } from '../../../hooks/inventaire/useInventairePDF';
+import { usePharmacySettings } from '../../../hooks/usePharmacySettings';
+import { exportToExcel } from '../../../utils/excelExport';
 import { LocalizedDateInput } from '../../LocalizedDateInput';
 
 import { InventaireProductSearch } from './InventaireProductSearch';
@@ -35,6 +37,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
 }) => {
     const { t } = useTranslation(['stock', 'common']);
     const { hasPerm } = usePermissions();
+    const { settings } = usePharmacySettings();
     // Validation de l'inventaire (ajustement de stock) : sudo can_adjust_stock.
     const canAdjustStock = hasPerm('can_adjust_stock');
     const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -77,7 +80,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
         selectedLines, toggleSelectAll, toggleSelectLine,
         dirtyLineIds,
         handleSaveHeader,
-        handleUpdateQuantity, handleDeleteLine, handleBulkDelete,
+        handleUpdateQuantity, handleDeleteLine, handleBulkDelete, handleDeleteZeroEcart,
         handleOpenValidateModal, handleImportCSV, importing,
         inventoryStats,
         flushPendingChanges, syncLocalOnlyLines, cancelPendingSyncs
@@ -86,6 +89,31 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
     const { generateEtatPDF, generateEcartsPDF } = useInventairePDF();
     const lock = useDocumentLock('inventaire', activeInventaire?.id);
     const [printing, setPrinting] = useState(false);
+
+    const handleExportExcel = () => {
+        if (!activeInventaire || lignes.length === 0) return;
+        try {
+            const data = lignes.map(ligne => ({
+                [t('inventaire.detail.col_product')]: ligne.produit_nom,
+                [t('inventaire.detail.col_cip')]: ligne.produit_cip ?? '',
+                [t('inventaire.detail.col_lot')]: ligne.lot_numero ?? '',
+                [t('inventaire.detail.col_expiration')]: ligne.lot_expiration ?? '',
+                [t('inventaire.detail.col_rayon')]: ligne.produit_rayon ?? '',
+                [t('inventaire.detail.col_cmp')]: Number(ligne.pmp_snapshot || ligne.produit_pmp || 0),
+                [t('inventaire.detail.col_theo')]: Number(ligne.stock_theorique ?? 0),
+                [t('inventaire.detail.col_phys')]: Number(ligne.quantite_physique ?? 0),
+                [t('inventaire.detail.col_gap')]: Number(ligne.quantite_physique ?? 0) - Number(ligne.stock_theorique ?? 0),
+                [t('inventaire.detail.col_counted')]: dirtyLineIds.has(ligne.id) || ligne.isLocalOnly === true || ligne.is_counted !== false,
+            }));
+            exportToExcel(data, settings, {
+                filename: `Inventaire_${activeInventaire.id}.xlsx`,
+                sheetName: t('inventaire.detail.excel_sheet'),
+                title: t('inventaire.detail.title_edit', { id: activeInventaire.id }),
+            });
+        } catch {
+            gooeyToast.error(t('inventaire.detail.export_error'));
+        }
+    };
 
     const handlePrintEtat = async () => {
         if (!activeInventaire) return;
@@ -244,6 +272,16 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                               <button
                                   type="button"
                                   role="menuitem"
+                                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+                                  onClick={() => { handleExportExcel(); setMenuOpen(false); }}
+                                  disabled={!activeInventaire?.id || lignes.length === 0 || saving || importing}
+                              >
+                                  <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+                                  {t('inventaire.detail.export_excel')}
+                              </button>
+                              <button
+                                  type="button"
+                                  role="menuitem"
                                   className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
                                   onClick={() => { handleSendTelegram(); setMenuOpen(false); }}
                                   disabled={sendingTelegram || !activeInventaire?.id}
@@ -346,6 +384,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                         handleUpdateQuantity={handleUpdateQuantity}
                         handleDeleteLine={handleDeleteLine}
                         handleBulkDelete={handleBulkDelete}
+                        handleDeleteZeroEcart={handleDeleteZeroEcart}
                         onQtyEnter={searchLogic.focusInput}
                     />
                 </div>

@@ -8,7 +8,6 @@ from django_filters import rest_framework as django_filters
 from django_filters.rest_framework import DjangoFilterBackend
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font
-from openpyxl.utils import get_column_letter
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -219,16 +218,9 @@ class StockAdjustmentViewSet(MultiTermSearchMixin, viewsets.ReadOnlyModelViewSet
             sheet.append(row)
 
         # Ajuster largeur colonnes (skip header block rows before the table)
-        dims = {}
-        for row in sheet.rows:
-            for cell in row:
-                if cell.row <= header_row:
-                    continue
-                if cell.value and cell.column is not None:
-                    col_letter = get_column_letter(cell.column)
-                    dims[col_letter] = max((dims.get(col_letter, 0), len(str(cell.value))))
-        for col, value in dims.items():
-            sheet.column_dimensions[col].width = min(30, max(10, value + 2))
+        from api.utils.excel import fit_excel_columns
+
+        fit_excel_columns(sheet, min_row=header_row)
 
         output = io.BytesIO()
         wb.save(output)

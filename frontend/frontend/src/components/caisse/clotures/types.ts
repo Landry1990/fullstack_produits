@@ -41,6 +41,43 @@ export interface ClotureCaisse {
   billetage?: BilletageData | null
 }
 
+export interface ClotureSale {
+  facture_id: number
+  numero: string
+  date_encaissement: string
+  vendeur: string
+  caissier: string
+  montant: string
+  regle: string
+  en_compte: string
+}
+
+export interface ClotureProductLine {
+  ligne_id: number
+  facture_id: number
+  numero: string
+  date_encaissement: string
+  produit: string
+  quantite: number
+  prix_unitaire: string
+  montant: string
+}
+
+export interface ClotureSalesReport {
+  cloture_id: number
+  date_debut: string | null
+  date_fin: string
+  caissier: string
+  poste_caisse: string
+  count: number
+  ventes: ClotureSale[]
+  totaux: Pick<ClotureSale, 'montant' | 'regle' | 'en_compte'>
+  produits?: {
+    lignes: ClotureProductLine[]
+    totaux: { quantite: number; montant: string }
+  }
+}
+
 export interface SessionCaisse {
   id: number
   poste: number

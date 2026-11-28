@@ -16,6 +16,7 @@ import ScanModeToggles from '../components/scanner/ScanModeToggles';
 import ProductCard from '../components/scanner/ProductCard';
 import EditLineModal from '../components/scanner/EditLineModal';
 import RecentScans from '../components/scanner/RecentScans';
+import RestantsSheet from '../components/scanner/RestantsSheet';
 import SyncBanner from '../components/scanner/SyncBanner';
 import { theme } from '../config/theme';
 
@@ -48,12 +49,19 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
     offlineCount,
     syncing,
     syncProgress,
+    preloadProgress,
+    uncountedLignes,
+    restantsOpen,
+    scopeWarning,
+    zeroing,
     setQuantity,
     setScanInput,
     setEditQuantity,
     setLotQuantities,
     setNewLotNumber,
     setNewLotExpiration,
+    setRestantsOpen,
+    sendZeroUncounted,
     handleScanSubmit,
     handleValidate,
     handleCancel,
@@ -80,7 +88,17 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
         keyboardEnabled={isKeyboardEnabled}
         onToggleKeyboard={toggleKeyboard}
         count={lignes.length}
+        progress={preloadProgress}
+        onPressProgress={() => setRestantsOpen(true)}
       />
+
+      {scopeWarning && (
+        <View style={styles.scopeWarningBanner}>
+          <Text style={styles.scopeWarningText}>
+            {t('scanner.out_of_scope', { name: scopeWarning })}
+          </Text>
+        </View>
+      )}
 
       {lastSavedProduct && (
         <View style={styles.savedFeedbackBanner}>
@@ -154,6 +172,15 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
         onEdit={(ligne) => handleEditLine(ligne as Parameters<typeof handleEditLine>[0])}
         onRemove={handleRemoveLine}
       />
+
+      <RestantsSheet
+        visible={restantsOpen}
+        lignes={uncountedLignes}
+        isOnline={isOnline}
+        zeroing={zeroing}
+        onClose={() => setRestantsOpen(false)}
+        onZeroAll={sendZeroUncounted}
+      />
     </View>
   );
 }
@@ -162,6 +189,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.bg,
+  },
+  scopeWarningBanner: {
+    backgroundColor: theme.warningWash,
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.warning,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scopeWarningText: {
+    color: theme.warning,
+    fontWeight: 'bold',
+    fontSize: 13,
   },
   savedFeedbackBanner: {
     backgroundColor: theme.primaryLight,

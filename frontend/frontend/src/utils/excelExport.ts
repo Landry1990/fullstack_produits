@@ -7,6 +7,23 @@ import { getDocumentLanguage } from './documentLang';
 /** Largeur maximale d'une colonne (en caractères). */
 const MAX_COL_WIDTH = 50;
 
+export function fitExcelColumns(ws: XLSX.WorkSheet, startRow = 0): void {
+    if (!ws['!ref']) return;
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    const merges = ws['!merges'] ?? [];
+    const widths = Array.from({ length: range.e.c + 1 }, () => 0);
+    for (let r = Math.max(startRow, range.s.r); r <= range.e.r; r++) {
+        for (let c = range.s.c; c <= range.e.c; c++) {
+            if (merges.some(merge => r >= merge.s.r && r <= merge.e.r && c >= merge.s.c && c <= merge.e.c)) continue;
+            const cell = ws[XLSX.utils.encode_cell({ r, c })] as XLSX.CellObject | undefined;
+            if (!cell) continue;
+            const text = XLSX.utils.format_cell(cell);
+            widths[c] = Math.max(widths[c], ...text.split(/\r?\n/).map(line => line.length));
+        }
+    }
+    ws['!cols'] = widths.map(width => ({ wch: Math.min(width + 2, MAX_COL_WIDTH) }));
+}
+
 interface ExcelExportOptions {
     sheetName?: string;
     filename: string;
@@ -76,16 +93,8 @@ export function exportToExcel(
 
     // Largeur automatique des colonnes (basée sur le contenu des données)
     if (data.length > 0) {
-        const colWidths = Object.keys(data[0]).map(key => {
-            const headerLen = key.length;
-            const maxContentLen = data.reduce((max, row) => {
-                const val = String(row[key] ?? '');
-                return Math.max(max, val.length);
-            }, 0);
-            // +2 de marge (au lieu de +4, trop aéré) et plafond pour les textes très longs.
-            return { wch: Math.min(Math.max(headerLen, maxContentLen) + 2, MAX_COL_WIDTH) };
-        });
-        ws['!cols'] = colWidths;
+        // +2 de marge (au lieu de +4, trop aéré) et plafond pour les textes très longs.
+        fitExcelColumns(ws, dataStartRow);
     }
 
     if (options.printA4Portrait) {

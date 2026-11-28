@@ -264,7 +264,6 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
         import openpyxl
         from django.http import HttpResponse
         from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
-        from openpyxl.utils import get_column_letter
         
         # Récupérer les données filtrées (sans pagination)
         date_debut = request.query_params.get('date_debut')
@@ -366,18 +365,10 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
                 cell.border = border
             row_idx += 1
             
-        # Ajuster largeur colonnes (uniquement sur les données, pas l'en-tête)
-        for col in ws.columns:
-            max_length = 0
-            column = get_column_letter(col[0].column)
-            for cell in col:
-                if cell.row == 1:
-                    continue
-                try:
-                    max_length = max(max_length, len(str(cell.value)))
-                except Exception:
-                    pass
-            ws.column_dimensions[column].width = min(25, max(10, max_length + 2))
+        # Ajuster largeur colonnes (en-têtes + données, règle centralisée)
+        from api.utils.excel import fit_excel_columns
+
+        fit_excel_columns(ws)
             
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         response['Content-Disposition'] = f'attachment; filename=Historique_Ventes_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'

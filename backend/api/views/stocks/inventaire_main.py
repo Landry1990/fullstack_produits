@@ -431,6 +431,7 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
                             status=status.HTTP_400_BAD_REQUEST
                         )
                     existing_ligne.quantite_physique += new_qte
+                    existing_ligne.is_counted = True
                     existing_ligne.save() # Le ecart est calculé dans save() du modèle
 
                     log_audit(
@@ -452,7 +453,7 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
                 # Sinon, création normale
                 serializer = LigneInventaireSerializer(data=data)
                 if serializer.is_valid():
-                    ligne = serializer.save()
+                    ligne = serializer.save(is_counted=True)
                     log_audit(
                         user=request.user,
                         action=AuditLog.Action.CREATE,
@@ -906,7 +907,13 @@ class LigneInventaireViewSet(viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         fields = sorted(serializer.validated_data.keys())
-        ligne = serializer.save()
+        # Une quantité écrite (PATCH web/PDA) = ligne réellement comptée.
+        # Un PATCH portant sur d'autres champs ne change pas le flag
+        # (jamais repasser False : une ligne comptée le reste).
+        if 'quantite_physique' in serializer.validated_data:
+            ligne = serializer.save(is_counted=True)
+        else:
+            ligne = serializer.save()
         log_audit(
             user=self.request.user,
             action=AuditLog.Action.UPDATE,
@@ -946,6 +953,6 @@ class LigneInventaireViewSet(viewsets.ModelViewSet):
                 f"« {produit.name} » est un service : non concerné par l'inventaire physique."
             )
         if 'stock_theorique' not in serializer.validated_data:
-            serializer.save(stock_theorique=produit.stock)
+            serializer.save(stock_theorique=produit.stock, is_counted=True)
         else:
-            serializer.save()
+            serializer.save(is_counted=True)

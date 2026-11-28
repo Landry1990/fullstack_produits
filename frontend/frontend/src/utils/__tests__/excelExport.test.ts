@@ -1,24 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { downloadBlob, exportToExcel } from '../excelExport';
+import { downloadBlob, exportToExcel, fitExcelColumns } from '../excelExport';
+import * as XLSX from 'xlsx';
 
-vi.mock('xlsx', () => {
-    const mockSheet = {};
-    const mockBook = { SheetNames: [], Sheets: {} };
+vi.mock('xlsx', async importOriginal => {
+    const actual = await importOriginal<typeof import('xlsx')>();
     return {
-        default: {
-            utils: {
-                book_new: vi.fn(() => mockBook),
-                aoa_to_sheet: vi.fn(() => mockSheet),
-                sheet_add_json: vi.fn(),
-                book_append_sheet: vi.fn(),
-            },
-            writeFile: vi.fn(),
-        },
+        ...actual,
         utils: {
-            book_new: vi.fn(() => mockBook),
-            aoa_to_sheet: vi.fn(() => mockSheet),
-            sheet_add_json: vi.fn(),
-            book_append_sheet: vi.fn(),
+            ...actual.utils,
+            book_append_sheet: vi.fn(actual.utils.book_append_sheet),
         },
         writeFile: vi.fn(),
     };
@@ -27,6 +17,46 @@ vi.mock('xlsx', () => {
 describe('excelExport utilities', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+    });
+
+    describe('fitExcelColumns', () => {
+        it('fits headers, all rows and formatted numbers without fixed minimums', () => {
+            const ws = XLSX.utils.aoa_to_sheet([
+                ['ID', 'Produit', 'Montant'],
+                [0, 'Paracétamol', 12345.5],
+            ]);
+            ws.C2.z = '#,##0.00';
+            ws['!cols'] = [{ wch: 40 }];
+            fitExcelColumns(ws);
+            expect(ws['!cols']).toEqual([{ wch: 4 }, { wch: 13 }, { wch: 11 }]);
+        });
+
+        it('ignores pharmacy metadata and merged titles', () => {
+            const ws = XLSX.utils.aoa_to_sheet([
+                ['Pharmacie '.repeat(20)],
+                ['ID', 'Nom'],
+                [1, 'Test'],
+                ['Total général '.repeat(20)],
+            ]);
+            ws['!merges'] = [XLSX.utils.decode_range('A4:B4')];
+            fitExcelColumns(ws, 1);
+            expect(ws['!cols']).toEqual([{ wch: 4 }, { wch: 6 }]);
+        });
+
+        it('uses the longest line, caps long text and considers rows beyond 200', () => {
+            const ws = XLSX.utils.aoa_to_sheet([
+                ['Texte', 'Notes'],
+                ...Array.from({ length: 250 }, () => ['a', '']),
+                ['longue ligne\ncourte', 'x'.repeat(100)],
+            ]);
+            fitExcelColumns(ws);
+            expect(ws['!cols']).toEqual([{ wch: 14 }, { wch: 50 }]);
+        });
+
+        it('handles empty worksheets', () => {
+            const ws = XLSX.utils.aoa_to_sheet([]);
+            expect(() => fitExcelColumns(ws)).not.toThrow();
+        });
     });
 
     describe('downloadBlob', () => {
@@ -99,6 +129,16 @@ describe('excelExport utilities', () => {
                 expect.anything(),
                 'MySheet'
             );
+        });
+
+        it('sizes the exported table independently of pharmacy metadata', () => {
+            exportToExcel([{ ID: 0, Nom: 'Test' }], {
+                ...mockSettings, pharmacy_name: 'Pharmacie '.repeat(20),
+            }, { filename: 'compact.xlsx', title: 'Titre '.repeat(30) });
+            const workbook = vi.mocked(XLSX.writeFile).mock.calls[0][0];
+            const ws = workbook.Sheets[workbook.SheetNames[0]];
+            expect(ws['!cols']).toEqual([{ wch: 4 }, { wch: 6 }]);
+            expect(ws.A1.v).toBe('Pharmacie '.repeat(20));
         });
 
         it('should handle empty data array', async () => {

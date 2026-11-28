@@ -43,22 +43,18 @@ const StatsList = memo(({ title, data, type, t }: StatsListProps) => {
                     </div>
                 ) : (
                     data.slice(0, 50).map((p, i) => (
-                        <div key={`${type}-${p.produit_nom}-${p.ecart}`} className="group flex items-center justify-between p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors last:border-0">
-                            <div className="flex items-center gap-4">
-                                <div className={`size-8 rounded-lg bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-400 group-hover:${bgColorClass} group-hover:${colorClass} transition-colors`}>
-                                    {i + 1}
-                                </div>
-                                <div className="max-w-[150px] md:max-w-xs">
-                                    <div className="font-bold text-sm text-slate-700 group-hover:text-emerald-600 transition-colors truncate">{p.produit_nom}</div>
-                                    <div className={`text-caption font-bold uppercase tracking-tight mt-0.5 ${colorClass}`}>
-                                        {p.ecart > 0 ? '+' : ''}{p.ecart} {t('common:units_short')}
-                                    </div>
-                                </div>
+                        <div key={`${type}-${p.produit_nom}-${p.ecart}`} className="group grid grid-cols-[28px_minmax(0,1fr)_auto_auto] items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 border-b border-slate-50 hover:bg-slate-50 transition-colors last:border-0">
+                            <div className="size-7 rounded-lg bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-500">
+                                {i + 1}
                             </div>
-                            <div className="text-right">
-                                <div className={`font-mono font-bold ${colorClass}`}>
-                                    {p.valeur > 0 ? '+' : ''}{formatCurrency(p.valeur)}
-                                </div>
+                            <div className="min-w-0 font-bold text-sm text-slate-700 group-hover:text-emerald-600 transition-colors truncate" title={p.produit_nom}>
+                                {p.produit_nom}
+                            </div>
+                            <div className={`text-xs font-bold tabular-nums whitespace-nowrap ${colorClass}`}>
+                                {p.ecart > 0 ? '+' : ''}{p.ecart} {t('common:units_short')}
+                            </div>
+                            <div className={`text-right font-mono font-bold tabular-nums whitespace-nowrap ${colorClass}`}>
+                                {p.valeur > 0 ? '+' : ''}{formatCurrency(p.valeur)}
                             </div>
                         </div>
                     ))

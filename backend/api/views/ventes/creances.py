@@ -446,7 +446,6 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         import openpyxl
         from django.http import HttpResponse
         from openpyxl.styles import Alignment, Border, Font, Side
-        from openpyxl.utils import get_column_letter
 
         history = request.query_params.get('history', 'false').lower() == 'true'
         # Id invalide → 400 (utilisé ensuite dans le filtre ORM et le .get(pk=)).
@@ -524,19 +523,18 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         thin_border = Border(left=thin, right=thin, top=thin, bottom=thin)
 
         columns = [
-            (T(lang, 'col_date'), 12),
-            (T(lang, 'col_num_facture'), 18),
-            (T(lang, 'cre_col_client_assurance'), 30),
-            (T(lang, 'cre_col_beneficiaire'), 25),
-            (T(lang, 'cre_col_societe'), 20),
-            (T(lang, 'col_total_ttc'), 14),
-            (T(lang, 'cre_col_paye'), 14),
-            (T(lang, 'cre_col_reste'), 14),
-            (T(lang, 'col_statut'), 12),
+            T(lang, 'col_date'),
+            T(lang, 'col_num_facture'),
+            T(lang, 'cre_col_client_assurance'),
+            T(lang, 'cre_col_beneficiaire'),
+            T(lang, 'cre_col_societe'),
+            T(lang, 'col_total_ttc'),
+            T(lang, 'cre_col_paye'),
+            T(lang, 'cre_col_reste'),
+            T(lang, 'col_statut'),
         ]
         nb_cols = len(columns)
-        for i, (_, width) in enumerate(columns, start=1):
-            ws.column_dimensions[get_column_letter(i)].width = width
+        from api.utils.excel import fit_excel_columns
 
         row = 1
         ws.append([pharma_name])
@@ -572,7 +570,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
 
         # En-têtes du tableau
         header_row = row
-        for col_idx, (col_name, _) in enumerate(columns, start=1):
+        for col_idx, col_name in enumerate(columns, start=1):
             cell = ws.cell(row=header_row, column=col_idx, value=col_name)
             cell.font = Font(name='Calibri', bold=True, size=10)
             cell.alignment = Alignment(horizontal='center', vertical='center')
@@ -639,19 +637,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
                 c.border = thin_border
 
         # Ajustement auto largeur colonnes texte (skip header block before table)
-        for col in ws.columns:
-            max_length = 0
-            col_idx = None
-            for cell in col:
-                if cell.column:
-                    col_idx = cell.column
-                if cell.row <= header_row:
-                    continue
-                if cell.value:
-                    max_length = max(max_length, len(str(cell.value)))
-            if col_idx:
-                current = ws.column_dimensions[get_column_letter(col_idx)].width or 0
-                ws.column_dimensions[get_column_letter(col_idx)].width = max(current, min(30, max_length + 2))
+        fit_excel_columns(ws, min_row=header_row)
 
         # ── Réponse HTTP ──
         output = io.BytesIO()
@@ -740,7 +726,6 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
 
         import openpyxl
         from openpyxl.styles import Alignment, Border, Font, Side
-        from openpyxl.utils import get_column_letter
 
         raw_ids = request.query_params.get('client_ids', '')
         try:
@@ -812,13 +797,13 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
                     )
 
         columns = [
-            (T(lang, 'col_date'), 12),
-            (T(lang, 'col_num_facture'), 18),
-            (T(lang, 'cre_col_beneficiaire'), 25),
-            (T(lang, 'cre_col_societe'), 20),
-            (T(lang, 'col_total_ttc'), 14),
-            (T(lang, 'cre_col_paye'), 14),
-            (T(lang, 'cre_col_reste'), 14),
+            T(lang, 'col_date'),
+            T(lang, 'col_num_facture'),
+            T(lang, 'cre_col_beneficiaire'),
+            T(lang, 'cre_col_societe'),
+            T(lang, 'col_total_ttc'),
+            T(lang, 'cre_col_paye'),
+            T(lang, 'cre_col_reste'),
         ]
         nb_cols = len(columns)
 
@@ -843,8 +828,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         from ...pdf_utils import number_to_french
 
         def write_releve_sheet(ws, client, factures, releve_num):
-            for i, (_, width) in enumerate(columns, start=1):
-                ws.column_dimensions[get_column_letter(i)].width = width
+            from api.utils.excel import fit_excel_columns
 
             def right_line(row, text, *, bold=False, size=10, italic=False):
                 ws.merge_cells(start_row=row, start_column=4, end_row=row, end_column=nb_cols)
@@ -902,7 +886,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             r += 1  # ligne vide
 
             header_row = r
-            for col_idx, (col_name, _) in enumerate(columns, start=1):
+            for col_idx, col_name in enumerate(columns, start=1):
                 cell = ws.cell(row=header_row, column=col_idx, value=col_name)
                 cell.font = Font(name='Calibri', bold=True, size=10)
                 cell.alignment = Alignment(horizontal='center', vertical='center')
@@ -973,6 +957,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             frame_region(ws, header_row, total_row, 1, nb_cols)       # tableau des factures
             frame_region(ws, words_start, row, 1, nb_cols)            # montant en lettres
             frame_region(ws, 1, row, 1, nb_cols)                      # contour global
+            fit_excel_columns(ws, min_row=header_row, max_row=total_row)
 
         first = True
         for cid in client_ids:

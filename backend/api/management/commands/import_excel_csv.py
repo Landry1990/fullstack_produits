@@ -404,6 +404,10 @@ class Command(BaseCommand):
                 error_df = pd.DataFrame(stats['error_rows']) if stats['error_rows'] \
                     else pd.DataFrame([{'info': 'Aucun échec'}])
                 error_df.to_excel(writer, sheet_name='Échecs', index=False)
+                from api.utils.excel import fit_excel_columns
+
+                for sheet in writer.book.worksheets:
+                    fit_excel_columns(sheet)
 
             self.stdout.write(self.style.SUCCESS(f"📊 Rapport Excel  : {xlsx_path}"))
         except Exception as e:

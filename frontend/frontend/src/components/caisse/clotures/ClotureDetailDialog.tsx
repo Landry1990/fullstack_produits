@@ -2,9 +2,10 @@
  * Modale "Détail de clôture" : date/période, montants, écart,
  * flux financiers, ventilation par mode, billetage repliable, observation.
  */
-import { Banknote, Printer } from 'lucide-react'
+import { Banknote, FileSpreadsheet, Loader2, Printer } from 'lucide-react'
 import { Button } from '../../shadcn/button'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '../../shadcn/dialog'
+import { Select } from '../../shadcn/select'
 import { cn } from '../../../lib/utils'
 import { normalizeNumberInput } from '../../../utils/formatters'
 import type { DetailsMeta } from './types'
@@ -17,7 +18,8 @@ interface Props {
 export default function ClotureDetailDialog({ state }: Props) {
   const {
     t, selectedCloture, setSelectedCloture, showBilletage, setShowBilletage,
-    formatDate, formatMoney, getModeLabel, handlePrint,
+    formatDate, formatMoney, getModeLabel, handlePrint, salesAction, handleSalesDocument,
+    salesDetail, setSalesDetail,
   } = state
 
   return (
@@ -194,10 +196,25 @@ export default function ClotureDetailDialog({ state }: Props) {
             )}
           </div>
 
-          <div className="border-t border-slate-200 p-4 bg-slate-50 shrink-0 flex gap-2">
-            <Button variant="outline" onClick={() => handlePrint(selectedCloture)} className="gap-2 mr-auto border-emerald-300 text-emerald-600 hover:bg-emerald-50">
+          <div className="border-t border-slate-200 p-4 bg-slate-50 shrink-0 flex flex-wrap gap-2">
+            <div className="w-full flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+              <label htmlFor="cloture-sales-detail" className="text-sm font-medium text-slate-700 shrink-0">{t('sales.content')}</label>
+              <Select id="cloture-sales-detail" value={salesDetail} onChange={event => setSalesDetail(event.target.value === 'produits' ? 'produits' : 'ventes')} disabled={salesAction !== null} className="w-full sm:flex-1">
+                <option value="ventes">{t('sales.by_sale')}</option>
+                <option value="produits">{t('sales.by_product')}</option>
+              </Select>
+            </div>
+            <Button variant="outline" onClick={() => handlePrint(selectedCloture)} className="gap-2 border-emerald-300 text-emerald-600 hover:bg-emerald-50">
               <Printer className="size-5" />
               {t('modal.print')}
+            </Button>
+            <Button variant="outline" onClick={() => handleSalesDocument(selectedCloture, 'print')} disabled={salesAction !== null} className="gap-2">
+              {salesAction === 'print' ? <Loader2 className="size-4 animate-spin" /> : <Printer className="size-4" />}
+              {t(salesDetail === 'produits' ? 'sales.print_products' : 'sales.print')}
+            </Button>
+            <Button variant="outline" onClick={() => handleSalesDocument(selectedCloture, 'excel')} disabled={salesAction !== null} className="gap-2 mr-auto">
+              {salesAction === 'excel' ? <Loader2 className="size-4 animate-spin" /> : <FileSpreadsheet className="size-4" />}
+              {t(salesDetail === 'produits' ? 'sales.export_products' : 'sales.export_excel')}
             </Button>
             <Button
               variant="ghost"

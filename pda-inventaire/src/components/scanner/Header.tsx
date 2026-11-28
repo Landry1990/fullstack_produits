@@ -20,6 +20,9 @@ interface HeaderProps {
   keyboardEnabled?: boolean;
   onToggleKeyboard?: () => void;
   count?: number;
+  /** Inventaire à périmètre : progression du comptage (tap → liste restants). */
+  progress?: { done: number; total: number } | null;
+  onPressProgress?: () => void;
 }
 
 export default function Header({
@@ -32,7 +35,10 @@ export default function Header({
   keyboardEnabled,
   onToggleKeyboard,
   count,
+  progress,
+  onPressProgress,
 }: HeaderProps) {
+  const hasRemaining = !!progress && progress.done < progress.total;
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const topInset = Platform.OS === 'web' ? 8 : Math.min(insets.top, 32);
@@ -44,6 +50,16 @@ export default function Header({
           <Text style={styles.backBtnText}>{t('common.back')}</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>{reference}</Text>
+        {progress && (
+          <TouchableOpacity
+            onPress={onPressProgress}
+            style={[styles.progressChip, hasRemaining && styles.progressChipWarn]}
+          >
+            <Text style={[styles.progressChipText, hasRemaining && styles.progressChipTextWarn]}>
+              {progress.done}/{progress.total}
+            </Text>
+          </TouchableOpacity>
+        )}
         {typeof count === 'number' && (
           <View style={styles.counter}>
             <Text style={styles.counterText}>{count}</Text>
@@ -64,7 +80,7 @@ export default function Header({
               <Text style={styles.actionBtnText}>{t('scanner.keyboard')}</Text>
             </TouchableOpacity>
           )}
-          {onUpload && offlineCount > 0 && (
+          {onUpload && (offlineCount > 0 || hasRemaining) && (
             <TouchableOpacity
               onPress={onUpload}
               style={[styles.actionBtn, styles.uploadBtn]}
@@ -198,5 +214,27 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '800',
     fontSize: 14,
+  },
+  progressChip: {
+    minHeight: 36,
+    paddingHorizontal: 10,
+    marginRight: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: theme.primary,
+    borderRadius: 18,
+  },
+  progressChipWarn: {
+    backgroundColor: theme.warningWash,
+    borderWidth: 1,
+    borderColor: theme.warning,
+  },
+  progressChipText: {
+    color: '#fff',
+    fontWeight: '800',
+    fontSize: 13,
+  },
+  progressChipTextWarn: {
+    color: theme.warning,
   },
 });

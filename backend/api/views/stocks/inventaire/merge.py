@@ -65,7 +65,7 @@ def merge_inventaires(
     # 2. Charger toutes les lignes source en une requête (IDs seulement, pas de lazy-load FK)
     source_lignes = list(
         source_inventaire.lignes.values('id', 'produit_id', 'stock_lot_id',
-                                        'quantite_physique', 'stock_theorique')
+                                        'quantite_physique', 'stock_theorique', 'is_counted')
     )
 
     # 3. Partitionner : lignes à fusionner dans la cible vs lignes à déplacer
@@ -80,6 +80,7 @@ def merge_inventaires(
             compatible_line.quantite_physique += s['quantite_physique']
             compatible_line.stock_theorique += s['stock_theorique']
             compatible_line.ecart = compatible_line.quantite_physique - compatible_line.stock_theorique
+            compatible_line.is_counted = compatible_line.is_counted or s['is_counted']
             merged_source_ids.append(s['id'])
 
     merged_count = len(merged_source_ids)
@@ -99,7 +100,7 @@ def merge_inventaires(
     if to_update:
         LigneInventaire.objects.bulk_update(
             list(to_update.values()),
-            ['quantite_physique', 'stock_theorique', 'ecart']
+            ['quantite_physique', 'stock_theorique', 'ecart', 'is_counted']
         )
 
     # Rattacher les mouvements de stock de la source vers la cible avant suppression
@@ -177,8 +178,12 @@ def merge_duplicate_lines(inventaire: Inventaire) -> Response:
                 l.quantite_physique for l in other_lines
             )
 
-            # Mise à jour de la ligne principale
+            # Mise à jour de la ligne principale (comptée si au moins
+            # une des lignes fusionnées l'était)
             primary_line.quantite_physique = total_qty
+            primary_line.is_counted = primary_line.is_counted or any(
+                l.is_counted for l in other_lines
+            )
             primary_line.save()
 
             # Suppression des doublons

@@ -12,14 +12,18 @@ import { logger } from '../../utils/logger'
 import { formatCurrency, normalizeNumberInput } from '../../utils/formatters'
 import { usePharmacySettings, useDocumentLocale } from '../usePharmacySettings'
 import { useAuth } from '../../context/AuthContext'
+import { writePrintDocument } from '../../utils/print/printHelpers'
 import {
   formatDateForApi,
   buildDailyData,
   exportCloturesExcel,
+  exportClotureSalesExcel,
+  generateClotureSalesHtml,
   printCloture,
 } from '../../components/caisse/clotures/utils'
 import type {
   ClotureCaisse,
+  ClotureSalesReport,
   SessionCaisse,
   ClotureUserOption,
   PosteCaisseOption,
@@ -84,6 +88,8 @@ export function useHistoriqueClotures() {
   // Sélection
   const [selectedCloture, setSelectedCloture] = useState<ClotureCaisse | null>(null)
   const [showBilletage, setShowBilletage] = useState(false)
+  const [salesAction, setSalesAction] = useState<'print' | 'excel' | null>(null)
+  const [salesDetail, setSalesDetail] = useState<'ventes' | 'produits'>('ventes')
 
   // Metric month/year (default to now)
   const [metricMonth, setMetricMonth] = useState<string>(() => { const now = new Date(); return String(now.getMonth() + 1).padStart(2, '0') })
@@ -224,6 +230,51 @@ export function useHistoriqueClotures() {
     await printCloture(cloture, pharmacySettings, docT('modal.print_title', { id: cloture.id }))
   }
 
+  const handleSalesDocument = async (cloture: ClotureCaisse, action: 'print' | 'excel') => {
+    if (salesAction) return
+    const win = action === 'print' ? window.open('about:blank', '_blank') : null
+    if (action === 'print' && !win) {
+      gooeyToast.error(t('sales.popup_blocked'))
+      return
+    }
+    if (win) {
+      win.document.title = t('sales.loading')
+      win.document.body.textContent = t('sales.loading')
+    }
+    setSalesAction(action)
+    try {
+      const { data } = await api.get<ClotureSalesReport>(`clotures-caisse/${cloture.id}/ventes/`, {
+        params: { detail: salesDetail },
+      })
+      if (salesDetail === 'produits' && !data.produits) {
+        throw new Error('Détail produits absent du relevé de clôture')
+      }
+      if (!data.count) {
+        win?.close()
+        gooeyToast.info(t('sales.empty'))
+        return
+      }
+      if (action === 'excel') {
+        exportClotureSalesExcel(data, pharmacySettings, docT)
+      } else if (win && !win.closed) {
+        writePrintDocument(win, generateClotureSalesHtml(data, pharmacySettings, docT))
+        win.setTimeout(() => {
+          if (!win.closed) {
+            win.focus()
+            win.print()
+          }
+        }, 300)
+      }
+    } catch (error) {
+      win?.close()
+      logger.error('Erreur relevé des ventes de clôture:', error)
+      const apiError = error as { response?: { data?: { detail?: string } } }
+      gooeyToast.error(apiError.response?.data?.detail || t('sales.error'))
+    } finally {
+      setSalesAction(null)
+    }
+  }
+
   return {
     t,
     clotures,
@@ -276,5 +327,9 @@ export function useHistoriqueClotures() {
     resetFilters,
     exportExcel,
     handlePrint,
+    salesAction,
+    salesDetail,
+    setSalesDetail,
+    handleSalesDocument,
   }
 }

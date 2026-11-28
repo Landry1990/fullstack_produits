@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -55,19 +55,29 @@ export default function ProductCard({
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const lots = product.stock_lots || [];
+  const firstLotRef = useRef<TextInput>(null);
+
+  // autoFocus dans une Modal pose le focus mais ne déclenche pas le clavier
+  // sur certains Android — focus programmatique après l'animation d'ouverture.
+  useEffect(() => {
+    if (!product.use_lot_management || lots.length === 0) return;
+    const timer = setTimeout(() => firstLotRef.current?.focus(), 350);
+    return () => clearTimeout(timer);
+  }, [product.id, product.use_lot_management, lots.length]);
 
   const handleLotQtyChange = (lotId: string | number, value: string) => {
     setLotQuantities((prev) => ({ ...prev, [String(lotId)]: value }));
   };
 
-  const renderLotItem = ({ item }: { item: StockLot }) => {
+  const renderLotItem = ({ item, index }: { item: StockLot; index: number }) => {
     const theoretical = inventoryType === 'RESERVE'
       ? item.quantity_reserved || 0
       : inventoryType === 'GLOBAL'
         ? item.quantity_remaining + (item.quantity_reserved || 0)
         : item.quantity_remaining;
-    const physical = Number(lotQuantities[String(item.id)] || 0);
-    const difference = physical - theoretical;
+    const rawQty = lotQuantities[String(item.id)];
+    const physical = rawQty === '' || rawQty === undefined ? null : Number(rawQty);
+    const difference = physical === null ? null : physical - theoretical;
 
     return (
       <View style={styles.lotItem}>
@@ -79,6 +89,7 @@ export default function ProductCard({
         <View style={styles.quantityBlock}>
           <Text style={styles.quantityLabel}>{t('scanner.counted_stock')}</Text>
           <TextInput
+            ref={index === 0 ? firstLotRef : undefined}
             style={styles.lotQtyInput}
             value={lotQuantities[String(item.id)] ?? ''}
             onChangeText={(value) => handleLotQtyChange(item.id, value)}
@@ -86,9 +97,10 @@ export default function ProductCard({
             placeholderTextColor={theme.textMuted}
             keyboardType="number-pad"
             selectTextOnFocus
+            showSoftInputOnFocus
           />
-          <Text style={[styles.difference, difference === 0 ? styles.neutral : difference > 0 ? styles.positive : styles.negative]}>
-            {t('home.gap_label')} {difference > 0 ? '+' : ''}{difference}
+          <Text style={[styles.difference, difference === null ? styles.neutral : difference === 0 ? styles.neutral : difference > 0 ? styles.positive : styles.negative]}>
+            {difference === null ? '—' : `${t('home.gap_label')} ${difference > 0 ? '+' : ''}${difference}`}
           </Text>
         </View>
       </View>

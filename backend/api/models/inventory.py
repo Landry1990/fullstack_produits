@@ -89,6 +89,10 @@ class LigneInventaire(models.Model):
     stock_theorique = models.IntegerField(help_text="Stock au moment de l'ajout dans l'inventaire")
     quantite_physique = models.IntegerField(default=0, validators=[MinValueValidator(0)])
     ecart = models.IntegerField(default=0, editable=False)
+    is_counted = models.BooleanField(
+        default=False,
+        help_text="Quantité réellement saisie (scan/saisie). False = ligne pré-remplie jamais comptée."
+    )
     pmp_snapshot = models.DecimalField(
         max_digits=10, decimal_places=2, default=Decimal('0.00'),
         validators=[MinValueValidator(Decimal('0'))]

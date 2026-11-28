@@ -192,7 +192,7 @@ def bulk_lignes_inventaire(
     if lignes_finales:
         LigneInventaire.objects.bulk_create(lignes_finales.values())
     if lignes_maj:
-        LigneInventaire.objects.bulk_update(lignes_maj.values(), ['quantite_physique', 'ecart'])
+        LigneInventaire.objects.bulk_update(lignes_maj.values(), ['quantite_physique', 'ecart', 'is_counted'])
 
     # Les lignes créées/mises à jour sont renvoyées sérialisées : le client
     # peut fusionner sa copie locale sans recharger tout l'inventaire (GET lignes).
@@ -333,6 +333,7 @@ def _process_bulk_line(
         else:
             existing_in_db.quantite_physique += qte_saisie
         existing_in_db.ecart = existing_in_db.quantite_physique - stock_theorique
+        existing_in_db.is_counted = True
         lignes_maj[merge_key] = existing_in_db
         return 1
 
@@ -343,6 +344,7 @@ def _process_bulk_line(
         stock_theorique=stock_theorique,
         quantite_physique=qte_saisie,
         ecart=qte_saisie - stock_theorique,
-        pmp_snapshot=produit.pmp or produit.cost_price or 0
+        pmp_snapshot=produit.pmp or produit.cost_price or 0,
+        is_counted=True
     )
     return 1

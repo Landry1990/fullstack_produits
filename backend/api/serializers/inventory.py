@@ -37,6 +37,9 @@ class LigneInventaireSerializer(serializers.ModelSerializer):
     class Meta:
         model = LigneInventaire
         fields = '__all__'
+        # is_counted est posé côté serveur (True dès qu'une quantité est
+        # écrite) — jamais accepté depuis le payload client.
+        read_only_fields = ['is_counted']
 
     def validate_quantite_physique(self, value):
         if value is None or value < 0:

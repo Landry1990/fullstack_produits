@@ -2,6 +2,215 @@
 
 > 📚 Archives mensuelles : `docs/changelog/YYYY-MM.md` (juin → septembre 2026).
 
+## 2026-11-28 — Revue de code : corrections post-review
+
+- `compta_exports._build_excel(wrap=True)` : la note fusionnée (B:D) est exclue
+  de la mesure des colonnes → largeur minimale de 24 restaurée sur D, sinon le
+  texte long était tronqué (hauteur de ligne fixe de 90).
+- `excel_general` : les titres de section « Remises »/« Avoirs » sont fusionnés
+  sur la largeur de leur tableau — non mesurés, ils ne gonflent plus la colonne A.
+- `listing_excel`, `creances` : largeurs mortes retirées des définitions de
+  colonnes (tuples `(libellé, largeur)` → libellés simples ; les largeurs sont
+  mesurées par `fit_excel_columns`). Commentaire obsolète corrigé dans
+  `historique_ventes`.
+- `LigneInventaireViewSet.perform_update` : `is_counted=True` posé uniquement si
+  le PATCH écrit `quantite_physique` (et jamais repassé à False).
+- PDA : champs de lots vides uniquement si *ce produit* a des lignes pré-remplies
+  non comptées (un produit déjà compté ou hors périmètre garde le pré-remplissage
+  théorique) ; le périmètre n'est mémorisé que si `pre_populate` réussit ;
+  type `GROUPE` inutilisé supprimé.
+
+## 2026-11-28 — Caisse : journal chronologique des produits par clôture
+
+- `api/views/ventes/caisse.py` : option de lecture `detail=produits` sur le relevé
+  des ventes de clôture. Chaque ligne de facture est conservée, dans l'ordre
+  chronologique du premier encaissement puis dans l'ordre des lignes de vente.
+  Aucun regroupement par produit, ni duplication liée aux paiements mixtes.
+- Numéro et heure répétés sur chaque ligne ; produit, quantité vendue, prix
+  unitaire net et montant net. Remise globale et arrondi répartis au prorata
+  avec cumul arrondi pour conserver le total de la facture. Totaux des quantités
+  et montants en bas. Les unités gratuites sont hors quantité vendue.
+- `clotures/{types,utils,ClotureDetailDialog}`, `useHistoriqueClotures` et
+  `cash_closings.json` FR/EN : choix « Par vente » ou « Produits — ordre
+  chronologique » commun aux impressions A4 et exports Excel ; fond blanc
+  conservé. Aucun calcul de caisse, écriture de vente ou schéma modifié.
+- Tests `test_cloture_sales.py` et `clotureSales.test.ts` : occurrences répétées,
+  ordre chronologique, totaux/remises/arrondi, sorties A4/Excel. Le relevé refuse
+  d'omettre silencieusement une vente dont les lignes produit manquent.
+
+## 2026-11-28 — Caisse : fond blanc du relevé imprimable
+
+- `clotures/utils.ts` : le relevé A4 impose un schéma clair et un fond blanc
+  explicite pour éviter le texte sombre sur fond sombre dans la fenêtre
+  d'impression. Couleurs du tableau et des totaux conservées.
+- `clotureSales.test.ts` : régression sur le schéma clair et le fond blanc.
+
+## 2026-11-28 — Caisse : ventes d'une clôture en A4 et Excel
+
+- Action en lecture seule `clotures-caisse/{id}/ventes/` dans
+  `api/views/ventes/caisse.py` : une ligne par facture avec encaissement réel,
+  filtrée sur le caissier, le poste éventuel et la période de la clôture.
+  Paiements mixtes regroupés ; recouvrements, dépôts seuls et crédit intégral
+  exclus. Totaux calculés en Decimal côté serveur.
+- Colonnes : numéro, heure du premier encaissement de la vente dans la clôture,
+  vendeur, caissier, montant facture, réglé dans la période, reste en compte à la
+  fin de la clôture (paiements postérieurs ignorés).
+  Les règlements antérieurs éventuels sont déduits du reste, sans être ajoutés
+  aux encaissements de cette clôture. Aucun calcul de clôture modifié.
+- Détail de clôture : boutons « Imprimer les ventes (A4) » et « Exporter les
+  ventes en Excel », source/tableau communs et totaux en bas. Impression avec
+  en-têtes répétés, HTML échappé ; export via l'utilitaire Excel centralisé.
+  Fichiers frontend : `clotures/{types,utils,ClotureDetailDialog}`,
+  `useHistoriqueClotures`, traductions `cash_closings.json` FR/EN.
+- Tests : `test_cloture_sales.py` (périmètre, règlements mixtes/ultérieurs,
+  exclusions, permissions) et `clotureSales.test.ts` (A4, Excel, totaux, XSS).
+
+## 2026-11-28 — Inventaire : listes d'écarts compactes
+
+- `InventaireAnalysisTab.tsx` : produit, écart quantité et montant alignés sur
+  une seule ligne dans les listes pertes/surplus, avec espacement vertical réduit
+  pour afficher davantage de résultats à hauteur égale. Colonnes numériques
+  non compressibles, nom tronqué avec libellé complet au survol.
+
+## 2026-11-28 — Excel : dimensionnement des colonnes centralisé
+
+- Règle commune frontend/backend : largeur calculée sur les en-têtes de colonnes
+  et toutes les données (totaux inclus), marge de 2 caractères, plafond de 50,
+  sans largeur minimale fixe. Les titres/pharmacies et cellules fusionnées
+  ne gonflent plus les colonnes ; textes multilignes mesurés ligne par ligne.
+- Frontend : `fitExcelColumns` dans `src/utils/excelExport.ts`, réutilisé par
+  `exportToExcel`, les paiements fournisseurs et les clôtures de caisse.
+- Backend : `api/utils/excel.py` partagé par les exports comptables/OHADA,
+  rapports généraux et financiers, historique des ventes, balance et ajustements
+  de stock, listings d'inventaire, avoirs clients, créances/relevés, catalogue
+  et rapports de la commande `import_excel_csv`. Formats et valeurs conservés.
+- Tests de régression : largeurs compactes, métadonnées exclues, cellules
+  fusionnées, formats numériques, lignes au-delà de 200, plafonds et classeurs
+  sérialisés (`excelExport.test.ts`, `test_excel_layout.py`).
+
+## 2026-11-28 — Web : export Excel de la feuille de saisie d'inventaire
+
+- Ajout de « Exporter en Excel » au menu « Exporter / Partager » dans
+  `InventaireEditor.tsx`, via l'utilitaire `exportToExcel` existant.
+- Export de toutes les lignes actuellement saisies, y compris les modifications
+  en attente d'autosauvegarde : produit, CIP, lot, péremption, rayon, PMP,
+  quantités théorique/physique, écart recalculé et indicateur de comptage.
+- En-tête pharmacie, fichier identifié par l'inventaire, traductions FR/EN
+  (`public/locales/{fr,en}/stock.json`). Export désactivé sans lignes.
+
+## 2026-11-28 — PDA : clavier numérique auto à l'ouverture du formulaire lots
+
+- Le champ du premier lot est focusé programmatiquement (`ref` + `focus()`
+  différé 350 ms) : `autoFocus` posait le focus mais ne déclenchait pas le
+  clavier dans une `Modal` sur certains Android. `keyboardType="number-pad"`,
+  `showSoftInputOnFocus` explicite.
+
+## 2026-11-28 — PDA : lots pré-remplis → champs vides = « non compté »
+
+- Produit à lots sur inventaire à périmètre : les champs de quantité ne sont
+  plus pré-remplis au théorique mais **vides** — valider marquait chaque lot
+  « compté conforme » même absent (stock fantôme + invisible aux restants).
+- Saisir seulement ce qui est compté ; un lot vide reste `is_counted=false`
+  → traité en masse par le « Mettre à 0 » de fin. Taper `0` = absent explicite.
+- `ProductCard` : champ vide affiche « — » au lieu d'un écart -N trompeur.
+- Détection par produit (`lignes serveur is_counted=false`), robuste au
+  chargement asynchrone du scope local.
+
+## 2026-11-28 — PDA : saisie du zéro — message clarifié + fix état lots
+
+- Le 0 était accepté (formulaire manuel, par lot, édition, backend) mais
+  le message « au moins une quantité positive » laissait croire le contraire
+  → rewordé « 0 accepté ». Reste impossible par design : modes continu/rapide
+  (pas de formulaire → contournement : mode manuel ou éditer la ligne) et
+  produit à lots sans aucun lot listé.
+- **Fix** : `lotQuantities`/`newLotNumber`/`newLotExpiration` n'étaient pas
+  réinitialisés au scan d'un produit non-lot après un produit à lots → les
+  anciennes quantités auraient été enregistrées comme lignes du produit
+  courant à la validation.
+
+## 2026-11-28 — PDA : numérotation d'inventaire harmonisée avec le web
+
+- Le PDA n'envoie plus `reference` à la création : le backend génère
+  `INV-YYYYMM-XXXX` comme pour le web (avant : saisie manuelle obligatoire
+  + pré-remplissage `INV-DDMMYYYY-HHMM` côté client = 2 formats divergents).
+- Le champ de la modale devient un **nom optionnel** stocké en `description`
+  (sémantique identique au web) ; `reference_required` supprimé.
+- `createInventaire(description?, opts)` — payload `{description,
+  inventory_type}` seulement.
+
+## 2026-11-28 — PDA : inventaire à périmètre, étape 2 (restants + fin de comptage)
+
+- **« Restants à compter »** : lignes serveur `is_counted=false` non couvertes
+  par une saisie offline. Chip `done/total` dans le header (ambre si incomplet,
+  tap → `RestantsSheet` : liste nom/lot/théo + bouton « Tout mettre à 0 »).
+- **Choix de fin** : au téléversement ET à la sortie, si des lignes restent
+  non comptées → « Voir la liste / Laisser conforme / Mettre à 0 ».
+  « Mettre à 0 » envoie un bulk `quantite_physique=0` + `mode:'replace'`
+  par ligne (idempotent) — le stock fantôme est corrigé à la validation
+  au lieu de rester conforme silencieusement. Hors ligne : simple rappel.
+- **Hors périmètre** : scan d'un produit absent des lignes attendues →
+  bannière d'avertissement non bloquante (accepté : peut être mal classé).
+- **Migration 0309 complétée** : backfill `is_counted=TRUE` sur les lignes
+  legacy — le `DEFAULT false` les marquait toutes « jamais comptées » →
+  faux avertissements/risque de mise à 0 sur les inventaires en cours
+  pré-feature (appliqué manuellement en dev : 427 lignes, inventaires
+  post-feature exclus).
+
+## 2026-11-28 — PDA : fix race AsyncStorage sur le marquage « synchronisé »
+
+- **`useOfflineSync.syncAll`** appelait `Promise.all(markAsSynced)` par
+  batch : chaque `markAsSynced` faisait un read-modify-write complet
+  d'AsyncStorage → ~50 lectures concurrentes du même snapshot, le dernier
+  write écrasait tout → 1 seule ligne restée `synced` → les autres
+  reproposées à la sortie (et re-envoyées = double en `mode: 'add'`).
+- Nouveau `localStorageService.markAllAsSynced(tempIds)` : une seule
+  lecture + une seule écriture pour tout le batch (les 2 branches :
+  import complet et partiel). `markAsSynced` délègue.
+- **Erreurs remontées à l'utilisateur** : `onSyncComplete(count,
+  errorMessage?)` — premier message d'erreur du batch ou message API en
+  cas d'échec → alerte « Synchronisation incomplète » au lieu du toast
+  succès trompeur. i18n `scanner.sync_error_*` fr/en.
+
+## 2026-11-28 — PDA : inventaire par rayon/forme (étape 1) + flag `is_counted`
+
+- **Backend `LigneInventaire.is_counted`** (migration 0309, `RunSQL`
+  + `SeparateDatabaseAndState`, défaut `false` metadata-only) :
+  `false` pour `pre_populate`, `True` dès qu'une quantité est écrite
+  (bulk `lignes/bulk/`, POST ligne, PATCH `lignes-inventaire/`, merge
+  propagé en `OR`). Sérialisé en lecture seule. Distingue « pré-rempli
+  jamais compté » de « compté pile au théorique ».
+- **PDA création filtrée** : la modale propose `Tout / Rayon / Forme`
+  (+ picker `/rayons/` `/formes/`), crée l'inventaire en `inventory_type=RAYON`,
+  appelle `pre_populate`, mémorise le périmètre en AsyncStorage
+  (`pda_inventaire_scopes`, badge « Rayon : X » sur la carte).
+- **`useScannerController`** : détecte l'inventaire pré-rempli (scope local
+  OU ligne serveur `is_counted=false`) → uploads en `mode: 'replace'`
+  (sinon `théorique + compté` = double). Lignes serveur couvertes par une
+  saisie offline masquées (produit + lot) pour éviter les doublons
+  d'affichage.
+- i18n fr/en PDA. Backend : migration appliquée + 20 tests inventaire OK ;
+  `tsc` PDA OK.
+- À venir (étape 2) : compteur X/Y, écran « restants », choix de fin
+  (mettre à 0 / laisser / revoir), avertissement hors périmètre.
+
+## 2026-11-28 — Inventaire : bouton « purge écarts nuls »
+
+- Feuille de saisie (`InventaireDataTab`) : nouveau bouton à gauche de la
+  barre de tri « Écarts nuls (N) » qui supprime en une action toutes les
+  lignes dont `quantite_physique − stock_theorique = 0` (confirm. danger,
+  compteur live, désactivé s'il n'y en a aucune ou en lecture seule).
+- `useInventaireEditor` : logique de suppression groupée extraite dans
+  `deleteLinesByIds` (bulk-delete distant + retrait local + nettoyage
+  sélection/dirty), partagée entre `handleBulkDelete` et le nouveau
+  `handleDeleteZeroEcart`.
+- Garde-fou métier : `isPurgeableZeroEcart` (`types/inventory.ts`) exclut
+  de la purge les lignes à écart nul portant `pending_promis`/`pending_force`
+  — la validation détache ces obligations du compteur physique
+  (`mark_unapplied_after_absolute_stock_reset`) ; supprimer la ligne
+  sauterait ce reset → pénurie fantôme en caisse.
+- i18n fr/en (`inventaire.detail.delete_zero_ecart*`). tsc + eslint +
+  vitest Inventaire (12 tests) OK.
+
 ## 2026-11-27 — CI : vitest réparé, ruff pinné
 
 - La CI GitHub était rouge depuis sa création (runs #89→#148) — 3 jobs

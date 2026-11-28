@@ -1,9 +1,10 @@
 import logging
 from datetime import timedelta
-from decimal import Decimal, InvalidOperation
+from collections import defaultdict
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
 from django.db import transaction
-from django.db.models import Count, Sum
+from django.db.models import Count, Min, Q, Sum
 from django.db.models.functions import Abs
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
@@ -15,7 +16,7 @@ from rest_framework.response import Response
 from ...audit_helpers import log_audit
 from ...centralized_configs import BaseViewSetConfig
 from ...idempotency import idempotent_action
-from ...models import AuditLog, Caisse, ClotureCaisse
+from ...models import AuditLog, Caisse, ClotureCaisse, FactureProduit
 from ...serializers import (
     CaisseSerializer,
     ClotureCaisseSerializer,
@@ -392,6 +393,111 @@ class ClotureCaisseViewSet(BaseViewSetConfig, viewsets.ReadOnlyModelViewSet):
         serializer = self.get_serializer(paginated_queryset, many=True)
 
         return Response({'count': total_count, 'results': serializer.data, 'totals': global_totals})
+
+    @action(detail=True, methods=['get'])
+    def ventes(self, request, pk=None):
+        cloture = self.get_object()
+        if not cloture.user_id:
+            return Response(
+                {'detail': 'Le caissier de cette clôture est introuvable. Le relevé ne peut pas être reconstitué.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        end = cloture.date_fin or cloture.date
+        payments = Caisse.objects.filter(
+            user_id=cloture.user_id, statut='completee', date_paiement__lte=end,
+        ).exclude(
+            Q(mode_paiement__in=['en_compte', 'depot', 'recouvrement'])
+            | Q(reference__icontains='[RECOUV]')
+        )
+        if cloture.date_debut:
+            payments = payments.filter(date_paiement__gte=cloture.date_debut)
+        if cloture.poste_caisse_id:
+            payments = payments.filter(facture__poste_caisse_id=cloture.poste_caisse_id)
+        sales = list(payments.values(
+            'facture_id', 'facture__numero_facture', 'facture__total_ttc',
+            'facture__created_by__username', 'facture__created_by__first_name',
+            'facture__created_by__last_name',
+        ).annotate(regle=Sum('montant'), premiere_date=Min('date_paiement')).filter(
+            regle__gt=0,
+        ).order_by('premiere_date', 'facture_id'))
+        paid_at_close = dict(Caisse.objects.filter(
+            facture_id__in=[sale['facture_id'] for sale in sales],
+            statut='completee', date_paiement__lte=end,
+        ).exclude(mode_paiement='en_compte').order_by().values('facture_id').annotate(
+            total=Sum('montant'),
+        ).values_list('facture_id', 'total'))
+        cashier = cloture.user.get_full_name() or cloture.user.username
+        totals = {key: Decimal('0.00') for key in ('montant', 'regle', 'en_compte')}
+        rows = []
+        for sale in sales:
+            amount = sale['facture__total_ttc']
+            values = {
+                'montant': amount,
+                'regle': sale['regle'],
+                'en_compte': max(Decimal('0.00'), amount - paid_at_close.get(sale['facture_id'], Decimal('0.00'))),
+            }
+            seller = ' '.join(filter(None, [
+                sale['facture__created_by__first_name'], sale['facture__created_by__last_name'],
+            ])) or sale['facture__created_by__username'] or ''
+            rows.append({
+                'facture_id': sale['facture_id'],
+                'numero': sale['facture__numero_facture'] or str(sale['facture_id']),
+                'date_encaissement': sale['premiere_date'].isoformat(),
+                'vendeur': seller, 'caissier': cashier,
+                **{key: format(value, '.2f') for key, value in values.items()},
+            })
+            for key, value in values.items():
+                totals[key] += value
+        report = {
+            'cloture_id': cloture.pk,
+            'date_debut': cloture.date_debut.isoformat() if cloture.date_debut else None,
+            'date_fin': end.isoformat(),
+            'caissier': cashier,
+            'poste_caisse': cloture.poste_caisse.nom if cloture.poste_caisse else '',
+            'count': len(rows), 'ventes': rows,
+            'totaux': {key: format(value, '.2f') for key, value in totals.items()},
+        }
+        if request.query_params.get('detail') == 'produits':
+            report['produits'] = self._product_details(rows)
+        return Response(report)
+
+    @staticmethod
+    def _product_details(sales):
+        by_invoice = defaultdict(list)
+        for line in FactureProduit.objects.filter(
+            facture_id__in=[sale['facture_id'] for sale in sales],
+        ).select_related('produit').order_by('facture_id', 'pk'):
+            by_invoice[line.facture_id].append(line)
+        rows = []
+        total_quantity = 0
+        total_amount = Decimal('0.00')
+        for sale in sales:
+            lines = by_invoice[sale['facture_id']]
+            if not lines:
+                raise ValidationError({'detail': f"Aucune ligne produit conservée pour la vente {sale['numero']}. Le détail ne peut pas être reconstitué."})
+            gross = sum((line.quantity * (line.selling_price - line.discount) for line in lines), Decimal('0.00'))
+            invoice_amount = Decimal(sale['montant'])
+            if gross <= 0 and invoice_amount != 0:
+                raise ValidationError({'detail': f"Les lignes de la vente {sale['numero']} ne permettent pas de répartir son montant net."})
+            quantum = Decimal('1') if invoice_amount == invoice_amount.to_integral_value() else Decimal('0.01')
+            running_gross = allocated = Decimal('0.00')
+            for line in lines:
+                unit_price = line.selling_price - line.discount
+                running_gross += line.quantity * unit_price
+                cumulative = (running_gross * invoice_amount / gross).quantize(quantum, rounding=ROUND_HALF_UP) if gross else Decimal('0.00')
+                amount = cumulative - allocated
+                allocated = cumulative
+                rows.append({
+                    'ligne_id': line.pk, 'facture_id': sale['facture_id'],
+                    'numero': sale['numero'], 'date_encaissement': sale['date_encaissement'],
+                    'produit': line.produit_nom or (line.produit.name if line.produit else ''),
+                    'quantite': line.quantity,
+                    'prix_unitaire': format(unit_price, '.2f'),
+                    'montant': format(amount, '.2f'),
+                })
+                total_quantity += line.quantity
+                total_amount += amount
+        return {'lignes': rows, 'totaux': {'quantite': total_quantity, 'montant': format(total_amount, '.2f')}}
 
     @action(detail=False, methods=['get'])
     def performances_caissiers(self, request):

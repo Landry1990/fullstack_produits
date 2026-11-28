@@ -4,6 +4,7 @@ import { staggerContainer, fadeInUp } from '../lib/motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Loader2, Download, AlertTriangle, Building2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import { fitExcelColumns } from '../utils/excelExport';
 import api from '../services/api';
 import { formatCompact, formatCurrency } from '../utils/formatters';
 import { formatDate as formatDateDisplay } from '../utils/dateUtils';
@@ -244,6 +245,7 @@ export default function StatistiquesFournisseur() {
         [t('payments_tab.export.headers.notes')]: p.notes || ''
       }));
       const ws = XLSX.utils.json_to_sheet(rows);
+      fitExcelColumns(ws);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, t('payments_tab.export.sheet_name'));
       const filename = `${t('payments_tab.export.filename')}_${formatDate(new Date())}.xlsx`;

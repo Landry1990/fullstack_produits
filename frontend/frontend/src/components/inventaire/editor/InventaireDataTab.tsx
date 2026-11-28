@@ -1,9 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Trash2, PackageX, ArrowUp, ArrowDown, AlertTriangle } from 'lucide-react';
+import { Trash2, PackageX, ArrowUp, ArrowDown, AlertTriangle, Eraser } from 'lucide-react';
 import { formatCurrency, normalizeNumberInput } from '../../../utils/formatters';
 import type { LigneInventaire } from '../../../types';
-import { getProduitName } from '../../../types/inventory';
+import { getProduitName, isPurgeableZeroEcart } from '../../../types/inventory';
 import { EmptyState } from '../../ui/EmptyState';
 import { InventaireLineRow } from './InventaireLineRow';
 
@@ -24,6 +24,7 @@ interface InventaireDataTabProps {
     handleUpdateQuantity: (id: number, qty: number) => void;
     handleDeleteLine: (id: number) => void;
     handleBulkDelete: () => void;
+    handleDeleteZeroEcart?: () => void;
     onQtyEnter?: () => void;
 }
 
@@ -38,6 +39,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
     handleUpdateQuantity,
     handleDeleteLine,
     handleBulkDelete,
+    handleDeleteZeroEcart,
     onQtyEnter
 }) => {
     const { t } = useTranslation(['stock', 'common']);
@@ -116,6 +118,10 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
             return acc + (ecart * pmp);
         }, 0);
     }, [sortedLines]);
+
+    const zeroEcartCount = useMemo(() => {
+        return lignes.filter(isPurgeableZeroEcart).length;
+    }, [lignes]);
 
     const pendingTotals = useMemo(() => {
         return lignes.reduce((acc, l) => {
@@ -201,31 +207,47 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                 </div>
             )}
 
-            {/* Sort Controls */}
-            <div className="px-4 py-2 border-b border-slate-100 bg-slate-50/30 flex justify-end items-center gap-2">
-                <div className="text-sm font-medium text-slate-500">
-                    {t('inventaire.detail.sort.title')}
+            {/* Sort Controls + purge écarts nuls */}
+            <div className="px-4 py-2 border-b border-slate-100 bg-slate-50/30 flex justify-between items-center gap-2">
+                <div>
+                    {!isReadOnly && handleDeleteZeroEcart && (
+                        <button
+                            type="button"
+                            className="inline-flex items-center justify-center h-8 px-3 rounded-lg text-xs font-bold text-slate-500 border border-slate-200 bg-white gap-1.5 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:hover:text-slate-500 disabled:hover:border-slate-200 disabled:hover:bg-white"
+                            onClick={handleDeleteZeroEcart}
+                            disabled={saving || zeroEcartCount === 0}
+                            title={t('inventaire.detail.delete_zero_ecart_hint')}
+                        >
+                            <Eraser className="h-3.5 w-3.5" />
+                            {t('inventaire.detail.delete_zero_ecart', { count: zeroEcartCount })}
+                        </button>
+                    )}
                 </div>
-                <select
-                    className="h-8 px-2 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:border-emerald-500 transition-all"
-                    aria-label={t('inventaire.detail.sort.title')}
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as 'nom' | 'chronologie' | 'ecart' | 'prix')}
-                >
-                    <option value="chronologie">{t('inventaire.detail.sort.chronologie')}</option>
-                    <option value="nom">{t('inventaire.detail.sort.nom')}</option>
-                    <option value="ecart">{t('inventaire.detail.sort.ecart')}</option>
-                    <option value="prix">{t('inventaire.detail.sort.prix')}</option>
-                </select>
-                <button
-                    type="button"
-                    className="inline-flex items-center justify-center size-8 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors"
-                    onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-                    title={sortOrder === 'asc' ? t('common:sort.asc') : t('common:sort.desc')}
-                    aria-label={sortOrder === 'asc' ? t('common:sort.asc') : t('common:sort.desc')}
-                >
-                    {sortOrder === 'asc' ? <ArrowUp className="size-4" /> : <ArrowDown className="size-4" />}
-                </button>
+                <div className="flex items-center gap-2">
+                    <div className="text-sm font-medium text-slate-500">
+                        {t('inventaire.detail.sort.title')}
+                    </div>
+                    <select
+                        className="h-8 px-2 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:border-emerald-500 transition-all"
+                        aria-label={t('inventaire.detail.sort.title')}
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value as 'nom' | 'chronologie' | 'ecart' | 'prix')}
+                    >
+                        <option value="chronologie">{t('inventaire.detail.sort.chronologie')}</option>
+                        <option value="nom">{t('inventaire.detail.sort.nom')}</option>
+                        <option value="ecart">{t('inventaire.detail.sort.ecart')}</option>
+                        <option value="prix">{t('inventaire.detail.sort.prix')}</option>
+                    </select>
+                    <button
+                        type="button"
+                        className="inline-flex items-center justify-center size-8 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors"
+                        onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                        title={sortOrder === 'asc' ? t('common:sort.asc') : t('common:sort.desc')}
+                        aria-label={sortOrder === 'asc' ? t('common:sort.asc') : t('common:sort.desc')}
+                    >
+                        {sortOrder === 'asc' ? <ArrowUp className="size-4" /> : <ArrowDown className="size-4" />}
+                    </button>
+                </div>
             </div>
 
             {/* Table Header */}

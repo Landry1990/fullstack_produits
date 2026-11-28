@@ -1,16 +1,29 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Vibration, Keyboard, TextInput } from 'react-native';
 import { createAudioPlayer } from 'expo-audio';
 import { useTranslation } from 'react-i18next';
 import { showAlert } from '../../utils/alert';
 import type { Inventaire, LigneInventaire, Produit } from '../../services/inventaire';
 import { inventaireService, produitService } from '../../services/inventaire';
+import { localStorageService } from '../../services/localStorage';
+import type { OfflineLigne } from '../../services/localStorage';
 import { useOfflineSync } from '../../hooks/useOfflineSync';
 
 export interface DisplayLigne extends LigneInventaire {
   tempId?: string;
   details?: { isOffline: boolean };
 }
+
+/** Une ligne offline (produit + lot) couvre la ligne serveur pré-remplie
+ * correspondante : masquage/dédoublonnage et calcul « restants ». */
+const isCoveredByOffline = (sv: LigneInventaire, offs: OfflineLigne[]) =>
+  offs.some(ol =>
+    ol.produitId === sv.produit && (
+      (ol.stockLotId != null && ol.stockLotId === sv.stock_lot) ||
+      (ol.lotNumero != null && ol.lotNumero === sv.lot_numero) ||
+      (ol.stockLotId == null && ol.lotNumero == null && sv.stock_lot == null)
+    )
+  );
 
 const expiryMMYYToISO = (value: string) => {
   const match = value.match(/^(0[1-9]|1[0-2])\/(\d{2})$/);
@@ -41,8 +54,12 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
     removeOffline,
   } = useOfflineSync({
     inventaireId: inventaire.id,
-    onSyncComplete: (count) => {
-      showAlert(t('scanner.sync_title'), t('scanner.sync_complete', { count }));
+    onSyncComplete: (count, errorMessage) => {
+      if (errorMessage) {
+        showAlert(t('scanner.sync_error_title'), t('scanner.sync_error_msg', { count, error: errorMessage }));
+      } else {
+        showAlert(t('scanner.sync_title'), t('scanner.sync_complete', { count }));
+      }
       loadLignes();
     }
   });
@@ -62,6 +79,50 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
   const [rapidCountMode, setRapidCountMode] = useState(false);
   const [lastSavedProduct, setLastSavedProduct] = useState<string | null>(null);
   const [isKeyboardEnabled, setIsKeyboardEnabled] = useState(false);
+
+  // Inventaire pré-rempli (par rayon/forme) : lignes attendues à is_counted=false.
+  // Source : périmètre mémorisé localement (créé ici) OU lignes serveur non comptées
+  // (pré-rempli côté web). Dans ce mode, l'upload remplace la ligne pré-remplie
+  // (mode 'replace') au lieu d'additionner au stock théorique.
+  const [isPreloaded, setIsPreloaded] = useState(false);
+  useEffect(() => {
+    localStorageService.getScope(inventaire.id).then(scope => {
+      if (scope) setIsPreloaded(true);
+    });
+  }, [inventaire.id]);
+
+  // Étape 2 : suivi « restants à compter » sur inventaire pré-rempli.
+  const [serverLignes, setServerLignes] = useState<LigneInventaire[]>([]);
+  const [restantsOpen, setRestantsOpen] = useState(false);
+  const [zeroing, setZeroing] = useState(false);
+  // Alerte non bloquante quand un scan sort du périmètre pré-rempli.
+  const [scopeWarning, setScopeWarning] = useState<string | null>(null);
+  useEffect(() => {
+    if (!scopeWarning) return;
+    const timer = setTimeout(() => setScopeWarning(null), 4000);
+    return () => clearTimeout(timer);
+  }, [scopeWarning]);
+
+  /** Lignes pré-remplies jamais comptées, non couvertes par une saisie offline. */
+  const uncountedLignes = useMemo(
+    () => isPreloaded
+      ? serverLignes.filter(l => l.is_counted === false && !isCoveredByOffline(l, offlineLignes))
+      : [],
+    [isPreloaded, serverLignes, offlineLignes]
+  );
+
+  const preloadProgress = useMemo(() => {
+    if (!isPreloaded || serverLignes.length === 0) return null;
+    return { done: serverLignes.length - uncountedLignes.length, total: serverLignes.length };
+  }, [isPreloaded, serverLignes, uncountedLignes]);
+
+  /** Produits attendus (périmètre pré-rempli + déjà saisis offline). */
+  const expectedProduitIds = useMemo(() => {
+    if (!isPreloaded) return null;
+    const ids = new Set(serverLignes.map(l => l.produit));
+    offlineLignes.forEach(l => ids.add(l.produitId));
+    return ids;
+  }, [isPreloaded, serverLignes, offlineLignes]);
 
   // Charger les lignes (Serveur + Local)
   useEffect(() => {
@@ -88,10 +149,10 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
 
   const loadLignes = useCallback(async () => {
     try {
-      let serverLignes: LigneInventaire[] = [];
+      let fetched: LigneInventaire[] = [];
       if (isOnline) {
         try {
-          serverLignes = await inventaireService.getLignes(inventaire.id);
+          fetched = await inventaireService.getLignes(inventaire.id);
         } catch (e) {
           console.warn('Erreur fetch lignes server:', e);
         }
@@ -121,7 +182,16 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
         details: { isOffline: true }
       }));
 
-      setLignes([...localDisplayLignes, ...serverLignes]);
+      setServerLignes(fetched);
+
+      // Lignes serveur pré-remplies jamais comptées → inventaire filtré
+      if (fetched.some(l => l.is_counted === false)) {
+        setIsPreloaded(true);
+      }
+
+      // Une ligne offline couvre la ligne serveur correspondante : masquée
+      // pour éviter l'affichage en double.
+      setLignes([...localDisplayLignes, ...fetched.filter(sv => !isCoveredByOffline(sv, offlineLignes))]);
     } catch (error) {
       console.error('Erreur chargement lignes:', error);
     }
@@ -202,7 +272,9 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
         { id: product.id, name: product.name, cip1: product.cip1 || product.cip2 || product.cip3 || product.cip4 || undefined },
         qty,
         inventaire,
-        product.stock
+        product.stock,
+        undefined, undefined, undefined,
+        isPreloaded
       );
 
       setLastSavedProduct(`${product.name} (Qté: ${qty})`);
@@ -230,6 +302,12 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
     try {
       const product = await produitService.getByCip(trimmedCode);
       if (product) {
+        // Inventaire à périmètre : produit absent des lignes attendues →
+        // avertissement (accepté quand même : peut être mal classé).
+        if (expectedProduitIds && !expectedProduitIds.has(product.id)) {
+          setScopeWarning(product.name);
+        }
+
         if (continuousScanMode && !product.use_lot_management) {
           await handleContinuousSave(product);
           return;
@@ -240,7 +318,9 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
             { id: product.id, name: product.name, cip1: product.cip1 || product.cip2 || product.cip3 || product.cip4 || undefined },
             1,
             inventaire,
-            product.stock
+            product.stock,
+            undefined, undefined, undefined,
+            isPreloaded
           );
           setLastSavedProduct(`${product.name} (Qté: 1)`);
           await playSound('success');
@@ -258,6 +338,12 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
             ? await produitService.getLots(product.id, inventaire.inventory_type)
             : product.stock_lots || [];
           selectedProduct = { ...product, stock_lots: lots };
+          // Ce produit a encore des lignes pré-remplies non comptées ?
+          // → champs VIDES (« non compté » : le lot reste is_counted=false,
+          // traité par le « Mettre à 0 » de fin). Sinon le pré-remplissage
+          // théorique marquerait chaque lot validé « compté conforme »,
+          // même absent. Produit déjà compté ou hors périmètre : pré-rempli.
+          const hasUncountedLignes = uncountedLignes.some(l => l.produit === product.id);
           const initialQuantities: { [key: string]: string } = {};
           lots.forEach(lot => {
             const theoretical = inventaire.inventory_type === 'RESERVE'
@@ -265,9 +351,15 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
               : inventaire.inventory_type === 'GLOBAL'
                 ? lot.quantity_remaining + (lot.quantity_reserved || 0)
                 : lot.quantity_remaining;
-            initialQuantities[String(lot.id)] = String(theoretical);
+            initialQuantities[String(lot.id)] = hasUncountedLignes ? '' : String(theoretical);
           });
           setLotQuantities(initialQuantities);
+        } else {
+          // Purger les quantités d'un éventuel produit à lots précédent —
+          // sinon elles seraient enregistrées comme lignes du produit courant.
+          setLotQuantities({});
+          setNewLotNumber('');
+          setNewLotExpiration('');
         }
         setScannedProduct(selectedProduct);
         setQuantity(rapidCountMode ? '1' : product.use_lot_management ? '' : String(product.stock));
@@ -481,7 +573,88 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
     Keyboard.dismiss();
   };
 
-  const handleFinishAndSync = async () => {
+  /**
+   * Envoie au serveur les lignes pré-remplies jamais comptées avec
+   * quantite_physique=0 (mode 'replace') — produit absent du rayon.
+   * Idempotent : rejouable sans effet si l'envoi précédent a réussi.
+   */
+  const sendZeroUncounted = async (): Promise<boolean> => {
+    if (uncountedLignes.length === 0) return true;
+    setZeroing(true);
+    try {
+      const payload = uncountedLignes.map(l => ({
+        produit: l.produit,
+        quantite_physique: 0,
+        stock_lot: l.stock_lot ?? undefined,
+        lot_numero: l.lot_numero ?? undefined,
+        lot_expiration: l.lot_expiration ?? undefined,
+        mode: 'replace' as const,
+      }));
+      const res = await inventaireService.bulkImport(
+        inventaire.id, payload, `inv-${inventaire.id}-zero-${Date.now()}`
+      );
+      if (res.errors?.length) {
+        showAlert(t('scanner.sync_error_title'), res.errors.slice(0, 3).join('\n'));
+        return false;
+      }
+      await loadLignes();
+      showAlert(t('scanner.success'), t('scanner.uncounted_sent', { count: res.imported }));
+      return true;
+    } catch {
+      showAlert(t('common.error'), t('scanner.uncounted_zero_error'));
+      return false;
+    } finally {
+      setZeroing(false);
+    }
+  };
+
+  /** Rappel « produits non scannés » → Voir / Laisser / Mettre à 0, puis `next`. */
+  const promptUncounted = (next: () => void) => {
+    showAlert(
+      t('scanner.uncounted_title'),
+      t('scanner.uncounted_msg', { count: uncountedLignes.length }),
+      [
+        { text: t('scanner.uncounted_list'), style: 'cancel', onPress: () => setRestantsOpen(true) },
+        { text: t('scanner.uncounted_keep'), onPress: next },
+        {
+          text: t('scanner.uncounted_zero'),
+          onPress: async () => { if (await sendZeroUncounted()) next(); },
+        },
+      ]
+    );
+  };
+
+  /** Prompt « lignes en attente » (envoyer sans quitter). */
+  const uploadPending = () => {
+    if (offlineCount === 0) {
+      showAlert(t('scanner.upload_title'), t('scanner.upload_empty'));
+      return;
+    }
+    showAlert(
+      t('scanner.upload_title'),
+      t('scanner.upload_confirm', { count: offlineCount }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('common.send'), onPress: async () => { await syncAll(); } },
+      ]
+    );
+  };
+
+  // Téléverse les lignes en attente sans quitter l'écran (bouton dédié).
+  const handleUpload = () => {
+    if (!isOnline) {
+      showAlert(t('scanner.no_connection'), t('scanner.upload_offline'));
+      return;
+    }
+    if (uncountedLignes.length > 0) {
+      promptUncounted(uploadPending);
+      return;
+    }
+    uploadPending();
+  };
+
+  /** Envoie les lignes en attente puis quitte l'écran. */
+  const sendPendingAndExit = () => {
     if (offlineCount === 0) {
       onBack();
       return;
@@ -516,44 +689,49 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
     );
   };
 
-  // Téléverse les lignes en attente sans quitter l'écran (bouton dédié).
-  const handleUpload = async () => {
+  /** Prompt « lignes en attente » à la sortie (envoyer ou garder). */
+  const askPendingThenExit = () => {
     if (offlineCount === 0) {
-      showAlert(t('scanner.upload_title'), t('scanner.upload_empty'));
-      return;
-    }
-    if (!isOnline) {
-      showAlert(t('scanner.no_connection'), t('scanner.upload_offline'));
+      onBack();
       return;
     }
     showAlert(
-      t('scanner.upload_title'),
-      t('scanner.upload_confirm', { count: offlineCount }),
+      t('scanner.pending_back_title'),
+      t('scanner.pending_back_msg', { count: offlineCount }),
       [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.send'),
-          onPress: async () => {
-            await syncAll();
-          },
-        },
+        { text: t('scanner.keep_and_quit'), style: 'default', onPress: onBack },
+        { text: t('scanner.send_all'), onPress: sendPendingAndExit },
       ]
     );
   };
 
-  const handleBack = () => {
-    if (offlineCount > 0) {
-      showAlert(
-        t('scanner.pending_back_title'),
-        t('scanner.pending_back_msg', { count: offlineCount }),
-        [
-          { text: t('scanner.send_all'), onPress: handleFinishAndSync },
-          { text: t('scanner.keep_and_quit'), style: 'default', onPress: onBack },
-        ]
-      );
-    } else {
-      onBack();
+  // SyncBanner : terminer = rappel non comptés → envoi → sortie.
+  const handleFinishAndSync = () => {
+    if (isOnline && uncountedLignes.length > 0) {
+      promptUncounted(sendPendingAndExit);
+      return;
     }
+    sendPendingAndExit();
+  };
+
+  const handleBack = () => {
+    if (uncountedLignes.length > 0) {
+      if (isOnline) {
+        promptUncounted(askPendingThenExit);
+      } else {
+        // Hors ligne : impossible de mettre à 0 — simple rappel.
+        showAlert(
+          t('scanner.uncounted_title'),
+          t('scanner.uncounted_offline_msg', { count: uncountedLignes.length }),
+          [
+            { text: t('common.cancel'), style: 'cancel' },
+            { text: t('scanner.keep_and_quit'), onPress: askPendingThenExit },
+          ]
+        );
+      }
+      return;
+    }
+    askPendingThenExit();
   };
 
   const toggleContinuousMode = () => {
@@ -597,6 +775,12 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
     offlineCount,
     syncing,
     syncProgress,
+    // Pré-rempli (étape 2)
+    preloadProgress,
+    uncountedLignes,
+    restantsOpen,
+    scopeWarning,
+    zeroing,
     // Setters
     setQuantity,
     setScanInput,
@@ -605,7 +789,9 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
     setLotQuantities,
     setNewLotNumber,
     setNewLotExpiration,
+    setRestantsOpen,
     // Handlers
+    sendZeroUncounted,
     handleScanSubmit,
     handleValidate,
     handleCancel,

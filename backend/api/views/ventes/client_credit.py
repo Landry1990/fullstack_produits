@@ -349,7 +349,6 @@ class AvoirClientViewSet(viewsets.ModelViewSet):
         import openpyxl
         from django.http import HttpResponse
         from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
-        from openpyxl.utils import get_column_letter
 
         queryset = self.filter_queryset(self.get_queryset())
         avoirs = list(queryset.select_related('client', 'facture_origine'))
@@ -390,8 +389,9 @@ class AvoirClientViewSet(viewsets.ModelViewSet):
             ws.cell(row=row_idx, column=8, value=avoir.lignes.count()).border = border
             ws.cell(row=row_idx, column=9, value=str(avoir.created_by) if avoir.created_by else '—').border = border
 
-        for col_idx in range(1, len(headers) + 1):
-            ws.column_dimensions[get_column_letter(col_idx)].auto_size = True
+        from api.utils.excel import fit_excel_columns
+
+        fit_excel_columns(ws)
 
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         response['Content-Disposition'] = 'attachment; filename="avoirs_clients.xlsx"'

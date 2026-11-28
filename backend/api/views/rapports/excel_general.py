@@ -29,7 +29,6 @@ from django.http import HttpResponse
 from django.utils import timezone
 from openpyxl.drawing.image import Image as XLImage
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
-from openpyxl.utils import get_column_letter
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Palette & helpers de style
@@ -157,19 +156,10 @@ def _write_col_headers(ws, row: int, headers: list[str]):
         cell.border = _border()
 
 
-def _auto_width(ws, min_w=10, max_w=30):
-    merged_ranges = set()
-    for mr in ws.merged_cells.ranges:
-        for row in range(mr.min_row, mr.max_row + 1):
-            for col in range(mr.min_col, mr.max_col + 1):
-                merged_ranges.add((row, col))
-    for col in ws.columns:
-        length = 0
-        for cell in col:
-            if (cell.row, cell.column) in merged_ranges:
-                continue
-            length = max(length, len(str(cell.value or "")))
-        ws.column_dimensions[get_column_letter(col[0].column)].width = min(max_w, max(min_w, length + 2))
+def _auto_width(ws):
+    from api.utils.excel import fit_excel_columns
+
+    fit_excel_columns(ws, min_row=8)
 
 
 def _row_style(ws, row: int, n_cols: int, is_alt: bool = False, is_total: bool = False):
@@ -249,8 +239,7 @@ def _sheet_synthese(wb, data: dict, pharmacy: dict, mois_label: str, logo_path, 
         _row_style(ws, r, 2, is_alt=(i % 2 == 0), is_total=is_total)
         r += 1
 
-    ws.column_dimensions["A"].width = 35
-    ws.column_dimensions["B"].width = 22
+    _auto_width(ws)
     return ws
 
 
@@ -328,6 +317,10 @@ def _sheet_remises_avoirs(wb, remises_rows: list, avoirs_rows: list, pharmacy: d
     start = _write_sheet_header(ws, pharmacy, T(lang, 'xs_t_remises', mois=mois_label), logo_path, lang=lang)
 
     # ── Remises ──
+    # Titre de section fusionné sur la largeur du tableau : ignoré par
+    # _auto_width (sinon il gonflerait la colonne A).
+    h_remises = [T(lang, 'col_date'), T(lang, 'col_num_facture'), T(lang, 'col_client'), T(lang, 'xcol_remise_globale'), T(lang, 'xcol_remise_lignes'), T(lang, 'xcol_fidelite'), T(lang, 'xcol_total_remise')]
+    ws.merge_cells(start_row=start, start_column=1, end_row=start, end_column=len(h_remises))
     ws.cell(row=start, column=1, value=T(lang, 'xs_sec_remises')).font = _font(bold=True, size=12, color=PALETTE["sub_bg"])
     start += 1
     h_remises = [T(lang, 'col_date'), T(lang, 'col_num_facture'), T(lang, 'col_client'), T(lang, 'xcol_remise_globale'), T(lang, 'xcol_remise_lignes'), T(lang, 'xcol_fidelite'), T(lang, 'xcol_total_remise')]
@@ -356,9 +349,10 @@ def _sheet_remises_avoirs(wb, remises_rows: list, avoirs_rows: list, pharmacy: d
     r += 2
 
     # ── Avoirs ──
+    h_avoirs = [T(lang, 'col_date'), T(lang, 'col_num_avoir'), T(lang, 'col_fournisseur'), T(lang, 'col_montant_ht'), T(lang, 'col_statut')]
+    ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=len(h_avoirs))
     ws.cell(row=r, column=1, value=T(lang, 'xs_sec_avoirs')).font = _font(bold=True, size=12, color=PALETTE["sub_bg"])
     r += 1
-    h_avoirs = [T(lang, 'col_date'), T(lang, 'col_num_avoir'), T(lang, 'col_fournisseur'), T(lang, 'col_montant_ht'), T(lang, 'col_statut')]
     _write_col_headers(ws, r, h_avoirs)
     r += 1
     total_av = Decimal(0)

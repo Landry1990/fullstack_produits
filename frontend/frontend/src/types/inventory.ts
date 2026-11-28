@@ -21,6 +21,7 @@ export interface LigneInventaire {
     pending_promis?: number
     pending_force?: number
     isLocalOnly?: boolean
+    is_counted?: boolean
 }
 
 export function isProduitObject(produit: number | ProduitModel | undefined | null): produit is ProduitModel {
@@ -40,6 +41,19 @@ export function getProduitId(produit: number | ProduitModel): number {
 export function getProduitName(produit: number | ProduitModel | undefined | null, fallback = ''): string {
     if (isProduitObject(produit)) return produit.name || fallback;
     return fallback;
+}
+
+/**
+ * Écart nul ET aucune obligation en attente (promis / vente forcée).
+ * Une ligne à écart nul avec obligations doit être conservée : la
+ * validation de l'inventaire « détache » ces unités du compteur physique
+ * (mark_unapplied_after_absolute_stock_reset) — la supprimer priverait
+ * le produit de ce reset et laisserait une pénurie fantôme en caisse.
+ */
+export function isPurgeableZeroEcart(l: LigneInventaire): boolean {
+    return (l.quantite_physique || 0) - (l.stock_theorique || 0) === 0
+        && !(l.pending_promis || 0)
+        && !(l.pending_force || 0);
 }
 
 export interface Inventaire {

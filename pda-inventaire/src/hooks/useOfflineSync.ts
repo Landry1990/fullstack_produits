@@ -7,7 +7,7 @@ import type { Inventaire } from '../services/inventaire';
 
 interface UseOfflineSyncOptions {
     inventaireId: number;
-    onSyncComplete?: (count: number) => void;
+    onSyncComplete?: (count: number, errorMessage?: string) => void;
 }
 
 const BATCH_SIZE = 50;
@@ -175,22 +175,26 @@ export function useOfflineSync({ inventaireId, onSyncComplete }: UseOfflineSyncO
             throw lastErr;
         };
 
+        let firstError: string | undefined;
+
         try {
             for (const batch of batches) {
                 const result = await sendBatch(batch);
                 const errorIndices = parseErrorIndices(result.errors);
+                if (result.errors?.length && !firstError) {
+                    firstError = result.errors.slice(0, 3).join('\n');
+                }
 
                 if (result.imported === batch.length) {
-                    // Batch entièrement importé
-                    await Promise.all(batch.map(l => localStorageService.markAsSynced(l.tempId)));
+                    // Batch entièrement importé — UNE écriture (read-modify-write
+                    // en parallèle = race, seule la dernière ligne survivait).
+                    await localStorageService.markAllAsSynced(batch.map(l => l.tempId));
                     syncedCount += result.imported;
                 } else if (result.errors?.length && errorIndices.size === batch.length - result.imported) {
                     // Sync partielle : on sait quelles lignes ont échoué
-                    await Promise.all(batch.map((l, idx) =>
-                        errorIndices.has(idx)
-                            ? Promise.resolve()
-                            : localStorageService.markAsSynced(l.tempId)
-                    ));
+                    await localStorageService.markAllAsSynced(
+                        batch.filter((_, idx) => !errorIndices.has(idx)).map(l => l.tempId)
+                    );
                     syncedCount += result.imported;
                 } else {
                     // Incertitude sur les lignes en échec : tout garder en attente
@@ -204,13 +208,15 @@ export function useOfflineSync({ inventaireId, onSyncComplete }: UseOfflineSyncO
             await loadOfflineLignes();
 
             if (onSyncComplete) {
-                onSyncComplete(syncedCount);
+                onSyncComplete(syncedCount, firstError);
             }
         } catch (error) {
             console.error('Erreur sync groupée:', error);
+            const apiErr = error as { response?: { data?: { error?: string } }; message?: string };
+            const message = apiErr.response?.data?.error || apiErr.message || 'Sync error';
             await loadOfflineLignes();
             if (onSyncComplete) {
-                onSyncComplete(syncedCount);
+                onSyncComplete(syncedCount, firstError ?? message);
             }
         } finally {
             setSyncing(false);

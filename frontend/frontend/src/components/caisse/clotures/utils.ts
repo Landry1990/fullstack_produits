@@ -7,11 +7,120 @@ import type { TFunction } from 'i18next'
 import { gooeyToast } from 'goey-toast'
 import { normalizeNumberInput } from '../../../utils/formatters'
 import { logger } from '../../../utils/logger'
+import { getDocumentLocale } from '../../../utils/documentLang'
+import { exportToExcel, fitExcelColumns } from '../../../utils/excelExport'
 import { generateClotureTemplate } from '../../../utils/print/printTemplates'
-import { writePrintDocument } from '../../../utils/print/printHelpers'
+import { escHtml, formatDateFr, writePrintDocument } from '../../../utils/print/printHelpers'
 import { printClotureSmart } from '../../../utils/print/printClotureSmart'
-import type { ClotureCaisse, CloturesViewMode, DailyAggregate } from './types'
+import type { ClotureCaisse, ClotureSalesReport, CloturesViewMode, DailyAggregate } from './types'
 import type { PharmacySettings } from '../../../types'
+
+function saleTime(date: string): string {
+  return new Date(date).toLocaleTimeString(getDocumentLocale(), { hour: '2-digit', minute: '2-digit', hour12: false })
+}
+
+export function buildClotureSalesRows(report: ClotureSalesReport, t: TFunction): Record<string, string | number>[] {
+  if (report.produits) {
+    const values: Record<string, string | number>[] = report.produits.lignes.map(line => ({
+      [t('sales.number')]: line.numero,
+      [t('sales.time')]: saleTime(line.date_encaissement),
+      [t('sales.product')]: line.produit || '—',
+      [t('sales.quantity')]: line.quantite,
+      [t('sales.unit_price')]: Number(line.prix_unitaire),
+      [t('sales.net_amount')]: Number(line.montant),
+    }))
+    values.push({
+      [t('sales.number')]: t('sales.totals'),
+      [t('sales.time')]: '',
+      [t('sales.product')]: '',
+      [t('sales.quantity')]: report.produits.totaux.quantite,
+      [t('sales.unit_price')]: '',
+      [t('sales.net_amount')]: Number(report.produits.totaux.montant),
+    })
+    return values
+  }
+  const values = report.ventes.map(sale => ({
+    [t('sales.number')]: sale.numero,
+    [t('sales.time')]: saleTime(sale.date_encaissement),
+    [t('sales.seller')]: sale.vendeur || '—',
+    [t('sales.cashier')]: sale.caissier,
+    [t('sales.amount')]: Number(sale.montant),
+    [t('sales.paid')]: Number(sale.regle),
+    [t('sales.on_account')]: Number(sale.en_compte),
+  }))
+  values.push({
+    [t('sales.number')]: t('sales.totals'),
+    [t('sales.time')]: '',
+    [t('sales.seller')]: '',
+    [t('sales.cashier')]: '',
+    [t('sales.amount')]: Number(report.totaux.montant),
+    [t('sales.paid')]: Number(report.totaux.regle),
+    [t('sales.on_account')]: Number(report.totaux.en_compte),
+  })
+  return values
+}
+
+function salesPeriod(report: ClotureSalesReport, t: TFunction): string {
+  return t('sales.period', {
+    start: report.date_debut ? formatDateFr(report.date_debut) : t('sales.beginning'),
+    end: formatDateFr(report.date_fin),
+  })
+}
+
+export function exportClotureSalesExcel(report: ClotureSalesReport, settings: PharmacySettings, t: TFunction): void {
+  exportToExcel(buildClotureSalesRows(report, t), { ...settings, city: settings.city || '' }, {
+    filename: `${report.produits ? 'Produits_' : ''}Ventes_Cloture_${report.cloture_id}.xlsx`,
+    sheetName: t(report.produits ? 'sales.products_sheet' : 'sales.sheet_name'),
+    title: [
+      t(report.produits ? 'sales.products_title' : 'sales.title', { id: report.cloture_id }), salesPeriod(report, t),
+      `${t('sales.cashier')} : ${report.caissier}`,
+      report.poste_caisse, t(report.produits ? 'sales.products_note' : 'sales.note'),
+    ].filter(Boolean).join('\n'),
+  })
+}
+
+export function generateClotureSalesHtml(report: ClotureSalesReport, settings: PharmacySettings, t: TFunction): string {
+  const rows = buildClotureSalesRows(report, t)
+  const headers = Object.keys(rows[0])
+  const numericHeaders = new Set(headers.filter(header => typeof rows[0][header] === 'number'))
+  const renderRow = (row: Record<string, string | number>) => `<tr>${headers.map(header => {
+    const value = row[header]
+    return `<td${numericHeaders.has(header) ? ' class="money"' : ''}>${escHtml(typeof value === 'number' ? value.toLocaleString(getDocumentLocale(), { maximumFractionDigits: 2 }) : value)}</td>`
+  }).join('')}</tr>`
+  const title = t(report.produits ? 'sales.products_title' : 'sales.title', { id: report.cloture_id })
+  return `<!DOCTYPE html><html lang="${escHtml(settings.locale || 'fr-FR')}"><head>
+    <meta charset="utf-8"><meta name="color-scheme" content="only light"><title>${escHtml(title)}</title>
+    <style>
+      @page { size: A4 portrait; margin: 12mm; }
+      html { color-scheme: only light; background: #fff; }
+      body { margin: 0; background: #fff; color: #0f172a; font: 11px Arial, sans-serif; }
+      h1 { font-size: 17px; margin: 16px 0 8px; }
+      .pharmacy { font-size: 18px; font-weight: bold; }
+      .meta { margin: 4px 0; }
+      table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+      th, td { border: 1px solid #cbd5e1; padding: 6px; text-align: left; overflow-wrap: anywhere; }
+      td { background: #fff; }
+      th, tfoot td { background: #f1f5f9; }
+      .money { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+      thead { display: table-header-group; }
+      tfoot { display: table-row-group; font-weight: bold; background: #f1f5f9; }
+      tr { break-inside: avoid; }
+      .note { color: #475569; font-size: 10px; margin-top: 12px; }
+    </style>
+    </head><body>
+    <div class="pharmacy">${escHtml(settings.pharmacy_name)}</div>
+    <div class="meta">${escHtml([settings.address, settings.city].filter(Boolean).join(' — '))}</div>
+    <div class="meta">${escHtml(settings.phone)}</div>
+    <h1>${escHtml(title)}</h1>
+    <div class="meta">${escHtml(salesPeriod(report, t))}</div>
+    <div class="meta">${escHtml(t('sales.cashier'))} : ${escHtml(report.caissier)}${report.poste_caisse ? ` — ${escHtml(report.poste_caisse)}` : ''}</div>
+    <div class="meta">${escHtml(t('sales.count', { count: report.count }))} — ${escHtml(settings.currency_symbol || 'FCFA')}</div>
+    <table><thead><tr>${headers.map(header => `<th${numericHeaders.has(header) ? ' class="money"' : ''}>${escHtml(header)}</th>`).join('')}</tr></thead>
+    <tbody>${rows.slice(0, -1).map(renderRow).join('')}</tbody>
+    <tfoot>${renderRow(rows[rows.length - 1])}</tfoot></table>
+    <p class="note">${escHtml(t(report.produits ? 'sales.products_note' : 'sales.note'))}</p>
+    </body></html>`
+}
 
 export const formatDateForApi = (date: Date): string => {
   const pad = (num: number) => num.toString().padStart(2, '0')
@@ -104,6 +213,7 @@ export async function exportCloturesExcel({ viewMode, clotures, dailyData, t }: 
       filename = `clotures_${new Date().toISOString().split('T')[0]}.xlsx`
     }
 
+    fitExcelColumns(ws)
     XLSX.utils.book_append_sheet(wb, ws, 'Clotures')
     XLSX.writeFile(wb, filename)
   } catch (err) {

@@ -8,7 +8,6 @@ from django.db.models.functions import Coalesce
 from django.http import HttpResponse
 from django.utils import timezone
 from openpyxl.styles import Font
-from openpyxl.utils import get_column_letter
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm, mm
 from reportlab.platypus import (
@@ -222,19 +221,9 @@ class RapportInventoryMixin:
                 ws.append([p.cip1 or "", p.name, si, ac, -vt, aj, sf])
 
         # Auto-width (skip merged title row)
-        merged_ranges = set()
-        for mr in ws.merged_cells.ranges:
-            for row in range(mr.min_row, mr.max_row + 1):
-                for col in range(mr.min_col, mr.max_col + 1):
-                    merged_ranges.add((row, col))
-        for col in ws.columns:
-            length = 0
-            for cell in col:
-                if (cell.row, cell.column) in merged_ranges:
-                    continue
-                val = str(cell.value or "")
-                length = max(length, len(val))
-            ws.column_dimensions[get_column_letter(col[0].column)].width = min(30, max(10, length + 2))
+        from api.utils.excel import fit_excel_columns
+
+        fit_excel_columns(ws, min_row=3)
 
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         response['Content-Disposition'] = 'attachment; filename="Balance_Stocks.xlsx"'; wb.save(response)
